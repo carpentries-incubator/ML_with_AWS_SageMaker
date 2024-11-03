@@ -234,12 +234,11 @@
 
     <div id="flush-collapsecurrent" class="accordion-collapse collapse show" aria-labelledby="flush-headingcurrent" data-bs-parent="#accordionFlushcurrent">
       <div class="accordion-body">
-        <ul><li><a href="#a.-read-data-from-s3-into-memory">1A. Read Data from S3 into Memory</a></li>
-<li><a href="#b.-download-data-as-a-local-copy">1B. Download Data as a Local Copy</a></li>
-<li><a href="#check-current-size-and-storage-costs-of-the-bucket">2. Check Current Size and Storage Costs of the Bucket</a></li>
-<li><a href="#estimate-storage-costs">3. Estimate Storage Costs</a></li>
-<li><a href="#important-considerations">Important Considerations:</a></li>
-<li><a href="#upload-new-files-from-notebook-to-s3">4. Upload New Files from Notebook to S3</a></li>
+        <ul><li><a href="#a.-read-data-from-s3-into-memory">1A. Read data from S3 into memory</a></li>
+<li><a href="#b.-download-copy-into-notebook-environment">1B. Download copy into notebook environment</a></li>
+<li><a href="#check-current-size-and-storage-costs-of-bucket">2. Check current size and storage costs of bucket</a></li>
+<li><a href="#check-storage-costs-of-bucket">3: Check storage costs of bucket</a></li>
+<li><a href="#pushing-new-files-from-notebook-environment-to-bucket">4. Pushing new files from notebook environment to bucket</a></li>
         </ul></div><!--/div.accordion-body-->
     </div><!--/div.accordion-collapse-->
 
@@ -345,171 +344,261 @@ bucket.</li>
 </div>
 </div>
 </div>
-<section><h2 class="section-heading" id="a--read-data-from-s3-into-memory">1A. Read Data from S3 into Memory<a class="anchor" aria-label="anchor" href="#a--read-data-from-s3-into-memory"></a></h2>
-<hr class="half-width"><p>Our data is stored in an S3 bucket called
-<code>titanic-dataset-test</code>. This approach reads data directly
-from S3 into memory within the Jupyter notebook environment without
-creating a local copy of <code>train.csv</code>.</p>
+<div class="section level4">
+<h4 id="directory-setup">Directory setup<a class="anchor" aria-label="anchor" href="#directory-setup"></a></h4>
+<p>Let’s make sure we’re starting in the root directory of this
+instance, so that we all have our AWS_helpers.py file located in the
+same path (/test_AWS/scripts/AWS_helpers.py)</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="im">import</span> boto3</span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="im">import</span> sagemaker</span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a></span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co"># Define the SageMaker role and session</span></span>
-<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>role <span class="op">=</span> sagemaker.get_execution_role()</span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>session <span class="op">=</span> sagemaker.Session()</span>
-<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="co"># Define the S3 bucket and object key</span></span>
-<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>bucket <span class="op">=</span> <span class="st">'titanic-dataset-test'</span>  <span class="co"># replace with your S3 bucket name</span></span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>key <span class="op">=</span> <span class="st">'data/titanic_train.csv'</span>   <span class="co"># replace with your object key</span></span>
-<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>response <span class="op">=</span> s3.get_object(Bucket<span class="op">=</span>bucket, Key<span class="op">=</span>key)</span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="co"># Load the data into a pandas DataFrame</span></span>
-<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>train_data <span class="op">=</span> pd.read_csv(response[<span class="st">'Body'</span>])</span>
-<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a><span class="bu">print</span>(train_data.shape)</span>
-<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a>train_data.head()</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="op">!</span>pwd</span></code></pre>
 </div>
-<div id="why-direct-reading" class="callout">
-<div class="callout-square">
-<i class="callout-icon" data-feather="bell"></i>
-</div>
-<div id="why-direct-reading" class="callout-inner">
-<h3 class="callout-title">Why Direct Reading?</h3>
-<div class="callout-content">
-<p>Directly reading from S3 into memory minimizes storage requirements
-on the notebook instance and can handle large datasets without local
-storage limitations.</p>
-</div>
-</div>
-</div>
-</section><section><h2 class="section-heading" id="b--download-data-as-a-local-copy">1B. Download Data as a Local Copy<a class="anchor" aria-label="anchor" href="#b--download-data-as-a-local-copy"></a></h2>
-<hr class="half-width"><p>For smaller datasets, it can be convenient to have a local copy
-within the notebook’s environment. However, if your dataset is large
-(&gt;1GB), consider skipping this step.</p>
-<div class="section level3">
-<h3 id="steps-to-download-data-from-s3">Steps to Download Data from S3<a class="anchor" aria-label="anchor" href="#steps-to-download-data-from-s3"></a></h3>
 <div class="codewrapper sourceCode" id="cb2">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Define the S3 bucket and file location</span></span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>file_key <span class="op">=</span> <span class="st">"data/titanic_train.csv"</span>  <span class="co"># Path to your file in the S3 bucket</span></span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>local_file_path <span class="op">=</span> <span class="st">"./titanic_train.csv"</span>  <span class="co"># Local path to save the file</span></span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co"># Download the file from S3</span></span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>s3.download_file(bucket, file_key, local_file_path)</span>
-<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"File downloaded:"</span>, local_file_path)</span></code></pre>
-</div>
-<div id="resolving-permission-issues" class="callout">
-<div class="callout-square">
-<i class="callout-icon" data-feather="bell"></i>
-</div>
-<div id="resolving-permission-issues" class="callout-inner">
-<h3 class="callout-title">Resolving Permission Issues</h3>
-<div class="callout-content">
-<p>If you encounter permission issues when downloading from S3: - Ensure
-your IAM role has appropriate policies for S3 access. - Verify the
-bucket policy allows access.</p>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="ex">/home/ec2-user/SageMaker</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="ex">/home/ec2-user/SageMaker</span></span></code></pre>
 </div>
 </div>
-</div>
-</div>
-</section><section><h2 class="section-heading" id="check-current-size-and-storage-costs-of-the-bucket">2. Check Current Size and Storage Costs of the Bucket<a class="anchor" aria-label="anchor" href="#check-current-size-and-storage-costs-of-the-bucket"></a></h2>
-<hr class="half-width"><p>It’s useful to periodically check the storage usage and associated
-costs of your S3 bucket. Using the <strong>Boto3</strong> library, you
-can calculate the total size of objects within a specified bucket.</p>
+<section><h2 class="section-heading" id="a--read-data-from-s3-into-memory">1A. Read data from S3 into memory<a class="anchor" aria-label="anchor" href="#a--read-data-from-s3-into-memory"></a></h2>
+<hr class="half-width"><p>Our data is stored on an S3 bucket called ‘titanic-dataset-test’. We
+can use the following code to read data directly from S3 into memory in
+the Jupyter notebook environment, without actually downloading a copy of
+train.csv as a local file.</p>
 <div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Initialize the total size counter</span></span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>total_size_bytes <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co"># List and sum the size of all objects in the bucket</span></span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>paginator <span class="op">=</span> s3.get_paginator(<span class="st">'list_objects_v2'</span>)</span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="cf">for</span> page <span class="kw">in</span> paginator.paginate(Bucket<span class="op">=</span>bucket):</span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>    <span class="cf">for</span> obj <span class="kw">in</span> page.get(<span class="st">'Contents'</span>, []):</span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>        total_size_bytes <span class="op">+=</span> obj[<span class="st">'Size'</span>]</span>
-<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a></span>
-<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co"># Convert the total size to megabytes for readability</span></span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>total_size_mb <span class="op">=</span> total_size_bytes <span class="op">/</span> (<span class="dv">1024</span> <span class="op">**</span> <span class="dv">2</span>)</span>
-<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Total size of bucket '</span><span class="sc">{</span>bucket<span class="sc">}</span><span class="ss">': </span><span class="sc">{</span>total_size_mb<span class="sc">:.2f}</span><span class="ss"> MB"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="im">import</span> boto3</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="im">import</span> sagemaker</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co"># Initialize the SageMaker role and session</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co"># Define the SageMaker role and session</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>role <span class="op">=</span> sagemaker.get_execution_role()</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>session <span class="op">=</span> sagemaker.Session()</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co"># Define the S3 bucket and object key</span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>bucket_name <span class="op">=</span> <span class="st">'titanic-dataset-test'</span>  <span class="co"># replace with your S3 bucket name</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co"># Read the train data from S3</span></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>key <span class="op">=</span> <span class="st">'data/titanic_train.csv'</span>  <span class="co"># replace with your object key</span></span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a>response <span class="op">=</span> s3.get_object(Bucket<span class="op">=</span>bucket_name, Key<span class="op">=</span>key)</span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a>train_data <span class="op">=</span> pd.read_csv(response[<span class="st">'Body'</span>])</span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co"># Read the test data from S3</span></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a>key <span class="op">=</span> <span class="st">'data/titanic_test.csv'</span>  <span class="co"># replace with your object key</span></span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a>response <span class="op">=</span> s3.get_object(Bucket<span class="op">=</span>bucket_name, Key<span class="op">=</span>key)</span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a>test_data <span class="op">=</span> pd.read_csv(response[<span class="st">'Body'</span>])</span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a></span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a><span class="co"># check shape</span></span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a><span class="bu">print</span>(train_data.shape)</span>
+<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a><span class="bu">print</span>(test_data.shape)</span>
+<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a></span>
+<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a><span class="co"># Inspect the first few rows of the DataFrame</span></span>
+<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a>train_data.head()</span></code></pre>
 </div>
-<div id="explanation" class="callout">
-<div class="callout-square">
-<i class="callout-icon" data-feather="bell"></i>
-</div>
-<div id="explanation" class="callout-inner">
-<h3 class="callout-title">Explanation</h3>
-<div class="callout-content">
-<ol style="list-style-type: decimal"><li>
-<strong>Paginator</strong>: Handles large listings in S3
-buckets.</li>
-<li>
-<strong>Size Calculation</strong>: Sums the <code>Size</code>
-attribute of each object.</li>
-<li>
-<strong>Unit Conversion</strong>: Size is converted from bytes to
-megabytes for readability.</li>
-</ol><blockquote>
-<p><strong>Tip</strong>: For large buckets, consider filtering by folder
-or object prefix to calculate size for specific directories.</p>
-</blockquote>
-</div>
-</div>
-</div>
-</section><section><h2 class="section-heading" id="estimate-storage-costs">3. Estimate Storage Costs<a class="anchor" aria-label="anchor" href="#estimate-storage-costs"></a></h2>
-<hr class="half-width"><p>AWS S3 costs are based on data size, region, and storage class. The
-example below estimates costs for the <strong>S3 Standard</strong>
-storage class in <strong>US East (N. Virginia)</strong>.</p>
 <div class="codewrapper sourceCode" id="cb4">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Pricing per GB for different storage tiers</span></span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>first_50_tb_price_per_gb <span class="op">=</span> <span class="fl">0.023</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>next_450_tb_price_per_gb <span class="op">=</span> <span class="fl">0.022</span></span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>over_500_tb_price_per_gb <span class="op">=</span> <span class="fl">0.021</span></span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co"># Calculate the cost based on the size</span></span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>total_size_gb <span class="op">=</span> total_size_bytes <span class="op">/</span> (<span class="dv">1024</span> <span class="op">**</span> <span class="dv">3</span>)</span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="cf">if</span> total_size_gb <span class="op">&lt;=</span> <span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span>:</span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>    cost <span class="op">=</span> total_size_gb <span class="op">*</span> first_50_tb_price_per_gb</span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="cf">elif</span> total_size_gb <span class="op">&lt;=</span> <span class="dv">500</span> <span class="op">*</span> <span class="dv">1024</span>:</span>
-<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>    cost <span class="op">=</span> (<span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> first_50_tb_price_per_gb) <span class="op">+</span> <span class="op">\</span></span>
-<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>           ((total_size_gb <span class="op">-</span> <span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span>) <span class="op">*</span> next_450_tb_price_per_gb)</span>
-<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="cf">else</span>:</span>
-<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a>    cost <span class="op">=</span> (<span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> first_50_tb_price_per_gb) <span class="op">+</span> <span class="op">\</span></span>
-<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>           (<span class="dv">450</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> next_450_tb_price_per_gb) <span class="op">+</span> <span class="op">\</span></span>
-<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>           ((total_size_gb <span class="op">-</span> <span class="dv">500</span> <span class="op">*</span> <span class="dv">1024</span>) <span class="op">*</span> over_500_tb_price_per_gb)</span>
-<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a></span>
-<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated monthly storage cost: $</span><span class="sc">{</span>cost<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="ex">sagemaker.config</span> INFO <span class="at">-</span> Not applying SDK defaults from location: /etc/xdg/sagemaker/config.yaml</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="ex">sagemaker.config</span> INFO <span class="at">-</span> Not applying SDK defaults from location: /home/ec2-user/.config/sagemaker/config.yaml</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="kw">(</span><span class="ex">712,</span> 12<span class="kw">)</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="kw">(</span><span class="ex">179,</span> 12<span class="kw">)</span></span></code></pre>
 </div>
-<blockquote>
-<p>For up-to-date pricing details, refer to the <a href="https://aws.amazon.com/s3/pricing/" class="external-link">AWS S3 Pricing page</a>.</p>
-</blockquote>
-</section><section><h2 class="section-heading" id="important-considerations">Important Considerations:<a class="anchor" aria-label="anchor" href="#important-considerations"></a></h2>
-<hr class="half-width"><ul><li>
-<strong>Pricing Tiers</strong>: S3 has tiered pricing, so costs vary
-with data size.</li>
-<li>
-<strong>Region and Storage Class</strong>: Prices differ by AWS
-region and storage class.</li>
-<li>
-<strong>Additional Costs</strong>: Consider other costs for
-requests, retrievals, and data transfer.</li>
-</ul></section><section><h2 class="section-heading" id="upload-new-files-from-notebook-to-s3">4. Upload New Files from Notebook to S3<a class="anchor" aria-label="anchor" href="#upload-new-files-from-notebook-to-s3"></a></h2>
-<hr class="half-width"><p>As your analysis generates new files, you may need to upload them to
-your S3 bucket. Here’s how to upload a file from the notebook
-environment to S3.</p>
-<div class="codewrapper sourceCode" id="cb5">
+</section><section><h2 class="section-heading" id="b--download-copy-into-notebook-environment">1B. Download copy into notebook environment<a class="anchor" aria-label="anchor" href="#b--download-copy-into-notebook-environment"></a></h2>
+<hr class="half-width"><p>If you have larger dataset (&gt; 1GB), you may want to skip this step
+and always read directly into memory. However, for smaller datasets, it
+can be convenient to have a “local” copy (i.e., one stored in your
+notebook’s instance).</p>
+<p>Download data from S3 to notebook environment. You may need to hit
+refresh on the file explorer panel to the left to see this file. If you
+get any permission issues…</p>
+<ul><li>check that you have selected the appropriate policy for this
+notebook</li>
+<li>check that your bucket has the appropriate policy permissions</li>
+</ul><div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Define the S3 bucket name and file paths</span></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>train_file_path <span class="op">=</span> <span class="st">"results.txt"</span>  <span class="co"># File to upload</span></span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>s3.upload_file(train_file_path, bucket, <span class="st">"results/results.txt"</span>)</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Files uploaded successfully."</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Define the S3 bucket and file location</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>file_key <span class="op">=</span> <span class="st">"data/titanic_train.csv"</span>  <span class="co"># Path to your file in the S3 bucket</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>local_file_path <span class="op">=</span> <span class="st">"./titanic_train.csv"</span>  <span class="co"># Local path to save the file</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co"># Initialize the S3 client and download the file</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>s3 <span class="op">=</span> boto3.client(<span class="st">"s3"</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>s3.download_file(bucket_name, file_key, local_file_path)</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"File downloaded:"</span>, local_file_path)</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb6">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">File</span> downloaded: ./titanic_train.csv</span></code></pre>
+</div>
+</section><section><h2 class="section-heading" id="check-current-size-and-storage-costs-of-bucket">2. Check current size and storage costs of bucket<a class="anchor" aria-label="anchor" href="#check-current-size-and-storage-costs-of-bucket"></a></h2>
+<hr class="half-width"><p>It’s a good idea to periodically check how much storage you have used
+in your bucket. You can do this from a Jupyter notebook in SageMaker by
+using the <strong>Boto3</strong> library, which is the AWS SDK for
+Python. This will allow you to calculate the total size of objects
+within a specified bucket. Here’s how you can do it…</p>
+<div class="section level3">
+<h3 id="step-1-set-up-the-s3-client-and-calculate-bucket-size">Step 1: Set Up the S3 Client and Calculate Bucket Size<a class="anchor" aria-label="anchor" href="#step-1-set-up-the-s3-client-and-calculate-bucket-size"></a></h3>
+<div class="codewrapper sourceCode" id="cb7">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Initialize the total size counter</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>total_size_bytes <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co"># List and sum the size of all objects in the bucket</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>paginator <span class="op">=</span> s3.get_paginator(<span class="st">'list_objects_v2'</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="cf">for</span> page <span class="kw">in</span> paginator.paginate(Bucket<span class="op">=</span>bucket_name):</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>    <span class="cf">for</span> obj <span class="kw">in</span> page.get(<span class="st">'Contents'</span>, []):</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>        total_size_bytes <span class="op">+=</span> obj[<span class="st">'Size'</span>]</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co"># Convert the total size to gigabytes for cost estimation</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>total_size_gb <span class="op">=</span> total_size_bytes <span class="op">/</span> (<span class="dv">1024</span> <span class="op">**</span> <span class="dv">3</span>)</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="co"># print(f"Total size of bucket '{bucket_name}': {total_size_gb:.2f} GB") # can uncomment this if you want GB reported</span></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a></span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="co"># Convert the total size to megabytes for readability</span></span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>total_size_mb <span class="op">=</span> total_size_bytes <span class="op">/</span> (<span class="dv">1024</span> <span class="op">**</span> <span class="dv">2</span>)</span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Total size of bucket '</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">': </span><span class="sc">{</span>total_size_mb<span class="sc">:.2f}</span><span class="ss"> MB"</span>)</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb8">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="ex">Total</span> size of bucket <span class="st">'titanic-dataset-test'</span>: 41.04 MB</span></code></pre>
+</div>
+<p>We have added this code to a helper called
+<code>get_s3_bucket_size(bucket_name)</code> for your convenience. You
+can call this function via the below code.</p>
+<div class="codewrapper sourceCode" id="cb9">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="im">import</span> test_AWS.scripts.AWS_helpers <span class="im">as</span> helpers <span class="co"># test_AWS.scripts.AWS_helpers reflects path leading up to AWS_helpers.py</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>helpers.get_s3_bucket_size(bucket_name)</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb10">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="ex">{</span><span class="st">'size_mb'</span><span class="ex">:</span> 41.043779373168945, <span class="st">'size_gb'</span>: 0.0400818157941103}</span></code></pre>
+</div>
+</div>
+<div class="section level3">
+<h3 id="explanation">Explanation<a class="anchor" aria-label="anchor" href="#explanation"></a></h3>
+<ol style="list-style-type: decimal"><li>
+<strong>Paginator</strong>: Since S3 buckets can contain many
+objects, we use a paginator to handle large listings.</li>
+<li>
+<strong>Size Calculation</strong>: We sum the <code>Size</code>
+attribute of each object in the bucket.</li>
+<li>
+<strong>Unit Conversion</strong>: The size is given in bytes, so
+dividing by <code>1024 ** 2</code> converts it to megabytes (MB).</li>
+</ol><blockquote>
+<p><strong>Note</strong>: If your bucket has very large objects or you
+want to check specific folders within a bucket, you may want to refine
+this code to only fetch certain objects or folders.</p>
+</blockquote>
+</div>
+</section><section><h2 class="section-heading" id="check-storage-costs-of-bucket">3: Check storage costs of bucket<a class="anchor" aria-label="anchor" href="#check-storage-costs-of-bucket"></a></h2>
+<hr class="half-width"><p>To estimate the storage cost of your Amazon S3 bucket directly from a
+Jupyter notebook in SageMaker, you can use the following approach. This
+method calculates the total size of the bucket and estimates the monthly
+storage cost based on AWS S3 pricing.</p>
+<p><strong>Note</strong>: AWS S3 pricing varies by region and storage
+class. The example below uses the S3 Standard storage class pricing for
+the US East (N. Virginia) region as of November 1, 2024. Please verify
+the current pricing for your specific region and storage class on the <a href="https://aws.amazon.com/s3/pricing/" class="external-link">AWS S3 Pricing page</a>.</p>
+<div class="codewrapper sourceCode" id="cb11">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># AWS S3 Standard Storage pricing for US East (N. Virginia) region</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="co"># Pricing tiers as of November 1, 2024</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>first_50_tb_price_per_gb <span class="op">=</span> <span class="fl">0.023</span>  <span class="co"># per GB for the first 50 TB</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>next_450_tb_price_per_gb <span class="op">=</span> <span class="fl">0.022</span>  <span class="co"># per GB for the next 450 TB</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>over_500_tb_price_per_gb <span class="op">=</span> <span class="fl">0.021</span>  <span class="co"># per GB for storage over 500 TB</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co"># Calculate the cost based on the size</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="cf">if</span> total_size_gb <span class="op">&lt;=</span> <span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span>:</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>    <span class="co"># Total size is within the first 50 TB</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>    cost <span class="op">=</span> total_size_gb <span class="op">*</span> first_50_tb_price_per_gb</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="cf">elif</span> total_size_gb <span class="op">&lt;=</span> <span class="dv">500</span> <span class="op">*</span> <span class="dv">1024</span>:</span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a>    <span class="co"># Total size is within the next 450 TB</span></span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a>    cost <span class="op">=</span> (<span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> first_50_tb_price_per_gb) <span class="op">+</span> <span class="op">\</span></span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a>           ((total_size_gb <span class="op">-</span> <span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span>) <span class="op">*</span> next_450_tb_price_per_gb)</span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a>    <span class="co"># Total size is over 500 TB</span></span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a>    cost <span class="op">=</span> (<span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> first_50_tb_price_per_gb) <span class="op">+</span> <span class="op">\</span></span>
+<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a>           (<span class="dv">450</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> next_450_tb_price_per_gb) <span class="op">+</span> <span class="op">\</span></span>
+<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a>           ((total_size_gb <span class="op">-</span> <span class="dv">500</span> <span class="op">*</span> <span class="dv">1024</span>) <span class="op">*</span> over_500_tb_price_per_gb)</span>
+<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a></span>
+<span id="cb11-21"><a href="#cb11-21" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated monthly storage cost: $</span><span class="sc">{</span>cost<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb11-22"><a href="#cb11-22" tabindex="-1"></a></span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb12">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="ex">Estimated</span> monthly storage cost: <span class="va">$0</span>.0009</span></code></pre>
+</div>
+<p>For your convenience, we have also added this code to a helper
+function.</p>
+<div class="codewrapper sourceCode" id="cb13">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="im">import</span> test_AWS.scripts.AWS_helpers <span class="im">as</span> helpers <span class="co"># test_AWS.scripts.AWS_helpers reflects path leading up to AWS_helpers.py</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>cost <span class="op">=</span> helpers.calculate_s3_storage_cost(bucket_name)</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated monthly storage cost for bucket '</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">': $</span><span class="sc">{</span>cost<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb14">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="ex">Estimated</span> monthly storage cost for bucket <span class="st">'titanic-dataset-test'</span>: <span class="va">$0</span>.0009</span></code></pre>
+</div>
+<p><strong>Important Considerations</strong>:</p>
+<ul><li>
+<strong>Pricing Tiers</strong>: AWS S3 pricing is tiered. The first
+50 TB per month is priced at <code>$0.023 per GB</code>, the next 450 TB
+at <code>$0.022 per GB</code>, and storage over 500 TB at
+<code>$0.021 per GB</code>. Ensure you apply the correct pricing tier
+based on your total storage size.</li>
+<li>
+<strong>Region and Storage Class</strong>: Pricing varies by AWS
+region and storage class. The example above uses the S3 Standard storage
+class pricing for the US East (N. Virginia) region. Adjust the pricing
+variables if your bucket is in a different region or uses a different
+storage class.</li>
+<li>
+<strong>Additional Costs</strong>: This estimation covers storage
+costs only. AWS S3 may have additional charges for requests, data
+retrievals, and data transfers. For a comprehensive cost analysis,
+consider these factors as well.</li>
+</ul><p>For detailed and up-to-date information on AWS S3 pricing, please
+refer to the <a href="https://aws.amazon.com/s3/pricing/" class="external-link">AWS S3 Pricing
+page</a>.</p>
+</section><section><h2 class="section-heading" id="pushing-new-files-from-notebook-environment-to-bucket">4. Pushing new files from notebook environment to bucket<a class="anchor" aria-label="anchor" href="#pushing-new-files-from-notebook-environment-to-bucket"></a></h2>
+<hr class="half-width"><p>As your analysis generates new files, you can upload to your bucket
+as demonstrated below. For this demo, you can create a blank
+<code>results.txt</code> file to upload to your bucket.</p>
+<div class="codewrapper sourceCode" id="cb15">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="co"># Define the S3 bucket name and the file paths</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>train_file_path <span class="op">=</span> <span class="st">"results.txt"</span></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="co"># Upload the training file</span></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>s3.upload_file(train_file_path, bucket_name, <span class="st">"results/results.txt"</span>)</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a></span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Files uploaded successfully."</span>)</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb16">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="ex">Files</span> uploaded successfully.</span></code></pre>
 </div>
 <div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
