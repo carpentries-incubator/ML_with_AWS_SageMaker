@@ -46,13 +46,7 @@ An **S3 bucket** is a container in Amazon S3 (Simple Storage Service) where you 
 
 ### When to Store Data Directly on EC2 (e.g., in Jupyter Notebook instance)
 
-Using EC2 for data storage can be a quick solution for temporary needs, but **S3 is generally preferred** for scalability, cost-efficiency, and ease of integration across AWS services, especially for machine learning workflows. An **EC2 instance** provides a virtual server environment with its own local storage, which can be used to store and process data directly on the instance. This method is suitable for **temporary or small datasets** and for **one-off experiments** that don’t require long-term data storage or frequent access from multiple services. 
-
-#### Use EC2 storage for:
-
-- **Temporary or Small Datasets**: If your dataset is under 1 GB and you need quick, one-time processing, EC2 storage can be simpler and faster to set up.
-- **No S3 Access Required**: If your environment has limited permissions or network restrictions preventing S3 access, storing data on EC2 may be preferable.
-- **One-off Experiments**: For experiments that won’t require scaling or future access to data, storing directly on EC2 can be convenient.
+Using EC2 for data storage can be a quick solution for temporary needs, but **S3 is generally preferred** for scalability, cost-efficiency, and ease of integration across AWS services, especially for machine learning workflows. An EC2 instance provides a virtual server environment with its own local storage, which can be used to store and process data directly on the instance. This method is suitable for temporary or small datasets and for one-off experiments that don’t require long-term data storage or frequent access from multiple services. 
 
 #### Limitations of EC2 Storage:
 - **Scalability**: EC2 storage is limited to the instance’s disk capacity, so it may not be ideal for very large datasets.

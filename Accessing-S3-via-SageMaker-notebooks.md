@@ -44,6 +44,7 @@ response = s3.get_object(Bucket=bucket, Key=key)
 train_data = pd.read_csv(response['Body'])
 print(train_data.shape)
 train_data.head()
+```
 
 ::::::::::::::::::::::::::::::::::::: callout 
 
