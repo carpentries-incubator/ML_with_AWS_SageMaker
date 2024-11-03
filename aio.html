@@ -288,6 +288,18 @@
 </div>
 <!--/div.accordion-flush-->
 
+<div class="accordion accordion-flush" id="accordionFlush6">
+  <div class="accordion-item">
+    <div class="accordion-header" id="flush-heading6">
+        <a href="Training-models-in-SageMaker-notebooks.html">5. Training models in SageMaker notebooks</a>
+    </div>
+<!--/div.accordion-header-->
+
+  </div>
+<!--/div.accordion-item-->
+</div>
+<!--/div.accordion-flush-->
+
                 </div>
               </div>
             </div>
@@ -1778,7 +1790,201 @@ any links that you are not going to use.
  -->
 </div>
 </div>
-</div></section>
+</div></section><section id="aio-Training-models-in-SageMaker-notebooks"><p>Content from <a href="Training-models-in-SageMaker-notebooks.html">Training models in SageMaker notebooks</a></p>
+<hr>
+<p>Last updated on 2024-11-03 |
+
+        <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker.git/edit/main/episodes/Training-models-in-SageMaker-notebooks.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
+<div class="text-end">
+          <button role="button" aria-pressed="false" tabindex="0" id="expand-code" class="pull-right" data-expand="Expand All Solutions " data-collapse="Collapse All Solutions "> Expand All Solutions <i aria-hidden="true" data-feather="plus"></i></button>
+        </div>
+<div class="overview card">
+<h2 class="card-header">Overview</h2>
+<div class="row g-0">
+<div class="col-md-4">
+<div class="card-body">
+<div class="inner">
+<h3 class="card-title">Questions</h3>
+<ul>
+<li>How can I initialize the SageMaker environment and set up data in
+S3?</li>
+<li>What are the differences between local training and
+SageMaker-managed training?</li>
+<li>How do Estimator classes in SageMaker streamline the training
+process for various frameworks?</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="col-md-8">
+<div class="card-body">
+<div class="inner bordered">
+<h3 class="card-title">Objectives</h3>
+<ul>
+<li>Set up and initialize the SageMaker environment, including roles,
+sessions, and S3 data.</li>
+<li>Understand the difference between training locally in a SageMaker
+notebook and using SageMaker’s managed infrastructure.</li>
+<li>Learn to configure and use SageMaker’s Estimator classes for
+different frameworks (e.g., XGBoost, PyTorch, SKLearn).</li>
+<li>Compare performance, cost, and setup between custom scripts and
+built-in images in SageMaker.</li>
+<li>Conduct training with data stored in S3 and monitor training job
+status using the SageMaker console.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<section><h2 class="section-heading" id="initialize-sagemaker-environment">Initialize SageMaker environment<a class="anchor" aria-label="anchor" href="#initialize-sagemaker-environment"></a>
+</h2>
+<hr class="half-width">
+<p>This code initializes the AWS SageMaker environment by defining the
+SageMaker role, session, and S3 client. It also specifies the S3 bucket
+and key for accessing the Titanic training dataset stored in an S3
+bucket.</p>
+<div class="section level4">
+<h4 id="boto3-api">Boto3 API<a class="anchor" aria-label="anchor" href="#boto3-api"></a>
+</h4>
+<blockquote>
+<p>Boto3 is the official AWS SDK for Python, allowing developers to
+interact programmatically with AWS services like S3, EC2, and Lambda. It
+provides both high-level and low-level APIs, making it easy to manage
+AWS resources and automate tasks. With built-in support for paginators,
+waiters, and session management, Boto3 simplifies working with AWS
+credentials, regions, and IAM permissions. It’s ideal for automating
+cloud operations and integrating AWS services into Python
+applications.</p>
+</blockquote>
+<div class="codewrapper sourceCode" id="cb1">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="im">import</span> boto3</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="im">import</span> sagemaker</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co"># Initialize the SageMaker role (will reflect notebook instance's policy)</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>role <span class="op">=</span> sagemaker.get_execution_role()</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'role = </span><span class="sc">{</span>role<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="co"># Create a SageMaker session to manage interactions with Amazon SageMaker, such as training jobs, model deployments, and data input/output.</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>session <span class="op">=</span> sagemaker.Session()</span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="co"># Initialize an S3 client to interact with Amazon S3, allowing operations like uploading, downloading, and managing objects and buckets.</span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="co"># Define the S3 bucket that we will load from</span></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>bucket <span class="op">=</span> <span class="st">'titanic-dataset-test'</span>  <span class="co"># replace with your S3 bucket name</span></span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a><span class="co"># Define train/test filenames</span></span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a>train_filename <span class="op">=</span> <span class="st">'titanic_train.csv'</span></span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a>test_filename <span class="op">=</span> <span class="st">'titanic_test.csv'</span></span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb2">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="ex">sagemaker.config</span> INFO <span class="at">-</span> Not applying SDK defaults from location: /etc/xdg/sagemaker/config.yaml</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="ex">sagemaker.config</span> INFO <span class="at">-</span> Not applying SDK defaults from location: /home/ec2-user/.config/sagemaker/config.yaml</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="ex">role</span> = arn:aws:iam::183295408236:role/ml-sagemaker-use</span></code></pre>
+</div>
+</div>
+<div class="section level3">
+<h3 id="download-copy-into-notebook-environment">Download copy into notebook environment<a class="anchor" aria-label="anchor" href="#download-copy-into-notebook-environment"></a>
+</h3>
+<p>If you have larger dataset (&gt; 1GB), you may want to skip this step
+and always read directly into memory. However, for smaller datasets, it
+can be convenient to have a “local” copy (i.e., one that you store in
+your notebook’s instance).</p>
+<p>Download data from S3 to notebook environment. You may need to hit
+refresh on the file explorer panel to the left to see this file. If you
+get any permission issues…</p>
+<ul>
+<li>check that you have selected the appropriate policy for this
+notebook</li>
+<li>check that your bucket has the appropriate policy permissions</li>
+</ul>
+<div class="codewrapper sourceCode" id="cb3">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Define the S3 bucket and file location</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>file_key <span class="op">=</span> <span class="ss">f"data/</span><span class="sc">{</span>train_filename<span class="sc">}</span><span class="ss">"</span>  <span class="co"># Path to your file in the S3 bucket</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>local_file_path <span class="op">=</span> <span class="ss">f"./</span><span class="sc">{</span>train_filename<span class="sc">}</span><span class="ss">"</span>  <span class="co"># Local path to save the file</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co"># Download the file using the s3 client variable we initialized earlier</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>s3.download_file(bucket, file_key, local_file_path)</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"File downloaded:"</span>, local_file_path)</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb4">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="ex">File</span> downloaded: ./titanic_train.csv</span></code></pre>
+</div>
+<p>We can do the same for the test set.</p>
+<div class="codewrapper sourceCode" id="cb5">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Define the S3 bucket and file location</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>file_key <span class="op">=</span> <span class="ss">f"data/</span><span class="sc">{</span>test_filename<span class="sc">}</span><span class="ss">"</span>  <span class="co"># Path to your file in the S3 bucket. W</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>local_file_path <span class="op">=</span> <span class="ss">f"./</span><span class="sc">{</span>test_filename<span class="sc">}</span><span class="ss">"</span>  <span class="co"># Local path to save the file</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co"># Initialize the S3 client and download the file</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>s3.download_file(bucket, file_key, local_file_path)</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"File downloaded:"</span>, local_file_path)</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb6">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">File</span> downloaded: ./titanic_test.csv</span></code></pre>
+</div>
+<div id="keypoints1" class="callout keypoints">
+<div class="callout-square">
+<i class="callout-icon" data-feather="key"></i>
+</div>
+<div class="callout-inner">
+<h3 class="callout-title">Key Points</h3>
+<div class="callout-content">
+<ul>
+<li>
+<strong>Environment Initialization</strong>: Setting up a SageMaker
+session, defining roles, and specifying the S3 bucket are essential for
+managing data and running jobs in SageMaker.</li>
+<li>
+<strong>Local vs. Managed Training</strong>: Local training in
+SageMaker notebooks can be useful for quick tests but lacks the
+scalability and resource management available in SageMaker-managed
+training.</li>
+<li>
+<strong>Estimator Classes</strong>: SageMaker provides
+framework-specific Estimator classes (e.g., XGBoost, PyTorch, SKLearn)
+to streamline training setups, each suited to different model types and
+workflows.</li>
+<li>
+<strong>Custom Scripts vs. Built-in Images</strong>: Custom training
+scripts offer flexibility with preprocessing and custom logic, while
+built-in images are optimized for rapid deployment and simpler
+setups.</li>
+<li>
+<strong>Training Data Channels</strong>: Using
+<code>TrainingInput</code> ensures SageMaker manages data efficiently,
+especially for distributed setups where data needs to be synchronized
+across multiple instances.</li>
+<li>
+<strong>Distributed Training Options</strong>: Data parallelism
+(splitting data across instances) is common for many models, while model
+parallelism (splitting the model across instances) is useful for very
+large models that exceed instance memory.</li>
+</ul>
+</div>
+</div>
+</div>
+<!--
+Place links that you need to refer to multiple times across pages here. Delete
+any links that you are not going to use.
+ -->
+</div>
+</section></section>
 </div>
     </main>
 </div>
