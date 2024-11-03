@@ -253,6 +253,30 @@
 </div>
 <!--/div.accordion-flush-->
 
+<div class="accordion accordion-flush" id="accordionFlush3">
+  <div class="accordion-item">
+    <div class="accordion-header" id="flush-heading3">
+        <a href="SageMaker-notebooks-as-controllers.html">2. Notebooks as Controllers</a>
+    </div>
+<!--/div.accordion-header-->
+
+  </div>
+<!--/div.accordion-item-->
+</div>
+<!--/div.accordion-flush-->
+
+<div class="accordion accordion-flush" id="accordionFlush4">
+  <div class="accordion-item">
+    <div class="accordion-header" id="flush-heading4">
+        <a href="Accessing-S3-via-SageMaker-notebooks.html">3. Accessing and Managing Data in S3 with SageMaker Notebooks</a>
+    </div>
+<!--/div.accordion-header-->
+
+  </div>
+<!--/div.accordion-item-->
+</div>
+<!--/div.accordion-flush-->
+
                 </div>
               </div>
             </div>
@@ -673,6 +697,477 @@ Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
  -->
 </div>
+</section></section><section id="aio-SageMaker-notebooks-as-controllers"><p>Content from <a href="SageMaker-notebooks-as-controllers.html">Notebooks as Controllers</a></p>
+<hr>
+<p>Last updated on 2024-11-03 |
+
+        <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker.git/edit/main/episodes/SageMaker-notebooks-as-controllers.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
+<p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 30 minutes</p>
+<div class="text-end">
+          <button role="button" aria-pressed="false" tabindex="0" id="expand-code" class="pull-right" data-expand="Expand All Solutions " data-collapse="Collapse All Solutions "> Expand All Solutions <i aria-hidden="true" data-feather="plus"></i></button>
+        </div>
+<div class="overview card">
+<h2 class="card-header">Overview</h2>
+<div class="row g-0">
+<div class="col-md-4">
+<div class="card-body">
+<div class="inner">
+<h3 class="card-title">Questions</h3>
+<ul>
+<li>How do you set up and use SageMaker Notebooks for machine learning
+tasks?</li>
+<li>How can you manage compute resources efficiently using SageMaker’s
+controller notebook approach?</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="col-md-8">
+<div class="card-body">
+<div class="inner bordered">
+<h3 class="card-title">Objectives</h3>
+<ul>
+<li>Describe how to use SageMaker Notebooks for ML workflows.</li>
+<li>Set up a Jupyter notebook instance as a controller to manage compute
+tasks.</li>
+<li>Use SageMaker SDK to launch training and tuning jobs on scalable
+instances.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<section><h2 class="section-heading" id="step-2-running-python-code-with-sagemaker-notebooks">Step 2: Running Python Code with SageMaker Notebooks<a class="anchor" aria-label="anchor" href="#step-2-running-python-code-with-sagemaker-notebooks"></a>
+</h2>
+<hr class="half-width">
+<p>Amazon SageMaker provides a managed environment to simplify the
+process of building, training, and deploying machine learning models. By
+using SageMaker, you can focus on model development without needing to
+manually provision resources or set up environments. Here, we’ll guide
+you through setting up a Jupyter notebook instance, loading data,
+training a model, and performing optional hyperparameter tuning using
+the Titanic dataset in S3.</p>
+<blockquote>
+<p><strong>Note</strong>: We’ll use SageMaker notebook instances
+directly (instead of SageMaker Studio) for easier instance monitoring
+across users and streamlined resource management.</p>
+</blockquote>
+</section><section><h2 class="section-heading" id="using-the-notebook-as-a-controller">Using the Notebook as a Controller<a class="anchor" aria-label="anchor" href="#using-the-notebook-as-a-controller"></a>
+</h2>
+<hr class="half-width">
+<p>In this setup, the notebook instance functions as a
+<strong>controller</strong> to manage more resource-intensive compute
+tasks. By selecting a minimal instance (e.g., <code>ml.t3.medium</code>)
+for the notebook, you can perform lightweight operations and leverage
+the <strong>SageMaker Python SDK</strong> to launch more powerful,
+scalable compute instances when needed for model training, batch
+processing, or hyperparameter tuning. This approach minimizes costs by
+keeping your controller instance lightweight while accessing the full
+power of SageMaker for demanding tasks.</p>
+</section><section><h2 class="section-heading" id="summary-of-key-steps">Summary of Key Steps<a class="anchor" aria-label="anchor" href="#summary-of-key-steps"></a>
+</h2>
+<hr class="half-width">
+<ol style="list-style-type: decimal">
+<li>Navigate to SageMaker in AWS.</li>
+<li>Create a Jupyter notebook instance as a controller.</li>
+<li>Set up the Python environment within the notebook.</li>
+<li>Load the Titanic dataset from S3.</li>
+<li>Use SageMaker SDK to launch training and tuning jobs on powerful
+instances.</li>
+<li>View and monitor training/tuning progress.</li>
+</ol></section><section><h2 class="section-heading" id="detailed-procedure">Detailed Procedure<a class="anchor" aria-label="anchor" href="#detailed-procedure"></a>
+</h2>
+<hr class="half-width">
+<div class="section level3">
+<h3 id="navigate-to-sagemaker">1. Navigate to SageMaker<a class="anchor" aria-label="anchor" href="#navigate-to-sagemaker"></a>
+</h3>
+<ul>
+<li>In the AWS Console, search for <strong>SageMaker</strong> and select
+<strong>SageMaker - Build, Train, and Deploy Models</strong>.</li>
+<li>Click <strong>Set up for single user</strong> (if prompted) and wait
+for the SageMaker domain to spin up.</li>
+<li>Under <strong>S3 Resource Configurations</strong>, select the S3
+bucket you created earlier containing your dataset.</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="create-a-new-notebook-instance">2. Create a New Notebook Instance<a class="anchor" aria-label="anchor" href="#create-a-new-notebook-instance"></a>
+</h3>
+<ul>
+<li>In the SageMaker menu, go to <strong>Notebooks &gt; Notebook
+instances</strong>, then click <strong>Create notebook
+instance</strong>.</li>
+<li>
+<strong>Notebook Name</strong>: Enter a name (e.g.,
+<code>Titanic-ML-Notebook</code>).</li>
+<li>
+<strong>Instance Type</strong>: Start with a small instance type,
+such as <code>ml.t3.medium</code>. You can scale up later as needed for
+intensive tasks, which will be managed by launching separate training
+jobs from this notebook.</li>
+<li>
+<strong>Permissions and Encryption</strong>:
+<ul>
+<li>
+<strong>IAM Role</strong>: Choose an existing role or create a new
+one. The role should include the <code>AmazonSageMakerFullAccess</code>
+policy to enable access to AWS services like S3.</li>
+<li>
+<strong>Root Access</strong>: Choose to enable or disable root
+access. If you’re comfortable with managing privileges, enabling root
+access allows for additional flexibility in package installation.</li>
+<li>
+<strong>Encryption Key</strong> (Optional): Specify a KMS key for
+encrypting data at rest if needed. Otherwise, leave it blank.</li>
+</ul>
+</li>
+<li>
+<strong>Network (Optional)</strong>: Networking settings are
+optional. Configure them if you’re working within a specific VPC or need
+network customization.</li>
+<li>
+<strong>Git Repositories Configuration (Optional)</strong>: Connect
+a GitHub repository to automatically clone it into your notebook. Note
+that larger repositories consume more disk space, so manage storage to
+minimize costs.
+<ul>
+<li>
+<strong>Tips to Manage Storage</strong>:
+<ul>
+<li><p>Use <strong>S3</strong> for large files or datasets instead of
+storing them in the repository.</p></li>
+<li><p>Keep Git repositories small (code and small files only).</p></li>
+<li>
+<p>Monitor storage with the following command in a terminal to check
+disk usage:</p>
+<div class="codewrapper sourceCode" id="cb1">
+<h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">du</span> <span class="at">-sh</span> <span class="pp">*</span></span></code></pre>
+</div>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<strong>Tags (Optional)</strong>: Adding tags helps track and
+organize resources for billing and management.
+<ul>
+<li>Example:
+<code>Key: Job, Value: Titanic-Analysis-Notebook</code>
+</li>
+</ul>
+</li>
+</ul>
+<p>Click <strong>Create notebook instance</strong>. It may take a few
+minutes for the instance to start. Once its status is
+<strong>InService</strong>, you can open the notebook instance and start
+coding.</p>
+<div id="tags-for-billing-management" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<div id="tags-for-billing-management" class="callout-inner">
+<h3 class="callout-title">Tags for Billing Management</h3>
+<div class="callout-content">
+<p>Adding tags to your notebook instance helps track costs over time.
+This is particularly useful when you need to break down expenses by
+project, task, or team. We recommend using tags like <code>Job</code>,
+<code>Project</code>, or <code>Team</code> to help with future cost
+analysis.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="section level3">
+<h3 id="managing-training-and-tuning-with-the-controller-notebook">Managing Training and Tuning with the Controller Notebook<a class="anchor" aria-label="anchor" href="#managing-training-and-tuning-with-the-controller-notebook"></a>
+</h3>
+<p>After setting up the controller notebook, use the <strong>SageMaker
+Python SDK</strong> within the notebook to launch compute-heavy tasks on
+more powerful instances as needed. Examples of tasks to launch
+include:</p>
+<ul>
+<li>
+<strong>Training a Model</strong>: Use the SDK to submit a training
+job, specifying a higher-powered instance (e.g.,
+<code>ml.p2.xlarge</code> or <code>ml.m5.4xlarge</code>) based on your
+model’s resource requirements.</li>
+<li>
+<strong>Hyperparameter Tuning</strong>: Configure and launch tuning
+jobs, allowing SageMaker to automatically manage multiple powerful
+instances for optimal tuning.</li>
+<li>
+<strong>Batch Processing</strong>: Offload batch data processing
+tasks to a larger instance if needed.</li>
+</ul>
+<p>This setup allows you to control costs by keeping the notebook
+instance minimal and only incurring costs for larger instances when they
+are actively training or tuning models.</p>
+<p>For more details, refer to the <a href="https://sagemaker.readthedocs.io/" class="external-link">SageMaker Python SDK
+documentation</a> for example code on launching and managing remote
+training jobs.</p>
+<div id="keypoints1" class="callout keypoints">
+<div class="callout-square">
+<i class="callout-icon" data-feather="key"></i>
+</div>
+<div class="callout-inner">
+<h3 class="callout-title">Key Points</h3>
+<div class="callout-content">
+<ul>
+<li>Use a minimal SageMaker notebook instance as a controller to manage
+larger, resource-intensive tasks.</li>
+<li>Launch training, tuning, or batch processing jobs on scalable
+instances using the SageMaker SDK.</li>
+<li>Tags can help track costs effectively, especially in multi-project
+or team settings.</li>
+<li>Use the SageMaker SDK documentation to explore additional options
+for managing compute resources in AWS.</li>
+</ul>
+</div>
+</div>
+</div>
+<!--
+Place links that you need to refer to multiple times across pages here. Delete
+any links that you are not going to use.
+ -->
+</div>
+</section></section><section id="aio-Accessing-S3-via-SageMaker-notebooks"><p>Content from <a href="Accessing-S3-via-SageMaker-notebooks.html">Accessing and Managing Data in S3 with SageMaker Notebooks</a></p>
+<hr>
+<p>Last updated on 2024-11-03 |
+
+        <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker.git/edit/main/episodes/Accessing-S3-via-SageMaker-notebooks.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
+<p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 30 minutes</p>
+<div class="text-end">
+          <button role="button" aria-pressed="false" tabindex="0" id="expand-code" class="pull-right" data-expand="Expand All Solutions " data-collapse="Collapse All Solutions "> Expand All Solutions <i aria-hidden="true" data-feather="plus"></i></button>
+        </div>
+<div class="overview card">
+<h2 class="card-header">Overview</h2>
+<div class="row g-0">
+<div class="col-md-4">
+<div class="card-body">
+<div class="inner">
+<h3 class="card-title">Questions</h3>
+<ul>
+<li>How can I load data from S3 into a SageMaker notebook?</li>
+<li>How do I monitor storage usage and costs for my S3 bucket?</li>
+<li>What steps are involved in pushing new data back to S3 from a
+notebook?</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="col-md-8">
+<div class="card-body">
+<div class="inner bordered">
+<h3 class="card-title">Objectives</h3>
+<ul>
+<li>Read data directly from an S3 bucket into memory in a SageMaker
+notebook.</li>
+<li>Check storage usage and estimate costs for data in an S3
+bucket.</li>
+<li>Upload new files from the SageMaker environment back to the S3
+bucket.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<section><h2 class="section-heading" id="a--read-data-from-s3-into-memory">1A. Read Data from S3 into Memory<a class="anchor" aria-label="anchor" href="#a--read-data-from-s3-into-memory"></a>
+</h2>
+<hr class="half-width">
+<p>Our data is stored in an S3 bucket called
+<code>titanic-dataset-test</code>. This approach reads data directly
+from S3 into memory within the Jupyter notebook environment without
+creating a local copy of <code>train.csv</code>.</p>
+<div class="codewrapper sourceCode" id="cb1">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="im">import</span> boto3</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="im">import</span> sagemaker</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co"># Define the SageMaker role and session</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>role <span class="op">=</span> sagemaker.get_execution_role()</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>session <span class="op">=</span> sagemaker.Session()</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="co"># Define the S3 bucket and object key</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>bucket <span class="op">=</span> <span class="st">'titanic-dataset-test'</span>  <span class="co"># replace with your S3 bucket name</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>key <span class="op">=</span> <span class="st">'data/titanic_train.csv'</span>   <span class="co"># replace with your object key</span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>response <span class="op">=</span> s3.get_object(Bucket<span class="op">=</span>bucket, Key<span class="op">=</span>key)</span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="co"># Load the data into a pandas DataFrame</span></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>train_data <span class="op">=</span> pd.read_csv(response[<span class="st">'Body'</span>])</span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a><span class="bu">print</span>(train_data.shape)</span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a>train_data.head()</span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a>::::::::::::::::::::::::::::::::::::: callout </span>
+<span id="cb1-22"><a href="#cb1-22" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" tabindex="-1"></a><span class="co">### Why Direct Reading?</span></span>
+<span id="cb1-24"><a href="#cb1-24" tabindex="-1"></a></span>
+<span id="cb1-25"><a href="#cb1-25" tabindex="-1"></a>Directly reading <span class="im">from</span> S3 into memory minimizes storage requirements on the notebook instance <span class="kw">and</span> can handle large datasets without local storage limitations.</span>
+<span id="cb1-26"><a href="#cb1-26" tabindex="-1"></a></span>
+<span id="cb1-27"><a href="#cb1-27" tabindex="-1"></a>::::::::::::::::::::::::::::::::::::::::::::::::</span>
+<span id="cb1-28"><a href="#cb1-28" tabindex="-1"></a></span>
+<span id="cb1-29"><a href="#cb1-29" tabindex="-1"></a><span class="co">## 1B. Download Data as a Local Copy</span></span>
+<span id="cb1-30"><a href="#cb1-30" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" tabindex="-1"></a>For smaller datasets, it can be convenient to have a local copy within the notebook’s environment. However, <span class="cf">if</span> your dataset <span class="kw">is</span> large (<span class="op">&gt;</span><span class="dv">1</span><span class="er">GB</span>), consider skipping this step.</span>
+<span id="cb1-32"><a href="#cb1-32" tabindex="-1"></a></span>
+<span id="cb1-33"><a href="#cb1-33" tabindex="-1"></a><span class="co">### Steps to Download Data from S3</span></span>
+<span id="cb1-34"><a href="#cb1-34" tabindex="-1"></a></span>
+<span id="cb1-35"><a href="#cb1-35" tabindex="-1"></a>```python</span>
+<span id="cb1-36"><a href="#cb1-36" tabindex="-1"></a><span class="co"># Define the S3 bucket and file location</span></span>
+<span id="cb1-37"><a href="#cb1-37" tabindex="-1"></a>file_key <span class="op">=</span> <span class="st">"data/titanic_train.csv"</span>  <span class="co"># Path to your file in the S3 bucket</span></span>
+<span id="cb1-38"><a href="#cb1-38" tabindex="-1"></a>local_file_path <span class="op">=</span> <span class="st">"./titanic_train.csv"</span>  <span class="co"># Local path to save the file</span></span>
+<span id="cb1-39"><a href="#cb1-39" tabindex="-1"></a></span>
+<span id="cb1-40"><a href="#cb1-40" tabindex="-1"></a><span class="co"># Download the file from S3</span></span>
+<span id="cb1-41"><a href="#cb1-41" tabindex="-1"></a>s3.download_file(bucket, file_key, local_file_path)</span>
+<span id="cb1-42"><a href="#cb1-42" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"File downloaded:"</span>, local_file_path)</span></code></pre>
+</div>
+<div id="resolving-permission-issues" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<div id="resolving-permission-issues" class="callout-inner">
+<h3 class="callout-title">Resolving Permission Issues</h3>
+<div class="callout-content">
+<p>If you encounter permission issues when downloading from S3: - Ensure
+your IAM role has appropriate policies for S3 access. - Verify the
+bucket policy allows access.</p>
+</div>
+</div>
+</div>
+</section><section><h2 class="section-heading" id="check-current-size-and-storage-costs-of-the-bucket">2. Check Current Size and Storage Costs of the Bucket<a class="anchor" aria-label="anchor" href="#check-current-size-and-storage-costs-of-the-bucket"></a>
+</h2>
+<hr class="half-width">
+<p>It’s useful to periodically check the storage usage and associated
+costs of your S3 bucket. Using the <strong>Boto3</strong> library, you
+can calculate the total size of objects within a specified bucket.</p>
+<div class="codewrapper sourceCode" id="cb2">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Initialize the total size counter</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>total_size_bytes <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co"># List and sum the size of all objects in the bucket</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>paginator <span class="op">=</span> s3.get_paginator(<span class="st">'list_objects_v2'</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="cf">for</span> page <span class="kw">in</span> paginator.paginate(Bucket<span class="op">=</span>bucket):</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>    <span class="cf">for</span> obj <span class="kw">in</span> page.get(<span class="st">'Contents'</span>, []):</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>        total_size_bytes <span class="op">+=</span> obj[<span class="st">'Size'</span>]</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co"># Convert the total size to megabytes for readability</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>total_size_mb <span class="op">=</span> total_size_bytes <span class="op">/</span> (<span class="dv">1024</span> <span class="op">**</span> <span class="dv">2</span>)</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Total size of bucket '</span><span class="sc">{</span>bucket<span class="sc">}</span><span class="ss">': </span><span class="sc">{</span>total_size_mb<span class="sc">:.2f}</span><span class="ss"> MB"</span>)</span></code></pre>
+</div>
+<div id="explanation" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<div id="explanation" class="callout-inner">
+<h3 class="callout-title">Explanation</h3>
+<div class="callout-content">
+<ol style="list-style-type: decimal">
+<li>
+<strong>Paginator</strong>: Handles large listings in S3
+buckets.</li>
+<li>
+<strong>Size Calculation</strong>: Sums the <code>Size</code>
+attribute of each object.</li>
+<li>
+<strong>Unit Conversion</strong>: Size is converted from bytes to
+megabytes for readability.</li>
+</ol>
+<blockquote>
+<p><strong>Tip</strong>: For large buckets, consider filtering by folder
+or object prefix to calculate size for specific directories.</p>
+</blockquote>
+</div>
+</div>
+</div>
+</section><section><h2 class="section-heading" id="estimate-storage-costs">3. Estimate Storage Costs<a class="anchor" aria-label="anchor" href="#estimate-storage-costs"></a>
+</h2>
+<hr class="half-width">
+<p>AWS S3 costs are based on data size, region, and storage class. The
+example below estimates costs for the <strong>S3 Standard</strong>
+storage class in <strong>US East (N. Virginia)</strong>.</p>
+<div class="codewrapper sourceCode" id="cb3">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Pricing per GB for different storage tiers</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>first_50_tb_price_per_gb <span class="op">=</span> <span class="fl">0.023</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>next_450_tb_price_per_gb <span class="op">=</span> <span class="fl">0.022</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>over_500_tb_price_per_gb <span class="op">=</span> <span class="fl">0.021</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co"># Calculate the cost based on the size</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>total_size_gb <span class="op">=</span> total_size_bytes <span class="op">/</span> (<span class="dv">1024</span> <span class="op">**</span> <span class="dv">3</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="cf">if</span> total_size_gb <span class="op">&lt;=</span> <span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span>:</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>    cost <span class="op">=</span> total_size_gb <span class="op">*</span> first_50_tb_price_per_gb</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="cf">elif</span> total_size_gb <span class="op">&lt;=</span> <span class="dv">500</span> <span class="op">*</span> <span class="dv">1024</span>:</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>    cost <span class="op">=</span> (<span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> first_50_tb_price_per_gb) <span class="op">+</span> <span class="op">\</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>           ((total_size_gb <span class="op">-</span> <span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span>) <span class="op">*</span> next_450_tb_price_per_gb)</span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>    cost <span class="op">=</span> (<span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> first_50_tb_price_per_gb) <span class="op">+</span> <span class="op">\</span></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>           (<span class="dv">450</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> next_450_tb_price_per_gb) <span class="op">+</span> <span class="op">\</span></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>           ((total_size_gb <span class="op">-</span> <span class="dv">500</span> <span class="op">*</span> <span class="dv">1024</span>) <span class="op">*</span> over_500_tb_price_per_gb)</span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated monthly storage cost: $</span><span class="sc">{</span>cost<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre>
+</div>
+<blockquote>
+<p>For up-to-date pricing details, refer to the <a href="https://aws.amazon.com/s3/pricing/" class="external-link">AWS S3 Pricing page</a>.</p>
+</blockquote>
+</section><section><h2 class="section-heading" id="important-considerations">Important Considerations:<a class="anchor" aria-label="anchor" href="#important-considerations"></a>
+</h2>
+<hr class="half-width">
+<ul>
+<li>
+<strong>Pricing Tiers</strong>: S3 has tiered pricing, so costs vary
+with data size.</li>
+<li>
+<strong>Region and Storage Class</strong>: Prices differ by AWS
+region and storage class.</li>
+<li>
+<strong>Additional Costs</strong>: Consider other costs for
+requests, retrievals, and data transfer.</li>
+</ul></section><section><h2 class="section-heading" id="upload-new-files-from-notebook-to-s3">4. Upload New Files from Notebook to S3<a class="anchor" aria-label="anchor" href="#upload-new-files-from-notebook-to-s3"></a>
+</h2>
+<hr class="half-width">
+<p>As your analysis generates new files, you may need to upload them to
+your S3 bucket. Here’s how to upload a file from the notebook
+environment to S3.</p>
+<div class="codewrapper sourceCode" id="cb4">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Define the S3 bucket name and file paths</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>train_file_path <span class="op">=</span> <span class="st">"results.txt"</span>  <span class="co"># File to upload</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>s3.upload_file(train_file_path, bucket, <span class="st">"results/results.txt"</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Files uploaded successfully."</span>)</span></code></pre>
+</div>
+<div id="keypoints1" class="callout keypoints">
+<div class="callout-square">
+<i class="callout-icon" data-feather="key"></i>
+</div>
+<div class="callout-inner">
+<h3 class="callout-title">Key Points</h3>
+<div class="callout-content">
+<ul>
+<li>Load data from S3 into memory for efficient storage and
+processing.</li>
+<li>Periodically check storage usage and costs to manage S3
+budgets.</li>
+<li>Use SageMaker to upload analysis results and maintain an organized
+workflow.</li>
+</ul>
+</div>
+</div>
+</div>
+<!--
+Place links that you need to refer to multiple times across pages here. Delete
+any links that you are not going to use.
+ -->
 </section></section>
 </div>
     </main>
