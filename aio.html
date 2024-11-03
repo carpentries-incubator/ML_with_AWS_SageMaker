@@ -276,6 +276,18 @@
 </div>
 <!--/div.accordion-flush-->
 
+<div class="accordion accordion-flush" id="accordionFlush5">
+  <div class="accordion-item">
+    <div class="accordion-header" id="flush-heading5">
+        <a href="Interacting-with-code-repo.html">4. Using a GitHub Personal Access Token (PAT) to Push/Pull from a SageMaker Notebook</a>
+    </div>
+<!--/div.accordion-header-->
+
+  </div>
+<!--/div.accordion-item-->
+</div>
+<!--/div.accordion-flush-->
+
                 </div>
               </div>
             </div>
@@ -1249,7 +1261,524 @@ workflow.</li>
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
  -->
-</section></section>
+</section></section><section id="aio-Interacting-with-code-repo"><p>Content from <a href="Interacting-with-code-repo.html">Using a GitHub Personal Access Token (PAT) to Push/Pull from a SageMaker Notebook</a></p>
+<hr>
+<p>Last updated on 2024-11-03 |
+
+        <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker.git/edit/main/episodes/Interacting-with-code-repo.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
+<div class="text-end">
+          <button role="button" aria-pressed="false" tabindex="0" id="expand-code" class="pull-right" data-expand="Expand All Solutions " data-collapse="Collapse All Solutions "> Expand All Solutions <i aria-hidden="true" data-feather="plus"></i></button>
+        </div>
+<div class="overview card">
+<h2 class="card-header">Overview</h2>
+<div class="row g-0">
+<div class="col-md-4">
+<div class="card-body">
+<div class="inner">
+<h3 class="card-title">Questions</h3>
+<ul>
+<li>How can I securely push/pull code to and from GitHub within a
+SageMaker notebook?</li>
+<li>What steps are necessary to set up a GitHub PAT for authentication
+in SageMaker?</li>
+<li>How can I convert notebooks to <code>.py</code> files and ignore
+<code>.ipynb</code> files in version control?</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="col-md-8">
+<div class="card-body">
+<div class="inner bordered">
+<h3 class="card-title">Objectives</h3>
+<ul>
+<li>Configure Git in a SageMaker notebook to use a GitHub Personal
+Access Token (PAT) for HTTPS-based authentication.</li>
+<li>Securely handle credentials in a notebook environment using
+<code>getpass</code>.</li>
+<li>Convert <code>.ipynb</code> files to <code>.py</code> files for
+better version control practices in collaborative projects.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="section level1">
+<h1 id="using-a-github-personal-access-token-pat-to-pushpull-from-a-sagemaker-notebook">Using a GitHub Personal Access Token (PAT) to Push/Pull from a
+SageMaker Notebook<a class="anchor" aria-label="anchor" href="#using-a-github-personal-access-token-pat-to-pushpull-from-a-sagemaker-notebook"></a>
+</h1>
+<p>When working in SageMaker notebooks, you may often need to push code
+updates to GitHub repositories. However, SageMaker notebooks are
+typically launched with temporary instances that don’t persist
+configurations, including SSH keys, across sessions. This makes
+HTTPS-based authentication, secured with a GitHub Personal Access Token
+(PAT), a practical solution. PATs provide flexibility for authentication
+and enable seamless interaction with both public and private
+repositories directly from your notebook.</p>
+<blockquote>
+<p><strong>Important Note</strong>: Personal access tokens are powerful
+credentials that grant specific permissions to your GitHub account. To
+ensure security, only select the minimum necessary permissions and
+handle the token carefully.</p>
+</blockquote>
+<div class="section level2">
+<h2 id="step-1-generate-a-personal-access-token-pat-on-github">Step 1: Generate a Personal Access Token (PAT) on GitHub<a class="anchor" aria-label="anchor" href="#step-1-generate-a-personal-access-token-pat-on-github"></a>
+</h2>
+<ol style="list-style-type: decimal">
+<li>Go to <strong>Settings &gt; Developer settings &gt; Personal access
+tokens</strong> on GitHub.</li>
+<li>Click <strong>Generate new token</strong>, select
+<strong>Classic</strong>.</li>
+<li>Give your token a descriptive name (e.g., “SageMaker Access Token”)
+and set an expiration date if desired for added security.</li>
+<li>
+<strong>Select the minimum permissions needed</strong>:
+<ul>
+<li>
+<strong>For public repositories</strong>: Choose only
+<strong><code>public_repo</code></strong>.</li>
+<li>
+<strong>For private repositories</strong>: Choose
+<strong><code>repo</code></strong> (full control of private
+repositories).</li>
+<li>Optional permissions, if needed:
+<ul>
+<li>
+<strong><code>repo:status</code></strong>: Access commit status (if
+checking status checks).</li>
+<li>
+<strong><code>workflow</code></strong>: Update GitHub Actions
+workflows (only if working with GitHub Actions).</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Generate the token and <strong>copy it</strong> (you won’t be able
+to see it again).</li>
+</ol>
+<blockquote>
+<p><strong>Caution</strong>: Treat your PAT like a password. Avoid
+sharing it or exposing it in your code. Store it securely (e.g., via a
+password manager like LastPass) and consider rotating it regularly.</p>
+</blockquote>
+</div>
+<div class="section level2">
+<h2 id="step-2-configure-git-user-name-and-user-email">Step 2: Configure Git <code>user.name</code> and
+<code>user.email</code>
+<a class="anchor" aria-label="anchor" href="#step-2-configure-git-user-name-and-user-email"></a>
+</h2>
+<p>In your SageMaker or Jupyter notebook environment, run the following
+commands to set up your Git user information</p>
+<div class="section level4">
+<h4 id="directory-setup">Directory setup<a class="anchor" aria-label="anchor" href="#directory-setup"></a>
+</h4>
+<p>Let’s make sure we’re starting at the same directory. Cd to the root
+directory of this instance before going further.</p>
+<div class="codewrapper sourceCode" id="cb1">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="op">!</span>pwd</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb2">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="ex">/home/ec2-user/SageMaker</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="ex">/home/ec2-user/SageMaker</span></span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb3">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="op">!</span>git config <span class="op">--</span><span class="kw">global</span> user.name <span class="st">"Chris Endemann"</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="op">!</span>git config <span class="op">--</span><span class="kw">global</span> user.email endeman<span class="op">@</span>wisc.edu</span></code></pre>
+</div>
+</div>
+<div class="section level3">
+<h3 id="explanation">Explanation<a class="anchor" aria-label="anchor" href="#explanation"></a>
+</h3>
+<ul>
+<li>
+<strong><code>user.name</code></strong>: This is your GitHub
+username, which will appear in the commit history as the author of the
+changes.</li>
+<li>
+<strong><code>user.email</code></strong>: This should match the
+email associated with your GitHub account so that commits are properly
+linked to your profile.</li>
+</ul>
+<p>Setting this globally (<code>--global</code>) will ensure the
+configuration persists across all repositories in the environment. If
+you’re working in a temporary environment, you may need to re-run this
+configuration after a restart.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="step-3-use-getpass-to-prompt-for-username-and-pat">Step 3: Use <code>getpass</code> to Prompt for Username and PAT<a class="anchor" aria-label="anchor" href="#step-3-use-getpass-to-prompt-for-username-and-pat"></a>
+</h2>
+<p>The <code>getpass</code> library allows you to input your GitHub
+username and PAT without exposing them in the notebook. This approach
+ensures you’re not hardcoding sensitive information.</p>
+<div class="codewrapper sourceCode" id="cb4">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="im">import</span> getpass</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co"># Prompt for GitHub username and PAT securely</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>github_url <span class="op">=</span> <span class="st">'github.com/UW-Madison-DataScience/test_AWS.git'</span> <span class="co"># found under Code -&gt; Clone -&gt; HTTPS (remote the https:// before the rest of the address)</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>username <span class="op">=</span> <span class="bu">input</span>(<span class="st">"GitHub Username: "</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>token <span class="op">=</span> getpass.getpass(<span class="st">"GitHub Personal Access Token (PAT): "</span>)</span></code></pre>
+</div>
+<p><strong>Note</strong>: After running, you may want to comment out the
+above code so that you don’t have to enter in your login every time you
+run your whole notebook</p>
+<div class="section level3">
+<h3 id="explanation-1">Explanation<a class="anchor" aria-label="anchor" href="#explanation-1"></a>
+</h3>
+<ul>
+<li>
+<strong><code>input("GitHub Username: ")</code></strong>: Prompts
+you to enter your GitHub username.</li>
+<li>
+<strong><code>getpass.getpass("GitHub Personal Access Token (PAT): ")</code></strong>:
+Prompts you to securely enter the PAT, keeping it hidden on the
+screen.</li>
+</ul>
+</div>
+</div>
+<div class="section level2">
+<h2 id="step-4-add-commit-and-push-changes-with-manual-authentication">Step 4: Add, Commit, and Push Changes with Manual
+Authentication<a class="anchor" aria-label="anchor" href="#step-4-add-commit-and-push-changes-with-manual-authentication"></a>
+</h2>
+<div class="section level3">
+<h3 id="navigate-to-the-repository-directory-adjust-the-path-if-needed">1. Navigate to the Repository Directory (adjust the path if
+needed):<a class="anchor" aria-label="anchor" href="#navigate-to-the-repository-directory-adjust-the-path-if-needed"></a>
+</h3>
+<div class="codewrapper sourceCode" id="cb5">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="op">!</span>pwd</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="op">%</span>cd test_AWS</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb6">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">/home/ec2-user/SageMaker</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="ex">/home/ec2-user/SageMaker/test_AWS</span></span></code></pre>
+</div>
+</div>
+<div class="section level3">
+<h3 id="preview-changes-you-may-see-elaborate-changes-if-you-are-tracking-ipynb-files-directly-">2. Preview changes: You may see elaborate changes if you are
+tracking ipynb files directly.<a class="anchor" aria-label="anchor" href="#preview-changes-you-may-see-elaborate-changes-if-you-are-tracking-ipynb-files-directly-"></a>
+</h3>
+<div class="codewrapper sourceCode" id="cb7">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="op">!</span>git diff </span></code></pre>
+</div>
+</div>
+<div class="section level3">
+<h3 id="convert-json-ipynb-files-to--py">3. Convert json ipynb files to .py<a class="anchor" aria-label="anchor" href="#convert-json-ipynb-files-to--py"></a>
+</h3>
+<p>To avoid tracking ipynb files directly, which are formatted as json,
+we may want to convert our notebook to .py first (plain text). This will
+make it easier to see our code edits across commits. Otherwise, each
+small edit will have massive changes associated with it.</p>
+<div class="section level4">
+<h4 id="benefits-of-converting-to--py-before-committing">Benefits of converting to <code>.py</code> before Committing<a class="anchor" aria-label="anchor" href="#benefits-of-converting-to--py-before-committing"></a>
+</h4>
+<ul>
+<li>
+<strong>Cleaner Version Control</strong>: <code>.py</code> files
+have cleaner diffs and are easier to review and merge in Git.</li>
+<li>
+<strong>Script Compatibility</strong>: Python files are more
+compatible with other environments and can run easily from the command
+line.</li>
+<li>
+<strong>Reduced Repository Size</strong>: <code>.py</code> files are
+generally lighter than <code>.ipynb</code> files since they don’t store
+outputs or metadata.</li>
+</ul>
+<p>Converting notebooks to <code>.py</code> files helps streamline the
+workflow for both collaborative projects and deployments. This approach
+also maintains code readability and minimizes potential issues with
+notebook-specific metadata in Git history. Here’s how to convert
+<code>.ipynb</code> files to <code>.py</code> in SageMaker without
+needing to export or download files:</p>
+</div>
+<div class="section level4">
+<h4 id="method-1-using-jupytext">Method 1: Using JupyText<a class="anchor" aria-label="anchor" href="#method-1-using-jupytext"></a>
+</h4>
+<ol style="list-style-type: decimal">
+<li>
+<strong>Install Jupytext</strong> (if you haven’t already):</li>
+</ol>
+<div class="codewrapper sourceCode" id="cb8">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="op">!</span>pip install jupytext</span></code></pre>
+</div>
+<ol style="list-style-type: decimal">
+<li>
+<strong>Run the following command</strong> in a notebook cell to
+convert the current notebook to a <code>.py</code> file:</li>
+</ol>
+<p>This command will create a <code>.py</code> file in the same
+directory as the notebook.</p>
+<div class="codewrapper sourceCode" id="cb9">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># Replace 'your_notebook.ipynb' with your actual notebook filename</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="op">!</span>jupytext <span class="op">--</span>to py Data<span class="op">-</span>storage<span class="op">-</span><span class="kw">and</span><span class="op">-</span>access<span class="op">-</span>via<span class="op">-</span>buckets.ipynb</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb10">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="ex">[jupytext]</span> Reading 03_Data-storage-and-access-via-buckets.ipynb in format ipynb</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="ex">[jupytext]</span> Updating the timestamp of 03_Data-storage-and-access-via-buckets.py</span></code></pre>
+</div>
+</div>
+<div class="section level4">
+<h4 id="method-2-automated-script-for-converting-all-notebooks-in-a-directory">Method 2: Automated Script for Converting All Notebooks in a
+Directory<a class="anchor" aria-label="anchor" href="#method-2-automated-script-for-converting-all-notebooks-in-a-directory"></a>
+</h4>
+<p>If you have multiple notebooks to convert, you can automate the
+conversion process by running this script, which converts all
+<code>.ipynb</code> files in the current directory to <code>.py</code>
+files:</p>
+<div class="codewrapper sourceCode" id="cb11">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="im">import</span> subprocess</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co"># List all .ipynb files in the directory</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>notebooks <span class="op">=</span> [f <span class="cf">for</span> f <span class="kw">in</span> os.listdir() <span class="cf">if</span> f.endswith(<span class="st">'.ipynb'</span>)]</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co"># Convert each notebook to .py using jupytext</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="cf">for</span> notebook <span class="kw">in</span> notebooks:</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>    output_file <span class="op">=</span> notebook.replace(<span class="st">'.ipynb'</span>, <span class="st">'.py'</span>)</span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>    subprocess.run([<span class="st">"jupytext"</span>, <span class="st">"--to"</span>, <span class="st">"py"</span>, notebook, <span class="st">"--output"</span>, output_file])</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Converted </span><span class="sc">{</span>notebook<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span>output_file<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+</div>
+</div>
+</div>
+<div class="section level3">
+<h3 id="adding--ipynb-to-gitigore">4. Adding .ipynb to gitigore<a class="anchor" aria-label="anchor" href="#adding--ipynb-to-gitigore"></a>
+</h3>
+<p>Adding <code>.ipynb</code> files to <code>.gitignore</code> is a good
+practice if you plan to only commit <code>.py</code> scripts. This will
+prevent accidental commits of Jupyter Notebook files across all
+subfolders in the repository.</p>
+<p>Here’s how to add <code>.ipynb</code> files to
+<code>.gitignore</code> to ignore them project-wide:</p>
+<ol style="list-style-type: decimal">
+<li>
+<p><strong>Open or Create the <code>.gitignore</code>
+File</strong>:</p>
+<div class="codewrapper sourceCode" id="cb12">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="op">!</span>ls <span class="op">-</span>a <span class="co"># check for existing .gitignore file</span></span></code></pre>
+</div>
+<ul>
+<li>
+<p>If you don’t already have a <code>.gitignore</code> file in the
+repository root (use ‘!ls -a’ to check, you can create one by
+running:</p>
+<div class="codewrapper sourceCode" id="cb13">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="op">!</span>touch .gitignore</span></code></pre>
+</div>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Add <code>.ipynb</code> Files to
+<code>.gitignore</code></strong>:</p>
+<ul>
+<li>
+<p>Append the following line to your <code>.gitignore</code> file to
+ignore all <code>.ipynb</code> files in all folders:</p>
+<pre class="plaintext"><code>*.ipynb # Ignore all Jupyter Notebook files</code></pre>
+</li>
+<li>
+<p>You can add this line using a command within your notebook:</p>
+<div class="codewrapper sourceCode" id="cb15">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">".gitignore"</span>, <span class="st">"a"</span>) <span class="im">as</span> gitignore:</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>    gitignore.write(<span class="st">"</span><span class="ch">\n</span><span class="st"># Ignore all Jupyter Notebook files</span><span class="ch">\n</span><span class="st">*.ipynb</span><span class="ch">\n</span><span class="st">"</span>)</span></code></pre>
+</div>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Verify and Commit the <code>.gitignore</code>
+File</strong>:</p>
+<ul>
+<li>
+<p>Add and commit the updated <code>.gitignore</code> file to ensure
+it’s applied across the repository.</p>
+<div class="codewrapper sourceCode" id="cb16">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="op">!</span>git add .gitignore</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Add .ipynb files to .gitignore to ignore notebooks"</span></span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a><span class="op">!</span>git push origin main</span></code></pre>
+</div>
+</li>
+</ul>
+</li>
+</ol>
+<p>This setup will: - Prevent all <code>.ipynb</code> files from being
+tracked by Git. - Keep your repository cleaner, containing only
+<code>.py</code> scripts for easier version control and reduced
+repository size.</p>
+<p>Now any new or existing notebooks won’t show up as untracked files in
+Git, ensuring your commits stay focused on the converted
+<code>.py</code> files.</p>
+<ol start="2" style="list-style-type: decimal">
+<li>
+<strong>Add and Commit Changes</strong>:</li>
+</ol>
+<div class="codewrapper sourceCode" id="cb17">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="op">!</span>git add . <span class="co"># you may also add files one at a time, for further specificity over the associated commit message</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Updates from Jupyter notebooks"</span> <span class="co"># in general, your commit message should be more specific!</span></span></code></pre>
+</div>
+<ol start="3" style="list-style-type: decimal">
+<li>
+<p><strong>Pull the Latest Changes from the Main Branch</strong>:
+Pull the latest changes from the remote main branch to ensure your local
+branch is up-to-date.</p>
+<p>Recommended: Set the Pull Strategy for this Repository (Merge by
+Default)</p>
+<p>All options:</p>
+<ul>
+<li>Merge (pull.rebase false): Combines the remote changes into your
+local branch as a merge commit.</li>
+<li>Rebase (pull.rebase true): Replays your local changes on top of the
+updated main branch, resulting in a linear history.</li>
+<li>Fast-forward only (pull.ff only): Only pulls if the local branch can
+fast-forward to the remote without diverging (no new commits
+locally).</li>
+</ul>
+</li>
+</ol>
+<div class="codewrapper sourceCode" id="cb18">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="op">!</span>git config pull.rebase false <span class="co"># Combines the remote changes into your local branch as a merge commit.</span></span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="op">!</span>git pull origin main</span></code></pre>
+</div>
+<p>If you get merge conflicts, be sure to resolve those before moving
+forward (e.g., use git checkout -&gt; add -&gt; commit). You can skip
+the below code if you don’t have any conflicts.</p>
+<div class="codewrapper sourceCode" id="cb19">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="co"># Keep your local changes in one conflicting file</span></span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="co"># !git checkout --ours train_nn.py</span></span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a></span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a><span class="co"># Keep remote version for the other conflicting file</span></span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a><span class="co"># !git checkout --theirs train_xgboost.py</span></span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a></span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a><span class="co"># # Stage the files to mark the conflicts as resolved</span></span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a><span class="co"># !git add train_nn.py</span></span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a><span class="co"># !git add train_xgboost.py</span></span>
+<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a></span>
+<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a><span class="co"># # Commit the merge result</span></span>
+<span id="cb19-12"><a href="#cb19-12" tabindex="-1"></a><span class="co"># !git commit -m "Resolved merge conflicts by keeping local changes"</span></span></code></pre>
+</div>
+<ol start="4" style="list-style-type: decimal">
+<li>
+<strong>Push Changes and Enter Credentials</strong>:</li>
+</ol>
+<div class="codewrapper sourceCode" id="cb20">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="co"># Push with embedded credentials from getpass (avoids interactive prompt)</span></span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a><span class="op">!</span>git push https:<span class="op">//</span>{username}:{token}<span class="op">@</span>{github_url} main</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb21">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="ex">fatal:</span> unable to access <span class="st">'https://{github_url}/'</span>: URL rejected: Bad hostname</span></code></pre>
+</div>
+</div>
+</div>
+<div class="section level2">
+<h2 id="step-5-pulling--py-files-and-converting-back-to-notebook-format">Step 5: Pulling .py files and converting back to notebook
+format<a class="anchor" aria-label="anchor" href="#step-5-pulling--py-files-and-converting-back-to-notebook-format"></a>
+</h2>
+<p>Let’s assume you’ve taken a short break from your work, and you would
+like to start again by pulling in your code repo. If you’d like to work
+with notebook files again, you can again use jupytext to convert your
+<code>.py</code> files back to <code>.ipynb</code></p>
+<p>This command will create
+<code>03_Data-storage-and-access-via-buckets-test.ipynb</code> in the
+current directory, converting the Python script to a Jupyter Notebook
+format. Jupytext handles the conversion gracefully without expecting the
+<code>.py</code> file to be in JSON format.</p>
+<div class="codewrapper sourceCode" id="cb22">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="co"># Replace 'your_script.py' with your actual filename</span></span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a><span class="op">!</span>jupytext <span class="op">--</span>to notebook Data<span class="op">-</span>storage<span class="op">-</span><span class="kw">and</span><span class="op">-</span>access<span class="op">-</span>via<span class="op">-</span>buckets.py <span class="op">--</span>output Data<span class="op">-</span>storage<span class="op">-</span><span class="kw">and</span><span class="op">-</span>access<span class="op">-</span>via<span class="op">-</span>buckets<span class="op">-</span>test.ipynb</span></code></pre>
+</div>
+<div class="section level3">
+<h3 id="applying-to-all--py-files">Applying to all .py files<a class="anchor" aria-label="anchor" href="#applying-to-all--py-files"></a>
+</h3>
+<p>To convert all of your .py files to notebooks, you can use the
+following code:</p>
+<div class="codewrapper sourceCode" id="cb23">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="im">import</span> subprocess</span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a></span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a><span class="co"># List all .py files in the directory</span></span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a>scripts <span class="op">=</span> [f <span class="cf">for</span> f <span class="kw">in</span> os.listdir() <span class="cf">if</span> f.endswith(<span class="st">'.py'</span>)]</span>
+<span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a></span>
+<span id="cb23-7"><a href="#cb23-7" tabindex="-1"></a><span class="co"># Convert each .py file to .ipynb using jupytext</span></span>
+<span id="cb23-8"><a href="#cb23-8" tabindex="-1"></a><span class="cf">for</span> script <span class="kw">in</span> scripts:</span>
+<span id="cb23-9"><a href="#cb23-9" tabindex="-1"></a>    output_file <span class="op">=</span> script.replace(<span class="st">'.py'</span>, <span class="st">'.ipynb'</span>)</span>
+<span id="cb23-10"><a href="#cb23-10" tabindex="-1"></a>    subprocess.run([<span class="st">"jupytext"</span>, <span class="st">"--to"</span>, <span class="st">"notebook"</span>, script, <span class="st">"--output"</span>, output_file])</span>
+<span id="cb23-11"><a href="#cb23-11" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Converted </span><span class="sc">{</span>script<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span>output_file<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+</div>
+<div id="keypoints1" class="callout keypoints">
+<div class="callout-square">
+<i class="callout-icon" data-feather="key"></i>
+</div>
+<div class="callout-inner">
+<h3 class="callout-title">Key Points</h3>
+<div class="callout-content">
+<ul>
+<li>Use a GitHub PAT for HTTPS-based authentication in temporary
+SageMaker notebook instances.</li>
+<li>Securely enter sensitive information in notebooks using
+<code>getpass</code>.</li>
+<li>Converting <code>.ipynb</code> files to <code>.py</code> files helps
+with cleaner version control and easier review of changes.</li>
+<li>Adding <code>.ipynb</code> files to <code>.gitignore</code> keeps
+your repository organized and reduces storage.</li>
+</ul>
+</div>
+</div>
+</div>
+<!--
+Place links that you need to refer to multiple times across pages here. Delete
+any links that you are not going to use.
+ -->
+</div>
+</div>
+</div></section>
 </div>
     </main>
 </div>
