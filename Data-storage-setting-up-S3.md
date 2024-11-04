@@ -53,7 +53,7 @@ The benefits will become more clear as you progress through these materials. How
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 
-## Recommended Approach: Use S3 for Data Storage
+## Recommended approach: Use S3 for data storage
 
 For flexibility, scalability, and cost efficiency, store data in S3 and load it into EC2 as needed. This setup allows:
 
@@ -78,7 +78,7 @@ For flexibility, scalability, and cost efficiency, store data in S3 and load it 
    - Protip: select the star icon to save S3 as a bookmark in your AWS toolbar 
    - Select **S3 - Scalable Storage in the Cloud**
 
-4. **Create a New Bucket (or Use an Existing One)**:
+4. **Create a new bucket**:
    - Click **Create Bucket** and enter a unique name. **Hackathon participants**: Use the following convention for your bucket name: `TeamName-DatasetName` (e.g., `EmissionImpossible-CO2data`).
    - **Region**: Leave as is (likely `us-east-1` (US East N. Virginia))
    - **Access Control**: Disable ACLs (recommended).
@@ -103,20 +103,20 @@ For flexibility, scalability, and cost efficiency, store data in S3 and load it 
 
 S3 bucket storage incurs costs based on data storage, data transfer, and request counts.
 
-### Storage Costs:
+### Storage costs:
 - Storage is charged per GB per month.
 - Example: Storing 10 GB costs approximately $0.23/month in S3 Standard.
 - **Pricing Tiers**: S3 offers multiple storage classes (Standard, Intelligent-Tiering, Glacier, etc.), with different costs based on access frequency and retrieval times.
 - To calculate specific costs based on your needs, refer to AWS's [S3 Pricing Information](https://aws.amazon.com/s3/pricing/).
 
-### Data Transfer Costs:
+### Data transfer costs:
 - **Uploading** data to S3 is free.
 - **Downloading** data (out of S3) incurs charges (~$0.09/GB).
 - **In-region transfer** (e.g., S3 to EC2) is free, while cross-region data transfer is charged (~$0.02/GB).
 
 > **[Data Transfer Pricing](https://aws.amazon.com/s3/pricing/)**
 
-### Request Costs:
+### Request costs:
 - GET requests are $0.0004 per 1,000 requests.
 
 > **[Request Pricing](https://aws.amazon.com/s3/pricing/)**
