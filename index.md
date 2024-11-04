@@ -11,6 +11,7 @@ To keep costs manageable, this workshop provides tips for tracking and monitorin
 ### What This Workshop Does Not Cover
 
 Currently, this workshop does not include:
+
 - **AWS Lambda** for serverless function deployment,
 - **MLFlow** or other MLOps tools for experiment tracking,
 - Additional AWS services beyond the core SageMaker ML workflows.
