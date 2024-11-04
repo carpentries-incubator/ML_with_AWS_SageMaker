@@ -97,7 +97,7 @@ Once the bucket is created, you'll be brought to a page that shows all of your c
 
 1. Click on the name of your bucket to bring up additional options and settings.
 2. Click the Permissions tab
-3. Scroll down to Bucket policy and click Edit. Paste the following policy, editing the bucket name to reflect your bucket's name.
+3. Scroll down to Bucket policy and click Edit. Paste the following policy, editing the bucket name "aws-wksp-test" to reflect your bucket's name.
 
 ```json
 {
@@ -123,7 +123,7 @@ Once the bucket is created, you'll be brought to a page that shows all of your c
 }
 ```
 
-For hackathon attendees, this policy grants the `ml-sagemaker-use` IAM role access to specific S3 bucket actions, ensuring they can use the `aws-wksp-test` bucket for reading, writing, deleting, and listing parts during multipart uploads. Attendees should apply this policy to their buckets to enable SageMaker to operate on stored data.
+For hackathon attendees, this policy grants the `ml-sagemaker-use` IAM role access to specific S3 bucket actions, ensuring they can use the bucket for reading, writing, deleting, and listing parts during multipart uploads. Attendees should apply this policy to their buckets to enable SageMaker to operate on stored data.
 
 ### General guidance for setting up permissions outside the hackathon
 > For those not participating in the hackathon, it’s essential to create a similar IAM role (such as `ml-sagemaker-use`) with policies that provide controlled access to S3 resources, ensuring only the necessary actions are permitted for security and cost-efficiency.
