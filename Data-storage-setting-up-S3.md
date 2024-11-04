@@ -85,14 +85,58 @@ For flexibility, scalability, and cost efficiency, store data in S3 and load it 
    - **Public Access**: Turn on "Block all public access".
    - **Versioning**: Disable unless you need multiple versions of objects.
    - **Tags**: Include suggested tags for easier cost tracking. Adding tags to your S3 buckets is a great way to track project-specific costs and usage over time, especially as data and resources scale up. While tags are required for hackathon participants, we suggest that all users apply tags to easily identify and analyze costs later. **Hackathon participants**: Use the following convention for your bucket name
-      - Name: Your Name
-      - ProjectName: Your team's name
-      - Purpose: Dataset name (e.g., TitanicData if you're following along with this workshop)
-      ![Example of Recommended Tags for an S3 Bucket](path/to/your-image.png){alt="Screenshot showing recommended tags for an S3 bucket, such as Team, Dataset, and Environment"}
+      - **Name**: Your Name
+      - **ProjectName**: Your team's name
+      - **Purpose**: Dataset name (e.g., TitanicData if you're following along with this workshop)
+      ![Example of Tags for an S3 Bucket](https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/images/bucket_tags.PNG){alt="Screenshot showing required tags for an S3 bucket"}
 
    - Click **Create Bucket** at the bottom once everything above has been configured
-     
-4. **Upload Files to the Bucket**:
+
+5. **Edit bucket policy**
+Once the bucket is created, you'll be brought to a page that shows all of your current buckets (and those on our shared account). We'll have to edit our bucket's policy to allow ourselves proper access to any files stored there (e.g., read from bucket, write to bucket). To set these permissions...
+
+1. Click on the name of your bucket to bring up additional options and settings.
+2. Click the Permissions tab
+3. Scroll down to Bucket policy and click Edit. Paste the following policy, editing the bucket name to reflect your bucket's name.
+
+```json
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Principal": {
+				"AWS": "arn:aws:iam::183295408236:role/ml-sagemaker-use"
+			},
+			"Action": [
+				"s3:GetObject",
+				"s3:PutObject",
+				"s3:DeleteObject",
+				"s3:ListMultipartUploadParts"
+			],
+			"Resource": [
+				"arn:aws:s3:::aws-wksp-test",
+				"arn:aws:s3:::aws-wksp-test/*"
+			]
+		}
+	]
+}
+```
+
+For hackathon attendees, this policy grants the `ml-sagemaker-use` IAM role access to specific S3 bucket actions, ensuring they can use the `aws-wksp-test` bucket for reading, writing, deleting, and listing parts during multipart uploads. Attendees should apply this policy to their buckets to enable SageMaker to operate on stored data.
+
+### General guidance for setting up permissions outside the hackathon
+> For those not participating in the hackathon, it’s essential to create a similar IAM role (such as `ml-sagemaker-use`) with policies that provide controlled access to S3 resources, ensuring only the necessary actions are permitted for security and cost-efficiency.
+> 
+> 1. **Create an IAM role**: Set up an IAM role for SageMaker to assume, with necessary S3 access permissions, such as `s3:GetObject`, `s3:PutObject`, `s3:DeleteObject`, and `s3:ListMultipartUploadParts`, as shown in the policy above.
+> 
+> 2. **Attach permissions to S3 buckets**: Attach bucket policies that specify this role as the principal, as in the hackathon example.
+> 
+> 3. **More information**: For a detailed guide on setting up roles and policies for SageMaker, refer to the [AWS SageMaker documentation on IAM roles and policies](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html). This resource explains role creation, permission setups, and policy best practices tailored for SageMaker’s operations with S3 and other AWS services.
+> 
+> This setup ensures that your SageMaker operations will have the access needed without exposing the bucket to unnecessary permissions or external accounts.
+
+7. **Upload Files to the Bucket**:
    - Click on your bucket’s name, then **Upload**.
    - **Add Files** (e.g., `train.csv`, `test.csv`) and click **Upload** to complete.
 
