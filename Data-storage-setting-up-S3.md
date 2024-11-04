@@ -71,10 +71,12 @@ For flexibility, scalability, and cost efficiency, store data in S3 and load it 
 ### Detailed procedure:
 
 1. **Sign in to the AWS Management Console**:
-   - Log in to [AWS Console](https://aws.amazon.com/console/) using your credentials.
+   - Log in to AWS Console using your credentials.
 
 2. **Navigate to S3**:
-   - Type “S3” in the search bar and select **S3 - Scalable Storage in the Cloud**.
+   - Type "S3" in the search bar
+   - Protip: select the star icon to save S3 as a bookmark in your AWS toolbar 
+   - Select **S3 - Scalable Storage in the Cloud**
 
 4. **Create a New Bucket (or Use an Existing One)**:
    - Click **Create Bucket** and enter a unique name. **Hackathon participants**: Use the following convention for your bucket name: `TeamName-DatasetName` (e.g., `EmissionImpossible-CO2data`).
@@ -83,18 +85,13 @@ For flexibility, scalability, and cost efficiency, store data in S3 and load it 
    - **Public Access**: Turn on "Block all public access".
    - **Versioning**: Disable unless you need multiple versions of objects.
    - **Tags**: Include suggested tags for easier cost tracking. Adding tags to your S3 buckets is a great way to track project-specific costs and usage over time, especially as data and resources scale up. While tags are required for hackathon participants, we suggest that all users apply tags to easily identify and analyze costs later. **Hackathon participants**: Use the following convention for your bucket name
-      - Name
-      - ProjectName
-      - Purpose
+      - Name: Your Name
+      - ProjectName: Your team's name
+      - Purpose: Dataset name (e.g., TitanicData if you're following along with this workshop)
+      ![Example of Recommended Tags for an S3 Bucket](path/to/your-image.png){alt="Screenshot showing recommended tags for an S3 bucket, such as Team, Dataset, and Environment"}
 
-![Example of Recommended Tags for an S3 Bucket](path/to/your-image.png){alt="Screenshot showing recommended tags for an S3 bucket, such as Team, Dataset, and Environment"}
-
-Suggested tags include:
-- **Team**: Your team name (e.g., `EmissionPossible`)
-- **Dataset**: The specific dataset name (e.g., `CO2`)
-- **Environment**: The type of environment (e.g., `Development`, `Production`)
-   - **Encryption**: Use **Server-side encryption with Amazon S3 managed keys (SSE-S3)**.
-
+   - Click **Create Bucket** at the bottom once everything above has been configured
+     
 4. **Upload Files to the Bucket**:
    - Click on your bucket’s name, then **Upload**.
    - **Add Files** (e.g., `train.csv`, `test.csv`) and click **Upload** to complete.
