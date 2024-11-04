@@ -21,7 +21,7 @@ Once your AWS account is set up, log in to the **AWS Management Console** to get
 
 ## Data Sets
 
-For this workshop, you will need the **Titanic dataset**. Please download the following files:
+For this workshop, you will need the **Titanic dataset**. Please download the following files by right clicking each and selecting `Save as`. Make sure to save them out as .csvs:
 
 - [titanic_train.csv](https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/data/titanic_train.csv)
 - [titanic_test.csv](https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/data/titanic_test.csv)
