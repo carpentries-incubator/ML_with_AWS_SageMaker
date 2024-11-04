@@ -8,7 +8,7 @@ This workshop introduces you to foundational workflows in **AWS SageMaker**, cov
 
 To keep costs manageable, this workshop provides tips for tracking and monitoring AWS expenses, so your experiments remain affordable. While AWS isn’t entirely free, it's very cost-effective for typical ML workflows—training roughly 100 models on a small dataset (under 10GB) can cost under $20, making it accessible for many research projects. 
 
-### What This Workshop Does Not Cover
+### What This Workshop Does Not Cover (Yet)
 
 Currently, this workshop does not include:
 
