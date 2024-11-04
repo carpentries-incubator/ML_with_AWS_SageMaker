@@ -268,7 +268,7 @@
 <div class="accordion accordion-flush" id="accordionFlush4">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading4">
-        <a href="SageMaker-notebooks-as-controllers.html">3. Notebooks as Controllers</a>
+        <a href="SageMaker-notebooks-as-controllers.html">3. Notebooks as controllers</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -853,9 +853,9 @@ Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
  -->
 </div>
-</section></section><section id="aio-SageMaker-notebooks-as-controllers"><p>Content from <a href="SageMaker-notebooks-as-controllers.html">Notebooks as Controllers</a></p>
+</section></section><section id="aio-SageMaker-notebooks-as-controllers"><p>Content from <a href="SageMaker-notebooks-as-controllers.html">Notebooks as controllers</a></p>
 <hr>
-<p>Last updated on 2024-11-03 |
+<p>Last updated on 2024-11-04 |
 
         <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker/edit/main/episodes/SageMaker-notebooks-as-controllers.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 30 minutes</p>
@@ -870,7 +870,7 @@ any links that you are not going to use.
 <div class="inner">
 <h3 class="card-title">Questions</h3>
 <ul>
-<li>How do you set up and use SageMaker Notebooks for machine learning
+<li>How do you set up and use SageMaker notebooks for machine learning
 tasks?</li>
 <li>How can you manage compute resources efficiently using SageMaker’s
 controller notebook approach?</li>
@@ -883,7 +883,7 @@ controller notebook approach?</li>
 <div class="inner bordered">
 <h3 class="card-title">Objectives</h3>
 <ul>
-<li>Describe how to use SageMaker Notebooks for ML workflows.</li>
+<li>Describe how to use SageMaker notebooks for ML workflows.</li>
 <li>Set up a Jupyter notebook instance as a controller to manage compute
 tasks.</li>
 <li>Use SageMaker SDK to launch training and tuning jobs on scalable
@@ -894,22 +894,22 @@ instances.</li>
 </div>
 </div>
 </div>
-<section><h2 class="section-heading" id="step-2-running-python-code-with-sagemaker-notebooks">Step 2: Running Python Code with SageMaker Notebooks<a class="anchor" aria-label="anchor" href="#step-2-running-python-code-with-sagemaker-notebooks"></a>
+<section><h2 class="section-heading" id="step-2-running-python-code-with-sagemaker-notebooks">Step 2: Running Python code with SageMaker notebooks<a class="anchor" aria-label="anchor" href="#step-2-running-python-code-with-sagemaker-notebooks"></a>
 </h2>
 <hr class="half-width">
 <p>Amazon SageMaker provides a managed environment to simplify the
 process of building, training, and deploying machine learning models. By
 using SageMaker, you can focus on model development without needing to
 manually provision resources or set up environments. Here, we’ll guide
-you through setting up a Jupyter notebook instance, loading data,
-training a model, and performing optional hyperparameter tuning using
-the Titanic dataset in S3.</p>
+you through setting up a Jupyter notebook instance and loading data to
+get started with model training and tuning in future episodes using the
+Titanic dataset in S3.</p>
 <blockquote>
 <p><strong>Note</strong>: We’ll use SageMaker notebook instances
 directly (instead of SageMaker Studio) for easier instance monitoring
 across users and streamlined resource management.</p>
 </blockquote>
-</section><section><h2 class="section-heading" id="using-the-notebook-as-a-controller">Using the Notebook as a Controller<a class="anchor" aria-label="anchor" href="#using-the-notebook-as-a-controller"></a>
+</section><section><h2 class="section-heading" id="using-the-notebook-as-a-controller">Using the notebook as a controller<a class="anchor" aria-label="anchor" href="#using-the-notebook-as-a-controller"></a>
 </h2>
 <hr class="half-width">
 <p>In this setup, the notebook instance functions as a
@@ -921,7 +921,7 @@ scalable compute instances when needed for model training, batch
 processing, or hyperparameter tuning. This approach minimizes costs by
 keeping your controller instance lightweight while accessing the full
 power of SageMaker for demanding tasks.</p>
-</section><section><h2 class="section-heading" id="summary-of-key-steps">Summary of Key Steps<a class="anchor" aria-label="anchor" href="#summary-of-key-steps"></a>
+</section><section><h2 class="section-heading" id="summary-of-key-steps">Summary of key steps<a class="anchor" aria-label="anchor" href="#summary-of-key-steps"></a>
 </h2>
 <hr class="half-width">
 <ol style="list-style-type: decimal">
@@ -930,9 +930,15 @@ power of SageMaker for demanding tasks.</p>
 <li>Set up the Python environment within the notebook.</li>
 <li>Load the Titanic dataset from S3.</li>
 <li>Use SageMaker SDK to launch training and tuning jobs on powerful
-instances.</li>
-<li>View and monitor training/tuning progress.</li>
-</ol></section><section><h2 class="section-heading" id="detailed-procedure">Detailed Procedure<a class="anchor" aria-label="anchor" href="#detailed-procedure"></a>
+instances (covered in next episodes).</li>
+<li>View and monitor training/tuning progress (covered in next
+episodes).</li>
+</ol>
+<blockquote>
+<p><strong>Note</strong>: In upcoming episodes, we’ll dive into training
+and tuning ML models with SageMaker from this notebook instance.</p>
+</blockquote>
+</section><section><h2 class="section-heading" id="detailed-procedure">Detailed procedure<a class="anchor" aria-label="anchor" href="#detailed-procedure"></a>
 </h2>
 <hr class="half-width">
 <div class="section level3">
@@ -948,48 +954,48 @@ bucket you created earlier containing your dataset.</li>
 </ul>
 </div>
 <div class="section level3">
-<h3 id="create-a-new-notebook-instance">2. Create a New Notebook Instance<a class="anchor" aria-label="anchor" href="#create-a-new-notebook-instance"></a>
+<h3 id="create-a-new-notebook-instance">2. Create a new notebook instance<a class="anchor" aria-label="anchor" href="#create-a-new-notebook-instance"></a>
 </h3>
 <ul>
 <li>In the SageMaker menu, go to <strong>Notebooks &gt; Notebook
 instances</strong>, then click <strong>Create notebook
 instance</strong>.</li>
 <li>
-<strong>Notebook Name</strong>: Enter a name (e.g.,
+<strong>Notebook name</strong>: Enter a name (e.g.,
 <code>Titanic-ML-Notebook</code>).</li>
 <li>
-<strong>Instance Type</strong>: Start with a small instance type,
+<strong>Instance type</strong>: Start with a small instance type,
 such as <code>ml.t3.medium</code>. You can scale up later as needed for
 intensive tasks, which will be managed by launching separate training
 jobs from this notebook.</li>
 <li>
-<strong>Permissions and Encryption</strong>:
+<strong>Permissions and encryption</strong>:
 <ul>
 <li>
-<strong>IAM Role</strong>: Choose an existing role or create a new
+<strong>IAM role</strong>: Choose an existing role or create a new
 one. The role should include the <code>AmazonSageMakerFullAccess</code>
 policy to enable access to AWS services like S3.</li>
 <li>
-<strong>Root Access</strong>: Choose to enable or disable root
+<strong>Root access</strong>: Choose to enable or disable root
 access. If you’re comfortable with managing privileges, enabling root
 access allows for additional flexibility in package installation.</li>
 <li>
-<strong>Encryption Key</strong> (Optional): Specify a KMS key for
+<strong>Encryption key</strong> (optional): Specify a KMS key for
 encrypting data at rest if needed. Otherwise, leave it blank.</li>
 </ul>
 </li>
 <li>
-<strong>Network (Optional)</strong>: Networking settings are
+<strong>Network (optional)</strong>: Networking settings are
 optional. Configure them if you’re working within a specific VPC or need
 network customization.</li>
 <li>
-<strong>Git Repositories Configuration (Optional)</strong>: Connect
+<strong>Git repositories configuration (optional)</strong>: Connect
 a GitHub repository to automatically clone it into your notebook. Note
 that larger repositories consume more disk space, so manage storage to
 minimize costs.
 <ul>
 <li>
-<strong>Tips to Manage Storage</strong>:
+<strong>Tips to manage storage</strong>:
 <ul>
 <li><p>Use <strong>S3</strong> for large files or datasets instead of
 storing them in the repository.</p></li>
@@ -1008,7 +1014,7 @@ disk usage:</p>
 </ul>
 </li>
 <li>
-<strong>Tags (Optional)</strong>: Adding tags helps track and
+<strong>Tags (optional)</strong>: Adding tags helps track and
 organize resources for billing and management.
 <ul>
 <li>Example:
@@ -1026,19 +1032,21 @@ coding.</p>
 <i class="callout-icon" data-feather="bell"></i>
 </div>
 <div id="tags-for-billing-management" class="callout-inner">
-<h3 class="callout-title">Tags for Billing Management</h3>
+<h3 class="callout-title">Tags for billing management</h3>
 <div class="callout-content">
 <p>Adding tags to your notebook instance helps track costs over time.
 This is particularly useful when you need to break down expenses by
 project, task, or team. We recommend using tags like <code>Job</code>,
 <code>Project</code>, or <code>Team</code> to help with future cost
 analysis.</p>
+<figure><img src="https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/images/notebook_tags.PNG" alt="Tag Setup Example" class="figure mx-auto d-block"><div class="figcaption">Tag Setup Example</div>
+</figure>
 </div>
 </div>
 </div>
 </div>
 <div class="section level3">
-<h3 id="managing-training-and-tuning-with-the-controller-notebook">Managing Training and Tuning with the Controller Notebook<a class="anchor" aria-label="anchor" href="#managing-training-and-tuning-with-the-controller-notebook"></a>
+<h3 id="managing-training-and-tuning-with-the-controller-notebook">Managing training and tuning with the controller notebook<a class="anchor" aria-label="anchor" href="#managing-training-and-tuning-with-the-controller-notebook"></a>
 </h3>
 <p>After setting up the controller notebook, use the <strong>SageMaker
 Python SDK</strong> within the notebook to launch compute-heavy tasks on
@@ -1046,21 +1054,22 @@ more powerful instances as needed. Examples of tasks to launch
 include:</p>
 <ul>
 <li>
-<strong>Training a Model</strong>: Use the SDK to submit a training
+<strong>Training a model</strong>: Use the SDK to submit a training
 job, specifying a higher-powered instance (e.g.,
 <code>ml.p2.xlarge</code> or <code>ml.m5.4xlarge</code>) based on your
 model’s resource requirements.</li>
 <li>
-<strong>Hyperparameter Tuning</strong>: Configure and launch tuning
+<strong>Hyperparameter tuning</strong>: Configure and launch tuning
 jobs, allowing SageMaker to automatically manage multiple powerful
 instances for optimal tuning.</li>
 <li>
-<strong>Batch Processing</strong>: Offload batch data processing
+<strong>Batch processing</strong>: Offload batch data processing
 tasks to a larger instance if needed.</li>
 </ul>
 <p>This setup allows you to control costs by keeping the notebook
 instance minimal and only incurring costs for larger instances when they
-are actively training or tuning models.</p>
+are actively training or tuning models. Detailed guidance on training,
+tuning, and batch processing will follow in later episodes.</p>
 <p>For more details, refer to the <a href="https://sagemaker.readthedocs.io/" class="external-link">SageMaker Python SDK
 documentation</a> for example code on launching and managing remote
 training jobs.</p>
