@@ -4,7 +4,7 @@ site: sandpaper::sandpaper_site
 
 ## Overview
 
-This workshop introduces you to foundational workflows in **AWS SageMaker**, covering data setup, code repo setup, model training, and hyperparameter tuning, and model deployment within AWS's managed environment. You’ll learn how to use SageMaker notebooks to control data pipelines, manage training jobs, and evaluate model performance effectively. We’ll also cover strategies to help you scale training and tuning efficiently, with guidance on choosing between CPUs and GPUs, as well as when to consider parallelized training.
+This workshop introduces you to foundational workflows in **AWS SageMaker**, covering data setup, code repo setup, model training, and hyperparameter tuning within AWS's managed environment. You’ll learn how to use SageMaker notebooks to control data pipelines, manage training jobs, and evaluate model performance effectively. We’ll also cover strategies to help you scale training and tuning efficiently, with guidance on choosing between CPUs and GPUs, as well as when to consider parallelized training.
 
 To keep costs manageable, this workshop provides tips for tracking and monitoring AWS expenses, so your experiments remain affordable. While AWS isn’t entirely free, it's very cost-effective for typical ML workflows—training roughly 100 models on a small dataset (under 10GB) can cost under $20, making it accessible for many research projects. 
 
@@ -12,6 +12,7 @@ To keep costs manageable, this workshop provides tips for tracking and monitorin
 
 Currently, this workshop does not include:
 
+- Model deployment via endpoints
 - **AWS Lambda** for serverless function deployment,
 - **MLFlow** or other MLOps tools for experiment tracking,
 - Additional AWS services beyond the core SageMaker ML workflows.
