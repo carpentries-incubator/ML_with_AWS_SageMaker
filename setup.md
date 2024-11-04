@@ -25,8 +25,8 @@ Once your AWS account is set up, log in to the **AWS Management Console** to get
 
 For this workshop, you will need the **Titanic dataset**. Please download the following files:
 
-- [titanic_train.csv](path/to/your-titanic_train.csv)
-- [titanic_test.csv](path/to/your-titanic_test.csv)
+- [titanic_train.csv](https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/data/titanic_train.csv)
+- [titanic_test.csv](https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/data/titanic_test.csv)
 
 Save these files to a location where they can easily be accessed. In the first episode, you will create an S3 bucket and upload this data to use with SageMaker.
 
