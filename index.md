@@ -2,7 +2,7 @@
 site: sandpaper::sandpaper_site
 ---
 
-## Overview
+## Workshop Overview
 
 This workshop introduces you to foundational workflows in **AWS SageMaker**, covering data setup, code repo setup, model training, and hyperparameter tuning within AWS's managed environment. You’ll learn how to use SageMaker notebooks to control data pipelines, manage training jobs, and evaluate model performance effectively. We’ll also cover strategies to help you scale training and tuning efficiently, with guidance on choosing between CPUs and GPUs, as well as when to consider parallelized training.
 
