@@ -432,7 +432,7 @@ any links that you are not going to use.
  -->
 </div></section><section id="aio-Data-storage-setting-up-S3"><p>Content from <a href="Data-storage-setting-up-S3.html">Data Storage: Setting up S3</a></p>
 <hr>
-<p>Last updated on 2024-11-03 |
+<p>Last updated on 2024-11-04 |
 
         <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker/edit/main/episodes/Data-storage-setting-up-S3.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 20 minutes</p>
@@ -472,7 +472,7 @@ SageMaker.</li>
 </div>
 </div>
 </div>
-<section><h2 class="section-heading" id="step-1-data-storage">Step 1: Data Storage<a class="anchor" aria-label="anchor" href="#step-1-data-storage"></a>
+<section><h2 class="section-heading" id="step-1-data-storage">Step 1: Data storage<a class="anchor" aria-label="anchor" href="#step-1-data-storage"></a>
 </h2>
 <hr class="half-width">
 <blockquote>
@@ -481,72 +481,21 @@ relate to your specific Kaggle challenge, except for auxiliary datasets
 for transfer learning or pretraining. <strong>DO NOT upload any
 restricted or sensitive data to AWS.</strong></p>
 </blockquote>
-</section><section><h2 class="section-heading" id="options-for-storage-s3-or-ec2-instance">Options for Storage: S3 or EC2 Instance<a class="anchor" aria-label="anchor" href="#options-for-storage-s3-or-ec2-instance"></a>
+</section><section><h2 class="section-heading" id="options-for-storage-ec2-instance-or-s3">Options for storage: EC2 Instance or S3<a class="anchor" aria-label="anchor" href="#options-for-storage-ec2-instance-or-s3"></a>
 </h2>
 <hr class="half-width">
-<p>Storing data in an <strong>S3 bucket</strong> is generally preferred
-for machine learning workflows on AWS, especially when using
-SageMaker.</p>
 <div class="section level3">
-<h3 id="what-is-an-s3-bucket">What is an S3 Bucket?<a class="anchor" aria-label="anchor" href="#what-is-an-s3-bucket"></a>
-</h3>
-<p>An <strong>S3 bucket</strong> is a container in Amazon S3 (Simple
-Storage Service) where you can store, organize, and manage data files.
-Buckets act as the top-level directory within S3 and can hold a
-virtually unlimited number of files and folders, making them ideal for
-storing large datasets, backups, logs, or any files needed for your
-project. You access objects in a bucket via a unique <strong>S3
-URI</strong> (e.g., <code>s3://your-bucket-name/your-file.csv</code>),
-which you can use to reference data across various AWS services like EC2
-and SageMaker.</p>
-<div id="benefits-of-using-s3-recommended-for-sagemaker" class="callout">
-<div class="callout-square">
-<i class="callout-icon" data-feather="bell"></i>
-</div>
-<div id="benefits-of-using-s3-recommended-for-sagemaker" class="callout-inner">
-<h3 class="callout-title">Benefits of Using S3 (Recommended for SageMaker)</h3>
-<div class="callout-content">
-<ul>
-<li>
-<strong>Scalability</strong>: S3 handles large datasets efficiently,
-enabling storage beyond the limits of an EC2 instance’s disk space.</li>
-<li>
-<strong>Cost Efficiency</strong>: S3 storage costs are generally
-lower than expanding EC2 disk volumes. You only pay for the storage you
-use.</li>
-<li>
-<strong>Separation of Storage and Compute</strong>: You can start
-and stop EC2 instances without losing access to data stored in S3.</li>
-<li>
-<strong>Integration with AWS Services</strong>: SageMaker can read
-directly from and write back to S3, making it ideal for AWS-based
-workflows.</li>
-<li>
-<strong>Easy Data Sharing</strong>: Datasets in S3 are easier to
-share with team members or across projects compared to EC2 storage.</li>
-<li>
-<strong>Cost-Effective Data Transfer</strong>: When S3 and EC2 are
-in the same region, data transfer between them is free.</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
-<div class="section level3">
-<h3 id="when-to-store-data-directly-on-ec2-e-g--in-jupyter-notebook-instance">When to Store Data Directly on EC2 (e.g., in Jupyter Notebook
+<h3 id="when-to-store-data-directly-on-ec2-e-g--in-jupyter-notebook-instance">When to store data directly on EC2 (e.g., in Jupyter Notebook
 instance)<a class="anchor" aria-label="anchor" href="#when-to-store-data-directly-on-ec2-e-g--in-jupyter-notebook-instance"></a>
 </h3>
-<p>Using EC2 for data storage can be a quick solution for temporary
-needs, but <strong>S3 is generally preferred</strong> for scalability,
-cost-efficiency, and ease of integration across AWS services, especially
-for machine learning workflows. An EC2 instance provides a virtual
-server environment with its own local storage, which can be used to
-store and process data directly on the instance. This method is suitable
-for temporary or small datasets and for one-off experiments that don’t
-require long-term data storage or frequent access from multiple
-services.</p>
+<p>Using EC2 for data storage can be a quick solution for certain
+temporary needs. An EC2 instance provides a virtual server environment
+with its own local storage, which can be used to store and process data
+directly on the instance. This method is suitable for temporary or small
+datasets and for one-off experiments that don’t require long-term data
+storage or frequent access from multiple services.</p>
 <div class="section level4">
-<h4 id="limitations-of-ec2-storage">Limitations of EC2 Storage:<a class="anchor" aria-label="anchor" href="#limitations-of-ec2-storage"></a>
+<h4 id="limitations-of-ec2-storage">Limitations of EC2 storage:<a class="anchor" aria-label="anchor" href="#limitations-of-ec2-storage"></a>
 </h4>
 <ul>
 <li>
@@ -563,6 +512,55 @@ instance is stopped or terminated, unless using Elastic Block Store
 </ul>
 </div>
 </div>
+<div class="section level3">
+<h3 id="what-is-an-s3-bucket">What is an S3 bucket?<a class="anchor" aria-label="anchor" href="#what-is-an-s3-bucket"></a>
+</h3>
+<p>Storing data in an <strong>S3 bucket</strong> is generally preferred
+for machine learning workflows on AWS, especially when using SageMaker.
+An S3 bucket is a container in Amazon S3 (Simple Storage Service) where
+you can store, organize, and manage data files. Buckets act as the
+top-level directory within S3 and can hold a virtually unlimited number
+of files and folders, making them ideal for storing large datasets,
+backups, logs, or any files needed for your project. You access objects
+in a bucket via a unique <strong>S3 URI</strong> (e.g.,
+<code>s3://your-bucket-name/your-file.csv</code>), which you can use to
+reference data across various AWS services like EC2 and SageMaker.</p>
+<div id="benefits-of-using-s3-recommended-for-sagemaker-and-ml-workflows" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<div id="benefits-of-using-s3-recommended-for-sagemaker-and-ml-workflows" class="callout-inner">
+<h3 class="callout-title">Benefits of using S3 (recommended for SageMaker and ML workflows)</h3>
+<div class="callout-content">
+<p>The benefits will become more clear as you progress through these
+materials. However, to point out the most important benefits
+briefly…</p>
+<ul>
+<li>
+<strong>Scalability</strong>: S3 handles large datasets efficiently,
+enabling storage beyond the limits of an EC2 instance’s disk space.</li>
+<li>
+<strong>Cost efficiency</strong>: S3 storage costs are generally
+lower than expanding EC2 disk volumes. You only pay for the storage you
+use.</li>
+<li>
+<strong>Separation of storage and compute</strong>: You can start
+and stop EC2 instances without losing access to data stored in S3.</li>
+<li>
+<strong>Integration with AWS services</strong>: SageMaker can read
+directly from and write back to S3, making it ideal for AWS-based
+workflows.</li>
+<li>
+<strong>Easy data sharing</strong>: Datasets in S3 are easier to
+share with team members or across projects compared to EC2 storage.</li>
+<li>
+<strong>Cost-effective data transfer</strong>: When S3 and EC2 are
+in the same region, data transfer between them is free.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
 </section><section><h2 class="section-heading" id="recommended-approach-use-s3-for-data-storage">Recommended Approach: Use S3 for Data Storage<a class="anchor" aria-label="anchor" href="#recommended-approach-use-s3-for-data-storage"></a>
 </h2>
 <hr class="half-width">
@@ -574,7 +572,7 @@ and load it into EC2 as needed. This setup allows:</p>
 <li>Seamless integration across AWS services</li>
 </ul>
 <div class="section level3">
-<h3 id="steps-to-access-s3-and-upload-your-dataset">Steps to Access S3 and Upload Your Dataset<a class="anchor" aria-label="anchor" href="#steps-to-access-s3-and-upload-your-dataset"></a>
+<h3 id="summary-steps-to-access-s3-and-upload-your-dataset">Summary steps to access S3 and upload your dataset<a class="anchor" aria-label="anchor" href="#summary-steps-to-access-s3-and-upload-your-dataset"></a>
 </h3>
 <ol style="list-style-type: decimal">
 <li>Log in to AWS Console and navigate to S3.</li>
@@ -585,23 +583,7 @@ experiments.</li>
 </ol>
 </div>
 <div class="section level3">
-<h3 id="adding-tags-for-cost-tracking">Adding Tags for Cost Tracking<a class="anchor" aria-label="anchor" href="#adding-tags-for-cost-tracking"></a>
-</h3>
-<p>Adding tags to your S3 buckets is a great way to track
-project-specific costs and usage over time, especially as data and
-resources scale up. While tags are required for hackathon participants,
-we suggest that all users apply tags to easily identify and analyze
-costs later.</p>
-<figure><img src="../path/to/your-image.png" alt="Screenshot showing recommended tags for an S3 bucket, such as Team, Dataset, and Environment" class="figure mx-auto d-block"><div class="figcaption">Example of Recommended Tags for an S3
-Bucket</div>
-</figure><p>Suggested tags include: - <strong>Team</strong>: Your team name
-(e.g., <code>DataScienceClub</code>) - <strong>Dataset</strong>: The
-specific dataset name (e.g., <code>CustomerRetention</code>) -
-<strong>Environment</strong>: The type of environment (e.g.,
-<code>Development</code>, <code>Production</code>)</p>
-</div>
-<div class="section level3">
-<h3 id="detailed-procedure">Detailed Procedure:<a class="anchor" aria-label="anchor" href="#detailed-procedure"></a>
+<h3 id="detailed-procedure">Detailed procedure:<a class="anchor" aria-label="anchor" href="#detailed-procedure"></a>
 </h3>
 <ol style="list-style-type: decimal">
 <li>
@@ -621,14 +603,13 @@ in the Cloud</strong>.</li>
 <li>
 <strong>Create a New Bucket (or Use an Existing One)</strong>:
 <ul>
-<li>Click <strong>Create Bucket</strong> and enter a unique name.</li>
-<li>
-<strong>Hackathon participants</strong>: Use a format like
-<code>TeamName-DatasetName</code> (e.g.,
+<li>Click <strong>Create Bucket</strong> and enter a unique name.
+<strong>Hackathon participants</strong>: Use the following convention
+for your bucket name: <code>TeamName-DatasetName</code> (e.g.,
 <code>EmissionImpossible-CO2data</code>).</li>
 <li>
-<strong>Region</strong>: Leave as <code>us-east-1</code> (US East N.
-Virginia).</li>
+<strong>Region</strong>: Leave as is (likely <code>us-east-1</code>
+(US East N. Virginia))</li>
 <li>
 <strong>Access Control</strong>: Disable ACLs (recommended).</li>
 <li>
@@ -639,12 +620,31 @@ access”.</li>
 versions of objects.</li>
 <li>
 <strong>Tags</strong>: Include suggested tags for easier cost
-tracking.</li>
-<li>
-<strong>Encryption</strong>: Use <strong>Server-side encryption with
-Amazon S3 managed keys (SSE-S3)</strong>.</li>
+tracking. Adding tags to your S3 buckets is a great way to track
+project-specific costs and usage over time, especially as data and
+resources scale up. While tags are required for hackathon participants,
+we suggest that all users apply tags to easily identify and analyze
+costs later. <strong>Hackathon participants</strong>: Use the following
+convention for your bucket name
+<ul>
+<li>Name</li>
+<li>ProjectName</li>
+<li>Purpose</li>
 </ul>
 </li>
+</ul>
+</li>
+</ol>
+<figure><img src="../path/to/your-image.png" alt="Screenshot showing recommended tags for an S3 bucket, such as Team, Dataset, and Environment" class="figure mx-auto d-block"><div class="figcaption">Example of Recommended Tags for an S3
+Bucket</div>
+</figure><p>Suggested tags include: - <strong>Team</strong>: Your team name
+(e.g., <code>EmissionPossible</code>) - <strong>Dataset</strong>: The
+specific dataset name (e.g., <code>CO2</code>) -
+<strong>Environment</strong>: The type of environment (e.g.,
+<code>Development</code>, <code>Production</code>) -
+<strong>Encryption</strong>: Use <strong>Server-side encryption with
+Amazon S3 managed keys (SSE-S3)</strong>.</p>
+<ol start="4" style="list-style-type: decimal">
 <li>
 <strong>Upload Files to the Bucket</strong>:
 <ul>
