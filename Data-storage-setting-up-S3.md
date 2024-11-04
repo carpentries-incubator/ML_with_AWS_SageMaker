@@ -79,7 +79,7 @@ For flexibility, scalability, and cost efficiency, store data in S3 and load it 
    - Select **S3 - Scalable Storage in the Cloud**
 
 4. **Create a new bucket**:
-   - Click **Create Bucket** and enter a unique name. **Hackathon participants**: Use the following convention for your bucket name: `TeamName-DatasetName` (e.g., `EmissionImpossible-CO2data`).
+   - Click **Create Bucket** and enter a unique name. **Hackathon participants**: Use the following convention for your bucket name: `TeamName-DatasetName` (e.g., `MyAwesomeTeam-TitanicData`).
    - **Region**: Leave as is (likely `us-east-1` (US East N. Virginia))
    - **Access Control**: Disable ACLs (recommended).
    - **Public Access**: Turn on "Block all public access".
@@ -136,14 +136,14 @@ For hackathon attendees, this policy grants the `ml-sagemaker-use` IAM role acce
 > 
 > This setup ensures that your SageMaker operations will have the access needed without exposing the bucket to unnecessary permissions or external accounts.
 
-7. **Upload Files to the Bucket**:
-   - Click on your bucket’s name, then **Upload**.
-   - **Add Files** (e.g., `train.csv`, `test.csv`) and click **Upload** to complete.
+7. **Upload files to the bucket**:
+   - Navigate to the Objects tab of your bucket, then **Upload**.
+   - **Add Files** (e.g., `titanic_train.csv`, `titanic_test.csv`) and click **Upload** to complete.
 
-5. **Getting the S3 URI for Your Data**:
+5. **Getting the S3 URI for your data**:
    - After uploading, click on a file to find its **Object URI** (e.g., `s3://titanic-dataset-test/test.csv`). Use this URI to load data into SageMaker or EC2.
 
-## S3 Bucket Costs
+## S3 bucket costs
 
 S3 bucket storage incurs costs based on data storage, data transfer, and request counts.
 
@@ -158,25 +158,25 @@ S3 bucket storage incurs costs based on data storage, data transfer, and request
 - **Downloading** data (out of S3) incurs charges (~$0.09/GB).
 - **In-region transfer** (e.g., S3 to EC2) is free, while cross-region data transfer is charged (~$0.02/GB).
 
-> **[Data Transfer Pricing](https://aws.amazon.com/s3/pricing/)**
+> **[Data transfer pricing](https://aws.amazon.com/s3/pricing/)**
 
 ### Request costs:
 - GET requests are $0.0004 per 1,000 requests.
 
 > **[Request Pricing](https://aws.amazon.com/s3/pricing/)**
 
-## Removing Unused Data
+## Removing unused data
 
 Choose one of these options:
 
-### Option 1: Delete Data Only
+### Option 1: Delete data only
 - **When to Use**: You plan to reuse the bucket.
 - **Steps**:
    - Go to S3, navigate to the bucket.
    - Select files to delete, then **Actions > Delete**.
    - **CLI** (optional): `!aws s3 rm s3://your-bucket-name --recursive`
 
-### Option 2: Delete the S3 Bucket Entirely
+### Option 2: Delete the S3 bucket entirely
 - **When to Use**: You no longer need the bucket or data.
 - **Steps**:
    - Select the bucket, click **Actions > Delete**.
@@ -187,7 +187,7 @@ Deleting the bucket stops all costs associated with storage, requests, and data 
 ::::::::::::::::::::::::::::::::::::: keypoints 
 
 - Use S3 for scalable, cost-effective, and flexible storage.
-- EC2 storage is suitable for small, temporary datasets.
+- EC2 storage is fairly uncommon, but may be suitable for small, temporary datasets.
 - Track your S3 storage costs, data transfer, and requests to manage expenses.
 - Regularly delete unused data or buckets to avoid ongoing costs.
 
