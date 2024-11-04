@@ -95,9 +95,9 @@ For flexibility, scalability, and cost efficiency, store data in S3 and load it 
 5. **Edit bucket policy**
 Once the bucket is created, you'll be brought to a page that shows all of your current buckets (and those on our shared account). We'll have to edit our bucket's policy to allow ourselves proper access to any files stored there (e.g., read from bucket, write to bucket). To set these permissions...
 
-1. Click on the name of your bucket to bring up additional options and settings.
-2. Click the Permissions tab
-3. Scroll down to Bucket policy and click Edit. Paste the following policy, editing the bucket name "aws-wksp-test" to reflect your bucket's name.
+	1. Click on the name of your bucket to bring up additional options and settings.
+	2. Click the Permissions tab
+	3. Scroll down to Bucket policy and click Edit. Paste the following policy, editing the bucket name "aws-wksp-test" to reflect your bucket's name.
 
 ```json
 {
