@@ -38,6 +38,6 @@ To do this:
 2. Click **Fork** (top right) to create your own copy of the repository under your GitHub account.
 3. Once forked, you don't need to do anything else. We'll clone this fork once we start working in the AWS Jupyter environment using...
 
-       ```bash
-       !git clone https://github.com/YOUR_USERNAME/ml-with-aws-sagemaker.git
-       ```  
+```python
+!git clone https://github.com/YOUR_USERNAME/ml-with-aws-sagemaker.git
+```  
