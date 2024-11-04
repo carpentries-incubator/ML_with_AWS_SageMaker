@@ -587,13 +587,13 @@ experiments.</li>
 </h3>
 <ol style="list-style-type: decimal">
 <li>
-<strong>Sign in to the AWS Management Console</strong>:
+<p><strong>Sign in to the AWS Management Console</strong>:</p>
 <ul>
 <li>Log in to AWS Console using your credentials.</li>
 </ul>
 </li>
 <li>
-<strong>Navigate to S3</strong>:
+<p><strong>Navigate to S3</strong>:</p>
 <ul>
 <li>Type “S3” in the search bar</li>
 <li>Protip: select the star icon to save S3 as a bookmark in your AWS
@@ -603,7 +603,7 @@ toolbar</li>
 </ul>
 </li>
 <li>
-<strong>Create a new bucket</strong>:
+<p><strong>Create a new bucket</strong>:</p>
 <ul>
 <li>Click <strong>Create Bucket</strong> and enter a unique name.
 <strong>Hackathon participants</strong>: Use the following convention
@@ -629,10 +629,13 @@ we suggest that all users apply tags to easily identify and analyze
 costs later. <strong>Hackathon participants</strong>: Use the following
 convention for your bucket name
 <ul>
-<li>Name: Your Name</li>
-<li>ProjectName: Your team’s name</li>
-<li>Purpose: Dataset name (e.g., TitanicData if you’re following along
-with this workshop) <img src="../path/to/your-image.png" alt="Screenshot showing recommended tags for an S3 bucket, such as Team, Dataset, and Environment" class="figure">
+<li>
+<strong>Name</strong>: Your Name</li>
+<li>
+<strong>ProjectName</strong>: Your team’s name</li>
+<li>
+<strong>Purpose</strong>: Dataset name (e.g., TitanicData if you’re
+following along with this workshop) <img src="https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/images/bucket_tags.PNG" alt="Screenshot showing required tags for an S3 bucket" class="figure">
 </li>
 </ul>
 </li>
@@ -640,6 +643,81 @@ with this workshop) <img src="../path/to/your-image.png" alt="Screenshot showing
 above has been configured</li>
 </ul>
 </li>
+<li><p><strong>Edit bucket policy</strong> Once the bucket is created,
+you’ll be brought to a page that shows all of your current buckets (and
+those on our shared account). We’ll have to edit our bucket’s policy to
+allow ourselves proper access to any files stored there (e.g., read from
+bucket, write to bucket). To set these permissions…</p></li>
+<li><p>Click on the name of your bucket to bring up additional options
+and settings.</p></li>
+<li><p>Click the Permissions tab</p></li>
+<li><p>Scroll down to Bucket policy and click Edit. Paste the following
+policy, editing the bucket name to reflect your bucket’s name.</p></li>
+</ol>
+<div class="codewrapper sourceCode" id="cb1">
+<h3 class="code-label">JSON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode json" tabindex="0"><code class="sourceCode json"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>	<span class="dt">"Version"</span><span class="fu">:</span> <span class="st">"2012-10-17"</span><span class="fu">,</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>	<span class="dt">"Statement"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>		<span class="fu">{</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>			<span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Allow"</span><span class="fu">,</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>			<span class="dt">"Principal"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>				<span class="dt">"AWS"</span><span class="fu">:</span> <span class="st">"arn:aws:iam::183295408236:role/ml-sagemaker-use"</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>			<span class="fu">},</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>			<span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>				<span class="st">"s3:GetObject"</span><span class="ot">,</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>				<span class="st">"s3:PutObject"</span><span class="ot">,</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>				<span class="st">"s3:DeleteObject"</span><span class="ot">,</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>				<span class="st">"s3:ListMultipartUploadParts"</span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>			<span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a>			<span class="dt">"Resource"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a>				<span class="st">"arn:aws:s3:::aws-wksp-test"</span><span class="ot">,</span></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>				<span class="st">"arn:aws:s3:::aws-wksp-test/*"</span></span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a>			<span class="ot">]</span></span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a>		<span class="fu">}</span></span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a>	<span class="ot">]</span></span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a><span class="fu">}</span></span></code></pre>
+</div>
+<p>For hackathon attendees, this policy grants the
+<code>ml-sagemaker-use</code> IAM role access to specific S3 bucket
+actions, ensuring they can use the <code>aws-wksp-test</code> bucket for
+reading, writing, deleting, and listing parts during multipart uploads.
+Attendees should apply this policy to their buckets to enable SageMaker
+to operate on stored data.</p>
+</div>
+<div class="section level3">
+<h3 id="general-guidance-for-setting-up-permissions-outside-the-hackathon">General guidance for setting up permissions outside the
+hackathon<a class="anchor" aria-label="anchor" href="#general-guidance-for-setting-up-permissions-outside-the-hackathon"></a>
+</h3>
+<blockquote>
+<p>For those not participating in the hackathon, it’s essential to
+create a similar IAM role (such as <code>ml-sagemaker-use</code>) with
+policies that provide controlled access to S3 resources, ensuring only
+the necessary actions are permitted for security and
+cost-efficiency.</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Create an IAM role</strong>: Set up an IAM role for
+SageMaker to assume, with necessary S3 access permissions, such as
+<code>s3:GetObject</code>, <code>s3:PutObject</code>,
+<code>s3:DeleteObject</code>, and
+<code>s3:ListMultipartUploadParts</code>, as shown in the policy
+above.</p></li>
+<li><p><strong>Attach permissions to S3 buckets</strong>: Attach bucket
+policies that specify this role as the principal, as in the hackathon
+example.</p></li>
+<li><p><strong>More information</strong>: For a detailed guide on
+setting up roles and policies for SageMaker, refer to the <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html" class="external-link">AWS
+SageMaker documentation on IAM roles and policies</a>. This resource
+explains role creation, permission setups, and policy best practices
+tailored for SageMaker’s operations with S3 and other AWS
+services.</p></li>
+</ol>
+<p>This setup ensures that your SageMaker operations will have the
+access needed without exposing the bucket to unnecessary permissions or
+external accounts.</p>
+</blockquote>
+<ol start="7" style="list-style-type: decimal">
 <li>
 <strong>Upload Files to the Bucket</strong>:
 <ul>
