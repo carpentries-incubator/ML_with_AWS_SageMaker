@@ -22,11 +22,4 @@ SageMaker provides several features that make it an ideal choice for researchers
 
 - **Cost Management and Monitoring**: SageMaker includes built-in monitoring tools to help you track and manage costs, ensuring you can scale up efficiently without unnecessary expenses. With thoughtful usage, SageMaker can be very affordable—for example, training roughly 100 models on a small dataset (under 1GB) can cost less than $20, making it accessible for many research projects.
 
-### Getting Started
-
-For more detailed information, refer to the following resources:
-- [AWS SageMaker Documentation](https://docs.aws.amazon.com/sagemaker/)
-- [Using SageMaker for Hyperparameter Tuning](https://docs.aws.amazon.com/sagemaker/latest/dg/automatic-model-tuning.html)
-- [Custom Training with Script Mode](https://docs.aws.amazon.com/sagemaker/latest/dg/script-mode.html)
-
 SageMaker is designed to support machine learning at any scale, making it a strong choice for projects ranging from small experiments to large research deployments. With robust tools for every step of the ML process, it empowers researchers and practitioners to bring their models from development to production efficiently and effectively.
