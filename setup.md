@@ -2,53 +2,44 @@
 title: Setup
 ---
 
-FIXME: Setup instructions live in this document. Please specify the tools and
-the data sets the Learner needs to have installed.
+## Overview
+
+In this workshop, we’ll explore machine learning procedures using **AWS SageMaker**. We assume you have a GitHub account and an AWS account. If not, please follow the instructions below to set these up. Once accounts are ready, you’ll download the required data and create a fork of this lesson's GitHub repository.
+
+## Accounts and Initial Setup
+
+### GitHub Account
+
+If you don't already have a GitHub account, [sign up for GitHub](https://github.com/) to create a free account. A GitHub account will be required to fork and interact with the lesson repository.
+
+### AWS Account
+
+If you don't have an AWS account, please follow these steps:
+
+1. Go to the [AWS Free Tier page](https://aws.amazon.com/free/) and click **Create a Free Account**.
+2. Complete the sign-up process. AWS offers a free tier with limited monthly usage. Some services, including SageMaker, may incur charges beyond free-tier limits, so be mindful of usage during the workshop.
+
+Once your AWS account is set up, log in to the **AWS Management Console** to get started with SageMaker.
 
 ## Data Sets
 
-<!--
-FIXME: place any data you want learners to use in `episodes/data` and then use
-       a relative link ( [data zip file](data/lesson-data.zip) ) to provide a
-       link to it, replacing the example.com link.
--->
-Download the [data zip file](https://example.com/FIXME) and unzip it to your Desktop
+For this workshop, you will need the **Titanic dataset**. Please download the following files:
 
-## Software Setup
+- [titanic_train.csv](path/to/your-titanic_train.csv)
+- [titanic_test.csv](path/to/your-titanic_test.csv)
 
-::::::::::::::::::::::::::::::::::::::: discussion
+Save these files to a location where they can easily be accessed. In the first episode, you will create an S3 bucket and upload this data to use with SageMaker.
 
-### Details
+## Workshop Repository Setup
 
-Setup for different systems can be presented in dropdown menus via a `spoiler`
-tag. They will join to this discussion block, so you can give a general overview
-of the software used in this lesson here and fill out the individual operating
-systems (and potentially add more, e.g. online setup) in the solutions blocks.
+You will need a copy of the lesson repository on GitHub to explore how to manage your repo in AWS. This setup will allow you to follow along with the workshop and test out the Interacting with Repositories episode.
 
-:::::::::::::::::::::::::::::::::::::::::::::::::::
+To do this:
 
-:::::::::::::::: spoiler
+1. Go to the workshop's [GitHub repository page](https://github.com/YOUR_REPO_LINK).
+2. Click **Fork** (top right) to create your own copy of the repository under your GitHub account.
+3. Once forked, you don't need to do anything else. We'll clone this fork once we start working in the AWS Jupyter environment using...
 
-### Windows
-
-Use PuTTY
-
-::::::::::::::::::::::::
-
-:::::::::::::::: spoiler
-
-### MacOS
-
-Use Terminal.app
-
-::::::::::::::::::::::::
-
-
-:::::::::::::::: spoiler
-
-### Linux
-
-Use Terminal
-
-::::::::::::::::::::::::
-
+       ```bash
+       !git clone https://github.com/YOUR_USERNAME/YOUR_FORKED_REPO.git
+       ```  
