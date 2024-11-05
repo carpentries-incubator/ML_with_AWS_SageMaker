@@ -24,16 +24,19 @@ exercises: 5
 > **Hackathon Attendees**: All data uploaded to AWS must relate to your specific Kaggle challenge, except for auxiliary datasets for transfer learning or pretraining. **DO NOT upload any restricted or sensitive data to AWS.**
 
 ## Options for storage: EC2 Instance or S3
+When working with SageMaker and other AWS services, you have options for data storage, primarily **EC2 instances** or **S3**.
 
-### When to store data directly on EC2 (e.g., in Jupyter Notebook instance)
+#### What is an EC2 instance?
+An Amazon EC2 (Elastic Compute Cloud) instance is a virtual server environment where you can run applications, process data, and store data temporarily. EC2 instances come in various types and sizes to meet different computing and memory needs, making them versatile for tasks ranging from light web servers to intensive machine learning workloads. In SageMaker, the notebook instance itself is an EC2 instance configured to run Jupyter notebooks, enabling direct data processing.
 
-Using EC2 for data storage can be a quick solution for certain temporary needs. An EC2 instance provides a virtual server environment with its own local storage, which can be used to store and process data directly on the instance. This method is suitable for temporary or small datasets and for one-off experiments that don’t require long-term data storage or frequent access from multiple services. 
+#### When to store data directly on EC2
+Using an EC2 instance for data storage can be useful for temporary or small datasets, especially during processing within a Jupyter notebook. However, this storage is not persistent; if the instance is stopped or terminated, the data is erased. Therefore, EC2 is ideal for one-off experiments or intermediate steps in data processing.
 
-#### Limitations of EC2 storage:
+**Limitations of EC2 storage**
+
 - **Scalability**: EC2 storage is limited to the instance’s disk capacity, so it may not be ideal for very large datasets.
 - **Cost**: EC2 storage can be more costly for long-term use compared to S3.
 - **Data Persistence**: EC2 data may be lost if the instance is stopped or terminated, unless using Elastic Block Store (EBS) for persistent storage.
-
 
 ### What is an S3 bucket?
 Storing data in an **S3 bucket** is generally preferred for machine learning workflows on AWS, especially when using SageMaker. An S3 bucket is a container in Amazon S3 (Simple Storage Service) where you can store, organize, and manage data files. Buckets act as the top-level directory within S3 and can hold a virtually unlimited number of files and folders, making them ideal for storing large datasets, backups, logs, or any files needed for your project. You access objects in a bucket via a unique **S3 URI** (e.g., `s3://your-bucket-name/your-file.csv`), which you can use to reference data across various AWS services like EC2 and SageMaker.
@@ -41,7 +44,7 @@ Storing data in an **S3 bucket** is generally preferred for machine learning wor
 ::::::::::::::::::::::::::::::::::::: callout 
 
 ### Benefits of using S3 (recommended for SageMaker and ML workflows)
-The benefits will become more clear as you progress through these materials. However, to point out the most important benefits briefly...
+For flexibility, scalability, and cost efficiency, store data in S3 and load it into EC2 as needed. This setup allows:
 
 - **Scalability**: S3 handles large datasets efficiently, enabling storage beyond the limits of an EC2 instance's disk space.
 - **Cost efficiency**: S3 storage costs are generally lower than expanding EC2 disk volumes. You only pay for the storage you use.
@@ -52,15 +55,6 @@ The benefits will become more clear as you progress through these materials. How
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-
-## Recommended approach: Use S3 for data storage
-
-For flexibility, scalability, and cost efficiency, store data in S3 and load it into EC2 as needed. This setup allows:
-
-- Starting and stopping EC2 instances as needed
-- Scaling storage without reconfiguring the instance
-- Seamless integration across AWS services
-
 ### Summary steps to access S3 and upload your dataset
 
 1. Log in to AWS Console and navigate to S3.
@@ -68,17 +62,17 @@ For flexibility, scalability, and cost efficiency, store data in S3 and load it 
 3. Upload your dataset files.
 4. Use the object URL to reference your data in future experiments.
 
-### Detailed procedure:
+### Detailed procedure
 
-1. **Sign in to the AWS Management Console**:
+1. **Sign in to the AWS Management Console**
    - Log in to AWS Console using your credentials.
 
-2. **Navigate to S3**:
+2. **Navigate to S3**
    - Type "S3" in the search bar
    - Protip: select the star icon to save S3 as a bookmark in your AWS toolbar 
    - Select **S3 - Scalable Storage in the Cloud**
 
-4. **Create a new bucket**:
+4. **Create a new bucket**
    - Click **Create Bucket** and enter a unique name. **Hackathon participants**: Use the following convention for your bucket name: `TeamName-DatasetName` (e.g., `MyAwesomeTeam-TitanicData`).
    - **Region**: Leave as is (likely `us-east-1` (US East N. Virginia))
    - **Access Control**: Disable ACLs (recommended).
