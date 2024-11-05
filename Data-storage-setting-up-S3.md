@@ -61,6 +61,8 @@ For flexibility, scalability, and cost efficiency, store data in S3 and load it 
 
 ## Recommended approach: S3 buckets
 
+**Hackathon attendees**: When you setup your bucket for your actual project, note that you will only need one bucket for your whole team. Team members will have the proper permissions to access buckets on our shared account.
+
 ### Summary steps to access S3 and upload your dataset
 
 1. Log in to AWS Console and navigate to S3.
