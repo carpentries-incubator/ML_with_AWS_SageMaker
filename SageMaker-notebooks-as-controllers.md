@@ -40,14 +40,13 @@ In this setup, the notebook instance functions as a **controller** to manage mor
 ## Detailed procedure
 
 ### 1. Navigate to SageMaker
-- In the AWS Console, search for **SageMaker** and select **SageMaker - Build, Train, and Deploy Models**.
-- Click **Set up for single user** (if prompted) and wait for the SageMaker domain to spin up.
-- Under **S3 Resource Configurations**, select the S3 bucket you created earlier containing your dataset.
+- In the AWS Console, search for **SageMaker**. Protip: select the star icon to save SageMaker as a bookmark in your AWS toolbar 
+- Select **SageMaker - Build, Train, and Deploy Models**.
 
 ### 2. Create a new notebook instance
-- In the SageMaker menu, go to **Notebooks > Notebook instances**, then click **Create notebook instance**.
-- **Notebook name**: Enter a name (e.g., `Titanic-ML-Notebook`).
-- **Instance type**: Start with a small instance type, such as `ml.t3.medium`. You can scale up later as needed for intensive tasks, which will be managed by launching separate training jobs from this notebook.
+- In the SageMaker left-side menu, click on **Notebooks**, then click **Create notebook instance**.
+- **Notebook name**: Enter a name that reflects your notebook's project and purpose. Hackathon attendees should follow this convention: TeamName_YourName_Dataset_Purpose_Model(s) (e.g., `MyAwesomeTeam_ChrisEndemann_TitanicData_Train-Tune_XGBoost-NN`).
+- **Instance type**: Start with a small instance type, such as `ml.t3.medium`. You can scale up later as needed for intensive tasks, which will be managed by launching separate training jobs from this notebook. For guidance on common instances for ML procedures, refer to this [spreadsheet](https://docs.google.com/spreadsheets/d/1uPT4ZAYl_onIl7zIjv5oEAdwy4Hdn6eiA9wVfOBbHmY/edit?usp=sharing).
 - **Permissions and encryption**:
    - **IAM role**: Choose an existing role or create a new one. **Hackathon attendees should select 'ml-sagemaker-use'**. The role should include the `AmazonSageMakerFullAccess` policy to enable access to AWS services like S3.
    - **Root access**: Choose to enable or disable root access. If you’re comfortable with managing privileges, enabling root access allows for additional flexibility in package installation.
