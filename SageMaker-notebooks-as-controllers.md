@@ -60,12 +60,6 @@ Adding tags to your notebook instance helps track costs over time.
 ![Tag Setup Example](https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/images/notebook_tags.PNG)
 Click **Create notebook instance**. It may take a few minutes for the instance to start. Once its status is **InService**, you can open the notebook instance and start coding.
 
-::::::::::::::::::::::::::::::::::::: callout
-
-
-
-::::::::::::::::::::::::::::::::::::::::::::::::
-
 ### Managing training and tuning with the controller notebook
 
 After setting up the controller notebook, use the **SageMaker Python SDK** within the notebook to launch compute-heavy tasks on more powerful instances as needed. Examples of tasks to launch include:
