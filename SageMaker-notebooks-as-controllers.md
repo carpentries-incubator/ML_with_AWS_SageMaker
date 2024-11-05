@@ -48,18 +48,18 @@ In this setup, the notebook instance functions as a **controller** to manage mor
 - In the SageMaker left-side menu, click on **Notebooks**, then click **Create notebook instance**.
 - **Notebook name**: Enter a name that reflects your notebook's primary user (your name), dataset (titanic), purpose (train-tune), and models utilized (XGBoost-NN). **Hackathon attendees must use the following convention**: TeamName_YourName_Dataset_NotebookPurpose(s)_Model(s) (e.g., `MyAwesomeTeam_ChrisEndemann_Titanic_Train-Tune_XGBoost-NN`). 
 - **Instance type**: Start with a small instance type, such as `ml.t3.medium`. You can scale up later as needed for intensive tasks, which will be managed by launching separate training jobs from this notebook. For guidance on common instances for ML procedures, refer to this [spreadsheet](https://docs.google.com/spreadsheets/d/1uPT4ZAYl_onIl7zIjv5oEAdwy4Hdn6eiA9wVfOBbHmY/edit?usp=sharing).
+- **Platform identifier**: You can leave this as the default.
 - **Permissions and encryption**:
    - **IAM role**: Choose an existing role or create a new one. **Hackathon attendees should select 'ml-sagemaker-use'**. The role should include the `AmazonSageMakerFullAccess` policy to enable access to AWS services like S3.
-   - **Root access**: Choose to enable or disable root access. If you’re comfortable with managing privileges, enabling root access allows for additional flexibility in package installation.
-   - **Encryption key** (optional): Specify a KMS key for encrypting data at rest if needed. Otherwise, leave it blank.
+   - **Root access**: Enable root access to notebook.
+   - **Encryption key (optional)**: Specify a KMS key for encrypting data at rest if needed. Otherwise, leave it blank.
 - **Network (optional)**: Networking settings are optional. Configure them if you’re working within a specific VPC or need network customization.
-- **Git repositories configuration (optional)**: Connect a GitHub repository to automatically clone it into your notebook. Note that larger repositories consume more disk space, so manage storage to minimize costs. For this workshop, we'll run a clone command from jupyter to get our repo setup.
-- **Tags (required for hackathon attendees)**: Adding tags helps track and organize resources for billing and management. This is particularly useful when you need to break down expenses by project, task, or team. We recommend using tags like `Name`, `ProjectName`, and `Purpose` to help with future cost analysis.
-   - Please use the tags found in the below image to track your notebook's resource usage.
-Adding tags to your notebook instance helps track costs over time. 
+- **Git repositories configuration (optional)**: You don't need to complete this configuration. Instead, we'll run a clone command from our notebook later to get our repo setup. This approach is a common strategy (allowing some flexiblity in which repo you use for the notebook.
+- **Tags (required for hackathon attendees)**: Adding tags helps track and organize resources for billing and management. This is particularly useful when you need to break down expenses by project, task, or team. Please use the tags found in the below image to track your notebook's resource usage.
 
 ![Tag Setup Example](https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/images/notebook_tags.PNG)
-Click **Create notebook instance**. It may take a few minutes for the instance to start. Once its status is **InService**, you can open the notebook instance and start coding.
+
+- Click **Create notebook instance**. It may take a few minutes for the instance to start. Once its status is **InService**, you can open the notebook instance and start coding.
 
 ### Managing training and tuning with the controller notebook
 
