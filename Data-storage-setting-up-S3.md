@@ -86,7 +86,7 @@ For flexibility, scalability, and cost efficiency, store data in S3 and load it 
    - **Access Control**: Disable ACLs (recommended).
    - **Public Access**: Turn on "Block all public access".
    - **Versioning**: Disable unless you need multiple versions of objects.
-   - **Tags**: Include suggested tags for easier cost tracking. Adding tags to your S3 buckets is a great way to track project-specific costs and usage over time, especially as data and resources scale up. While tags are required for hackathon participants, we suggest that all users apply tags to easily identify and analyze costs later. **Hackathon participants**: Use the following convention for your bucket name
+   - **Tags**: Adding tags to your S3 buckets is a great way to track project-specific costs and usage over time, especially as data and resources scale up. While tags are required for hackathon participants, we suggest that all users apply tags to easily identify and analyze costs later. **Hackathon participants**: Use the following convention for your bucket name
       - **Name**: Your Name
       - **ProjectName**: Your team's name
       - **Purpose**: Dataset name (e.g., TitanicData if you're following along with this workshop)
