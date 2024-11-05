@@ -569,17 +569,19 @@ actions, ensuring they can use the bucket for reading, writing,
 deleting, and listing parts during multipart uploads. Attendees should
 apply this policy to their buckets to enable SageMaker to operate on
 stored data.</p>
+<div id="general-guidance-for-setting-up-permissions-outside-the-hackathon" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
 </div>
-<div class="section level3">
-<h3 id="general-guidance-for-setting-up-permissions-outside-the-hackathon">General guidance for setting up permissions outside the
-hackathon<a class="anchor" aria-label="anchor" href="#general-guidance-for-setting-up-permissions-outside-the-hackathon"></a></h3>
-<blockquote>
+<div id="general-guidance-for-setting-up-permissions-outside-the-hackathon" class="callout-inner">
+<h3 class="callout-title">General guidance for setting up permissions outside the hackathon</h3>
+<div class="callout-content">
 <p>For those not participating in the hackathon, it’s essential to
 create a similar IAM role (such as <code>ml-sagemaker-use</code>) with
 policies that provide controlled access to S3 resources, ensuring only
 the necessary actions are permitted for security and
 cost-efficiency.</p>
-<ol style="list-style-type: decimal"><li><p><strong>Create an IAM role</strong>: Set up an IAM role for
+<ol style="list-style-type: lower-alpha"><li><p><strong>Create an IAM role</strong>: Set up an IAM role for
 SageMaker to assume, with necessary S3 access permissions, such as
 <code>s3:GetObject</code>, <code>s3:PutObject</code>,
 <code>s3:DeleteObject</code>, and
@@ -597,7 +599,9 @@ services.</p></li>
 </ol><p>This setup ensures that your SageMaker operations will have the
 access needed without exposing the bucket to unnecessary permissions or
 external accounts.</p>
-</blockquote>
+</div>
+</div>
+</div>
 <ol start="7" style="list-style-type: decimal"><li>
 <strong>Upload files to the bucket</strong>:
 <ul><li>Navigate to the Objects tab of your bucket, then
@@ -611,31 +615,33 @@ complete.</li>
 <strong>Getting the S3 URI for your data</strong>:
 <ul><li>After uploading, click on a file to find its <strong>Object
 URI</strong> (e.g., <code>s3://titanic-dataset-test/test.csv</code>).
-Use this URI to load data into SageMaker or EC2.</li>
+We’ll use this URI to load data into SageMaker later.</li>
 </ul></li>
 </ol></div>
 </section><section><h2 class="section-heading" id="s3-bucket-costs">S3 bucket costs<a class="anchor" aria-label="anchor" href="#s3-bucket-costs"></a></h2>
 <hr class="half-width"><p>S3 bucket storage incurs costs based on data storage, data transfer,
 and request counts.</p>
 <div class="section level3">
-<h3 id="storage-costs">Storage costs:<a class="anchor" aria-label="anchor" href="#storage-costs"></a></h3>
-<ul><li>Storage is charged per GB per month.</li>
-<li>Example: Storing 10 GB costs approximately $0.23/month in S3
-Standard.</li>
-<li>
-<strong>Pricing Tiers</strong>: S3 offers multiple storage classes
-(Standard, Intelligent-Tiering, Glacier, etc.), with different costs
-based on access frequency and retrieval times.</li>
-<li>To calculate specific costs based on your needs, refer to AWS’s <a href="https://aws.amazon.com/s3/pricing/" class="external-link">S3 Pricing
+<h3 id="storage-costs">Storage costs<a class="anchor" aria-label="anchor" href="#storage-costs"></a></h3>
+<ul><li>Storage is charged per GB per month. Typical: Storing 10 GB costs
+approximately $0.23/month in S3 Standard (us-east-1).</li>
+<li>Pricing Tiers: S3 offers multiple storage classes (Standard,
+Intelligent-Tiering, Glacier, etc.), with different costs based on
+access frequency and retrieval times. Standard S3 fits most purposes. If
+you’re curious about other tiers, refer to AWS’s <a href="https://aws.amazon.com/s3/pricing/" class="external-link">S3 Pricing
 Information</a>.</li>
+<li>To calculate specific costs based on your needs, storage class, and
+region, refer to AWS’s <a href="https://aws.amazon.com/s3/pricing/" class="external-link">S3
+Pricing Information</a>.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="data-transfer-costs">Data transfer costs:<a class="anchor" aria-label="anchor" href="#data-transfer-costs"></a></h3>
+<h3 id="data-transfer-costs">Data transfer costs<a class="anchor" aria-label="anchor" href="#data-transfer-costs"></a></h3>
 <ul><li>
 <strong>Uploading</strong> data to S3 is free.</li>
 <li>
 <strong>Downloading</strong> data (out of S3) incurs charges
-(~$0.09/GB).</li>
+(~$0.09/GB). Be sure to take note of this fee, as it can add up fast for
+large datasets.</li>
 <li>
 <strong>In-region transfer</strong> (e.g., S3 to EC2) is free, while
 cross-region data transfer is charged (~$0.02/GB).</li>
@@ -645,12 +651,110 @@ pricing</a></strong></p>
 </blockquote>
 </div>
 <div class="section level3">
-<h3 id="request-costs">Request costs:<a class="anchor" aria-label="anchor" href="#request-costs"></a></h3>
-<ul><li>GET requests are $0.0004 per 1,000 requests.</li>
+<h3 id="request-costs">Request costs<a class="anchor" aria-label="anchor" href="#request-costs"></a></h3>
+<ul><li>GET requests are $0.0004 per 1,000 requests. In the context of
+Amazon S3, “GET” requests refer to the action of retrieving or
+downloading data from an S3 bucket. Each time a file or object is
+accessed in S3, it incurs a small cost per request. This means that if
+you have code that reads data from S3 frequently, such as loading
+datasets repeatedly, each read operation counts as a GET request.</li>
 </ul><blockquote>
 <p><strong><a href="https://aws.amazon.com/s3/pricing/" class="external-link">Request
 Pricing</a></strong></p>
 </blockquote>
+<div id="challenge-exercise-calculate-your-projects-data-costs" class="callout discussion">
+<div class="callout-square">
+<i class="callout-icon" data-feather="message-circle"></i>
+</div>
+<div id="challenge-exercise-calculate-your-projects-data-costs" class="callout-inner">
+<h3 class="callout-title">Challenge Exercise: Calculate Your Project’s Data Costs</h3>
+<div class="callout-content">
+<p>Estimate the total cost of storing your project data in S3 for one
+month, using the following dataset sizes and assuming:</p>
+<ul><li>Storage duration: 1 month</li>
+<li>Storage region: us-east-1</li>
+<li>Storage class: S3 Standard</li>
+<li>Data will be retrieved 100 times for model training
+(<code>GET</code> requests)</li>
+<li>Data will be deleted after the project concludes, incurring data
+retrieval and deletion costs</li>
+</ul><p>Dataset sizes to consider: - 1 GB - 10 GB - 100 GB - 1 TB</p>
+<p><strong>Hints</strong>: - S3 storage cost: $0.023 per GB per month
+(us-east-1) - Data transfer cost (retrieval/deletion): $0.09 per GB
+(us-east-1 out to internet) - <code>GET</code> requests cost: $0.0004
+per 1,000 requests (each model training will incur one <code>GET</code>
+request)</p>
+<p>Check the <a href="https://aws.amazon.com/s3/pricing/" class="external-link">AWS S3
+Pricing</a> page for more details.</p>
+</div>
+</div>
+</div>
+<div id="accordionSolution1" class="accordion challenge-accordion accordion-flush">
+<div class="accordion-item">
+<button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
+  <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
+</button>
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div class="accordion-body">
+<p>Using the S3 Standard rate in us-east-1:</p>
+<ol style="list-style-type: decimal"><li>
+<strong>1 GB</strong>:
+<ul><li>
+<strong>Storage</strong>: 1 GB * $0.023 = $0.023</li>
+<li>
+<strong>Retrieval/Deletion</strong>: 1 GB * $0.09 = $0.09<br></li>
+<li>
+<strong>GET Requests</strong>: 100 requests * $0.0004 per 1,000 =
+$0.00004<br></li>
+<li>
+<strong>Total Cost</strong>: <strong>$0.11304</strong>
+</li>
+</ul></li>
+<li>
+<strong>10 GB</strong>:
+<ul><li>
+<strong>Storage</strong>: 10 GB * $0.023 = $0.23</li>
+<li>
+<strong>Retrieval/Deletion</strong>: 10 GB * $0.09 = $0.90<br></li>
+<li>
+<strong>GET Requests</strong>: 100 requests * $0.0004 per 1,000 =
+$0.00004<br></li>
+<li>
+<strong>Total Cost</strong>: <strong>$1.13004</strong>
+</li>
+</ul></li>
+<li>
+<strong>100 GB</strong>:
+<ul><li>
+<strong>Storage</strong>: 100 GB * $0.023 = $2.30</li>
+<li>
+<strong>Retrieval/Deletion</strong>: 100 GB * $0.09 = $9.00<br></li>
+<li>
+<strong>GET Requests</strong>: 100 requests * $0.0004 per 1,000 =
+$0.00004<br></li>
+<li>
+<strong>Total Cost</strong>: <strong>$11.30004</strong>
+</li>
+</ul></li>
+<li>
+<strong>1 TB (1024 GB)</strong>:
+<ul><li>
+<strong>Storage</strong>: 1024 GB * $0.023 = $23.55</li>
+<li>
+<strong>Retrieval/Deletion</strong>: 1024 GB * $0.09 = $92.16<br></li>
+<li>
+<strong>GET Requests</strong>: 100 requests * $0.0004 per 1,000 =
+$0.00004<br></li>
+<li>
+<strong>Total Cost</strong>: <strong>$115.71004</strong>
+</li>
+</ul></li>
+</ol><p>These costs assume no additional request charges beyond those for
+retrieval, storage, and <code>GET</code> requests for training.</p>
+</div>
+</div>
+</div>
+</div>
 </div>
 </section><section><h2 class="section-heading" id="removing-unused-data">Removing unused data<a class="anchor" aria-label="anchor" href="#removing-unused-data"></a></h2>
 <hr class="half-width"><p>Choose one of these options:</p>
