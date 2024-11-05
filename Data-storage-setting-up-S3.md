@@ -32,11 +32,15 @@ An Amazon EC2 (Elastic Compute Cloud) instance is a virtual server environment w
 #### When to store data directly on EC2
 Using an EC2 instance for data storage can be useful for temporary or small datasets, especially during processing within a Jupyter notebook. However, this storage is not persistent; if the instance is stopped or terminated, the data is erased. Therefore, EC2 is ideal for one-off experiments or intermediate steps in data processing.
 
-**Limitations of EC2 storage**
+::::::::::::::::::::::::::::::::::::: callout 
+
+### Limitations of EC2 storage
 
 - **Scalability**: EC2 storage is limited to the instance’s disk capacity, so it may not be ideal for very large datasets.
 - **Cost**: EC2 storage can be more costly for long-term use compared to S3.
 - **Data Persistence**: EC2 data may be lost if the instance is stopped or terminated, unless using Elastic Block Store (EBS) for persistent storage.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
 
 ### What is an S3 bucket?
 Storing data in an **S3 bucket** is generally preferred for machine learning workflows on AWS, especially when using SageMaker. An S3 bucket is a container in Amazon S3 (Simple Storage Service) where you can store, organize, and manage data files. Buckets act as the top-level directory within S3 and can hold a virtually unlimited number of files and folders, making them ideal for storing large datasets, backups, logs, or any files needed for your project. You access objects in a bucket via a unique **S3 URI** (e.g., `s3://your-bucket-name/your-file.csv`), which you can use to reference data across various AWS services like EC2 and SageMaker.
@@ -54,6 +58,8 @@ For flexibility, scalability, and cost efficiency, store data in S3 and load it 
 - **Cost-effective data transfer**: When S3 and EC2 are in the same region, data transfer between them is free.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
+
+## Recommended approach: S3 buckets
 
 ### Summary steps to access S3 and upload your dataset
 
