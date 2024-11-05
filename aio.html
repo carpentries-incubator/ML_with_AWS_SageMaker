@@ -429,7 +429,7 @@ any links that you are not going to use.
  -->
 </div></section><section id="aio-Data-storage-setting-up-S3"><p>Content from <a href="Data-storage-setting-up-S3.html">Data Storage: Setting up S3</a></p>
 <hr>
-<p>Last updated on 2024-11-04 |
+<p>Last updated on 2024-11-05 |
 
         <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker/edit/main/episodes/Data-storage-setting-up-S3.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <div class="text-end">
@@ -480,19 +480,29 @@ restricted or sensitive data to AWS.</strong></p>
 </section><section><h2 class="section-heading" id="options-for-storage-ec2-instance-or-s3">Options for storage: EC2 Instance or S3<a class="anchor" aria-label="anchor" href="#options-for-storage-ec2-instance-or-s3"></a>
 </h2>
 <hr class="half-width">
-<div class="section level3">
-<h3 id="when-to-store-data-directly-on-ec2-e-g--in-jupyter-notebook-instance">When to store data directly on EC2 (e.g., in Jupyter Notebook
-instance)<a class="anchor" aria-label="anchor" href="#when-to-store-data-directly-on-ec2-e-g--in-jupyter-notebook-instance"></a>
-</h3>
-<p>Using EC2 for data storage can be a quick solution for certain
-temporary needs. An EC2 instance provides a virtual server environment
-with its own local storage, which can be used to store and process data
-directly on the instance. This method is suitable for temporary or small
-datasets and for one-off experiments that don’t require long-term data
-storage or frequent access from multiple services.</p>
+<p>When working with SageMaker and other AWS services, you have options
+for data storage, primarily <strong>EC2 instances</strong> or
+<strong>S3</strong>.</p>
 <div class="section level4">
-<h4 id="limitations-of-ec2-storage">Limitations of EC2 storage:<a class="anchor" aria-label="anchor" href="#limitations-of-ec2-storage"></a>
+<h4 id="what-is-an-ec2-instance">What is an EC2 instance?<a class="anchor" aria-label="anchor" href="#what-is-an-ec2-instance"></a>
 </h4>
+<p>An Amazon EC2 (Elastic Compute Cloud) instance is a virtual server
+environment where you can run applications, process data, and store data
+temporarily. EC2 instances come in various types and sizes to meet
+different computing and memory needs, making them versatile for tasks
+ranging from light web servers to intensive machine learning workloads.
+In SageMaker, the notebook instance itself is an EC2 instance configured
+to run Jupyter notebooks, enabling direct data processing.</p>
+</div>
+<div class="section level4">
+<h4 id="when-to-store-data-directly-on-ec2">When to store data directly on EC2<a class="anchor" aria-label="anchor" href="#when-to-store-data-directly-on-ec2"></a>
+</h4>
+<p>Using an EC2 instance for data storage can be useful for temporary or
+small datasets, especially during processing within a Jupyter notebook.
+However, this storage is not persistent; if the instance is stopped or
+terminated, the data is erased. Therefore, EC2 is ideal for one-off
+experiments or intermediate steps in data processing.</p>
+<p><strong>Limitations of EC2 storage</strong></p>
 <ul>
 <li>
 <strong>Scalability</strong>: EC2 storage is limited to the
@@ -506,7 +516,6 @@ use compared to S3.</li>
 instance is stopped or terminated, unless using Elastic Block Store
 (EBS) for persistent storage.</li>
 </ul>
-</div>
 </div>
 <div class="section level3">
 <h3 id="what-is-an-s3-bucket">What is an S3 bucket?<a class="anchor" aria-label="anchor" href="#what-is-an-s3-bucket"></a>
@@ -528,9 +537,8 @@ reference data across various AWS services like EC2 and SageMaker.</p>
 <div id="benefits-of-using-s3-recommended-for-sagemaker-and-ml-workflows" class="callout-inner">
 <h3 class="callout-title">Benefits of using S3 (recommended for SageMaker and ML workflows)</h3>
 <div class="callout-content">
-<p>The benefits will become more clear as you progress through these
-materials. However, to point out the most important benefits
-briefly…</p>
+<p>For flexibility, scalability, and cost efficiency, store data in S3
+and load it into EC2 as needed. This setup allows:</p>
 <ul>
 <li>
 <strong>Scalability</strong>: S3 handles large datasets efficiently,
@@ -557,16 +565,6 @@ in the same region, data transfer between them is free.</li>
 </div>
 </div>
 </div>
-</section><section><h2 class="section-heading" id="recommended-approach-use-s3-for-data-storage">Recommended approach: Use S3 for data storage<a class="anchor" aria-label="anchor" href="#recommended-approach-use-s3-for-data-storage"></a>
-</h2>
-<hr class="half-width">
-<p>For flexibility, scalability, and cost efficiency, store data in S3
-and load it into EC2 as needed. This setup allows:</p>
-<ul>
-<li>Starting and stopping EC2 instances as needed</li>
-<li>Scaling storage without reconfiguring the instance</li>
-<li>Seamless integration across AWS services</li>
-</ul>
 <div class="section level3">
 <h3 id="summary-steps-to-access-s3-and-upload-your-dataset">Summary steps to access S3 and upload your dataset<a class="anchor" aria-label="anchor" href="#summary-steps-to-access-s3-and-upload-your-dataset"></a>
 </h3>
@@ -579,17 +577,17 @@ experiments.</li>
 </ol>
 </div>
 <div class="section level3">
-<h3 id="detailed-procedure">Detailed procedure:<a class="anchor" aria-label="anchor" href="#detailed-procedure"></a>
+<h3 id="detailed-procedure">Detailed procedure<a class="anchor" aria-label="anchor" href="#detailed-procedure"></a>
 </h3>
 <ol style="list-style-type: decimal">
 <li>
-<p><strong>Sign in to the AWS Management Console</strong>:</p>
+<p><strong>Sign in to the AWS Management Console</strong></p>
 <ul>
 <li>Log in to AWS Console using your credentials.</li>
 </ul>
 </li>
 <li>
-<p><strong>Navigate to S3</strong>:</p>
+<p><strong>Navigate to S3</strong></p>
 <ul>
 <li>Type “S3” in the search bar</li>
 <li>Protip: select the star icon to save S3 as a bookmark in your AWS
@@ -599,7 +597,7 @@ toolbar</li>
 </ul>
 </li>
 <li>
-<p><strong>Create a new bucket</strong>:</p>
+<p><strong>Create a new bucket</strong></p>
 <ul>
 <li>Click <strong>Create Bucket</strong> and enter a unique name.
 <strong>Hackathon participants</strong>: Use the following convention
