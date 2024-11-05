@@ -1,5 +1,5 @@
 ---
-title: "Notebooks as controllers"
+title: "Notebooks as Controllers"
 teaching: 20
 exercises: 10
 ---
@@ -21,9 +21,9 @@ exercises: 10
 
 ## Step 2: Running Python code with SageMaker notebooks
 
-Amazon SageMaker provides a managed environment to simplify the process of building, training, and deploying machine learning models. By using SageMaker, you can focus on model development without needing to manually provision resources or set up environments. Here, we'll guide you through setting up a Jupyter notebook instance and loading data to get started with model training and tuning in future episodes using the Titanic dataset in S3.
+Amazon SageMaker provides a managed environment to simplify the process of building, training, and deploying machine learning models. By using SageMaker, you can focus on model development without needing to manually provision resources or set up environments. In this episode, we’ll guide you through setting up a **SageMaker notebook instance**—a Jupyter notebook hosted on AWS specifically for running SageMaker jobs. This setup allows you to efficiently manage and monitor machine learning workflows directly from a lightweight notebook controller. We’ll also cover loading data in preparation for model training and tuning in future episodes, using the Titanic dataset stored in S3.
 
-> **Note**: We’ll use SageMaker notebook instances directly (instead of SageMaker Studio) for easier instance monitoring across users and streamlined resource management.
+> **Note for hackathon attendees**: We’ll use SageMaker notebook instances (not the full SageMaker Studio environment) for simpler instance management and streamlined resource usage, ideal for collaborative projects or straightforward ML tasks.
 
 ## Using the notebook as a controller
 
