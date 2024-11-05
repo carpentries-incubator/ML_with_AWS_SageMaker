@@ -37,8 +37,6 @@ In this setup, the notebook instance functions as a **controller** to manage mor
 5. Use SageMaker SDK to launch training and tuning jobs on powerful instances (covered in next episodes).
 6. View and monitor training/tuning progress (covered in next episodes).
 
-> **Note**: In upcoming episodes, we’ll dive into training and tuning ML models with SageMaker from this notebook instance.
-
 ## Detailed procedure
 
 ### 1. Navigate to SageMaker
