@@ -73,12 +73,14 @@ For flexibility, scalability, and cost efficiency, store data in S3 and load it 
 1. **Sign in to the AWS Management Console**
    - Log in to AWS Console using your credentials.
 
+
 2. **Navigate to S3**
    - Type "S3" in the search bar
    - Protip: select the star icon to save S3 as a bookmark in your AWS toolbar 
    - Select **S3 - Scalable Storage in the Cloud**
 
-4. **Create a new bucket**
+
+3. **Create a new bucket**
    - Click **Create Bucket** and enter a unique name. **Hackathon participants**: Use the following convention for your bucket name: `TeamName-DatasetName` (e.g., `MyAwesomeTeam-TitanicData`).
    - **Region**: Leave as is (likely `us-east-1` (US East N. Virginia))
    - **Access Control**: Disable ACLs (recommended).
@@ -92,12 +94,13 @@ For flexibility, scalability, and cost efficiency, store data in S3 and load it 
 
    - Click **Create Bucket** at the bottom once everything above has been configured
 
-5. **Edit bucket policy**
+
+4. **Edit bucket policy**
 Once the bucket is created, you'll be brought to a page that shows all of your current buckets (and those on our shared account). We'll have to edit our bucket's policy to allow ourselves proper access to any files stored there (e.g., read from bucket, write to bucket). To set these permissions...
 
 	1. Click on the name of your bucket to bring up additional options and settings.
 	2. Click the Permissions tab
-	3. Scroll down to Bucket policy and click Edit. Paste the following policy, editing the bucket name "aws-wksp-test" to reflect your bucket's name.
+	3. Scroll down to Bucket policy and click Edit. Paste the following policy, **editing the bucket name "MyAwesomeTeam-TitanicData"** to reflect your bucket's name
 
 ```json
 {
@@ -115,8 +118,8 @@ Once the bucket is created, you'll be brought to a page that shows all of your c
 				"s3:ListMultipartUploadParts"
 			],
 			"Resource": [
-				"arn:aws:s3:::aws-wksp-test",
-				"arn:aws:s3:::aws-wksp-test/*"
+				"arn:aws:s3:::MyAwesomeTeam-TitanicData",
+				"arn:aws:s3:::MyAwesomeTeam-TitanicData/*"
 			]
 		}
 	]
@@ -140,11 +143,12 @@ This setup ensures that your SageMaker operations will have the access needed wi
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-7. **Upload files to the bucket**:
+5. **Upload files to the bucket**
    - Navigate to the Objects tab of your bucket, then **Upload**.
    - **Add Files** (e.g., `titanic_train.csv`, `titanic_test.csv`) and click **Upload** to complete.
 
-5. **Getting the S3 URI for your data**:
+
+6. **Take note of S3 URI for your data**
    - After uploading, click on a file to find its **Object URI** (e.g., `s3://titanic-dataset-test/test.csv`). We'll use this URI to load data into SageMaker later.
 
 ## S3 bucket costs
@@ -186,7 +190,7 @@ Dataset sizes to consider:
 - 100 GB
 - 1 TB
 
-**Hints**: 
+**Hints**
 - S3 storage cost: $0.023 per GB per month (us-east-1)
 - Data transfer cost (retrieval/deletion): $0.09 per GB (us-east-1 out to internet)
 - `GET` requests cost: $0.0004 per 1,000 requests (each model training will incur one `GET` request)
