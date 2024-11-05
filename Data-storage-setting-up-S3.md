@@ -125,45 +125,109 @@ Once the bucket is created, you'll be brought to a page that shows all of your c
 
 For hackathon attendees, this policy grants the `ml-sagemaker-use` IAM role access to specific S3 bucket actions, ensuring they can use the bucket for reading, writing, deleting, and listing parts during multipart uploads. Attendees should apply this policy to their buckets to enable SageMaker to operate on stored data.
 
+::::::::::::::::::::::::::::::::::::: callout 
+
 ### General guidance for setting up permissions outside the hackathon
-> For those not participating in the hackathon, it’s essential to create a similar IAM role (such as `ml-sagemaker-use`) with policies that provide controlled access to S3 resources, ensuring only the necessary actions are permitted for security and cost-efficiency.
-> 
-> 1. **Create an IAM role**: Set up an IAM role for SageMaker to assume, with necessary S3 access permissions, such as `s3:GetObject`, `s3:PutObject`, `s3:DeleteObject`, and `s3:ListMultipartUploadParts`, as shown in the policy above.
-> 
-> 2. **Attach permissions to S3 buckets**: Attach bucket policies that specify this role as the principal, as in the hackathon example.
-> 
-> 3. **More information**: For a detailed guide on setting up roles and policies for SageMaker, refer to the [AWS SageMaker documentation on IAM roles and policies](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html). This resource explains role creation, permission setups, and policy best practices tailored for SageMaker’s operations with S3 and other AWS services.
-> 
-> This setup ensures that your SageMaker operations will have the access needed without exposing the bucket to unnecessary permissions or external accounts.
+For those not participating in the hackathon, it’s essential to create a similar IAM role (such as `ml-sagemaker-use`) with policies that provide controlled access to S3 resources, ensuring only the necessary actions are permitted for security and cost-efficiency.
+ 
+a. **Create an IAM role**: Set up an IAM role for SageMaker to assume, with necessary S3 access permissions, such as `s3:GetObject`, `s3:PutObject`, `s3:DeleteObject`, and `s3:ListMultipartUploadParts`, as shown in the policy above.
+ 
+b. **Attach permissions to S3 buckets**: Attach bucket policies that specify this role as the principal, as in the hackathon example.
+ 
+c. **More information**: For a detailed guide on setting up roles and policies for SageMaker, refer to the [AWS SageMaker documentation on IAM roles and policies](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html). This resource explains role creation, permission setups, and policy best practices tailored for SageMaker’s operations with S3 and other AWS services.
+ 
+This setup ensures that your SageMaker operations will have the access needed without exposing the bucket to unnecessary permissions or external accounts.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
 
 7. **Upload files to the bucket**:
    - Navigate to the Objects tab of your bucket, then **Upload**.
    - **Add Files** (e.g., `titanic_train.csv`, `titanic_test.csv`) and click **Upload** to complete.
 
 5. **Getting the S3 URI for your data**:
-   - After uploading, click on a file to find its **Object URI** (e.g., `s3://titanic-dataset-test/test.csv`). Use this URI to load data into SageMaker or EC2.
+   - After uploading, click on a file to find its **Object URI** (e.g., `s3://titanic-dataset-test/test.csv`). We'll use this URI to load data into SageMaker later.
 
 ## S3 bucket costs
 
 S3 bucket storage incurs costs based on data storage, data transfer, and request counts.
 
-### Storage costs:
-- Storage is charged per GB per month.
-- Example: Storing 10 GB costs approximately $0.23/month in S3 Standard.
-- **Pricing Tiers**: S3 offers multiple storage classes (Standard, Intelligent-Tiering, Glacier, etc.), with different costs based on access frequency and retrieval times.
-- To calculate specific costs based on your needs, refer to AWS's [S3 Pricing Information](https://aws.amazon.com/s3/pricing/).
+### Storage costs
+- Storage is charged per GB per month. Typical: Storing 10 GB costs approximately $0.23/month in S3 Standard (us-east-1).
+- Pricing Tiers: S3 offers multiple storage classes (Standard, Intelligent-Tiering, Glacier, etc.), with different costs based on access frequency and retrieval times. Standard S3 fits most purposes. If you're curious about other tiers, refer to AWS's [S3 Pricing Information](https://aws.amazon.com/s3/pricing/).
+- To calculate specific costs based on your needs, storage class, and region, refer to AWS's [S3 Pricing Information](https://aws.amazon.com/s3/pricing/).
 
-### Data transfer costs:
+### Data transfer costs
 - **Uploading** data to S3 is free.
-- **Downloading** data (out of S3) incurs charges (~$0.09/GB).
+- **Downloading** data (out of S3) incurs charges (~$0.09/GB). Be sure to take note of this fee, as it can add up fast for large datasets.
 - **In-region transfer** (e.g., S3 to EC2) is free, while cross-region data transfer is charged (~$0.02/GB).
 
 > **[Data transfer pricing](https://aws.amazon.com/s3/pricing/)**
 
-### Request costs:
-- GET requests are $0.0004 per 1,000 requests.
+### Request costs
+- GET requests are $0.0004 per 1,000 requests. In the context of Amazon S3, "GET" requests refer to the action of retrieving or downloading data from an S3 bucket. Each time a file or object is accessed in S3, it incurs a small cost per request. This means that if you have code that reads data from S3 frequently, such as loading datasets repeatedly, each read operation counts as a GET request.
 
 > **[Request Pricing](https://aws.amazon.com/s3/pricing/)**
+
+::::::::::::::::::::::::::::::::::::: challenge 
+
+### Challenge Exercise: Calculate Your Project's Data Costs
+
+Estimate the total cost of storing your project data in S3 for one month, using the following dataset sizes and assuming:
+
+- Storage duration: 1 month
+- Storage region: us-east-1
+- Storage class: S3 Standard
+- Data will be retrieved 100 times for model training (`GET` requests)
+- Data will be deleted after the project concludes, incurring data retrieval and deletion costs
+
+Dataset sizes to consider:
+- 1 GB
+- 10 GB
+- 100 GB
+- 1 TB
+
+**Hints**: 
+- S3 storage cost: $0.023 per GB per month (us-east-1)
+- Data transfer cost (retrieval/deletion): $0.09 per GB (us-east-1 out to internet)
+- `GET` requests cost: $0.0004 per 1,000 requests (each model training will incur one `GET` request)
+
+Check the [AWS S3 Pricing](https://aws.amazon.com/s3/pricing/) page for more details.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+:::::::::::::::::::::::::::::::::::: solution
+
+### Solution
+
+Using the S3 Standard rate in us-east-1:
+
+1. **1 GB**:  
+   - **Storage**: 1 GB * $0.023 = $0.023
+   - **Retrieval/Deletion**: 1 GB * $0.09 = $0.09  
+   - **GET Requests**: 100 requests * $0.0004 per 1,000 = $0.00004  
+   - **Total Cost**: **$0.11304**
+
+2. **10 GB**:  
+   - **Storage**: 10 GB * $0.023 = $0.23
+   - **Retrieval/Deletion**: 10 GB * $0.09 = $0.90  
+   - **GET Requests**: 100 requests * $0.0004 per 1,000 = $0.00004  
+   - **Total Cost**: **$1.13004**
+
+3. **100 GB**:  
+   - **Storage**: 100 GB * $0.023 = $2.30
+   - **Retrieval/Deletion**: 100 GB * $0.09 = $9.00  
+   - **GET Requests**: 100 requests * $0.0004 per 1,000 = $0.00004  
+   - **Total Cost**: **$11.30004**
+
+4. **1 TB (1024 GB)**:  
+   - **Storage**: 1024 GB * $0.023 = $23.55
+   - **Retrieval/Deletion**: 1024 GB * $0.09 = $92.16  
+   - **GET Requests**: 100 requests * $0.0004 per 1,000 = $0.00004  
+   - **Total Cost**: **$115.71004**
+
+These costs assume no additional request charges beyond those for retrieval, storage, and `GET` requests for training.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## Removing unused data
 
