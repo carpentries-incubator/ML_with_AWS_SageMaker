@@ -173,7 +173,7 @@ print(f"Total size of bucket '{bucket_name}': {total_size_mb:.2f} MB")
 ### Using helper functions from lesson repo
 We have added code to calculate bucket size to a helper function called `get_s3_bucket_size(bucket_name)` for your convenience. There are also some other helper functions in that repo to assist you with common AWS/SageMaker workflows. To clone the repo to our Jupyter notebook, use the following code.
 
-**Note**: Make sure you have already forked the lesson repo as described on the [setup page](). Replace "username" below with your GitHub username.
+**Note**: Make sure you have already forked the lesson repo as described on the [setup page](https://uw-madison-datascience.github.io/ML_with_Amazon_SageMaker/#workshop-repository-setup). Replace "username" below with your GitHub username.
 
 ```python
 !git clone https://github.com/username/ML_with_Amazon_SageMaker.git # downloads ML_with_Amazon_SageMaker folder/repo (refresh file explorer to see)
