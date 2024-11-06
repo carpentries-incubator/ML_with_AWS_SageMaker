@@ -25,16 +25,6 @@ exercises: 10
 #### Open notebook
 Once your newly created notebook shows as `InService`, open the notebook in Jupyter Lab. From there, we will select the pre-built pytorch environment (conda_pytorch3_p310). This will save us the trouble of having to install pytorch on this instance / notebook evnironment later. You can name your notebook something along the lines of, `Interacting-with-S3.ipynb`.
 
-#### Directory setup
-Let's make sure we're starting in the root directory of this instance, so that we all have our AWS_helpers.py file located in the same path (/test_AWS/scripts/AWS_helpers.py)
-
-
-```python
-%cd /home/ec2-user/SageMaker/
-```
-
-    /home/ec2-user/SageMaker
-
 #### Set up AWS environment
 To begin each SageMaker notebook, it's important to set up an AWS environment that will allow seamless access to the necessary cloud resources. Here's what we'll do to get started:
 
@@ -171,18 +161,28 @@ print(f"Total size of bucket '{bucket_name}': {total_size_mb:.2f} MB")
 
 
 ### Using helper functions from lesson repo
-We have added code to calculate bucket size to a helper function called `get_s3_bucket_size(bucket_name)` for your convenience. There are also some other helper functions in that repo to assist you with common AWS/SageMaker workflows. To clone the repo to our Jupyter notebook, use the following code.
+We have added code to calculate bucket size to a helper function called `get_s3_bucket_size(bucket_name)` for your convenience. There are also some other helper functions in that repo to assist you with common AWS/SageMaker workflows. We'll show you how to clone this code into your notebook environment.
 
 **Note**: Make sure you have already forked the lesson repo as described on the [setup page](https://uw-madison-datascience.github.io/ML_with_Amazon_SageMaker/#workshop-repository-setup). Replace "username" below with your GitHub username.
 
+#### Directory setup
+Let's make sure we're starting in the root directory of this instance, so that we all have our AWS_helpers.py file located in the same path (/test_AWS/scripts/AWS_helpers.py)
+
 ```python
-!git clone https://github.com/username/ML_with_Amazon_SageMaker.git # downloads ML_with_Amazon_SageMaker folder/repo (refresh file explorer to see)
+%cd /home/ec2-user/SageMaker/
 ```
 
-Our AWS_helpers.py file can be found in `ML_with_Amazon_SageMaker/scripts/AWS_helpers.py`. With this file downloaded, you can call this function via...
+    /home/ec2-user/SageMaker
+
+To clone the repo to our Jupyter notebook, use the following code.
+```python
+!git clone https://github.com/username/AWS_helpers.git # downloads AWS_helpers folder/repo (refresh file explorer to see)
+```
+
+Our AWS_helpers.py file can be found in `AWS_helpers/helpers.py`. With this file downloaded, you can call this function via...
 
 ```python
-import ML_with_Amazon_SageMaker.scripts.AWS_helpers as helpers
+import AWS_helpers.helpers as helpers
 helpers.get_s3_bucket_size(bucket_name)
 ```
 
