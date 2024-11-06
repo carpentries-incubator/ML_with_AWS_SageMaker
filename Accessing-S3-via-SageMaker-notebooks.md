@@ -286,8 +286,7 @@ Alternatively, we can substitute this for a helper function call as well.
 file_list = helpers.list_S3_objects(bucket_name)
 file_list
 ```
-
-   ['results/results.txt', 'titanic_test.csv', 'titanic_train.csv']
+['results/results.txt', 'titanic_test.csv', 'titanic_train.csv']
 
 
 :::::::::::::::::::::::::::::::::::::: keypoints 
