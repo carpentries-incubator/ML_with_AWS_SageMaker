@@ -246,14 +246,14 @@ For detailed and up-to-date information on AWS S3 pricing, please refer to the [
 
 
 ## 4. Pushing new files from notebook environment to bucket
-As your analysis generates new files, you can upload to your bucket as demonstrated below. For this demo, you can create a blank `results.txt` file to upload to your bucket.
+As your analysis generates new files, you can upload to your bucket as demonstrated below. For this demo, you can create a blank `results.txt` file to upload to your bucket. To do so, go to **File** -> **New** -> **Text file**, and save it out as `results.txt`.
 
 
 ```python
 # Define the S3 bucket name and the file paths
-train_file_path = "results.txt"
+train_file_path = "results.txt" # assuming your file is in root directory of jupyter notebook (check file explorer tab)
 
-# Upload the training file
+# Upload the training file to a new folder called "results". You can also just place it in the bucket's root directory if you prefer (remove results/ in code below).
 s3.upload_file(train_file_path, bucket_name, "results/results.txt")
 
 print("Files uploaded successfully.")
@@ -262,6 +262,27 @@ print("Files uploaded successfully.")
 
     Files uploaded successfully.
 
+After uploading, we can view the objects/files available on our bucket using...
+
+```python
+# List and print all objects in the bucket
+response = s3.list_objects_v2(Bucket=bucket_name)
+
+# Check if there are objects in the bucket
+if 'Contents' in response:
+    for obj in response['Contents']:
+        print(obj['Key'])  # Print the object's key (its path in the bucket)
+else:
+    print("The bucket is empty or does not exist.")
+
+```
+
+Alternatively, we can substitute this for a helper function call as well.
+
+```python
+file_list = helpers.list_S3_objects(bucket_name)
+file_list
+```
 
 :::::::::::::::::::::::::::::::::::::: keypoints 
 
