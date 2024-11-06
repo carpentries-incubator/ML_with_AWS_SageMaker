@@ -124,9 +124,46 @@ helpers.convert_files(direction="notebook_to_python")
 
 ```
 
-Once converted, we can move our .py files to the AWS_helpers folder using the file explorer panel in Jupyter Lab.
+**Once converted, we can move our .py files to the AWS_helpers folder using the file explorer panel in Jupyter Lab.**
 
-## Step 4. Adding .ipynb to gitigore
+## Step 4. Add and commit .py files
+
+1. Check status of repo. Make sure you're in the repo folder before running the next step.
+
+```python
+!git status
+```
+
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	Interacting-with-S3.py
+	Interacting-with-git.py
+
+nothing added to commit but untracked files present (use "git add" to track)
+
+2. Add and commit changes
+
+```python
+!git add . # you may also add files one at a time, for further specificity over the associated commit message
+!git commit -m "Updates from Jupyter notebooks" # in general, your commit message should be more specific!
+
+```
+
+3. Check status
+
+```python
+!git status
+```
+    On branch main
+    Your branch is ahead of 'origin/main' by 1 commit.
+      (use "git push" to publish your local commits)
+    
+    nothing to commit, working tree clean
+
+## Step 5. Adding .ipynb to gitigore
 
 Adding `.ipynb` files to `.gitignore` is a good practice if you plan to only commit `.py` scripts. This will prevent accidental commits of Jupyter Notebook files across all subfolders in the repository.
 
@@ -140,121 +177,104 @@ Here’s how to add `.ipynb` files to `.gitignore` to ignore them project-wide:
     ```
 
 2. **Create the `.gitignore` file**:
+    This file will be hidden in Jupyter (since it starts with "."), but you can verify it exists using `ls`.
+    ```python
+    !touch .gitignore
+    !ls -a
+    ```
+
+3. **Add `.ipynb` files to `.gitignore`**:
+
+    You can add this line using a command within your notebook:
+   
+    ```python
+    with open(".gitignore", "a") as gitignore:
+        gitignore.write("\n# Ignore all Jupyter Notebook files\n*.ipynb\n")
+    ```
     
-   - If you don’t already have a `.gitignore` file in the repository root (use '!ls -a' to check, you can create one by running:
-   
-     ```python
-     !touch .gitignore
-     ```
+    View file contents
+    ```python
+    !cat .gitignore
+    ```
 
-2. **Add `.ipynb` files to `.gitignore`**:
+4. **Ignore other common temp files**
+    While we're at it, let's ignore other common files that can clutter repos, such as cache folders and temporary files.
+    ```python
+    with open(".gitignore", "a") as gitignore:
+        gitignore.write("\n# Ignore cache and temp files\n__pycache__/\n*.tmp\n*.log\n")
+    ```
 
-   - Append the following line to your `.gitignore` file to ignore all `.ipynb` files in all folders:
+    View file contents
+    ```python
+    !cat .gitignore
+    ```
+    
+5. **Add and commit the `.gitignore` file**:
 
-     ```plaintext
-     *.ipynb # Ignore all Jupyter Notebook files
-     ```
-
-   - You can add this line using a command within your notebook:
-   
-     ```python
-     with open(".gitignore", "a") as gitignore:
-         gitignore.write("\n# Ignore all Jupyter Notebook files\n*.ipynb\n")
-     ```
-
-3. **Verify and commit the `.gitignore` File**:
-
-   - Add and commit the updated `.gitignore` file to ensure it’s applied across the repository.
-
-     ```python
-     !git add .gitignore
-     !git commit -m "Add .ipynb files to .gitignore to ignore notebooks"
-     !git push origin main
-     ```
+    Add and commit the updated `.gitignore` file to ensure it’s applied across the repository.
+    ```python
+    !git add .gitignore
+    !git commit -m "Add .ipynb files to .gitignore to ignore notebooks"
+    ```
 
 This setup will:
 - Prevent all `.ipynb` files from being tracked by Git.
 - Keep your repository cleaner, containing only `.py` scripts for easier version control and reduced repository size. 
 
-Now any new or existing notebooks won’t show up as untracked files in Git, ensuring your commits stay focused on the converted `.py` files.
+## Step 6. Merging local changes with remote/GitHub
+Our local changes have now been committed, and we can begin the process of mergining with the remoate main branch. Before we try to push our changes, it's good practice to first to a pull. This is critical when working on a collaborate repo with multiple users, so that you don't miss any updates from other team members.
 
 
+### 1. Pull the latest changes from the main branch
+There are a few different options for pulling the remote code into your local version. The best pull strategy depends on your workflow and the history structure you want to maintain. Here’s a breakdown to help you decide:
 
+* Merge (pull.rebase false): Combines the remote changes into your local branch as a merge commit.
+   - **Use if**: You’re okay with having merge commits in your history, which indicate where you pulled in remote changes. This is the default and is usually the easiest for team collaborations, especially if conflicts arise.
 
-#### Navigate to the repository directory (adjust the path if needed):
+* Rebase (pull.rebase true): Replays your local changes on top of the updated main branch, resulting in a linear history.
+    - **Use if**: You prefer a clean, linear history without merge commits. Rebase is useful if you like to keep your branch history as if all changes happened sequentially.
 
-```python
-%cd AWS_helpers/
-!pwd
-```
-    /home/ec2-user/SageMaker/AWS_helpers
+* Fast-forward only (pull.ff only): Only pulls if the local branch can fast-forward to the remote without diverging (no new commits locally).
+    - **Use if**: You only want to pull updates if no additional commits have been made locally. This can be helpful to avoid unintended merges when your branch hasn’t diverged.
 
-Check status of repo. If you're following along with these materials, you shouldn't see any files ready for adding/committing since your ipynb files should be located one level above AWS_helpers (in /home/ec2-user/SageMaker/AWS_helpers
-
-```python
-!git status
-```
-
-2. **Add and Commit Changes**:
-
-
-
-
-```python
-!git add . # you may also add files one at a time, for further specificity over the associated commit message
-!git commit -m "Updates from Jupyter notebooks" # in general, your commit message should be more specific!
-
-```
-
-3. **Pull the Latest Changes from the Main Branch**: Pull the latest changes from the remote main branch to ensure your local branch is up-to-date.
-
-    Recommended: Set the Pull Strategy for this Repository (Merge by Default)
-
-    All options:
-
-    * Merge (pull.rebase false): Combines the remote changes into your local branch as a merge commit.
-    * Rebase (pull.rebase true): Replays your local changes on top of the updated main branch, resulting in a linear history.
-    * Fast-forward only (pull.ff only): Only pulls if the local branch can fast-forward to the remote without diverging (no new commits locally).
-
+#### Recommended for Most Users
+If you’re collaborating and want simplicity, **merge (pull.rebase false)** is often the most practical option. This will ensure you get remote changes with a merge commit that captures the history of integration points. For those who prefer a more streamlined history and are comfortable with Git, **rebase (pull.rebase true)** can be ideal but may require more careful conflict handling.
 
 ```python
 !git config pull.rebase false # Combines the remote changes into your local branch as a merge commit.
-
 !git pull origin main
 
 ```
+    From https://github.com/qualiaMachine/AWS_helpers
+     * branch            main       -> FETCH_HEAD
+    Already up to date.
 
 If you get merge conflicts, be sure to resolve those before moving forward (e.g., use git checkout -> add -> commit). You can skip the below code if you don't have any conflicts. 
 
-
 ```python
 # Keep your local changes in one conflicting file
-# !git checkout --ours train_nn.py
+# !git checkout --ours Interacting-with-git.py
 
 # Keep remote version for the other conflicting file
-# !git checkout --theirs train_xgboost.py
+# !git checkout --theirs Interacting-with-git.py
 
 # # Stage the files to mark the conflicts as resolved
-# !git add train_nn.py
-# !git add train_xgboost.py
+# !git add Interacting-with-git.py
 
 # # Commit the merge result
 # !git commit -m "Resolved merge conflicts by keeping local changes"
 ```
 
-4. **Push Changes and Enter Credentials**:
-
+### 2. Push changes using PAT creditials 
 
 ```python
 # Push with embedded credentials from getpass (avoids interactive prompt)
-github_url = 'github.com/username/ML_with_Amazon_SageMaker.git' # replace username with your own. THe full address for your fork can be found under Code -> Clone -> HTTPS (remote the https:// before the rest of the address)
+github_url = 'github.com/username/AWS_helpers.git' # replace username with your own. THe full address for your fork can be found under Code -> Clone -> HTTPS (remote the https:// before the rest of the address)
 !git push https://{username}:{token}@{github_url} main
 ```
 
-    fatal: unable to access 'https://{github_url}/': URL rejected: Bad hostname
 
-
-## Step 5: Pulling .py files and converting back to notebook format
+## Step 7: Pulling .py files and converting back to notebook format
 
 Let's assume you've taken a short break from your work, and you would like to start again by pulling in your code repo. If you'd like to work with notebook files again, you can again use jupytext to convert your `.py` files back to `.ipynb`
 
