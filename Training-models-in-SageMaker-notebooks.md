@@ -72,13 +72,10 @@ test_filename = 'titanic_test.csv'
 
 
 ### 3. Download copy into notebook environment
-If you have larger dataset (> 1GB), you may want to skip this step and always read directly into memory. However, for smaller datasets, it can be convenient to have a "local" copy (i.e., one that you store in your notebook's instance).
-
-Download data from S3 to notebook environment. You may need to hit refresh on the file explorer panel to the left to see this file. If you get any permission issues...
+It can be convenient to have a "local" copy (i.e., one that you store in your notebook's instance). Run the next code chunk to download data from S3 to notebook environment. You may need to hit refresh on the file explorer panel to the left to see this file. If you get any permission issues...
 
 * check that you have selected the appropriate policy for this notebook
 * check that your bucket has the appropriate policy permissions
-
 
 ```python
 # Define the S3 bucket and file location
@@ -109,12 +106,8 @@ print("File downloaded:", local_file_path)
 
     File downloaded: ./titanic_test.csv
 
-
-### Get code (train and tune scripts) from git repo. 
-We recommend you DO NOT put data inside your code repo, as version tracking for data files takes up unnecessary storage in this notebook instance. Instead, store your data in a separte S3 bucket. We have a data folder in our repo only as a means to initially hand you the data for this tutorial. 
-
-Check to make sure we're in our EC2 root folder (`/home/ec2-user/SageMaker`).
-
+### Get code from git repo (skip if completed already from earlier episodes)
+If you didn't complete the earlier episodes, you'll need to clone our code repo before moving forward. Check to make sure we're in our EC2 root folder (`/home/ec2-user/SageMaker`).
 
 ```python
 !pwd
@@ -128,32 +121,28 @@ If not, change directory using `%cd `.
 
 ```python
 %cd /home/ec2-user/SageMaker/
-!pwd
 ```
 
     /home/ec2-user/SageMaker
-    /home/ec2-user/SageMaker
-
 
 
 ```python
-!git clone https://github.com/UW-Madison-DataScience/test_AWS.git
+!git clone https://github.com/username/AWS_helpers.git
 ```
 
     fatal: destination path 'test_AWS' already exists and is not an empty directory.
 
 
 ### Testing train.py on this notebook's instance
-Notebook instances in SageMaker allow us allocate more powerful instances (or many instances) to machine learning jobs that require extra power, GPUs, or benefit from parallelization. Before we try exploiting this extra power, it is essential that we test our code thoroughly. We don't want to waste unnecessary compute cycles and resources on jobs that produce bugs instead of insights. If you need to, you can use a subset of your data to run quicker tests. You can also select a slightly better instance resource if your current instance insn't meeting your needs. See the [Instances for ML spreadsheet](https://docs.google.com/spreadsheets/d/1uPT4ZAYl_onIl7zIjv5oEAdwy4Hdn6eiA9wVfOBbHmY/edit?usp=sharing) for guidance. 
+In this next section, we will learn how to take a model training script, and deploy it to more powerful instances (or many instances). This is helpful for machine learning jobs that require extra power, GPUs, or benefit from parallelization. Before we try exploiting this extra power, it is essential that we test our code thoroughly. We don't want to waste unnecessary compute cycles and resources on jobs that produce bugs instead of insights. If you need to, you can use a subset of your data to run quicker tests. You can also select a slightly better instance resource if your current instance insn't meeting your needs. See the [Instances for ML spreadsheet](https://docs.google.com/spreadsheets/d/1uPT4ZAYl_onIl7zIjv5oEAdwy4Hdn6eiA9wVfOBbHmY/edit?usp=sharing) for guidance. 
 
 #### Logging runtime & instance info
 To compare our local runtime with future experiments, we'll need to know what instance was used, as this will greatly impact runtime in many cases. We can extract the instance name for this notebook using...
 
-
 ```python
 # Replace with your notebook instance name.
-# This does NOT refer to specific ipynb fils, but to the notebook instance opened from SageMaker.
-notebook_instance_name = 'Titanic-ML-Notebook'
+# This does NOT refer to specific ipynb files, but to the SageMaker notebook instance.
+notebook_instance_name = 'MyAwesomeTeam-ChrisEndemann-Titanic-Train-Tune-Xgboost-NN'
 
 # Initialize SageMaker client
 sagemaker_client = boto3.client('sagemaker')
@@ -177,16 +166,11 @@ You can also use the `get_notebook_instance_info()` function found in `AWS_helpe
 
 
 ```python
-from test_AWS.scripts.AWS_helpers import get_notebook_instance_info
-get_notebook_instance_info(notebook_instance_name)
+import AWS_helpers.helpers as helpers
+helpers.get_notebook_instance_info(notebook_instance_name)
 ```
 
-
-
-
     {'Status': 'InService', 'InstanceType': 'ml.t3.medium'}
-
-
 
 Test train.py on this notebook's instance (or when possible, on your own machine) before doing anything more complicated (e.g., hyperparameter tuning on multiple instances)
 
