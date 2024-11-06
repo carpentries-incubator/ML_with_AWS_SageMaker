@@ -46,7 +46,7 @@ In this setup, the notebook instance functions as a **controller** to manage mor
 
 ### 2. Create a new notebook instance
 - In the SageMaker left-side menu, click on **Notebooks**, then click **Create notebook instance**.
-- **Notebook name**: Enter a name that reflects your notebook's primary user (your name), dataset (titanic), purpose (train-tune), and models utilized (XGBoost-NN). **Hackathon attendees must use the following convention**: TeamName_YourName_Dataset_NotebookPurpose(s)_Model(s) (e.g., `MyAwesomeTeam_ChrisEndemann_Titanic_Train-Tune_XGBoost-NN`). 
+- **Notebook name**: Enter a name that reflects your notebook's primary user (your name), dataset (titanic), purpose (train-tune), and models utilized (XGBoost-NN). **Hackathon attendees must use the following convention**: TeamName-YourName-Dataset-NotebookPurpose(s)-Model(s) (e.g., `MyAwesomeTeam-ChrisEndemann-Titanic-Train-Tune-XGBoost-NN`). 
 - **Instance type**: Start with a small instance type, such as `ml.t3.medium`. You can scale up later as needed for intensive tasks, which will be managed by launching separate training jobs from this notebook. For guidance on common instances for ML procedures, refer to this [spreadsheet](https://docs.google.com/spreadsheets/d/1uPT4ZAYl_onIl7zIjv5oEAdwy4Hdn6eiA9wVfOBbHmY/edit?usp=sharing).
 - **Platform identifier**: You can leave this as the default.
 - **Permissions and encryption**:
