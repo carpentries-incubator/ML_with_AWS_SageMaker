@@ -198,12 +198,14 @@ Here’s how to add `.ipynb` files to `.gitignore` to ignore them project-wide:
 
 4. **Ignore other common temp files**
     While we're at it, let's ignore other common files that can clutter repos, such as cache folders and temporary files.
+
     ```python
     with open(".gitignore", "a") as gitignore:
         gitignore.write("\n# Ignore cache and temp files\n__pycache__/\n*.tmp\n*.log\n")
     ```
 
     View file contents
+
     ```python
     !cat .gitignore
     ```
@@ -211,12 +213,14 @@ Here’s how to add `.ipynb` files to `.gitignore` to ignore them project-wide:
 5. **Add and commit the `.gitignore` file**:
 
     Add and commit the updated `.gitignore` file to ensure it’s applied across the repository.
+
     ```python
     !git add .gitignore
     !git commit -m "Add .ipynb files to .gitignore to ignore notebooks"
     ```
 
 This setup will:
+
 - Prevent all `.ipynb` files from being tracked by Git.
 - Keep your repository cleaner, containing only `.py` scripts for easier version control and reduced repository size. 
 
@@ -286,6 +290,7 @@ After pushing, you should navigate back to your fork on GitHub to verify everyth
 Let's assume you've taken a short break from your work, and others on your team have made updates to your .py files on the remote main branch. If you'd like to work with notebook files again, you can again use jupytext to convert your `.py` files back to `.ipynb`. 
 
 1. First, pull any updates from the remote main branch.
+
 ```python
 !git config pull.rebase false # Combines the remote changes into your local branch as a merge commit.
 !git pull origin main
@@ -304,7 +309,6 @@ To convert all of your .py files to notebooks, you can use our helper function a
 
 ```python
 helpers.convert_files(direction="python_to_notebook")
-
 ```
 
 
