@@ -172,16 +172,21 @@ helpers.get_notebook_instance_info(notebook_instance_name)
 
     {'Status': 'InService', 'InstanceType': 'ml.t3.medium'}
 
+
 Test train.py on this notebook's instance (or when possible, on your own machine) before doing anything more complicated (e.g., hyperparameter tuning on multiple instances)
 
 
 ```python
 !pip install xgboost # need to add this to environment to run train.py
 ```
-
-    Requirement already satisfied: xgboost in /home/ec2-user/anaconda3/envs/pytorch_p310/lib/python3.10/site-packages (2.1.2)
+    Collecting xgboost
+      Downloading xgboost-2.1.2-py3-none-manylinux2014_x86_64.whl.metadata (2.0 kB)
     Requirement already satisfied: numpy in /home/ec2-user/anaconda3/envs/pytorch_p310/lib/python3.10/site-packages (from xgboost) (1.26.4)
     Requirement already satisfied: scipy in /home/ec2-user/anaconda3/envs/pytorch_p310/lib/python3.10/site-packages (from xgboost) (1.14.1)
+    Downloading xgboost-2.1.2-py3-none-manylinux2014_x86_64.whl (4.5 MB)
+       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.5/4.5 MB 82.5 MB/s eta 0:00:00
+    Installing collected packages: xgboost
+    Successfully installed xgboost-2.1.2
 
 
 Here’s what each argument does in detail for the below call to train_xgboost.py:
@@ -198,15 +203,13 @@ Here’s what each argument does in detail for the below call to train_xgboost.p
 
 - `--train ./train.csv`: Points to the location of the training data, `train.csv`, which will be used to train the model.
 
-
-
 ```python
 import time as t # we'll use the time package to measure runtime
 
 start_time = t.time()
 
 # Run the script and pass arguments directly
-%run test_AWS/scripts/train_xgboost.py --max_depth 5 --eta 0.1 --subsample 0.8 --colsample_bytree 0.8 --num_round 100 --train ./titanic_train.csv
+%run AWS_helpers/train_xgboost.py --max_depth 5 --eta 0.1 --subsample 0.8 --colsample_bytree 0.8 --num_round 100 --train ./titanic_train.csv
 
 # Measure and print the time taken
 print(f"Total local runtime: {t.time() - start_time:.2f} seconds, instance_type = {local_instance}")
