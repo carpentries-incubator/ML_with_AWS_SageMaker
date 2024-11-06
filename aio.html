@@ -856,7 +856,7 @@ Pricing</a> page for more details.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -1713,7 +1713,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-Interacting-with-code-repo"><p>Content from <a href="Interacting-with-code-repo.html">Using a GitHub Personal Access Token (PAT) to Push/Pull from a SageMaker Notebook</a></p>
 <hr>
-<p>Last updated on 2024-11-03 |
+<p>Last updated on 2024-11-06 |
 
         <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker/edit/main/episodes/Interacting-with-code-repo.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <div class="text-end">
@@ -1772,6 +1772,9 @@ credentials that grant specific permissions to your GitHub account. To
 ensure security, only select the minimum necessary permissions and
 handle the token carefully.</p>
 </blockquote>
+<p>In this episode, we’ll see how to push our code to the fork we
+created during the <a href="https://uw-madison-datascience.github.io/ML_with_Amazon_SageMaker/#workshop-repository-setup" class="external-link">workshop
+setup</a>.</p>
 <div class="section level2">
 <h2 id="step-1-generate-a-personal-access-token-pat-on-github">Step 1: Generate a Personal Access Token (PAT) on GitHub<a class="anchor" aria-label="anchor" href="#step-1-generate-a-personal-access-token-pat-on-github"></a>
 </h2>
@@ -1828,21 +1831,19 @@ directory of this instance before going further.</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="op">!</span>pwd</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span></span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="ex">/home/ec2-user/SageMaker</span></span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="ex">/home/ec2-user/SageMaker</span></span></code></pre>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="ex">/home/ec2-user/SageMaker</span></span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a></span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="op">!</span>git config <span class="op">--</span><span class="kw">global</span> user.name <span class="st">"Chris Endemann"</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="op">!</span>git config <span class="op">--</span><span class="kw">global</span> user.email endeman<span class="op">@</span>wisc.edu</span></code></pre>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="op">!</span>git config <span class="op">--</span><span class="kw">global</span> user.name <span class="st">"Your name"</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="op">!</span>git config <span class="op">--</span><span class="kw">global</span> user.email your_email<span class="op">@</span>wisc.edu</span></code></pre>
 </div>
 </div>
 <div class="section level3">
@@ -1876,9 +1877,8 @@ ensures you’re not hardcoding sensitive information.</p>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="im">import</span> getpass</span>
 <span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co"># Prompt for GitHub username and PAT securely</span></span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>github_url <span class="op">=</span> <span class="st">'github.com/UW-Madison-DataScience/test_AWS.git'</span> <span class="co"># found under Code -&gt; Clone -&gt; HTTPS (remote the https:// before the rest of the address)</span></span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>username <span class="op">=</span> <span class="bu">input</span>(<span class="st">"GitHub Username: "</span>)</span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>token <span class="op">=</span> getpass.getpass(<span class="st">"GitHub Personal Access Token (PAT): "</span>)</span></code></pre>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>username <span class="op">=</span> <span class="bu">input</span>(<span class="st">"GitHub Username: "</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>token <span class="op">=</span> getpass.getpass(<span class="st">"GitHub Personal Access Token (PAT): "</span>)</span></code></pre>
 </div>
 <p><strong>Note</strong>: After running, you may want to comment out the
 above code so that you don’t have to enter in your login every time you
@@ -2154,7 +2154,8 @@ the below code if you don’t have any conflicts.</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="co"># Push with embedded credentials from getpass (avoids interactive prompt)</span></span>
-<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a><span class="op">!</span>git push https:<span class="op">//</span>{username}:{token}<span class="op">@</span>{github_url} main</span></code></pre>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>github_url <span class="op">=</span> <span class="st">'github.com/username/ML_with_Amazon_SageMaker.git'</span> <span class="co"># replace username with your own. THe full address for your fork can be found under Code -&gt; Clone -&gt; HTTPS (remote the https:// before the rest of the address)</span></span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a><span class="op">!</span>git push https:<span class="op">//</span>{username}:{token}<span class="op">@</span>{github_url} main</span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb21">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
