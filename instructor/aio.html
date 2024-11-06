@@ -2549,9 +2549,14 @@ hyperparameter tuning on multiple instances)</p>
 <div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="ex">Requirement</span> already satisfied: xgboost in /home/ec2-user/anaconda3/envs/pytorch_p310/lib/python3.10/site-packages <span class="er">(</span><span class="ex">2.1.2</span><span class="kw">)</span></span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="ex">Requirement</span> already satisfied: numpy in /home/ec2-user/anaconda3/envs/pytorch_p310/lib/python3.10/site-packages <span class="er">(</span><span class="ex">from</span> xgboost<span class="kw">)</span> <span class="kw">(</span><span class="ex">1.26.4</span><span class="kw">)</span></span>
-<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a><span class="ex">Requirement</span> already satisfied: scipy in /home/ec2-user/anaconda3/envs/pytorch_p310/lib/python3.10/site-packages <span class="er">(</span><span class="ex">from</span> xgboost<span class="kw">)</span> <span class="kw">(</span><span class="ex">1.14.1</span><span class="kw">)</span></span></code></pre>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="ex">Collecting</span> xgboost</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>  <span class="ex">Downloading</span> xgboost-2.1.2-py3-none-manylinux2014_x86_64.whl.metadata <span class="er">(</span><span class="ex">2.0</span> kB<span class="kw">)</span></span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a><span class="ex">Requirement</span> already satisfied: numpy in /home/ec2-user/anaconda3/envs/pytorch_p310/lib/python3.10/site-packages <span class="er">(</span><span class="ex">from</span> xgboost<span class="kw">)</span> <span class="kw">(</span><span class="ex">1.26.4</span><span class="kw">)</span></span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a><span class="ex">Requirement</span> already satisfied: scipy in /home/ec2-user/anaconda3/envs/pytorch_p310/lib/python3.10/site-packages <span class="er">(</span><span class="ex">from</span> xgboost<span class="kw">)</span> <span class="kw">(</span><span class="ex">1.14.1</span><span class="kw">)</span></span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a><span class="ex">Downloading</span> xgboost-2.1.2-py3-none-manylinux2014_x86_64.whl <span class="er">(</span><span class="ex">4.5</span> MB<span class="kw">)</span></span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>   <span class="ex">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span> 4.5/4.5 MB 82.5 MB/s eta 0:00:00</span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a><span class="ex">Installing</span> collected packages: xgboost</span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a><span class="ex">Successfully</span> installed xgboost-2.1.2</span></code></pre>
 </div>
 <p>Here’s what each argument does in detail for the below call to
 train_xgboost.py:</p>
@@ -2585,7 +2590,7 @@ model.</p></li>
 <span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>start_time <span class="op">=</span> t.time()</span>
 <span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a></span>
 <span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a><span class="co"># Run the script and pass arguments directly</span></span>
-<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a><span class="op">%</span>run test_AWS<span class="op">/</span>scripts<span class="op">/</span>train_xgboost.py <span class="op">--</span>max_depth <span class="dv">5</span> <span class="op">--</span>eta <span class="fl">0.1</span> <span class="op">--</span>subsample <span class="fl">0.8</span> <span class="op">--</span>colsample_bytree <span class="fl">0.8</span> <span class="op">--</span>num_round <span class="dv">100</span> <span class="op">--</span>train .<span class="op">/</span>titanic_train.csv</span>
+<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a><span class="op">%</span>run AWS_helpers<span class="op">/</span>train_xgboost.py <span class="op">--</span>max_depth <span class="dv">5</span> <span class="op">--</span>eta <span class="fl">0.1</span> <span class="op">--</span>subsample <span class="fl">0.8</span> <span class="op">--</span>colsample_bytree <span class="fl">0.8</span> <span class="op">--</span>num_round <span class="dv">100</span> <span class="op">--</span>train .<span class="op">/</span>titanic_train.csv</span>
 <span id="cb20-7"><a href="#cb20-7" tabindex="-1"></a></span>
 <span id="cb20-8"><a href="#cb20-8" tabindex="-1"></a><span class="co"># Measure and print the time taken</span></span>
 <span id="cb20-9"><a href="#cb20-9" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Total local runtime: </span><span class="sc">{</span>t<span class="sc">.</span>time() <span class="op">-</span> start_time<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type = </span><span class="sc">{</span>local_instance<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
