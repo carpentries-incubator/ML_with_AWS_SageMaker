@@ -86,31 +86,21 @@ We'd like to track our notebook files within our AWS_helpers fork. However, to a
 
 Here’s how to convert `.ipynb` files to `.py` in SageMaker without needing to export or download files.
 
-### Method 1: Using JupyText
-
-First, unstall Jupytext.
-
+1. First, install Jupytext.
 ```python
 !pip install jupytext
 ```
 
-Then, run the following command in a notebook cell to convert the current notebook to a `.py` file:
-
-This command will create a `.py` file in the same directory as the notebook.
-
+2. Then, run the following command in a notebook cell to convert both of our notebooks to `.py` files
 ```python
-# Replace 'your_notebook.ipynb' with your actual notebook filename
-!jupytext --to py Data-storage-and-access-via-buckets.ipynb
+# Adjust filename(s) if you used something different
+!jupytext --to py Interacting-with-S3.ipynb
 ```
 
-    [jupytext] Reading 03_Data-storage-and-access-via-buckets.ipynb in format ipynb
-    [jupytext] Updating the timestamp of 03_Data-storage-and-access-via-buckets.py
+    [jupytext] Reading Interacting-with-S3.ipynb in format ipynb
+    [jupytext] Writing Interacting-with-S3.py
 
-
-#### Method 2: Automated Script for Converting All Notebooks in a Directory
-
-If you have multiple notebooks to convert, you can automate the conversion process by running this script, which converts all `.ipynb` files in the current directory to `.py` files:
-
+3. If you have multiple notebooks to convert, you can automate the conversion process by running this code, which converts all `.ipynb` files in the current directory to `.py` files:
 
 ```python
 import subprocess
@@ -126,6 +116,14 @@ for notebook in notebooks:
     print(f"Converted {notebook} to {output_file}")
 
 ```
+
+For convenience, you can also use the convert_files() function from helpers.py
+```python
+import AWS_helpers.helpers as helpers
+helpers.convert_files(direction="notebook_to_python")
+
+```
+
 
 ## Step 4. Adding .ipynb to gitigore
 
