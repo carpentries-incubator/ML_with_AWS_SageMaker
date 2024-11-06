@@ -20,46 +20,83 @@ exercises: 10
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
+### Setup 
+
+#### Open notebook
+Once your newly created notebook shows as `InService`, open the notebook in Jupyter Lab. From there, we will select the pre-built pytorch environment (conda_pytorch3_p310). This will save us the trouble of having to install pytorch on this instance / notebook evnironment later. You can name your notebook something along the lines of, `Interacting-with-S3.ipynb`.
+
 #### Directory setup
 Let's make sure we're starting in the root directory of this instance, so that we all have our AWS_helpers.py file located in the same path (/test_AWS/scripts/AWS_helpers.py)
 
 
 ```python
 %cd /home/ec2-user/SageMaker/
-!pwd
 ```
 
     /home/ec2-user/SageMaker
-    /home/ec2-user/SageMaker
 
+#### Set up AWS environment
+To begin each SageMaker notebook, it’s important to set up an AWS environment that will allow seamless access to the necessary cloud resources. Here’s what we’ll do to get started:
 
-## 1A. Read data from S3 into memory
-Our data is stored on an S3 bucket called 'titanic-dataset-test'. We can use the following code to read data directly from S3 into memory in the Jupyter notebook environment, without actually downloading a copy of train.csv as a local file.
+1. **Define the Role**: We’ll use `get_execution_role()` to retrieve the IAM role associated with the SageMaker instance. This role specifies the permissions needed for interacting with AWS services like S3, which allows SageMaker to securely read from and write to storage buckets.
 
+2. **Initialize the SageMaker Session**: Next, we’ll create a `sagemaker.Session()` object, which will help manage and track the resources and operations we use in SageMaker, such as training jobs and model artifacts. The session acts as a bridge between the SageMaker SDK commands in our notebook and AWS services.
 
+3. **Set Up an S3 Client**: Using `boto3`, we’ll initialize an S3 client for accessing S3 buckets directly. This client enables us to handle data storage, retrieve datasets, and manage files in S3, which will be essential as we work through various machine learning tasks.
+
+Starting with these initializations prepares our notebook environment to efficiently interact with AWS resources for model development, data management, and deployment.
 
 ```python
 import boto3
-import pandas as pd
 import sagemaker
 from sagemaker import get_execution_role
 
 # Initialize the SageMaker role and session
 # Define the SageMaker role and session
-role = sagemaker.get_execution_role()
-session = sagemaker.Session()
+role = sagemaker.get_execution_role() # specifies your permissions to use AWS tools
+session = sagemaker.Session() 
 s3 = boto3.client('s3')
 
+```
+
+### Reading data from S3
+
+You can either read data from S3 into memory or download a copy of your S3 data into your notebook's instance. While loading into memory can save on storage resources, it can be convenient at times to have a local copy. We'll show you both strategies in this upcoming section. Here's a more detailed look at the pros and cons of each strategy:
+
+1. **Reading data directly from S3 into memory**:
+   - **Pros**:
+     - **Storage efficiency**: By keeping data in memory, you avoid taking up local storage on your notebook instance, which can be particularly beneficial for larger datasets or instances with limited storage.
+     - **Simple data management**: Accessing data directly from S3 avoids the need to manage or clean up local copies after processing.
+   - **Cons**:
+     - **Performance for frequent reads**: Accessing S3 data repeatedly can introduce latency and slow down workflows, as each read requires a network request. This approach works best if you only need to load data once or infrequently.
+     - **Potential cost for high-frequency access**: Multiple GET requests to S3 can accumulate charges over time, especially if your workflow requires repeated access to the same data.
+
+2. **Downloading a copy of data from S3 to local storage**:
+   - **Pros**:
+     - **Better performance for intensive workflows**: If you need to access the dataset multiple times during processing, working from a local copy avoids repeated network requests, making operations faster and more efficient.
+     - **Offline access**: Once downloaded, you can access the data without a persistent internet connection, which can be helpful for handling larger data transformations.
+   - **Cons**:
+     - **Storage costs**: Local storage on the instance may come with additional costs or limitations, especially if your instance type has constrained storage capacity.
+     - **Data management overhead**: You’ll need to manage local data copies and ensure that they are properly cleaned up to free resources once processing is complete.
+
+### Choosing between the two strategies
+If your workflow requires only a single read of the dataset for processing, reading directly into memory can be a quick and resource-efficient solution. However, for cases where you’ll perform extensive or iterative processing, downloading a local copy of the data will typically be more performant and may incur fewer request-related costs.
+
+## 1A. Read data from S3 into memory
+Our data is stored on an S3 bucket called 'titanic-dataset-test'. We can use the following code to read data directly from S3 into memory in the Jupyter notebook environment, without actually downloading a copy of train.csv as a local file.
+
+```python
+import pandas as pd
 # Define the S3 bucket and object key
-bucket_name = 'titanic-dataset-test'  # replace with your S3 bucket name
+bucket_name = 'myawesometeam-titanic'  # replace with your S3 bucket name
 
 # Read the train data from S3
-key = 'data/titanic_train.csv'  # replace with your object key
+key = 'titanic_train.csv'  # replace with your object key
 response = s3.get_object(Bucket=bucket_name, Key=key)
 train_data = pd.read_csv(response['Body'])
 
 # Read the test data from S3
-key = 'data/titanic_test.csv'  # replace with your object key
+key = 'titanic_test.csv'  # replace with your object key
 response = s3.get_object(Bucket=bucket_name, Key=key)
 test_data = pd.read_csv(response['Body'])
 
@@ -75,7 +112,6 @@ train_data.head()
     sagemaker.config INFO - Not applying SDK defaults from location: /home/ec2-user/.config/sagemaker/config.yaml
     (712, 12)
     (179, 12)
-
 
 
 ## 1B. Download copy into notebook environment
