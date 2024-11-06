@@ -176,7 +176,7 @@ We have added code to calculate bucket size to a helper function called `get_s3_
 **Note**: Make sure you have already forked the lesson repo as described on the [setup page](). Replace "username" below with your GitHub username.
 
 ```python
-!git clone https://github.com/username/ml-with-aws-sagemaker.git # downloads ML_with_Amazon_SageMaker folder/repo (refresh file explorer to see)
+!git clone https://github.com/username/ML_with_Amazon_SageMaker.git # downloads ML_with_Amazon_SageMaker folder/repo (refresh file explorer to see)
 ```
 
 Our AWS_helpers.py file can be found in `ML_with_Amazon_SageMaker/scripts/AWS_helpers.py`. With this file downloaded, you can call this function via...
@@ -184,7 +184,6 @@ Our AWS_helpers.py file can be found in `ML_with_Amazon_SageMaker/scripts/AWS_he
 ```python
 import ML_with_Amazon_SageMaker.scripts.AWS_helpers as helpers
 helpers.get_s3_bucket_size(bucket_name)
-=
 ```
 
     {'size_mb': 0.060057640075683594, 'size_gb': 5.865003913640976e-05}
