@@ -2152,6 +2152,18 @@ the below code if you don’t have any conflicts.</p>
 <span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>github_url <span class="op">=</span> <span class="st">'github.com/username/AWS_helpers.git'</span> <span class="co"># replace username with your own. THe full address for your fork can be found under Code -&gt; Clone -&gt; HTTPS (remote the https:// before the rest of the address)</span></span>
 <span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a><span class="op">!</span>git push https:<span class="op">//</span>{username}:{token}<span class="op">@</span>{github_url} main</span></code></pre>
 </div>
+<div class="codewrapper sourceCode" id="cb20">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="ex">Enumerating</span> objects: 6, done.</span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a><span class="ex">Counting</span> objects: 100% <span class="er">(</span><span class="ex">6/6</span><span class="kw">)</span><span class="ex">,</span> done.</span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a><span class="ex">Delta</span> compression using up to 2 threads</span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a><span class="ex">Compressing</span> objects: 100% <span class="er">(</span><span class="ex">5/5</span><span class="kw">)</span><span class="ex">,</span> done.</span>
+<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a><span class="ex">Writing</span> objects: 100% <span class="er">(</span><span class="ex">5/5</span><span class="kw">)</span><span class="ex">,</span> 3.00 KiB <span class="kw">|</span> <span class="ex">3.00</span> MiB/s, done.</span>
+<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a><span class="ex">Total</span> 5 <span class="er">(</span><span class="ex">delta</span> 0<span class="kw">)</span><span class="ex">,</span> reused 0 <span class="er">(</span><span class="ex">delta</span> 0<span class="kw">)</span><span class="ex">,</span> pack-reused 0</span>
+<span id="cb20-7"><a href="#cb20-7" tabindex="-1"></a><span class="ex">To</span> https://github.com/qualiaMachine/AWS_helpers.git</span>
+<span id="cb20-8"><a href="#cb20-8" tabindex="-1"></a>   <span class="ex">bc47546..6a8bb8b</span>  main <span class="at">-</span><span class="op">&gt;</span> main</span></code></pre>
+</div>
 <p>After pushing, you should navigate back to your fork on GitHub to
 verify everything worked (e.g., <a href="https://github.com/username/AWS_helpers/tree/main" class="external-link uri">https://github.com/username/AWS_helpers/tree/main</a>)</p>
 </div>
@@ -2159,40 +2171,56 @@ verify everything worked (e.g., <a href="https://github.com/username/AWS_helpers
 format<a class="anchor" aria-label="anchor" href="#step-7-pulling--py-files-and-converting-back-to-notebook-format"></a>
 </h2>
 <hr class="half-width">
-<p>Let’s assume you’ve taken a short break from your work, and you would
-like to start again by pulling in your code repo. If you’d like to work
-with notebook files again, you can again use jupytext to convert your
-<code>.py</code> files back to <code>.ipynb</code></p>
-<p>This command will create
-<code>03_Data-storage-and-access-via-buckets-test.ipynb</code> in the
-current directory, converting the Python script to a Jupyter Notebook
-format. Jupytext handles the conversion gracefully without expecting the
-<code>.py</code> file to be in JSON format.</p>
-<div class="codewrapper sourceCode" id="cb20">
+<p>Let’s assume you’ve taken a short break from your work, and others on
+your team have made updates to your .py files on the remote main branch.
+If you’d like to work with notebook files again, you can again use
+jupytext to convert your <code>.py</code> files back to
+<code>.ipynb</code>.</p>
+<ol style="list-style-type: decimal">
+<li>First, pull any updates from the remote main branch.</li>
+</ol>
+<div class="codewrapper sourceCode" id="cb21">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="co"># Replace 'your_script.py' with your actual filename</span></span>
-<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a><span class="op">!</span>jupytext <span class="op">--</span>to notebook Data<span class="op">-</span>storage<span class="op">-</span><span class="kw">and</span><span class="op">-</span>access<span class="op">-</span>via<span class="op">-</span>buckets.py <span class="op">--</span>output Data<span class="op">-</span>storage<span class="op">-</span><span class="kw">and</span><span class="op">-</span>access<span class="op">-</span>via<span class="op">-</span>buckets<span class="op">-</span>test.ipynb</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="op">!</span>git config pull.rebase false <span class="co"># Combines the remote changes into your local branch as a merge commit.</span></span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a><span class="op">!</span>git pull origin main</span></code></pre>
+</div>
+<ol start="2" style="list-style-type: decimal">
+<li>We can then use jupytext again to convert in the other direction
+(.py to .ipynb). This command will create <code>ipynb</code> in the
+current directory, converting the Python script to a Jupyter Notebook
+format. Jupytext handles the conversion gracefully without expecting the
+<code>.py</code> file to be in JSON format.</li>
+</ol>
+<p><strong>Note</strong>: You may wish to delete any local .ipynb files
+in your file explorer before running the next step (to verify the
+conversion works). So long as your .py versions are stored on your
+git/github fork, it’s safe to delete those earlier notebooks.</p>
+<div class="codewrapper sourceCode" id="cb22">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="co"># Replace 'your_script.py' with your actual filename</span></span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a><span class="op">!</span>jupytext <span class="op">--</span>to notebook Interacting<span class="op">-</span><span class="cf">with</span><span class="op">-</span>git.py <span class="op">--</span>output Interacting<span class="op">-</span><span class="cf">with</span><span class="op">-</span>git.ipynb</span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="applying-to-all--py-files">Applying to all .py files<a class="anchor" aria-label="anchor" href="#applying-to-all--py-files"></a>
 </h3>
 <p>To convert all of your .py files to notebooks, you can use the
 following code:</p>
-<div class="codewrapper sourceCode" id="cb21">
+<div class="codewrapper sourceCode" id="cb23">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="im">import</span> subprocess</span>
-<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a><span class="im">import</span> os</span>
-<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a></span>
-<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a><span class="co"># List all .py files in the directory</span></span>
-<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a>scripts <span class="op">=</span> [f <span class="cf">for</span> f <span class="kw">in</span> os.listdir() <span class="cf">if</span> f.endswith(<span class="st">'.py'</span>)]</span>
-<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a></span>
-<span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a><span class="co"># Convert each .py file to .ipynb using jupytext</span></span>
-<span id="cb21-8"><a href="#cb21-8" tabindex="-1"></a><span class="cf">for</span> script <span class="kw">in</span> scripts:</span>
-<span id="cb21-9"><a href="#cb21-9" tabindex="-1"></a>    output_file <span class="op">=</span> script.replace(<span class="st">'.py'</span>, <span class="st">'.ipynb'</span>)</span>
-<span id="cb21-10"><a href="#cb21-10" tabindex="-1"></a>    subprocess.run([<span class="st">"jupytext"</span>, <span class="st">"--to"</span>, <span class="st">"notebook"</span>, script, <span class="st">"--output"</span>, output_file])</span>
-<span id="cb21-11"><a href="#cb21-11" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Converted </span><span class="sc">{</span>script<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span>output_file<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="im">import</span> subprocess</span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a></span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a><span class="co"># List all .py files in the directory</span></span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a>scripts <span class="op">=</span> [f <span class="cf">for</span> f <span class="kw">in</span> os.listdir() <span class="cf">if</span> f.endswith(<span class="st">'.py'</span>)]</span>
+<span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a></span>
+<span id="cb23-7"><a href="#cb23-7" tabindex="-1"></a><span class="co"># Convert each .py file to .ipynb using jupytext</span></span>
+<span id="cb23-8"><a href="#cb23-8" tabindex="-1"></a><span class="cf">for</span> script <span class="kw">in</span> scripts:</span>
+<span id="cb23-9"><a href="#cb23-9" tabindex="-1"></a>    output_file <span class="op">=</span> script.replace(<span class="st">'.py'</span>, <span class="st">'.ipynb'</span>)</span>
+<span id="cb23-10"><a href="#cb23-10" tabindex="-1"></a>    subprocess.run([<span class="st">"jupytext"</span>, <span class="st">"--to"</span>, <span class="st">"notebook"</span>, script, <span class="st">"--output"</span>, output_file])</span>
+<span id="cb23-11"><a href="#cb23-11" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Converted </span><span class="sc">{</span>script<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span>output_file<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
