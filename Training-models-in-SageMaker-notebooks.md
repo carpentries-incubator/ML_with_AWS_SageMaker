@@ -6,30 +6,41 @@ exercises: 10
 
 :::::::::::::::::::::::::::::::::::::: questions 
 
-- How can I initialize the SageMaker environment and set up data in S3?
 - What are the differences between local training and SageMaker-managed training?
 - How do Estimator classes in SageMaker streamline the training process for various frameworks?
+- How does SageMaker handle data and model parallelism, and when should each be considered?
+- When should you consider using a GPU instance for training neural networks in SageMaker, and what are the benefits and limitations?
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ::::::::::::::::::::::::::::::::::::: objectives
 
-- Set up and initialize the SageMaker environment, including roles, sessions, and S3 data.
 - Understand the difference between training locally in a SageMaker notebook and using SageMaker's managed infrastructure.
 - Learn to configure and use SageMaker's Estimator classes for different frameworks (e.g., XGBoost, PyTorch, SKLearn).
+- Understand data and model parallelism options in SageMaker, including when to use each for efficient training.
 - Compare performance, cost, and setup between custom scripts and built-in images in SageMaker.
 - Conduct training with data stored in S3 and monitor training job status using the SageMaker console.
+- Determine when to use GPU instances for neural network training in SageMaker, and assess their impact on performance and cost.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
+## Initial setup 
 
-## Initialize SageMaker environment
+#### 1. Open a new .ipynb notebook
+Open a fresh .ipynb notebook ("Jupyter notebook"), and select the conda_pytorch_p310 environment. This will save us the trouble of having to install pytorch in this notebook. You can name your Jupyter notebook something along the lines of, `Training-models.ipynb`.
 
+#### 2. CD to instance home directory
+So we all can reference the helper functions using the same path, CD to...
+
+```python
+%cd /home/ec2-user/SageMaker/
+```
+
+#### 3. Initialize SageMaker environment
 This code initializes the AWS SageMaker environment by defining the SageMaker role, session, and S3 client. It also specifies the S3 bucket and key for accessing the Titanic training dataset stored in an S3 bucket.
 
 #### Boto3 API
 > Boto3 is the official AWS SDK for Python, allowing developers to interact programmatically with AWS services like S3, EC2, and Lambda. It provides both high-level and low-level APIs, making it easy to manage AWS resources and automate tasks. With built-in support for paginators, waiters, and session management, Boto3 simplifies working with AWS credentials, regions, and IAM permissions. It’s ideal for automating cloud operations and integrating AWS services into Python applications.
-
 
 ```python
 import boto3
@@ -48,7 +59,7 @@ session = sagemaker.Session()
 s3 = boto3.client('s3')
 
 # Define the S3 bucket that we will load from
-bucket = 'titanic-dataset-test'  # replace with your S3 bucket name
+bucket_name = 'myawesometeam-titanic'  # replace with your S3 bucket name
 
 # Define train/test filenames
 train_filename = 'titanic_train.csv'
@@ -60,7 +71,7 @@ test_filename = 'titanic_test.csv'
     role = arn:aws:iam::183295408236:role/ml-sagemaker-use
 
 
-### Download copy into notebook environment
+### 3. Download copy into notebook environment
 If you have larger dataset (> 1GB), you may want to skip this step and always read directly into memory. However, for smaller datasets, it can be convenient to have a "local" copy (i.e., one that you store in your notebook's instance).
 
 Download data from S3 to notebook environment. You may need to hit refresh on the file explorer panel to the left to see this file. If you get any permission issues...
@@ -71,11 +82,11 @@ Download data from S3 to notebook environment. You may need to hit refresh on th
 
 ```python
 # Define the S3 bucket and file location
-file_key = f"data/{train_filename}"  # Path to your file in the S3 bucket
+file_key = f"{train_filename}"  # Path to your file in the S3 bucket
 local_file_path = f"./{train_filename}"  # Local path to save the file
 
 # Download the file using the s3 client variable we initialized earlier
-s3.download_file(bucket, file_key, local_file_path)
+s3.download_file(bucket_name, file_key, local_file_path)
 print("File downloaded:", local_file_path)
 ```
 
@@ -87,11 +98,11 @@ We can do the same for the test set.
 
 ```python
 # Define the S3 bucket and file location
-file_key = f"data/{test_filename}"  # Path to your file in the S3 bucket. W
+file_key = f"{test_filename}"  # Path to your file in the S3 bucket. W
 local_file_path = f"./{test_filename}"  # Local path to save the file
 
 # Initialize the S3 client and download the file
-s3.download_file(bucket, file_key, local_file_path)
+s3.download_file(bucket_name, file_key, local_file_path)
 print("File downloaded:", local_file_path)
 
 ```
@@ -323,11 +334,11 @@ instance_type="ml.m5.large"
 instance_count=1 # always start with 1. Rarely is parallelized training justified with data < 50 GB.
 
 # Define S3 paths for input and output
-train_s3_path = f's3://{bucket}/data/{train_filename}'
+train_s3_path = f's3://{bucket_name}/data/{train_filename}'
 
 # we'll store all results in a subfolder called xgboost on our bucket. This folder will automatically be created if it doesn't exist already.
 output_folder = 'xgboost'
-output_path = f's3://{bucket}/{output_folder}/' 
+output_path = f's3://{bucket_name}/{output_folder}/' 
 
 # Set up the SageMaker XGBoost Estimator with custom script
 xgboost_estimator = XGBoost(
@@ -383,7 +394,7 @@ print(f"Runtime for training on SageMaker: {end - start:.2f} seconds, instance_t
 
 
 #### Model results
-> With this code, the training results and model artifacts are saved in a subfolder called `xgboost` in your specified S3 bucket. This folder (`s3://{bucket}/xgboost/`) will be automatically created if it doesn’t already exist, and will contain:
+> With this code, the training results and model artifacts are saved in a subfolder called `xgboost` in your specified S3 bucket. This folder (`s3://{bucket_name}/xgboost/`) will be automatically created if it doesn’t already exist, and will contain:
 > 
 > 1. **Model Artifacts**: The trained model file (often a `.tar.gz` file) that SageMaker saves in the `output_path`.
 > 2. **Logs and Metrics**: Any metrics and logs related to the training job, stored in the same `xgboost` folder.
@@ -413,7 +424,7 @@ print(model_s3_path)
 local_model_path = 'model.tar.gz'
 
 # Download the trained model from S3
-s3.download_file(bucket, model_s3_path, local_model_path)
+s3.download_file(bucket_name, model_s3_path, local_model_path)
 
 # Extract the model file
 import tarfile
@@ -869,8 +880,8 @@ val_file = "val_data.npz"  # Local file path in your notebook environment
 s3 = boto3.client('s3')
 
 # Upload the training and validation files to S3
-s3.upload_file(train_file, bucket, f"{train_file}")
-s3.upload_file(val_file, bucket, f"{val_file}")
+s3.upload_file(train_file, bucket_name, f"{train_file}")
+s3.upload_file(val_file, bucket_name, f"{val_file}")
 
 print("Files successfully uploaded to S3.")
 
@@ -907,7 +918,7 @@ from sagemaker.inputs import TrainingInput
 epochs = 10000
 instance_count = 1
 instance_type="ml.m5.large"
-output_path = f's3://{bucket}/output_nn/' # this folder will auto-generate if it doesn't exist already
+output_path = f's3://{bucket_name}/output_nn/' # this folder will auto-generate if it doesn't exist already
 
 # Define the PyTorch estimator and pass hyperparameters as arguments
 pytorch_estimator = PyTorch(
@@ -928,8 +939,8 @@ pytorch_estimator = PyTorch(
 )
 
 # Define input paths
-train_input = TrainingInput(f"s3://{bucket}/train_data.npz", content_type="application/x-npz")
-val_input = TrainingInput(f"s3://{bucket}/val_data.npz", content_type="application/x-npz")
+train_input = TrainingInput(f"s3://{bucket_name}/train_data.npz", content_type="application/x-npz")
+val_input = TrainingInput(f"s3://{bucket_name}/val_data.npz", content_type="application/x-npz")
 
 # Start the training job and time it
 start = t.time()
@@ -979,7 +990,7 @@ import time as t
 epochs = 10000
 instance_count = 1
 instance_type="ml.g4dn.xlarge"
-output_path = f's3://{bucket}/output_nn/'
+output_path = f's3://{bucket_name}/output_nn/'
 
 # Define the PyTorch estimator and pass hyperparameters as arguments
 pytorch_estimator_gpu = PyTorch(
@@ -1000,8 +1011,8 @@ pytorch_estimator_gpu = PyTorch(
 )
 
 # Define input paths
-train_input = TrainingInput(f"s3://{bucket}/train_data.npz", content_type="application/x-npz")
-val_input = TrainingInput(f"s3://{bucket}/val_data.npz", content_type="application/x-npz")
+train_input = TrainingInput(f"s3://{bucket_name}/train_data.npz", content_type="application/x-npz")
+val_input = TrainingInput(f"s3://{bucket_name}/val_data.npz", content_type="application/x-npz")
 
 # Start the training job and time it
 start = t.time()
@@ -1043,7 +1054,7 @@ import time as t
 epochs = 10000
 instance_count = 2 # increasing to 2 to see if it has any benefit (likely won't see any with this small dataset)
 instance_type="ml.m5.xlarge"
-output_path = f's3://{bucket}/output_nn/'
+output_path = f's3://{bucket_name}/output_nn/'
 
 # Define the PyTorch estimator and pass hyperparameters as arguments
 pytorch_estimator = PyTorch(
@@ -1064,8 +1075,8 @@ pytorch_estimator = PyTorch(
 )
 
 # Define input paths
-train_input = TrainingInput(f"s3://{bucket}/train_data.npz", content_type="application/x-npz")
-val_input = TrainingInput(f"s3://{bucket}/val_data.npz", content_type="application/x-npz")
+train_input = TrainingInput(f"s3://{bucket_name}/train_data.npz", content_type="application/x-npz")
+val_input = TrainingInput(f"s3://{bucket_name}/val_data.npz", content_type="application/x-npz")
 
 # Start the training job and time it
 start = t.time()
