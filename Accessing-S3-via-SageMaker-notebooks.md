@@ -115,8 +115,6 @@ train_data.head()
 
 
 ## 1B. Download copy into notebook environment
-If you have larger dataset (> 1GB), you may want to skip this step and always read directly into memory. However, for smaller datasets, it can be convenient to have a "local" copy (i.e., one stored in your notebook's instance).
-
 Download data from S3 to notebook environment. You may need to hit refresh on the file explorer panel to the left to see this file. If you get any permission issues...
 
 * check that you have selected the appropriate policy for this notebook
@@ -125,13 +123,12 @@ Download data from S3 to notebook environment. You may need to hit refresh on th
 
 ```python
 # Define the S3 bucket and file location
-file_key = "data/titanic_train.csv"  # Path to your file in the S3 bucket
+key = "titanic_train.csv"  # Path to your file in the S3 bucket
 local_file_path = "./titanic_train.csv"  # Local path to save the file
 
 # Initialize the S3 client and download the file
-s3 = boto3.client("s3")
-s3.download_file(bucket_name, file_key, local_file_path)
-print("File downloaded:", local_file_path)
+s3.download_file(bucket_name, key, local_file_path)
+!ls
 ```
 
     File downloaded: ./titanic_train.csv
@@ -141,7 +138,7 @@ print("File downloaded:", local_file_path)
 
 It's a good idea to periodically check how much storage you have used in your bucket. You can do this from a Jupyter notebook in SageMaker by using the **Boto3** library, which is the AWS SDK for Python. This will allow you to calculate the total size of objects within a specified bucket. Here’s how you can do it...
 
-### Step 1: Set Up the S3 Client and Calculate Bucket Size
+### Step 1: Set up the S3 Client and Calculate Bucket Size
 
 
 ```python
@@ -163,24 +160,10 @@ total_size_mb = total_size_bytes / (1024 ** 2)
 print(f"Total size of bucket '{bucket_name}': {total_size_mb:.2f} MB")
 ```
 
-    Total size of bucket 'titanic-dataset-test': 41.04 MB
+    Total size of bucket 'myawesometeam-titanic': 0.06 MB
 
 
-We have added this code to a helper called `get_s3_bucket_size(bucket_name)` for your convenience. You can call this function via the below code.
-
-
-```python
-import test_AWS.scripts.AWS_helpers as helpers # test_AWS.scripts.AWS_helpers reflects path leading up to AWS_helpers.py
-
-helpers.get_s3_bucket_size(bucket_name)
-```
-
-
-
-
-    {'size_mb': 41.043779373168945, 'size_gb': 0.0400818157941103}
-
-
+We have added this code to a helper called `get_s3_bucket_size(bucket_name)` for your convenience. In the next episode, we'll show you how to clone our git repo to get access to these helper functions. 
 
 ### Explanation
 
