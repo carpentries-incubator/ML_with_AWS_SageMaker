@@ -1901,40 +1901,36 @@ outputs or metadata.</li>
 </ul>
 <p>Here’s how to convert <code>.ipynb</code> files to <code>.py</code>
 in SageMaker without needing to export or download files.</p>
-</div>
-<div class="section level3">
-<h3 id="method-1-using-jupytext">Method 1: Using JupyText<a class="anchor" aria-label="anchor" href="#method-1-using-jupytext"></a>
-</h3>
-<p>First, unstall Jupytext.</p>
+<ol style="list-style-type: decimal">
+<li>First, install Jupytext.</li>
+</ol>
 <div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="op">!</span>pip install jupytext</span></code></pre>
 </div>
-<p>Then, run the following command in a notebook cell to convert the
-current notebook to a <code>.py</code> file:</p>
-<p>This command will create a <code>.py</code> file in the same
-directory as the notebook.</p>
+<ol start="2" style="list-style-type: decimal">
+<li>Then, run the following command in a notebook cell to convert both
+of our notebooks to <code>.py</code> files</li>
+</ol>
 <div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Replace 'your_notebook.ipynb' with your actual notebook filename</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="op">!</span>jupytext <span class="op">--</span>to py Data<span class="op">-</span>storage<span class="op">-</span><span class="kw">and</span><span class="op">-</span>access<span class="op">-</span>via<span class="op">-</span>buckets.ipynb</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Adjust filename(s) if you used something different</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="op">!</span>jupytext <span class="op">--</span>to py Interacting<span class="op">-</span><span class="cf">with</span><span class="op">-</span>S3.ipynb</span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="ex">[jupytext]</span> Reading 03_Data-storage-and-access-via-buckets.ipynb in format ipynb</span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="ex">[jupytext]</span> Updating the timestamp of 03_Data-storage-and-access-via-buckets.py</span></code></pre>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="ex">[jupytext]</span> Reading Interacting-with-S3.ipynb in format ipynb</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="ex">[jupytext]</span> Writing Interacting-with-S3.py</span></code></pre>
 </div>
-<div class="section level4">
-<h4 id="method-2-automated-script-for-converting-all-notebooks-in-a-directory">Method 2: Automated Script for Converting All Notebooks in a
-Directory<a class="anchor" aria-label="anchor" href="#method-2-automated-script-for-converting-all-notebooks-in-a-directory"></a>
-</h4>
-<p>If you have multiple notebooks to convert, you can automate the
-conversion process by running this script, which converts all
+<ol start="3" style="list-style-type: decimal">
+<li>If you have multiple notebooks to convert, you can automate the
+conversion process by running this code, which converts all
 <code>.ipynb</code> files in the current directory to <code>.py</code>
-files:</p>
+files:</li>
+</ol>
 <div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1950,6 +1946,13 @@ files:</p>
 <span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>    subprocess.run([<span class="st">"jupytext"</span>, <span class="st">"--to"</span>, <span class="st">"py"</span>, notebook, <span class="st">"--output"</span>, output_file])</span>
 <span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Converted </span><span class="sc">{</span>notebook<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span>output_file<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
+<p>For convenience, you can also use the convert_files() function from
+helpers.py</p>
+<div class="codewrapper sourceCode" id="cb9">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="im">import</span> AWS_helpers.helpers <span class="im">as</span> helpers</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>helpers.convert_files(direction<span class="op">=</span><span class="st">"notebook_to_python"</span>)</span></code></pre>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="step-4--adding--ipynb-to-gitigore">Step 4. Adding .ipynb to gitigore<a class="anchor" aria-label="anchor" href="#step-4--adding--ipynb-to-gitigore"></a>
@@ -1965,20 +1968,20 @@ subfolders in the repository.</p>
 <li>
 <p><strong>Open or Create the <code>.gitignore</code>
 File</strong>:</p>
-<div class="codewrapper sourceCode" id="cb9">
+<div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="op">!</span>ls <span class="op">-</span>a <span class="co"># check for existing .gitignore file</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="op">!</span>ls <span class="op">-</span>a <span class="co"># check for existing .gitignore file</span></span></code></pre>
 </div>
 <ul>
 <li>
 <p>If you don’t already have a <code>.gitignore</code> file in the
 repository root (use ‘!ls -a’ to check, you can create one by
 running:</p>
-<div class="codewrapper sourceCode" id="cb10">
+<div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="op">!</span>touch .gitignore</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="op">!</span>touch .gitignore</span></code></pre>
 </div>
 </li>
 </ul>
@@ -1994,11 +1997,11 @@ ignore all <code>.ipynb</code> files in all folders:</p>
 </li>
 <li>
 <p>You can add this line using a command within your notebook:</p>
-<div class="codewrapper sourceCode" id="cb12">
+<div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">".gitignore"</span>, <span class="st">"a"</span>) <span class="im">as</span> gitignore:</span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>    gitignore.write(<span class="st">"</span><span class="ch">\n</span><span class="st"># Ignore all Jupyter Notebook files</span><span class="ch">\n</span><span class="st">*.ipynb</span><span class="ch">\n</span><span class="st">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">".gitignore"</span>, <span class="st">"a"</span>) <span class="im">as</span> gitignore:</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>    gitignore.write(<span class="st">"</span><span class="ch">\n</span><span class="st"># Ignore all Jupyter Notebook files</span><span class="ch">\n</span><span class="st">*.ipynb</span><span class="ch">\n</span><span class="st">"</span>)</span></code></pre>
 </div>
 </li>
 </ul>
@@ -2010,12 +2013,12 @@ File</strong>:</p>
 <li>
 <p>Add and commit the updated <code>.gitignore</code> file to ensure
 it’s applied across the repository.</p>
-<div class="codewrapper sourceCode" id="cb13">
+<div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="op">!</span>git add .gitignore</span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Add .ipynb files to .gitignore to ignore notebooks"</span></span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="op">!</span>git push origin main</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="op">!</span>git add .gitignore</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Add .ipynb files to .gitignore to ignore notebooks"</span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="op">!</span>git push origin main</span></code></pre>
 </div>
 </li>
 </ul>
@@ -2032,35 +2035,35 @@ Git, ensuring your commits stay focused on the converted
 <h4 id="navigate-to-the-repository-directory-adjust-the-path-if-needed">Navigate to the repository directory (adjust the path if
 needed):<a class="anchor" aria-label="anchor" href="#navigate-to-the-repository-directory-adjust-the-path-if-needed"></a>
 </h4>
-<div class="codewrapper sourceCode" id="cb14">
+<div class="codewrapper sourceCode" id="cb15">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="op">%</span>cd AWS_helpers<span class="op">/</span></span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="op">!</span>pwd</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="op">%</span>cd AWS_helpers<span class="op">/</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="op">!</span>pwd</span></code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb15">
+<div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="ex">/home/ec2-user/SageMaker/AWS_helpers</span></span></code></pre>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="ex">/home/ec2-user/SageMaker/AWS_helpers</span></span></code></pre>
 </div>
 <p>Check status of repo. If you’re following along with these materials,
 you shouldn’t see any files ready for adding/committing since your ipynb
 files should be located one level above AWS_helpers (in
 /home/ec2-user/SageMaker/AWS_helpers</p>
-<div class="codewrapper sourceCode" id="cb16">
+<div class="codewrapper sourceCode" id="cb17">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="op">!</span>git status</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="op">!</span>git status</span></code></pre>
 </div>
 <ol start="2" style="list-style-type: decimal">
 <li>
 <strong>Add and Commit Changes</strong>:</li>
 </ol>
-<div class="codewrapper sourceCode" id="cb17">
+<div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="op">!</span>git add . <span class="co"># you may also add files one at a time, for further specificity over the associated commit message</span></span>
-<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Updates from Jupyter notebooks"</span> <span class="co"># in general, your commit message should be more specific!</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="op">!</span>git add . <span class="co"># you may also add files one at a time, for further specificity over the associated commit message</span></span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Updates from Jupyter notebooks"</span> <span class="co"># in general, your commit message should be more specific!</span></span></code></pre>
 </div>
 <ol start="3" style="list-style-type: decimal">
 <li>
@@ -2081,47 +2084,47 @@ locally).</li>
 </ul>
 </li>
 </ol>
-<div class="codewrapper sourceCode" id="cb18">
+<div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="op">!</span>git config pull.rebase false <span class="co"># Combines the remote changes into your local branch as a merge commit.</span></span>
-<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a></span>
-<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="op">!</span>git pull origin main</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="op">!</span>git config pull.rebase false <span class="co"># Combines the remote changes into your local branch as a merge commit.</span></span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a></span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a><span class="op">!</span>git pull origin main</span></code></pre>
 </div>
 <p>If you get merge conflicts, be sure to resolve those before moving
 forward (e.g., use git checkout -&gt; add -&gt; commit). You can skip
 the below code if you don’t have any conflicts.</p>
-<div class="codewrapper sourceCode" id="cb19">
+<div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="co"># Keep your local changes in one conflicting file</span></span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="co"># !git checkout --ours train_nn.py</span></span>
-<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a></span>
-<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a><span class="co"># Keep remote version for the other conflicting file</span></span>
-<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a><span class="co"># !git checkout --theirs train_xgboost.py</span></span>
-<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a></span>
-<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a><span class="co"># # Stage the files to mark the conflicts as resolved</span></span>
-<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a><span class="co"># !git add train_nn.py</span></span>
-<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a><span class="co"># !git add train_xgboost.py</span></span>
-<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a></span>
-<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a><span class="co"># # Commit the merge result</span></span>
-<span id="cb19-12"><a href="#cb19-12" tabindex="-1"></a><span class="co"># !git commit -m "Resolved merge conflicts by keeping local changes"</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="co"># Keep your local changes in one conflicting file</span></span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a><span class="co"># !git checkout --ours train_nn.py</span></span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a></span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a><span class="co"># Keep remote version for the other conflicting file</span></span>
+<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a><span class="co"># !git checkout --theirs train_xgboost.py</span></span>
+<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a></span>
+<span id="cb20-7"><a href="#cb20-7" tabindex="-1"></a><span class="co"># # Stage the files to mark the conflicts as resolved</span></span>
+<span id="cb20-8"><a href="#cb20-8" tabindex="-1"></a><span class="co"># !git add train_nn.py</span></span>
+<span id="cb20-9"><a href="#cb20-9" tabindex="-1"></a><span class="co"># !git add train_xgboost.py</span></span>
+<span id="cb20-10"><a href="#cb20-10" tabindex="-1"></a></span>
+<span id="cb20-11"><a href="#cb20-11" tabindex="-1"></a><span class="co"># # Commit the merge result</span></span>
+<span id="cb20-12"><a href="#cb20-12" tabindex="-1"></a><span class="co"># !git commit -m "Resolved merge conflicts by keeping local changes"</span></span></code></pre>
 </div>
 <ol start="4" style="list-style-type: decimal">
 <li>
 <strong>Push Changes and Enter Credentials</strong>:</li>
 </ol>
-<div class="codewrapper sourceCode" id="cb20">
+<div class="codewrapper sourceCode" id="cb21">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="co"># Push with embedded credentials from getpass (avoids interactive prompt)</span></span>
-<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>github_url <span class="op">=</span> <span class="st">'github.com/username/ML_with_Amazon_SageMaker.git'</span> <span class="co"># replace username with your own. THe full address for your fork can be found under Code -&gt; Clone -&gt; HTTPS (remote the https:// before the rest of the address)</span></span>
-<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a><span class="op">!</span>git push https:<span class="op">//</span>{username}:{token}<span class="op">@</span>{github_url} main</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="co"># Push with embedded credentials from getpass (avoids interactive prompt)</span></span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>github_url <span class="op">=</span> <span class="st">'github.com/username/ML_with_Amazon_SageMaker.git'</span> <span class="co"># replace username with your own. THe full address for your fork can be found under Code -&gt; Clone -&gt; HTTPS (remote the https:// before the rest of the address)</span></span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a><span class="op">!</span>git push https:<span class="op">//</span>{username}:{token}<span class="op">@</span>{github_url} main</span></code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb21">
+<div class="codewrapper sourceCode" id="cb22">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="ex">fatal:</span> unable to access <span class="st">'https://{github_url}/'</span>: URL rejected: Bad hostname</span></code></pre>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="ex">fatal:</span> unable to access <span class="st">'https://{github_url}/'</span>: URL rejected: Bad hostname</span></code></pre>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="step-5-pulling--py-files-and-converting-back-to-notebook-format">Step 5: Pulling .py files and converting back to notebook
@@ -2137,31 +2140,31 @@ with notebook files again, you can again use jupytext to convert your
 current directory, converting the Python script to a Jupyter Notebook
 format. Jupytext handles the conversion gracefully without expecting the
 <code>.py</code> file to be in JSON format.</p>
-<div class="codewrapper sourceCode" id="cb22">
+<div class="codewrapper sourceCode" id="cb23">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="co"># Replace 'your_script.py' with your actual filename</span></span>
-<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a><span class="op">!</span>jupytext <span class="op">--</span>to notebook Data<span class="op">-</span>storage<span class="op">-</span><span class="kw">and</span><span class="op">-</span>access<span class="op">-</span>via<span class="op">-</span>buckets.py <span class="op">--</span>output Data<span class="op">-</span>storage<span class="op">-</span><span class="kw">and</span><span class="op">-</span>access<span class="op">-</span>via<span class="op">-</span>buckets<span class="op">-</span>test.ipynb</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="co"># Replace 'your_script.py' with your actual filename</span></span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a><span class="op">!</span>jupytext <span class="op">--</span>to notebook Data<span class="op">-</span>storage<span class="op">-</span><span class="kw">and</span><span class="op">-</span>access<span class="op">-</span>via<span class="op">-</span>buckets.py <span class="op">--</span>output Data<span class="op">-</span>storage<span class="op">-</span><span class="kw">and</span><span class="op">-</span>access<span class="op">-</span>via<span class="op">-</span>buckets<span class="op">-</span>test.ipynb</span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="applying-to-all--py-files">Applying to all .py files<a class="anchor" aria-label="anchor" href="#applying-to-all--py-files"></a>
 </h3>
 <p>To convert all of your .py files to notebooks, you can use the
 following code:</p>
-<div class="codewrapper sourceCode" id="cb23">
+<div class="codewrapper sourceCode" id="cb24">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="im">import</span> subprocess</span>
-<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a><span class="im">import</span> os</span>
-<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a></span>
-<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a><span class="co"># List all .py files in the directory</span></span>
-<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a>scripts <span class="op">=</span> [f <span class="cf">for</span> f <span class="kw">in</span> os.listdir() <span class="cf">if</span> f.endswith(<span class="st">'.py'</span>)]</span>
-<span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a></span>
-<span id="cb23-7"><a href="#cb23-7" tabindex="-1"></a><span class="co"># Convert each .py file to .ipynb using jupytext</span></span>
-<span id="cb23-8"><a href="#cb23-8" tabindex="-1"></a><span class="cf">for</span> script <span class="kw">in</span> scripts:</span>
-<span id="cb23-9"><a href="#cb23-9" tabindex="-1"></a>    output_file <span class="op">=</span> script.replace(<span class="st">'.py'</span>, <span class="st">'.ipynb'</span>)</span>
-<span id="cb23-10"><a href="#cb23-10" tabindex="-1"></a>    subprocess.run([<span class="st">"jupytext"</span>, <span class="st">"--to"</span>, <span class="st">"notebook"</span>, script, <span class="st">"--output"</span>, output_file])</span>
-<span id="cb23-11"><a href="#cb23-11" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Converted </span><span class="sc">{</span>script<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span>output_file<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="im">import</span> subprocess</span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a></span>
+<span id="cb24-4"><a href="#cb24-4" tabindex="-1"></a><span class="co"># List all .py files in the directory</span></span>
+<span id="cb24-5"><a href="#cb24-5" tabindex="-1"></a>scripts <span class="op">=</span> [f <span class="cf">for</span> f <span class="kw">in</span> os.listdir() <span class="cf">if</span> f.endswith(<span class="st">'.py'</span>)]</span>
+<span id="cb24-6"><a href="#cb24-6" tabindex="-1"></a></span>
+<span id="cb24-7"><a href="#cb24-7" tabindex="-1"></a><span class="co"># Convert each .py file to .ipynb using jupytext</span></span>
+<span id="cb24-8"><a href="#cb24-8" tabindex="-1"></a><span class="cf">for</span> script <span class="kw">in</span> scripts:</span>
+<span id="cb24-9"><a href="#cb24-9" tabindex="-1"></a>    output_file <span class="op">=</span> script.replace(<span class="st">'.py'</span>, <span class="st">'.ipynb'</span>)</span>
+<span id="cb24-10"><a href="#cb24-10" tabindex="-1"></a>    subprocess.run([<span class="st">"jupytext"</span>, <span class="st">"--to"</span>, <span class="st">"notebook"</span>, script, <span class="st">"--output"</span>, output_file])</span>
+<span id="cb24-11"><a href="#cb24-11" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Converted </span><span class="sc">{</span>script<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span>output_file<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
