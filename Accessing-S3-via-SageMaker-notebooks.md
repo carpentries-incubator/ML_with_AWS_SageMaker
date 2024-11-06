@@ -140,6 +140,13 @@ It's a good idea to periodically check how much storage you have used in your bu
 
 ### Step 1: Set up the S3 Client and Calculate Bucket Size
 
+The code below will calculate your bucket size for you. Here is a breakdown of the important pieces in the next code section:
+
+1. **Paginator**: Since S3 buckets can contain many objects, we use a paginator to handle large listings.
+2. **Size calculation**: We sum the `Size` attribute of each object in the bucket.
+3. **Unit conversion**: The size is given in bytes, so dividing by `1024 ** 2` converts it to megabytes (MB).
+
+> **Note**: If your bucket has very large objects or you want to check specific folders within a bucket, you may want to refine this code to only fetch certain objects or folders.
 
 ```python
 # Initialize the total size counter
@@ -164,39 +171,28 @@ print(f"Total size of bucket '{bucket_name}': {total_size_mb:.2f} MB")
 
 
 ### Using helper functions from lesson repo
-We have added code to calculate bucket size to a helper function called `get_s3_bucket_size(bucket_name)` for your convenience. There are also some other helper functions in that repo to assist you with common AWS/SageMaker workflows. To clone the repo to our Jupyter notebook, you can use the following code.
+We have added code to calculate bucket size to a helper function called `get_s3_bucket_size(bucket_name)` for your convenience. There are also some other helper functions in that repo to assist you with common AWS/SageMaker workflows. To clone the repo to our Jupyter notebook, use the following code.
 
 **Note**: Make sure you have already forked the lesson repo as described on the [setup page](). Replace "username" below with your GitHub username.
 
 ```python
-!git clone https://github.com/username/ml-with-aws-sagemaker.git
+!git clone https://github.com/username/ml-with-aws-sagemaker.git # downloads ML_with_Amazon_SageMaker folder/repo (refresh file explorer to see)
 ```
 
-Our AWS_helpers.py file can be found in `ml-with-aws-sagemaker/scripts/AWS_helpers.py`. With this file downloaded, you can call this function via...
+Our AWS_helpers.py file can be found in `ML_with_Amazon_SageMaker/scripts/AWS_helpers.py`. With this file downloaded, you can call this function via...
 
 ```python
-import test_AWS.scripts.AWS_helpers as helpers # test_AWS.scripts.AWS_helpers reflects path leading up to AWS_helpers.py
-
+import ML_with_Amazon_SageMaker.scripts.AWS_helpers as helpers
 helpers.get_s3_bucket_size(bucket_name)
+=
 ```
 
-    {'size_mb': 41.043779373168945, 'size_gb': 0.0400818157941103}
-
-### Explanation
-
-1. **Paginator**: Since S3 buckets can contain many objects, we use a paginator to handle large listings.
-2. **Size Calculation**: We sum the `Size` attribute of each object in the bucket.
-3. **Unit Conversion**: The size is given in bytes, so dividing by `1024 ** 2` converts it to megabytes (MB).
-
-> **Note**: If your bucket has very large objects or you want to check specific folders within a bucket, you may want to refine this code to only fetch certain objects or folders.
+    {'size_mb': 0.060057640075683594, 'size_gb': 5.865003913640976e-05}
 
 ## 3: Check storage costs of bucket
 To estimate the storage cost of your Amazon S3 bucket directly from a Jupyter notebook in SageMaker, you can use the following approach. This method calculates the total size of the bucket and estimates the monthly storage cost based on AWS S3 pricing.
 
 **Note**: AWS S3 pricing varies by region and storage class. The example below uses the S3 Standard storage class pricing for the US East (N. Virginia) region as of November 1, 2024. Please verify the current pricing for your specific region and storage class on the [AWS S3 Pricing page](https://aws.amazon.com/s3/pricing/).
-
-
-
 
 ```python
 # AWS S3 Standard Storage pricing for US East (N. Virginia) region
@@ -220,27 +216,25 @@ else:
            ((total_size_gb - 500 * 1024) * over_500_tb_price_per_gb)
 
 print(f"Estimated monthly storage cost: ${cost:.4f}")
-
+print(f"Estimated annual storage cost: ${cost*12:.4f}")
 
 ```
 
-    Estimated monthly storage cost: $0.0009
+    Estimated monthly storage cost: $0.0000
 
 
 For your convenience, we have also added this code to a helper function.
 
 
 ```python
-import test_AWS.scripts.AWS_helpers as helpers # test_AWS.scripts.AWS_helpers reflects path leading up to AWS_helpers.py
-
-cost = helpers.calculate_s3_storage_cost(bucket_name)
-
-print(f"Estimated monthly storage cost for bucket '{bucket_name}': ${cost:.4f}")
+monthly_cost, storage_size_gb = helpers.calculate_s3_storage_cost(bucket_name)
+print(f"Estimated monthly cost ({storage_size_gb:.4f} GB): ${monthly_cost:.5f}")
+print(f"Estimated annual cost ({storage_size_gb:.4f} GB): ${monthly_cost*12:.5f}")
 
 ```
 
-    Estimated monthly storage cost for bucket 'titanic-dataset-test': $0.0009
-
+    Estimated monthly cost (0.0001 GB): $0.00000
+    Estimated annual cost (0.0001 GB): $0.00002
 
 **Important Considerations**:
 
