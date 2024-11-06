@@ -23,8 +23,10 @@ exercises: 10
 ### Setup 
 
 #### Open .ipynb notebook
-Once your newly created notebook *instance* ("SageMaker notebook") shows as `InService`, open the instance in Jupyter Lab. From there, we will select the pre-built pytorch environment (conda_pytorch3_p310) to start our first .ipynb notebook ("Jupyter notebook"). This will save us the trouble of having to install pytorch on this instance / notebook evnironment later. You can name your Jupyter notebook something along the lines of, `Interacting-with-S3.ipynb`.
+Once your newly created notebook *instance* ("SageMaker notebook") shows as `InService`, open the instance in Jupyter Lab. From there, we will select the standard python3 environment (conda_python3) to start our first .ipynb notebook ("Jupyter notebook"). You can name your Jupyter notebook something along the lines of, `Interacting-with-S3.ipynb`.
 
+
+We can use the standard conda_python3 environment since we aren't doing any training/tuning just yet.
 #### Set up AWS environment
 To begin each SageMaker notebook, it's important to set up an AWS environment that will allow seamless access to the necessary cloud resources. Here's what we'll do to get started:
 
