@@ -30,14 +30,14 @@ Save these files to a location where they can easily be accessed. In the first e
 
 ## Workshop Repository Setup
 
-You will need a copy of the lesson repository on GitHub to explore how to manage your repo in AWS. This setup will allow you to follow along with the workshop and test out the Interacting with Repositories episode.
+You will need a copy of our AWS_helpers repo on GitHub to explore how to manage your repo in AWS. This setup will allow you to follow along with the workshop and test out the Interacting with Repositories episode.
 
 To do this:
 
-1. Go to the workshop's [GitHub repository page](https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker).
+1. Go to the [AWS_helpers GitHub repository](https://github.com/UW-Madison-DataScience/AWS_helpers).
 2. Click **Fork** (top right) to create your own copy of the repository under your GitHub account.
 3. Once forked, you don't need to do anything else. We'll clone this fork once we start working in the AWS Jupyter environment using...
 
 ```python
-!git clone https://github.com/YOUR_USERNAME/ml-with-aws-sagemaker.git
+!git clone https://github.com/YOUR_USERNAME/AWS_helpers.git
 ```  
