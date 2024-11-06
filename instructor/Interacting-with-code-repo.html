@@ -257,8 +257,10 @@
 a SageMaker notebook</a></li>
 <li><a href="#step-2-configure-git-settings">Step 2: Configure Git settings</a></li>
 <li><a href="#step-3-convert-json-.ipynb-files-to-.py">Step 3: Convert json .ipynb files to .py</a></li>
-<li><a href="#step-4.-adding-.ipynb-to-gitigore">Step 4. Adding .ipynb to gitigore</a></li>
-<li><a href="#step-5-pulling-.py-files-and-converting-back-to-notebook-format">Step 5: Pulling .py files and converting back to notebook
+<li><a href="#step-4.-add-and-commit-.py-files">Step 4. Add and commit .py files</a></li>
+<li><a href="#step-5.-adding-.ipynb-to-gitigore">Step 5. Adding .ipynb to gitigore</a></li>
+<li><a href="#step-6.-merging-local-changes-with-remotegithub">Step 6. Merging local changes with remote/GitHub</a></li>
+<li><a href="#step-7-pulling-.py-files-and-converting-back-to-notebook-format">Step 7: Pulling .py files and converting back to notebook
 format</a></li>
         </ul></div><!--/div.accordion-body-->
     </div><!--/div.accordion-collapse-->
@@ -551,10 +553,45 @@ files:</li>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="im">import</span> AWS_helpers.helpers <span class="im">as</span> helpers</span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>helpers.convert_files(direction<span class="op">=</span><span class="st">"notebook_to_python"</span>)</span></code></pre>
 </div>
-<p>Once converted, we can move our .py files to the AWS_helpers folder
-using the file explorer panel in Jupyter Lab.</p>
+<p><strong>Once converted, we can move our .py files to the AWS_helpers
+folder using the file explorer panel in Jupyter Lab.</strong></p>
 </div>
-</section><section><h2 class="section-heading" id="step-4--adding--ipynb-to-gitigore">Step 4. Adding .ipynb to gitigore<a class="anchor" aria-label="anchor" href="#step-4--adding--ipynb-to-gitigore"></a></h2>
+</section><section><h2 class="section-heading" id="step-4--add-and-commit--py-files">Step 4. Add and commit .py files<a class="anchor" aria-label="anchor" href="#step-4--add-and-commit--py-files"></a></h2>
+<hr class="half-width"><ol style="list-style-type: decimal"><li>Check status of repo. Make sure you’re in the repo folder before
+running the next step.</li>
+</ol><div class="codewrapper sourceCode" id="cb10">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="op">!</span>git status</span></code></pre>
+</div>
+<p>On branch main Your branch is up to date with ‘origin/main’.</p>
+<p>Untracked files: (use “git add <file>…” to include in what will be
+committed) Interacting-with-S3.py Interacting-with-git.py</file></p>
+<p>nothing added to commit but untracked files present (use “git add” to
+track)</p>
+<ol start="2" style="list-style-type: decimal"><li>Add and commit changes</li>
+</ol><div class="codewrapper sourceCode" id="cb11">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="op">!</span>git add . <span class="co"># you may also add files one at a time, for further specificity over the associated commit message</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Updates from Jupyter notebooks"</span> <span class="co"># in general, your commit message should be more specific!</span></span></code></pre>
+</div>
+<ol start="3" style="list-style-type: decimal"><li>Check status</li>
+</ol><div class="codewrapper sourceCode" id="cb12">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="op">!</span>git status</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb13">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="ex">On</span> branch main</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="ex">Your</span> branch is ahead of <span class="st">'origin/main'</span> by 1 commit.</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="kw">(</span><span class="ex">use</span> <span class="st">"git push"</span> to publish your local commits<span class="kw">)</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="ex">nothing</span> to commit, working tree clean</span></code></pre>
+</div>
+</section><section><h2 class="section-heading" id="step-5--adding--ipynb-to-gitigore">Step 5. Adding .ipynb to gitigore<a class="anchor" aria-label="anchor" href="#step-5--adding--ipynb-to-gitigore"></a></h2>
 <hr class="half-width"><p>Adding <code>.ipynb</code> files to <code>.gitignore</code> is a good
 practice if you plan to only commit <code>.py</code> scripts. This will
 prevent accidental commits of Jupyter Notebook files across all
@@ -564,154 +601,134 @@ subfolders in the repository.</p>
 <ol style="list-style-type: decimal"><li>
 <p><strong>Cd to git repo folder</strong> First make sure we’re in
 the repo folder</p>
-<div class="codewrapper sourceCode" id="cb10">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="op">%</span>cd AWS_helpers</span></code></pre>
-</div>
-</li>
-<li>
-<p><strong>Create the <code>.gitignore</code> file</strong>:</p>
-<ul><li>
-<p>If you don’t already have a <code>.gitignore</code> file in the
-repository root (use ‘!ls -a’ to check, you can create one by
-running:</p>
-<div class="codewrapper sourceCode" id="cb11">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="op">!</span>touch .gitignore</span></code></pre>
-</div>
-</li>
-</ul></li>
-<li>
-<p><strong>Add <code>.ipynb</code> files to
-<code>.gitignore</code></strong>:</p>
-<ul><li>
-<p>Append the following line to your <code>.gitignore</code> file to
-ignore all <code>.ipynb</code> files in all folders:</p>
-<pre class="plaintext"><code>*.ipynb # Ignore all Jupyter Notebook files</code></pre>
-</li>
-<li>
-<p>You can add this line using a command within your notebook:</p>
-<div class="codewrapper sourceCode" id="cb13">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">".gitignore"</span>, <span class="st">"a"</span>) <span class="im">as</span> gitignore:</span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>    gitignore.write(<span class="st">"</span><span class="ch">\n</span><span class="st"># Ignore all Jupyter Notebook files</span><span class="ch">\n</span><span class="st">*.ipynb</span><span class="ch">\n</span><span class="st">"</span>)</span></code></pre>
-</div>
-</li>
-</ul></li>
-<li>
-<p><strong>Verify and commit the <code>.gitignore</code>
-File</strong>:</p>
-<ul><li>
-<p>Add and commit the updated <code>.gitignore</code> file to ensure
-it’s applied across the repository.</p>
 <div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="op">!</span>git add .gitignore</span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Add .ipynb files to .gitignore to ignore notebooks"</span></span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="op">!</span>git push origin main</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="op">%</span>cd AWS_helpers</span></code></pre>
 </div>
 </li>
-</ul></li>
+<li><p><strong>Create the <code>.gitignore</code> file</strong>: This
+file will be hidden in Jupyter (since it starts with “.”), but you can
+verify it exists using <code>ls</code>.
+<code>python     !touch .gitignore     !ls -a</code></p></li>
+<li>
+<p><strong>Add <code>.ipynb</code> files to
+<code>.gitignore</code></strong>:</p>
+<p>You can add this line using a command within your notebook:</p>
+<div class="codewrapper sourceCode" id="cb15">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">".gitignore"</span>, <span class="st">"a"</span>) <span class="im">as</span> gitignore:</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>    gitignore.write(<span class="st">"</span><span class="ch">\n</span><span class="st"># Ignore all Jupyter Notebook files</span><span class="ch">\n</span><span class="st">*.ipynb</span><span class="ch">\n</span><span class="st">"</span>)</span></code></pre>
+</div>
+<p>View file contents <code>python  !cat .gitignore</code></p>
+</li>
+<li>
+<p><strong>Ignore other common temp files</strong> While we’re at
+it, let’s ignore other common files that can clutter repos, such as
+cache folders and temporary files.
+<code>python     with open(".gitignore", "a") as gitignore:         gitignore.write("\n# Ignore cache and temp files\n__pycache__/\n*.tmp\n*.log\n")</code></p>
+<p>View file contents <code>python  !cat .gitignore</code></p>
+</li>
+<li>
+<p><strong>Add and commit the <code>.gitignore</code>
+file</strong>:</p>
+<p>Add and commit the updated <code>.gitignore</code> file to ensure
+it’s applied across the repository.
+<code>python  !git add .gitignore  !git commit -m "Add .ipynb files to .gitignore to ignore notebooks"</code></p>
+</li>
 </ol><p>This setup will: - Prevent all <code>.ipynb</code> files from being
 tracked by Git. - Keep your repository cleaner, containing only
 <code>.py</code> scripts for easier version control and reduced
 repository size.</p>
-<p>Now any new or existing notebooks won’t show up as untracked files in
-Git, ensuring your commits stay focused on the converted
-<code>.py</code> files.</p>
-<div class="section level4">
-<h4 id="navigate-to-the-repository-directory-adjust-the-path-if-needed">Navigate to the repository directory (adjust the path if
-needed):<a class="anchor" aria-label="anchor" href="#navigate-to-the-repository-directory-adjust-the-path-if-needed"></a></h4>
-<div class="codewrapper sourceCode" id="cb15">
+</section><section><h2 class="section-heading" id="step-6--merging-local-changes-with-remotegithub">Step 6. Merging local changes with remote/GitHub<a class="anchor" aria-label="anchor" href="#step-6--merging-local-changes-with-remotegithub"></a></h2>
+<hr class="half-width"><p>Our local changes have now been committed, and we can begin the
+process of mergining with the remoate main branch. Before we try to push
+our changes, it’s good practice to first to a pull. This is critical
+when working on a collaborate repo with multiple users, so that you
+don’t miss any updates from other team members.</p>
+<div class="section level3">
+<h3 id="pull-the-latest-changes-from-the-main-branch">1. Pull the latest changes from the main branch<a class="anchor" aria-label="anchor" href="#pull-the-latest-changes-from-the-main-branch"></a></h3>
+<p>There are a few different options for pulling the remote code into
+your local version. The best pull strategy depends on your workflow and
+the history structure you want to maintain. Here’s a breakdown to help
+you decide:</p>
+<ul><li>Merge (pull.rebase false): Combines the remote changes into your
+local branch as a merge commit.
+<ul><li>
+<strong>Use if</strong>: You’re okay with having merge commits in
+your history, which indicate where you pulled in remote changes. This is
+the default and is usually the easiest for team collaborations,
+especially if conflicts arise.</li>
+</ul></li>
+<li>Rebase (pull.rebase true): Replays your local changes on top of the
+updated main branch, resulting in a linear history.
+<ul><li>
+<strong>Use if</strong>: You prefer a clean, linear history without
+merge commits. Rebase is useful if you like to keep your branch history
+as if all changes happened sequentially.</li>
+</ul></li>
+<li>Fast-forward only (pull.ff only): Only pulls if the local branch can
+fast-forward to the remote without diverging (no new commits locally).
+<ul><li>
+<strong>Use if</strong>: You only want to pull updates if no
+additional commits have been made locally. This can be helpful to avoid
+unintended merges when your branch hasn’t diverged.</li>
+</ul></li>
+</ul><div class="section level4">
+<h4 id="recommended-for-most-users">Recommended for Most Users<a class="anchor" aria-label="anchor" href="#recommended-for-most-users"></a></h4>
+<p>If you’re collaborating and want simplicity, <strong>merge
+(pull.rebase false)</strong> is often the most practical option. This
+will ensure you get remote changes with a merge commit that captures the
+history of integration points. For those who prefer a more streamlined
+history and are comfortable with Git, <strong>rebase (pull.rebase
+true)</strong> can be ideal but may require more careful conflict
+handling.</p>
+<div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="op">%</span>cd AWS_helpers<span class="op">/</span></span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="op">!</span>pwd</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="op">!</span>git config pull.rebase false <span class="co"># Combines the remote changes into your local branch as a merge commit.</span></span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="op">!</span>git pull origin main</span></code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb16">
+<div class="codewrapper sourceCode" id="cb17">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="ex">/home/ec2-user/SageMaker/AWS_helpers</span></span></code></pre>
-</div>
-<p>Check status of repo. If you’re following along with these materials,
-you shouldn’t see any files ready for adding/committing since your ipynb
-files should be located one level above AWS_helpers (in
-/home/ec2-user/SageMaker/AWS_helpers</p>
-<div class="codewrapper sourceCode" id="cb17">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="op">!</span>git status</span></code></pre>
-</div>
-<ol start="2" style="list-style-type: decimal"><li>
-<strong>Add and Commit Changes</strong>:</li>
-</ol><div class="codewrapper sourceCode" id="cb18">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="op">!</span>git add . <span class="co"># you may also add files one at a time, for further specificity over the associated commit message</span></span>
-<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Updates from Jupyter notebooks"</span> <span class="co"># in general, your commit message should be more specific!</span></span></code></pre>
-</div>
-<ol start="3" style="list-style-type: decimal"><li>
-<p><strong>Pull the Latest Changes from the Main Branch</strong>:
-Pull the latest changes from the remote main branch to ensure your local
-branch is up-to-date.</p>
-<p>Recommended: Set the Pull Strategy for this Repository (Merge by
-Default)</p>
-<p>All options:</p>
-<ul><li>Merge (pull.rebase false): Combines the remote changes into your
-local branch as a merge commit.</li>
-<li>Rebase (pull.rebase true): Replays your local changes on top of the
-updated main branch, resulting in a linear history.</li>
-<li>Fast-forward only (pull.ff only): Only pulls if the local branch can
-fast-forward to the remote without diverging (no new commits
-locally).</li>
-</ul></li>
-</ol><div class="codewrapper sourceCode" id="cb19">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="op">!</span>git config pull.rebase false <span class="co"># Combines the remote changes into your local branch as a merge commit.</span></span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a></span>
-<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a><span class="op">!</span>git pull origin main</span></code></pre>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="ex">From</span> https://github.com/qualiaMachine/AWS_helpers</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a> <span class="ex">*</span> branch            main       <span class="at">-</span><span class="op">&gt;</span> FETCH_HEAD</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a><span class="ex">Already</span> up to date.</span></code></pre>
 </div>
 <p>If you get merge conflicts, be sure to resolve those before moving
 forward (e.g., use git checkout -&gt; add -&gt; commit). You can skip
 the below code if you don’t have any conflicts.</p>
-<div class="codewrapper sourceCode" id="cb20">
+<div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="co"># Keep your local changes in one conflicting file</span></span>
-<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a><span class="co"># !git checkout --ours train_nn.py</span></span>
-<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a></span>
-<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a><span class="co"># Keep remote version for the other conflicting file</span></span>
-<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a><span class="co"># !git checkout --theirs train_xgboost.py</span></span>
-<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a></span>
-<span id="cb20-7"><a href="#cb20-7" tabindex="-1"></a><span class="co"># # Stage the files to mark the conflicts as resolved</span></span>
-<span id="cb20-8"><a href="#cb20-8" tabindex="-1"></a><span class="co"># !git add train_nn.py</span></span>
-<span id="cb20-9"><a href="#cb20-9" tabindex="-1"></a><span class="co"># !git add train_xgboost.py</span></span>
-<span id="cb20-10"><a href="#cb20-10" tabindex="-1"></a></span>
-<span id="cb20-11"><a href="#cb20-11" tabindex="-1"></a><span class="co"># # Commit the merge result</span></span>
-<span id="cb20-12"><a href="#cb20-12" tabindex="-1"></a><span class="co"># !git commit -m "Resolved merge conflicts by keeping local changes"</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="co"># Keep your local changes in one conflicting file</span></span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="co"># !git checkout --ours Interacting-with-git.py</span></span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a><span class="co"># Keep remote version for the other conflicting file</span></span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a><span class="co"># !git checkout --theirs Interacting-with-git.py</span></span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a></span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a><span class="co"># # Stage the files to mark the conflicts as resolved</span></span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a><span class="co"># !git add Interacting-with-git.py</span></span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a></span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a><span class="co"># # Commit the merge result</span></span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a><span class="co"># !git commit -m "Resolved merge conflicts by keeping local changes"</span></span></code></pre>
 </div>
-<ol start="4" style="list-style-type: decimal"><li>
-<strong>Push Changes and Enter Credentials</strong>:</li>
-</ol><div class="codewrapper sourceCode" id="cb21">
+</div>
+</div>
+<div class="section level3">
+<h3 id="push-changes-using-pat-creditials">2. Push changes using PAT creditials<a class="anchor" aria-label="anchor" href="#push-changes-using-pat-creditials"></a></h3>
+<div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="co"># Push with embedded credentials from getpass (avoids interactive prompt)</span></span>
-<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>github_url <span class="op">=</span> <span class="st">'github.com/username/ML_with_Amazon_SageMaker.git'</span> <span class="co"># replace username with your own. THe full address for your fork can be found under Code -&gt; Clone -&gt; HTTPS (remote the https:// before the rest of the address)</span></span>
-<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a><span class="op">!</span>git push https:<span class="op">//</span>{username}:{token}<span class="op">@</span>{github_url} main</span></code></pre>
-</div>
-<div class="codewrapper sourceCode" id="cb22">
-<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="ex">fatal:</span> unable to access <span class="st">'https://{github_url}/'</span>: URL rejected: Bad hostname</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="co"># Push with embedded credentials from getpass (avoids interactive prompt)</span></span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>github_url <span class="op">=</span> <span class="st">'github.com/username/AWS_helpers.git'</span> <span class="co"># replace username with your own. THe full address for your fork can be found under Code -&gt; Clone -&gt; HTTPS (remote the https:// before the rest of the address)</span></span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a><span class="op">!</span>git push https:<span class="op">//</span>{username}:{token}<span class="op">@</span>{github_url} main</span></code></pre>
 </div>
 </div>
-</section><section><h2 class="section-heading" id="step-5-pulling--py-files-and-converting-back-to-notebook-format">Step 5: Pulling .py files and converting back to notebook
-format<a class="anchor" aria-label="anchor" href="#step-5-pulling--py-files-and-converting-back-to-notebook-format"></a></h2>
+</section><section><h2 class="section-heading" id="step-7-pulling--py-files-and-converting-back-to-notebook-format">Step 7: Pulling .py files and converting back to notebook
+format<a class="anchor" aria-label="anchor" href="#step-7-pulling--py-files-and-converting-back-to-notebook-format"></a></h2>
 <hr class="half-width"><p>Let’s assume you’ve taken a short break from your work, and you would
 like to start again by pulling in your code repo. If you’d like to work
 with notebook files again, you can again use jupytext to convert your
@@ -721,30 +738,30 @@ with notebook files again, you can again use jupytext to convert your
 current directory, converting the Python script to a Jupyter Notebook
 format. Jupytext handles the conversion gracefully without expecting the
 <code>.py</code> file to be in JSON format.</p>
-<div class="codewrapper sourceCode" id="cb23">
+<div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="co"># Replace 'your_script.py' with your actual filename</span></span>
-<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a><span class="op">!</span>jupytext <span class="op">--</span>to notebook Data<span class="op">-</span>storage<span class="op">-</span><span class="kw">and</span><span class="op">-</span>access<span class="op">-</span>via<span class="op">-</span>buckets.py <span class="op">--</span>output Data<span class="op">-</span>storage<span class="op">-</span><span class="kw">and</span><span class="op">-</span>access<span class="op">-</span>via<span class="op">-</span>buckets<span class="op">-</span>test.ipynb</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="co"># Replace 'your_script.py' with your actual filename</span></span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a><span class="op">!</span>jupytext <span class="op">--</span>to notebook Data<span class="op">-</span>storage<span class="op">-</span><span class="kw">and</span><span class="op">-</span>access<span class="op">-</span>via<span class="op">-</span>buckets.py <span class="op">--</span>output Data<span class="op">-</span>storage<span class="op">-</span><span class="kw">and</span><span class="op">-</span>access<span class="op">-</span>via<span class="op">-</span>buckets<span class="op">-</span>test.ipynb</span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="applying-to-all--py-files">Applying to all .py files<a class="anchor" aria-label="anchor" href="#applying-to-all--py-files"></a></h3>
 <p>To convert all of your .py files to notebooks, you can use the
 following code:</p>
-<div class="codewrapper sourceCode" id="cb24">
+<div class="codewrapper sourceCode" id="cb21">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="im">import</span> subprocess</span>
-<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a><span class="im">import</span> os</span>
-<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a></span>
-<span id="cb24-4"><a href="#cb24-4" tabindex="-1"></a><span class="co"># List all .py files in the directory</span></span>
-<span id="cb24-5"><a href="#cb24-5" tabindex="-1"></a>scripts <span class="op">=</span> [f <span class="cf">for</span> f <span class="kw">in</span> os.listdir() <span class="cf">if</span> f.endswith(<span class="st">'.py'</span>)]</span>
-<span id="cb24-6"><a href="#cb24-6" tabindex="-1"></a></span>
-<span id="cb24-7"><a href="#cb24-7" tabindex="-1"></a><span class="co"># Convert each .py file to .ipynb using jupytext</span></span>
-<span id="cb24-8"><a href="#cb24-8" tabindex="-1"></a><span class="cf">for</span> script <span class="kw">in</span> scripts:</span>
-<span id="cb24-9"><a href="#cb24-9" tabindex="-1"></a>    output_file <span class="op">=</span> script.replace(<span class="st">'.py'</span>, <span class="st">'.ipynb'</span>)</span>
-<span id="cb24-10"><a href="#cb24-10" tabindex="-1"></a>    subprocess.run([<span class="st">"jupytext"</span>, <span class="st">"--to"</span>, <span class="st">"notebook"</span>, script, <span class="st">"--output"</span>, output_file])</span>
-<span id="cb24-11"><a href="#cb24-11" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Converted </span><span class="sc">{</span>script<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span>output_file<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="im">import</span> subprocess</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a></span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a><span class="co"># List all .py files in the directory</span></span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a>scripts <span class="op">=</span> [f <span class="cf">for</span> f <span class="kw">in</span> os.listdir() <span class="cf">if</span> f.endswith(<span class="st">'.py'</span>)]</span>
+<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a></span>
+<span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a><span class="co"># Convert each .py file to .ipynb using jupytext</span></span>
+<span id="cb21-8"><a href="#cb21-8" tabindex="-1"></a><span class="cf">for</span> script <span class="kw">in</span> scripts:</span>
+<span id="cb21-9"><a href="#cb21-9" tabindex="-1"></a>    output_file <span class="op">=</span> script.replace(<span class="st">'.py'</span>, <span class="st">'.ipynb'</span>)</span>
+<span id="cb21-10"><a href="#cb21-10" tabindex="-1"></a>    subprocess.run([<span class="st">"jupytext"</span>, <span class="st">"--to"</span>, <span class="st">"notebook"</span>, script, <span class="st">"--output"</span>, output_file])</span>
+<span id="cb21-11"><a href="#cb21-11" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Converted </span><span class="sc">{</span>script<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span>output_file<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
