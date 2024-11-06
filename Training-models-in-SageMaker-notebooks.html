@@ -268,7 +268,7 @@ train.py script</a></li>
 <li><a href="#training-with-sagemakers-built-in-xgboost-image">Training with SageMaker’s Built-in XGBoost Image</a></li>
 <li><a href="#monitoring-training">Monitoring Training</a></li>
 <li><a href="#when-training-takes-too-long">When Training Takes Too Long</a></li>
-<li><a href="#xgboosts-distributed-training-mechanism">XGBoost’s Distributed Training Mechanism</a></li>
+<li><a href="#xgboosts-distributed-training-mechanism">XGBoost’s distributed training mechanism</a></li>
 <li><a href="#implementing-distributed-training-with-xgboost-in-sagemaker">Implementing Distributed Training with XGBoost in SageMaker</a></li>
 <li><a href="#training-a-neural-network-with-sagemaker">Training a neural network with SageMaker</a></li>
         </ul></div><!--/div.accordion-body-->
@@ -930,12 +930,12 @@ additional explanation following the code.</p>
 <span id="cb25-23"><a href="#cb25-23" tabindex="-1"></a>    sagemaker_session<span class="op">=</span>session,</span>
 <span id="cb25-24"><a href="#cb25-24" tabindex="-1"></a>    framework_version<span class="op">=</span><span class="st">"1.5-1"</span>,           <span class="co"># Use latest supported version for better compatibility</span></span>
 <span id="cb25-25"><a href="#cb25-25" tabindex="-1"></a>    hyperparameters<span class="op">=</span>{</span>
-<span id="cb25-26"><a href="#cb25-26" tabindex="-1"></a>        <span class="st">'train'</span>: <span class="st">'titanic_train.csv'</span>,</span>
-<span id="cb25-27"><a href="#cb25-27" tabindex="-1"></a>        <span class="st">'max_depth'</span>: <span class="dv">5</span>,</span>
-<span id="cb25-28"><a href="#cb25-28" tabindex="-1"></a>        <span class="st">'eta'</span>: <span class="fl">0.1</span>,</span>
-<span id="cb25-29"><a href="#cb25-29" tabindex="-1"></a>        <span class="st">'subsample'</span>: <span class="fl">0.8</span>,</span>
-<span id="cb25-30"><a href="#cb25-30" tabindex="-1"></a>        <span class="st">'colsample_bytree'</span>: <span class="fl">0.8</span>,</span>
-<span id="cb25-31"><a href="#cb25-31" tabindex="-1"></a>        <span class="st">'num_round'</span>: <span class="dv">100</span></span>
+<span id="cb25-26"><a href="#cb25-26" tabindex="-1"></a>        <span class="st">'train'</span>: train_file,</span>
+<span id="cb25-27"><a href="#cb25-27" tabindex="-1"></a>        <span class="st">'max_depth'</span>: max_depth,</span>
+<span id="cb25-28"><a href="#cb25-28" tabindex="-1"></a>        <span class="st">'eta'</span>: eta,</span>
+<span id="cb25-29"><a href="#cb25-29" tabindex="-1"></a>        <span class="st">'subsample'</span>: subsample,</span>
+<span id="cb25-30"><a href="#cb25-30" tabindex="-1"></a>        <span class="st">'colsample_bytree'</span>: colsample_bytree,</span>
+<span id="cb25-31"><a href="#cb25-31" tabindex="-1"></a>        <span class="st">'num_round'</span>: num_round</span>
 <span id="cb25-32"><a href="#cb25-32" tabindex="-1"></a>    }</span>
 <span id="cb25-33"><a href="#cb25-33" tabindex="-1"></a>)</span>
 <span id="cb25-34"><a href="#cb25-34" tabindex="-1"></a></span>
@@ -1183,13 +1183,13 @@ interacting with your own job before making any changes.</p>
 <strong>SageMaker</strong> service (can search for it)</li>
 </ul></li>
 <li>
-<strong>View Training Jobs</strong>
+<strong>View training jobs</strong>
 <ul><li>In the left-hand navigation menu, select <strong>Training
 jobs</strong>. You’ll see a list of recent training jobs, which may
 include jobs from other users in the account.</li>
 </ul></li>
 <li>
-<strong>Verify Your Training Job</strong>
+<strong>Verify your training Job</strong>
 <ul><li>Identify your job by looking for the specific name format (e.g.,
 <code>sagemaker-xgboost-YYYY-MM-DD-HH-MM-SS-XXX</code>) generated when
 you launched the job. Click on its name to access detailed information.
@@ -1198,7 +1198,7 @@ and <strong>Input data configuration</strong>, with the parameters you
 set in your script.</li>
 </ul></li>
 <li>
-<strong>Monitor the Job Status</strong>
+<strong>Monitor the job status</strong>
 <ul><li>Once you’ve verified the correct job, click on its name to access
 detailed information:
 <ul><li>
@@ -1214,13 +1214,7 @@ model artifacts.</li>
 </ul></li>
 </ul></li>
 <li>
-<strong>Use CloudWatch for In-Depth Monitoring</strong>
-<ul><li>If additional monitoring is needed, go to <strong>CloudWatch
-Logs</strong> to view output logs associated with your training job in
-real-time.</li>
-</ul></li>
-<li>
-<strong>Stopping a Training Job</strong>
+<strong>Stopping a training job</strong>
 <ul><li>Before stopping a job, ensure you’ve selected the correct one by
 verifying job details as outlined above.</li>
 <li>If you’re certain it’s your job, go to <strong>Training
@@ -1238,7 +1232,7 @@ jobs you own, reducing the risk of impacting other users’ training
 processes.</p>
 </section><section><h2 class="section-heading" id="when-training-takes-too-long">When Training Takes Too Long<a class="anchor" aria-label="anchor" href="#when-training-takes-too-long"></a></h2>
 <hr class="half-width"><p>When training time becomes excessive, two main options can improve
-efficiency in SageMaker: * <strong>Option 1: Upgrading to a more
+efficiency in SageMaker. * <strong>Option 1: Upgrading to a more
 powerful instance</strong> * <strong>Option 2: Using multiple instances
 for distributed training</strong>.</p>
 <p>Generally, <strong>Option 1 is the preferred approach</strong> and
@@ -1251,13 +1245,13 @@ capabilities (e.g., for deep learning), is often the simplest and most
 cost-effective way to speed up training. Here’s a breakdown of instances
 to consider. Check the <a href="https://docs.google.com/spreadsheets/d/1uPT4ZAYl_onIl7zIjv5oEAdwy4Hdn6eiA9wVfOBbHmY/edit?usp=sharing" class="external-link">Instances
 for ML spreadsheet</a> for guidance on selecting a better instance.</p>
-<p><strong>When to Use a Single Instance Upgrade</strong><br>
+<p><strong>When to use a single instance upgrade</strong><br>
 Upgrading a single instance works well if: - <strong>Dataset
-Size</strong>: The dataset is small to moderate (e.g., &lt;10 GB),
+size</strong>: The dataset is small to moderate (e.g., &lt;10 GB),
 fitting comfortably within the memory of a larger instance. -
-<strong>Model Complexity</strong>: The model is not so large that it
+<strong>Model complexity</strong>: The model is not so large that it
 requires distribution across multiple devices. - <strong>Training
-Time</strong>: Expected training time is within a few hours, but could
+time</strong>: Expected training time is within a few hours, but could
 benefit from additional power.</p>
 <p>Upgrading a single instance is typically the most efficient option in
 terms of both cost and setup complexity. It avoids the communication
@@ -1265,7 +1259,7 @@ overhead associated with multi-instance setups (discussed below) and is
 well-suited for most small to medium-sized datasets.</p>
 </div>
 <div class="section level3">
-<h3 id="option-2-use-multiple-instances-for-distributed-training">Option 2: Use Multiple Instances for Distributed Training<a class="anchor" aria-label="anchor" href="#option-2-use-multiple-instances-for-distributed-training"></a></h3>
+<h3 id="option-2-use-multiple-instances-for-distributed-training">Option 2: Use multiple instances for distributed training<a class="anchor" aria-label="anchor" href="#option-2-use-multiple-instances-for-distributed-training"></a></h3>
 <p>If upgrading a single instance doesn’t sufficiently reduce training
 time, distributed training across multiple instances may be a viable
 alternative, particularly for larger datasets and complex models.
@@ -1274,14 +1268,14 @@ SageMaker supports two primary distributed training techniques:
 parallelism</strong>.</p>
 <div class="section level4">
 <h4 id="understanding-data-parallelism-vs--model-parallelism">Understanding Data Parallelism vs. Model Parallelism<a class="anchor" aria-label="anchor" href="#understanding-data-parallelism-vs--model-parallelism"></a></h4>
-<ul><li><p><strong>Data Parallelism</strong>: This approach splits the
+<ul><li><p><strong>Data parallelism</strong>: This approach splits the
 dataset across multiple instances, allowing each instance to process a
 subset of the data independently. After each batch, gradients are
 synchronized across instances to ensure consistent updates to the model.
 Data parallelism is effective when the model itself fits within an
 instance’s memory, but the data size or desired training speed requires
 faster processing through multiple instances.</p></li>
-<li><p><strong>Model Parallelism</strong>: Model parallelism divides the
+<li><p><strong>Model parallelism</strong>: Model parallelism divides the
 model itself across multiple instances, making it ideal for very large
 models (e.g., deep learning models in NLP or image processing) that
 cannot fit in memory on a single instance. Each instance processes a
@@ -1290,17 +1284,17 @@ approach is suitable for memory-intensive models that exceed the
 capacity of a single instance.</p></li>
 </ul></div>
 <div class="section level4">
-<h4 id="how-sagemaker-chooses-between-data-and-model-parallelism">How SageMaker Chooses Between Data and Model Parallelism<a class="anchor" aria-label="anchor" href="#how-sagemaker-chooses-between-data-and-model-parallelism"></a></h4>
+<h4 id="how-sagemaker-chooses-between-data-and-model-parallelism">How SageMaker chooses between data and model parallelism<a class="anchor" aria-label="anchor" href="#how-sagemaker-chooses-between-data-and-model-parallelism"></a></h4>
 <p>In SageMaker, the choice between data and model parallelism is not
 entirely automatic. Here’s how it typically works:</p>
-<ul><li><p><strong>Data Parallelism (Automatic)</strong>: When you set
+<ul><li><p><strong>Data parallelism (automatic)</strong>: When you set
 <code>instance_count &gt; 1</code>, SageMaker will automatically apply
 data parallelism. This splits the dataset across instances, allowing
 each instance to process a subset independently and synchronize
 gradients after each batch. Data parallelism works well when the model
 can fit in the memory of a single instance, but the data size or
 processing speed needs enhancement with multiple instances.</p></li>
-<li><p><strong>Model Parallelism (Manual Setup)</strong>: To enable
+<li><p><strong>Model parallelism (manual setup)</strong>: To enable
 model parallelism, you need to configure it explicitly using the
 <strong>SageMaker Model Parallel Library</strong>, suitable for deep
 learning models in frameworks like PyTorch or TensorFlow. Model
@@ -1308,19 +1302,19 @@ parallelism splits the model itself across multiple instances, which is
 useful for memory-intensive models that exceed the capacity of a single
 instance. Configuring model parallelism requires setting up a
 distribution strategy in SageMaker’s Python SDK.</p></li>
-<li><p><strong>Hybrid Parallelism (Manual Setup)</strong>: For extremely
+<li><p><strong>Hybrid parallelism (manual setup)</strong>: For extremely
 large datasets and models, SageMaker can support both data and model
 parallelism together, but this setup requires manual configuration.
 Hybrid parallelism is beneficial for workloads that are both data- and
 memory-intensive, where both the model and the data need distributed
 processing.</p></li>
-</ul><p><strong>When to Use Distributed Training with Multiple
-Instances</strong><br>
-Consider multiple instances if: - <strong>Dataset Size</strong>: The
+</ul><p><strong>When to use distributed training with multiple
+instances</strong><br>
+Consider multiple instances if: - <strong>Dataset size</strong>: The
 dataset is large (&gt;10 GB) and doesn’t fit comfortably within a single
-instance’s memory. - <strong>Model Complexity</strong>: The model is
+instance’s memory. - <strong>Model complexity</strong>: The model is
 complex, requiring extensive computation that a single instance cannot
-handle in a reasonable time. - <strong>Expected Training Time</strong>:
+handle in a reasonable time. - <strong>Expected training time</strong>:
 Training on a single instance takes prohibitively long (e.g., &gt;10
 hours), and distributed computing overhead is manageable.</p>
 </div>
@@ -1332,15 +1326,15 @@ you’re waiting hours for the training/tuning to complete.</p>
 <p>Let’s break down some key points for deciding between <strong>1
 instance vs. multiple instances</strong> from a cost perspective:</p>
 <ol style="list-style-type: decimal"><li>
-<strong>Instance Cost per Hour</strong>:
+<strong>Instance cost per hour</strong>:
 <ul><li>SageMaker charges per instance-hour. Running <strong>multiple
 instances</strong> in parallel can finish training faster, reducing
 wall-clock time, but the <strong>cost per hour will increase</strong>
 with each added instance.</li>
 </ul></li>
 <li>
-<strong>Single Instance vs. Multiple Instance Wall-Clock
-Time</strong>:
+<strong>Single instance vs. multiple instance wall-clock
+time</strong>:
 <ul><li>When using a single instance, training will take significantly
 longer, especially if your data is large. However, the wall-clock time
 difference between 1 instance and 10 instances may not translate to a
@@ -1352,7 +1346,7 @@ synchronize gradients between batches, which introduces
 larger clusters.</li>
 </ul></li>
 <li>
-<strong>Scaling Efficiency</strong>:
+<strong>Scaling efficiency</strong>:
 <ul><li>Parallelizing training does not scale perfectly due to those
 overheads. Adding instances generally provides <strong>diminishing
 returns</strong> on training time reduction.</li>
@@ -1362,7 +1356,7 @@ training time by around 20-30%, depending on the model and batch
 sizes.</li>
 </ul></li>
 <li>
-<strong>Typical Recommendation</strong>:
+<strong>Typical recommendation</strong>:
 <ul><li>For <strong>small-to-moderate datasets</strong> or cases where
 training time isn’t a critical factor, a <strong>single
 instance</strong> may be more cost-effective, as it avoids parallel
@@ -1373,7 +1367,7 @@ high priority (e.g., tuning complex deep learning models), using
 increase due to time savings.</li>
 </ul></li>
 <li>
-<strong>Practical Cost Estimation</strong>:
+<strong>Practical cost estimation</strong>:
 <ul><li>Suppose a single instance takes <code>T</code> hours to train and
 costs <code>$C</code> per hour. For a 10-instance setup, the cost would
 be approximately:
@@ -1402,7 +1396,7 @@ distributed training across multiple instances (Option 2)</strong> only
 when dataset size, model complexity, or training time demand it.</p>
 </blockquote>
 </div>
-</section><section><h2 class="section-heading" id="xgboosts-distributed-training-mechanism">XGBoost’s Distributed Training Mechanism<a class="anchor" aria-label="anchor" href="#xgboosts-distributed-training-mechanism"></a></h2>
+</section><section><h2 class="section-heading" id="xgboosts-distributed-training-mechanism">XGBoost’s distributed training mechanism<a class="anchor" aria-label="anchor" href="#xgboosts-distributed-training-mechanism"></a></h2>
 <hr class="half-width"><p>In the event that option 2 explained above really is better for your
 use-case (e.g., you have a very large dataset or model that takes a
 while to train even with high performance instances), the next example
@@ -1429,9 +1423,9 @@ framework to split the model itself.</p>
 <p>Here’s how distributed training in XGBoost works, particularly in the
 SageMaker environment:</p>
 <div class="section level3">
-<h3 id="key-steps-in-distributed-training-with-xgboost">Key Steps in Distributed Training with XGBoost<a class="anchor" aria-label="anchor" href="#key-steps-in-distributed-training-with-xgboost"></a></h3>
+<h3 id="key-steps-in-distributed-training-with-xgboost">Key steps in distributed training with XGBoost<a class="anchor" aria-label="anchor" href="#key-steps-in-distributed-training-with-xgboost"></a></h3>
 <div class="section level4">
-<h4 id="data-partitioning">1. <strong>Data Partitioning</strong>
+<h4 id="data-partitioning">1. <strong>Data partitioning</strong>
 <a class="anchor" aria-label="anchor" href="#data-partitioning"></a></h4>
 <ul><li>The dataset is divided among multiple instances. For example, with
 two instances, each instance may receive half of the dataset.</li>
@@ -1440,7 +1434,7 @@ automatically via the input channels you specify during training,
 reducing manual setup.</li>
 </ul></div>
 <div class="section level4">
-<h4 id="parallel-gradient-boosting">2. <strong>Parallel Gradient Boosting</strong>
+<h4 id="parallel-gradient-boosting">2. <strong>Parallel gradient boosting</strong>
 <a class="anchor" aria-label="anchor" href="#parallel-gradient-boosting"></a></h4>
 <ul><li>XGBoost performs gradient boosting by constructing trees iteratively
 based on calculated gradients.</li>
@@ -1452,7 +1446,7 @@ features to split and which trees to add to the model based on its data
 portion.</li>
 </ul></div>
 <div class="section level4">
-<h4 id="communication-between-instances">3. <strong>Communication Between Instances</strong>
+<h4 id="communication-between-instances">3. <strong>Communication between instances</strong>
 <a class="anchor" aria-label="anchor" href="#communication-between-instances"></a></h4>
 <ul><li>After computing gradients and Hessians locally, instances
 synchronize to share and combine these values.</li>
@@ -1464,7 +1458,7 @@ ensemble of trees reflects the entire dataset, despite its division
 across multiple instances.</li>
 </ul></div>
 <div class="section level4">
-<h4 id="final-model-aggregation">4. <strong>Final Model Aggregation</strong>
+<h4 id="final-model-aggregation">4. <strong>Final model aggregation</strong>
 <a class="anchor" aria-label="anchor" href="#final-model-aggregation"></a></h4>
 <ul><li>Once training completes, XGBoost aggregates the trained trees from
 each instance into a single final model.</li>
@@ -1569,16 +1563,16 @@ computation per instance.</li>
 <span id="cb34-28"><a href="#cb34-28" tabindex="-1"></a><span class="ex">Runtime</span> for training on SageMaker: 197.66 seconds, instance_type: ml.m5.large, instance_count: 2</span></code></pre>
 </div>
 <div class="section level3">
-<h3 id="why-scaling-instances-might-not-show-speedup-here">Why Scaling Instances Might Not Show Speedup Here<a class="anchor" aria-label="anchor" href="#why-scaling-instances-might-not-show-speedup-here"></a></h3>
-<ul><li><p>Small Dataset: With only 892 rows, the dataset might be too small
+<h3 id="why-scaling-instances-might-not-show-speedup-here">Why scaling instances might not show speedup here<a class="anchor" aria-label="anchor" href="#why-scaling-instances-might-not-show-speedup-here"></a></h3>
+<ul><li><p>Small dataset: With only 892 rows, the dataset might be too small
 to benefit from distributed training. Distributing small datasets often
 adds overhead (like network communication between instances), which
 outweighs the parallel processing benefits.</p></li>
-<li><p>Distributed Overhead: Distributed training introduces
+<li><p>Distributed overhead: Distributed training introduces
 coordination steps that can add latency. For very short training jobs,
 this overhead can become a larger portion of the total training time,
 reducing the benefit of additional instances.</p></li>
-<li><p>Tree-Based Models: Tree-based models, like those in XGBoost,
+<li><p>Tree-based models: Tree-based models, like those in XGBoost,
 don’t benefit from distributed scaling as much as deep learning models
 when datasets are small. For large datasets, distributed XGBoost can
 still offer speedups, but this effect is generally less than with neural
@@ -1586,16 +1580,16 @@ networks, where parallel gradient updates across multiple instances
 become efficient.</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="when-multi-instance-training-helps">When Multi-Instance Training Helps<a class="anchor" aria-label="anchor" href="#when-multi-instance-training-helps"></a></h3>
-<ul><li><p>Larger Datasets: Multi-instance training shines with larger
+<h3 id="when-multi-instance-training-helps">When multi-instance training helps<a class="anchor" aria-label="anchor" href="#when-multi-instance-training-helps"></a></h3>
+<ul><li><p>Larger datasets: Multi-instance training shines with larger
 datasets, where splitting the data across instances and processing it in
 parallel can significantly reduce the training time.</p></li>
-<li><p>Complex Models: For highly complex models with many parameters
+<li><p>Complex models: For highly complex models with many parameters
 (like deep learning models or large XGBoost ensembles) and long training
 times, distributing the training can help speed up the process as each
 instance contributes to the gradient calculation and optimization
 steps.</p></li>
-<li><p>Distributed Algorithms: XGBoost has a built-in distributed
+<li><p>Distributed algorithms: XGBoost has a built-in distributed
 training capability, but models that perform gradient descent, like deep
 neural networks, gain more obvious benefits because each instance can
 compute gradients for a batch of data simultaneously, allowing faster
@@ -1612,27 +1606,33 @@ needed.</p>
 <p>When deploying a PyTorch model on SageMaker, it’s helpful to prepare
 the input data in a format that’s directly accessible and compatible
 with PyTorch’s data handling methods. The next code cell will prep our
-npz files from the existing csv versions. Why are we using this
-format?</p>
-<ol style="list-style-type: decimal"><li><p><strong>Optimized Data Loading</strong>:<br>
+npz files from the existing csv versions.</p>
+<div id="why-are-we-using-this-file-format" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<div id="why-are-we-using-this-file-format" class="callout-inner">
+<h3 class="callout-title">Why are we using this file format?</h3>
+<div class="callout-content">
+<ol style="list-style-type: decimal"><li><p><strong>Optimized data loading</strong>:<br>
 The <code>.npz</code> format stores arrays in a compressed, binary
 format, making it efficient for both storage and loading. PyTorch can
 easily handle <code>.npz</code> files, especially in batch processing,
 without requiring complex data transformations during training.</p></li>
-<li><p><strong>Batch Compatibility</strong>:<br>
+<li><p><strong>Batch compatibility</strong>:<br>
 When training neural networks in PyTorch, it’s common to load data in
 batches. By storing data in an <code>.npz</code> file, we can quickly
 load the entire dataset or specific parts (e.g., <code>X_train</code>,
 <code>y_train</code>) into memory and feed it to the PyTorch
 <code>DataLoader</code>, enabling efficient batched data
 loading.</p></li>
-<li><p><strong>Reduced I/O Overhead in SageMaker</strong>:<br>
+<li><p><strong>Reduced I/O overhead in SageMaker</strong>:<br>
 Storing data in <code>.npz</code> files minimizes the I/O operations
 during training, reducing time spent on data handling. This is
 especially beneficial in cloud environments like SageMaker, where
 efficient data handling directly impacts training costs and
 performance.</p></li>
-<li><p><strong>Consistency and Compatibility</strong>:<br>
+<li><p><strong>Consistency and compatibility</strong>:<br>
 Using <code>.npz</code> files allows us to ensure consistency between
 training and validation datasets. Each file (<code>train_data.npz</code>
 and <code>val_data.npz</code>) stores the arrays in a standardized way
@@ -1641,7 +1641,7 @@ that can be easily accessed by keys (<code>X_train</code>,
 structure is compatible with PyTorch’s <code>Dataset</code> class,
 making it straightforward to design custom datasets for
 training.</p></li>
-<li><p><strong>Support for Multiple Data Types</strong>:<br><code>.npz</code> files support storage of multiple arrays within a
+<li><p><strong>Support for multiple data types</strong>:<br><code>.npz</code> files support storage of multiple arrays within a
 single file. This is helpful for organizing features and labels without
 additional code. Here, the <code>train_data.npz</code> file contains
 both <code>X_train</code> and <code>y_train</code>, keeping everything
@@ -1652,6 +1652,9 @@ simplifying file management.</p></li>
 smooth workflow from data loading to model training in PyTorch,
 leveraging SageMaker’s infrastructure for a more efficient, structured
 training process.</p>
+</div>
+</div>
+</div>
 <div class="codewrapper sourceCode" id="cb35">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
