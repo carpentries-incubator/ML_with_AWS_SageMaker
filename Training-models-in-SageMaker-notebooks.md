@@ -157,7 +157,7 @@ print(f"Instance Type: {local_instance}")
 
 ```
 
-    Notebook Instance 'Titanic-ML-Notebook' status: InService
+    Notebook Instance 'MyAwesomeTeam-ChrisEndemann-Titanic-Train-Tune-Xgboost-NN' status: InService
     Instance Type: ml.t3.medium
 
 
@@ -260,6 +260,9 @@ accuracy = accuracy_score(y_test, predictions)
 print(f"Test Set Accuracy: {accuracy:.4f}")
 
 ```
+
+    Test Set Accuracy: 0.8156
+
 
 ## Training via SageMaker (using notebook as controller) - custom train.py script
 Unlike "local" training (using this notebook), this next approach leverages SageMaker’s managed infrastructure to handle resources, parallelism, and scalability. By specifying instance parameters, such as instance_count and instance_type, you can control the resources allocated for training.
@@ -469,7 +472,7 @@ print(f"Test Set Accuracy: {accuracy:.4f}")
 
 ```
 
-    Test Set Accuracy: 0.7933
+    Test Set Accuracy: 0.8156
 
 
     /home/ec2-user/anaconda3/envs/pytorch_p310/lib/python3.10/site-packages/xgboost/core.py:158: UserWarning: [21:13:21] WARNING: /workspace/src/collective/../data/../common/error_msg.h:80: If you are loading a serialized model (like pickle in Python, RDS in R) or
