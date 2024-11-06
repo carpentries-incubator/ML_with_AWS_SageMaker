@@ -188,29 +188,23 @@ Test train.py on this notebook's instance (or when possible, on your own machine
     Installing collected packages: xgboost
     Successfully installed xgboost-2.1.2
 
-### Script arguments for train_xgboost.py
-Here’s what each argument does in detail for the below call to train_xgboost.py:
-
-- `--max_depth 5`: Sets the maximum depth of each tree in the model to 5. Limiting tree depth helps control model complexity and can reduce overfitting, especially on small datasets.
-  
-- `--eta 0.1`: Sets the learning rate to 0.1, which scales the contribution of each tree to the final model. A smaller learning rate often requires more rounds to converge but can lead to better performance.
-
-- `--subsample 0.8`: Specifies that 80% of the training data will be randomly sampled to build each tree. Subsampling can help with model robustness by preventing overfitting and increasing variance.
-
-- `--colsample_bytree 0.8`: Specifies that 80% of the features will be randomly sampled for each tree, enhancing the model's ability to generalize by reducing feature reliance.
-
-- `--num_round 100`: Sets the number of boosting rounds (trees) to 100. More rounds typically allow for a more refined model, but too many rounds can lead to overfitting.
-
-- `--train ./train.csv`: Points to the location of the training data, `train.csv`, which will be used to train the model.
-
 ### Local test
 ```python
 import time as t # we'll use the time package to measure runtime
 
 start_time = t.time()
 
-# Run the script and pass arguments directly
-%run AWS_helpers/train_xgboost.py --max_depth 3 --eta 0.1 --subsample 0.8 --colsample_bytree 0.8 --num_round 100 --train ./titanic_train.csv
+# Define your parameters. These python vars wil be passed as input args to our train_xgboost.py script using %run
+
+max_depth = 3 # Sets the maximum depth of each tree in the model to 3. Limiting tree depth helps control model complexity and can reduce overfitting, especially on small datasets.
+eta = 0.1 #  Sets the learning rate to 0.1, which scales the contribution of each tree to the final model. A smaller learning rate often requires more rounds to converge but can lead to better performance.
+subsample = 0.8 # Specifies that 80% of the training data will be randomly sampled to build each tree. Subsampling can help with model robustness by preventing overfitting and increasing variance.
+colsample_bytree = 0.8 # Specifies that 80% of the features will be randomly sampled for each tree, enhancing the model's ability to generalize by reducing feature reliance.
+num_round = 100 # Sets the number of boosting rounds (trees) to 100. More rounds typically allow for a more refined model, but too many rounds can lead to overfitting.
+train_file = 'titanic_train.csv' #  Points to the location of the training data
+
+# Use f-strings to format the command with your variables
+%run AWS_helpers/train_xgboost.py --max_depth {max_depth} --eta {eta} --subsample {subsample} --colsample_bytree {colsample_bytree} --num_round {num_round} --train {train_file}
 
 # Measure and print the time taken
 print(f"Total local runtime: {t.time() - start_time:.2f} seconds, instance_type = {local_instance}")
@@ -235,7 +229,7 @@ Training on this relatively small dataset should take less than a minute, but as
 
 
 ### Quick evaluation on test set
-This next section isn't SageMaker specific, so we'll cover it quickly. Here's how you would apply the outputted model to your test set.
+This next section isn't SageMaker specific, so we'll cover it quickly. Here's how you would apply the outputted model to your test set using your local notebook instance.
 
 ```python
 import xgboost as xgb
@@ -270,11 +264,11 @@ print(f"Test Set Accuracy: {accuracy:.4f}")
 ## Training via SageMaker (using notebook as controller) - custom train.py script
 Unlike "local" training (using this notebook), this next approach leverages SageMaker’s managed infrastructure to handle resources, parallelism, and scalability. By specifying instance parameters, such as instance_count and instance_type, you can control the resources allocated for training.
 
+### Which instance to start with?
 In this example, we start with one ml.m5.large instance, which is suitable for small- to medium-sized datasets and simpler models. Using a single instance is often cost-effective and sufficient for initial testing, allowing for straightforward scaling up to more powerful instance types or multiple instances if training takes too long. See here for further guidance on selecting an appropriate instance for your data/model: [EC2 Instances for ML](https://docs.google.com/spreadsheets/d/1uPT4ZAYl_onIl7zIjv5oEAdwy4Hdn6eiA9wVfOBbHmY/edit?usp=sharing)
 
-
-### Overview of Estimator Classes in SageMaker
-In SageMaker, **Estimator** classes streamline the configuration and training of models on managed instances. Each Estimator can work with custom scripts and be enhanced with additional dependencies by specifying a `requirements.txt` file, which is automatically installed at the start of training. Here’s a breakdown of some commonly used Estimator classes in SageMaker:
+### Overview of Estimator classes in SageMaker
+To launch this training "job", we'll use the XGBoost "Estimator. In SageMaker, Estimator classes streamline the configuration and training of models on managed instances. Each Estimator can work with custom scripts and be enhanced with additional dependencies by specifying a `requirements.txt` file, which is automatically installed at the start of training. Here’s a breakdown of some commonly used Estimator classes in SageMaker:
 
 #### 1. **`Estimator` (Base Class)**
    - **Purpose**: General-purpose for custom Docker containers or defining an image URI directly.
@@ -315,8 +309,8 @@ In SageMaker, **Estimator** classes streamline the configuration and training of
       - `dependencies`: Additional dependencies can be listed in `requirements.txt` to install TensorFlow add-ons, custom layers, or preprocessing libraries.
    - **Ideal Use Cases**: NLP, computer vision, and transfer learning applications in TensorFlow.
 
-
-#### Configuring Custom Environments with `requirements.txt`
+::::::::::::::::::::::::::::::::::::: callout 
+#### Configuring custom environments with `requirements.txt`
 
 For all these Estimators, adding a `requirements.txt` file under `dependencies` ensures that additional packages are installed before training begins. This approach allows the use of specific libraries that may be critical for custom preprocessing, feature engineering, or model modifications. Here’s how to include it:
 
@@ -338,12 +332,10 @@ sklearn_estimator = SKLearn(
 )
 ```
 
-This setup simplifies training, allowing you to maintain custom environments directly within SageMaker’s managed containers, without needing to build and manage your own Docker images.
+This setup simplifies training, allowing you to maintain custom environments directly within SageMaker’s managed containers, without needing to build and manage your own Docker images. The [AWS SageMaker Documentation](https://docs.aws.amazon.com/sagemaker/latest/dg/pre-built-containers-frameworks-deep-learning.html) provides lists of pre-built container images for each framework and their standard libraries, including details on pre-installed packages.
+:::::::::::::::::::::::::::::::::::::::::::::
 
-
-### More information on pre-built environments
-he [AWS SageMaker Documentation](https://docs.aws.amazon.com/sagemaker/latest/dg/pre-built-containers-frameworks-deep-learning.html) provides lists of pre-built container images for each framework and their standard libraries, including details on pre-installed packages.
-      
+### Deploying to other instances
 For this deployment, we configure the "XGBoost" estimator with a custom training script, train_xgboost.py, and define hyperparameters directly within the SageMaker setup. Here’s the full code, with some additional explanation following the code.
 
 
@@ -356,7 +348,7 @@ instance_type="ml.m5.large"
 instance_count=1 # always start with 1. Rarely is parallelized training justified with data < 50 GB.
 
 # Define S3 paths for input and output
-train_s3_path = f's3://{bucket_name}/data/{train_filename}'
+train_s3_path = f's3://{bucket_name}/{train_filename}'
 
 # we'll store all results in a subfolder called xgboost on our bucket. This folder will automatically be created if it doesn't exist already.
 output_folder = 'xgboost'
@@ -365,7 +357,7 @@ output_path = f's3://{bucket_name}/{output_folder}/'
 # Set up the SageMaker XGBoost Estimator with custom script
 xgboost_estimator = XGBoost(
     entry_point='train_xgboost.py',      # Custom script path
-    source_dir='test_AWS/scripts',               # Directory where your script is located
+    source_dir='AWS_helpers',               # Directory where your script is located
     role=role,
     instance_count=instance_count,
     instance_type=instance_type,
@@ -399,32 +391,21 @@ print(f"Runtime for training on SageMaker: {end - start:.2f} seconds, instance_t
 
 
 #### Hyperparameters
->The `hyperparameters` section in this code defines key parameters for the XGBoost model, such as `max_depth`, `eta`, `subsample`, `colsample_bytree`, and `num_round`, which control aspects of the model like tree depth, learning rate, and data sampling, directly impacting model performance and training time. 
-> 
-> Additionally, we define a `train_file` hyperparameter to pass the dataset’s S3 path to `train_xgboost.py`, allowing the script to access this path directly. When running the training job, SageMaker passes these values to `train_xgboost.py` as command-line arguments, making them accessible in the script via `argparse` or similar methods. This setup enables flexible tuning of model parameters and data paths directly from the training configuration, without needing modifications in the script itself.
+The `hyperparameters` section in this code defines the input arguments of train_XGBoost.py. The first is the name of the training input file, and the others are hyperparameters for the XGBoost model, such as `max_depth`, `eta`, `subsample`, `colsample_bytree`, and `num_round`.
 
-
-#### Why do we need a train hyperparameter in addition to TrainingInput?
->  The `TrainingInput` in SageMaker isn't just about providing the data path for your script. It actually sets up a **data channel** that allows SageMaker to manage, validate, and automatically transfer your data from S3 to the training instance. Here’s how it works:
-> 1. **Data Download**: SageMaker uses `TrainingInput` to download your dataset from S3 to a temporary location on the training instance. This location is mounted and managed by SageMaker and can be accessed by the training job if needed.
-> 2. **Environment Setup**: Using `TrainingInput` also configures the job environment. For example, the path specified in `TrainingInput` (e.g., under `'train'`) becomes an environment variable (`SM_CHANNEL_TRAIN`), which points to the downloaded data location on the training instance.
-> 3. **Data Management**: SageMaker can manage and track data inputs independently of your script, which is especially useful for distributed training or when using managed algorithms.
-> ##### Why Use Both?
-> If your script is designed to handle the data directly (e.g., by downloading it from an S3 path), the **data path you pass as a hyperparameter** can handle this. However, SageMaker still needs `TrainingInput` to manage and configure the environment and data resources properly.
-> - **`TrainingInput`**: Required by SageMaker for managing the data channel, downloading data to the instance, and setting up the training environment.
-> - **Hyperparameter with S3 Path**: Necessary for your custom script to handle the dataset directly.
-
+#### TrainingInput
+Additionally, we define a TrainingInput object containing the training data's S3 path, to pass to `.fit({'train': train_input})`. SageMaker uses `TrainingInput` to download your dataset from S3 to a temporary location on the training instance. This location is mounted and managed by SageMaker and can be accessed by the training job if/when needed.
 
 #### Model results
-> With this code, the training results and model artifacts are saved in a subfolder called `xgboost` in your specified S3 bucket. This folder (`s3://{bucket_name}/xgboost/`) will be automatically created if it doesn’t already exist, and will contain:
-> 
-> 1. **Model Artifacts**: The trained model file (often a `.tar.gz` file) that SageMaker saves in the `output_path`.
-> 2. **Logs and Metrics**: Any metrics and logs related to the training job, stored in the same `xgboost` folder.
-> 
-> This setup allows for convenient access to both the trained model and related output for later evaluation or deployment.
+With this code, the training results and model artifacts are saved in a subfolder called `xgboost` in your specified S3 bucket. This folder (`s3://{bucket_name}/xgboost/`) will be automatically created if it doesn’t already exist, and will contain:
+
+1. **Model "artifacts"**: The trained model file (often a `.tar.gz` file) that SageMaker saves in the `output_path`.
+2. **Logs and metrics**: Any metrics and logs related to the training job, stored in the same `xgboost` folder.
+ 
+This setup allows for convenient access to both the trained model and related output for later evaluation or deployment.
 
 ### Extracting trained model from S3 for final evaluation
-To evaluate the model on a test set after training, we’ll go through these steps:
+To evaluate the model on a test set after training, we'll go through these steps:
 
 1. **Download the trained model from S3**.
 2. **Load and preprocess** the test dataset. 
@@ -459,37 +440,30 @@ with tarfile.open(local_model_path) as tar:
 
 
 ```python
-# Load the test set. We downloaded this earlier from our S3 bucket.
-test_data = pd.read_csv(test_filename)
-test_data.head()
-
-```
-
-```python
-# Preprocess the test set to match the training setup
-from test_AWS.scripts.train_xgboost import preprocess_data
-X_test, y_test = preprocess_data(test_data)
-```
-
-```python
-import pandas as pd
 import xgboost as xgb
+import pandas as pd
 import numpy as np
-import joblib
 from sklearn.metrics import accuracy_score
+import joblib
+from AWS_helpers.train_xgboost import preprocess_data
 
-# Load the trained model using joblib
-model = joblib.load("xgboost-model")
+# Load the test data
+test_data = pd.read_csv('./titanic_test.csv')
 
-# Assume X_test and y_test are defined
-# Create DMatrix for X_test for XGBoost prediction compatibility
-dmatrix_test = xgb.DMatrix(X_test)
+# Preprocess the test data using the imported preprocess_data function
+X_test, y_test = preprocess_data(test_data)
+
+# Convert the test features to DMatrix for XGBoost
+dtest = xgb.DMatrix(X_test)
+
+# Load the trained model from the saved file
+model = joblib.load('./xgboost-model')
 
 # Make predictions on the test set
-preds = model.predict(dmatrix_test)
-predictions = np.round(preds)  # Round to 0 or 1 for classification
+preds = model.predict(dtest)
+predictions = np.round(preds)  # Round predictions to 0 or 1 for binary classification
 
-# Calculate accuracy or any other relevant metrics
+# Calculate and print the accuracy of the model on the test data
 accuracy = accuracy_score(y_test, predictions)
 print(f"Test Set Accuracy: {accuracy:.4f}")
 
