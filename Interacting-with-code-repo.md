@@ -132,11 +132,14 @@ Adding `.ipynb` files to `.gitignore` is a good practice if you plan to only com
 
 Here’s how to add `.ipynb` files to `.gitignore` to ignore them project-wide:
 
-1. **Open or Create the `.gitignore` File**:
-
+1. **Cd to git repo folder**
+    First make sure we're in the repo folder
+    
     ```python
-    !ls -a # check for existing .gitignore file
+    %cd AWS_helpers
     ```
+
+2. **Create the `.gitignore` file**:
     
    - If you don’t already have a `.gitignore` file in the repository root (use '!ls -a' to check, you can create one by running:
    
@@ -144,8 +147,7 @@ Here’s how to add `.ipynb` files to `.gitignore` to ignore them project-wide:
      !touch .gitignore
      ```
 
-
-2. **Add `.ipynb` Files to `.gitignore`**:
+2. **Add `.ipynb` files to `.gitignore`**:
 
    - Append the following line to your `.gitignore` file to ignore all `.ipynb` files in all folders:
 
@@ -160,9 +162,7 @@ Here’s how to add `.ipynb` files to `.gitignore` to ignore them project-wide:
          gitignore.write("\n# Ignore all Jupyter Notebook files\n*.ipynb\n")
      ```
 
-
-
-3. **Verify and Commit the `.gitignore` File**:
+3. **Verify and commit the `.gitignore` File**:
 
    - Add and commit the updated `.gitignore` file to ensure it’s applied across the repository.
 
