@@ -20,15 +20,26 @@ exercises: 10
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-# Using a GitHub Personal Access Token (PAT) to Push/Pull from a SageMaker Notebook
-In this episode, we'll see how to push our code to the fork we created during the [workshop setup](https://uw-madison-datascience.github.io/ML_with_Amazon_SageMaker/#workshop-repository-setup).
+## Step 0: Initial setup
+In the previous episode, we cloned our fork that we created during the [workshop setup](https://uw-madison-datascience.github.io/ML_with_Amazon_SageMaker/#workshop-repository-setup). In this episode, we'll see how to push our code to this fork. Complete these three setup steps before moving foward.
 
+1. Clone the fork if you haven't already. See previous episode.
+
+2. Start a new Jupyter notebook, and name it something along the lines of "Interacting-with-git.ipynb". We can use the standard conda_python3 environment since we aren't doing any training/tuning just yet.
+
+3. Let's make sure we're starting at the same directory. Cd to the root directory of this instance before going further.
+
+```python
+%cd /home/ec2-user/SageMaker/
+```
+    /home/ec2-user/SageMaker
+    
+## Step 1: Using a GitHub personal access token (PAT) to push/pull from a SageMaker notebook
 When working in SageMaker notebooks, you may often need to push code updates to GitHub repositories. However, SageMaker notebooks are typically launched with temporary instances that don’t persist configurations, including SSH keys, across sessions. This makes HTTPS-based authentication, secured with a GitHub Personal Access Token (PAT), a practical solution. PATs provide flexibility for authentication and enable seamless interaction with both public and private repositories directly from your notebook. 
 
 > **Important Note**: Personal access tokens are powerful credentials that grant specific permissions to your GitHub account. To ensure security, only select the minimum necessary permissions and handle the token carefully.
 
-## Step 1: Generate a Personal Access Token (PAT) on GitHub
-
+#### Generate a personal access token (PAT) on GitHub
 1. Go to **Settings > Developer settings > Personal access tokens** on GitHub.
 2. Click **Generate new token**, select **Classic**.
 3. Give your token a descriptive name (e.g., "SageMaker Access Token") and set an expiration date if desired for added security.
@@ -42,37 +53,7 @@ When working in SageMaker notebooks, you may often need to push code updates to 
 
 > **Caution**: Treat your PAT like a password. Avoid sharing it or exposing it in your code. Store it securely (e.g., via a password manager like LastPass) and consider rotating it regularly.
 
-
-## Step 2: Configure Git `user.name` and `user.email`
-In your SageMaker or Jupyter notebook environment, run the following commands to set up your Git user information
-
-
-#### Directory setup
-Let's make sure we're starting at the same directory. Cd to the root directory of this instance before going further.
-
-
-```python
-%cd /home/ec2-user/SageMaker/
-```
-
-    /home/ec2-user/SageMaker
-
-```python
-
-!git config --global user.name "Your name"
-!git config --global user.email your_email@wisc.edu
-
-```
-
-### Explanation
-
-- **`user.name`**: This is your GitHub username, which will appear in the commit history as the author of the changes.
-- **`user.email`**: This should match the email associated with your GitHub account so that commits are properly linked to your profile.
-
-Setting this globally (`--global`) will ensure the configuration persists across all repositories in the environment. If you’re working in a temporary environment, you may need to re-run this configuration after a restart.
-
-## Step 3: Use `getpass` to Prompt for Username and PAT
-
+#### Use `getpass` to prompt for username and PAT
 The `getpass` library allows you to input your GitHub username and PAT without exposing them in the notebook. This approach ensures you’re not hardcoding sensitive information.
 
 ```python
@@ -85,52 +66,37 @@ token = getpass.getpass("GitHub Personal Access Token (PAT): ")
 
 **Note**: After running, you may want to comment out the above code so that you don't have to enter in your login every time you run your whole notebook
 
-## Step 4: Add, Commit, and Push Changes with Manual Authentication
-### 1. Navigate to the Repository Directory (adjust the path if needed):
+## Step 2: Configure Git settings
+In your SageMaker or Jupyter notebook environment, run the following commands to set up your Git user information.
 
-
-
-```python
-%cd ML_with_Amazon_SageMaker/
-!pwd
-```
-    /home/ec2-user/SageMaker/ML_with_Amazon_SageMaker
-
-
-### 2. Preview changes
-You may see elaborate changes if you are tracking ipynb files directly.
+Setting this globally (`--global`) will ensure the configuration persists across all repositories in the environment. If you’re working in a temporary environment, you may need to re-run this configuration after a restart.
 
 ```python
-!git diff 
+!git config --global user.name "Your name" # This is your GitHub username (or just your name), which will appear in the commit history as the author of the changes.
+!git config --global user.email your_email@wisc.edu # This should match the email associated with your GitHub account so that commits are properly linked to your profile.
 ```
 
-### 3. Convert json ipynb files to .py
-
-To avoid tracking ipynb files directly, which are formatted as json, we may want to convert our notebook to .py first (plain text). This will make it easier to see our code edits across commits. Otherwise, each small edit will have massive changes associated with it.
+## Step 3: Convert json .ipynb files to .py
+We'd like to track our notebook files within our AWS_helpers fork. However, to avoid tracking ipynb files directly, which are formatted as json, we may want to convert our notebook to .py first (plain text). Converting notebooks to `.py` files helps maintain code (and version-control) readability and minimizes potential issues with notebook-specific metadata in Git history. 
 
 #### Benefits of converting to `.py` before Committing
+- **Cleaner version control**: `.py` files have cleaner diffs and are easier to review and merge in Git.
+- **Script compatibility**: Python files are more compatible with other environments and can run easily from the command line.
+- **Reduced repository size**: `.py` files are generally lighter than `.ipynb` files since they don’t store outputs or metadata.
 
-- **Cleaner Version Control**: `.py` files have cleaner diffs and are easier to review and merge in Git.
-- **Script Compatibility**: Python files are more compatible with other environments and can run easily from the command line.
-- **Reduced Repository Size**: `.py` files are generally lighter than `.ipynb` files since they don’t store outputs or metadata.
+Here’s how to convert `.ipynb` files to `.py` in SageMaker without needing to export or download files.
 
-Converting notebooks to `.py` files helps streamline the workflow for both collaborative projects and deployments. This approach also maintains code readability and minimizes potential issues with notebook-specific metadata in Git history. Here’s how to convert `.ipynb` files to `.py` in SageMaker without needing to export or download files:
+### Method 1: Using JupyText
 
-#### Method 1: Using JupyText
-
-1. **Install Jupytext** (if you haven’t already):
-
+First, unstall Jupytext.
 
 ```python
 !pip install jupytext
-
 ```
 
-
-1. **Run the following command** in a notebook cell to convert the current notebook to a `.py` file:
+Then, run the following command in a notebook cell to convert the current notebook to a `.py` file:
 
 This command will create a `.py` file in the same directory as the notebook.
-
 
 ```python
 # Replace 'your_notebook.ipynb' with your actual notebook filename
@@ -161,7 +127,7 @@ for notebook in notebooks:
 
 ```
 
-### 4. Adding .ipynb to gitigore
+## Step 4. Adding .ipynb to gitigore
 
 Adding `.ipynb` files to `.gitignore` is a good practice if you plan to only commit `.py` scripts. This will prevent accidental commits of Jupyter Notebook files across all subfolders in the repository.
 
@@ -213,6 +179,22 @@ This setup will:
 
 Now any new or existing notebooks won’t show up as untracked files in Git, ensuring your commits stay focused on the converted `.py` files.
 
+
+
+
+#### Navigate to the repository directory (adjust the path if needed):
+
+```python
+%cd AWS_helpers/
+!pwd
+```
+    /home/ec2-user/SageMaker/AWS_helpers
+
+Check status of repo. If you're following along with these materials, you shouldn't see any files ready for adding/committing since your ipynb files should be located one level above AWS_helpers (in /home/ec2-user/SageMaker/AWS_helpers
+
+```python
+!git status
+```
 
 2. **Add and Commit Changes**:
 
