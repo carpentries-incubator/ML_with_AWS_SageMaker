@@ -243,7 +243,6 @@ If you’re collaborating and want simplicity, **merge (pull.rebase false)** is 
 ```python
 !git config pull.rebase false # Combines the remote changes into your local branch as a merge commit.
 !git pull origin main
-
 ```
     From https://github.com/qualiaMachine/AWS_helpers
      * branch            main       -> FETCH_HEAD
@@ -272,19 +271,35 @@ If you get merge conflicts, be sure to resolve those before moving forward (e.g.
 github_url = 'github.com/username/AWS_helpers.git' # replace username with your own. THe full address for your fork can be found under Code -> Clone -> HTTPS (remote the https:// before the rest of the address)
 !git push https://{username}:{token}@{github_url} main
 ```
-
+	Enumerating objects: 6, done.
+	Counting objects: 100% (6/6), done.
+	Delta compression using up to 2 threads
+	Compressing objects: 100% (5/5), done.
+	Writing objects: 100% (5/5), 3.00 KiB | 3.00 MiB/s, done.
+	Total 5 (delta 0), reused 0 (delta 0), pack-reused 0
+	To https://github.com/qualiaMachine/AWS_helpers.git
+	   bc47546..6a8bb8b  main -> main
+   
 After pushing, you should navigate back to your fork on GitHub to verify everything worked (e.g., https://github.com/username/AWS_helpers/tree/main)
 
 ## Step 7: Pulling .py files and converting back to notebook format
 
-Let's assume you've taken a short break from your work, and you would like to start again by pulling in your code repo. If you'd like to work with notebook files again, you can again use jupytext to convert your `.py` files back to `.ipynb`
+Let's assume you've taken a short break from your work, and others on your team have made updates to your .py files on the remote main branch. If you'd like to work with notebook files again, you can again use jupytext to convert your `.py` files back to `.ipynb`.
 
-This command will create `03_Data-storage-and-access-via-buckets-test.ipynb` in the current directory, converting the Python script to a Jupyter Notebook format. Jupytext handles the conversion gracefully without expecting the `.py` file to be in JSON format.
+1. First, pull any updates from the remote main branch.
+```python
+!git config pull.rebase false # Combines the remote changes into your local branch as a merge commit.
+!git pull origin main
+```
 
+2. We can then use jupytext again to convert in the other direction (.py to .ipynb).
+This command will create `ipynb` in the current directory, converting the Python script to a Jupyter Notebook format. Jupytext handles the conversion gracefully without expecting the `.py` file to be in JSON format.
+
+**Note**: You may wish to delete any local .ipynb files in your file explorer before running the next step (to verify the conversion works). So long as your .py versions are stored on your git/github fork, it's safe to delete those earlier notebooks.
 
 ```python
 # Replace 'your_script.py' with your actual filename
-!jupytext --to notebook Data-storage-and-access-via-buckets.py --output Data-storage-and-access-via-buckets-test.ipynb
+!jupytext --to notebook Interacting-with-git.py --output Interacting-with-git.ipynb
 
 ```
 
