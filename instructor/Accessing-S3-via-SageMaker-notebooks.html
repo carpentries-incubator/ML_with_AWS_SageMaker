@@ -243,7 +243,9 @@
 
     <div id="flush-collapsecurrent" class="accordion-collapse collapse show" aria-labelledby="flush-headingcurrent" data-bs-parent="#accordionFlushcurrent">
       <div class="accordion-body">
-        <ul><li><a href="#a.-read-data-from-s3-into-memory">1A. Read data from S3 into memory</a></li>
+        <ul><li><a href="#initial-setup">Initial setup</a></li>
+<li><a href="#reading-data-from-s3">Reading data from S3</a></li>
+<li><a href="#a.-read-data-from-s3-into-memory">1A. Read data from S3 into memory</a></li>
 <li><a href="#b.-download-copy-into-notebook-environment">1B. Download copy into notebook environment</a></li>
 <li><a href="#check-current-size-and-storage-costs-of-bucket">2. Check current size and storage costs of bucket</a></li>
 <li><a href="#check-storage-costs-of-bucket">3: Check storage costs of bucket</a></li>
@@ -373,9 +375,8 @@ bucket.</li>
 </div>
 </div>
 </div>
-<div class="section level3">
-<h3 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a></h3>
-<div class="section level4">
+<section><h2 class="section-heading" id="initial-setup">Initial setup<a class="anchor" aria-label="anchor" href="#initial-setup"></a></h2>
+<hr class="half-width"><div class="section level4">
 <h4 id="open--ipynb-notebook">Open .ipynb notebook<a class="anchor" aria-label="anchor" href="#open--ipynb-notebook"></a></h4>
 <p>Once your newly created notebook <em>instance</em> (“SageMaker
 notebook”) shows as <code>InService</code>, open the instance in Jupyter
@@ -423,10 +424,8 @@ management, and deployment.</p>
 <span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span></code></pre>
 </div>
 </div>
-</div>
-<div class="section level3">
-<h3 id="reading-data-from-s3">Reading data from S3<a class="anchor" aria-label="anchor" href="#reading-data-from-s3"></a></h3>
-<p>You can either read data from S3 into memory or download a copy of
+</section><section><h2 class="section-heading" id="reading-data-from-s3">Reading data from S3<a class="anchor" aria-label="anchor" href="#reading-data-from-s3"></a></h2>
+<hr class="half-width"><p>You can either read data from S3 into memory or download a copy of
 your S3 data into your notebook’s instance. While loading into memory
 can save on storage resources, it can be convenient at times to have a
 local copy. We’ll show you both strategies in this upcoming section.
@@ -485,8 +484,7 @@ local data copies and ensure that they are properly cleaned up to free
 resources once processing is complete.</li>
 </ul></li>
 </ul></li>
-</ol></div>
-<div class="section level3">
+</ol><div class="section level3">
 <h3 id="choosing-between-the-two-strategies">Choosing between the two strategies<a class="anchor" aria-label="anchor" href="#choosing-between-the-two-strategies"></a></h3>
 <p>If your workflow requires only a single read of the dataset for
 processing, reading directly into memory can be a quick and
@@ -495,7 +493,7 @@ extensive or iterative processing, downloading a local copy of the data
 will typically be more performant and may incur fewer request-related
 costs.</p>
 </div>
-<section><h2 class="section-heading" id="a--read-data-from-s3-into-memory">1A. Read data from S3 into memory<a class="anchor" aria-label="anchor" href="#a--read-data-from-s3-into-memory"></a></h2>
+</section><section><h2 class="section-heading" id="a--read-data-from-s3-into-memory">1A. Read data from S3 into memory<a class="anchor" aria-label="anchor" href="#a--read-data-from-s3-into-memory"></a></h2>
 <hr class="half-width"><p>Our data is stored on an S3 bucket called ‘titanic-dataset-test’. We
 can use the following code to read data directly from S3 into memory in
 the Jupyter notebook environment, without actually downloading a copy of
