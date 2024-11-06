@@ -543,7 +543,7 @@ print(f"Runtime for training on SageMaker: {end - start:.2f} seconds, instance_t
     Runtime for training on SageMaker: 197.50 seconds, instance_type: ml.m5.large, instance_count: 1
 
 
-## Monitoring Training
+## Monitoring training
 
 To view and monitor your SageMaker training job, follow these steps in the AWS Management Console. Since training jobs may be visible to multiple users in your account, it's essential to confirm that you're interacting with your own job before making any changes.
 
@@ -569,7 +569,7 @@ To view and monitor your SageMaker training job, follow these steps in the AWS M
 
 Following these steps helps ensure you only interact with and modify jobs you own, reducing the risk of impacting other users' training processes.
 
-## When Training Takes Too Long
+## When training takes too long
 
 When training time becomes excessive, two main options can improve efficiency in SageMaker.
 * **Option 1: Upgrading to a more powerful instance** 
@@ -577,7 +577,7 @@ When training time becomes excessive, two main options can improve efficiency in
 
 Generally, **Option 1 is the preferred approach** and should be explored first.
 
-### Option 1: Upgrade to a More Powerful Instance (Preferred Starting Point)
+### Option 1: Upgrade to a more powerful instance (preferred starting point)
 
 Upgrading to a more capable instance, particularly one with GPU capabilities (e.g., for deep learning), is often the simplest and most cost-effective way to speed up training. Here's a breakdown of instances to consider. Check the [Instances for ML spreadsheet](https://docs.google.com/spreadsheets/d/1uPT4ZAYl_onIl7zIjv5oEAdwy4Hdn6eiA9wVfOBbHmY/edit?usp=sharing) for guidance on selecting a better instance.
 
@@ -592,7 +592,7 @@ Upgrading a single instance is typically the most efficient option in terms of b
 ### Option 2: Use multiple instances for distributed training
 If upgrading a single instance doesn't sufficiently reduce training time, distributed training across multiple instances may be a viable alternative, particularly for larger datasets and complex models. SageMaker supports two primary distributed training techniques: **data parallelism** and **model parallelism**.
 
-#### Understanding Data Parallelism vs. Model Parallelism
+#### Understanding data parallelism vs. model parallelism
 
 - **Data parallelism**: This approach splits the dataset across multiple instances, allowing each instance to process a subset of the data independently. After each batch, gradients are synchronized across instances to ensure consistent updates to the model. Data parallelism is effective when the model itself fits within an instance's memory, but the data size or desired training speed requires faster processing through multiple instances.
 
@@ -677,7 +677,7 @@ Here's how distributed training in XGBoost works, particularly in the SageMaker 
 SageMaker simplifies these steps by automatically managing the partitioning, synchronization, and aggregation processes during distributed training with XGBoost.
 
 
-## Implementing Distributed Training with XGBoost in SageMaker
+## Implementing distributed training with XGBoost in SageMaker
 
 In SageMaker, setting up distributed training for XGBoost can offer significant time savings as dataset sizes and computational requirements increase. Here's how you can configure it:
 
