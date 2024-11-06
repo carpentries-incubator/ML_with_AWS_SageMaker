@@ -96,7 +96,6 @@ Here’s how to convert `.ipynb` files to `.py` in SageMaker without needing to 
 # Adjust filename(s) if you used something different
 !jupytext --to py Interacting-with-S3.ipynb
 ```
-
     [jupytext] Reading Interacting-with-S3.ipynb in format ipynb
     [jupytext] Writing Interacting-with-S3.py
 
@@ -117,13 +116,15 @@ for notebook in notebooks:
 
 ```
 
-For convenience, you can also use the convert_files() function from helpers.py
+For convenience, we have placed this code inside a `convert_files()` function in `helpers.py`.
+
 ```python
 import AWS_helpers.helpers as helpers
 helpers.convert_files(direction="notebook_to_python")
 
 ```
 
+Once converted, we can move our .py files to the AWS_helpers folder using the file explorer panel in Jupyter Lab.
 
 ## Step 4. Adding .ipynb to gitigore
 
