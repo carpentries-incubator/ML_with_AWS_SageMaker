@@ -36,13 +36,13 @@ Let's make sure we're starting in the root directory of this instance, so that w
     /home/ec2-user/SageMaker
 
 #### Set up AWS environment
-To begin each SageMaker notebook, it’s important to set up an AWS environment that will allow seamless access to the necessary cloud resources. Here’s what we’ll do to get started:
+To begin each SageMaker notebook, it's important to set up an AWS environment that will allow seamless access to the necessary cloud resources. Here's what we'll do to get started:
 
-1. **Define the Role**: We’ll use `get_execution_role()` to retrieve the IAM role associated with the SageMaker instance. This role specifies the permissions needed for interacting with AWS services like S3, which allows SageMaker to securely read from and write to storage buckets.
+1. **Define the Role**: We'll use `get_execution_role()` to retrieve the IAM role associated with the SageMaker instance. This role specifies the permissions needed for interacting with AWS services like S3, which allows SageMaker to securely read from and write to storage buckets.
 
-2. **Initialize the SageMaker Session**: Next, we’ll create a `sagemaker.Session()` object, which will help manage and track the resources and operations we use in SageMaker, such as training jobs and model artifacts. The session acts as a bridge between the SageMaker SDK commands in our notebook and AWS services.
+2. **Initialize the SageMaker Session**: Next, we'll create a `sagemaker.Session()` object, which will help manage and track the resources and operations we use in SageMaker, such as training jobs and model artifacts. The session acts as a bridge between the SageMaker SDK commands in our notebook and AWS services.
 
-3. **Set Up an S3 Client**: Using `boto3`, we’ll initialize an S3 client for accessing S3 buckets directly. This client enables us to handle data storage, retrieve datasets, and manage files in S3, which will be essential as we work through various machine learning tasks.
+3. **Set Up an S3 Client**: Using `boto3`, we'll initialize an S3 client for accessing S3 buckets directly. This client enables us to handle data storage, retrieve datasets, and manage files in S3, which will be essential as we work through various machine learning tasks.
 
 Starting with these initializations prepares our notebook environment to efficiently interact with AWS resources for model development, data management, and deployment.
 
@@ -77,10 +77,10 @@ You can either read data from S3 into memory or download a copy of your S3 data 
      - **Offline access**: Once downloaded, you can access the data without a persistent internet connection, which can be helpful for handling larger data transformations.
    - **Cons**:
      - **Storage costs**: Local storage on the instance may come with additional costs or limitations, especially if your instance type has constrained storage capacity.
-     - **Data management overhead**: You’ll need to manage local data copies and ensure that they are properly cleaned up to free resources once processing is complete.
+     - **Data management overhead**: You'll need to manage local data copies and ensure that they are properly cleaned up to free resources once processing is complete.
 
 ### Choosing between the two strategies
-If your workflow requires only a single read of the dataset for processing, reading directly into memory can be a quick and resource-efficient solution. However, for cases where you’ll perform extensive or iterative processing, downloading a local copy of the data will typically be more performant and may incur fewer request-related costs.
+If your workflow requires only a single read of the dataset for processing, reading directly into memory can be a quick and resource-efficient solution. However, for cases where you'll perform extensive or iterative processing, downloading a local copy of the data will typically be more performant and may incur fewer request-related costs.
 
 ## 1A. Read data from S3 into memory
 Our data is stored on an S3 bucket called 'titanic-dataset-test'. We can use the following code to read data directly from S3 into memory in the Jupyter notebook environment, without actually downloading a copy of train.csv as a local file.
@@ -136,7 +136,7 @@ s3.download_file(bucket_name, key, local_file_path)
 
 ## 2. Check current size and storage costs of bucket
 
-It's a good idea to periodically check how much storage you have used in your bucket. You can do this from a Jupyter notebook in SageMaker by using the **Boto3** library, which is the AWS SDK for Python. This will allow you to calculate the total size of objects within a specified bucket. Here’s how you can do it...
+It's a good idea to periodically check how much storage you have used in your bucket. You can do this from a Jupyter notebook in SageMaker by using the **Boto3** library, which is the AWS SDK for Python. This will allow you to calculate the total size of objects within a specified bucket. Here's how you can do it...
 
 ### Step 1: Set up the S3 Client and Calculate Bucket Size
 
@@ -163,7 +163,24 @@ print(f"Total size of bucket '{bucket_name}': {total_size_mb:.2f} MB")
     Total size of bucket 'myawesometeam-titanic': 0.06 MB
 
 
-We have added this code to a helper called `get_s3_bucket_size(bucket_name)` for your convenience. In the next episode, we'll show you how to clone our git repo to get access to these helper functions. 
+### Using helper functions from lesson repo
+We have added code to calculate bucket size to a helper function called `get_s3_bucket_size(bucket_name)` for your convenience. There are also some other helper functions in that repo to assist you with common AWS/SageMaker workflows. To clone the repo to our Jupyter notebook, you can use the following code.
+
+**Note**: Make sure you have already forked the lesson repo as described on the [setup page](). Replace "username" below with your GitHub username.
+
+```python
+!git clone https://github.com/username/ml-with-aws-sagemaker.git
+```
+
+Our AWS_helpers.py file can be found in `ml-with-aws-sagemaker/scripts/AWS_helpers.py`. With this file downloaded, you can call this function via...
+
+```python
+import test_AWS.scripts.AWS_helpers as helpers # test_AWS.scripts.AWS_helpers reflects path leading up to AWS_helpers.py
+
+helpers.get_s3_bucket_size(bucket_name)
+```
+
+    {'size_mb': 41.043779373168945, 'size_gb': 0.0400818157941103}
 
 ### Explanation
 
