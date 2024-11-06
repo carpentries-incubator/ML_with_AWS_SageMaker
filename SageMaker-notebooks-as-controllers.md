@@ -63,11 +63,10 @@ In this setup, the notebook instance functions as a **controller** to manage mor
 
 ### Managing training and tuning with the controller notebook
 
-After setting up the controller notebook, use the **SageMaker Python SDK** within the notebook to launch compute-heavy tasks on more powerful instances as needed. Examples of tasks to launch include:
+In the next couple expisodes, we'll use the **SageMaker Python SDK** within the notebook to launch compute-heavy tasks on more powerful instances as needed. Examples of tasks to launch include:
 
 - **Training a model**: Use the SDK to submit a training job, specifying a higher-powered instance (e.g., `ml.p2.xlarge` or `ml.m5.4xlarge`) based on your model’s resource requirements.
 - **Hyperparameter tuning**: Configure and launch tuning jobs, allowing SageMaker to automatically manage multiple powerful instances for optimal tuning.
-- **Batch processing**: Offload batch data processing tasks to a larger instance if needed.
 
 This setup allows you to control costs by keeping the notebook instance minimal and only incurring costs for larger instances when they are actively training or tuning models. Detailed guidance on training, tuning, and batch processing will follow in later episodes.
 
@@ -76,7 +75,7 @@ For more details, refer to the [SageMaker Python SDK documentation](https://sage
 ::::::::::::::::::::::::::::::::::::: keypoints 
 
 - Use a minimal SageMaker notebook instance as a controller to manage larger, resource-intensive tasks.
-- Launch training, tuning, or batch processing jobs on scalable instances using the SageMaker SDK.
+- Launch training and tuning jobs on scalable instances using the SageMaker SDK.
 - Tags can help track costs effectively, especially in multi-project or team settings.
 - Use the SageMaker SDK documentation to explore additional options for managing compute resources in AWS.
 
