@@ -1,5 +1,5 @@
 ---
-title: "Training models in SageMaker notebooks"
+title: "Training Models in SageMaker Notebooks"
 teaching: 20
 exercises: 10
 ---
