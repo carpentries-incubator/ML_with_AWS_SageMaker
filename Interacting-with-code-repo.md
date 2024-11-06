@@ -121,7 +121,6 @@ For convenience, we have placed this code inside a `convert_files()` function in
 ```python
 import AWS_helpers.helpers as helpers
 helpers.convert_files(direction="notebook_to_python")
-
 ```
 
 **Once converted, we can move our .py files to the AWS_helpers folder using the file explorer panel in Jupyter Lab.**
@@ -284,7 +283,7 @@ After pushing, you should navigate back to your fork on GitHub to verify everyth
 
 ## Step 7: Pulling .py files and converting back to notebook format
 
-Let's assume you've taken a short break from your work, and others on your team have made updates to your .py files on the remote main branch. If you'd like to work with notebook files again, you can again use jupytext to convert your `.py` files back to `.ipynb`.
+Let's assume you've taken a short break from your work, and others on your team have made updates to your .py files on the remote main branch. If you'd like to work with notebook files again, you can again use jupytext to convert your `.py` files back to `.ipynb`. 
 
 1. First, pull any updates from the remote main branch.
 ```python
@@ -293,34 +292,21 @@ Let's assume you've taken a short break from your work, and others on your team 
 ```
 
 2. We can then use jupytext again to convert in the other direction (.py to .ipynb).
-This command will create `ipynb` in the current directory, converting the Python script to a Jupyter Notebook format. Jupytext handles the conversion gracefully without expecting the `.py` file to be in JSON format.
-
-**Note**: You may wish to delete any local .ipynb files in your file explorer before running the next step (to verify the conversion works). So long as your .py versions are stored on your git/github fork, it's safe to delete those earlier notebooks.
+This command will create `Interacting-with-S3.ipynb` in the current directory, converting the Python script to a Jupyter Notebook format. Jupytext handles the conversion gracefully without expecting the `.py` file to be in JSON format.
 
 ```python
 # Replace 'your_script.py' with your actual filename
-!jupytext --to notebook Interacting-with-git.py --output Interacting-with-git.ipynb
-
+!jupytext --to notebook Interacting-with-S3.py --output Interacting-with-S3.ipynb
 ```
 
 ### Applying to all .py files
-To convert all of your .py files to notebooks, you can use the following code:
-
+To convert all of your .py files to notebooks, you can use our helper function as follows
 
 ```python
-import subprocess
-import os
-
-# List all .py files in the directory
-scripts = [f for f in os.listdir() if f.endswith('.py')]
-
-# Convert each .py file to .ipynb using jupytext
-for script in scripts:
-    output_file = script.replace('.py', '.ipynb')
-    subprocess.run(["jupytext", "--to", "notebook", script, "--output", output_file])
-    print(f"Converted {script} to {output_file}")
+helpers.convert_files(direction="python_to_notebook")
 
 ```
+
 
 :::::::::::::::::::::::::::::::::::::: keypoints 
 
