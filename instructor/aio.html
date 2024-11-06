@@ -860,7 +860,7 @@ Pricing</a> page for more details.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -2392,13 +2392,11 @@ applications.</p>
 <div class="section level3">
 <h3 id="download-copy-into-notebook-environment">3. Download copy into notebook environment<a class="anchor" aria-label="anchor" href="#download-copy-into-notebook-environment"></a>
 </h3>
-<p>If you have larger dataset (&gt; 1GB), you may want to skip this step
-and always read directly into memory. However, for smaller datasets, it
-can be convenient to have a “local” copy (i.e., one that you store in
-your notebook’s instance).</p>
-<p>Download data from S3 to notebook environment. You may need to hit
-refresh on the file explorer panel to the left to see this file. If you
-get any permission issues…</p>
+<p>It can be convenient to have a “local” copy (i.e., one that you store
+in your notebook’s instance). Run the next code chunk to download data
+from S3 to notebook environment. You may need to hit refresh on the file
+explorer panel to the left to see this file. If you get any permission
+issues…</p>
 <ul>
 <li>check that you have selected the appropriate policy for this
 notebook</li>
@@ -2439,15 +2437,12 @@ notebook</li>
 </div>
 </div>
 <div class="section level3">
-<h3 id="get-code-train-and-tune-scripts-from-git-repo-">Get code (train and tune scripts) from git repo.<a class="anchor" aria-label="anchor" href="#get-code-train-and-tune-scripts-from-git-repo-"></a>
+<h3 id="get-code-from-git-repo-skip-if-completed-already-from-earlier-episodes">Get code from git repo (skip if completed already from earlier
+episodes)<a class="anchor" aria-label="anchor" href="#get-code-from-git-repo-skip-if-completed-already-from-earlier-episodes"></a>
 </h3>
-<p>We recommend you DO NOT put data inside your code repo, as version
-tracking for data files takes up unnecessary storage in this notebook
-instance. Instead, store your data in a separte S3 bucket. We have a
-data folder in our repo only as a means to initially hand you the data
-for this tutorial.</p>
-<p>Check to make sure we’re in our EC2 root folder
-(<code>/home/ec2-user/SageMaker</code>).</p>
+<p>If you didn’t complete the earlier episodes, you’ll need to clone our
+code repo before moving forward. Check to make sure we’re in our EC2
+root folder (<code>/home/ec2-user/SageMaker</code>).</p>
 <div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -2462,19 +2457,17 @@ for this tutorial.</p>
 <div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span></span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="op">!</span>pwd</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span></span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="ex">/home/ec2-user/SageMaker</span></span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="ex">/home/ec2-user/SageMaker</span></span></code></pre>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="ex">/home/ec2-user/SageMaker</span></span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="op">!</span>git clone https:<span class="op">//</span>github.com<span class="op">/</span>UW<span class="op">-</span>Madison<span class="op">-</span>DataScience<span class="op">/</span>test_AWS.git</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="op">!</span>git clone https:<span class="op">//</span>github.com<span class="op">/</span>username<span class="op">/</span>AWS_helpers.git</span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -2485,15 +2478,16 @@ for this tutorial.</p>
 <div class="section level3">
 <h3 id="testing-train-py-on-this-notebooks-instance">Testing train.py on this notebook’s instance<a class="anchor" aria-label="anchor" href="#testing-train-py-on-this-notebooks-instance"></a>
 </h3>
-<p>Notebook instances in SageMaker allow us allocate more powerful
-instances (or many instances) to machine learning jobs that require
-extra power, GPUs, or benefit from parallelization. Before we try
-exploiting this extra power, it is essential that we test our code
-thoroughly. We don’t want to waste unnecessary compute cycles and
-resources on jobs that produce bugs instead of insights. If you need to,
-you can use a subset of your data to run quicker tests. You can also
-select a slightly better instance resource if your current instance
-insn’t meeting your needs. See the <a href="https://docs.google.com/spreadsheets/d/1uPT4ZAYl_onIl7zIjv5oEAdwy4Hdn6eiA9wVfOBbHmY/edit?usp=sharing" class="external-link">Instances
+<p>In this next section, we will learn how to take a model training
+script, and deploy it to more powerful instances (or many instances).
+This is helpful for machine learning jobs that require extra power,
+GPUs, or benefit from parallelization. Before we try exploiting this
+extra power, it is essential that we test our code thoroughly. We don’t
+want to waste unnecessary compute cycles and resources on jobs that
+produce bugs instead of insights. If you need to, you can use a subset
+of your data to run quicker tests. You can also select a slightly better
+instance resource if your current instance insn’t meeting your needs.
+See the <a href="https://docs.google.com/spreadsheets/d/1uPT4ZAYl_onIl7zIjv5oEAdwy4Hdn6eiA9wVfOBbHmY/edit?usp=sharing" class="external-link">Instances
 for ML spreadsheet</a> for guidance.</p>
 <div class="section level4">
 <h4 id="logging-runtime-instance-info">Logging runtime &amp; instance info<a class="anchor" aria-label="anchor" href="#logging-runtime-instance-info"></a>
@@ -2505,8 +2499,8 @@ cases. We can extract the instance name for this notebook using…</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># Replace with your notebook instance name.</span></span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="co"># This does NOT refer to specific ipynb fils, but to the notebook instance opened from SageMaker.</span></span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>notebook_instance_name <span class="op">=</span> <span class="st">'Titanic-ML-Notebook'</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="co"># This does NOT refer to specific ipynb files, but to the SageMaker notebook instance.</span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>notebook_instance_name <span class="op">=</span> <span class="st">'MyAwesomeTeam-ChrisEndemann-Titanic-Train-Tune-Xgboost-NN'</span></span>
 <span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a></span>
 <span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="co"># Initialize SageMaker client</span></span>
 <span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>sagemaker_client <span class="op">=</span> boto3.client(<span class="st">'sagemaker'</span>)</span>
@@ -2536,8 +2530,8 @@ your own project.</p>
 <div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="im">from</span> test_AWS.scripts.AWS_helpers <span class="im">import</span> get_notebook_instance_info</span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>get_notebook_instance_info(notebook_instance_name)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="im">import</span> AWS_helpers.helpers <span class="im">as</span> helpers</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>helpers.get_notebook_instance_info(notebook_instance_name)</span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb17">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
