@@ -106,7 +106,7 @@ print("File downloaded:", local_file_path)
 
     File downloaded: ./titanic_test.csv
 
-### Get code from git repo (skip if completed already from earlier episodes)
+### 4. Get code from git repo (skip if completed already from earlier episodes)
 If you didn't complete the earlier episodes, you'll need to clone our code repo before moving forward. Check to make sure we're in our EC2 root folder (`/home/ec2-user/SageMaker`).
 
 ```python
@@ -133,7 +133,7 @@ If not, change directory using `%cd `.
     fatal: destination path 'test_AWS' already exists and is not an empty directory.
 
 
-### Testing train.py on this notebook's instance
+## Testing train.py on this notebook's instance
 In this next section, we will learn how to take a model training script, and deploy it to more powerful instances (or many instances). This is helpful for machine learning jobs that require extra power, GPUs, or benefit from parallelization. Before we try exploiting this extra power, it is essential that we test our code thoroughly. We don't want to waste unnecessary compute cycles and resources on jobs that produce bugs instead of insights. If you need to, you can use a subset of your data to run quicker tests. You can also select a slightly better instance resource if your current instance insn't meeting your needs. See the [Instances for ML spreadsheet](https://docs.google.com/spreadsheets/d/1uPT4ZAYl_onIl7zIjv5oEAdwy4Hdn6eiA9wVfOBbHmY/edit?usp=sharing) for guidance. 
 
 #### Logging runtime & instance info
@@ -188,7 +188,7 @@ Test train.py on this notebook's instance (or when possible, on your own machine
     Installing collected packages: xgboost
     Successfully installed xgboost-2.1.2
 
-
+### Script arguments for train_xgboost.py
 Here’s what each argument does in detail for the below call to train_xgboost.py:
 
 - `--max_depth 5`: Sets the maximum depth of each tree in the model to 5. Limiting tree depth helps control model complexity and can reduce overfitting, especially on small datasets.
@@ -203,13 +203,14 @@ Here’s what each argument does in detail for the below call to train_xgboost.p
 
 - `--train ./train.csv`: Points to the location of the training data, `train.csv`, which will be used to train the model.
 
+### Local test
 ```python
 import time as t # we'll use the time package to measure runtime
 
 start_time = t.time()
 
 # Run the script and pass arguments directly
-%run AWS_helpers/train_xgboost.py --max_depth 5 --eta 0.1 --subsample 0.8 --colsample_bytree 0.8 --num_round 100 --train ./titanic_train.csv
+%run AWS_helpers/train_xgboost.py --max_depth 3 --eta 0.1 --subsample 0.8 --colsample_bytree 0.8 --num_round 100 --train ./titanic_train.csv
 
 # Measure and print the time taken
 print(f"Total local runtime: {t.time() - start_time:.2f} seconds, instance_type = {local_instance}")
@@ -230,7 +231,41 @@ print(f"Total local runtime: {t.time() - start_time:.2f} seconds, instance_type 
 
 Training on this relatively small dataset should take less than a minute, but as we scale up with larger datasets and more complex models in SageMaker, tracking both training time and total runtime becomes essential for efficient debugging and resource management.
 
-**Note**: Our training script includes print statements to monitor dataset size and track time spent specifically on training, which provides insights into resource usage for model development. We recommend incorporating similar logging to track not only training time but also total runtime, which includes additional steps like data loading, evaluation, and saving results. Tracking both can help you pinpoint bottlenecks and optimize your workflow as projects grow in size and complexity, especially when scaling with SageMaker’s distributed resources.
+**Note**: Our code above includes print statements to monitor dataset size, training time, and total runtime, which provides insights into resource usage for model development. We recommend incorporating similar logging to track not only training time but also total runtime, which includes additional steps like data loading, evaluation, and saving results. Tracking both can help you pinpoint bottlenecks and optimize your workflow as projects grow in size and complexity, especially when scaling with SageMaker’s distributed resources.
+
+
+### Quick evaluation on test set
+This next section isn't SageMaker specific, so we'll cover it quickly. Here's how you would apply the outputted model to your test set.
+
+```python
+import xgboost as xgb
+import pandas as pd
+import numpy as np
+from sklearn.metrics import accuracy_score
+import joblib
+from AWS_helpers.train_xgboost import preprocess_data
+
+# Load the test data
+test_data = pd.read_csv('./titanic_test.csv')
+
+# Preprocess the test data using the imported preprocess_data function
+X_test, y_test = preprocess_data(test_data)
+
+# Convert the test features to DMatrix for XGBoost
+dtest = xgb.DMatrix(X_test)
+
+# Load the trained model from the saved file
+model = joblib.load('./xgboost-model')
+
+# Make predictions on the test set
+preds = model.predict(dtest)
+predictions = np.round(preds)  # Round predictions to 0 or 1 for binary classification
+
+# Calculate and print the accuracy of the model on the test data
+accuracy = accuracy_score(y_test, predictions)
+print(f"Test Set Accuracy: {accuracy:.4f}")
+
+```
 
 ## Training via SageMaker (using notebook as controller) - custom train.py script
 Unlike "local" training (using this notebook), this next approach leverages SageMaker’s managed infrastructure to handle resources, parallelism, and scalability. By specifying instance parameters, such as instance_count and instance_type, you can control the resources allocated for training.
