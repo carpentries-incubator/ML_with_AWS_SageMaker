@@ -27,6 +27,7 @@ Once your newly created notebook *instance* ("SageMaker notebook") shows as `InS
 
 
 We can use the standard conda_python3 environment since we aren't doing any training/tuning just yet.
+
 #### Set up AWS environment
 To begin each SageMaker notebook, it's important to set up an AWS environment that will allow seamless access to the necessary cloud resources. Here's what we'll do to get started:
 
