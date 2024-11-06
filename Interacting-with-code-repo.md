@@ -21,11 +21,11 @@ exercises: 10
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 # Using a GitHub Personal Access Token (PAT) to Push/Pull from a SageMaker Notebook
+In this episode, we'll see how to push our code to the fork we created during the [workshop setup](https://uw-madison-datascience.github.io/ML_with_Amazon_SageMaker/#workshop-repository-setup).
+
 When working in SageMaker notebooks, you may often need to push code updates to GitHub repositories. However, SageMaker notebooks are typically launched with temporary instances that don’t persist configurations, including SSH keys, across sessions. This makes HTTPS-based authentication, secured with a GitHub Personal Access Token (PAT), a practical solution. PATs provide flexibility for authentication and enable seamless interaction with both public and private repositories directly from your notebook. 
 
 > **Important Note**: Personal access tokens are powerful credentials that grant specific permissions to your GitHub account. To ensure security, only select the minimum necessary permissions and handle the token carefully.
-
-In this episode, we'll see how to push our code to the fork we created during the [workshop setup](https://uw-madison-datascience.github.io/ML_with_Amazon_SageMaker/#workshop-repository-setup).
 
 ## Step 1: Generate a Personal Access Token (PAT) on GitHub
 
@@ -85,30 +85,20 @@ token = getpass.getpass("GitHub Personal Access Token (PAT): ")
 
 **Note**: After running, you may want to comment out the above code so that you don't have to enter in your login every time you run your whole notebook
 
-
-### Explanation
-
-- **`input("GitHub Username: ")`**: Prompts you to enter your GitHub username.
-- **`getpass.getpass("GitHub Personal Access Token (PAT): ")`**: Prompts you to securely enter the PAT, keeping it hidden on the screen.
-
-
-
 ## Step 4: Add, Commit, and Push Changes with Manual Authentication
 ### 1. Navigate to the Repository Directory (adjust the path if needed):
 
 
 
 ```python
+%cd ML_with_Amazon_SageMaker/
 !pwd
-%cd test_AWS
 ```
-
-    /home/ec2-user/SageMaker
-    /home/ec2-user/SageMaker/test_AWS
+    /home/ec2-user/SageMaker/ML_with_Amazon_SageMaker
 
 
-### 2. Preview changes: You may see elaborate changes if you are tracking ipynb files directly.
-
+### 2. Preview changes
+You may see elaborate changes if you are tracking ipynb files directly.
 
 ```python
 !git diff 
