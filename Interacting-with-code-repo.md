@@ -273,6 +273,7 @@ github_url = 'github.com/username/AWS_helpers.git' # replace username with your 
 !git push https://{username}:{token}@{github_url} main
 ```
 
+After pushing, you should navigate back to your fork on GitHub to verify everything worked (e.g., https://github.com/username/AWS_helpers/tree/main)
 
 ## Step 7: Pulling .py files and converting back to notebook format
 
