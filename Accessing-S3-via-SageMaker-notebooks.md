@@ -20,7 +20,7 @@ exercises: 10
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-### Setup 
+## Initial setup 
 
 #### Open .ipynb notebook
 Once your newly created notebook *instance* ("SageMaker notebook") shows as `InService`, open the instance in Jupyter Lab. From there, we will select the standard python3 environment (conda_python3) to start our first .ipynb notebook ("Jupyter notebook"). You can name your Jupyter notebook something along the lines of, `Interacting-with-S3.ipynb`.
@@ -52,7 +52,7 @@ s3 = boto3.client('s3')
 
 ```
 
-### Reading data from S3
+## Reading data from S3
 
 You can either read data from S3 into memory or download a copy of your S3 data into your notebook's instance. While loading into memory can save on storage resources, it can be convenient at times to have a local copy. We'll show you both strategies in this upcoming section. Here's a more detailed look at the pros and cons of each strategy:
 
