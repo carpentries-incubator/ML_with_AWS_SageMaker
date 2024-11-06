@@ -21,11 +21,11 @@ exercises: 10
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 # Using a GitHub Personal Access Token (PAT) to Push/Pull from a SageMaker Notebook
-
 When working in SageMaker notebooks, you may often need to push code updates to GitHub repositories. However, SageMaker notebooks are typically launched with temporary instances that don’t persist configurations, including SSH keys, across sessions. This makes HTTPS-based authentication, secured with a GitHub Personal Access Token (PAT), a practical solution. PATs provide flexibility for authentication and enable seamless interaction with both public and private repositories directly from your notebook. 
 
 > **Important Note**: Personal access tokens are powerful credentials that grant specific permissions to your GitHub account. To ensure security, only select the minimum necessary permissions and handle the token carefully.
 
+In this episode, we'll see how to push our code to the fork we created during the [workshop setup](https://uw-madison-datascience.github.io/ML_with_Amazon_SageMaker/#workshop-repository-setup).
 
 ## Step 1: Generate a Personal Access Token (PAT) on GitHub
 
@@ -53,18 +53,14 @@ Let's make sure we're starting at the same directory. Cd to the root directory o
 
 ```python
 %cd /home/ec2-user/SageMaker/
-!pwd
 ```
 
     /home/ec2-user/SageMaker
-    /home/ec2-user/SageMaker
-
-
 
 ```python
 
-!git config --global user.name "Chris Endemann"
-!git config --global user.email endeman@wisc.edu
+!git config --global user.name "Your name"
+!git config --global user.email your_email@wisc.edu
 
 ```
 
@@ -79,13 +75,10 @@ Setting this globally (`--global`) will ensure the configuration persists across
 
 The `getpass` library allows you to input your GitHub username and PAT without exposing them in the notebook. This approach ensures you’re not hardcoding sensitive information.
 
-
-
 ```python
 import getpass
 
 # Prompt for GitHub username and PAT securely
-github_url = 'github.com/UW-Madison-DataScience/test_AWS.git' # found under Code -> Clone -> HTTPS (remote the https:// before the rest of the address)
 username = input("GitHub Username: ")
 token = getpass.getpass("GitHub Personal Access Token (PAT): ")
 ```
@@ -283,6 +276,7 @@ If you get merge conflicts, be sure to resolve those before moving forward (e.g.
 
 ```python
 # Push with embedded credentials from getpass (avoids interactive prompt)
+github_url = 'github.com/username/ML_with_Amazon_SageMaker.git' # replace username with your own. THe full address for your fork can be found under Code -> Clone -> HTTPS (remote the https:// before the rest of the address)
 !git push https://{username}:{token}@{github_url} main
 ```
 
