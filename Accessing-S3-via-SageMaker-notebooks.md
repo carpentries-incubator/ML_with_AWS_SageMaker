@@ -287,6 +287,9 @@ file_list = helpers.list_S3_objects(bucket_name)
 file_list
 ```
 
+   ['results/results.txt', 'titanic_test.csv', 'titanic_train.csv']
+
+
 :::::::::::::::::::::::::::::::::::::: keypoints 
 
 - Load data from S3 into memory for efficient storage and processing.
