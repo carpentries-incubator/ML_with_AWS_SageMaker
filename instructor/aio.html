@@ -325,6 +325,18 @@
 </div>
 <!--/div.accordion-flush-->
 
+<div class="accordion accordion-flush" id="accordionFlush9">
+  <div class="accordion-item">
+    <div class="accordion-header" id="flush-heading9">
+        <a href="Hyperparameter-tuning.html">8. Hyperparameter Tuning in SageMaker: Neural Network Example</a>
+    </div>
+<!--/div.accordion-header-->
+
+  </div>
+<!--/div.accordion-item-->
+</div>
+<!--/div.accordion-flush-->
+
                 </div>
               </div>
             </div>
@@ -872,7 +884,7 @@ Pricing</a> page for more details.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -4860,7 +4872,848 @@ Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
  -->
 </div>
-</section></section>
+</section></section><section id="aio-Hyperparameter-tuning"><p>Content from <a href="Hyperparameter-tuning.html">Hyperparameter Tuning in SageMaker: Neural Network Example</a></p>
+<hr>
+<p>Last updated on 2024-11-07 |
+
+        <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker/edit/main/episodes/Hyperparameter-tuning.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
+<p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 60 minutes</p>
+<div class="text-end">
+          <button role="button" aria-pressed="false" tabindex="0" id="expand-code" class="pull-right" data-expand="Expand All Solutions " data-collapse="Collapse All Solutions "> Expand All Solutions <i aria-hidden="true" data-feather="plus"></i></button>
+        </div>
+<div class="overview card">
+<h2 class="card-header">Overview</h2>
+<div class="row g-0">
+<div class="col-md-4">
+<div class="card-body">
+<div class="inner">
+<h3 class="card-title">Questions</h3>
+<ul>
+<li>How can we efficiently manage hyperparameter tuning in
+SageMaker?</li>
+<li>How can we parallelize tuning jobs to optimize time without
+increasing costs?</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="col-md-8">
+<div class="card-body">
+<div class="inner bordered">
+<h3 class="card-title">Objectives</h3>
+<ul>
+<li>Set up and run a hyperparameter tuning job in SageMaker.</li>
+<li>Define <code>ContinuousParameter</code> and
+<code>CategoricalParameter</code> for targeted tuning.</li>
+<li>Log and capture objective metrics for evaluating tuning
+success.</li>
+<li>Optimize tuning setup to balance cost and efficiency, including
+parallelization.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<p>To conduct efficient hyperparameter tuning with neural networks (or
+any model) in SageMaker, we’ll leverage SageMaker’s
+<strong>hyperparameter tuning jobs</strong> while carefully managing
+parameter ranges and model count. Here’s an overview of the process,
+with a focus on both efficiency and cost-effectiveness.</p>
+<div class="section level3">
+<h3 id="key-steps-for-hyperparameter-tuning">Key steps for hyperparameter tuning<a class="anchor" aria-label="anchor" href="#key-steps-for-hyperparameter-tuning"></a>
+</h3>
+<p>The overall process involves these five below steps.</p>
+<ol style="list-style-type: decimal">
+<li>Setup estimator</li>
+<li>Define parameter ranges</li>
+<li>Set up HyperParamterTuner object</li>
+<li>Prepare training script to log metrics</li>
+<li>Set data paths and launch tuner.fit()</li>
+<li>Monitor tuning job from SageMaker console</li>
+<li>Extract best model for final evaluation</li>
+</ol>
+<div class="section level4">
+<h4 id="code-example-for-sagemaker-hyperparameter-tuning-with-neural-networks">Code example for SageMaker hyperparameter tuning with neural
+networks<a class="anchor" aria-label="anchor" href="#code-example-for-sagemaker-hyperparameter-tuning-with-neural-networks"></a>
+</h4>
+<p>We’ll walk through each step in detail by tuning a neural network.
+Specifcially, we will test out different values for our
+<code>epochs</code> and <code>learning_rate</code> parameters. We are
+sticking to just two hyperparameters for demonstration purposes, but you
+may wish to explore additional parameters in your own work.</p>
+<p>This setup provides: - <strong>Explicit control</strong> over
+<code>epochs</code> using <code>CategoricalParameter</code>, allowing
+targeted testing of specific values. - <strong>Efficient
+sampling</strong> for <code>learning_rate</code> using
+<code>ContinuousParameter</code>, covering a defined range for a
+balanced approach. - <strong>Cost control</strong> by setting moderate
+<code>max_jobs</code> and <code>max_parallel_jobs</code>.</p>
+<p>By managing these settings and configuring metrics properly, you can
+achieve a balanced and efficient approach to hyperparameter tuning for
+neural networks.</p>
+</div>
+<div class="section level4">
+<h4 id="directory-setup">0. Directory setup<a class="anchor" aria-label="anchor" href="#directory-setup"></a>
+</h4>
+<p>Just to make we are all on the same directory starting point, let’s
+cd to our instance’s root directory</p>
+<div class="codewrapper sourceCode" id="cb1">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span></span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb2">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="ex">/home/ec2-user/SageMaker</span></span></code></pre>
+</div>
+</div>
+<div class="section level4">
+<h4 id="setup-estimator">1. Setup estimator<a class="anchor" aria-label="anchor" href="#setup-estimator"></a>
+</h4>
+<p>To kick off our hyperparameter tuning for a neural network model,
+we’ll start by defining the <strong>SageMaker Estimator</strong>. The
+estimator setup here is very similar to our previous episode, where we
+used it to configure and train a model directly. However, this time,
+rather than directly running a training job with the estimator, we’ll be
+using it as the foundation for <strong>hyperparameter
+tuning</strong>.</p>
+<p>In SageMaker, the estimator serves as a blueprint for each tuning
+job, specifying the training script, instance type, and key parameters
+like data paths and metrics. Once defined, this estimator will be passed
+to a <strong>Hyperparameter Tuner</strong> that manages the creation of
+multiple training jobs with various hyperparameter combinations, helping
+us find an optimal configuration.</p>
+<p>Here’s the setup for our PyTorch estimator, which includes specifying
+the entry script for training (<code>train_nn.py</code>) and defining
+hyperparameters that will remain fixed across tuning jobs. The
+hyperparameters we’re setting up to tune include <code>epochs</code> and
+<code>learning_rate</code>, with a few specific values or ranges
+defined:</p>
+<div class="codewrapper sourceCode" id="cb3">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="im">import</span> sagemaker</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="im">from</span> sagemaker.tuner <span class="im">import</span> HyperparameterTuner, IntegerParameter, ContinuousParameter, CategoricalParameter</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="im">from</span> sagemaker.pytorch <span class="im">import</span> PyTorch</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="im">from</span> sagemaker.inputs <span class="im">import</span> TrainingInput</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co"># Initialize SageMaker session and role</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>session <span class="op">=</span> sagemaker.Session()</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>role <span class="op">=</span> get_execution_role()</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>bucket_name <span class="op">=</span> <span class="st">'myawesometeam-titanic'</span>  <span class="co"># replace with your S3 bucket name</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co"># Define the PyTorch estimator with entry script and environment details</span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>pytorch_estimator <span class="op">=</span> PyTorch(</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>    entry_point<span class="op">=</span><span class="st">"AWS_helpers/train_nn.py"</span>,  <span class="co"># Your script for training</span></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a>    instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span>,</span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a>    framework_version<span class="op">=</span><span class="st">"1.9"</span>,</span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a>    py_version<span class="op">=</span><span class="st">"py38"</span>,</span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a>    metric_definitions<span class="op">=</span>[{<span class="st">"Name"</span>: <span class="st">"validation:accuracy"</span>, <span class="st">"Regex"</span>: <span class="st">"validation:accuracy = ([0-9</span><span class="ch">\\</span><span class="st">.]+)"</span>}],</span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a>    hyperparameters<span class="op">=</span>{</span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a>        <span class="st">"train"</span>: <span class="st">"/opt/ml/input/data/train/train_data.npz"</span>,  <span class="co"># SageMaker will mount this path</span></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a>        <span class="st">"val"</span>: <span class="st">"/opt/ml/input/data/val/val_data.npz"</span>,        <span class="co"># SageMaker will mount this path</span></span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a>        <span class="st">"epochs"</span>: <span class="dv">100</span>, <span class="co"># Placeholder initial value. Will be overridden by tuning by tuning values tested</span></span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a>        <span class="st">"learning_rate"</span>: <span class="fl">0.001</span> <span class="co"># Placeholder initial value. Will be overridden by tuning values tested</span></span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a>    },</span>
+<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a>)</span>
+<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a></span></code></pre>
+</div>
+</div>
+<div class="section level4">
+<h4 id="define-hyperparameter-ranges">2. Define hyperparameter ranges<a class="anchor" aria-label="anchor" href="#define-hyperparameter-ranges"></a>
+</h4>
+<p>In SageMaker, you must explicitly define ranges for any
+hyperparameters you want to tune. SageMaker supports both
+<code>ContinuousParameter</code> and <code>CategoricalParameter</code>
+types:</p>
+<ul>
+<li>
+<strong><code>ContinuousParameter</code></strong> allows SageMaker
+to dynamically sample numeric values within a specified range, making it
+ideal for broad, exploratory tuning. The total number of values tested
+can be controlled through the upcoming <code>max_jobs</code> parameter,
+which defines how many different combinations SageMaker will
+evaluate.</li>
+<li>
+<strong><code>CategoricalParameter</code></strong> specifies exact
+values for SageMaker to test, which is useful when you want the model to
+only try a specific set of options.</li>
+</ul>
+<p>By default, SageMaker uses <strong>Bayesian optimization</strong>,
+adjusting future selections based on previous results to efficiently
+find optimal values. You can also set the <code>strategy</code> to
+<strong>“Random”</strong> for uniform sampling across the range, which
+is effective in larger or more exploratory search spaces. Random
+sampling may end up costing much more in time and resources, however.
+Generally, we recommend sticking with the default setting.</p>
+<div class="codewrapper sourceCode" id="cb4">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Hyperparameter tuning ranges</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>hyperparameter_ranges <span class="op">=</span> {</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>    <span class="st">"epochs"</span>: CategoricalParameter([<span class="dv">100</span>, <span class="dv">1000</span>, <span class="dv">10000</span>]),       <span class="co"># Adjust as needed</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>    <span class="st">"learning_rate"</span>: ContinuousParameter(<span class="fl">0.001</span>, <span class="fl">0.1</span>),  <span class="co"># Range for continuous values</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>}</span></code></pre>
+</div>
+</div>
+<div class="section level4">
+<h4 id="hyperparameter-considerations-in-neural-nets">Hyperparameter considerations in neural nets<a class="anchor" aria-label="anchor" href="#hyperparameter-considerations-in-neural-nets"></a>
+</h4>
+<p>When tuning hyperparameters in neural networks, it’s essential to
+prioritize parameters that directly impact model performance while
+remaining mindful of diminishing returns and potential overfitting.
+Below are some core hyperparameters to consider and general strategies
+for tuning:</p>
+<ul>
+<li><p><strong>Learning Rate</strong>: Often the most impactful
+parameter, learning rate controls the speed of convergence. A smaller
+learning rate can lead to more stable, though slower, convergence, while
+a larger rate may speed things up but risks overshooting optimal values.
+Testing ranges like <code>0.0001</code> to <code>0.1</code> with a
+<code>ContinuousParameter</code> is common practice, and
+<code>Bayesian</code> search can help home in on ideal values.</p></li>
+<li><p><strong>Batch Size</strong>: Larger batch sizes often yield
+faster training times and may improve stability, but this can risk
+bypassing useful local minima, especially with small datasets. Smaller
+batch sizes can capture more nuanced updates but are computationally
+expensive. Ranges from <code>16</code> to <code>256</code> are worth
+exploring for most use cases, although, for large datasets or
+high-capacity models, even larger values may be beneficial.</p></li>
+<li><p><strong>Number of Epochs</strong>: While larger epochs allow the
+model to learn from data longer, increasing epochs doesn’t always equate
+to better performance and can lead to overfitting. Exploring
+<code>CategoricalParameter([50, 100, 500, 1000])</code> can help balance
+performance without excessive training costs.</p></li>
+<li><p><strong>Layer Width and Depth</strong>: Increasing the width or
+depth (i.e., number of neurons and layers) can improve model capacity
+but also risks overfitting if the dataset is small or lacks variability.
+Testing a range of layer sizes or depths (e.g., <code>32, 64, 128</code>
+neurons per layer) can reveal whether additional complexity yields
+benefits. Notably, understanding <em>double descent</em> is essential
+here, as larger networks may initially seem to overfit before
+unexpectedly improving in the <em>second descent</em>—a phenomenon worth
+investigating in high-capacity networks.</p></li>
+<li><p><strong>Regularization Parameters</strong>: Regularization
+techniques, such as dropout rates or weight decay, can help control
+overfitting by limiting model capacity. For example, dropout rates from
+<code>0.1</code> to <code>0.5</code> or weight decay values of
+<code>0.0001</code> to <code>0.01</code> often balance underfitting and
+overfitting effectively. Higher regularization might inhibit learning,
+especially if the model is relatively small.</p></li>
+<li><p><strong>Early Stopping</strong>: While not a traditional
+hyperparameter, setting up early stopping based on the validation
+performance can prevent overfitting without the need to exhaustively
+test for epoch limits. By allowing the model to halt once performance
+plateaus or worsens, early stopping can improve efficiency in
+hyperparameter tuning.</p></li>
+<li><p><strong>Special Phenomena - Grokking and Double Descent</strong>:
+For certain complex datasets or when tuning particularly large models,
+keep an eye on phenomena like <em>grokking</em> (sudden shifts from poor
+to excellent generalization) and <em>double descent</em> (an unexpected
+second drop in error after initial overfitting). These behaviors are
+more likely to appear in models with high capacity and prolonged
+training periods, potentially requiring longer epochs or lower learning
+rates to observe.</p></li>
+</ul>
+<p>In summary, hyperparameter tuning is a balancing act between
+expanding model capacity and mitigating overfitting. Prioritize
+parameters that have shown past efficacy in similar problems, and limit
+the search to a manageable range—often 20–30 model configurations are
+sufficient to observe gains. This approach keeps resource consumption
+practical while achieving meaningful improvements in model
+performance.</p>
+</div>
+<div class="section level4">
+<h4 id="set-up-hyperparamtertuner-object">3. Set up HyperParamterTuner object<a class="anchor" aria-label="anchor" href="#set-up-hyperparamtertuner-object"></a>
+</h4>
+<p>In step 3, we set up the <code>HyperparameterTuner</code>, which
+controls the tuning process by specifying the…</p>
+<ul>
+<li>
+<code>estimator</code>: Here, we connect the previously defined
+<code>pytorch_estimator</code> to <code>tuner</code>, ensuring that the
+tuning job will run with our PyTorch model configuration.</li>
+<li>
+<code>objectives</code>:</li>
+<li>The <code>metric_definitions</code> and
+<code>objective_metric_name</code> indicate which metric SageMaker
+should monitor to find the best-performing model; in this case, we’re
+tracking “validation:accuracy” and aiming to maximize it. We’ll show you
+how to setup your training script to report this information in the next
+step.</li>
+<li>
+<code>hyperparameter ranges</code>: Defined above.</li>
+<li>
+<code>tuning strategy</code>: SageMaker uses a <strong>Bayesian
+strategy</strong> by default, which iteratively improves parameter
+selection based on past performance to find an optimal model more
+efficiently. Although it’s possible to adjust to a “Random” strategy,
+Bayesian optimization generally provides better results, so it’s
+recommended to keep this setting.</li>
+<li>
+<code>max_jobs</code> and <code>max_parallel_jobs</code>: Finally,
+we set <code>max_jobs</code> to control the total number of
+configurations SageMaker will explore and <code>max_parallel_jobs</code>
+to limit the number of jobs that run simultaneously, balancing resource
+usage and tuning speed. Since SageMaker tests different hyperparameter
+values dynamically, it’s important to limit total parallel instances to
+&lt;= 4.</li>
+</ul>
+<blockquote>
+<p><strong>Resource-Conscious Approach</strong>: To control costs and
+energy-needs, choose efficient instance types and limit the search to
+impactful parameters at a sensible range, keeping resource consumption
+in check. Hyperparameter tuning often does yield better performing
+models, but these gains can be marginal after exhausting a reasonable
+search window of 20-30 model configurations. As a researcher, it’s also
+imortant to do some digging on past work to see which parameters may be
+worthwhile to explore. Make sure you understand what each parameter is
+doing before you adjust them.</p>
+</blockquote>
+<p><strong>Always start with <code>max_jobs = 1</code> and
+<code>max_parallel_jobs=1</code>.</strong> Before running the full
+search, let’s test our setup by setting max_jobs = 1. This will test
+just one possible hyperparameter configuration. This critical step helps
+ensure our code is functional before attempting to scale up.</p>
+<div class="codewrapper sourceCode" id="cb5">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Tuner configuration</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>tuner <span class="op">=</span> HyperparameterTuner(</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>    estimator<span class="op">=</span>pytorch_estimator,</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>    metric_definitions<span class="op">=</span>[{<span class="st">"Name"</span>: <span class="st">"validation:accuracy"</span>, <span class="st">"Regex"</span>: <span class="st">"validation:accuracy = ([0-9</span><span class="ch">\\</span><span class="st">.]+)"</span>}],</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>    objective_metric_name<span class="op">=</span><span class="st">"validation:accuracy"</span>,  <span class="co"># Ensure this matches the metric name exactly</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>    objective_type<span class="op">=</span><span class="st">"Maximize"</span>,                   <span class="co"># Specify if maximizing or minimizing the metric</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>    hyperparameter_ranges<span class="op">=</span>hyperparameter_ranges,</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>    strategy<span class="op">=</span><span class="st">"Bayesian"</span>,  <span class="co"># Default setting (recommend sticking with this!); can adjust to "Random" for uniform sampling across the range</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>    max_jobs<span class="op">=</span><span class="dv">1</span>,                <span class="co"># Always start with 1 instance for debugging purposes. Adjust based on exploration needs (keep below 30 to be kind to environment). </span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>    max_parallel_jobs<span class="op">=</span><span class="dv">1</span>         <span class="co"># Always start with 1 instance for debugging purposes. Adjust based on available resources and budget. Recommended to keep this value &lt; 4 since SageMaker tests values dynamically.</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>)</span></code></pre>
+</div>
+</div>
+<div class="section level4">
+<h4 id="prepare-training-script-to-log-metrics">4. Prepare training script to log metrics<a class="anchor" aria-label="anchor" href="#prepare-training-script-to-log-metrics"></a>
+</h4>
+<p>To prepare <code>train_nn.py</code> for hyperparameter tuning, we
+added code to log validation metrics in a format that SageMaker
+recognizes for tracking. In the training loop, we added a print
+statement for <code>Val Accuracy</code> in a specific format that
+SageMaker can capture.</p>
+<p><strong>Note</strong>: It’s best to use an if statement to only print
+out metrics periodically (e.g., every 100 epochs), so that you print
+time does not each up too much of your training time. It may be a little
+counter-intuitive that printing can slow things down so dramatically,
+but it truly does become a significant factor if you’re doing it every
+epoch. On the flipside of this, you don’t want to print metrics so
+infrequently that you lose resolution in the monitored validation
+accuracy. Choose a number between 100-1000 epochs or divide your total
+epoch count by ~25 to yield a reasonable range.</p>
+<div class="codewrapper sourceCode" id="cb6">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="cf">if</span> (epoch <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> <span class="dv">100</span> <span class="op">==</span> <span class="dv">0</span> <span class="kw">or</span> epoch <span class="op">==</span> epochs <span class="op">-</span> <span class="dv">1</span>:</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"validation:accuracy = </span><span class="sc">{</span>val_accuracy<span class="sc">:.4f}</span><span class="ss">"</span>, flush<span class="op">=</span><span class="va">True</span>)  <span class="co"># Log for SageMaker metric tracking. Needed for hyperparameter tuning later.</span></span></code></pre>
+</div>
+<p>Paired with this, our <code>metric_definitions</code> above uses a
+regular expression <code>"validation:accuracy = ([0-9\\.]+)"</code> to
+extract the val_accuracy value from each log line. This regex
+specifically looks for validation:accuracy =, followed by a
+floating-point number, which corresponds to the format of our log
+statement in train_nn.py.</p>
+</div>
+<div class="section level4">
+<h4 id="set-data-paths-and-launch-tuner-fit">5. Set data paths and launch tuner.fit()<a class="anchor" aria-label="anchor" href="#set-data-paths-and-launch-tuner-fit"></a>
+</h4>
+<p>In step 4, we define the input data paths for the training job and
+launch the hyperparameter tuning process. Using
+<code>TrainingInput</code>, we specify the S3 paths to our
+<code>train_data.npz</code> and <code>val_data.npz</code> files. This
+setup ensures that SageMaker correctly accesses our training and
+validation data during each job in the tuning process. We then call
+<code>tuner.fit</code> and pass a dictionary mapping each data channel
+(“train” and “val”) to its respective path. This command initiates the
+tuning job, triggering SageMaker to begin sampling hyperparameter
+combinations, training the model, and evaluating performance based on
+our defined objective metric. Once the job is launched, SageMaker
+handles the tuning process automatically, running the specified number
+of configurations and keeping track of the best model parameters based
+on validation accuracy.</p>
+<div class="codewrapper sourceCode" id="cb7">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Define the input paths</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>train_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/train_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>val_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/val_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co"># Launch the hyperparameter tuning job</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>tuner.fit({<span class="st">"train"</span>: train_input, <span class="st">"val"</span>: val_input})</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Hyperparameter tuning job launched."</span>)</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb8">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="ex">No</span> finished training job found associated with this estimator. Please make sure this estimator is only used for building workflow config</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="ex">No</span> finished training job found associated with this estimator. Please make sure this estimator is only used for building workflow config</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="ex">.......................................!</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="ex">Hyperparameter</span> tuning job launched.</span></code></pre>
+</div>
+</div>
+<div class="section level4">
+<h4 id="monitor-tuning-job-from-sagemaker-console">6. Monitor tuning job from SageMaker console<a class="anchor" aria-label="anchor" href="#monitor-tuning-job-from-sagemaker-console"></a>
+</h4>
+<p>After running the above cell, we can check on the progress by
+visiting the SageMaker Console and finding the “Training” tab located on
+the left panel. Click “Hyperparmater tuning jobs” to view running
+jobs.</p>
+</div>
+</div>
+<div class="section level3">
+<h3 id="scaling-up-our-approach">Scaling up our approach<a class="anchor" aria-label="anchor" href="#scaling-up-our-approach"></a>
+</h3>
+<p>If all goes well, we can scale up the experiment with the below code.
+In this configuration, we’re scaling up the search by allowing SageMaker
+to test more hyperparameter configurations (<code>max_jobs=20</code>)
+while setting <code>max_parallel_jobs=2</code> to manage parallelization
+efficiently. With two jobs running at once, SageMaker will be able to
+explore potential improvements more quickly than in a fully sequential
+setup, while still dynamically selecting promising values as it learns
+from completed jobs. This balance leverages SageMaker’s Bayesian
+optimization, which uses completed trials to inform subsequent ones,
+helping to avoid redundant testing of less promising parameter
+combinations. <strong>Setting <code>max_parallel_jobs</code> higher than
+2-4 could increase costs and reduce tuning efficiency, as SageMaker’s
+ability to learn from completed jobs decreases when too many jobs run
+simultaneously.</strong></p>
+<p>With this approach, SageMaker is better able to refine configurations
+without overloading resources or risking inefficient exploration, making
+<code>max_parallel_jobs=2</code> a solid default for most use cases.</p>
+<div class="codewrapper sourceCode" id="cb9">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="im">import</span> time <span class="im">as</span> t <span class="co"># always a good idea to keep a runtime of your experiments </span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co"># Configuration variables</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>instance_type <span class="op">=</span> <span class="st">"ml.m5.large"</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>max_jobs <span class="op">=</span> <span class="dv">2</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>max_parallel_jobs <span class="op">=</span> <span class="dv">2</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co"># Define the Tuner configuration</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>tuner <span class="op">=</span> HyperparameterTuner(</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>    estimator<span class="op">=</span>pytorch_estimator,</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>    metric_definitions<span class="op">=</span>[{<span class="st">"Name"</span>: <span class="st">"validation:accuracy"</span>, <span class="st">"Regex"</span>: <span class="st">"validation:accuracy = ([0-9</span><span class="ch">\\</span><span class="st">.]+)"</span>}],</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>    objective_metric_name<span class="op">=</span><span class="st">"validation:accuracy"</span>,  <span class="co"># Ensure this matches the metric name exactly</span></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>    objective_type<span class="op">=</span><span class="st">"Maximize"</span>,                   <span class="co"># Specify if maximizing or minimizing the metric</span></span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>    hyperparameter_ranges<span class="op">=</span>hyperparameter_ranges,</span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>    max_jobs<span class="op">=</span>max_jobs,</span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>    max_parallel_jobs<span class="op">=</span>max_parallel_jobs</span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>)</span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a></span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a><span class="co"># Define the input paths</span></span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a>train_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/train_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a>val_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/val_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a></span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a><span class="co"># Track start time</span></span>
+<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a>start_time <span class="op">=</span> t.time()</span>
+<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a></span>
+<span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a><span class="co"># Launch the hyperparameter tuning job</span></span>
+<span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a>tuner.fit({<span class="st">"train"</span>: train_input, <span class="st">"val"</span>: val_input})</span>
+<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a></span>
+<span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a><span class="co"># Calculate runtime</span></span>
+<span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a>runtime <span class="op">=</span> t.time() <span class="op">-</span> start_time</span>
+<span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a></span>
+<span id="cb9-32"><a href="#cb9-32" tabindex="-1"></a><span class="co"># Print confirmation with runtime and configuration details</span></span>
+<span id="cb9-33"><a href="#cb9-33" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Tuning runtime: </span><span class="sc">{</span>runtime<span class="sc">:.2f}</span><span class="ss"> seconds, Instance Type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, Max Jobs: </span><span class="sc">{</span>max_jobs<span class="sc">}</span><span class="ss">, Max Parallel Jobs: </span><span class="sc">{</span>max_parallel_jobs<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb10">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="ex">No</span> finished training job found associated with this estimator. Please make sure this estimator is only used for building workflow config</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="ex">No</span> finished training job found associated with this estimator. Please make sure this estimator is only used for building workflow config</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="ex">.......................................!</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="ex">Tuning</span> runtime: 205.53 seconds, Instance Type: ml.m5.large, Max Jobs: 2, Max Parallel Jobs: 2</span></code></pre>
+</div>
+</div>
+<div class="section level3">
+<h3 id="monitoring-tuning">Monitoring tuning<a class="anchor" aria-label="anchor" href="#monitoring-tuning"></a>
+</h3>
+<p>After running the above cell, we can check on the progress by
+visiting the SageMaker Console and finding the “Training” tab located on
+the left panel. Click “Hyperparmater tuning jobs” to view running
+jobs.</p>
+<ul>
+<li>Initial Jobs: SageMaker starts by running only max_parallel_jobs (2
+in this case) as the initial batch. As each job completes, new jobs from
+the remaining pool are triggered until max_jobs (20) is reached.</li>
+<li>Job Completion: Once the first few jobs complete, SageMaker will
+continue to launch the remaining jobs up to the maximum of 20, but no
+more than two at a time.</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="canshould-we-run-more-instances-in-parallel">Can/should we run more instances in parallel?<a class="anchor" aria-label="anchor" href="#canshould-we-run-more-instances-in-parallel"></a>
+</h3>
+<p>Setting max_parallel_jobs to 20 (equal to max_jobs) will indeed
+launch all 20 jobs in parallel. This approach won’t affect the total
+cost (since cost is based on the number of total jobs, not how many run
+concurrently), but it can impact the final results and resource usage
+pattern due to SageMaker’s ability to dynamically select hyperparameter
+values to test to maximize efficiency and improve model performance.
+This adaptability is especially useful for neural networks, which often
+have a large hyperparameter space with complex interactions. Here’s how
+SageMaker’s approach impacts typical neural network training:</p>
+<div class="section level4">
+<h4 id="adaptive-search-strategies">1. Adaptive Search Strategies<a class="anchor" aria-label="anchor" href="#adaptive-search-strategies"></a>
+</h4>
+<ul>
+<li>SageMaker offers <strong>Bayesian optimization</strong> for
+hyperparameter tuning. Instead of purely random sampling, it learns from
+previous jobs to choose the next set of hyperparameters more likely to
+improve the objective metric.</li>
+<li>For neural networks, this strategy can help converge on
+better-performing configurations faster by favoring promising areas of
+the hyperparameter space and discarding poor ones.</li>
+</ul>
+</div>
+<div class="section level4">
+<h4 id="effect-of-max_parallel_jobs-on-adaptive-tuning">2. Effect of <code>max_parallel_jobs</code> on adaptive tuning<a class="anchor" aria-label="anchor" href="#effect-of-max_parallel_jobs-on-adaptive-tuning"></a>
+</h4>
+<ul>
+<li>When using Bayesian optimization, a lower
+<code>max_parallel_jobs</code> (e.g., 2–4) can allow SageMaker to
+iteratively adjust and improve its choices. Each batch of jobs informs
+the subsequent batch, which may yield better results over time.</li>
+<li>Conversely, if all jobs are run in parallel (e.g.,
+<code>max_parallel_jobs=20</code>), SageMaker can’t learn and adapt
+within a single batch, making this setup more like a traditional grid or
+random search. This approach is still valid, especially for small search
+spaces, but it doesn’t leverage the full potential of adaptive
+tuning.</li>
+</ul>
+</div>
+<div class="section level4">
+<h4 id="practical-impact-on-neural-network-training">3. Practical impact on neural network training<a class="anchor" aria-label="anchor" href="#practical-impact-on-neural-network-training"></a>
+</h4>
+<ul>
+<li>
+<strong>For simpler models</strong> or smaller parameter ranges,
+running jobs in parallel with a higher <code>max_parallel_jobs</code>
+works well and quickly completes the search.</li>
+<li>
+<strong>For more complex neural networks</strong> or large
+hyperparameter spaces, an adaptive strategy with a smaller
+<code>max_parallel_jobs</code> may yield a better model with fewer total
+jobs by fine-tuning hyperparameters over multiple iterations.</li>
+</ul>
+</div>
+<div class="section level4">
+<h4 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
+</h4>
+<ul>
+<li>
+<strong>For fast, straightforward tuning</strong>: Set
+<code>max_parallel_jobs</code> closer to <code>max_jobs</code> for
+simultaneous testing.</li>
+<li>
+<strong>For adaptive, refined tuning</strong>: Use a smaller
+<code>max_parallel_jobs</code> (like 2–4) to let SageMaker leverage
+adaptive tuning for optimal configurations.</li>
+</ul>
+<p>This balance between exploration and exploitation is particularly
+impactful in neural network tuning, where training costs can be high and
+parameters interact in complex ways.</p>
+</div>
+</div>
+<div class="section level3">
+<h3 id="extracting-and-evaluating-the-best-model-after-tuning">Extracting and evaluating the best model after tuning<a class="anchor" aria-label="anchor" href="#extracting-and-evaluating-the-best-model-after-tuning"></a>
+</h3>
+<p>Tuning should only take about 5 minutes to complete — not bad for 20
+models! After SageMaker completes the hyperparameter tuning job, the
+results, including the trained models for each configuration, are stored
+in an S3 bucket. Here’s a breakdown of the steps to locate and evaluate
+the best model on test data.</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>Understanding the folder structure</strong>:
+<ul>
+<li>SageMaker saves each tuning job’s results in the specified S3 bucket
+under a unique prefix.</li>
+<li>For the best model, SageMaker stores the model artifact in the
+format <code>s3://{bucket}/{job_name}/output/model.tar.gz</code>. Each
+model is compressed as a <code>.tar.gz</code> file containing the saved
+model parameters.</li>
+</ul>
+</li>
+<li>
+<strong>Retrieve and load the best model</strong>:
+<ul>
+<li>Using the <code>tuner.best_training_job()</code> method, you can get
+the name of the best-performing job.</li>
+<li>From there, retrieve the S3 URI of the best model artifact, download
+it locally, and extract the files for use.</li>
+</ul>
+</li>
+<li>
+<strong>Prepare test data for final assessment of model
+generalizability</strong>
+<ul>
+<li>If not done already.</li>
+</ul>
+</li>
+<li>
+<strong>Evaluate the model on test data</strong>:
+<ul>
+<li>Once extracted, load the saved model weights and evaluate the model
+on your test dataset to get the final performance metrics.</li>
+</ul>
+</li>
+</ol>
+<p>Here’s the code to implement these steps:</p>
+<div class="section level4">
+<h4 id="view-best-model-details-and-storage-info">View best model details and storage info<a class="anchor" aria-label="anchor" href="#view-best-model-details-and-storage-info"></a>
+</h4>
+<p>We can easily view the best hyperparameters from the tuning
+procedure…</p>
+<div class="codewrapper sourceCode" id="cb11">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># 1. Get the best training job from the completed tuning job</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>best_job_name <span class="op">=</span> tuner.best_training_job()</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Best training job name:"</span>, best_job_name)</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co"># 2. Use describe_training_job to retrieve full details, including hyperparameters...</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>best_job_desc <span class="op">=</span> session.sagemaker_client.describe_training_job(TrainingJobName<span class="op">=</span>best_job_name)</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>best_hyperparameters <span class="op">=</span> best_job_desc[<span class="st">"HyperParameters"</span>]</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Best hyperparameters:"</span>, best_hyperparameters)</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="co"># ...  and model URI (location on S3)</span></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>best_model_s3_uri <span class="op">=</span> best_job_desc[<span class="st">'ModelArtifacts'</span>][<span class="st">'S3ModelArtifacts'</span>]</span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Best model artifact S3 URI: </span><span class="sc">{</span>best_model_s3_uri<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb12">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="ex">Best</span> training job name: pytorch-training-241107-0025-001-72851d7f</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="ex">Best</span> hyperparameters: {<span class="st">'_tuning_objective_metric'</span>: <span class="st">'validation:accuracy'</span>, <span class="st">'epochs'</span>: <span class="st">'"100"'</span>, <span class="st">'learning_rate'</span>: <span class="st">'0.005250489250786233'</span>, <span class="st">'sagemaker_container_log_level'</span>: <span class="st">'20'</span>, <span class="st">'sagemaker_estimator_class_name'</span>: <span class="st">'"PyTorch"'</span>, <span class="st">'sagemaker_estimator_module'</span>: <span class="st">'"sagemaker.pytorch.estimator"'</span>, <span class="st">'sagemaker_job_name'</span>: <span class="st">'"pytorch-training-2024-11-07-00-25-35-999"'</span>, <span class="st">'sagemaker_program'</span>: <span class="st">'"train_nn.py"'</span>, <span class="st">'sagemaker_region'</span>: <span class="st">'"us-east-1"'</span>, <span class="st">'sagemaker_submit_directory'</span>: <span class="st">'"s3://sagemaker-us-east-1-183295408236/pytorch-training-2024-11-07-00-25-35-999/source/sourcedir.tar.gz"'</span>, <span class="st">'train'</span>: <span class="st">'"/opt/ml/input/data/train/train_data.npz"'</span>, <span class="st">'val'</span>: <span class="st">'"/opt/ml/input/data/val/val_data.npz"'</span>}</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="ex">Best</span> model artifact S3 URI: s3://sagemaker-us-east-1-183295408236/pytorch-training-241107-0025-001-72851d7f/output/model.tar.gz</span></code></pre>
+</div>
+</div>
+<div class="section level4">
+<h4 id="retrieve-and-load-best-model">Retrieve and load best model<a class="anchor" aria-label="anchor" href="#retrieve-and-load-best-model"></a>
+</h4>
+<div class="codewrapper sourceCode" id="cb13">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="im">import</span> boto3</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="im">import</span> tarfile</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co"># Initialize S3 client</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co"># Download and extract the model artifact</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>local_model_path <span class="op">=</span> <span class="st">"best_model.tar.gz"</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>bucket_name, model_key <span class="op">=</span> best_model_s3_uri.split(<span class="st">'/'</span>)[<span class="dv">2</span>], <span class="st">'/'</span>.join(best_model_s3_uri.split(<span class="st">'/'</span>)[<span class="dv">3</span>:])</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>s3.download_file(bucket_name, model_key, local_model_path)</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="co"># Extract the model files from the tar.gz archive</span></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="cf">with</span> tarfile.<span class="bu">open</span>(local_model_path, <span class="st">'r:gz'</span>) <span class="im">as</span> tar:</span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>    tar.extractall()</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Best model downloaded and extracted."</span>)</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb14">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="ex">Best</span> model downloaded and extracted.</span></code></pre>
+</div>
+</div>
+<div class="section level4">
+<h4 id="prepare-test-set-as-test_data-npz">Prepare test set as test_data.npz<a class="anchor" aria-label="anchor" href="#prepare-test-set-as-test_data-npz"></a>
+</h4>
+<p>In our previous episode, we converted our train dataset into
+train/validate subsets, and saved them out as .npz files for efficient
+processing. We’ll need to preprocess our test data the same way to
+evaluate it on our model.</p>
+<p><strong>Note</strong>: It’s always a good idea to keep preprocessing
+code as a function so you can apply the same exact procedure across
+datasets with ease. We’ll import our preprocessing function from
+<code>train_nn.py</code>.</p>
+<div class="codewrapper sourceCode" id="cb15">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="co"># Now try importing the function again</span></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="im">from</span> AWS_helpers.train_nn <span class="im">import</span> preprocess_data</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a></span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="co"># Example usage for test data (using the same scaler from training)</span></span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>test_df <span class="op">=</span> pd.read_csv(<span class="st">"titanic_test.csv"</span>)</span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a>X_test, y_test, _ <span class="op">=</span> preprocess_data(test_df)</span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a></span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a><span class="co"># Save processed data for testing</span></span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a>np.savez(<span class="st">'test_data.npz'</span>, X_test<span class="op">=</span>X_test, y_test<span class="op">=</span>y_test)</span></code></pre>
+</div>
+</div>
+<div class="section level4">
+<h4 id="evaluate-the-model-on-test-data">Evaluate the model on test data<a class="anchor" aria-label="anchor" href="#evaluate-the-model-on-test-data"></a>
+</h4>
+<div class="codewrapper sourceCode" id="cb16">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="im">from</span> AWS_helpers.train_nn <span class="im">import</span> TitanicNet</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="im">from</span> AWS_helpers.train_nn <span class="im">import</span> calculate_accuracy</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a><span class="co"># Load the model (assuming it's saved as 'nn_model.pth' after extraction)</span></span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>model <span class="op">=</span> TitanicNet()  <span class="co"># Ensure TitanicNet is defined as per your training script</span></span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a>model.load_state_dict(torch.load(<span class="st">"nn_model.pth"</span>))</span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a>model.<span class="bu">eval</span>()</span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a></span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a><span class="co"># Load test data (assuming the test set is saved as "test_data.npz" in npz format)</span></span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a>test_data <span class="op">=</span> np.load(<span class="st">"test_data.npz"</span>)  <span class="co"># Replace "test_data.npz" with actual test data path if different</span></span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a>X_test <span class="op">=</span> torch.tensor(test_data[<span class="st">'X_test'</span>], dtype<span class="op">=</span>torch.float32)</span>
+<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a>y_test <span class="op">=</span> torch.tensor(test_data[<span class="st">'y_test'</span>], dtype<span class="op">=</span>torch.float32)</span>
+<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a></span>
+<span id="cb16-15"><a href="#cb16-15" tabindex="-1"></a><span class="co"># Evaluate the model on the test set</span></span>
+<span id="cb16-16"><a href="#cb16-16" tabindex="-1"></a><span class="cf">with</span> torch.no_grad():</span>
+<span id="cb16-17"><a href="#cb16-17" tabindex="-1"></a>    predictions <span class="op">=</span> model(X_test)</span>
+<span id="cb16-18"><a href="#cb16-18" tabindex="-1"></a>    accuracy <span class="op">=</span> calculate_accuracy(predictions, y_test)  <span class="co"># Assuming calculate_accuracy is defined as in your training script</span></span>
+<span id="cb16-19"><a href="#cb16-19" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Test Accuracy: </span><span class="sc">{</span>accuracy<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb17">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="ex">Test</span> Accuracy: 98.0894</span></code></pre>
+</div>
+</div>
+</div>
+<div class="section level3">
+<h3 id="conclusions">Conclusions<a class="anchor" aria-label="anchor" href="#conclusions"></a>
+</h3>
+<p>In just under 5 minutes, we produced a model that is almost 100%
+accurate on the test set. However, this performance does come at a cost
+(albeit manageable if you’ve stuck with our advise thus far). This next
+section will help you assess the total compute time that was used by
+your tuning job.</p>
+<p>In SageMaker, training time and billing time (extracted in our code
+below) are often expected to differ slightly for training jobs, but not
+for tuning jobs. Here’s a breakdown of what’s happening:</p>
+<ul>
+<li><p>Training Time: This is the actual wall-clock time that each
+training job takes to run, from start to end. This metric represents the
+pure time spent on training without considering the compute
+resources.</p></li>
+<li><p>Billing Time: This includes the training time but is adjusted for
+the resources used. Billing time considers:</p></li>
+</ul>
+<p>Instance Count: The number of instances used for training affects
+billing time. Round-Up Policy: SageMaker rounds up the billing time to
+the nearest second for each job and multiplies it by the instance count
+used. This means that for short jobs, the difference between training
+and billing time can be more pronounced.</p>
+<div class="codewrapper sourceCode" id="cb18">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="im">import</span> boto3</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="im">import</span> math</span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a><span class="co"># Initialize SageMaker client</span></span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a>sagemaker_client <span class="op">=</span> boto3.client(<span class="st">"sagemaker"</span>)</span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a></span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a><span class="co"># Retrieve tuning job details</span></span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a>tuning_job_name <span class="op">=</span> tuner.latest_tuning_job.name  <span class="co"># Replace with your tuning job name if needed</span></span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a>tuning_job_desc <span class="op">=</span> sagemaker_client.describe_hyper_parameter_tuning_job(HyperParameterTuningJobName<span class="op">=</span>tuning_job_name)</span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a></span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a><span class="co"># Extract relevant settings</span></span>
+<span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a>instance_type <span class="op">=</span> tuning_job_desc[<span class="st">'TrainingJobDefinition'</span>][<span class="st">'ResourceConfig'</span>][<span class="st">'InstanceType'</span>]</span>
+<span id="cb18-13"><a href="#cb18-13" tabindex="-1"></a>max_jobs <span class="op">=</span> tuning_job_desc[<span class="st">'HyperParameterTuningJobConfig'</span>][<span class="st">'ResourceLimits'</span>][<span class="st">'MaxNumberOfTrainingJobs'</span>]</span>
+<span id="cb18-14"><a href="#cb18-14" tabindex="-1"></a>max_parallel_jobs <span class="op">=</span> tuning_job_desc[<span class="st">'HyperParameterTuningJobConfig'</span>][<span class="st">'ResourceLimits'</span>][<span class="st">'MaxParallelTrainingJobs'</span>]</span>
+<span id="cb18-15"><a href="#cb18-15" tabindex="-1"></a></span>
+<span id="cb18-16"><a href="#cb18-16" tabindex="-1"></a><span class="co"># Retrieve all training jobs for the tuning job</span></span>
+<span id="cb18-17"><a href="#cb18-17" tabindex="-1"></a>training_jobs <span class="op">=</span> sagemaker_client.list_training_jobs_for_hyper_parameter_tuning_job(</span>
+<span id="cb18-18"><a href="#cb18-18" tabindex="-1"></a>    HyperParameterTuningJobName<span class="op">=</span>tuning_job_name, StatusEquals<span class="op">=</span><span class="st">'Completed'</span></span>
+<span id="cb18-19"><a href="#cb18-19" tabindex="-1"></a>)[<span class="st">"TrainingJobSummaries"</span>]</span>
+<span id="cb18-20"><a href="#cb18-20" tabindex="-1"></a></span>
+<span id="cb18-21"><a href="#cb18-21" tabindex="-1"></a><span class="co"># Calculate total training and billing time</span></span>
+<span id="cb18-22"><a href="#cb18-22" tabindex="-1"></a>total_training_time <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb18-23"><a href="#cb18-23" tabindex="-1"></a>total_billing_time <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb18-24"><a href="#cb18-24" tabindex="-1"></a></span>
+<span id="cb18-25"><a href="#cb18-25" tabindex="-1"></a><span class="cf">for</span> job <span class="kw">in</span> training_jobs:</span>
+<span id="cb18-26"><a href="#cb18-26" tabindex="-1"></a>    job_name <span class="op">=</span> job[<span class="st">"TrainingJobName"</span>]</span>
+<span id="cb18-27"><a href="#cb18-27" tabindex="-1"></a>    job_desc <span class="op">=</span> sagemaker_client.describe_training_job(TrainingJobName<span class="op">=</span>job_name)</span>
+<span id="cb18-28"><a href="#cb18-28" tabindex="-1"></a>    </span>
+<span id="cb18-29"><a href="#cb18-29" tabindex="-1"></a>    <span class="co"># Calculate training time (in seconds)</span></span>
+<span id="cb18-30"><a href="#cb18-30" tabindex="-1"></a>    training_time <span class="op">=</span> job_desc[<span class="st">"TrainingEndTime"</span>] <span class="op">-</span> job_desc[<span class="st">"TrainingStartTime"</span>]</span>
+<span id="cb18-31"><a href="#cb18-31" tabindex="-1"></a>    total_training_time <span class="op">+=</span> training_time.total_seconds()</span>
+<span id="cb18-32"><a href="#cb18-32" tabindex="-1"></a>    </span>
+<span id="cb18-33"><a href="#cb18-33" tabindex="-1"></a>    <span class="co"># Calculate billed time with rounding up</span></span>
+<span id="cb18-34"><a href="#cb18-34" tabindex="-1"></a>    billed_time <span class="op">=</span> math.ceil(training_time.total_seconds())</span>
+<span id="cb18-35"><a href="#cb18-35" tabindex="-1"></a>    total_billing_time <span class="op">+=</span> billed_time <span class="op">*</span> job_desc[<span class="st">"ResourceConfig"</span>][<span class="st">"InstanceCount"</span>]</span>
+<span id="cb18-36"><a href="#cb18-36" tabindex="-1"></a></span>
+<span id="cb18-37"><a href="#cb18-37" tabindex="-1"></a><span class="co"># Print configuration details and total compute/billing time</span></span>
+<span id="cb18-38"><a href="#cb18-38" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Instance Type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb18-39"><a href="#cb18-39" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Max Jobs: </span><span class="sc">{</span>max_jobs<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb18-40"><a href="#cb18-40" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Max Parallel Jobs: </span><span class="sc">{</span>max_parallel_jobs<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb18-41"><a href="#cb18-41" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Total training time across all jobs: </span><span class="sc">{</span>total_training_time <span class="op">/</span> <span class="dv">3600</span><span class="sc">:.2f}</span><span class="ss"> hours"</span>)</span>
+<span id="cb18-42"><a href="#cb18-42" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated total billing time across all jobs: </span><span class="sc">{</span>total_billing_time <span class="op">/</span> <span class="dv">3600</span><span class="sc">:.2f}</span><span class="ss"> hours"</span>)</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb19">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="ex">Instance</span> Type: ml.m5.large</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="ex">Max</span> Jobs: 2</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a><span class="ex">Max</span> Parallel Jobs: 2</span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a><span class="ex">Total</span> training time across all jobs: 0.07 hours</span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a><span class="ex">Estimated</span> total billing time across all jobs: 0.07 hours</span></code></pre>
+</div>
+<p>For convenience, we have added this as a function in helpers.py</p>
+<div class="codewrapper sourceCode" id="cb20">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="im">import</span> AWS_helpers.helpers <span class="im">as</span> helpers</span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a><span class="im">import</span> importlib</span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>importlib.<span class="bu">reload</span>(helpers)</span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a>helpers.calculate_tuning_job_time(tuner)</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb21">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="ex">Instance</span> Type: ml.m5.large</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a><span class="ex">Max</span> Jobs: 2</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a><span class="ex">Max</span> Parallel Jobs: 2</span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a><span class="ex">Total</span> training time across all jobs: 0.07 hours</span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a><span class="ex">Estimated</span> total billing time across all jobs: 0.07 hours</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb22">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="op">!</span>jupyter nbconvert <span class="op">--</span>to markdown Hyperparameter<span class="op">-</span>tuning.ipynb</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb23">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="ex">[NbConvertApp]</span> Converting notebook Hyperparameter-tuning.ipynb to markdown</span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a><span class="ex">[NbConvertApp]</span> Writing 31418 bytes to Hyperparameter-tuning.md</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb24">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"></code></pre>
+</div>
+<!--
+Place links that you need to refer to multiple times across pages here. Delete
+any links that you are not going to use.
+ -->
+</div></section>
 </div>
     </main>
 </div>
