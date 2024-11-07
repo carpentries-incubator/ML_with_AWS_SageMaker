@@ -111,7 +111,7 @@ If you didn't complete the earlier episodes, you'll need to clone our code repo 
 !pwd
 ```
 
-    /home/ec2-user/SageMaker/test_AWS
+    /home/ec2-user/SageMaker/
 
 
 If not, change directory using `%cd `.
@@ -127,8 +127,6 @@ If not, change directory using `%cd `.
 ```python
 !git clone https://github.com/username/AWS_helpers.git
 ```
-
-    fatal: destination path 'test_AWS' already exists and is not an empty directory.
 
 
 ## Testing train.py on this notebook's instance
