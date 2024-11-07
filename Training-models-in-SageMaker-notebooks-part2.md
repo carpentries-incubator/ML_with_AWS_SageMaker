@@ -148,7 +148,7 @@ print("Files successfully uploaded to S3.")
     Files successfully uploaded to S3.
 
 
-#### Testing our train script on notebook instance
+## Testing on notebook instance
 You should always test code thoroughly before scaling up and using more resources. Here, we will test our script using a small number of epochs — just to verify our setup is correct.
 
 
@@ -166,7 +166,7 @@ print(f"Local training time: {t.time() - start_time:.2f} seconds, instance_type 
 ```
 
 
-### Deploying PyTorch neural network via SageMaker
+## Deploying PyTorch neural network via SageMaker
 Now that we have tested things locally, we can try to train with a larger number of epochs and a better instance selected. We can do this easily by invoking the PyTorch estimator. Our notebook is currently configured to use ml.m5.large. We can upgrade this to `ml.m5.xlarge` with the below code (using our notebook as a controller). 
 
 **Should we use a GPU?**: Since this dataset is farily small, we don't necessarily need a GPU for training. Considering costs, the m5.xlarge is `$0.17/hour`, while the cheapest GPU instance is `$0.75/hour`. However, for larger datasets (> 1 GB) and models, we may want to consider a GPU if training time becomes cumbersome (see [Instances for ML](https://docs.google.com/spreadsheets/d/1uPT4ZAYl_onIl7zIjv5oEAdwy4Hdn6eiA9wVfOBbHmY/edit?usp=sharing). If that doesn't work, we can try distributed computing (setting instance > 1). More on this in the next section.
@@ -218,7 +218,7 @@ print(f"Runtime for training on SageMaker: {end - start:.2f} seconds, instance_t
     Runtime for training on SageMaker: 197.62 seconds, instance_type: ml.m5.large, instance_count: 1
 
 
-### Deploying PyTorch neural network via SageMaker with a GPU instance
+## Deploying PyTorch neural network via SageMaker with a GPU instance
 
 In this section, we'll implement the same procedure as above, but using a GPU-enabled instance for potentially faster training. While GPU instances are more expensive, they can be cost-effective for larger datasets or more complex models that require significant computational power.
 
@@ -302,7 +302,7 @@ This performance discrepancy might be due to the following factors:
 
 If training time continues to be critical, sticking with a CPU instance may be the best approach for smaller datasets. For larger, more complex models and datasets, the GPU's advantages should become more apparent.
 
-### Distributed Training for Neural Networks in SageMaker
+## Distributed Training for Neural Networks in SageMaker
 In the event that you do need distributed computing to achieve reasonable train times (remember to try an upgraded instance first!), simply adjust the instance count to a number between 2 and 5. Beyond 5 instances, you'll see diminishing returns and may be needlessly spending extra money/compute-energy.
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
