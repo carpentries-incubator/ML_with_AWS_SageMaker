@@ -3380,11 +3380,13 @@ reasonable time.</li>
 instance takes prohibitively long (e.g., &gt;10 hours), and distributed
 computing overhead is manageable.</li>
 </ul>
+<div id="cost-of-distributed-computing" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
 </div>
-</div>
-<div class="section level3">
-<h3 id="cost-of-distributed-computing">Cost of distributed computing<a class="anchor" aria-label="anchor" href="#cost-of-distributed-computing"></a>
-</h3>
+<div id="cost-of-distributed-computing" class="callout-inner">
+<h3 class="callout-title">Cost of distributed computing</h3>
+<div class="callout-content">
 <p><strong>tl;dr</strong> Use 1 instance unless you are finding that
 you’re waiting hours for the training/tuning to complete.</p>
 <p>Let’s break down some key points for deciding between <strong>1
@@ -3461,6 +3463,9 @@ a single instance on total cost but at a higher wall-clock time.</li>
 </ul>
 </li>
 </ol>
+</div>
+</div>
+</div>
 <blockquote>
 <p>In summary: - <strong>Start by upgrading to a more powerful instance
 (Option 1)</strong> for datasets up to 10 GB and moderately complex
@@ -3473,6 +3478,7 @@ overheads that affect parallel efficiency. - <strong>Consider
 distributed training across multiple instances (Option 2)</strong> only
 when dataset size, model complexity, or training time demand it.</p>
 </blockquote>
+</div>
 </div>
 </section><section><h2 class="section-heading" id="xgboosts-distributed-training-mechanism">XGBoost’s distributed training mechanism<a class="anchor" aria-label="anchor" href="#xgboosts-distributed-training-mechanism"></a>
 </h2>
@@ -3571,14 +3577,14 @@ significant time savings as dataset sizes and computational requirements
 increase. Here’s how you can configure it:</p>
 <ol style="list-style-type: decimal">
 <li>
-<strong>Select Multiple Instances</strong>: Specify
+<strong>Select multiple instances</strong>: Specify
 <code>instance_count &gt; 1</code> in the SageMaker
 <code>Estimator</code> to enable distributed training.</li>
 <li>
-<strong>Optimize Instance Type</strong>: Choose an instance type
+<strong>Optimize instance type</strong>: Choose an instance type
 suitable for your dataset size and XGBoost requirements</li>
 <li>
-<strong>Monitor for Speed Improvements</strong>: With larger
+<strong>Monitor for speed improvements</strong>: With larger
 datasets, distributed training can yield time savings by scaling
 horizontally. However, gains may vary depending on the dataset and
 computation per instance.</li>
