@@ -301,11 +301,10 @@ This performance discrepancy might be due to the following factors:
 4. **Instance type**: Some GPU instances, like the `ml.g4dn` series, have less computational power than the larger `p3` series. They're better suited for inference or lightweight tasks rather than intense training, so a more powerful instance (e.g., `ml.p3.2xlarge`) could help for larger tasks.
 
 If training time continues to be critical, sticking with a CPU instance may be the best approach for smaller datasets. For larger, more complex models and datasets, the GPU's advantages should become more apparent.
+::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## Distributed Training for Neural Networks in SageMaker
 In the event that you do need distributed computing to achieve reasonable train times (remember to try an upgraded instance first!), simply adjust the instance count to a number between 2 and 5. Beyond 5 instances, you'll see diminishing returns and may be needlessly spending extra money/compute-energy.
-::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
 
 ```python
 from sagemaker.pytorch import PyTorch
@@ -354,7 +353,7 @@ print(f"Runtime for training on SageMaker: {end - start:.2f} seconds, instance_t
     Runtime for training on SageMaker: 198.36 seconds, instance_type: ml.m5.xlarge, instance_count: 2
 
 
-### Distributed training for neural networks in SageMaker: Understanding training strategies and how epochs are managed
+### Distributed training for neural nets: how epochs are managed
 Amazon SageMaker provides two main strategies for distributed training: **data parallelism** and **model parallelism**. Understanding which strategy will be used depends on the model size and the configuration of your SageMaker training job, as well as the default settings of the specific SageMaker Estimator you are using.
 
 #### 1. **Data parallelism (most common for mini-batch SGD)**
