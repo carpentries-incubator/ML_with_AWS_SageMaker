@@ -568,6 +568,7 @@ Following these steps helps ensure you only interact with and modify jobs you ow
 ## When training takes too long
 
 When training time becomes excessive, two main options can improve efficiency in SageMaker.
+
 * **Option 1: Upgrading to a more powerful instance** 
 * **Option 2: Using multiple instances for distributed training**. 
 
@@ -579,6 +580,7 @@ Upgrading to a more capable instance, particularly one with GPU capabilities (e.
 
 **When to use a single instance upgrade**  
 Upgrading a single instance works well if:
+
    - **Dataset size**: The dataset is small to moderate (e.g., <10 GB), fitting comfortably within the memory of a larger instance.
    - **Model complexity**: The model is not so large that it requires distribution across multiple devices.
    - **Training time**: Expected training time is within a few hours, but could benefit from additional power.
@@ -606,6 +608,7 @@ In SageMaker, the choice between data and model parallelism is not entirely auto
 
 **When to use distributed training with multiple instances**  
 Consider multiple instances if:
+
    - **Dataset size**: The dataset is large (>10 GB) and doesn't fit comfortably within a single instance's memory.
    - **Model complexity**: The model is complex, requiring extensive computation that a single instance cannot handle in a reasonable time.
    - **Expected training time**: Training on a single instance takes prohibitively long (e.g., >10 hours), and distributed computing overhead is manageable.
