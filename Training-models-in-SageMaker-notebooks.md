@@ -657,21 +657,21 @@ Here's how distributed training in XGBoost works, particularly in the SageMaker 
 
 ### Key steps in distributed training with XGBoost
 
-#### 1. **Data partitioning**
+#### 1. Data partitioning
    - The dataset is divided among multiple instances. For example, with two instances, each instance may receive half of the dataset.
    - In SageMaker, data partitioning across instances is handled automatically via the input channels you specify during training, reducing manual setup.
 
-#### 2. **Parallel gradient boosting**
+#### 2. Parallel gradient boosting
    - XGBoost performs gradient boosting by constructing trees iteratively based on calculated gradients.
    - Each instance calculates gradients (first-order derivatives) and Hessians (second-order derivatives of the loss function) independently on its subset of data.
    - This parallel processing allows each instance to determine which features to split and which trees to add to the model based on its data portion.
 
-#### 3. **Communication between instances**
+#### 3. Communication between instances
    - After computing gradients and Hessians locally, instances synchronize to share and combine these values.
    - Synchronization keeps the model parameters consistent across instances. Only computed gradients are communicated, not the raw dataset, minimizing data transfer overhead.
    - The combined gradients guide global model updates, ensuring that the ensemble of trees reflects the entire dataset, despite its division across multiple instances.
 
-#### 4. **Final model aggregation**
+#### 4. Final model aggregation
    - Once training completes, XGBoost aggregates the trained trees from each instance into a single final model.
    - This aggregation enables the final model to perform as though it trained on the entire dataset, even if the dataset couldn't fit into a single instance's memory.
 
