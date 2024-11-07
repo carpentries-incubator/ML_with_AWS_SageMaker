@@ -272,6 +272,10 @@
       <div class="accordion-body">
         <ul><li><a href="#initial-setup">Initial setup</a></li>
 <li><a href="#training-a-neural-network-with-sagemaker">Training a neural network with SageMaker</a></li>
+<li><a href="#testing-on-notebook-instance">Testing on notebook instance</a></li>
+<li><a href="#deploying-pytorch-neural-network-via-sagemaker">Deploying PyTorch neural network via SageMaker</a></li>
+<li><a href="#deploying-pytorch-neural-network-via-sagemaker-with-a-gpu-instance">Deploying PyTorch neural network via SageMaker with a GPU
+instance</a></li>
         </ul></div><!--/div.accordion-body-->
     </div><!--/div.accordion-collapse-->
 
@@ -558,9 +562,9 @@ being actively used.</p>
 </h3>
 <pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">Files</span> successfully uploaded to S3.</span></code></pre>
 </div>
-<div class="section level4">
-<h4 id="testing-our-train-script-on-notebook-instance">Testing our train script on notebook instance<a class="anchor" aria-label="anchor" href="#testing-our-train-script-on-notebook-instance"></a></h4>
-<p>You should always test code thoroughly before scaling up and using
+</div>
+</section><section><h2 class="section-heading" id="testing-on-notebook-instance">Testing on notebook instance<a class="anchor" aria-label="anchor" href="#testing-on-notebook-instance"></a></h2>
+<hr class="half-width"><p>You should always test code thoroughly before scaling up and using
 more resources. Here, we will test our script using a small number of
 epochs — just to verify our setup is correct.</p>
 <div class="codewrapper sourceCode" id="cb7">
@@ -576,11 +580,8 @@ epochs — just to verify our setup is correct.</p>
 <span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="op">%</span>run  AWS_helpers<span class="op">/</span>train_nn.py <span class="op">--</span>train train_data.npz <span class="op">--</span>val val_data.npz <span class="op">--</span>epochs {epochs} <span class="op">--</span>learning_rate {learning_rate}</span>
 <span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Local training time: </span><span class="sc">{</span>t<span class="sc">.</span>time() <span class="op">-</span> start_time<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type = </span><span class="sc">{</span>local_instance<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-</div>
-</div>
-<div class="section level3">
-<h3 id="deploying-pytorch-neural-network-via-sagemaker">Deploying PyTorch neural network via SageMaker<a class="anchor" aria-label="anchor" href="#deploying-pytorch-neural-network-via-sagemaker"></a></h3>
-<p>Now that we have tested things locally, we can try to train with a
+</section><section><h2 class="section-heading" id="deploying-pytorch-neural-network-via-sagemaker">Deploying PyTorch neural network via SageMaker<a class="anchor" aria-label="anchor" href="#deploying-pytorch-neural-network-via-sagemaker"></a></h2>
+<hr class="half-width"><p>Now that we have tested things locally, we can try to train with a
 larger number of epochs and a better instance selected. We can do this
 easily by invoking the PyTorch estimator. Our notebook is currently
 configured to use ml.m5.large. We can upgrade this to
@@ -642,11 +643,9 @@ for ML</a>. If that doesn’t work, we can try distributed computing
 <span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="ex">Billable</span> seconds: 135</span>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="ex">Runtime</span> for training on SageMaker: 197.62 seconds, instance_type: ml.m5.large, instance_count: 1</span></code></pre>
 </div>
-</div>
-<div class="section level3">
-<h3 id="deploying-pytorch-neural-network-via-sagemaker-with-a-gpu-instance">Deploying PyTorch neural network via SageMaker with a GPU
-instance<a class="anchor" aria-label="anchor" href="#deploying-pytorch-neural-network-via-sagemaker-with-a-gpu-instance"></a></h3>
-<p>In this section, we’ll implement the same procedure as above, but
+</section><section><h2 class="section-heading" id="deploying-pytorch-neural-network-via-sagemaker-with-a-gpu-instance">Deploying PyTorch neural network via SageMaker with a GPU
+instance<a class="anchor" aria-label="anchor" href="#deploying-pytorch-neural-network-via-sagemaker-with-a-gpu-instance"></a></h2>
+<hr class="half-width"><p>In this section, we’ll implement the same procedure as above, but
 using a GPU-enabled instance for potentially faster training. While GPU
 instances are more expensive, they can be cost-effective for larger
 datasets or more complex models that require significant computational
@@ -761,8 +760,8 @@ tasks.</p></li>
 instance may be the best approach for smaller datasets. For larger, more
 complex models and datasets, the GPU’s advantages should become more
 apparent.</p>
-<div class="section level3">
-<h3 id="distributed-training-for-neural-networks-in-sagemaker">Distributed Training for Neural Networks in SageMaker<a class="anchor" aria-label="anchor" href="#distributed-training-for-neural-networks-in-sagemaker"></a></h3>
+<div class="section level2">
+<h2 id="distributed-training-for-neural-networks-in-sagemaker">Distributed Training for Neural Networks in SageMaker<a class="anchor" aria-label="anchor" href="#distributed-training-for-neural-networks-in-sagemaker"></a></h2>
 <p>In the event that you do need distributed computing to achieve
 reasonable train times (remember to try an upgraded instance first!),
 simply adjust the instance count to a number between 2 and 5. Beyond 5
@@ -820,7 +819,6 @@ extra money/compute-energy.</p>
 <span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="ex">Training</span> seconds: 228</span>
 <span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a><span class="ex">Billable</span> seconds: 228</span>
 <span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="ex">Runtime</span> for training on SageMaker: 198.36 seconds, instance_type: ml.m5.xlarge, instance_count: 2</span></code></pre>
-</div>
 </div>
 </div>
 <div class="section level3">
