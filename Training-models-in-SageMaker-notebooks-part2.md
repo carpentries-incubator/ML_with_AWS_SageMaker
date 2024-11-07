@@ -1,5 +1,5 @@
 ---
-title: "Training Models in SageMaker: Part 2"
+title: "Training Models in SageMaker: PyTorch Example"
 teaching: 20
 exercises: 10
 ---
