@@ -613,6 +613,7 @@ Consider multiple instances if:
    - **Model complexity**: The model is complex, requiring extensive computation that a single instance cannot handle in a reasonable time.
    - **Expected training time**: Training on a single instance takes prohibitively long (e.g., >10 hours), and distributed computing overhead is manageable.
 
+::::::::::::::::::::::::::::::::: callout
 ### Cost of distributed computing 
 **tl;dr** Use 1 instance unless you are finding that you're waiting hours for the training/tuning to complete.
 
@@ -639,6 +640,7 @@ Let's break down some key points for deciding between **1 instance vs. multiple 
      - **10 instances (parallel):** `(T / k) * (10 * $C)`, where `k` is the speedup factor (<10 due to overhead).
    - If the speedup is only about 5x instead of 10x due to communication overhead, then the cost difference may be minimal, with a slight edge to a single instance on total cost but at a higher wall-clock time.
 
+::::::::::::::::::::::::::::::::: 
 
 > In summary:
 > - **Start by upgrading to a more powerful instance (Option 1)** for datasets up to 10 GB and moderately complex models. A single, more powerful, instance is usually more cost-effective for smaller workloads and where time isn't critical. Running initial tests with a single instance can also provide a benchmark. You can then experiment with small increases in instance count to find a balance between cost and time savings, particularly considering communication overheads that affect parallel efficiency.
@@ -680,9 +682,9 @@ SageMaker simplifies these steps by automatically managing the partitioning, syn
 
 In SageMaker, setting up distributed training for XGBoost can offer significant time savings as dataset sizes and computational requirements increase. Here's how you can configure it:
 
-1. **Select Multiple Instances**: Specify `instance_count > 1` in the SageMaker `Estimator` to enable distributed training.
-2. **Optimize Instance Type**: Choose an instance type suitable for your dataset size and XGBoost requirements 
-3. **Monitor for Speed Improvements**: With larger datasets, distributed training can yield time savings by scaling horizontally. However, gains may vary depending on the dataset and computation per instance.
+1. **Select multiple instances**: Specify `instance_count > 1` in the SageMaker `Estimator` to enable distributed training.
+2. **Optimize instance type**: Choose an instance type suitable for your dataset size and XGBoost requirements 
+3. **Monitor for speed improvements**: With larger datasets, distributed training can yield time savings by scaling horizontally. However, gains may vary depending on the dataset and computation per instance.
 
 
 ```python
