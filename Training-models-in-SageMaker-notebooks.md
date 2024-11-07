@@ -9,7 +9,6 @@ exercises: 10
 - What are the differences between local training and SageMaker-managed training?
 - How do Estimator classes in SageMaker streamline the training process for various frameworks?
 - How does SageMaker handle data and model parallelism, and when should each be considered?
-- When should you consider using a GPU instance for training neural networks in SageMaker, and what are the benefits and limitations?
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -20,7 +19,6 @@ exercises: 10
 - Understand data and model parallelism options in SageMaker, including when to use each for efficient training.
 - Compare performance, cost, and setup between custom scripts and built-in images in SageMaker.
 - Conduct training with data stored in S3 and monitor training job status using the SageMaker console.
-- Determine when to use GPU instances for neural network training in SageMaker, and assess their impact on performance and cost.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
