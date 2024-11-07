@@ -880,7 +880,7 @@ Pricing</a> page for more details.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -3261,9 +3261,14 @@ processes.</p>
 </h2>
 <hr class="half-width">
 <p>When training time becomes excessive, two main options can improve
-efficiency in SageMaker. * <strong>Option 1: Upgrading to a more
-powerful instance</strong> * <strong>Option 2: Using multiple instances
-for distributed training</strong>.</p>
+efficiency in SageMaker.</p>
+<ul>
+<li><strong>Option 1: Upgrading to a more powerful
+instance</strong></li>
+<li>
+<strong>Option 2: Using multiple instances for distributed
+training</strong>.</li>
+</ul>
 <p>Generally, <strong>Option 1 is the preferred approach</strong> and
 should be explored first.</p>
 <div class="section level3">
@@ -3276,13 +3281,19 @@ cost-effective way to speed up training. Here’s a breakdown of instances
 to consider. Check the <a href="https://docs.google.com/spreadsheets/d/1uPT4ZAYl_onIl7zIjv5oEAdwy4Hdn6eiA9wVfOBbHmY/edit?usp=sharing" class="external-link">Instances
 for ML spreadsheet</a> for guidance on selecting a better instance.</p>
 <p><strong>When to use a single instance upgrade</strong><br>
-Upgrading a single instance works well if: - <strong>Dataset
-size</strong>: The dataset is small to moderate (e.g., &lt;10 GB),
-fitting comfortably within the memory of a larger instance. -
+Upgrading a single instance works well if:</p>
+<ul>
+<li>
+<strong>Dataset size</strong>: The dataset is small to moderate
+(e.g., &lt;10 GB), fitting comfortably within the memory of a larger
+instance.</li>
+<li>
 <strong>Model complexity</strong>: The model is not so large that it
-requires distribution across multiple devices. - <strong>Training
-time</strong>: Expected training time is within a few hours, but could
-benefit from additional power.</p>
+requires distribution across multiple devices.</li>
+<li>
+<strong>Training time</strong>: Expected training time is within a
+few hours, but could benefit from additional power.</li>
+</ul>
 <p>Upgrading a single instance is typically the most efficient option in
 terms of both cost and setup complexity. It avoids the communication
 overhead associated with multi-instance setups (discussed below) and is
@@ -3347,13 +3358,20 @@ processing.</p></li>
 </ul>
 <p><strong>When to use distributed training with multiple
 instances</strong><br>
-Consider multiple instances if: - <strong>Dataset size</strong>: The
-dataset is large (&gt;10 GB) and doesn’t fit comfortably within a single
-instance’s memory. - <strong>Model complexity</strong>: The model is
-complex, requiring extensive computation that a single instance cannot
-handle in a reasonable time. - <strong>Expected training time</strong>:
-Training on a single instance takes prohibitively long (e.g., &gt;10
-hours), and distributed computing overhead is manageable.</p>
+Consider multiple instances if:</p>
+<ul>
+<li>
+<strong>Dataset size</strong>: The dataset is large (&gt;10 GB) and
+doesn’t fit comfortably within a single instance’s memory.</li>
+<li>
+<strong>Model complexity</strong>: The model is complex, requiring
+extensive computation that a single instance cannot handle in a
+reasonable time.</li>
+<li>
+<strong>Expected training time</strong>: Training on a single
+instance takes prohibitively long (e.g., &gt;10 hours), and distributed
+computing overhead is manageable.</li>
+</ul>
 </div>
 </div>
 <div class="section level3">
