@@ -1,5 +1,5 @@
 ---
-title: "Training Models in SageMaker"
+title: "Training Models in SageMaker: Intro"
 teaching: 20
 exercises: 10
 ---
