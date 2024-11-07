@@ -1452,8 +1452,7 @@ SageMaker environment:</p>
 <div class="section level3">
 <h3 id="key-steps-in-distributed-training-with-xgboost">Key steps in distributed training with XGBoost<a class="anchor" aria-label="anchor" href="#key-steps-in-distributed-training-with-xgboost"></a></h3>
 <div class="section level4">
-<h4 id="data-partitioning">1. <strong>Data partitioning</strong>
-<a class="anchor" aria-label="anchor" href="#data-partitioning"></a></h4>
+<h4 id="data-partitioning">1. Data partitioning<a class="anchor" aria-label="anchor" href="#data-partitioning"></a></h4>
 <ul><li>The dataset is divided among multiple instances. For example, with
 two instances, each instance may receive half of the dataset.</li>
 <li>In SageMaker, data partitioning across instances is handled
@@ -1461,8 +1460,7 @@ automatically via the input channels you specify during training,
 reducing manual setup.</li>
 </ul></div>
 <div class="section level4">
-<h4 id="parallel-gradient-boosting">2. <strong>Parallel gradient boosting</strong>
-<a class="anchor" aria-label="anchor" href="#parallel-gradient-boosting"></a></h4>
+<h4 id="parallel-gradient-boosting">2. Parallel gradient boosting<a class="anchor" aria-label="anchor" href="#parallel-gradient-boosting"></a></h4>
 <ul><li>XGBoost performs gradient boosting by constructing trees iteratively
 based on calculated gradients.</li>
 <li>Each instance calculates gradients (first-order derivatives) and
@@ -1473,8 +1471,7 @@ features to split and which trees to add to the model based on its data
 portion.</li>
 </ul></div>
 <div class="section level4">
-<h4 id="communication-between-instances">3. <strong>Communication between instances</strong>
-<a class="anchor" aria-label="anchor" href="#communication-between-instances"></a></h4>
+<h4 id="communication-between-instances">3. Communication between instances<a class="anchor" aria-label="anchor" href="#communication-between-instances"></a></h4>
 <ul><li>After computing gradients and Hessians locally, instances
 synchronize to share and combine these values.</li>
 <li>Synchronization keeps the model parameters consistent across
@@ -1485,8 +1482,7 @@ ensemble of trees reflects the entire dataset, despite its division
 across multiple instances.</li>
 </ul></div>
 <div class="section level4">
-<h4 id="final-model-aggregation">4. <strong>Final model aggregation</strong>
-<a class="anchor" aria-label="anchor" href="#final-model-aggregation"></a></h4>
+<h4 id="final-model-aggregation">4. Final model aggregation<a class="anchor" aria-label="anchor" href="#final-model-aggregation"></a></h4>
 <ul><li>Once training completes, XGBoost aggregates the trained trees from
 each instance into a single final model.</li>
 <li>This aggregation enables the final model to perform as though it
