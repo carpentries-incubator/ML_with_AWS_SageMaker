@@ -337,6 +337,18 @@
 </div>
 <!--/div.accordion-flush-->
 
+<div class="accordion accordion-flush" id="accordionFlush10">
+  <div class="accordion-item">
+    <div class="accordion-header" id="flush-heading10">
+        <a href="Resource-management-cleanup.html">9. Resource Management and Monitoring</a>
+    </div>
+<!--/div.accordion-header-->
+
+  </div>
+<!--/div.accordion-item-->
+</div>
+<!--/div.accordion-flush-->
+
                 </div>
               </div>
             </div>
@@ -884,7 +896,7 @@ Pricing</a> page for more details.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -5216,7 +5228,190 @@ and billing time can be more pronounced.</p>
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
  -->
-</div></section>
+</div></section><section id="aio-Resource-management-cleanup"><p>Content from <a href="Resource-management-cleanup.html">Resource Management and Monitoring</a></p>
+<hr>
+<p>Last updated on 2024-11-08 |
+
+        <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker/edit/main/episodes/Resource-management-cleanup.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
+<p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 30 minutes</p>
+<div class="text-end">
+          <button role="button" aria-pressed="false" tabindex="0" id="expand-code" class="pull-right" data-expand="Expand All Solutions " data-collapse="Collapse All Solutions "> Expand All Solutions <i aria-hidden="true" data-feather="plus"></i></button>
+        </div>
+<div class="overview card">
+<h2 class="card-header">Overview</h2>
+<div class="row g-0">
+<div class="col-md-4">
+<div class="card-body">
+<div class="inner">
+<h3 class="card-title">Questions</h3>
+<ul>
+<li>How can I monitor and manage AWS resources to avoid unnecessary
+costs?</li>
+<li>What steps are necessary to clean up SageMaker and S3 resources
+after the workshop?</li>
+<li>What best practices can help with efficient resource
+utilization?</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="col-md-8">
+<div class="card-body">
+<div class="inner bordered">
+<h3 class="card-title">Objectives</h3>
+<ul>
+<li>Understand how to shut down SageMaker notebook instances to minimize
+costs.</li>
+<li>Learn to clean up S3 storage and terminate unused training
+jobs.</li>
+<li>Explore basic resource management strategies and tools for AWS.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<section><h2 class="section-heading" id="shutting-down-notebook-instances">Shutting down notebook instances<a class="anchor" aria-label="anchor" href="#shutting-down-notebook-instances"></a>
+</h2>
+<hr class="half-width">
+<p>Notebook instances in SageMaker are billed per hour, so it’s
+essential to stop or delete them when they are no longer needed. Earlier
+in the <strong>Notebooks as controllers</strong> episode, we discussed
+using lower-cost instance types like <code>ml.t3.medium</code>
+(approximately $0.05/hour) for controlling workflows. While this makes
+open notebooks less costly than larger instances, it’s still a good
+habit to stop or delete notebooks to avoid unnecessary spending,
+especially if left idle for long periods.</p>
+<ol style="list-style-type: decimal">
+<li><strong>Navigate to SageMaker in the AWS Console.</strong></li>
+<li>In the left-hand menu, click <strong>Notebooks</strong>.</li>
+<li>Locate your notebook instance and select it.</li>
+<li>Choose <strong>Stop</strong> to shut it down temporarily or
+<strong>Delete</strong> to permanently remove it. &gt;
+<strong>Tip:</strong> If you plan to reuse the notebook later, stopping
+it is sufficient. Deleting is recommended if you are finished with the
+workshop.</li>
+</ol></section><section><h2 class="section-heading" id="cleaning-up-s3-storage">Cleaning up S3 storage<a class="anchor" aria-label="anchor" href="#cleaning-up-s3-storage"></a>
+</h2>
+<hr class="half-width">
+<p>While S3 storage is relatively inexpensive, cleaning up unused
+buckets and files helps keep costs minimal and your workspace
+organized.</p>
+<ol style="list-style-type: decimal">
+<li><strong>Navigate to the S3 Console.</strong></li>
+<li>Locate the bucket(s) you created for this workshop.</li>
+<li>Open the bucket and select any objects (files) you no longer
+need.</li>
+<li>Click <strong>Delete</strong> to remove the selected objects.</li>
+<li>To delete an entire bucket:
+<ul>
+<li>Empty the bucket by selecting <strong>Empty bucket</strong> under
+<strong>Bucket actions</strong>.</li>
+<li>Delete the bucket by clicking <strong>Delete bucket</strong>.</li>
+</ul>
+</li>
+</ol>
+<blockquote>
+<p><strong>Reminder:</strong> Earlier in the workshop, we set up tags
+for S3 buckets. Use these tags to filter and identify workshop-related
+buckets, ensuring that only unnecessary resources are deleted.</p>
+</blockquote>
+</section><section><h2 class="section-heading" id="monitoring-and-stopping-active-jobs">Monitoring and stopping active jobs<a class="anchor" aria-label="anchor" href="#monitoring-and-stopping-active-jobs"></a>
+</h2>
+<hr class="half-width">
+<p>SageMaker charges for training and tuning jobs while they run, so
+make sure to terminate unused jobs.</p>
+<ol style="list-style-type: decimal">
+<li>In the SageMaker Console, go to <strong>Training Jobs</strong> or
+<strong>Tuning Jobs</strong>.</li>
+<li>Identify any active jobs that you no longer need.</li>
+<li>Select the jobs and click <strong>Stop</strong>. &gt;
+<strong>Tip:</strong> Review the job logs to ensure you’ve saved the
+results before stopping a job.</li>
+</ol></section><section><h2 class="section-heading" id="billing-and-cost-monitoring">Billing and cost monitoring<a class="anchor" aria-label="anchor" href="#billing-and-cost-monitoring"></a>
+</h2>
+<hr class="half-width">
+<p>Managing your AWS expenses is vital to staying within budget. Follow
+these steps to monitor and control costs:</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>Set up billing alerts:</strong>
+<ul>
+<li>Go to the AWS <strong>Billing Dashboard</strong>.</li>
+<li>Navigate to <strong>Budgets</strong> and create a budget alert to
+track your spending.</li>
+</ul>
+</li>
+<li>
+<strong>Review usage and costs:</strong>
+<ul>
+<li>Use the AWS <strong>Cost Explorer</strong> in the Billing Dashboard
+to view detailed expenses by service, such as SageMaker and S3.</li>
+</ul>
+</li>
+<li>
+<strong>Use tags for cost tracking:</strong>
+<ul>
+<li>Refer to the tags you set up earlier in the workshop for your
+notebooks and S3 buckets. These tags help you identify and monitor costs
+associated with specific resources.</li>
+</ul>
+</li>
+</ol></section><section><h2 class="section-heading" id="best-practices-for-resource-management">Best practices for resource management<a class="anchor" aria-label="anchor" href="#best-practices-for-resource-management"></a>
+</h2>
+<hr class="half-width">
+<p>Efficient resource management can save significant costs and improve
+your workflows. Below are some best practices:</p>
+<ul>
+<li>
+<strong>Automate resource cleanup:</strong> Use AWS SDK or CLI
+scripts to automatically shut down instances and clean up S3 buckets
+when not in use. <a href="https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html" class="external-link">Learn
+more about automation with AWS CLI</a>.</li>
+<li>
+<strong>Schedule resource usage:</strong> Schedule instance start
+and stop times using AWS Lambda. <a href="https://docs.aws.amazon.com/lambda/latest/dg/tutorial-scheduled-events.html" class="external-link">Learn
+how to schedule tasks with AWS Lambda</a>.</li>
+<li>
+<strong>Test workflows locally first:</strong> Before scaling up
+experiments in SageMaker, test them locally to minimize cloud usage and
+costs. <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/hosting-alternatives.html" class="external-link">Learn
+about SageMaker local mode</a>.</li>
+<li>
+<strong>Use cost tracking tools:</strong> Explore AWS’s cost
+allocation tags and budget tracking features. <a href="https://aws.amazon.com/aws-cost-management/" class="external-link">Learn more about cost
+management in AWS</a>.</li>
+</ul>
+<p>By following these practices and leveraging the additional resources
+provided, you can optimize your use of AWS while keeping costs under
+control.</p>
+<div id="keypoints1" class="callout keypoints">
+<div class="callout-square">
+<i class="callout-icon" data-feather="key"></i>
+</div>
+<div class="callout-inner">
+<h3 class="callout-title">Key Points</h3>
+<div class="callout-content">
+<ul>
+<li>Always stop or delete notebook instances when not in use to avoid
+charges.</li>
+<li>Regularly clean up unused S3 buckets and objects to save on storage
+costs.</li>
+<li>Monitor your expenses through the AWS Billing Dashboard and set up
+alerts.</li>
+<li>Use tags (set up earlier in the workshop) to track and monitor costs
+by resource.</li>
+<li>Following best practices for AWS resource management can
+significantly reduce costs and improve efficiency.</li>
+</ul>
+</div>
+</div>
+</div>
+<!--
+Place links that you need to refer to multiple times across pages here. Delete
+any links that you are not going to use.
+ -->
+</section></section>
 </div>
     </main>
 </div>
@@ -5264,8 +5459,8 @@ any links that you are not going to use.
   "url": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/aio.html",
   "identifier": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/aio.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2024-11-07",
-  "datePublished": "2024-11-07"
+  "dateModified": "2024-11-08",
+  "datePublished": "2024-11-08"
 }
 
   </script><script>
