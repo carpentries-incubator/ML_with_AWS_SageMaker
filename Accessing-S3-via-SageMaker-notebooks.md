@@ -44,8 +44,7 @@ import boto3
 import sagemaker
 from sagemaker import get_execution_role
 
-# Initialize the SageMaker role and session
-# Define the SageMaker role and session
+# Initialize the SageMaker role, session, and s3 client
 role = sagemaker.get_execution_role() # specifies your permissions to use AWS tools
 session = sagemaker.Session() 
 s3 = boto3.client('s3')
