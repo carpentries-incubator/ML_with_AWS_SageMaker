@@ -488,6 +488,7 @@ With the SageMaker-provided XGBoost container, you can bypass custom script conf
 | **Use Cases**          | Ideal for complex workflows requiring unique preprocessing steps or when adding specific libraries or functionalities. | Best for quick experiments, standard workflows, or initial testing on datasets without complex preprocessing. |
 
 **When to use each approach**:
+
 - **Custom script**: Recommended if you need to implement custom data preprocessing, advanced feature engineering, or specific workflow steps that require more control over training.
 - **Built-in image**: Ideal when running standard XGBoost training, especially for quick experiments or production deployments where default configurations suffice.
 
