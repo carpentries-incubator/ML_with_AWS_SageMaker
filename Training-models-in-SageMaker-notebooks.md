@@ -644,6 +644,7 @@ Let's break down some key points for deciding between 1 instance vs. multiple in
 ::::::::::::::::::::::::::::::::: 
 
 > In summary:
+> 
 > - **Start by upgrading to a more powerful instance (Option 1)** for datasets up to 10 GB and moderately complex models. A single, more powerful, instance is usually more cost-effective for smaller workloads and where time isn't critical. Running initial tests with a single instance can also provide a benchmark. You can then experiment with small increases in instance count to find a balance between cost and time savings, particularly considering communication overheads that affect parallel efficiency.
 > - **Consider distributed training across multiple instances (Option 2)** only when dataset size, model complexity, or training time demand it.
 
