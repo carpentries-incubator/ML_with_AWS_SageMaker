@@ -3404,16 +3404,15 @@ computing overhead is manageable.</li>
 <div class="callout-content">
 <p><strong>tl;dr</strong> Use 1 instance unless you are finding that
 you’re waiting hours for the training/tuning to complete.</p>
-<p>Let’s break down some key points for deciding between <strong>1
-instance vs. multiple instances</strong> from a cost perspective:</p>
+<p>Let’s break down some key points for deciding between 1 instance
+vs. multiple instances from a cost perspective:</p>
 <ol style="list-style-type: decimal">
 <li>
 <strong>Instance cost per hour</strong>:
 <ul>
-<li>SageMaker charges per instance-hour. Running <strong>multiple
-instances</strong> in parallel can finish training faster, reducing
-wall-clock time, but the <strong>cost per hour will increase</strong>
-with each added instance.</li>
+<li>SageMaker charges per instance-hour. Running multiple instances in
+parallel can finish training faster, reducing wall-clock time, but the
+cost per hour will increase with each added instance.</li>
 </ul>
 </li>
 <li>
@@ -3423,20 +3422,19 @@ time</strong>:
 <li>When using a single instance, training will take significantly
 longer, especially if your data is large. However, the wall-clock time
 difference between 1 instance and 10 instances may not translate to a
-direct 10x speedup when using multiple instances due to
-<strong>communication overheads</strong>.</li>
+direct 10x speedup when using multiple instances due to communication
+overheads.</li>
 <li>For example, with data-parallel training, instances need to
-synchronize gradients between batches, which introduces
-<strong>communication costs</strong> and may slow down training on
-larger clusters.</li>
+synchronize gradients between batches, which introduces communication
+costs and may slow down training on larger clusters.</li>
 </ul>
 </li>
 <li>
 <strong>Scaling efficiency</strong>:
 <ul>
 <li>Parallelizing training does not scale perfectly due to those
-overheads. Adding instances generally provides <strong>diminishing
-returns</strong> on training time reduction.</li>
+overheads. Adding instances generally provides diminishing returns on
+training time reduction.</li>
 <li>For example, doubling instances from 1 to 2 may reduce training time
 by close to 50%, but going from 8 to 16 instances may only reduce
 training time by around 20-30%, depending on the model and batch
@@ -3446,14 +3444,12 @@ sizes.</li>
 <li>
 <strong>Typical recommendation</strong>:
 <ul>
-<li>For <strong>small-to-moderate datasets</strong> or cases where
-training time isn’t a critical factor, a <strong>single
-instance</strong> may be more cost-effective, as it avoids parallel
-processing overheads.</li>
-<li>For <strong>large datasets</strong> or where training speed is a
-high priority (e.g., tuning complex deep learning models), using
-<strong>multiple instances</strong> can be beneficial despite the cost
-increase due to time savings.</li>
+<li>For small-to-moderate datasets or cases where training time isn’t a
+critical factor, a single instance may be more cost-effective, as it
+avoids parallel processing overheads.</li>
+<li>For large datasets or where training speed is a high priority (e.g.,
+tuning complex deep learning models), using multiple instances can be
+beneficial despite the cost increase due to time savings.</li>
 </ul>
 </li>
 <li>
@@ -3463,13 +3459,10 @@ increase due to time savings.</li>
 costs <code>$C</code> per hour. For a 10-instance setup, the cost would
 be approximately:
 <ul>
-<li>
-<strong>Single instance:</strong> <code>T * $C</code>
+<li>Single instance: <code>T * $C</code>
 </li>
-<li>
-<strong>10 instances (parallel):</strong>
-<code>(T / k) * (10 * $C)</code>, where <code>k</code> is the speedup
-factor (&lt;10 due to overhead).</li>
+<li>10 instances (parallel): <code>(T / k) * (10 * $C)</code>, where
+<code>k</code> is the speedup factor (&lt;10 due to overhead).</li>
 </ul>
 </li>
 <li>If the speedup is only about 5x instead of 10x due to communication
