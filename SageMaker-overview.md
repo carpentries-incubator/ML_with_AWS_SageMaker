@@ -13,7 +13,7 @@ SageMaker provides several features that make it an ideal choice for researchers
 - **End-to-end workflow**: SageMaker covers the entire ML pipeline, from data preprocessing to model deployment. This unified environment reduces the need to switch between platforms or tools, enabling users to set up, train, tune, and deploy models seamlessly.
 
 - **Flexible compute options**: SageMaker lets you easily select instance types tailored to your project needs. For compute-intensive tasks, such as training deep learning models, you can switch to GPU instances for faster processing. SageMaker’s scalability also supports parallelized training, enabling you to distribute large training jobs across multiple instances, which can significantly speed up training time for large datasets and complex models.
-- 
+  
 - **Flexible compute options**: SageMaker lets you easily select "instance types" tailored to your project needs. Instance types vary based on computing power, memory, and storage capabilities.
 
     - CPU instances (e.g., ml.m5.large): Suitable for general ML workloads, feature engineering, and inference tasks.
