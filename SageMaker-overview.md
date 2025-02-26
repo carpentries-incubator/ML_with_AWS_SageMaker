@@ -14,13 +14,12 @@ SageMaker provides several features that make it an ideal choice for researchers
 
 - **Flexible compute options**: SageMaker lets you easily select instance types tailored to your project needs. For compute-intensive tasks, such as training deep learning models, you can switch to GPU instances for faster processing. SageMaker’s scalability also supports parallelized training, enabling you to distribute large training jobs across multiple instances, which can significantly speed up training time for large datasets and complex models.
   
-- **Flexible compute options**: SageMaker lets you easily select "instance types" tailored to your project needs. Instance types vary based on computing power, memory, and storage capabilities.
+- **Flexible compute options**: SageMaker lets you easily select "instance types" tailored to your project needs. Instance types vary based on computing power, memory, and storage capabilities (more on this later in the lesson).
 
-    - CPU instances (e.g., ml.m5.large): Suitable for general ML workloads, feature engineering, and inference tasks.
-    - GPU instances (e.g., ml.p3.2xlarge): Optimized for compute-intensive tasks like deep learning training, offering accelerated processing.
-    - Memory-optimized instances (e.g., ml.r5.xlarge): Best for handling large datasets in memory, such as training transformer models.
-    - SageMaker’s scalability also supports parallelized training, enabling you to distribute large training jobs across multiple instances, significantly speeding up training time for large datasets and complex models.
-
+    - **CPU instances (e.g., ml.m5.large)**: Suitable for general ML workloads, feature engineering, and inference tasks.
+    - **GPU instances (e.g., ml.p3.2xlarge)**: Optimized for compute-intensive tasks like deep learning training, offering accelerated processing.
+    - **Memory-optimized instances (e.g., ml.r5.xlarge)**: Best for handling large datasets in memory, such as training transformer models.
+      
 **Parallelized training and tuning**: SageMaker enables parallelized training across multiple instances, reducing training time for large datasets and complex models. It also supports parallelized hyperparameter tuning, allowing efficient exploration of model configurations with minimal code while maintaining fine-grained control over the process.
 
 - **Support for custom scripts**: While SageMaker offers built-in algorithms, it also allows users to bring their own customized scripts. This flexibility is crucial for researchers developing unique models or custom algorithms. SageMaker's support for Docker containers allows you to deploy fully customized code for training, tuning, and inference on scalable AWS infrastructure.
