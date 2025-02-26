@@ -20,14 +20,17 @@ exercises: 5
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## Step 1: Data storage
+Machine learning and AI projects rely on data, making efficient storage and management essential. AWS provides several options for storing data, each with different use cases and trade-offs. This episode will introduce S3 as a primary storage solution and discuss how to set it up for your SageMaker workflows.
 
-> **Hackathon Attendees**: All data uploaded to AWS must relate to your specific Kaggle challenge, except for auxiliary datasets for transfer learning or pretraining. **DO NOT upload any restricted or sensitive data to AWS.**
+### Handling sensitive data in AWS
+When using AWS for research, ensure that no restricted or sensitive data is uploaded to S3 or any other AWS service unless explicitly approved by your institution’s IT or cloud security team.
+For projects involving sensitive or regulated data (e.g., HIPAA, FERPA, or proprietary research data), consult your institution's cloud security or compliance team to explore approved solutions. This may include encryption, restricted-access storage, or dedicated secure environments. If unsure about data classification, review your institution's data security policies before uploading.
 
-## Options for storage: EC2 Instance or S3
+### Options for storage: EC2 Instance or S3
 When working with SageMaker and other AWS services, you have options for data storage, primarily **EC2 instances** or **S3**.
 
 #### What is an EC2 instance?
-An Amazon EC2 (Elastic Compute Cloud) instance is a virtual server environment where you can run applications, process data, and store data temporarily. EC2 instances come in various types and sizes to meet different computing and memory needs, making them versatile for tasks ranging from light web servers to intensive machine learning workloads. In SageMaker, the notebook instance itself is an EC2 instance configured to run Jupyter notebooks, enabling direct data processing.
+An Amazon EC2 (Elastic Compute Cloud) instance is a virtual server environment where you can run applications, process data, and store data temporarily. EC2 instances come in various types and sizes to meet different computing and memory needs, making them versatile for tasks ranging from light web servers to intensive machine learning workloads. For example, when you launch a new Jupyter notebook from Sagemaker, this notebook is run on an an EC2 instance configured to run Jupyter notebooks, enabling direct data processing. 
 
 #### When to store data directly on EC2
 Using an EC2 instance for data storage can be useful for temporary or small datasets, especially during processing within a Jupyter notebook. However, this storage is not persistent; if the instance is stopped or terminated, the data is erased. Therefore, EC2 is ideal for one-off experiments or intermediate steps in data processing.
