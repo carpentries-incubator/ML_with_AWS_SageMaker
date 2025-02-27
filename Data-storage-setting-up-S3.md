@@ -64,8 +64,6 @@ For flexibility, scalability, and cost efficiency, store data in S3 and load it 
 
 ## Recommended approach: S3 buckets
 
-**Hackathon attendees**: When you setup your bucket for your actual project, note that you will only need one bucket for your whole team. Team members will have the proper permissions to access buckets on our shared account.
-
 ### Summary steps to access S3 and upload your dataset
 
 1. Log in to AWS Console and navigate to S3.
@@ -84,17 +82,15 @@ For flexibility, scalability, and cost efficiency, store data in S3 and load it 
    - Protip: select the star icon to save S3 as a bookmark in your AWS toolbar 
    - Select **S3 - Scalable Storage in the Cloud**
 
-
 3. **Create a new bucket**
-   - Click **Create Bucket** and enter a unique name, and note that bucket name must not contain uppercase characters. **Hackathon participants**: Use the following convention for your bucket name: `teamname_datasetname` (e.g., `myawesometeam-titanic`).
-   - **Region**: Leave as is (likely `us-east-1` (US East N. Virginia))
+   - Click **Create Bucket** and enter a unique name, and note that bucket name must not contain uppercase characters. To easily find this bucket later in our shared AWS account, please use the following naming convention: `yourname-titanic` (e.g., doejohn-titanic)
+   - **Region**: Select the AWS region closest to your users or compute resources to minimize latency and reduce data transfer costs (a good option for UW-Madison users is typically us-east-1)
    - **Access Control**: Disable ACLs (recommended).
    - **Public Access**: Turn on "Block all public access".
    - **Versioning**: Disable unless you need multiple versions of objects.
-   - **Tags**: Adding tags to your S3 buckets is a great way to track project-specific costs and usage over time, especially as data and resources scale up. While tags are required for hackathon participants, we suggest that all users apply tags to easily identify and analyze costs later. **Hackathon participants**: Use the following convention for your bucket name
+   - **Tags**: Adding tags to your S3 buckets is a great way to track project-specific costs and usage over time, especially as data and resources scale up. To easily track costs associated with your bucket in our shared AWS account, the following tags will work:
       - **Name**: Your Name
-      - **ProjectName**: Your team's name
-      - **Purpose**: Dataset name (e.g., titanic if you're following along with this workshop)
+      - **Purpose**: titanic-S3-bucket
       ![Example of Tags for an S3 Bucket](https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/images/bucket_tags.PNG){alt="Screenshot showing required tags for an S3 bucket"}
 
    - Click **Create Bucket** at the bottom once everything above has been configured
