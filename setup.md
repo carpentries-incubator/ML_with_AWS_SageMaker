@@ -5,14 +5,20 @@ title: Setup
 ## Accounts and Initial Setup
 
 ### GitHub Account
+You will need a GitHub account to access the code provided during this lesson. If you don't already have a GitHub account, please [sign up for GitHub](https://github.com/) to create a free account. Don't worry if you're a little rusty on using GitHub/git; we will only use a couple of git commands during the lesson, and the instructor will provide guidance on these steps.
 
-If you don't already have a GitHub account, [sign up for GitHub](https://github.com/) to create a free account. A GitHub account will be required to fork and interact with the lesson repository.
+### AWS Account 
+There are two ways to run this lesson. 
 
-### AWS Account
+#### Option 1) Shared Account
+If you are attending this lesson as part of the 2025 Research Bazaar, we will provide a shared AWS account for all attendees. You do not need to set up your own AWS account. What to expect:
 
-If you don't have an AWS account, please follow these steps:
+* Before the workshop, you will receive an email invitation from the instructor with access details for the shared AWS account.
+* During the lesson, you will log in using the credentials provided in the email.
+* This setup ensures that all participants have the same environment and eliminates concerns about unexpected costs.
 
-> **Note**: Hackathon attendees can skip this step since we are providing you with the account.
+#### Option 2) AWS Free Tier — Skip If Using Shared Account
+**If you are attending this lesson as part of the 2025 Research Bazaar, you can skip this step**. We will provide all attendees with a shared account. Otherwise, please follow these steps:
 
 1. Go to the [AWS Free Tier page](https://aws.amazon.com/free/) and click **Create a Free Account**.
 2. Complete the sign-up process. AWS offers a free tier with limited monthly usage. Some services, including SageMaker, may incur charges beyond free-tier limits, so be mindful of usage during the workshop. If you follow along with the materials, you can expect to incur around $10 in compute fees (e.g., from training and tuning several different models with GPU enabled at times).
@@ -39,5 +45,5 @@ To do this:
 3. Once forked, you don't need to do anything else. We'll clone this fork once we start working in the AWS Jupyter environment using...
 
 ```python
-!git clone https://github.com/YOUR_USERNAME/AWS_helpers.git
+!git clone https://github.com/YOUR_GITHUB_USERNAME/AWS_helpers.git
 ```  
