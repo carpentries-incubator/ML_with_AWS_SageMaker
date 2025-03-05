@@ -8,7 +8,7 @@ title: Setup
 You will need a GitHub account to access the code provided during this lesson. If you don't already have a GitHub account, please [sign up for GitHub](https://github.com/) to create a free account. Don't worry if you're a little rusty on using GitHub/git; we will only use a couple of git commands during the lesson, and the instructor will provide guidance on these steps.
 
 ### AWS Account 
-There are two ways to run this lesson. 
+There are two ways to get access to AWs for this lesson. Please wait for a pre-workshop email from the instructor to confirm which option to choose.
 
 #### Option 1) Shared Account
 If you are attending this lesson as part of the 2025 Research Bazaar, we will provide a shared AWS account for all attendees. You do not need to set up your own AWS account. What to expect:
