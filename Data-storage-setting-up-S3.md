@@ -20,10 +20,10 @@ exercises: 5
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## Step 1: Data storage
-Machine learning and AI projects rely on data, making efficient storage and management essential. AWS provides several options for storing data, each with different use cases and trade-offs. This episode will introduce S3 as a primary storage solution and discuss how to set it up for your SageMaker workflows.
+Machine learning and AI projects rely on data, making efficient storage and management essential. AWS provides several options for storing data, each with different use cases and trade-offs. 
 
 ### Handling sensitive data in AWS
-When using AWS for research, ensure that no restricted or sensitive data is uploaded to S3 or any other AWS service unless explicitly approved by your institution’s IT or cloud security team.
+When using AWS for research, **ensure that no restricted or sensitive data is uploaded to S3 or any other AWS service *unless explicitly approved by your institution’s IT or cloud security team***.
 For projects involving sensitive or regulated data (e.g., HIPAA, FERPA, or proprietary research data), consult your institution's cloud security or compliance team to explore approved solutions. This may include encryption, restricted-access storage, or dedicated secure environments. If unsure about data classification, review your institution's data security policies before uploading.
 
 ### Options for storage: EC2 Instance or S3
