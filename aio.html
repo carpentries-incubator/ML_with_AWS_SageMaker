@@ -680,16 +680,16 @@ experiments.</li>
 <div class="section level3">
 <h3 id="detailed-procedure">Detailed procedure<a class="anchor" aria-label="anchor" href="#detailed-procedure"></a>
 </h3>
-<div class="section level4">
-<h4 id="sign-in-to-the-aws-management-console">1. Sign in to the AWS Management Console<a class="anchor" aria-label="anchor" href="#sign-in-to-the-aws-management-console"></a>
-</h4>
+<div class="section level5">
+<h5 id="sign-in-to-the-aws-management-console">1. Sign in to the AWS Management Console<a class="anchor" aria-label="anchor" href="#sign-in-to-the-aws-management-console"></a>
+</h5>
 <ul>
 <li>Log in to AWS Console using your credentials.</li>
 </ul>
 </div>
-<div class="section level4">
-<h4 id="navigate-to-s3">2. Navigate to S3<a class="anchor" aria-label="anchor" href="#navigate-to-s3"></a>
-</h4>
+<div class="section level5">
+<h5 id="navigate-to-s3">2. Navigate to S3<a class="anchor" aria-label="anchor" href="#navigate-to-s3"></a>
+</h5>
 <ul>
 <li>Type “S3” in the search bar</li>
 <li>Protip: Select the star icon to save S3 as a bookmark in your AWS
@@ -697,19 +697,20 @@ toolbar</li>
 <li>Select <strong>S3 - Scalable Storage in the Cloud</strong>
 </li>
 </ul>
-<ol start="3" style="list-style-type: decimal">
-<li>
-<p><strong>Create a new bucket</strong></p>
+</div>
+<div class="section level5">
+<h5 id="create-a-new-bucket">3. Create a new bucket<a class="anchor" aria-label="anchor" href="#create-a-new-bucket"></a>
+</h5>
 <ul>
-<li><p>Click <strong>Create Bucket</strong> and enter a unique name, and
+<li>Click <strong>Create Bucket</strong> and enter a unique name, and
 note that bucket name must not contain uppercase characters. To easily
 find this bucket later in our shared AWS account, please use the
 following naming convention: <code>yourname-titanic-s3</code> (e.g.,
-doejohn-titanic-s3).</p></li>
+doejohn-titanic-s3).</li>
 <li>
-<p><strong>Access Control (ACLs)</strong>: Disable ACLs
-(recommended).</p>
-<ul>
+<strong>Access Control (ACLs)</strong>: Disable ACLs
+(recommended).<br>
+</li>
 <li>
 <strong>What are ACLs?</strong> Access Control Lists (ACLs) define
 fine-grained permissions at the object level, allowing you to grant
@@ -721,47 +722,42 @@ bucket.<br>
 access through bucket policies and IAM roles, which offer better
 security and are easier to manage at scale. Unless you have a specific
 need for ACLs, disabling them is the best practice.</li>
-</ul>
-</li>
-<li><p><strong>Public Access</strong>: Turn on “Block all public access”
+<li>
+<strong>Public Access</strong>: Turn on “Block all public access”
 (recommended). This setting prevents unauthorized access and accidental
 data exposure. If you need external access, use IAM policies or signed
-URLs instead.</p></li>
+URLs instead.</li>
 <li>
-<p><strong>Versioning</strong>: Disable unless you need multiple
-versions of objects.</p>
-<ul>
-<li>
-<strong>Enable only if needed</strong>, as versioning increases
-storage costs.<br>
-</li>
-<li>Useful when tracking changes to datasets over time but unnecessary
-for static datasets.</li>
-</ul>
+<strong>Versioning</strong>: Disable unless you need multiple
+versions of objects. Enable only if needed, as versioning increases
+storage costs. Useful when tracking changes to datasets over time but
+unnecessary for static datasets.<br>
 </li>
 <li>
-<p><strong>Tags</strong>: Adding tags to your S3 buckets is a great
-way to track project-specific costs and usage over time, especially as
-data and resources scale up. To easily track costs associated with your
-bucket in our shared AWS account, add the following fields:</p>
+<strong>Tags</strong>: Adding tags to your S3 buckets is a great way
+to track project-specific costs and usage over time, especially as data
+and resources scale up. To easily track costs associated with your
+bucket in our shared AWS account, add the following fields:
 <ul>
 <li>
 <strong>Project</strong>: titanic-bucket</li>
 <li>
-<strong>Owner</strong>: yourname <img src="https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/images/bucket_tags.PNG" alt="Screenshot showing required tags for an S3 bucket" class="figure">
+<strong>Owner</strong>: yourname <img src="https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/images/bucket_tags2.png" alt="Screenshot showing required tags for an S3 bucket" class="figure">
 </li>
 </ul>
 </li>
-<li><p>Click <strong>Create Bucket</strong> at the bottom once
-everything above has been configured</p></li>
+<li>Click <strong>Create Bucket</strong> at the bottom once everything
+above has been configured</li>
 </ul>
-</li>
-<li>
-<p><strong>Edit bucket policy</strong> Once the bucket is created,
-you’ll be brought to a page that shows all of your current buckets (and
-those on our shared account). We’ll have to edit our bucket’s policy to
-allow ourselves proper access to any files stored there (e.g., read from
-bucket, write to bucket). To set these permissions…</p>
+</div>
+<div class="section level5">
+<h5 id="edit-bucket-policy">4. Edit bucket policy<a class="anchor" aria-label="anchor" href="#edit-bucket-policy"></a>
+</h5>
+<p>Once the bucket is created, you’ll be brought to a page that shows
+all of your current buckets (and those on our shared account). We’ll
+have to edit our bucket’s policy to allow ourselves proper access to any
+files stored there (e.g., read from bucket, write to bucket). To set
+these permissions…</p>
 <ol style="list-style-type: decimal">
 <li>Click on the name of your bucket to bring up additional options and
 settings.</li>
@@ -769,8 +765,6 @@ settings.</li>
 <li>Scroll down to Bucket policy and click Edit. Paste the following
 policy, <strong>editing the bucket name “myawesometeam-titanic”</strong>
 to reflect your bucket’s name</li>
-</ol>
-</li>
 </ol>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">JSON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -838,9 +832,10 @@ external accounts.</p>
 </div>
 </div>
 </div>
-<ol start="5" style="list-style-type: decimal">
-<li>
-<strong>Upload files to the bucket</strong>
+</div>
+<div class="section level5">
+<h5 id="upload-files-to-the-bucket">5. Upload files to the bucket<a class="anchor" aria-label="anchor" href="#upload-files-to-the-bucket"></a>
+</h5>
 <ul>
 <li>Navigate to the Objects tab of your bucket, then
 <strong>Upload</strong>.</li>
@@ -849,16 +844,15 @@ external accounts.</p>
 <code>titanic_test.csv</code>) and click <strong>Upload</strong> to
 complete.</li>
 </ul>
-</li>
-<li>
-<strong>Take note of S3 URI for your data</strong>
+</div>
+<div class="section level5">
+<h5 id="take-note-of-s3-uri-for-your-data">6. Take note of S3 URI for your data<a class="anchor" aria-label="anchor" href="#take-note-of-s3-uri-for-your-data"></a>
+</h5>
 <ul>
 <li>After uploading, click on a file to find its <strong>Object
 URI</strong> (e.g., <code>s3://titanic-dataset-test/test.csv</code>).
 We’ll use this URI to load data into SageMaker later.</li>
 </ul>
-</li>
-</ol>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="s3-bucket-costs">S3 bucket costs<a class="anchor" aria-label="anchor" href="#s3-bucket-costs"></a>
