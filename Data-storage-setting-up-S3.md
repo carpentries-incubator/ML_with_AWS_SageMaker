@@ -238,13 +238,13 @@ These costs assume no additional request charges beyond those for retrieval, sto
 
 ## Removing unused data (complete *after* the workshop)
 
-Choose one of these options:
+After you are done using your data, it's important to practice good resource stewardship and remove the uneeded files/buckets.
 
-### Option 1: Delete data only (if you plan to reuse bucket for other datasets)
+**Option 1: Delete data only (if you plan to reuse bucket for other datasets)**
 - Go to S3, navigate to the bucket.
 - Select files to delete, then **Actions > Delete**.
 
-### Option 2: Delete the S3 bucket entirely (you no longer need the bucket or data)
+**Option 2: Delete the S3 bucket entirely (you no longer need the bucket or data)**
 - Select the bucket, click **Actions > Delete**.
 - Type the bucket name to confirm deletion.
 
