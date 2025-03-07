@@ -588,8 +588,8 @@ these permissions…</p>
 settings.</li>
 <li>Click the Permissions tab</li>
 <li>Scroll down to Bucket policy and click Edit. Paste the following
-policy, <strong>editing the bucket name “myawesometeam-titanic”</strong>
-to reflect your bucket’s name</li>
+policy, <strong>editing the bucket name “doejohn-titanic-s3”</strong> to
+reflect your bucket’s name</li>
 </ol><div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">JSON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -608,8 +608,8 @@ to reflect your bucket’s name</li>
 <span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>				<span class="st">"s3:ListMultipartUploadParts"</span></span>
 <span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>			<span class="ot">]</span><span class="fu">,</span></span>
 <span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a>			<span class="dt">"Resource"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a>				<span class="st">"arn:aws:s3:::myawesometeam-titanic"</span><span class="ot">,</span></span>
-<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>				<span class="st">"arn:aws:s3:::myawesometeam-titanic/*"</span></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a>				<span class="st">"arn:aws:s3:::doejohn-titanic-s3"</span><span class="ot">,</span></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>				<span class="st">"arn:aws:s3:::doejohn-titanic-s3/*"</span></span>
 <span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a>			<span class="ot">]</span></span>
 <span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a>		<span class="fu">}</span></span>
 <span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a>	<span class="ot">]</span></span>
@@ -628,7 +628,7 @@ stored data.</p>
 <div id="general-guidance-for-setting-up-permissions-outside-of-this-workshop" class="callout-inner">
 <h3 class="callout-title">General guidance for setting up permissions outside of this workshop</h3>
 <div class="callout-content">
-<p>For those not participating in the hackathon, it’s essential to
+<p>When setting up a bucket outside of this workshop, it’s essential to
 create a similar IAM role (such as <code>ml-sagemaker-use</code>) with
 policies that provide controlled access to S3 resources, ensuring only
 the necessary actions are permitted for security and
@@ -640,8 +640,8 @@ SageMaker to assume, with necessary S3 access permissions, such as
 <code>s3:ListMultipartUploadParts</code>, as shown in the policy
 above.</p></li>
 <li><p><strong>Attach permissions to S3 buckets</strong>: Attach bucket
-policies that specify this role as the principal, as in the hackathon
-example.</p></li>
+policies that specify this role as the principal, as in our bucket
+policy above</p></li>
 <li><p><strong>More information</strong>: For a detailed guide on
 setting up roles and policies for SageMaker, refer to the <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html" class="external-link">AWS
 SageMaker documentation on IAM roles and policies</a>. This resource
@@ -657,10 +657,15 @@ external accounts.</p>
 </div>
 <div class="section level5">
 <h5 id="upload-files-to-the-bucket">5. Upload files to the bucket<a class="anchor" aria-label="anchor" href="#upload-files-to-the-bucket"></a></h5>
-<ul><li>Navigate to the Objects tab of your bucket, then
+<ul><li>If you haven’t downloaded these files yet (part of workshop setup),
+right-click and save as .csv:
+<ul><li><a href="https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/data/titanic_train.csv" class="external-link">titanic_train.csv</a></li>
+<li><a href="https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/data/titanic_test.csv" class="external-link">titanic_test.csv</a></li>
+</ul></li>
+<li>Navigate to the Objects tab of your bucket, then
 <strong>Upload</strong>.</li>
 <li>
-<strong>Add Files</strong> (e.g., <code>titanic_train.csv</code>,
+<strong>Add Files</strong> (<code>titanic_train.csv</code>,
 <code>titanic_test.csv</code>) and click <strong>Upload</strong> to
 complete.</li>
 </ul></div>
@@ -753,7 +758,7 @@ Pricing</a> page for more details.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal"><li>
