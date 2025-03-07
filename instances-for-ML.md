@@ -1,8 +1,6 @@
 ---
-title: 'Common Instances for Machine Learning'
+title: 'Instances for ML'
 ---
-
-## AWS Instance Recommendations for ML Workloads
 
 This table provides recommendations for selecting AWS instances based on dataset size, computational needs, and cost considerations.
 
