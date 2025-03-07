@@ -632,25 +632,34 @@ reference data across various AWS services like EC2 and SageMaker.</p>
 and load it into EC2 as needed. This setup allows:</p>
 <ul>
 <li>
-<strong>Scalability</strong>: S3 handles large datasets efficiently,
-enabling storage beyond the limits of an EC2 instance’s disk space.</li>
-<li>
-<strong>Cost efficiency</strong>: S3 storage costs are generally
-lower than expanding EC2 disk volumes. You only pay for the storage you
-use.</li>
-<li>
-<strong>Separation of storage and compute</strong>: You can start
-and stop EC2 instances without losing access to data stored in S3.</li>
-<li>
-<strong>Integration with AWS services</strong>: SageMaker can read
-directly from and write back to S3, making it ideal for AWS-based
-workflows.</li>
+<strong>Separation of storage and compute</strong>: The most
+essential advantage. Data in S3 remains accessible even when EC2
+instances are stopped or terminated, reducing costs and improving
+workflow flexibility.</li>
 <li>
 <strong>Easy data sharing</strong>: Datasets in S3 are easier to
-share with team members or across projects compared to EC2 storage.</li>
+share with team members or across projects compared to EC2
+storage.<br>
+</li>
 <li>
-<strong>Cost-effective data transfer</strong>: When S3 and EC2 are
-in the same region, data transfer between them is free.</li>
+<strong>Integration with AWS services</strong>: SageMaker, Lambda,
+and other AWS services can read directly from and write back to S3,
+streamlining ML workflows.<br>
+</li>
+<li>
+<strong>Scalability</strong>: S3 handles large datasets efficiently,
+enabling storage beyond the limits of an EC2 instance’s disk
+space.<br>
+</li>
+<li>
+<strong>Cost efficiency</strong>: S3 storage is generally lower cost
+than expanding EC2 disk volumes, and you only pay for the storage you
+use.<br>
+</li>
+<li>
+<strong>Data persistence</strong>: Unlike EC2 storage, which can be
+lost if an instance is terminated, S3 ensures long-term data
+availability.</li>
 </ul>
 </div>
 </div>
@@ -659,9 +668,8 @@ in the same region, data transfer between them is free.</li>
 </section><section><h2 class="section-heading" id="recommended-approach-s3-buckets">Recommended approach: S3 buckets<a class="anchor" aria-label="anchor" href="#recommended-approach-s3-buckets"></a>
 </h2>
 <hr class="half-width">
-<div class="section level3">
-<h3 id="summary-steps-to-access-s3-and-upload-your-dataset">Summary steps to access S3 and upload your dataset<a class="anchor" aria-label="anchor" href="#summary-steps-to-access-s3-and-upload-your-dataset"></a>
-</h3>
+<p>In order to upload our titanic dataset to an S3 bucket on AWS, we’ll
+follow the below summary procedure (details follow):</p>
 <ol style="list-style-type: decimal">
 <li>Log in to AWS Console and navigate to S3.</li>
 <li>Create a new bucket or use an existing one.</li>
@@ -669,7 +677,6 @@ in the same region, data transfer between them is free.</li>
 <li>Use the object URL to reference your data in future
 experiments.</li>
 </ol>
-</div>
 <div class="section level3">
 <h3 id="detailed-procedure">Detailed procedure<a class="anchor" aria-label="anchor" href="#detailed-procedure"></a>
 </h3>
@@ -684,7 +691,7 @@ experiments.</li>
 <p><strong>Navigate to S3</strong></p>
 <ul>
 <li>Type “S3” in the search bar</li>
-<li>Protip: select the star icon to save S3 as a bookmark in your AWS
+<li>Protip: Select the star icon to save S3 as a bookmark in your AWS
 toolbar</li>
 <li>Select <strong>S3 - Scalable Storage in the Cloud</strong>
 </li>
@@ -693,38 +700,63 @@ toolbar</li>
 <li>
 <p><strong>Create a new bucket</strong></p>
 <ul>
-<li>Click <strong>Create Bucket</strong> and enter a unique name, and
+<li><p>Click <strong>Create Bucket</strong> and enter a unique name, and
 note that bucket name must not contain uppercase characters. To easily
 find this bucket later in our shared AWS account, please use the
-following naming convention: <code>yourname-titanic</code> (e.g.,
-doejohn-titanic)</li>
+following naming convention: <code>yourname-titanic-s3</code> (e.g.,
+doejohn-titanic-s3).</p></li>
+<li><p><strong>Region</strong>: Select the AWS region closest to your
+users or compute resources to minimize latency and reduce data transfer
+costs (a good option for UW-Madison users is typically
+us-east-1).</p></li>
 <li>
-<strong>Region</strong>: Select the AWS region closest to your users
-or compute resources to minimize latency and reduce data transfer costs
-(a good option for UW-Madison users is typically us-east-1)</li>
-<li>
-<strong>Access Control</strong>: Disable ACLs (recommended).</li>
-<li>
-<strong>Public Access</strong>: Turn on “Block all public
-access”.</li>
-<li>
-<strong>Versioning</strong>: Disable unless you need multiple
-versions of objects.</li>
-<li>
-<strong>Tags</strong>: Adding tags to your S3 buckets is a great way
-to track project-specific costs and usage over time, especially as data
-and resources scale up. To easily track costs associated with your
-bucket in our shared AWS account, the following tags will work:
+<p><strong>Access Control (ACLs)</strong>: Disable ACLs
+(recommended).</p>
 <ul>
 <li>
-<strong>Name</strong>: Your Name</li>
+<strong>What are ACLs?</strong> Access Control Lists (ACLs) define
+fine-grained permissions at the object level, allowing you to grant
+specific users or AWS accounts access to individual files in your
+bucket.<br>
+</li>
 <li>
-<strong>Purpose</strong>: titanic-S3-bucket <img src="https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/images/bucket_tags.PNG" alt="Screenshot showing required tags for an S3 bucket" class="figure">
+<strong>Why disable them?</strong> AWS now recommends managing
+access through bucket policies and IAM roles, which offer better
+security and are easier to manage at scale. Unless you have a specific
+need for ACLs, disabling them is the best practice.</li>
+</ul>
+</li>
+<li><p><strong>Public Access</strong>: Turn on “Block all public access”
+(recommended). This setting prevents unauthorized access and accidental
+data exposure. If you need external access, use IAM policies or signed
+URLs instead.</p></li>
+<li>
+<p><strong>Versioning</strong>: Disable unless you need multiple
+versions of objects.</p>
+<ul>
+<li>
+<strong>Enable only if needed</strong>, as versioning increases
+storage costs.<br>
+</li>
+<li>Useful when tracking changes to datasets over time but unnecessary
+for static datasets.</li>
+</ul>
+</li>
+<li>
+<p><strong>Tags</strong>: Adding tags to your S3 buckets is a great
+way to track project-specific costs and usage over time, especially as
+data and resources scale up. To easily track costs associated with your
+bucket in our shared AWS account, add the following fields:</p>
+<ul>
+<li>
+<strong>Project</strong>: titanic-bucket</li>
+<li>
+<strong>Owner</strong>: yourname <img src="https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/images/bucket_tags.PNG" alt="Screenshot showing required tags for an S3 bucket" class="figure">
 </li>
 </ul>
 </li>
-<li>Click <strong>Create Bucket</strong> at the bottom once everything
-above has been configured</li>
+<li><p>Click <strong>Create Bucket</strong> at the bottom once
+everything above has been configured</p></li>
 </ul>
 </li>
 <li>
@@ -768,18 +800,18 @@ to reflect your bucket’s name</li>
 <span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a>	<span class="ot">]</span></span>
 <span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a><span class="fu">}</span></span></code></pre>
 </div>
-<p>For hackathon attendees, this policy grants the
+<p>For workshop attendees, this policy grants the
 <code>ml-sagemaker-use</code> IAM role access to specific S3 bucket
 actions, ensuring they can use the bucket for reading, writing,
 deleting, and listing parts during multipart uploads. Attendees should
 apply this policy to their buckets to enable SageMaker to operate on
 stored data.</p>
-<div id="general-guidance-for-setting-up-permissions-outside-the-hackathon" class="callout">
+<div id="general-guidance-for-setting-up-permissions-outside-of-this-workshop" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
 </div>
-<div id="general-guidance-for-setting-up-permissions-outside-the-hackathon" class="callout-inner">
-<h3 class="callout-title">General guidance for setting up permissions outside the hackathon</h3>
+<div id="general-guidance-for-setting-up-permissions-outside-of-this-workshop" class="callout-inner">
+<h3 class="callout-title">General guidance for setting up permissions outside of this workshop</h3>
 <div class="callout-content">
 <p>For those not participating in the hackathon, it’s essential to
 create a similar IAM role (such as <code>ml-sagemaker-use</code>) with
@@ -930,7 +962,7 @@ Pricing</a> page for more details.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
