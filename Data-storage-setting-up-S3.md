@@ -73,41 +73,36 @@ In order to upload our titanic dataset to an S3 bucket on AWS, we'll follow the 
 
 ### Detailed procedure
 
-#### 1. Sign in to the AWS Management Console
+##### 1. Sign in to the AWS Management Console
 - Log in to AWS Console using your credentials.
 
 
-#### 2. Navigate to S3
+##### 2. Navigate to S3
 - Type "S3" in the search bar
 - Protip: Select the star icon to save S3 as a bookmark in your AWS toolbar 
 - Select **S3 - Scalable Storage in the Cloud**
 
-3. **Create a new bucket**
-   - Click **Create Bucket** and enter a unique name, and note that bucket name must not contain uppercase characters. To easily find this bucket later in our shared AWS account, please use the following naming convention: `yourname-titanic-s3` (e.g., doejohn-titanic-s3).
-   - **Access Control (ACLs)**: Disable ACLs (recommended).  
-     - **What are ACLs?** Access Control Lists (ACLs) define fine-grained permissions at the object level, allowing you to grant specific users or AWS accounts access to individual files in your bucket.  
-     - **Why disable them?** AWS now recommends managing access through bucket policies and IAM roles, which offer better security and are easier to manage at scale. Unless you have a specific need for ACLs, disabling them is the best practice.
+##### 3. Create a new bucket
+- Click **Create Bucket** and enter a unique name, and note that bucket name must not contain uppercase characters. To easily find this bucket later in our shared AWS account, please use the following naming convention: `yourname-titanic-s3` (e.g., doejohn-titanic-s3).
+- **Access Control (ACLs)**: Disable ACLs (recommended).  
+- **What are ACLs?** Access Control Lists (ACLs) define fine-grained permissions at the object level, allowing you to grant specific users or AWS accounts access to individual files in your bucket.  
+- **Why disable them?** AWS now recommends managing access through bucket policies and IAM roles, which offer better security and are easier to manage at scale. Unless you have a specific need for ACLs, disabling them is the best practice.
+- **Public Access**: Turn on "Block all public access" (recommended). This setting prevents unauthorized access and accidental data exposure. If you need external access, use IAM policies or signed URLs instead.
+- **Versioning**: Disable unless you need multiple versions of objects. Enable only if needed, as versioning increases storage costs. Useful when tracking changes to datasets over time but unnecessary for static datasets.  
+- **Tags**: Adding tags to your S3 buckets is a great way to track project-specific costs and usage over time, especially as data and resources scale up. To easily track costs associated with your bucket in our shared AWS account, add the following fields:
+	- **Project**: titanic-bucket
+	- **Owner**: yourname
+	![Example of Tags for an S3 Bucket](https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/images/bucket_tags2.png){alt="Screenshot showing required tags for an S3 bucket"}
 
-   - **Public Access**: Turn on "Block all public access" (recommended). This setting prevents unauthorized access and accidental data exposure. If you need external access, use IAM policies or signed URLs instead.
-       
-   - **Versioning**: Disable unless you need multiple versions of objects.  
-     - **Enable only if needed**, as versioning increases storage costs.  
-     - Useful when tracking changes to datasets over time but unnecessary for static datasets.  
-
-   - **Tags**: Adding tags to your S3 buckets is a great way to track project-specific costs and usage over time, especially as data and resources scale up. To easily track costs associated with your bucket in our shared AWS account, add the following fields:
-      - **Project**: titanic-bucket
-      - **Owner**: yourname
-      ![Example of Tags for an S3 Bucket](https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/images/bucket_tags.PNG){alt="Screenshot showing required tags for an S3 bucket"}
-
-   - Click **Create Bucket** at the bottom once everything above has been configured
+- Click **Create Bucket** at the bottom once everything above has been configured
 
 
-4. **Edit bucket policy**
+##### 4. Edit bucket policy
 Once the bucket is created, you'll be brought to a page that shows all of your current buckets (and those on our shared account). We'll have to edit our bucket's policy to allow ourselves proper access to any files stored there (e.g., read from bucket, write to bucket). To set these permissions...
 
-	1. Click on the name of your bucket to bring up additional options and settings.
-	2. Click the Permissions tab
-	3. Scroll down to Bucket policy and click Edit. Paste the following policy, **editing the bucket name "myawesometeam-titanic"** to reflect your bucket's name
+1. Click on the name of your bucket to bring up additional options and settings.
+2. Click the Permissions tab
+3. Scroll down to Bucket policy and click Edit. Paste the following policy, **editing the bucket name "myawesometeam-titanic"** to reflect your bucket's name
 
 ```json
 {
@@ -150,13 +145,13 @@ This setup ensures that your SageMaker operations will have the access needed wi
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-5. **Upload files to the bucket**
-   - Navigate to the Objects tab of your bucket, then **Upload**.
-   - **Add Files** (e.g., `titanic_train.csv`, `titanic_test.csv`) and click **Upload** to complete.
+##### 5. Upload files to the bucket
+- Navigate to the Objects tab of your bucket, then **Upload**.
+- **Add Files** (e.g., `titanic_train.csv`, `titanic_test.csv`) and click **Upload** to complete.
 
 
-6. **Take note of S3 URI for your data**
-   - After uploading, click on a file to find its **Object URI** (e.g., `s3://titanic-dataset-test/test.csv`). We'll use this URI to load data into SageMaker later.
+##### 6. Take note of S3 URI for your data
+- After uploading, click on a file to find its **Object URI** (e.g., `s3://titanic-dataset-test/test.csv`). We'll use this URI to load data into SageMaker later.
 
 ## S3 bucket costs
 
