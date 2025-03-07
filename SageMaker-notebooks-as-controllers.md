@@ -22,25 +22,17 @@ exercises: 10
 ## Step 2: Running Python code with SageMaker notebooks
 Amazon SageMaker provides a managed environment to simplify the process of building, training, and deploying machine learning models. By using SageMaker, you can focus on model development without needing to manually provision resources or set up environments. In this episode, we’ll guide you through setting up a **SageMaker notebook instance**—a Jupyter notebook hosted on AWS specifically for running SageMaker jobs. This setup allows you to efficiently manage and monitor machine learning workflows directly from a lightweight notebook controller. We’ll also cover loading data in preparation for model training and tuning in future episodes, using the Titanic dataset stored in S3.
 
-## Using the notebook as a controller
+### Using the notebook as a controller
 In this setup, the notebook instance functions as a *controller* to manage more resource-intensive compute tasks. By selecting a minimal instance (e.g., `ml.t3.medium`) for the notebook, you can perform lightweight operations and leverage the **SageMaker Python SDK** to launch more powerful, scalable compute instances when needed for model training, batch processing, or hyperparameter tuning. This approach minimizes costs by keeping your controller instance lightweight while accessing the full power of SageMaker for demanding tasks.
 
-## Summary of key steps
-1. Navigate to SageMaker in AWS.
-2. Create a Jupyter notebook instance as a controller.
-3. Set up the Python environment within the notebook.
-4. Load the Titanic dataset from S3.
-5. Use SageMaker SDK to launch training and tuning jobs on powerful instances (covered in next episodes).
-6. View and monitor training/tuning progress (covered in next episodes).
+### Detailed procedure
 
-## Detailed procedure
-
-### 1. Navigate to SageMaker
+#### 1. Navigate to SageMaker
 - In the AWS Console, search for **SageMaker**.
 - Protip: select the star icon to save SageMaker as a bookmark in your AWS toolbar 
 - Select **SageMaker - Build, Train, and Deploy Models**.
 
-### 2. Create a new notebook instance
+#### 2. Create a new notebook instance
 - In the SageMaker left-side menu, click on **Notebooks**, then click **Create notebook instance**.
 - **Notebook name**: Enter a name that reflects your notebook's primary user (your name), dataset (titanic), purpose (train-tune), and models utilized (XGBoost-NN). **Hackathon attendees must use the following convention**: TeamName-YourName-Dataset-NotebookPurpose(s)-Model(s) (e.g., `MyAwesomeTeam-ChrisEndemann-Titanic-Train-Tune-XGBoost-NN`). 
 - **Instance type**: Start with a small instance type, such as `ml.t3.medium`. You can scale up later as needed for intensive tasks, which will be managed by launching separate training jobs from this notebook. For guidance on common instances for ML procedures, refer to our supplemental [Instances for ML webpage](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html).
