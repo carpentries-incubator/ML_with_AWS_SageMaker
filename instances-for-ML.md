@@ -1,5 +1,5 @@
 ---
-title: 'Instances for ML'
+title: Instances for ML
 ---
 
 This table provides recommendations for selecting AWS instances based on dataset size, computational needs, and cost considerations.
