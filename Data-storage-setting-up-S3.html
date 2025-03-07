@@ -228,7 +228,7 @@
         <ul><li><a href="#step-1-data-storage">Step 1: Data storage</a></li>
 <li><a href="#recommended-approach-s3-buckets">Recommended approach: S3 buckets</a></li>
 <li><a href="#s3-bucket-costs">S3 bucket costs</a></li>
-<li><a href="#removing-unused-data">Removing unused data</a></li>
+<li><a href="#removing-unused-data-complete-after-the-workshop">Removing unused data (complete <em>after</em> the workshop)</a></li>
         </ul></div><!--/div.accordion-body-->
     </div><!--/div.accordion-collapse-->
 
@@ -687,12 +687,8 @@ and request counts.</p>
 approximately $0.23/month in S3 Standard (us-east-1).</li>
 <li>Pricing Tiers: S3 offers multiple storage classes (Standard,
 Intelligent-Tiering, Glacier, etc.), with different costs based on
-access frequency and retrieval times. Standard S3 fits most purposes. If
-you’re curious about other tiers, refer to AWS’s <a href="https://aws.amazon.com/s3/pricing/" class="external-link">S3 Pricing
-Information</a>.</li>
-<li>To calculate specific costs based on your needs, storage class, and
-region, refer to AWS’s <a href="https://aws.amazon.com/s3/pricing/" class="external-link">S3
-Pricing Information</a>.</li>
+access frequency and retrieval times. Standard S3 fits most
+purposes.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="data-transfer-costs">Data transfer costs<a class="anchor" aria-label="anchor" href="#data-transfer-costs"></a></h3>
@@ -705,11 +701,7 @@ large datasets.</li>
 <li>
 <strong>In-region transfer</strong> (e.g., S3 to EC2) is free, while
 cross-region data transfer is charged (~$0.02/GB).</li>
-</ul><blockquote>
-<p><strong><a href="https://aws.amazon.com/s3/pricing/" class="external-link">Data transfer
-pricing</a></strong></p>
-</blockquote>
-</div>
+</ul></div>
 <div class="section level3">
 <h3 id="request-costs">Request costs<a class="anchor" aria-label="anchor" href="#request-costs"></a></h3>
 <ul><li>GET requests are $0.0004 per 1,000 requests. In the context of
@@ -718,23 +710,22 @@ downloading data from an S3 bucket. Each time a file or object is
 accessed in S3, it incurs a small cost per request. This means that if
 you have code that reads data from S3 frequently, such as loading
 datasets repeatedly, each read operation counts as a GET request.</li>
-</ul><blockquote>
-<p><strong><a href="https://aws.amazon.com/s3/pricing/" class="external-link">Request
-Pricing</a></strong></p>
-</blockquote>
-<div id="challenge-exercise-calculate-your-projects-data-costs" class="callout discussion">
+</ul><p><strong><em>To calculate specific costs based on your needs, storage
+class, and region, refer to AWS’s <a href="https://aws.amazon.com/s3/pricing/" class="external-link">S3 Pricing
+Information</a>.</em></strong></p>
+<div id="challenge-calculate-your-projects-data-costs" class="callout discussion">
 <div class="callout-square">
 <i class="callout-icon" data-feather="message-circle"></i>
 </div>
-<div id="challenge-exercise-calculate-your-projects-data-costs" class="callout-inner">
-<h3 class="callout-title">Challenge Exercise: Calculate Your Project’s Data Costs</h3>
+<div id="challenge-calculate-your-projects-data-costs" class="callout-inner">
+<h3 class="callout-title">Challenge: Calculate Your Project’s Data Costs</h3>
 <div class="callout-content">
 <p>Estimate the total cost of storing your project data in S3 for one
 month, using the following dataset sizes and assuming:</p>
 <ul><li>Storage duration: 1 month</li>
 <li>Storage region: us-east-1</li>
 <li>Storage class: S3 Standard</li>
-<li>Data will be retrieved 100 times for model training
+<li>Data will be retrieved 100 times for model training and tuning
 (<code>GET</code> requests)</li>
 <li>Data will be deleted after the project concludes, incurring data
 retrieval and deletion costs</li>
@@ -744,13 +735,13 @@ retrieval and deletion costs</li>
 <li>100 GB</li>
 <li>1 TB</li>
 </ul><p><strong>Hints</strong></p>
-<ul><li>S3 storage cost: $0.023 per GB per month (us-east-1)</li>
+<ol style="list-style-type: decimal"><li>S3 storage cost: $0.023 per GB per month (us-east-1)</li>
 <li>Data transfer cost (retrieval/deletion): $0.09 per GB (us-east-1 out
 to internet)</li>
 <li>
 <code>GET</code> requests cost: $0.0004 per 1,000 requests (each
 model training will incur one <code>GET</code> request)</li>
-</ul><p>Check the <a href="https://aws.amazon.com/s3/pricing/" class="external-link">AWS S3
+</ol><p>Check the <a href="https://aws.amazon.com/s3/pricing/" class="external-link">AWS S3
 Pricing</a> page for more details.</p>
 </div>
 </div>
@@ -822,33 +813,20 @@ retrieval, storage, and <code>GET</code> requests for training.</p>
 </div>
 </div>
 </div>
-</section><section><h2 class="section-heading" id="removing-unused-data">Removing unused data<a class="anchor" aria-label="anchor" href="#removing-unused-data"></a></h2>
+</section><section><h2 class="section-heading" id="removing-unused-data-complete-after-the-workshop">Removing unused data (complete <em>after</em> the workshop)<a class="anchor" aria-label="anchor" href="#removing-unused-data-complete-after-the-workshop"></a></h2>
 <hr class="half-width"><p>Choose one of these options:</p>
 <div class="section level3">
-<h3 id="option-1-delete-data-only">Option 1: Delete data only<a class="anchor" aria-label="anchor" href="#option-1-delete-data-only"></a></h3>
-<ul><li>
-<strong>When to Use</strong>: You plan to reuse the bucket.</li>
-<li>
-<strong>Steps</strong>:
+<h3 id="option-1-delete-data-only-if-you-plan-to-reuse-bucket-for-other-datasets">Option 1: Delete data only (if you plan to reuse bucket for other
+datasets)<a class="anchor" aria-label="anchor" href="#option-1-delete-data-only-if-you-plan-to-reuse-bucket-for-other-datasets"></a></h3>
 <ul><li>Go to S3, navigate to the bucket.</li>
 <li>Select files to delete, then <strong>Actions &gt;
 Delete</strong>.</li>
-<li>
-<strong>CLI</strong> (optional):
-<code>!aws s3 rm s3://your-bucket-name --recursive</code>
-</li>
-</ul></li>
 </ul></div>
 <div class="section level3">
-<h3 id="option-2-delete-the-s3-bucket-entirely">Option 2: Delete the S3 bucket entirely<a class="anchor" aria-label="anchor" href="#option-2-delete-the-s3-bucket-entirely"></a></h3>
-<ul><li>
-<strong>When to Use</strong>: You no longer need the bucket or
-data.</li>
-<li>
-<strong>Steps</strong>:
+<h3 id="option-2-delete-the-s3-bucket-entirely-you-no-longer-need-the-bucket-or-data">Option 2: Delete the S3 bucket entirely (you no longer need the
+bucket or data)<a class="anchor" aria-label="anchor" href="#option-2-delete-the-s3-bucket-entirely-you-no-longer-need-the-bucket-or-data"></a></h3>
 <ul><li>Select the bucket, click <strong>Actions &gt; Delete</strong>.</li>
 <li>Type the bucket name to confirm deletion.</li>
-</ul></li>
 </ul><p>Deleting the bucket stops all costs associated with storage,
 requests, and data transfer.</p>
 <div id="keypoints1" class="callout keypoints">
