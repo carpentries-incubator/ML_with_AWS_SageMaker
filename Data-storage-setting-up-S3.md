@@ -177,28 +177,21 @@ S3 bucket storage incurs costs based on data storage, data transfer, and request
 
 ### Challenge: Estimating Storage Costs
 
-Estimate the total cost of storing your project data in S3 for one month, using the following dataset sizes and assuming:
-
+**1. Estimate the total cost of storing 1 GB in S3 for one month assuming:**
 - Storage duration: 1 month
 - Storage region: us-east-1
 - Storage class: S3 Standard
 - Data will be retrieved 100 times for model training and tuning (`GET` requests)
 - Data will be deleted after the project concludes, incurring data retrieval and deletion costs
-
-Dataset sizes to consider:
-
-- 1 GB
-- 10 GB
-- 100 GB
-- 1 TB
+- Dataset sizes to consider: 1 GB, 10 GB, 100 GB, 1 TB
 
 **Hints**
-
-1. S3 storage cost: $0.023 per GB per month (us-east-1)
-2. Data transfer cost (retrieval/deletion): $0.09 per GB (us-east-1 out to internet)
-3. `GET` requests cost: $0.0004 per 1,000 requests (each model training will incur one `GET` request)
-
-Check the [AWS S3 Pricing](https://aws.amazon.com/s3/pricing/) page for more details.
+- S3 storage cost: $0.023 per GB per month (us-east-1)
+- Data transfer cost (retrieval/deletion): $0.09 per GB (us-east-1 out to internet)
+- `GET` requests cost: $0.0004 per 1,000 requests (each model training will incur one `GET` request)
+- Check the [AWS S3 Pricing](https://aws.amazon.com/s3/pricing/) page for more details.
+ 
+**2. Repeat the above calculation using the following dataset sizes: 10 GB, 100 GB, 1 TB**
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
