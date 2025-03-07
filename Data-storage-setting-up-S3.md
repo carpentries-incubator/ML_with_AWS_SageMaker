@@ -232,7 +232,7 @@ These costs assume no additional request charges beyond those for retrieval, sto
 
 ## Removing unused data (complete *after* the workshop)
 
-After you are done using your data, it's important to practice good resource stewardship and remove the uneeded files/buckets.
+After you are done using your data, it's important to practice good resource stewardship and remove the unneeded files/buckets.
 
 **Option 1: Delete data only (if you plan to reuse bucket for other datasets)**
 
