@@ -356,9 +356,32 @@
 
         
 
-<p>This table provides recommendations for selecting AWS instances based
-on dataset size, computational needs, and cost considerations.</p>
-<table class="table"><colgroup><col width="13%"><col width="23%"><col width="7%"><col width="13%"><col width="6%"><col width="20%"><col width="15%"></colgroup><thead><tr class="header"><th><strong>Dataset Size</strong></th>
+<p>The below table provides recommendations for selecting AWS instances
+based on dataset size, computational needs, and cost considerations.</p>
+<div class="section level4">
+<h4 id="notes">Notes:<a class="anchor" aria-label="anchor" href="#notes"></a></h4>
+<ul><li>
+<strong>Minimum RAM should be at least equal to dataset
+size</strong> unless using batch processing</li>
+<li>
+<strong>Deep learning models</strong> can process large datasets in
+batches, reducing RAM needs.</li>
+<li>
+<strong>Large tabular/text datasets</strong> often require in-memory
+processing, so instances with high RAM (1.5× dataset size) are
+recommended.</li>
+<li>
+<strong>GPU choices</strong> depend on the task (T4 for
+cost-effective DL, V100/A100 for high performance).</li>
+<li>The <strong>g4dn</strong> instances are cost-effective GPU options,
+suitable for moderate-scale deep learning tasks.</li>
+<li>The <strong>p3</strong> instances offer high-performance GPU
+processing, best suited for large deep learning models requiring fast
+training times.</li>
+<li>The <strong>m5</strong> and <strong>c5</strong> instances are
+optimized for CPU-heavy tasks, such as preprocessing, feature
+engineering, and model training without GPUs.</li>
+</ul><table class="table"><colgroup><col width="13%"><col width="23%"><col width="7%"><col width="13%"><col width="6%"><col width="20%"><col width="15%"></colgroup><thead><tr class="header"><th><strong>Dataset Size</strong></th>
 <th><strong>Recommended Instance Type</strong></th>
 <th><strong>vCPU</strong></th>
 <th><strong>Memory (GiB)</strong></th>
@@ -395,31 +418,31 @@ option</td>
 <td>8</td>
 <td>61</td>
 <td>1x NVIDIA V100</td>
-<td>$3.83</td>
+<td><strong>$3.83</strong></td>
 <td>High-performance GPU processing, faster training for deep learning
 models, higher cost but faster than <code>g4dn</code>
 </td>
 </tr><tr class="odd"><td>10GB</td>
-<td><code>ml.c5.xlarge</code></td>
-<td>4</td>
+<td><code>ml.c5.2xlarge</code></td>
 <td>8</td>
-<td>None</td>
-<td>$0.17</td>
-<td>CPU-heavy processing, model training</td>
-</tr><tr class="even"><td>10GB</td>
-<td><code>ml.m5.xlarge</code></td>
-<td>4</td>
 <td>16</td>
 <td>None</td>
-<td>$0.19</td>
+<td>$0.34</td>
+<td>CPU-heavy processing, model training</td>
+</tr><tr class="even"><td>10GB</td>
+<td><code>ml.m5.2xlarge</code></td>
+<td>8</td>
+<td>32</td>
+<td>None</td>
+<td>$0.38</td>
 <td>Preprocessing, feature engineering, model training</td>
 </tr><tr class="odd"><td>10GB</td>
 <td>
-<code>g4dn.xlarge</code> (T4 GPU)</td>
-<td>4</td>
-<td>16</td>
+<code>g4dn.2xlarge</code> (T4 GPU)</td>
+<td>8</td>
+<td>32</td>
 <td>1x NVIDIA T4</td>
-<td>$0.75</td>
+<td>$0.94</td>
 <td>Moderate-scale deep learning, cost-effective GPU training</td>
 </tr><tr class="even"><td>10GB</td>
 <td>
@@ -427,67 +450,74 @@ models, higher cost but faster than <code>g4dn</code>
 <td>8</td>
 <td>61</td>
 <td>1x NVIDIA V100</td>
-<td>$3.83</td>
+<td><strong>$3.83</strong></td>
 <td>Faster GPU processing for deep learning, better suited for larger
 models if budget allows</td>
 </tr><tr class="odd"><td>50GB</td>
-<td><code>ml.c5.2xlarge</code></td>
-<td>8</td>
+<td><code>ml.c5.4xlarge</code></td>
 <td>16</td>
+<td>64</td>
 <td>None</td>
-<td>$0.34</td>
+<td>$0.77</td>
 <td>CPU-heavy processing, large model training</td>
 </tr><tr class="even"><td>50GB</td>
-<td><code>ml.m5.2xlarge</code></td>
-<td>8</td>
-<td>32</td>
-<td>None</td>
-<td>$0.38</td>
-<td>Preprocessing, feature engineering, large model training</td>
-</tr><tr class="odd"><td>50GB</td>
-<td>
-<code>g4dn.xlarge</code> (T4 GPU)</td>
-<td>4</td>
-<td>16</td>
-<td>1x NVIDIA T4</td>
-<td>$0.75</td>
-<td>Moderate-scale deep learning, balanced performance and cost</td>
-</tr><tr class="even"><td>100GB</td>
-<td>
-<code>g4dn.2xlarge</code> (T4 GPU)</td>
-<td>8</td>
-<td>32</td>
-<td>1x NVIDIA T4</td>
-<td>$0.94</td>
-<td>Large-scale model training with cost-effective GPU acceleration</td>
-</tr><tr class="odd"><td>100GB</td>
 <td><code>ml.m5.4xlarge</code></td>
 <td>16</td>
 <td>64</td>
 <td>None</td>
 <td>$0.77</td>
-<td>Preprocessing, feature engineering, batch processing, large model
-training</td>
+<td>Preprocessing, feature engineering, large model training</td>
+</tr><tr class="odd"><td>50GB</td>
+<td>
+<code>g4dn.4xlarge</code> (T4 GPU)</td>
+<td>16</td>
+<td>64</td>
+<td>1x NVIDIA T4</td>
+<td>$1.48</td>
+<td>Moderate-scale deep learning, balanced performance and cost</td>
 </tr><tr class="even"><td>100GB</td>
 <td>
-<code>p3.2xlarge</code> (V100 GPU)</td>
-<td>8</td>
-<td>61</td>
-<td>1x NVIDIA V100</td>
-<td>$3.83</td>
+<code>g4dn.8xlarge</code> (T4 GPU)</td>
+<td>32</td>
+<td>128</td>
+<td>1x NVIDIA T4</td>
+<td><strong>$2.76</strong></td>
+<td>Large-scale model training with cost-effective GPU acceleration</td>
+</tr><tr class="odd"><td>100GB</td>
+<td>
+<code>p3.8xlarge</code> (V100 GPU)</td>
+<td>32</td>
+<td>244</td>
+<td>4x NVIDIA V100</td>
+<td><strong>$15.20</strong></td>
 <td>High-performance GPU processing for large deep learning models
 (e.g., transformers, CNNs)</td>
-</tr></tbody></table><div class="section level3">
-<h3 id="notes">Notes:<a class="anchor" aria-label="anchor" href="#notes"></a></h3>
-<ul><li>The <strong>g4dn</strong> instances are <strong>cost-effective GPU
-options</strong>, suitable for moderate-scale deep learning tasks.</li>
-<li>The <strong>p3</strong> instances offer <strong>high-performance GPU
-processing</strong>, best suited for large deep learning models
-requiring fast training times.</li>
-<li>The <strong>m5</strong> and <strong>c5</strong> instances are
-optimized for <strong>CPU-heavy tasks</strong>, such as preprocessing,
-feature engineering, and model training without GPUs.</li>
-</ul><!--
+</tr><tr class="even"><td>100GB</td>
+<td>
+<code>p4d.24xlarge</code> (A100 GPU)</td>
+<td>96</td>
+<td>1,152</td>
+<td>8x NVIDIA A100</td>
+<td><strong>$32.77</strong></td>
+<td>High-performance DL for large datasets with batch streaming</td>
+</tr><tr class="odd"><td>1TB+</td>
+<td>
+<code>p3.16xlarge</code> (V100 GPU)</td>
+<td>64</td>
+<td>488</td>
+<td>8x NVIDIA V100</td>
+<td><strong>$30.40</strong></td>
+<td>Extreme-scale deep learning, large transformer training</td>
+</tr><tr class="even"><td>1TB+</td>
+<td>
+<code>p4d.24xlarge</code> (A100 GPU)</td>
+<td>96</td>
+<td>1,152</td>
+<td>8x NVIDIA A100</td>
+<td><strong>$32.77</strong></td>
+<td><strong>Deep learning with batch processing for 1TB+
+datasets</strong></td>
+</tr></tbody></table><!--
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
  --></div>
