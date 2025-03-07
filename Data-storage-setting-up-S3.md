@@ -175,7 +175,7 @@ S3 bucket storage incurs costs based on data storage, data transfer, and request
 
 ::::::::::::::::::::::::::::::::::::: challenge 
 
-### Challenge: Calculate Your Project's Data Costs
+### Challenge: Estimating Storage Costs
 
 Estimate the total cost of storing your project data in S3 for one month, using the following dataset sizes and assuming:
 
