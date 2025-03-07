@@ -38,7 +38,8 @@ We encourage you to briefly study this glossary before the workshop and refer ba
 * **S3 Bucket**: A container in S3 where data is stored. Think of it like a folder, but with more scalability and security options. Data is accessed via unique S3 URIs (e.g., `s3://your-bucket-name/your-file.csv`).  
 * **S3 URI**: A unique identifier for an object in an S3 bucket, used for referencing data in AWS services like SageMaker.  
 * **Elastic Block Store (EBS)**: Persistent storage volumes attached to EC2 instances. Unlike S3, which is an object store, EBS provides block-level storage and is commonly used for databases or applications requiring high-speed storage.  
-
+ **Object URI**: The Uniform Resource Identifier (URI) is a unique address that specifies the location of the file within S3 (e.g., `s3://doejohn-titanic-s3/titanic_train.csv`). This URI is essential for referencing data in AWS services like SageMaker, where it will be used to load data for processing and model training.
+  
 ### SageMaker and Machine Learning Workflows  
 
 * **SageMaker**: A managed machine learning platform in AWS that provides tools for building, training, and deploying ML models. It simplifies the process of running ML workloads on the cloud.  
