@@ -342,7 +342,7 @@
       </div>
       <hr></nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Glossary</h1>
-        <p>Last updated on 2025-03-06 |
+        <p>Last updated on 2025-03-07 |
 
         <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker/edit/main/learners/reference.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -353,7 +353,7 @@
         </div>
 
         
-<section><h2 class="section-heading" id="cloud-computing-and-aws-terminology">Cloud Computing and AWS Terminology<a class="anchor" aria-label="anchor" href="#cloud-computing-and-aws-terminology"></a></h2>
+<section><h2 class="section-heading" id="workshop-terminology">Workshop Terminology<a class="anchor" aria-label="anchor" href="#workshop-terminology"></a></h2>
 <hr class="half-width"><p>Understanding the terminology used in cloud computing and AWS is half
 the battle when working with SageMaker. Familiarity with key concepts
 will help you navigate AWS services, configure machine learning
@@ -362,55 +362,147 @@ workflows, and troubleshoot issues more efficiently.</p>
 and refer back to it as needed. While we’ll go over these terms
 throughout the workshop, early exposure will be helpful in building your
 understanding and making the hands-on exercises smoother.</p>
-<ul><li><p><strong>Instance</strong>: A virtual machine that runs in the
-cloud. AWS provides different types of instances for various computing
-needs, including general-purpose, memory-optimized, and GPU-powered
-instances for machine learning.</p></li>
-<li><p><strong>EC2 (Elastic Compute Cloud)</strong>: An AWS service that
+<div class="section level3">
+<h3 id="cloud-compute-essentials">Cloud Compute Essentials<a class="anchor" aria-label="anchor" href="#cloud-compute-essentials"></a></h3>
+<ul><li>
+<strong>Virtual Machine (VM)</strong>: A software-based computer
+that runs in a cloud or on-premises environment. In AWS, EC2 instances
+act as virtual machines with configurable CPU, memory, and storage
+resources.<br></li>
+<li>
+<strong>Instance</strong>: A virtual machine that runs in the cloud.
+AWS provides different types of instances for various computing needs,
+including general-purpose, memory-optimized, and GPU-powered instances
+for machine learning.<br></li>
+<li>
+<strong>Container</strong>: A lightweight virtualized environment
+that packages applications and their dependencies together. Containers
+allow for consistent execution across different computing environments
+and can be deployed on AWS services like ECS, EKS, and SageMaker.<br></li>
+<li>
+<strong>Docker</strong>: A popular platform for developing,
+shipping, and running containerized applications. Docker containers
+encapsulate an application and its dependencies, making them portable
+across different cloud and local environments.<br></li>
+<li>
+<strong>Elasticity</strong>: The ability to automatically scale
+computing resources up or down based on demand. Cloud platforms like AWS
+provide elasticity to help manage costs and performance.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="aws-general">AWS General<a class="anchor" aria-label="anchor" href="#aws-general"></a></h3>
+<ul><li>
+<strong>EC2 (Elastic Compute Cloud)</strong>: An AWS service that
 provides virtual machines (instances) on demand. These instances can be
 used to run applications, process data, or train machine learning
-models.</p></li>
-<li><p><strong>S3 (Simple Storage Service)</strong>: A scalable storage
-service where you can store datasets, models, and other files. S3 is
-commonly used to store data that will be processed by
-SageMaker.</p></li>
-<li><p><strong>S3 Bucket</strong>: A container in S3 where data is
-stored. Think of it like a folder, but with more scalability and
-security options. Data is accessed via unique S3 URIs (e.g.,
-<code>s3://your-bucket-name/your-file.csv</code>).</p></li>
-<li><p><strong>IAM (Identity and Access Management)</strong>: A service
+models.<br></li>
+<li>
+<strong>Auto Scaling</strong>: A feature that automatically adjusts
+the number of EC2 instances or other cloud resources based on demand to
+optimize cost and performance.<br></li>
+<li>
+<strong>Spot Instances</strong>: Discounted EC2 instances that take
+advantage of unused AWS capacity. These instances are cheaper but can be
+interrupted if AWS reclaims resources.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="account-governance-and-security">Account Governance and Security<a class="anchor" aria-label="anchor" href="#account-governance-and-security"></a></h3>
+<ul><li>
+<strong>IAM (Identity and Access Management)</strong>: A service
 that manages user permissions and security policies for AWS resources.
 It controls who can access SageMaker, S3, and EC2, and what actions they
-can perform.</p></li>
-<li><p><strong>SageMaker</strong>: A managed machine learning platform
-in AWS that provides tools for building, training, and deploying ML
-models. It simplifies the process of running ML workloads on the
-cloud.</p></li>
-<li><p><strong>SageMaker Notebook Instance</strong>: A Jupyter notebook
+can perform.<br></li>
+<li>
+<strong>IAM Role</strong>: A security identity in AWS that grants
+specific permissions to users, applications, or services. Instead of
+assigning direct permissions to a user, an IAM role allows a service
+like SageMaker or EC2 to access other AWS resources (e.g., an EC2
+instance reading data from an S3 bucket).
+<ul><li>
+<strong>Relation to Bucket Policy</strong>: IAM roles grant
+permissions at the AWS account level, while bucket policies control
+access at the bucket level. Both must be configured correctly for secure
+and functional data access.<br></li>
+</ul></li>
+<li>
+<strong>Bucket Policy</strong>: A set of rules attached to an S3
+bucket that define access permissions. Bucket policies allow
+administrators to specify who can read, write, or manage objects in a
+bucket. They work in conjunction with IAM roles—<strong>a user or
+service must have both IAM role permissions and a bucket policy that
+grants access</strong> to perform actions on an S3 bucket.<br></li>
+<li>
+<strong>Access Control List (ACLs)</strong>: A legacy method for
+defining access to individual objects in an S3 bucket. AWS now
+recommends using <strong>bucket policies and IAM roles</strong> for
+managing access more securely.<br></li>
+<li>
+<strong>AWS Organizations</strong>: A management service that allows
+multiple AWS accounts to be grouped together under a central
+organization, enabling consolidated billing and centralized policy
+enforcement.<br></li>
+<li>
+<strong>Service Quotas</strong>: AWS places default limits on the
+usage of certain resources (e.g., maximum number of EC2 instances).
+Service quotas can be increased upon request, but understanding these
+limits helps prevent unexpected interruptions.<br></li>
+<li>
+<strong>Billing Alerts</strong>: AWS allows users to set cost
+monitoring and budget alerts to track spending and avoid unexpected
+charges.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="data-storage-and-management">Data Storage and Management<a class="anchor" aria-label="anchor" href="#data-storage-and-management"></a></h3>
+<ul><li>
+<strong>S3 (Simple Storage Service)</strong>: A scalable storage
+service where you can store datasets, models, and other files. S3 is
+commonly used to store data that will be processed by SageMaker.<br></li>
+<li>
+<strong>S3 Bucket</strong>: A container in S3 where data is stored.
+Think of it like a folder, but with more scalability and security
+options. Data is accessed via unique S3 URIs (e.g.,
+<code>s3://your-bucket-name/your-file.csv</code>).<br></li>
+<li>
+<strong>S3 URI</strong>: A unique identifier for an object in an S3
+bucket, used for referencing data in AWS services like SageMaker.<br></li>
+<li>
+<strong>Elastic Block Store (EBS)</strong>: Persistent storage
+volumes attached to EC2 instances. Unlike S3, which is an object store,
+EBS provides block-level storage and is commonly used for databases or
+applications requiring high-speed storage.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="sagemaker-and-machine-learning-workflows">SageMaker and Machine Learning Workflows<a class="anchor" aria-label="anchor" href="#sagemaker-and-machine-learning-workflows"></a></h3>
+<ul><li>
+<strong>SageMaker</strong>: A managed machine learning platform in
+AWS that provides tools for building, training, and deploying ML models.
+It simplifies the process of running ML workloads on the cloud.<br></li>
+<li>
+<strong>SageMaker Notebook Instance</strong>: A Jupyter notebook
 environment hosted on AWS. It provides a pre-configured setup for
 writing and running Python code, accessing data, and training
-models.</p></li>
-<li><p><strong>Controller</strong>: In this workshop, we use the term
+models.<br></li>
+<li>
+<strong>Controller</strong>: In this workshop, we use the term
 “controller” to describe how a SageMaker Notebook Instance is used to
 launch and manage training jobs, inference endpoints, and other AWS
 services. Rather than performing all computations within the notebook
 itself, the notebook acts as a high-level interface to configure and
-execute cloud-based ML workflows.</p></li>
-<li><p><strong>SageMaker Training Job</strong>: A managed process in
+execute cloud-based ML workflows.<br></li>
+<li>
+<strong>SageMaker Training Job</strong>: A managed process in
 SageMaker where a model is trained on a specified dataset using EC2
 instances. Training jobs can be configured to use GPUs or multiple
-instances for scalability.</p></li>
-<li><p><strong>Hyperparameter Tuning Job (HPO)</strong>: A SageMaker
+instances for scalability.<br></li>
+<li>
+<strong>Hyperparameter Tuning Job (HPO)</strong>: A SageMaker
 feature that automatically tests different hyperparameter values to find
-the best-performing model configuration.</p></li>
-<li><p><strong>Docker Container</strong>: A lightweight environment that
-packages ML models, dependencies, and code together, ensuring
-consistency when running models across different machines, including
-SageMaker.</p></li>
+the best-performing model configuration.</li>
 </ul><!--
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
- --></section></div> <!-- / div.lesson-content -->
+ --></div>
+</section></div> <!-- / div.lesson-content -->
     </main><!-- / main#main-content.main-content --><nav class="bottom-pagination mx-md-4" aria-label="Previous and Next Chapter"><div class="d-block d-sm-block d-md-none">
         <a class="chapter-link" href="index.html"><i aria-hidden="true" class="small-arrow" data-feather="arrow-left"></i>Previous</a>
         <a class="chapter-link float-end" href="index.html">Next<i aria-hidden="true" class="small-arrow" data-feather="arrow-right"></i></a>
@@ -468,7 +560,7 @@ any links that you are not going to use.
   "url": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/reference.html",
   "identifier": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/reference.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2025-03-06",
+  "dateModified": "2025-03-07",
   "datePublished": "2025-03-07"
 }
 
