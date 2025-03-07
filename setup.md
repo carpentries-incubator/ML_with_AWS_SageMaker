@@ -2,12 +2,20 @@
 title: Setup
 ---
 
-## Accounts and Initial Setup
+## Setup (Complete Before The Workshop)
+Before attending this workshop, you'll need to complete a few setup steps to ensure you can follow along smoothly. The main requirements are:
 
-### GitHub Account
+1. **GitHub Account** – Create an account and be ready to fork a repository.
+2. **AWS Access** – Use a **shared AWS account** (if attending the 2025 Research Bazaar) or sign up for an AWS Free Tier account.
+3. **Titanic Dataset** – Download the required CSV files in advance.
+4. **Workshop Repository** – Fork the provided GitHub repository for use in AWS.
+
+Details on each step are outlined below.
+
+### 1. GitHub Account
 You will need a GitHub account to access the code provided during this lesson. If you don't already have a GitHub account, please [sign up for GitHub](https://github.com/) to create a free account. Don't worry if you're a little rusty on using GitHub/git; we will only use a couple of git commands during the lesson, and the instructor will provide guidance on these steps.
 
-### AWS Account 
+### 2. AWS Account 
 There are two ways to get access to AWs for this lesson. Please wait for a pre-workshop email from the instructor to confirm which option to choose.
 
 #### Option 1) Shared Account
@@ -25,7 +33,7 @@ If you are attending this lesson as part of the 2025 Research Bazaar, we will pr
 
 Once your AWS account is set up, log in to the **AWS Management Console** to get started with SageMaker.
 
-## Data Sets
+### 3. Download the Data
 
 For this workshop, you will need the **Titanic dataset**. Please download the following files by right clicking each and selecting `Save as`. Make sure to save them out as .csvs:
 
@@ -34,14 +42,14 @@ For this workshop, you will need the **Titanic dataset**. Please download the fo
 
 Save these files to a location where they can easily be accessed. In the first episode, you will create an S3 bucket and upload this data to use with SageMaker.
 
-## Workshop Repository Setup
+### 4. Get Access To Workshop Code (Fork GitHub Repo)
 
 You will need a copy of our AWS_helpers repo on GitHub to explore how to manage your repo in AWS. This setup will allow you to follow along with the workshop and test out the Interacting with Repositories episode.
 
 To do this:
 
 1. Go to the [AWS_helpers GitHub repository](https://github.com/UW-Madison-DataScience/AWS_helpers).
-2. Click **Fork** (top right) to create your own copy of the repository under your GitHub account.
+2. Click **Fork** (top right) to create your own copy of the repository under your GitHub account. 
 3. Once forked, you don't need to do anything else. We'll clone this fork once we start working in the AWS Jupyter environment using...
 
 ```python
