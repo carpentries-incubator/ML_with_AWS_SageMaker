@@ -102,7 +102,7 @@ Once the bucket is created, you'll be brought to a page that shows all of your c
 
 1. Click on the name of your bucket to bring up additional options and settings.
 2. Click the Permissions tab
-3. Scroll down to Bucket policy and click Edit. Paste the following policy, **editing the bucket name "myawesometeam-titanic"** to reflect your bucket's name
+3. Scroll down to Bucket policy and click Edit. Paste the following policy, **editing the bucket name "doejohn-titanic-s3"** to reflect your bucket's name
 
 ```json
 {
@@ -120,8 +120,8 @@ Once the bucket is created, you'll be brought to a page that shows all of your c
 				"s3:ListMultipartUploadParts"
 			],
 			"Resource": [
-				"arn:aws:s3:::myawesometeam-titanic",
-				"arn:aws:s3:::myawesometeam-titanic/*"
+				"arn:aws:s3:::doejohn-titanic-s3",
+				"arn:aws:s3:::doejohn-titanic-s3/*"
 			]
 		}
 	]
@@ -132,12 +132,12 @@ For workshop attendees, this policy grants the `ml-sagemaker-use` IAM role acces
 
 ::::::::::::::::::::::::::::::::::::: callout 
 
-### General guidance for setting up permissions outside of this workshop
-For those not participating in the hackathon, it’s essential to create a similar IAM role (such as `ml-sagemaker-use`) with policies that provide controlled access to S3 resources, ensuring only the necessary actions are permitted for security and cost-efficiency.
+#### General guidance for setting up permissions outside of this workshop
+When setting up a bucket outside of this workshop, it's essential to create a similar IAM role (such as `ml-sagemaker-use`) with policies that provide controlled access to S3 resources, ensuring only the necessary actions are permitted for security and cost-efficiency.
  
 a. **Create an IAM role**: Set up an IAM role for SageMaker to assume, with necessary S3 access permissions, such as `s3:GetObject`, `s3:PutObject`, `s3:DeleteObject`, and `s3:ListMultipartUploadParts`, as shown in the policy above.
  
-b. **Attach permissions to S3 buckets**: Attach bucket policies that specify this role as the principal, as in the hackathon example.
+b. **Attach permissions to S3 buckets**: Attach bucket policies that specify this role as the principal, as in our bucket policy above
  
 c. **More information**: For a detailed guide on setting up roles and policies for SageMaker, refer to the [AWS SageMaker documentation on IAM roles and policies](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html). This resource explains role creation, permission setups, and policy best practices tailored for SageMaker’s operations with S3 and other AWS services.
  
@@ -146,9 +146,11 @@ This setup ensures that your SageMaker operations will have the access needed wi
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ##### 5. Upload files to the bucket
+- If you haven't downloaded these files yet (part of workshop setup), right-click and save as .csv:
+	- [titanic_train.csv](https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/data/titanic_train.csv)
+	- [titanic_test.csv](https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/data/titanic_test.csv)
 - Navigate to the Objects tab of your bucket, then **Upload**.
-- **Add Files** (e.g., `titanic_train.csv`, `titanic_test.csv`) and click **Upload** to complete.
-
+- **Add Files** (`titanic_train.csv`, `titanic_test.csv`) and click **Upload** to complete.
 
 ##### 6. Take note of S3 URI for your data
 - After uploading, click on a file to find its **Object URI** (e.g., `s3://titanic-dataset-test/test.csv`). We'll use this URI to load data into SageMaker later.
