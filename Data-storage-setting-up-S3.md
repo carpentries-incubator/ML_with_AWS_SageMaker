@@ -153,7 +153,7 @@ This setup ensures that your SageMaker operations will have the access needed wi
 - **Add Files** (`titanic_train.csv`, `titanic_test.csv`) and click **Upload** to complete.
 
 ##### 6. Take note of S3 URI for your data
-- After uploading, click on a file to find its **Object URI** (e.g., `s3://titanic-dataset-test/test.csv`). We'll use this URI to load data into SageMaker later.
+- After uploading a file to S3, click on the file to locate its **Object URI** (e.g., s3://doejohn-titanic-s3/titanic_train.csv). The Uniform Resource Identifier (URI) is a unique address that specifies the location of the file within S3. This URI is essential for referencing data in AWS services like SageMaker, where it will be used to load data for processing and model training.
 
 ## S3 bucket costs
 
