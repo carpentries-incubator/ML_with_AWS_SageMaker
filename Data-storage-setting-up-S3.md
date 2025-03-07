@@ -161,31 +161,28 @@ S3 bucket storage incurs costs based on data storage, data transfer, and request
 
 ### Storage costs
 - Storage is charged per GB per month. Typical: Storing 10 GB costs approximately $0.23/month in S3 Standard (us-east-1).
-- Pricing Tiers: S3 offers multiple storage classes (Standard, Intelligent-Tiering, Glacier, etc.), with different costs based on access frequency and retrieval times. Standard S3 fits most purposes. If you're curious about other tiers, refer to AWS's [S3 Pricing Information](https://aws.amazon.com/s3/pricing/).
-- To calculate specific costs based on your needs, storage class, and region, refer to AWS's [S3 Pricing Information](https://aws.amazon.com/s3/pricing/).
+- Pricing Tiers: S3 offers multiple storage classes (Standard, Intelligent-Tiering, Glacier, etc.), with different costs based on access frequency and retrieval times. Standard S3 fits most purposes. 
 
 ### Data transfer costs
 - **Uploading** data to S3 is free.
 - **Downloading** data (out of S3) incurs charges (~$0.09/GB). Be sure to take note of this fee, as it can add up fast for large datasets.
 - **In-region transfer** (e.g., S3 to EC2) is free, while cross-region data transfer is charged (~$0.02/GB).
 
-> **[Data transfer pricing](https://aws.amazon.com/s3/pricing/)**
-
 ### Request costs
 - GET requests are $0.0004 per 1,000 requests. In the context of Amazon S3, "GET" requests refer to the action of retrieving or downloading data from an S3 bucket. Each time a file or object is accessed in S3, it incurs a small cost per request. This means that if you have code that reads data from S3 frequently, such as loading datasets repeatedly, each read operation counts as a GET request.
 
-> **[Request Pricing](https://aws.amazon.com/s3/pricing/)**
+***To calculate specific costs based on your needs, storage class, and region, refer to AWS's [S3 Pricing Information](https://aws.amazon.com/s3/pricing/).***
 
 ::::::::::::::::::::::::::::::::::::: challenge 
 
-### Challenge Exercise: Calculate Your Project's Data Costs
+### Challenge: Calculate Your Project's Data Costs
 
 Estimate the total cost of storing your project data in S3 for one month, using the following dataset sizes and assuming:
 
 - Storage duration: 1 month
 - Storage region: us-east-1
 - Storage class: S3 Standard
-- Data will be retrieved 100 times for model training (`GET` requests)
+- Data will be retrieved 100 times for model training and tuning (`GET` requests)
 - Data will be deleted after the project concludes, incurring data retrieval and deletion costs
 
 Dataset sizes to consider:
@@ -197,9 +194,9 @@ Dataset sizes to consider:
 
 **Hints**
 
-- S3 storage cost: $0.023 per GB per month (us-east-1)
-- Data transfer cost (retrieval/deletion): $0.09 per GB (us-east-1 out to internet)
-- `GET` requests cost: $0.0004 per 1,000 requests (each model training will incur one `GET` request)
+1. S3 storage cost: $0.023 per GB per month (us-east-1)
+2. Data transfer cost (retrieval/deletion): $0.09 per GB (us-east-1 out to internet)
+3. `GET` requests cost: $0.0004 per 1,000 requests (each model training will incur one `GET` request)
 
 Check the [AWS S3 Pricing](https://aws.amazon.com/s3/pricing/) page for more details.
 
@@ -239,22 +236,17 @@ These costs assume no additional request charges beyond those for retrieval, sto
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-## Removing unused data
+## Removing unused data (complete *after* the workshop)
 
 Choose one of these options:
 
-### Option 1: Delete data only
-- **When to Use**: You plan to reuse the bucket.
-- **Steps**:
-   - Go to S3, navigate to the bucket.
-   - Select files to delete, then **Actions > Delete**.
-   - **CLI** (optional): `!aws s3 rm s3://your-bucket-name --recursive`
+### Option 1: Delete data only (if you plan to reuse bucket for other datasets)
+- Go to S3, navigate to the bucket.
+- Select files to delete, then **Actions > Delete**.
 
-### Option 2: Delete the S3 bucket entirely
-- **When to Use**: You no longer need the bucket or data.
-- **Steps**:
-   - Select the bucket, click **Actions > Delete**.
-   - Type the bucket name to confirm deletion.
+### Option 2: Delete the S3 bucket entirely (you no longer need the bucket or data)
+- Select the bucket, click **Actions > Delete**.
+- Type the bucket name to confirm deletion.
 
 Deleting the bucket stops all costs associated with storage, requests, and data transfer.
 
