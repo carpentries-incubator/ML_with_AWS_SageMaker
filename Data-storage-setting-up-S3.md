@@ -73,20 +73,17 @@ In order to upload our titanic dataset to an S3 bucket on AWS, we'll follow the 
 
 ### Detailed procedure
 
-1. **Sign in to the AWS Management Console**
-   - Log in to AWS Console using your credentials.
+#### 1. Sign in to the AWS Management Console
+- Log in to AWS Console using your credentials.
 
 
-2. **Navigate to S3**
-   - Type "S3" in the search bar
-   - Protip: Select the star icon to save S3 as a bookmark in your AWS toolbar 
-   - Select **S3 - Scalable Storage in the Cloud**
+#### 2. Navigate to S3
+- Type "S3" in the search bar
+- Protip: Select the star icon to save S3 as a bookmark in your AWS toolbar 
+- Select **S3 - Scalable Storage in the Cloud**
 
 3. **Create a new bucket**
    - Click **Create Bucket** and enter a unique name, and note that bucket name must not contain uppercase characters. To easily find this bucket later in our shared AWS account, please use the following naming convention: `yourname-titanic-s3` (e.g., doejohn-titanic-s3).
-
-   - **Region**: Select the AWS region closest to your users or compute resources to minimize latency and reduce data transfer costs (a good option for UW-Madison users is typically us-east-1).
-
    - **Access Control (ACLs)**: Disable ACLs (recommended).  
      - **What are ACLs?** Access Control Lists (ACLs) define fine-grained permissions at the object level, allowing you to grant specific users or AWS accounts access to individual files in your bucket.  
      - **Why disable them?** AWS now recommends managing access through bucket policies and IAM roles, which offer better security and are easier to manage at scale. Unless you have a specific need for ACLs, disabling them is the best practice.
