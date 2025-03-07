@@ -1,8 +1,7 @@
 ---
-title: 'Glossary'
+title: Glossary
 ---
 
-## 
 Understanding the terminology used in cloud computing and AWS is half the battle when working with SageMaker. Familiarity with key concepts will help you navigate AWS services, configure machine learning workflows, and troubleshoot issues more efficiently.  
 
 We encourage you to briefly study this glossary before the workshop and refer back to it as needed. While we'll go over these terms throughout the workshop, early exposure will be helpful in building your understanding and making the hands-on exercises smoother.  
