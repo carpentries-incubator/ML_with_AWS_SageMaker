@@ -51,20 +51,20 @@ Storing data in an **S3 bucket** is generally preferred for machine learning wor
 ::::::::::::::::::::::::::::::::::::: callout 
 
 ### Benefits of using S3 (recommended for SageMaker and ML workflows)
-For flexibility, scalability, and cost efficiency, store data in S3 and load it into EC2 as needed. This setup allows:
+For flexibility, scalability, and cost efficiency, store data in S3 and load it into EC2 as needed. This setup allows:  
 
-- **Scalability**: S3 handles large datasets efficiently, enabling storage beyond the limits of an EC2 instance's disk space.
-- **Cost efficiency**: S3 storage costs are generally lower than expanding EC2 disk volumes. You only pay for the storage you use.
-- **Separation of storage and compute**: You can start and stop EC2 instances without losing access to data stored in S3.
-- **Integration with AWS services**: SageMaker can read directly from and write back to S3, making it ideal for AWS-based workflows.
-- **Easy data sharing**: Datasets in S3 are easier to share with team members or across projects compared to EC2 storage.
-- **Cost-effective data transfer**: When S3 and EC2 are in the same region, data transfer between them is free.
+- **Separation of storage and compute**: The most essential advantage. Data in S3 remains accessible even when EC2 instances are stopped or terminated, reducing costs and improving workflow flexibility.
+- **Easy data sharing**: Datasets in S3 are easier to share with team members or across projects compared to EC2 storage.  
+- **Integration with AWS services**: SageMaker, Lambda, and other AWS services can read directly from and write back to S3, streamlining ML workflows.  
+- **Scalability**: S3 handles large datasets efficiently, enabling storage beyond the limits of an EC2 instance's disk space.  
+- **Cost efficiency**: S3 storage is generally lower cost than expanding EC2 disk volumes, and you only pay for the storage you use.  
+- **Data persistence**: Unlike EC2 storage, which can be lost if an instance is terminated, S3 ensures long-term data availability.  
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## Recommended approach: S3 buckets
 
-### Summary steps to access S3 and upload your dataset
+In order to upload our titanic dataset to an S3 bucket on AWS, we'll follow the below summary procedure (details follow):
 
 1. Log in to AWS Console and navigate to S3.
 2. Create a new bucket or use an existing one.
@@ -79,18 +79,27 @@ For flexibility, scalability, and cost efficiency, store data in S3 and load it 
 
 2. **Navigate to S3**
    - Type "S3" in the search bar
-   - Protip: select the star icon to save S3 as a bookmark in your AWS toolbar 
+   - Protip: Select the star icon to save S3 as a bookmark in your AWS toolbar 
    - Select **S3 - Scalable Storage in the Cloud**
 
 3. **Create a new bucket**
-   - Click **Create Bucket** and enter a unique name, and note that bucket name must not contain uppercase characters. To easily find this bucket later in our shared AWS account, please use the following naming convention: `yourname-titanic` (e.g., doejohn-titanic)
-   - **Region**: Select the AWS region closest to your users or compute resources to minimize latency and reduce data transfer costs (a good option for UW-Madison users is typically us-east-1)
-   - **Access Control**: Disable ACLs (recommended).
-   - **Public Access**: Turn on "Block all public access".
-   - **Versioning**: Disable unless you need multiple versions of objects.
-   - **Tags**: Adding tags to your S3 buckets is a great way to track project-specific costs and usage over time, especially as data and resources scale up. To easily track costs associated with your bucket in our shared AWS account, the following tags will work:
-      - **Name**: Your Name
-      - **Purpose**: titanic-S3-bucket
+   - Click **Create Bucket** and enter a unique name, and note that bucket name must not contain uppercase characters. To easily find this bucket later in our shared AWS account, please use the following naming convention: `yourname-titanic-s3` (e.g., doejohn-titanic-s3).
+
+   - **Region**: Select the AWS region closest to your users or compute resources to minimize latency and reduce data transfer costs (a good option for UW-Madison users is typically us-east-1).
+
+   - **Access Control (ACLs)**: Disable ACLs (recommended).  
+     - **What are ACLs?** Access Control Lists (ACLs) define fine-grained permissions at the object level, allowing you to grant specific users or AWS accounts access to individual files in your bucket.  
+     - **Why disable them?** AWS now recommends managing access through bucket policies and IAM roles, which offer better security and are easier to manage at scale. Unless you have a specific need for ACLs, disabling them is the best practice.
+
+   - **Public Access**: Turn on "Block all public access" (recommended). This setting prevents unauthorized access and accidental data exposure. If you need external access, use IAM policies or signed URLs instead.
+       
+   - **Versioning**: Disable unless you need multiple versions of objects.  
+     - **Enable only if needed**, as versioning increases storage costs.  
+     - Useful when tracking changes to datasets over time but unnecessary for static datasets.  
+
+   - **Tags**: Adding tags to your S3 buckets is a great way to track project-specific costs and usage over time, especially as data and resources scale up. To easily track costs associated with your bucket in our shared AWS account, add the following fields:
+      - **Project**: titanic-bucket
+      - **Owner**: yourname
       ![Example of Tags for an S3 Bucket](https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/images/bucket_tags.PNG){alt="Screenshot showing required tags for an S3 bucket"}
 
    - Click **Create Bucket** at the bottom once everything above has been configured
@@ -127,11 +136,11 @@ Once the bucket is created, you'll be brought to a page that shows all of your c
 }
 ```
 
-For hackathon attendees, this policy grants the `ml-sagemaker-use` IAM role access to specific S3 bucket actions, ensuring they can use the bucket for reading, writing, deleting, and listing parts during multipart uploads. Attendees should apply this policy to their buckets to enable SageMaker to operate on stored data.
+For workshop attendees, this policy grants the `ml-sagemaker-use` IAM role access to specific S3 bucket actions, ensuring they can use the bucket for reading, writing, deleting, and listing parts during multipart uploads. Attendees should apply this policy to their buckets to enable SageMaker to operate on stored data.
 
 ::::::::::::::::::::::::::::::::::::: callout 
 
-### General guidance for setting up permissions outside the hackathon
+### General guidance for setting up permissions outside of this workshop
 For those not participating in the hackathon, it’s essential to create a similar IAM role (such as `ml-sagemaker-use`) with policies that provide controlled access to S3 resources, ensuring only the necessary actions are permitted for security and cost-efficiency.
  
 a. **Create an IAM role**: Set up an IAM role for SageMaker to assume, with necessary S3 access permissions, such as `s3:GetObject`, `s3:PutObject`, `s3:DeleteObject`, and `s3:ListMultipartUploadParts`, as shown in the policy above.
