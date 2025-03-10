@@ -982,7 +982,7 @@ sizes: 10 GB, 100 GB, 1 TB</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -1441,16 +1441,28 @@ strategies.</p>
 in S3 and reading it into memory when needed, we avoid local storage
 constraints and ensure that our data remains accessible for SageMaker
 training and tuning jobs.</p>
-<p><strong>Pros</strong>: - <strong>Scalability</strong>: Data remains
-in S3, allowing multiple training/tuning jobs to access it without
-duplication. - <strong>Efficiency</strong>: No need to manage local
-copies or manually clean up storage. - <strong>Cost-effective</strong>:
-Avoids unnecessary instance storage usage.</p>
-<p><strong>Cons</strong>: - <strong>Network dependency</strong>:
-Requires internet access to S3. - <strong>Potential latency</strong>:
-Reading large datasets repeatedly from S3 may introduce small delays.
-This approach works best if you only need to load data once or
-infrequently.</p>
+<p><strong>Pros</strong>:</p>
+<ul>
+<li>
+<strong>Scalability</strong>: Data remains in S3, allowing multiple
+training/tuning jobs to access it without duplication.</li>
+<li>
+<strong>Efficiency</strong>: No need to manage local copies or
+manually clean up storage.</li>
+<li>
+<strong>Cost-effective</strong>: Avoids unnecessary instance storage
+usage.</li>
+</ul>
+<p><strong>Cons</strong>:</p>
+<ul>
+<li>
+<strong>Network dependency</strong>: Requires internet access to
+S3.</li>
+<li>
+<strong>Potential latency</strong>: Reading large datasets
+repeatedly from S3 may introduce small delays. This approach works best
+if you only need to load data once or infrequently.</li>
+</ul>
 <div class="section level4">
 <h4 id="example-reading-data-from-s3-into-memory">Example: Reading data from S3 into memory<a class="anchor" aria-label="anchor" href="#example-reading-data-from-s3-into-memory"></a>
 </h4>
@@ -1498,13 +1510,24 @@ actually downloading a copy of train.csv as a local file.</p>
 <p>In some cases, downloading a local copy of the dataset may be useful,
 such as when performing repeated reads in an interactive notebook
 session.</p>
-<p><strong>Pros</strong>: - <strong>Faster access for repeated
-operations</strong>: Avoids repeated S3 requests. - <strong>Works
-offline</strong>: Useful if running in an environment with limited
-network access.</p>
-<p><strong>Cons</strong>: - <strong>Consumes instance storage</strong>:
-Notebook instances have limited space. - <strong>Requires manual
-cleanup</strong>: Downloaded files remain until deleted.</p>
+<p><strong>Pros</strong>:</p>
+<ul>
+<li>
+<strong>Faster access for repeated operations</strong>: Avoids
+repeated S3 requests.</li>
+<li>
+<strong>Works offline</strong>: Useful if running in an environment
+with limited network access.</li>
+</ul>
+<p><strong>Cons</strong>:</p>
+<ul>
+<li>
+<strong>Consumes instance storage</strong>: Notebook instances have
+limited space.</li>
+<li>
+<strong>Requires manual cleanup</strong>: Downloaded files remain
+until deleted.</li>
+</ul>
 <div class="section level4">
 <h4 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h4>
