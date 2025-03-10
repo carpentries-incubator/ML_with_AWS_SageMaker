@@ -176,7 +176,7 @@ Here's how to add `.ipynb` files to `.gitignore` to ignore them project-wide:
 
 ```python
 with open(".gitignore", "a") as gitignore:
-gitignore.write("\n# Ignore all Jupyter Notebook files\n*.ipynb\n")
+	gitignore.write("\n# Ignore all Jupyter Notebook files\n*.ipynb\n")
 ```
 
 View file contents
@@ -189,7 +189,7 @@ While we're at it, let's ignore other common files that can clutter repos, such 
 
 ```python
 with open(".gitignore", "a") as gitignore:
-gitignore.write("\n# Ignore cache and temp files\n__pycache__/\n*.tmp\n*.log\n")
+	gitignore.write("\n# Ignore cache and temp files\n__pycache__/\n*.tmp\n*.log\n")
 ```
 
 View file contents
@@ -235,9 +235,6 @@ If you're collaborating and want simplicity, **merge (pull.rebase false)** is of
 !git config pull.rebase false # Combines the remote changes into your local branch as a merge commit.
 !git pull origin main
 ```
-    From https://github.com/qualiaMachine/AWS_helpers
-     * branch            main       -> FETCH_HEAD
-    Already up to date.
 
 If you get merge conflicts, be sure to resolve those before moving forward (e.g., use git checkout -> add -> commit). You can skip the below code if you don't have any conflicts. 
 
