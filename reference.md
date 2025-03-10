@@ -42,7 +42,7 @@ We encourage you to briefly study this glossary before the workshop and refer ba
 ### SageMaker and Machine Learning Workflows  
 
 * **SageMaker**: A managed machine learning platform in AWS that provides tools for building, training, and deploying ML models. It simplifies the process of running ML workloads on the cloud.  
-* **SageMaker Notebook Instance**: A Jupyter notebook environment hosted on AWS. It provides a pre-configured setup for writing and running Python code, accessing data, and training models.  
+* **SageMaker Notebook Instance** or **Notebook Instance** for short: A Jupyter notebook environment hosted on AWS. It provides a pre-configured setup for writing and running Python code, accessing data, and training models.  
 * **Controller**: In this workshop, we use the term "controller" to describe how a SageMaker Notebook Instance is used to launch and manage training jobs, inference endpoints, and other AWS services. Rather than performing all computations within the notebook itself, the notebook acts as a high-level interface to configure and execute cloud-based ML workflows.  
 * **SageMaker Training Job**: A managed process in SageMaker where a model is trained on a specified dataset using EC2 instances. Training jobs can be configured to use GPUs or multiple instances for scalability. 
 * **Hyperparameter Tuning Job (HPO)**: A SageMaker feature that automatically tests different hyperparameter values to find the best-performing model configuration.  
