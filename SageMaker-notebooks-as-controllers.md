@@ -19,13 +19,12 @@ exercises: 10
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-## Step 2: Running Python code with SageMaker notebooks
-Amazon SageMaker provides a managed environment to simplify the process of building, training, and deploying machine learning models. By using SageMaker, you can focus on model development without needing to manually provision resources or set up environments. In this episode, we’ll guide you through setting up a **SageMaker notebook instance**—a Jupyter notebook hosted on AWS specifically for running SageMaker jobs. This setup allows you to efficiently manage and monitor machine learning workflows directly from a lightweight notebook controller. We’ll also cover loading data in preparation for model training and tuning in future episodes, using the Titanic dataset stored in S3.
+## Setting up our notebook environment
+Amazon SageMaker provides a managed environment to simplify the process of building, training, and deploying machine learning models. In this episode, we'll set up a **SageMaker notebook instance**—a Jupyter notebook hosted on AWS for managing SageMaker workflows. 
 
 ### Using the notebook as a controller
-In this setup, the notebook instance functions as a *controller* to manage more resource-intensive compute tasks. By selecting a minimal instance (e.g., `ml.t3.medium`) for the notebook, you can perform lightweight operations and leverage the **SageMaker Python SDK** to launch more powerful, scalable compute instances when needed for model training, batch processing, or hyperparameter tuning. This approach minimizes costs by keeping your controller instance lightweight while accessing the full power of SageMaker for demanding tasks.
+In this setup, the notebook instance functions as a *controller* to manage more resource-intensive compute tasks. By selecting a minimal instance (e.g., `ml.t3.medium`), you can perform lightweight operations while leveraging the **SageMaker Python SDK** to launch scalable compute instances for model training, batch processing, and hyperparameter tuning. This approach minimizes costs while accessing the full power of SageMaker for demanding tasks.
 
-### Setting up the notebook
 We'll follow these steps to create our first "SageMaker notebook instance".
 
 #### 1. Navigate to SageMaker
@@ -56,7 +55,7 @@ We'll follow these steps to create our first "SageMaker notebook instance".
 
 In the next couple expisodes, we'll use the **SageMaker Python SDK** within the notebook to launch compute-heavy tasks on more powerful instances as needed. Examples of tasks to launch include:
 
-- **Training a model**: Use the SDK to submit a training job, specifying a higher-powered instance (e.g., `ml.p2.xlarge` or `ml.m5.4xlarge`) based on your model’s resource requirements.
+- **Training a model**: Use the SDK to submit a training job, specifying a higher-powered instance (e.g., `ml.p2.xlarge` or `ml.m5.4xlarge`) based on your model's resource requirements.
 - **Hyperparameter tuning**: Configure and launch tuning jobs, allowing SageMaker to automatically manage multiple powerful instances for optimal tuning.
 
 This setup allows you to control costs by keeping the notebook instance minimal and only incurring costs for larger instances when they are actively training or tuning models. Detailed guidance on training, tuning, and batch processing will follow in later episodes.
