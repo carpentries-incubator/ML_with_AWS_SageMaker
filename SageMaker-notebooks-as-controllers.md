@@ -25,7 +25,8 @@ Amazon SageMaker provides a managed environment to simplify the process of build
 ### Using the notebook as a controller
 In this setup, the notebook instance functions as a *controller* to manage more resource-intensive compute tasks. By selecting a minimal instance (e.g., `ml.t3.medium`) for the notebook, you can perform lightweight operations and leverage the **SageMaker Python SDK** to launch more powerful, scalable compute instances when needed for model training, batch processing, or hyperparameter tuning. This approach minimizes costs by keeping your controller instance lightweight while accessing the full power of SageMaker for demanding tasks.
 
-### Detailed procedure
+### Setting up the notebook
+We'll follow these steps to create our first "SageMaker notebook instance".
 
 #### 1. Navigate to SageMaker
 - In the AWS Console, search for **SageMaker**.
