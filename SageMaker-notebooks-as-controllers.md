@@ -46,7 +46,7 @@ We'll follow these steps to create our first "SageMaker notebook instance".
    - **Encryption key (skip)**: While we won't use this feature for the workshop, it is possible to specify a KMS key for encrypting data at rest if needed. 
 - **Network (skip)**: Networking settings are optional. Configure them if you're working within a specific VPC or need network customization.
 - **Git repositories configuration (skip)**: You don't need to complete this configuration. Instead, we'll run a clone command from our notebook later to get our repo setup. This approach is a common strategy (allowing some flexiblity in which repo you use for the notebook).
-- **Tags**: Adding tags helps track and organize resources for billing and management. This is particularly useful when you need to break down expenses by project, task, or team. To help track costs on our shared account, please use the tags found in the below image.
+- **Tags (NOT OPTIONAL)**: Adding tags helps track and organize resources for billing and management. This is particularly useful when you need to break down expenses by project, task, or team. To help track costs on our shared account, please use the tags found in the below image.
 
 ![Tag Setup Example](https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/images/notebook_tags.PNG)
 
