@@ -441,9 +441,6 @@ print(f"Test Set Accuracy: {accuracy:.4f}")
 
 ```
 
-    Test Set Accuracy: 0.8156
-
-
 Now that we've covered training using a custom script with the `XGBoost` estimator, let's examine the built-in image-based approach. Using SageMaker's pre-configured XGBoost image streamlines the setup by eliminating the need to manage custom scripts for common workflows, and it can also provide optimization advantages. Below, we'll discuss both the code and pros and cons of the image-based setup compared to the custom script approach.
 
 ## Training with SageMaker's Built-in XGBoost Image
