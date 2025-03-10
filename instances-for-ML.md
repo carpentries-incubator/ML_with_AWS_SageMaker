@@ -2,16 +2,14 @@
 title: Instances for ML
 ---
 
-The below table provides recommendations for selecting AWS instances based on dataset size, computational needs, and cost considerations.
+The below table provides general recommendations for selecting AWS instances based on dataset size, computational needs, and cost considerations.
 
-#### Notes:
-- **Minimum RAM should be at least equal to dataset size** unless using batch processing
-- **Deep learning models** can process large datasets in batches, reducing RAM needs.
-- **Large tabular/text datasets** often require in-memory processing, so instances with high RAM (1.5× dataset size) are recommended.
+#### Genearl Notes:
+- **Minimum RAM** should be at least 1.5X dataset size unless using batch processing (common in deep learning).
+- The **m5** and **c5** instances are optimized for CPU-heavy tasks, such as preprocessing, feature engineering, and model training without GPUs.
 - **GPU choices** depend on the task (T4 for cost-effective DL, V100/A100 for high performance).
 - The **g4dn** instances are cost-effective GPU options, suitable for moderate-scale deep learning tasks.
 - The **p3** instances offer high-performance GPU processing, best suited for large deep learning models requiring fast training times.
-- The **m5** and **c5** instances are optimized for CPU-heavy tasks, such as preprocessing, feature engineering, and model training without GPUs.
 
 | **Dataset Size** | **Recommended Instance Type** | **vCPU** | **Memory (GiB)** | **GPU** | **Price per Hour (USD)** | **Suitable Tasks** |
 |-----------------|------------------------------|----------|------------------|---------|--------------------------|--------------------|
@@ -30,5 +28,5 @@ The below table provides recommendations for selecting AWS instances based on da
 | 100GB         | `p3.8xlarge` (V100 GPU)       | 32       | 244              | 4x NVIDIA V100 | **$15.20** | High-performance GPU processing for large deep learning models (e.g., transformers, CNNs) |
 | 100GB         | `p4d.24xlarge` (A100 GPU)      | 96       | 1,152            | 8x NVIDIA A100 | **$32.77** | High-performance DL for large datasets with batch streaming |
 | 1TB+         | `p3.16xlarge` (V100 GPU)       | 64       | 488              | 8x NVIDIA V100 | **$30.40** | Extreme-scale deep learning, large transformer training |
-| 1TB+         | `p4d.24xlarge` (A100 GPU)      | 96       | 1,152            | 8x NVIDIA A100 | **$32.77** | **Deep learning with batch processing for 1TB+ datasets** |
+| 1TB+         | `p4d.24xlarge` (A100 GPU)      | 96       | 1,152            | 8x NVIDIA A100 | **$32.77** | Deep learning with batch processing for 1TB+ datasets |
 
