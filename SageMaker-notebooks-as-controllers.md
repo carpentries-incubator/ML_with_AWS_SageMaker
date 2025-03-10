@@ -30,7 +30,7 @@ We'll follow these steps to create our first "SageMaker notebook instance".
 
 #### 1. Navigate to SageMaker
 - In the AWS Console, search for **SageMaker**.
-- Protip: select the star icon to save SageMaker as a bookmark in your AWS toolbar 
+- Recommended: Select the star icon to save SageMaker as a bookmark in your AWS toolbar 
 - Select **SageMaker - Build, Train, and Deploy Models**.
 
 #### 2. Create a new notebook instance
