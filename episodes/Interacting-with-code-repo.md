@@ -35,26 +35,29 @@ In the previous episode, we cloned our fork that we created during the [workshop
     /home/ec2-user/SageMaker
     
 ## Step 1: Using a GitHub personal access token (PAT) to push/pull from a SageMaker notebook
-When working in SageMaker notebooks, you may often need to push code updates to GitHub repositories. However, SageMaker notebooks are typically launched with temporary instances that don’t persist configurations, including SSH keys, across sessions. This makes HTTPS-based authentication, secured with a GitHub Personal Access Token (PAT), a practical solution. PATs provide flexibility for authentication and enable seamless interaction with both public and private repositories directly from your notebook. 
+When working in SageMaker notebooks, you may often need to push code updates to GitHub repositories. However, SageMaker notebooks are typically launched with temporary instances that don't persist configurations, including SSH keys, across sessions. This makes HTTPS-based authentication, secured with a GitHub Personal Access Token (PAT), a practical solution. PATs provide flexibility for authentication and enable seamless interaction with both public and private repositories directly from your notebook. 
 
 > **Important Note**: Personal access tokens are powerful credentials that grant specific permissions to your GitHub account. To ensure security, only select the minimum necessary permissions and handle the token carefully.
 
 #### Generate a personal access token (PAT) on GitHub
-1. Go to **Settings > Developer settings > Personal access tokens** on GitHub.
-2. Click **Generate new token**, select **Classic**.
-3. Give your token a descriptive name (e.g., "SageMaker Access Token") and set an expiration date if desired for added security.
-4. **Select the minimum permissions needed**:
+1. Go to **Settings** by clicking on your profile picture in the upper-right corner of GitHub.
+2. Click **Developer settings** at the very bottom of the left sidebar.
+3. Select **Personal access tokens**, then click **Tokens (classic)**.
+4. Click **Generate new token (classic)**.
+5. Give your token a descriptive name (e.g., "SageMaker Access Token") and set an expiration date if desired for added security.
+6. **Select the minimum permissions needed**:
    - **For public repositories**: Choose only **`public_repo`**.
    - **For private repositories**: Choose **`repo`** (full control of private repositories).
    - Optional permissions, if needed:
      - **`repo:status`**: Access commit status (if checking status checks).
      - **`workflow`**: Update GitHub Actions workflows (only if working with GitHub Actions).
-5. Generate the token and **copy it** (you won’t be able to see it again).
+7. Click **Generate token** and **copy it immediately**—you won't be able to see it again once you leave the page.
+
 
 > **Caution**: Treat your PAT like a password. Avoid sharing it or exposing it in your code. Store it securely (e.g., via a password manager like LastPass) and consider rotating it regularly.
 
 #### Use `getpass` to prompt for username and PAT
-The `getpass` library allows you to input your GitHub username and PAT without exposing them in the notebook. This approach ensures you’re not hardcoding sensitive information.
+The `getpass` library allows you to input your GitHub username and PAT without exposing them in the notebook. This approach ensures you're not hardcoding sensitive information.
 
 ```python
 import getpass
@@ -69,7 +72,7 @@ token = getpass.getpass("GitHub Personal Access Token (PAT): ")
 ## Step 2: Configure Git settings
 In your SageMaker or Jupyter notebook environment, run the following commands to set up your Git user information.
 
-Setting this globally (`--global`) will ensure the configuration persists across all repositories in the environment. If you’re working in a temporary environment, you may need to re-run this configuration after a restart.
+Setting this globally (`--global`) will ensure the configuration persists across all repositories in the environment. If you're working in a temporary environment, you may need to re-run this configuration after a restart.
 
 ```python
 !git config --global user.name "Your name" # This is your GitHub username (or just your name), which will appear in the commit history as the author of the changes.
@@ -82,9 +85,9 @@ We'd like to track our notebook files within our AWS_helpers fork. However, to a
 #### Benefits of converting to `.py` before Committing
 - **Cleaner version control**: `.py` files have cleaner diffs and are easier to review and merge in Git.
 - **Script compatibility**: Python files are more compatible with other environments and can run easily from the command line.
-- **Reduced repository size**: `.py` files are generally lighter than `.ipynb` files since they don’t store outputs or metadata.
+- **Reduced repository size**: `.py` files are generally lighter than `.ipynb` files since they don't store outputs or metadata.
 
-Here’s how to convert `.ipynb` files to `.py` in SageMaker without needing to export or download files.
+Here's how to convert `.ipynb` files to `.py` in SageMaker without needing to export or download files.
 
 1. First, install Jupytext.
 ```python
@@ -123,11 +126,14 @@ import AWS_helpers.helpers as helpers
 helpers.convert_files(direction="notebook_to_python")
 ```
 
-**Once converted, we can move our .py files to the AWS_helpers folder using the file explorer panel in Jupyter Lab.**
+**Once converted, move our new .py file to the AWS_helpers folder using the file explorer panel in Jupyter Lab.**
 
 ## Step 4. Add and commit .py files
 
 1. Check status of repo. Make sure you're in the repo folder before running the next step.
+```python
+%cd /home/ec2-user/SageMaker/AWS_helpers
+```
 
 ```python
 !git status
@@ -166,7 +172,7 @@ nothing added to commit but untracked files present (use "git add" to track)
 
 Adding `.ipynb` files to `.gitignore` is a good practice if you plan to only commit `.py` scripts. This will prevent accidental commits of Jupyter Notebook files across all subfolders in the repository.
 
-Here’s how to add `.ipynb` files to `.gitignore` to ignore them project-wide:
+Here's how to add `.ipynb` files to `.gitignore` to ignore them project-wide:
 
 1. **Cd to git repo folder**
     First make sure we're in the repo folder
@@ -212,7 +218,7 @@ Here’s how to add `.ipynb` files to `.gitignore` to ignore them project-wide:
     
 5. **Add and commit the `.gitignore` file**:
 
-    Add and commit the updated `.gitignore` file to ensure it’s applied across the repository.
+    Add and commit the updated `.gitignore` file to ensure it's applied across the repository.
 
     ```python
     !git add .gitignore
@@ -229,19 +235,19 @@ Our local changes have now been committed, and we can begin the process of mergi
 
 
 ### 1. Pull the latest changes from the main branch
-There are a few different options for pulling the remote code into your local version. The best pull strategy depends on your workflow and the history structure you want to maintain. Here’s a breakdown to help you decide:
+There are a few different options for pulling the remote code into your local version. The best pull strategy depends on your workflow and the history structure you want to maintain. Here's a breakdown to help you decide:
 
 * Merge (pull.rebase false): Combines the remote changes into your local branch as a merge commit.
-   - **Use if**: You’re okay with having merge commits in your history, which indicate where you pulled in remote changes. This is the default and is usually the easiest for team collaborations, especially if conflicts arise.
+   - **Use if**: You're okay with having merge commits in your history, which indicate where you pulled in remote changes. This is the default and is usually the easiest for team collaborations, especially if conflicts arise.
 
 * Rebase (pull.rebase true): Replays your local changes on top of the updated main branch, resulting in a linear history.
     - **Use if**: You prefer a clean, linear history without merge commits. Rebase is useful if you like to keep your branch history as if all changes happened sequentially.
 
 * Fast-forward only (pull.ff only): Only pulls if the local branch can fast-forward to the remote without diverging (no new commits locally).
-    - **Use if**: You only want to pull updates if no additional commits have been made locally. This can be helpful to avoid unintended merges when your branch hasn’t diverged.
+    - **Use if**: You only want to pull updates if no additional commits have been made locally. This can be helpful to avoid unintended merges when your branch hasn't diverged.
 
 #### Recommended for Most Users
-If you’re collaborating and want simplicity, **merge (pull.rebase false)** is often the most practical option. This will ensure you get remote changes with a merge commit that captures the history of integration points. For those who prefer a more streamlined history and are comfortable with Git, **rebase (pull.rebase true)** can be ideal but may require more careful conflict handling.
+If you're collaborating and want simplicity, **merge (pull.rebase false)** is often the most practical option. This will ensure you get remote changes with a merge commit that captures the history of integration points. For those who prefer a more streamlined history and are comfortable with Git, **rebase (pull.rebase true)** can be ideal but may require more careful conflict handling.
 
 ```python
 !git config pull.rebase false # Combines the remote changes into your local branch as a merge commit.
