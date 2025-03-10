@@ -435,15 +435,21 @@ setup our SageMaker controller as usual:</p>
 <span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a>test_filename <span class="op">=</span> <span class="st">'titanic_test.csv'</span></span></code></pre>
 </div>
 <p>We should also record our local instance information to report this
-information during testing.</p>
+information during testing. First, let’s make sure we’re starting in the
+same location to access helper functions</p>
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="im">import</span> AWS_helpers.helpers <span class="im">as</span> helpers</span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>notebook_instance_name <span class="op">=</span> <span class="st">'MyAwesomeTeam-ChrisEndemann-Titanic-Train-Tune-Xgboost-NN'</span></span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>local_instance_info <span class="op">=</span> helpers.get_notebook_instance_info(notebook_instance_name)</span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>local_instance <span class="op">=</span> local_instance_info[<span class="st">'InstanceType'</span>]</span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>local_instance</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span></span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb3">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="im">import</span> AWS_helpers.helpers <span class="im">as</span> helpers</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>notebook_instance_name <span class="op">=</span> <span class="st">'DoeJohn-ExploreSageMaker'</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>local_instance_info <span class="op">=</span> helpers.get_notebook_instance_info(notebook_instance_name)</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>local_instance <span class="op">=</span> local_instance_info[<span class="st">'InstanceType'</span>]</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>local_instance</span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="training-a-neural-network-with-sagemaker">Training a neural network with SageMaker<a class="anchor" aria-label="anchor" href="#training-a-neural-network-with-sagemaker"></a></h2>
 <hr class="half-width"><p>Let’s see how to do a similar experiment, but this time using PyTorch
@@ -505,80 +511,80 @@ training process.</p>
 </div>
 </div>
 </div>
-<div class="codewrapper sourceCode" id="cb3">
+<div class="codewrapper sourceCode" id="cb4">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> train_test_split</span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="im">from</span> sklearn.preprocessing <span class="im">import</span> StandardScaler, LabelEncoder</span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a></span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co"># Load and preprocess the Titanic dataset</span></span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(train_filename)</span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a></span>
-<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co"># Encode categorical variables and normalize numerical ones</span></span>
-<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>df[<span class="st">'Sex'</span>] <span class="op">=</span> LabelEncoder().fit_transform(df[<span class="st">'Sex'</span>])</span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>df[<span class="st">'Embarked'</span>] <span class="op">=</span> df[<span class="st">'Embarked'</span>].fillna(<span class="st">'S'</span>)  <span class="co"># Fill missing values in 'Embarked'</span></span>
-<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>df[<span class="st">'Embarked'</span>] <span class="op">=</span> LabelEncoder().fit_transform(df[<span class="st">'Embarked'</span>])</span>
-<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a></span>
-<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co"># Fill missing values for 'Age' and 'Fare' with median</span></span>
-<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>df[<span class="st">'Age'</span>] <span class="op">=</span> df[<span class="st">'Age'</span>].fillna(df[<span class="st">'Age'</span>].median())</span>
-<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>df[<span class="st">'Fare'</span>] <span class="op">=</span> df[<span class="st">'Fare'</span>].fillna(df[<span class="st">'Fare'</span>].median())</span>
-<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a></span>
-<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co"># Select features and target</span></span>
-<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a>X <span class="op">=</span> df[[<span class="st">'Pclass'</span>, <span class="st">'Sex'</span>, <span class="st">'Age'</span>, <span class="st">'SibSp'</span>, <span class="st">'Parch'</span>, <span class="st">'Fare'</span>, <span class="st">'Embarked'</span>]].values</span>
-<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a>y <span class="op">=</span> df[<span class="st">'Survived'</span>].values</span>
-<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a></span>
-<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co"># Normalize features (helps avoid exploding/vanishing gradients)</span></span>
-<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a>scaler <span class="op">=</span> StandardScaler()</span>
-<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a>X <span class="op">=</span> scaler.fit_transform(X)</span>
-<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a></span>
-<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a><span class="co"># Split the data</span></span>
-<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a>X_train, X_val, y_train, y_val <span class="op">=</span> train_test_split(X, y, test_size<span class="op">=</span><span class="fl">0.2</span>, random_state<span class="op">=</span><span class="dv">42</span>)</span>
-<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a></span>
-<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a><span class="co"># Save the preprocessed data to our local jupyter environment</span></span>
-<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a>np.savez(<span class="st">'train_data.npz'</span>, X_train<span class="op">=</span>X_train, y_train<span class="op">=</span>y_train)</span>
-<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a>np.savez(<span class="st">'val_data.npz'</span>, X_val<span class="op">=</span>X_val, y_val<span class="op">=</span>y_val)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> train_test_split</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="im">from</span> sklearn.preprocessing <span class="im">import</span> StandardScaler, LabelEncoder</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co"># Load and preprocess the Titanic dataset</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(train_filename)</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co"># Encode categorical variables and normalize numerical ones</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>df[<span class="st">'Sex'</span>] <span class="op">=</span> LabelEncoder().fit_transform(df[<span class="st">'Sex'</span>])</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>df[<span class="st">'Embarked'</span>] <span class="op">=</span> df[<span class="st">'Embarked'</span>].fillna(<span class="st">'S'</span>)  <span class="co"># Fill missing values in 'Embarked'</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>df[<span class="st">'Embarked'</span>] <span class="op">=</span> LabelEncoder().fit_transform(df[<span class="st">'Embarked'</span>])</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co"># Fill missing values for 'Age' and 'Fare' with median</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>df[<span class="st">'Age'</span>] <span class="op">=</span> df[<span class="st">'Age'</span>].fillna(df[<span class="st">'Age'</span>].median())</span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>df[<span class="st">'Fare'</span>] <span class="op">=</span> df[<span class="st">'Fare'</span>].fillna(df[<span class="st">'Fare'</span>].median())</span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co"># Select features and target</span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a>X <span class="op">=</span> df[[<span class="st">'Pclass'</span>, <span class="st">'Sex'</span>, <span class="st">'Age'</span>, <span class="st">'SibSp'</span>, <span class="st">'Parch'</span>, <span class="st">'Fare'</span>, <span class="st">'Embarked'</span>]].values</span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a>y <span class="op">=</span> df[<span class="st">'Survived'</span>].values</span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a></span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="co"># Normalize features (helps avoid exploding/vanishing gradients)</span></span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a>scaler <span class="op">=</span> StandardScaler()</span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a>X <span class="op">=</span> scaler.fit_transform(X)</span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a><span class="co"># Split the data</span></span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a>X_train, X_val, y_train, y_val <span class="op">=</span> train_test_split(X, y, test_size<span class="op">=</span><span class="fl">0.2</span>, random_state<span class="op">=</span><span class="dv">42</span>)</span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a></span>
+<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a><span class="co"># Save the preprocessed data to our local jupyter environment</span></span>
+<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a>np.savez(<span class="st">'train_data.npz'</span>, X_train<span class="op">=</span>X_train, y_train<span class="op">=</span>y_train)</span>
+<span id="cb4-31"><a href="#cb4-31" tabindex="-1"></a>np.savez(<span class="st">'val_data.npz'</span>, X_val<span class="op">=</span>X_val, y_val<span class="op">=</span>y_val)</span></code></pre>
 </div>
 <p>Next, we will upload our compressed files to our S3 bucket. Storage
 is farily cheap on AWS (around $0.023 per GB per month), but be mindful
 of uploading too much data. It may be convenient to store a preprocessed
-version of the data, just don’t store too many versions that aren’t
-being actively used.</p>
-<div class="codewrapper sourceCode" id="cb4">
+version of the data at times, but try not to store too many versions
+that aren’t being actively used.</p>
+<div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="im">import</span> boto3</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>train_file <span class="op">=</span> <span class="st">"train_data.npz"</span>  <span class="co"># Local file path in your notebook environment</span></span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>val_file <span class="op">=</span> <span class="st">"val_data.npz"</span>  <span class="co"># Local file path in your notebook environment</span></span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co"># Initialize the S3 client</span></span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a></span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co"># Upload the training and validation files to S3</span></span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>s3.upload_file(train_file, bucket_name, <span class="ss">f"</span><span class="sc">{</span>train_file<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>s3.upload_file(val_file, bucket_name, <span class="ss">f"</span><span class="sc">{</span>val_file<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a></span>
-<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Files successfully uploaded to S3."</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="im">import</span> boto3</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>train_file <span class="op">=</span> <span class="st">"train_data.npz"</span>  <span class="co"># Local file path in your notebook environment</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>val_file <span class="op">=</span> <span class="st">"val_data.npz"</span>  <span class="co"># Local file path in your notebook environment</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co"># Initialize the S3 client</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co"># Upload the training and validation files to S3</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>s3.upload_file(train_file, bucket_name, <span class="ss">f"</span><span class="sc">{</span>train_file<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>s3.upload_file(val_file, bucket_name, <span class="ss">f"</span><span class="sc">{</span>val_file<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Files successfully uploaded to S3."</span>)</span></code></pre>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="testing-on-notebook-instance">Testing on notebook instance<a class="anchor" aria-label="anchor" href="#testing-on-notebook-instance"></a></h2>
 <hr class="half-width"><p>You should always test code thoroughly before scaling up and using
 more resources. Here, we will test our script using a small number of
 epochs — just to verify our setup is correct.</p>
-<div class="codewrapper sourceCode" id="cb5">
+<div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="im">import</span> torch</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="im">import</span> time <span class="im">as</span> t <span class="co"># Measure training time locally</span></span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a></span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>epochs <span class="op">=</span> <span class="dv">1000</span></span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>learning_rate <span class="op">=</span> <span class="fl">0.001</span></span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a></span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>start_time <span class="op">=</span> t.time()</span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="op">%</span>run  AWS_helpers<span class="op">/</span>train_nn.py <span class="op">--</span>train train_data.npz <span class="op">--</span>val val_data.npz <span class="op">--</span>epochs {epochs} <span class="op">--</span>learning_rate {learning_rate}</span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Local training time: </span><span class="sc">{</span>t<span class="sc">.</span>time() <span class="op">-</span> start_time<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type = </span><span class="sc">{</span>local_instance<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="im">import</span> time <span class="im">as</span> t <span class="co"># Measure training time locally</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>epochs <span class="op">=</span> <span class="dv">1000</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>learning_rate <span class="op">=</span> <span class="fl">0.001</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>start_time <span class="op">=</span> t.time()</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="op">%</span>run  AWS_helpers<span class="op">/</span>train_nn.py <span class="op">--</span>train train_data.npz <span class="op">--</span>val val_data.npz <span class="op">--</span>epochs {epochs} <span class="op">--</span>learning_rate {learning_rate}</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Local training time: </span><span class="sc">{</span>t<span class="sc">.</span>time() <span class="op">-</span> start_time<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type = </span><span class="sc">{</span>local_instance<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="deploying-pytorch-neural-network-via-sagemaker">Deploying PyTorch neural network via SageMaker<a class="anchor" aria-label="anchor" href="#deploying-pytorch-neural-network-via-sagemaker"></a></h2>
 <hr class="half-width"><p>Now that we have tested things locally, we can try to train with a
@@ -595,53 +601,44 @@ instance is <code>$0.75/hour</code>. However, for larger datasets (&gt;
 cumbersome (see <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
 for ML</a>. If that doesn’t work, we can try distributed computing
 (setting instance &gt; 1). More on this in the next section.</p>
-<div class="codewrapper sourceCode" id="cb6">
+<div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="im">from</span> sagemaker.pytorch <span class="im">import</span> PyTorch</span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="im">from</span> sagemaker.inputs <span class="im">import</span> TrainingInput</span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>instance_count <span class="op">=</span> <span class="dv">1</span></span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span></span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>output_path <span class="op">=</span> <span class="ss">f's3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/output_nn/'</span> <span class="co"># this folder will auto-generate if it doesn't exist already</span></span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a></span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co"># Define the PyTorch estimator and pass hyperparameters as arguments</span></span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>pytorch_estimator <span class="op">=</span> PyTorch(</span>
-<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>    entry_point<span class="op">=</span><span class="st">"AWS_helpers/train_nn.py"</span>,</span>
-<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
-<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>    instance_type<span class="op">=</span>instance_type, <span class="co"># with this small dataset, we don't recessarily need a GPU for fast training. </span></span>
-<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>    instance_count<span class="op">=</span>instance_count,  <span class="co"># Distributed training with two instances</span></span>
-<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>    framework_version<span class="op">=</span><span class="st">"1.9"</span>,</span>
-<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>    py_version<span class="op">=</span><span class="st">"py38"</span>,</span>
-<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>    output_path<span class="op">=</span>output_path,</span>
-<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a>    hyperparameters<span class="op">=</span>{</span>
-<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a>        <span class="st">"train"</span>: <span class="st">"/opt/ml/input/data/train/train_data.npz"</span>,  <span class="co"># SageMaker will mount this path</span></span>
-<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a>        <span class="st">"val"</span>: <span class="st">"/opt/ml/input/data/val/val_data.npz"</span>,        <span class="co"># SageMaker will mount this path</span></span>
-<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a>        <span class="st">"epochs"</span>: epochs,</span>
-<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a>        <span class="st">"learning_rate"</span>: learning_rate</span>
-<span id="cb6-23"><a href="#cb6-23" tabindex="-1"></a>    }</span>
-<span id="cb6-24"><a href="#cb6-24" tabindex="-1"></a>)</span>
-<span id="cb6-25"><a href="#cb6-25" tabindex="-1"></a></span>
-<span id="cb6-26"><a href="#cb6-26" tabindex="-1"></a><span class="co"># Define input paths</span></span>
-<span id="cb6-27"><a href="#cb6-27" tabindex="-1"></a>train_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/train_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
-<span id="cb6-28"><a href="#cb6-28" tabindex="-1"></a>val_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/val_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
-<span id="cb6-29"><a href="#cb6-29" tabindex="-1"></a></span>
-<span id="cb6-30"><a href="#cb6-30" tabindex="-1"></a><span class="co"># Start the training job and time it</span></span>
-<span id="cb6-31"><a href="#cb6-31" tabindex="-1"></a>start <span class="op">=</span> t.time()</span>
-<span id="cb6-32"><a href="#cb6-32" tabindex="-1"></a>pytorch_estimator.fit({<span class="st">"train"</span>: train_input, <span class="st">"val"</span>: val_input})</span>
-<span id="cb6-33"><a href="#cb6-33" tabindex="-1"></a>end <span class="op">=</span> t.time()</span>
-<span id="cb6-34"><a href="#cb6-34" tabindex="-1"></a></span>
-<span id="cb6-35"><a href="#cb6-35" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
-</div>
-<div class="codewrapper sourceCode" id="cb7">
-<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:27:03 Uploading <span class="at">-</span> Uploading generated training model</span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:27:03 Completed <span class="at">-</span> Training job completed</span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="ex">Training</span> seconds: 135</span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="ex">Billable</span> seconds: 135</span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="ex">Runtime</span> for training on SageMaker: 197.62 seconds, instance_type: ml.m5.large, instance_count: 1</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="im">from</span> sagemaker.pytorch <span class="im">import</span> PyTorch</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="im">from</span> sagemaker.inputs <span class="im">import</span> TrainingInput</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>instance_count <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>output_path <span class="op">=</span> <span class="ss">f's3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/output_nn/'</span> <span class="co"># this folder will auto-generate if it doesn't exist already</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co"># Define the PyTorch estimator and pass hyperparameters as arguments</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>pytorch_estimator <span class="op">=</span> PyTorch(</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>    entry_point<span class="op">=</span><span class="st">"AWS_helpers/train_nn.py"</span>,</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>    instance_type<span class="op">=</span>instance_type, <span class="co"># with this small dataset, we don't recessarily need a GPU for fast training. </span></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>    instance_count<span class="op">=</span>instance_count,  <span class="co"># Distributed training with two instances</span></span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>    framework_version<span class="op">=</span><span class="st">"1.9"</span>,</span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>    py_version<span class="op">=</span><span class="st">"py38"</span>,</span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>    output_path<span class="op">=</span>output_path,</span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a>    hyperparameters<span class="op">=</span>{</span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a>        <span class="st">"train"</span>: <span class="st">"/opt/ml/input/data/train/train_data.npz"</span>,  <span class="co"># SageMaker will mount this path</span></span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a>        <span class="st">"val"</span>: <span class="st">"/opt/ml/input/data/val/val_data.npz"</span>,        <span class="co"># SageMaker will mount this path</span></span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a>        <span class="st">"epochs"</span>: epochs,</span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a>        <span class="st">"learning_rate"</span>: learning_rate</span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a>    }</span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a>)</span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a></span>
+<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a><span class="co"># Define input paths</span></span>
+<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a>train_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/train_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
+<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a>val_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/val_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
+<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a></span>
+<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a><span class="co"># Start the training job and time it</span></span>
+<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a>start <span class="op">=</span> t.time()</span>
+<span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a>pytorch_estimator.fit({<span class="st">"train"</span>: train_input, <span class="st">"val"</span>: val_input})</span>
+<span id="cb7-33"><a href="#cb7-33" tabindex="-1"></a>end <span class="op">=</span> t.time()</span>
+<span id="cb7-34"><a href="#cb7-34" tabindex="-1"></a></span>
+<span id="cb7-35"><a href="#cb7-35" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="deploying-pytorch-neural-network-via-sagemaker-with-a-gpu-instance">Deploying PyTorch neural network via SageMaker with a GPU
 instance<a class="anchor" aria-label="anchor" href="#deploying-pytorch-neural-network-via-sagemaker-with-a-gpu-instance"></a></h2>
@@ -718,15 +715,6 @@ device if available.</p>
 <span id="cb9-34"><a href="#cb9-34" tabindex="-1"></a>end <span class="op">=</span> t.time()</span>
 <span id="cb9-35"><a href="#cb9-35" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb10">
-<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:33:56 Uploading <span class="at">-</span> Uploading generated training model</span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:33:56 Completed <span class="at">-</span> Training job completed</span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="ex">Training</span> seconds: 350</span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="ex">Billable</span> seconds: 350</span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="ex">Runtime</span> for training on SageMaker: 409.68 seconds, instance_type: ml.g4dn.xlarge, instance_count: 1</span></code></pre>
-</div>
 <div id="gpus-can-be-slow-for-small-datasetsmodels" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -770,54 +758,45 @@ reasonable train times (remember to try an upgraded instance first!),
 simply adjust the instance count to a number between 2 and 5. Beyond 5
 instances, you’ll see diminishing returns and may be needlessly spending
 extra money/compute-energy.</p>
-<div class="codewrapper sourceCode" id="cb11">
+<div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="im">from</span> sagemaker.pytorch <span class="im">import</span> PyTorch</span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="im">from</span> sagemaker.inputs <span class="im">import</span> TrainingInput</span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="im">import</span> time <span class="im">as</span> t</span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a></span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>instance_count <span class="op">=</span> <span class="dv">2</span> <span class="co"># increasing to 2 to see if it has any benefit (likely won't see any with this small dataset)</span></span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>instance_type<span class="op">=</span><span class="st">"ml.m5.xlarge"</span></span>
-<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>output_path <span class="op">=</span> <span class="ss">f's3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/output_nn/'</span></span>
-<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a></span>
-<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co"># Define the PyTorch estimator and pass hyperparameters as arguments</span></span>
-<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>pytorch_estimator <span class="op">=</span> PyTorch(</span>
-<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>    entry_point<span class="op">=</span><span class="st">"AWS_helpers/train_nn.py"</span>,</span>
-<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
-<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a>    instance_type<span class="op">=</span>instance_type, <span class="co"># with this small dataset, we don't recessarily need a GPU for fast training. </span></span>
-<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a>    instance_count<span class="op">=</span>instance_count,  <span class="co"># Distributed training with two instances</span></span>
-<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a>    framework_version<span class="op">=</span><span class="st">"1.9"</span>,</span>
-<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a>    py_version<span class="op">=</span><span class="st">"py38"</span>,</span>
-<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a>    output_path<span class="op">=</span>output_path,</span>
-<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a>    hyperparameters<span class="op">=</span>{</span>
-<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a>        <span class="st">"train"</span>: <span class="st">"/opt/ml/input/data/train/train_data.npz"</span>,  <span class="co"># SageMaker will mount this path</span></span>
-<span id="cb11-21"><a href="#cb11-21" tabindex="-1"></a>        <span class="st">"val"</span>: <span class="st">"/opt/ml/input/data/val/val_data.npz"</span>,        <span class="co"># SageMaker will mount this path</span></span>
-<span id="cb11-22"><a href="#cb11-22" tabindex="-1"></a>        <span class="st">"epochs"</span>: epochs,</span>
-<span id="cb11-23"><a href="#cb11-23" tabindex="-1"></a>        <span class="st">"learning_rate"</span>: learning_rate</span>
-<span id="cb11-24"><a href="#cb11-24" tabindex="-1"></a>    }</span>
-<span id="cb11-25"><a href="#cb11-25" tabindex="-1"></a>)</span>
-<span id="cb11-26"><a href="#cb11-26" tabindex="-1"></a></span>
-<span id="cb11-27"><a href="#cb11-27" tabindex="-1"></a><span class="co"># Define input paths</span></span>
-<span id="cb11-28"><a href="#cb11-28" tabindex="-1"></a>train_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/train_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
-<span id="cb11-29"><a href="#cb11-29" tabindex="-1"></a>val_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/val_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
-<span id="cb11-30"><a href="#cb11-30" tabindex="-1"></a></span>
-<span id="cb11-31"><a href="#cb11-31" tabindex="-1"></a><span class="co"># Start the training job and time it</span></span>
-<span id="cb11-32"><a href="#cb11-32" tabindex="-1"></a>start <span class="op">=</span> t.time()</span>
-<span id="cb11-33"><a href="#cb11-33" tabindex="-1"></a>pytorch_estimator.fit({<span class="st">"train"</span>: train_input, <span class="st">"val"</span>: val_input})</span>
-<span id="cb11-34"><a href="#cb11-34" tabindex="-1"></a>end <span class="op">=</span> t.time()</span>
-<span id="cb11-35"><a href="#cb11-35" tabindex="-1"></a></span>
-<span id="cb11-36"><a href="#cb11-36" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
-</div>
-<div class="codewrapper sourceCode" id="cb12">
-<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:36:35 Uploading <span class="at">-</span> Uploading generated training model</span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:36:47 Completed <span class="at">-</span> Training job completed</span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="ex">Training</span> seconds: 228</span>
-<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="ex">Billable</span> seconds: 228</span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="ex">Runtime</span> for training on SageMaker: 198.36 seconds, instance_type: ml.m5.xlarge, instance_count: 2</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="im">from</span> sagemaker.pytorch <span class="im">import</span> PyTorch</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="im">from</span> sagemaker.inputs <span class="im">import</span> TrainingInput</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="im">import</span> time <span class="im">as</span> t</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>instance_count <span class="op">=</span> <span class="dv">2</span> <span class="co"># increasing to 2 to see if it has any benefit (likely won't see any with this small dataset)</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>instance_type<span class="op">=</span><span class="st">"ml.m5.xlarge"</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>output_path <span class="op">=</span> <span class="ss">f's3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/output_nn/'</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co"># Define the PyTorch estimator and pass hyperparameters as arguments</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>pytorch_estimator <span class="op">=</span> PyTorch(</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>    entry_point<span class="op">=</span><span class="st">"AWS_helpers/train_nn.py"</span>,</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>    instance_type<span class="op">=</span>instance_type, <span class="co"># with this small dataset, we don't recessarily need a GPU for fast training. </span></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>    instance_count<span class="op">=</span>instance_count,  <span class="co"># Distributed training with two instances</span></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>    framework_version<span class="op">=</span><span class="st">"1.9"</span>,</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>    py_version<span class="op">=</span><span class="st">"py38"</span>,</span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>    output_path<span class="op">=</span>output_path,</span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a>    hyperparameters<span class="op">=</span>{</span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a>        <span class="st">"train"</span>: <span class="st">"/opt/ml/input/data/train/train_data.npz"</span>,  <span class="co"># SageMaker will mount this path</span></span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a>        <span class="st">"val"</span>: <span class="st">"/opt/ml/input/data/val/val_data.npz"</span>,        <span class="co"># SageMaker will mount this path</span></span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a>        <span class="st">"epochs"</span>: epochs,</span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a>        <span class="st">"learning_rate"</span>: learning_rate</span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a>    }</span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a>)</span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a></span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a><span class="co"># Define input paths</span></span>
+<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a>train_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/train_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
+<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a>val_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/val_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
+<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a></span>
+<span id="cb10-31"><a href="#cb10-31" tabindex="-1"></a><span class="co"># Start the training job and time it</span></span>
+<span id="cb10-32"><a href="#cb10-32" tabindex="-1"></a>start <span class="op">=</span> t.time()</span>
+<span id="cb10-33"><a href="#cb10-33" tabindex="-1"></a>pytorch_estimator.fit({<span class="st">"train"</span>: train_input, <span class="st">"val"</span>: val_input})</span>
+<span id="cb10-34"><a href="#cb10-34" tabindex="-1"></a>end <span class="op">=</span> t.time()</span>
+<span id="cb10-35"><a href="#cb10-35" tabindex="-1"></a></span>
+<span id="cb10-36"><a href="#cb10-36" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="distributed-training-for-neural-nets-how-epochs-are-managed">Distributed training for neural nets: how epochs are managed<a class="anchor" aria-label="anchor" href="#distributed-training-for-neural-nets-how-epochs-are-managed"></a></h3>
