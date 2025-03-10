@@ -977,7 +977,7 @@ sizes: 10 GB, 100 GB, 1 TB</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -2674,11 +2674,6 @@ notebook instance.</p>
 <span id="cb17-25"><a href="#cb17-25" tabindex="-1"></a>accuracy <span class="op">=</span> accuracy_score(y_test, predictions)</span>
 <span id="cb17-26"><a href="#cb17-26" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Test Set Accuracy: </span><span class="sc">{</span>accuracy<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb18">
-<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="ex">Test</span> Set Accuracy: 0.8156</span></code></pre>
-</div>
 </div>
 </section><section><h2 class="section-heading" id="training-via-sagemaker-using-notebook-as-controller---custom-train-py-script">Training via SageMaker (using notebook as controller) - custom
 train.py script<a class="anchor" aria-label="anchor" href="#training-via-sagemaker-using-notebook-as-controller---custom-train-py-script"></a>
@@ -2862,26 +2857,26 @@ installed before training begins. This approach allows the use of
 specific libraries that may be critical for custom preprocessing,
 feature engineering, or model modifications. Here’s how to include
 it:</p>
-<div class="codewrapper sourceCode" id="cb19">
+<div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="co"># Customizing estimator using requirements.txt</span></span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="im">from</span> sagemaker.sklearn.estimator <span class="im">import</span> SKLearn</span>
-<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>sklearn_estimator <span class="op">=</span> SKLearn(</span>
-<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>    entry_point<span class="op">=</span><span class="st">"train_script.py"</span>,</span>
-<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
-<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>    instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span>,</span>
-<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a>    output_path<span class="op">=</span><span class="st">"s3://your-bucket/output"</span>,</span>
-<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a>    framework_version<span class="op">=</span><span class="st">"1.0-1"</span>,</span>
-<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a>    dependencies<span class="op">=</span>[<span class="st">'requirements.txt'</span>],  <span class="co"># Adding custom dependencies</span></span>
-<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a>    hyperparameters<span class="op">=</span>{</span>
-<span id="cb19-12"><a href="#cb19-12" tabindex="-1"></a>        <span class="st">"max_depth"</span>: <span class="dv">5</span>,</span>
-<span id="cb19-13"><a href="#cb19-13" tabindex="-1"></a>        <span class="st">"eta"</span>: <span class="fl">0.1</span>,</span>
-<span id="cb19-14"><a href="#cb19-14" tabindex="-1"></a>        <span class="st">"subsample"</span>: <span class="fl">0.8</span>,</span>
-<span id="cb19-15"><a href="#cb19-15" tabindex="-1"></a>        <span class="st">"num_round"</span>: <span class="dv">100</span></span>
-<span id="cb19-16"><a href="#cb19-16" tabindex="-1"></a>    }</span>
-<span id="cb19-17"><a href="#cb19-17" tabindex="-1"></a>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="co"># Customizing estimator using requirements.txt</span></span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="im">from</span> sagemaker.sklearn.estimator <span class="im">import</span> SKLearn</span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>sklearn_estimator <span class="op">=</span> SKLearn(</span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>    entry_point<span class="op">=</span><span class="st">"train_script.py"</span>,</span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a>    instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span>,</span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a>    output_path<span class="op">=</span><span class="st">"s3://your-bucket/output"</span>,</span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a>    framework_version<span class="op">=</span><span class="st">"1.0-1"</span>,</span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a>    dependencies<span class="op">=</span>[<span class="st">'requirements.txt'</span>],  <span class="co"># Adding custom dependencies</span></span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a>    hyperparameters<span class="op">=</span>{</span>
+<span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a>        <span class="st">"max_depth"</span>: <span class="dv">5</span>,</span>
+<span id="cb18-13"><a href="#cb18-13" tabindex="-1"></a>        <span class="st">"eta"</span>: <span class="fl">0.1</span>,</span>
+<span id="cb18-14"><a href="#cb18-14" tabindex="-1"></a>        <span class="st">"subsample"</span>: <span class="fl">0.8</span>,</span>
+<span id="cb18-15"><a href="#cb18-15" tabindex="-1"></a>        <span class="st">"num_round"</span>: <span class="dv">100</span></span>
+<span id="cb18-16"><a href="#cb18-16" tabindex="-1"></a>    }</span>
+<span id="cb18-17"><a href="#cb18-17" tabindex="-1"></a>)</span></code></pre>
 </div>
 <p>This setup simplifies training, allowing you to maintain custom
 environments directly within SageMaker’s managed containers, without
@@ -2901,58 +2896,56 @@ pre-installed packages.</p>
 custom training script, train_xgboost.py, and define hyperparameters
 directly within the SageMaker setup. Here’s the full code, with some
 additional explanation following the code.</p>
-<div class="codewrapper sourceCode" id="cb20">
+<div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="im">from</span> sagemaker.inputs <span class="im">import</span> TrainingInput</span>
-<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a><span class="im">from</span> sagemaker.xgboost.estimator <span class="im">import</span> XGBoost</span>
-<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a></span>
-<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a><span class="co"># Define instance type/count we'll use for training</span></span>
-<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a>instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span></span>
-<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a>instance_count<span class="op">=</span><span class="dv">1</span> <span class="co"># always start with 1. Rarely is parallelized training justified with data &lt; 50 GB. More on this later.</span></span>
-<span id="cb20-7"><a href="#cb20-7" tabindex="-1"></a></span>
-<span id="cb20-8"><a href="#cb20-8" tabindex="-1"></a><span class="co"># Define S3 paths for input and output</span></span>
-<span id="cb20-9"><a href="#cb20-9" tabindex="-1"></a>train_s3_path <span class="op">=</span> <span class="ss">f's3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>train_filename<span class="sc">}</span><span class="ss">'</span></span>
-<span id="cb20-10"><a href="#cb20-10" tabindex="-1"></a></span>
-<span id="cb20-11"><a href="#cb20-11" tabindex="-1"></a><span class="co"># we'll store all results in a subfolder called xgboost on our bucket. This folder will automatically be created if it doesn't exist already.</span></span>
-<span id="cb20-12"><a href="#cb20-12" tabindex="-1"></a>output_folder <span class="op">=</span> <span class="st">'xgboost'</span></span>
-<span id="cb20-13"><a href="#cb20-13" tabindex="-1"></a>output_path <span class="op">=</span> <span class="ss">f's3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>output_folder<span class="sc">}</span><span class="ss">/'</span> </span>
-<span id="cb20-14"><a href="#cb20-14" tabindex="-1"></a></span>
-<span id="cb20-15"><a href="#cb20-15" tabindex="-1"></a><span class="co"># Set up the SageMaker XGBoost Estimator with custom script</span></span>
-<span id="cb20-16"><a href="#cb20-16" tabindex="-1"></a>xgboost_estimator <span class="op">=</span> XGBoost(</span>
-<span id="cb20-17"><a href="#cb20-17" tabindex="-1"></a>    entry_point<span class="op">=</span><span class="st">'train_xgboost.py'</span>,      <span class="co"># Custom script path</span></span>
-<span id="cb20-18"><a href="#cb20-18" tabindex="-1"></a>    source_dir<span class="op">=</span><span class="st">'AWS_helpers'</span>,               <span class="co"># Directory where your script is located</span></span>
-<span id="cb20-19"><a href="#cb20-19" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
-<span id="cb20-20"><a href="#cb20-20" tabindex="-1"></a>    instance_count<span class="op">=</span>instance_count,</span>
-<span id="cb20-21"><a href="#cb20-21" tabindex="-1"></a>    instance_type<span class="op">=</span>instance_type,</span>
-<span id="cb20-22"><a href="#cb20-22" tabindex="-1"></a>    output_path<span class="op">=</span>output_path,</span>
-<span id="cb20-23"><a href="#cb20-23" tabindex="-1"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb20-24"><a href="#cb20-24" tabindex="-1"></a>    framework_version<span class="op">=</span><span class="st">"1.5-1"</span>,           <span class="co"># Use latest supported version for better compatibility</span></span>
-<span id="cb20-25"><a href="#cb20-25" tabindex="-1"></a>    hyperparameters<span class="op">=</span>{</span>
-<span id="cb20-26"><a href="#cb20-26" tabindex="-1"></a>        <span class="st">'train'</span>: train_file,</span>
-<span id="cb20-27"><a href="#cb20-27" tabindex="-1"></a>        <span class="st">'max_depth'</span>: max_depth,</span>
-<span id="cb20-28"><a href="#cb20-28" tabindex="-1"></a>        <span class="st">'eta'</span>: eta,</span>
-<span id="cb20-29"><a href="#cb20-29" tabindex="-1"></a>        <span class="st">'subsample'</span>: subsample,</span>
-<span id="cb20-30"><a href="#cb20-30" tabindex="-1"></a>        <span class="st">'colsample_bytree'</span>: colsample_bytree,</span>
-<span id="cb20-31"><a href="#cb20-31" tabindex="-1"></a>        <span class="st">'num_round'</span>: num_round</span>
-<span id="cb20-32"><a href="#cb20-32" tabindex="-1"></a>    }</span>
-<span id="cb20-33"><a href="#cb20-33" tabindex="-1"></a>)</span>
-<span id="cb20-34"><a href="#cb20-34" tabindex="-1"></a></span>
-<span id="cb20-35"><a href="#cb20-35" tabindex="-1"></a><span class="co"># Define input data</span></span>
-<span id="cb20-36"><a href="#cb20-36" tabindex="-1"></a>train_input <span class="op">=</span> TrainingInput(train_s3_path, content_type<span class="op">=</span><span class="st">'csv'</span>)</span>
-<span id="cb20-37"><a href="#cb20-37" tabindex="-1"></a></span>
-<span id="cb20-38"><a href="#cb20-38" tabindex="-1"></a><span class="co"># Measure and start training time</span></span>
-<span id="cb20-39"><a href="#cb20-39" tabindex="-1"></a>start <span class="op">=</span> t.time()</span>
-<span id="cb20-40"><a href="#cb20-40" tabindex="-1"></a>xgboost_estimator.fit({<span class="st">'train'</span>: train_input})</span>
-<span id="cb20-41"><a href="#cb20-41" tabindex="-1"></a>end <span class="op">=</span> t.time()</span>
-<span id="cb20-42"><a href="#cb20-42" tabindex="-1"></a></span>
-<span id="cb20-43"><a href="#cb20-43" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="im">from</span> sagemaker.inputs <span class="im">import</span> TrainingInput</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="im">from</span> sagemaker.xgboost.estimator <span class="im">import</span> XGBoost</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a></span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a><span class="co"># Define instance type/count we'll use for training</span></span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span></span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>instance_count<span class="op">=</span><span class="dv">1</span> <span class="co"># always start with 1. Rarely is parallelized training justified with data &lt; 50 GB. More on this later.</span></span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a></span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a><span class="co"># Define S3 paths for input and output</span></span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a>train_s3_path <span class="op">=</span> <span class="ss">f's3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>train_filename<span class="sc">}</span><span class="ss">'</span></span>
+<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a></span>
+<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a><span class="co"># we'll store all results in a subfolder called xgboost on our bucket. This folder will automatically be created if it doesn't exist already.</span></span>
+<span id="cb19-12"><a href="#cb19-12" tabindex="-1"></a>output_folder <span class="op">=</span> <span class="st">'xgboost'</span></span>
+<span id="cb19-13"><a href="#cb19-13" tabindex="-1"></a>output_path <span class="op">=</span> <span class="ss">f's3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>output_folder<span class="sc">}</span><span class="ss">/'</span> </span>
+<span id="cb19-14"><a href="#cb19-14" tabindex="-1"></a></span>
+<span id="cb19-15"><a href="#cb19-15" tabindex="-1"></a><span class="co"># Set up the SageMaker XGBoost Estimator with custom script</span></span>
+<span id="cb19-16"><a href="#cb19-16" tabindex="-1"></a>xgboost_estimator <span class="op">=</span> XGBoost(</span>
+<span id="cb19-17"><a href="#cb19-17" tabindex="-1"></a>    entry_point<span class="op">=</span><span class="st">'train_xgboost.py'</span>,      <span class="co"># Custom script path</span></span>
+<span id="cb19-18"><a href="#cb19-18" tabindex="-1"></a>    source_dir<span class="op">=</span><span class="st">'AWS_helpers'</span>,               <span class="co"># Directory where your script is located</span></span>
+<span id="cb19-19"><a href="#cb19-19" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
+<span id="cb19-20"><a href="#cb19-20" tabindex="-1"></a>    instance_count<span class="op">=</span>instance_count,</span>
+<span id="cb19-21"><a href="#cb19-21" tabindex="-1"></a>    instance_type<span class="op">=</span>instance_type,</span>
+<span id="cb19-22"><a href="#cb19-22" tabindex="-1"></a>    output_path<span class="op">=</span>output_path,</span>
+<span id="cb19-23"><a href="#cb19-23" tabindex="-1"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb19-24"><a href="#cb19-24" tabindex="-1"></a>    framework_version<span class="op">=</span><span class="st">"1.5-1"</span>,           <span class="co"># Use latest supported version for better compatibility</span></span>
+<span id="cb19-25"><a href="#cb19-25" tabindex="-1"></a>    hyperparameters<span class="op">=</span>{</span>
+<span id="cb19-26"><a href="#cb19-26" tabindex="-1"></a>        <span class="st">'train'</span>: train_file,</span>
+<span id="cb19-27"><a href="#cb19-27" tabindex="-1"></a>        <span class="st">'max_depth'</span>: max_depth,</span>
+<span id="cb19-28"><a href="#cb19-28" tabindex="-1"></a>        <span class="st">'eta'</span>: eta,</span>
+<span id="cb19-29"><a href="#cb19-29" tabindex="-1"></a>        <span class="st">'subsample'</span>: subsample,</span>
+<span id="cb19-30"><a href="#cb19-30" tabindex="-1"></a>        <span class="st">'colsample_bytree'</span>: colsample_bytree,</span>
+<span id="cb19-31"><a href="#cb19-31" tabindex="-1"></a>        <span class="st">'num_round'</span>: num_round</span>
+<span id="cb19-32"><a href="#cb19-32" tabindex="-1"></a>    }</span>
+<span id="cb19-33"><a href="#cb19-33" tabindex="-1"></a>)</span>
+<span id="cb19-34"><a href="#cb19-34" tabindex="-1"></a></span>
+<span id="cb19-35"><a href="#cb19-35" tabindex="-1"></a><span class="co"># Define input data</span></span>
+<span id="cb19-36"><a href="#cb19-36" tabindex="-1"></a>train_input <span class="op">=</span> TrainingInput(train_s3_path, content_type<span class="op">=</span><span class="st">'csv'</span>)</span>
+<span id="cb19-37"><a href="#cb19-37" tabindex="-1"></a></span>
+<span id="cb19-38"><a href="#cb19-38" tabindex="-1"></a><span class="co"># Measure and start training time</span></span>
+<span id="cb19-39"><a href="#cb19-39" tabindex="-1"></a>start <span class="op">=</span> t.time()</span>
+<span id="cb19-40"><a href="#cb19-40" tabindex="-1"></a>xgboost_estimator.fit({<span class="st">'train'</span>: train_input})</span>
+<span id="cb19-41"><a href="#cb19-41" tabindex="-1"></a>end <span class="op">=</span> t.time()</span>
+<span id="cb19-42"><a href="#cb19-42" tabindex="-1"></a></span>
+<span id="cb19-43"><a href="#cb19-43" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb21">
-<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="ex">INFO:sagemaker:Creating</span> training-job with name: sagemaker-xgboost-2024-11-03-21-10-03-577</span></code></pre>
-</div>
+<p>When running longer training jobs, you can check on their status
+periodically from the AWS SageMaker Console (where we originally
+launched our Notebook instance) on left side panel under “Training”.</p>
 <div class="section level4">
 <h4 id="hyperparameters">Hyperparameters<a class="anchor" aria-label="anchor" href="#hyperparameters"></a>
 </h4>
@@ -3019,56 +3012,51 @@ compute accuracy or other metrics on the results.</li>
 </ul>
 <p>If additional metrics or custom evaluation steps are needed, you can
 add them in place of or alongside accuracy.</p>
-<div class="codewrapper sourceCode" id="cb22">
+<div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="co"># Model results are saved in auto-generated folders. Use xgboost_estimator.latest_training_job.name to get the folder name</span></span>
-<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>model_s3_path <span class="op">=</span> <span class="ss">f'</span><span class="sc">{</span>output_folder<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>xgboost_estimator<span class="sc">.</span>latest_training_job<span class="sc">.</span>name<span class="sc">}</span><span class="ss">/output/model.tar.gz'</span></span>
-<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a><span class="bu">print</span>(model_s3_path)</span>
-<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a>local_model_path <span class="op">=</span> <span class="st">'model.tar.gz'</span></span>
-<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a></span>
-<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a><span class="co"># Download the trained model from S3</span></span>
-<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a>s3.download_file(bucket_name, model_s3_path, local_model_path)</span>
-<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a></span>
-<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a><span class="co"># Extract the model file</span></span>
-<span id="cb22-10"><a href="#cb22-10" tabindex="-1"></a><span class="im">import</span> tarfile</span>
-<span id="cb22-11"><a href="#cb22-11" tabindex="-1"></a><span class="cf">with</span> tarfile.<span class="bu">open</span>(local_model_path) <span class="im">as</span> tar:</span>
-<span id="cb22-12"><a href="#cb22-12" tabindex="-1"></a>    tar.extractall()</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="co"># Model results are saved in auto-generated folders. Use xgboost_estimator.latest_training_job.name to get the folder name</span></span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>model_s3_path <span class="op">=</span> <span class="ss">f'</span><span class="sc">{</span>output_folder<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>xgboost_estimator<span class="sc">.</span>latest_training_job<span class="sc">.</span>name<span class="sc">}</span><span class="ss">/output/model.tar.gz'</span></span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a><span class="bu">print</span>(model_s3_path)</span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a>local_model_path <span class="op">=</span> <span class="st">'model.tar.gz'</span></span>
+<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a></span>
+<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a><span class="co"># Download the trained model from S3</span></span>
+<span id="cb20-7"><a href="#cb20-7" tabindex="-1"></a>s3.download_file(bucket_name, model_s3_path, local_model_path)</span>
+<span id="cb20-8"><a href="#cb20-8" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" tabindex="-1"></a><span class="co"># Extract the model file</span></span>
+<span id="cb20-10"><a href="#cb20-10" tabindex="-1"></a><span class="im">import</span> tarfile</span>
+<span id="cb20-11"><a href="#cb20-11" tabindex="-1"></a><span class="cf">with</span> tarfile.<span class="bu">open</span>(local_model_path) <span class="im">as</span> tar:</span>
+<span id="cb20-12"><a href="#cb20-12" tabindex="-1"></a>    tar.extractall()</span></code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb23">
-<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="ex">xgboost/sagemaker-xgboost-2024-11-03-21-10-03-577/output/model.tar.gz</span></span></code></pre>
-</div>
-<div class="codewrapper sourceCode" id="cb24">
+<div class="codewrapper sourceCode" id="cb21">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="im">import</span> xgboost <span class="im">as</span> xgb</span>
-<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb24-4"><a href="#cb24-4" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> accuracy_score</span>
-<span id="cb24-5"><a href="#cb24-5" tabindex="-1"></a><span class="im">import</span> joblib</span>
-<span id="cb24-6"><a href="#cb24-6" tabindex="-1"></a><span class="im">from</span> AWS_helpers.train_xgboost <span class="im">import</span> preprocess_data</span>
-<span id="cb24-7"><a href="#cb24-7" tabindex="-1"></a></span>
-<span id="cb24-8"><a href="#cb24-8" tabindex="-1"></a><span class="co"># Load the test data</span></span>
-<span id="cb24-9"><a href="#cb24-9" tabindex="-1"></a>test_data <span class="op">=</span> pd.read_csv(<span class="st">'./titanic_test.csv'</span>)</span>
-<span id="cb24-10"><a href="#cb24-10" tabindex="-1"></a></span>
-<span id="cb24-11"><a href="#cb24-11" tabindex="-1"></a><span class="co"># Preprocess the test data using the imported preprocess_data function</span></span>
-<span id="cb24-12"><a href="#cb24-12" tabindex="-1"></a>X_test, y_test <span class="op">=</span> preprocess_data(test_data)</span>
-<span id="cb24-13"><a href="#cb24-13" tabindex="-1"></a></span>
-<span id="cb24-14"><a href="#cb24-14" tabindex="-1"></a><span class="co"># Convert the test features to DMatrix for XGBoost</span></span>
-<span id="cb24-15"><a href="#cb24-15" tabindex="-1"></a>dtest <span class="op">=</span> xgb.DMatrix(X_test)</span>
-<span id="cb24-16"><a href="#cb24-16" tabindex="-1"></a></span>
-<span id="cb24-17"><a href="#cb24-17" tabindex="-1"></a><span class="co"># Load the trained model from the saved file</span></span>
-<span id="cb24-18"><a href="#cb24-18" tabindex="-1"></a>model <span class="op">=</span> joblib.load(<span class="st">'./xgboost-model'</span>)</span>
-<span id="cb24-19"><a href="#cb24-19" tabindex="-1"></a></span>
-<span id="cb24-20"><a href="#cb24-20" tabindex="-1"></a><span class="co"># Make predictions on the test set</span></span>
-<span id="cb24-21"><a href="#cb24-21" tabindex="-1"></a>preds <span class="op">=</span> model.predict(dtest)</span>
-<span id="cb24-22"><a href="#cb24-22" tabindex="-1"></a>predictions <span class="op">=</span> np.<span class="bu">round</span>(preds)  <span class="co"># Round predictions to 0 or 1 for binary classification</span></span>
-<span id="cb24-23"><a href="#cb24-23" tabindex="-1"></a></span>
-<span id="cb24-24"><a href="#cb24-24" tabindex="-1"></a><span class="co"># Calculate and print the accuracy of the model on the test data</span></span>
-<span id="cb24-25"><a href="#cb24-25" tabindex="-1"></a>accuracy <span class="op">=</span> accuracy_score(y_test, predictions)</span>
-<span id="cb24-26"><a href="#cb24-26" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Test Set Accuracy: </span><span class="sc">{</span>accuracy<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="im">import</span> xgboost <span class="im">as</span> xgb</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> accuracy_score</span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a><span class="im">import</span> joblib</span>
+<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a><span class="im">from</span> AWS_helpers.train_xgboost <span class="im">import</span> preprocess_data</span>
+<span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a></span>
+<span id="cb21-8"><a href="#cb21-8" tabindex="-1"></a><span class="co"># Load the test data</span></span>
+<span id="cb21-9"><a href="#cb21-9" tabindex="-1"></a>test_data <span class="op">=</span> pd.read_csv(<span class="st">'./titanic_test.csv'</span>)</span>
+<span id="cb21-10"><a href="#cb21-10" tabindex="-1"></a></span>
+<span id="cb21-11"><a href="#cb21-11" tabindex="-1"></a><span class="co"># Preprocess the test data using the imported preprocess_data function</span></span>
+<span id="cb21-12"><a href="#cb21-12" tabindex="-1"></a>X_test, y_test <span class="op">=</span> preprocess_data(test_data)</span>
+<span id="cb21-13"><a href="#cb21-13" tabindex="-1"></a></span>
+<span id="cb21-14"><a href="#cb21-14" tabindex="-1"></a><span class="co"># Convert the test features to DMatrix for XGBoost</span></span>
+<span id="cb21-15"><a href="#cb21-15" tabindex="-1"></a>dtest <span class="op">=</span> xgb.DMatrix(X_test)</span>
+<span id="cb21-16"><a href="#cb21-16" tabindex="-1"></a></span>
+<span id="cb21-17"><a href="#cb21-17" tabindex="-1"></a><span class="co"># Load the trained model from the saved file</span></span>
+<span id="cb21-18"><a href="#cb21-18" tabindex="-1"></a>model <span class="op">=</span> joblib.load(<span class="st">'./xgboost-model'</span>)</span>
+<span id="cb21-19"><a href="#cb21-19" tabindex="-1"></a></span>
+<span id="cb21-20"><a href="#cb21-20" tabindex="-1"></a><span class="co"># Make predictions on the test set</span></span>
+<span id="cb21-21"><a href="#cb21-21" tabindex="-1"></a>preds <span class="op">=</span> model.predict(dtest)</span>
+<span id="cb21-22"><a href="#cb21-22" tabindex="-1"></a>predictions <span class="op">=</span> np.<span class="bu">round</span>(preds)  <span class="co"># Round predictions to 0 or 1 for binary classification</span></span>
+<span id="cb21-23"><a href="#cb21-23" tabindex="-1"></a></span>
+<span id="cb21-24"><a href="#cb21-24" tabindex="-1"></a><span class="co"># Calculate and print the accuracy of the model on the test data</span></span>
+<span id="cb21-25"><a href="#cb21-25" tabindex="-1"></a>accuracy <span class="op">=</span> accuracy_score(y_test, predictions)</span>
+<span id="cb21-26"><a href="#cb21-26" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Test Set Accuracy: </span><span class="sc">{</span>accuracy<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <p>Now that we’ve covered training using a custom script with the
 <code>XGBoost</code> estimator, let’s examine the built-in image-based
@@ -3156,50 +3144,41 @@ SageMaker’s built-in XGBoost container contrasts with our previous
 method, where we specified a custom script with argument inputs
 (specified in hyperparameters) for data paths and settings. Here, we use
 hyperparameters only to specify the model’s hyperparameters.</p>
-<div class="codewrapper sourceCode" id="cb25">
+<div class="codewrapper sourceCode" id="cb22">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="im">from</span> sagemaker.estimator <span class="im">import</span> Estimator <span class="co"># when using images, we use the general Estimator class</span></span>
-<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a></span>
-<span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a><span class="co"># Define instance type/count we'll use for training</span></span>
-<span id="cb25-4"><a href="#cb25-4" tabindex="-1"></a>instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span></span>
-<span id="cb25-5"><a href="#cb25-5" tabindex="-1"></a>instance_count<span class="op">=</span><span class="dv">1</span> <span class="co"># always start with 1. Rarely is parallelized training justified with data &lt; 50 GB. More on this later.</span></span>
-<span id="cb25-6"><a href="#cb25-6" tabindex="-1"></a></span>
-<span id="cb25-7"><a href="#cb25-7" tabindex="-1"></a><span class="co"># Use Estimator directly for built-in container without specifying entry_point</span></span>
-<span id="cb25-8"><a href="#cb25-8" tabindex="-1"></a>xgboost_estimator_builtin <span class="op">=</span> Estimator(</span>
-<span id="cb25-9"><a href="#cb25-9" tabindex="-1"></a>    image_uri<span class="op">=</span>sagemaker.image_uris.retrieve(<span class="st">"xgboost"</span>, session.boto_region_name, version<span class="op">=</span><span class="st">"1.5-1"</span>),</span>
-<span id="cb25-10"><a href="#cb25-10" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
-<span id="cb25-11"><a href="#cb25-11" tabindex="-1"></a>    instance_count<span class="op">=</span>instance_count,</span>
-<span id="cb25-12"><a href="#cb25-12" tabindex="-1"></a>    instance_type<span class="op">=</span>instance_type,</span>
-<span id="cb25-13"><a href="#cb25-13" tabindex="-1"></a>    output_path<span class="op">=</span>output_path,</span>
-<span id="cb25-14"><a href="#cb25-14" tabindex="-1"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb25-15"><a href="#cb25-15" tabindex="-1"></a>    hyperparameters<span class="op">=</span>{</span>
-<span id="cb25-16"><a href="#cb25-16" tabindex="-1"></a>        <span class="st">'max_depth'</span>: max_depth,</span>
-<span id="cb25-17"><a href="#cb25-17" tabindex="-1"></a>        <span class="st">'eta'</span>: eta,</span>
-<span id="cb25-18"><a href="#cb25-18" tabindex="-1"></a>        <span class="st">'subsample'</span>: subsample,</span>
-<span id="cb25-19"><a href="#cb25-19" tabindex="-1"></a>        <span class="st">'colsample_bytree'</span>: colsample_bytree,</span>
-<span id="cb25-20"><a href="#cb25-20" tabindex="-1"></a>        <span class="st">'num_round'</span>: num_round</span>
-<span id="cb25-21"><a href="#cb25-21" tabindex="-1"></a>    }</span>
-<span id="cb25-22"><a href="#cb25-22" tabindex="-1"></a>)</span>
-<span id="cb25-23"><a href="#cb25-23" tabindex="-1"></a></span>
-<span id="cb25-24"><a href="#cb25-24" tabindex="-1"></a><span class="co"># Define input data</span></span>
-<span id="cb25-25"><a href="#cb25-25" tabindex="-1"></a>train_input <span class="op">=</span> TrainingInput(train_s3_path, content_type<span class="op">=</span><span class="st">"csv"</span>)</span>
-<span id="cb25-26"><a href="#cb25-26" tabindex="-1"></a></span>
-<span id="cb25-27"><a href="#cb25-27" tabindex="-1"></a><span class="co"># Measure and start training time</span></span>
-<span id="cb25-28"><a href="#cb25-28" tabindex="-1"></a>start <span class="op">=</span> t.time()</span>
-<span id="cb25-29"><a href="#cb25-29" tabindex="-1"></a>xgboost_estimator_builtin.fit({<span class="st">'train'</span>: train_input})</span>
-<span id="cb25-30"><a href="#cb25-30" tabindex="-1"></a>end <span class="op">=</span> t.time()</span>
-<span id="cb25-31"><a href="#cb25-31" tabindex="-1"></a></span>
-<span id="cb25-32"><a href="#cb25-32" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
-</div>
-<div class="codewrapper sourceCode" id="cb26">
-<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:16:19 Uploading <span class="at">-</span> Uploading generated training model</span>
-<span id="cb26-2"><a href="#cb26-2" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:16:19 Completed <span class="at">-</span> Training job completed</span>
-<span id="cb26-3"><a href="#cb26-3" tabindex="-1"></a><span class="ex">Training</span> seconds: 135</span>
-<span id="cb26-4"><a href="#cb26-4" tabindex="-1"></a><span class="ex">Billable</span> seconds: 135</span>
-<span id="cb26-5"><a href="#cb26-5" tabindex="-1"></a><span class="ex">Runtime</span> for training on SageMaker: 197.50 seconds, instance_type: ml.m5.large, instance_count: 1</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="im">from</span> sagemaker.estimator <span class="im">import</span> Estimator <span class="co"># when using images, we use the general Estimator class</span></span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a></span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a><span class="co"># Define instance type/count we'll use for training</span></span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a>instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span></span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a>instance_count<span class="op">=</span><span class="dv">1</span> <span class="co"># always start with 1. Rarely is parallelized training justified with data &lt; 50 GB. More on this later.</span></span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a></span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a><span class="co"># Use Estimator directly for built-in container without specifying entry_point</span></span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a>xgboost_estimator_builtin <span class="op">=</span> Estimator(</span>
+<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a>    image_uri<span class="op">=</span>sagemaker.image_uris.retrieve(<span class="st">"xgboost"</span>, session.boto_region_name, version<span class="op">=</span><span class="st">"1.5-1"</span>),</span>
+<span id="cb22-10"><a href="#cb22-10" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
+<span id="cb22-11"><a href="#cb22-11" tabindex="-1"></a>    instance_count<span class="op">=</span>instance_count,</span>
+<span id="cb22-12"><a href="#cb22-12" tabindex="-1"></a>    instance_type<span class="op">=</span>instance_type,</span>
+<span id="cb22-13"><a href="#cb22-13" tabindex="-1"></a>    output_path<span class="op">=</span>output_path,</span>
+<span id="cb22-14"><a href="#cb22-14" tabindex="-1"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb22-15"><a href="#cb22-15" tabindex="-1"></a>    hyperparameters<span class="op">=</span>{</span>
+<span id="cb22-16"><a href="#cb22-16" tabindex="-1"></a>        <span class="st">'max_depth'</span>: max_depth,</span>
+<span id="cb22-17"><a href="#cb22-17" tabindex="-1"></a>        <span class="st">'eta'</span>: eta,</span>
+<span id="cb22-18"><a href="#cb22-18" tabindex="-1"></a>        <span class="st">'subsample'</span>: subsample,</span>
+<span id="cb22-19"><a href="#cb22-19" tabindex="-1"></a>        <span class="st">'colsample_bytree'</span>: colsample_bytree,</span>
+<span id="cb22-20"><a href="#cb22-20" tabindex="-1"></a>        <span class="st">'num_round'</span>: num_round</span>
+<span id="cb22-21"><a href="#cb22-21" tabindex="-1"></a>    }</span>
+<span id="cb22-22"><a href="#cb22-22" tabindex="-1"></a>)</span>
+<span id="cb22-23"><a href="#cb22-23" tabindex="-1"></a></span>
+<span id="cb22-24"><a href="#cb22-24" tabindex="-1"></a><span class="co"># Define input data</span></span>
+<span id="cb22-25"><a href="#cb22-25" tabindex="-1"></a>train_input <span class="op">=</span> TrainingInput(train_s3_path, content_type<span class="op">=</span><span class="st">"csv"</span>)</span>
+<span id="cb22-26"><a href="#cb22-26" tabindex="-1"></a></span>
+<span id="cb22-27"><a href="#cb22-27" tabindex="-1"></a><span class="co"># Measure and start training time</span></span>
+<span id="cb22-28"><a href="#cb22-28" tabindex="-1"></a>start <span class="op">=</span> t.time()</span>
+<span id="cb22-29"><a href="#cb22-29" tabindex="-1"></a>xgboost_estimator_builtin.fit({<span class="st">'train'</span>: train_input})</span>
+<span id="cb22-30"><a href="#cb22-30" tabindex="-1"></a>end <span class="op">=</span> t.time()</span>
+<span id="cb22-31"><a href="#cb22-31" tabindex="-1"></a></span>
+<span id="cb22-32"><a href="#cb22-32" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 </div>
 </div>
@@ -3596,81 +3575,49 @@ datasets, distributed training can yield time savings by scaling
 horizontally. However, gains may vary depending on the dataset and
 computation per instance.</li>
 </ol>
-<div class="codewrapper sourceCode" id="cb27">
+<div class="codewrapper sourceCode" id="cb23">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a><span class="co"># Define instance type/count we'll use for training</span></span>
-<span id="cb27-2"><a href="#cb27-2" tabindex="-1"></a>instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span></span>
-<span id="cb27-3"><a href="#cb27-3" tabindex="-1"></a>instance_count<span class="op">=</span><span class="dv">1</span> <span class="co"># always start with 1. Rarely is parallelized training justified with data &lt; 50 GB.</span></span>
-<span id="cb27-4"><a href="#cb27-4" tabindex="-1"></a></span>
-<span id="cb27-5"><a href="#cb27-5" tabindex="-1"></a><span class="co"># Define the XGBoost estimator for distributed training</span></span>
-<span id="cb27-6"><a href="#cb27-6" tabindex="-1"></a>xgboost_estimator <span class="op">=</span> Estimator(</span>
-<span id="cb27-7"><a href="#cb27-7" tabindex="-1"></a>    image_uri<span class="op">=</span>sagemaker.image_uris.retrieve(<span class="st">"xgboost"</span>, session.boto_region_name, version<span class="op">=</span><span class="st">"1.5-1"</span>),</span>
-<span id="cb27-8"><a href="#cb27-8" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
-<span id="cb27-9"><a href="#cb27-9" tabindex="-1"></a>    instance_count<span class="op">=</span>instance_count,  <span class="co"># Start with 1 instance for baseline</span></span>
-<span id="cb27-10"><a href="#cb27-10" tabindex="-1"></a>    instance_type<span class="op">=</span>instance_type,</span>
-<span id="cb27-11"><a href="#cb27-11" tabindex="-1"></a>    output_path<span class="op">=</span>output_path,</span>
-<span id="cb27-12"><a href="#cb27-12" tabindex="-1"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb27-13"><a href="#cb27-13" tabindex="-1"></a>)</span>
-<span id="cb27-14"><a href="#cb27-14" tabindex="-1"></a></span>
-<span id="cb27-15"><a href="#cb27-15" tabindex="-1"></a><span class="co"># Set hyperparameters</span></span>
-<span id="cb27-16"><a href="#cb27-16" tabindex="-1"></a>xgboost_estimator.set_hyperparameters(</span>
-<span id="cb27-17"><a href="#cb27-17" tabindex="-1"></a>    max_depth<span class="op">=</span><span class="dv">5</span>,</span>
-<span id="cb27-18"><a href="#cb27-18" tabindex="-1"></a>    eta<span class="op">=</span><span class="fl">0.1</span>,</span>
-<span id="cb27-19"><a href="#cb27-19" tabindex="-1"></a>    subsample<span class="op">=</span><span class="fl">0.8</span>,</span>
-<span id="cb27-20"><a href="#cb27-20" tabindex="-1"></a>    colsample_bytree<span class="op">=</span><span class="fl">0.8</span>,</span>
-<span id="cb27-21"><a href="#cb27-21" tabindex="-1"></a>    num_round<span class="op">=</span><span class="dv">100</span>,</span>
-<span id="cb27-22"><a href="#cb27-22" tabindex="-1"></a>)</span>
-<span id="cb27-23"><a href="#cb27-23" tabindex="-1"></a></span>
-<span id="cb27-24"><a href="#cb27-24" tabindex="-1"></a><span class="co"># Specify input data from S3</span></span>
-<span id="cb27-25"><a href="#cb27-25" tabindex="-1"></a>train_input <span class="op">=</span> TrainingInput(train_s3_path, content_type<span class="op">=</span><span class="st">"csv"</span>)</span>
-<span id="cb27-26"><a href="#cb27-26" tabindex="-1"></a></span>
-<span id="cb27-27"><a href="#cb27-27" tabindex="-1"></a><span class="co"># Run with 1 instance</span></span>
-<span id="cb27-28"><a href="#cb27-28" tabindex="-1"></a>start1 <span class="op">=</span> t.time()</span>
-<span id="cb27-29"><a href="#cb27-29" tabindex="-1"></a>xgboost_estimator.fit({<span class="st">"train"</span>: train_input})</span>
-<span id="cb27-30"><a href="#cb27-30" tabindex="-1"></a>end1 <span class="op">=</span> t.time()</span>
-<span id="cb27-31"><a href="#cb27-31" tabindex="-1"></a></span>
-<span id="cb27-32"><a href="#cb27-32" tabindex="-1"></a></span>
-<span id="cb27-33"><a href="#cb27-33" tabindex="-1"></a><span class="co"># Now run with 2 instances to observe speedup</span></span>
-<span id="cb27-34"><a href="#cb27-34" tabindex="-1"></a>xgboost_estimator.instance_count <span class="op">=</span> <span class="dv">2</span></span>
-<span id="cb27-35"><a href="#cb27-35" tabindex="-1"></a>start2 <span class="op">=</span> t.time()</span>
-<span id="cb27-36"><a href="#cb27-36" tabindex="-1"></a>xgboost_estimator.fit({<span class="st">"train"</span>: train_input})</span>
-<span id="cb27-37"><a href="#cb27-37" tabindex="-1"></a>end2 <span class="op">=</span> t.time()</span>
-<span id="cb27-38"><a href="#cb27-38" tabindex="-1"></a></span>
-<span id="cb27-39"><a href="#cb27-39" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end1 <span class="op">-</span> start1<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb27-40"><a href="#cb27-40" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end2 <span class="op">-</span> start2<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>xgboost_estimator<span class="sc">.</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
-</div>
-<div class="codewrapper sourceCode" id="cb28">
-<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a><span class="ex">INFO:sagemaker.image_uris:Ignoring</span> unnecessary instance type: None.</span>
-<span id="cb28-2"><a href="#cb28-2" tabindex="-1"></a><span class="ex">INFO:sagemaker:Creating</span> training-job with name: sagemaker-xgboost-2024-11-03-21-16-39-216</span>
-<span id="cb28-3"><a href="#cb28-3" tabindex="-1"></a></span>
-<span id="cb28-4"><a href="#cb28-4" tabindex="-1"></a></span>
-<span id="cb28-5"><a href="#cb28-5" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:16:40 Starting <span class="at">-</span> Starting the training job...</span>
-<span id="cb28-6"><a href="#cb28-6" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:16:55 Starting <span class="at">-</span> Preparing the instances for training...</span>
-<span id="cb28-7"><a href="#cb28-7" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:17:22 Downloading <span class="at">-</span> Downloading input data...</span>
-<span id="cb28-8"><a href="#cb28-8" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:18:07 Downloading <span class="at">-</span> Downloading the training image......</span>
-<span id="cb28-9"><a href="#cb28-9" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:19:13 Training <span class="at">-</span> Training image download completed. Training in progress.</span>
-<span id="cb28-10"><a href="#cb28-10" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:19:13 Uploading <span class="at">-</span> Uploading generated training model[34m/miniconda3/lib/python3.8/site-packages/xgboost/compat.py:36: FutureWarning:</span>
-<span id="cb28-11"><a href="#cb28-11" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:19:32 Completed <span class="at">-</span> Training job completed</span>
-<span id="cb28-12"><a href="#cb28-12" tabindex="-1"></a></span>
-<span id="cb28-13"><a href="#cb28-13" tabindex="-1"></a><span class="ex">INFO:sagemaker:Creating</span> training-job with name: sagemaker-xgboost-2024-11-03-21-19-57-254</span>
-<span id="cb28-14"><a href="#cb28-14" tabindex="-1"></a><span class="ex">Training</span> seconds: 130</span>
-<span id="cb28-15"><a href="#cb28-15" tabindex="-1"></a><span class="ex">Billable</span> seconds: 130</span>
-<span id="cb28-16"><a href="#cb28-16" tabindex="-1"></a></span>
-<span id="cb28-17"><a href="#cb28-17" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:19:58 Starting <span class="at">-</span> Starting the training job...</span>
-<span id="cb28-18"><a href="#cb28-18" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:20:13 Starting <span class="at">-</span> Preparing the instances for training...</span>
-<span id="cb28-19"><a href="#cb28-19" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:20:46 Downloading <span class="at">-</span> Downloading input data......</span>
-<span id="cb28-20"><a href="#cb28-20" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:21:36 Downloading <span class="at">-</span> Downloading the training image...</span>
-<span id="cb28-21"><a href="#cb28-21" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:22:27 Training <span class="at">-</span> Training image download completed. Training in progress..[35m/miniconda3/lib/python3.8/site-packages/xgboost/compat.py:36: </span>
-<span id="cb28-22"><a href="#cb28-22" tabindex="-1"></a></span>
-<span id="cb28-23"><a href="#cb28-23" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:23:01 Uploading <span class="at">-</span> Uploading generated training model</span>
-<span id="cb28-24"><a href="#cb28-24" tabindex="-1"></a><span class="ex">2024-11-03</span> 21:23:01 Completed <span class="at">-</span> Training job completed</span>
-<span id="cb28-25"><a href="#cb28-25" tabindex="-1"></a><span class="ex">Training</span> seconds: 270</span>
-<span id="cb28-26"><a href="#cb28-26" tabindex="-1"></a><span class="ex">Billable</span> seconds: 270</span>
-<span id="cb28-27"><a href="#cb28-27" tabindex="-1"></a><span class="ex">Runtime</span> for training on SageMaker: 198.04 seconds, instance_type: ml.m5.large, instance_count: 1</span>
-<span id="cb28-28"><a href="#cb28-28" tabindex="-1"></a><span class="ex">Runtime</span> for training on SageMaker: 197.66 seconds, instance_type: ml.m5.large, instance_count: 2</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="co"># Define instance type/count we'll use for training</span></span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a>instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span></span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a>instance_count<span class="op">=</span><span class="dv">1</span> <span class="co"># always start with 1. Rarely is parallelized training justified with data &lt; 50 GB.</span></span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a></span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a><span class="co"># Define the XGBoost estimator for distributed training</span></span>
+<span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a>xgboost_estimator <span class="op">=</span> Estimator(</span>
+<span id="cb23-7"><a href="#cb23-7" tabindex="-1"></a>    image_uri<span class="op">=</span>sagemaker.image_uris.retrieve(<span class="st">"xgboost"</span>, session.boto_region_name, version<span class="op">=</span><span class="st">"1.5-1"</span>),</span>
+<span id="cb23-8"><a href="#cb23-8" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
+<span id="cb23-9"><a href="#cb23-9" tabindex="-1"></a>    instance_count<span class="op">=</span>instance_count,  <span class="co"># Start with 1 instance for baseline</span></span>
+<span id="cb23-10"><a href="#cb23-10" tabindex="-1"></a>    instance_type<span class="op">=</span>instance_type,</span>
+<span id="cb23-11"><a href="#cb23-11" tabindex="-1"></a>    output_path<span class="op">=</span>output_path,</span>
+<span id="cb23-12"><a href="#cb23-12" tabindex="-1"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb23-13"><a href="#cb23-13" tabindex="-1"></a>)</span>
+<span id="cb23-14"><a href="#cb23-14" tabindex="-1"></a></span>
+<span id="cb23-15"><a href="#cb23-15" tabindex="-1"></a><span class="co"># Set hyperparameters</span></span>
+<span id="cb23-16"><a href="#cb23-16" tabindex="-1"></a>xgboost_estimator.set_hyperparameters(</span>
+<span id="cb23-17"><a href="#cb23-17" tabindex="-1"></a>    max_depth<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb23-18"><a href="#cb23-18" tabindex="-1"></a>    eta<span class="op">=</span><span class="fl">0.1</span>,</span>
+<span id="cb23-19"><a href="#cb23-19" tabindex="-1"></a>    subsample<span class="op">=</span><span class="fl">0.8</span>,</span>
+<span id="cb23-20"><a href="#cb23-20" tabindex="-1"></a>    colsample_bytree<span class="op">=</span><span class="fl">0.8</span>,</span>
+<span id="cb23-21"><a href="#cb23-21" tabindex="-1"></a>    num_round<span class="op">=</span><span class="dv">100</span>,</span>
+<span id="cb23-22"><a href="#cb23-22" tabindex="-1"></a>)</span>
+<span id="cb23-23"><a href="#cb23-23" tabindex="-1"></a></span>
+<span id="cb23-24"><a href="#cb23-24" tabindex="-1"></a><span class="co"># Specify input data from S3</span></span>
+<span id="cb23-25"><a href="#cb23-25" tabindex="-1"></a>train_input <span class="op">=</span> TrainingInput(train_s3_path, content_type<span class="op">=</span><span class="st">"csv"</span>)</span>
+<span id="cb23-26"><a href="#cb23-26" tabindex="-1"></a></span>
+<span id="cb23-27"><a href="#cb23-27" tabindex="-1"></a><span class="co"># Run with 1 instance</span></span>
+<span id="cb23-28"><a href="#cb23-28" tabindex="-1"></a>start1 <span class="op">=</span> t.time()</span>
+<span id="cb23-29"><a href="#cb23-29" tabindex="-1"></a>xgboost_estimator.fit({<span class="st">"train"</span>: train_input})</span>
+<span id="cb23-30"><a href="#cb23-30" tabindex="-1"></a>end1 <span class="op">=</span> t.time()</span>
+<span id="cb23-31"><a href="#cb23-31" tabindex="-1"></a></span>
+<span id="cb23-32"><a href="#cb23-32" tabindex="-1"></a></span>
+<span id="cb23-33"><a href="#cb23-33" tabindex="-1"></a><span class="co"># Now run with 2 instances to observe speedup</span></span>
+<span id="cb23-34"><a href="#cb23-34" tabindex="-1"></a>xgboost_estimator.instance_count <span class="op">=</span> <span class="dv">2</span></span>
+<span id="cb23-35"><a href="#cb23-35" tabindex="-1"></a>start2 <span class="op">=</span> t.time()</span>
+<span id="cb23-36"><a href="#cb23-36" tabindex="-1"></a>xgboost_estimator.fit({<span class="st">"train"</span>: train_input})</span>
+<span id="cb23-37"><a href="#cb23-37" tabindex="-1"></a>end2 <span class="op">=</span> t.time()</span>
+<span id="cb23-38"><a href="#cb23-38" tabindex="-1"></a></span>
+<span id="cb23-39"><a href="#cb23-39" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end1 <span class="op">-</span> start1<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb23-40"><a href="#cb23-40" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end2 <span class="op">-</span> start2<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>xgboost_estimator<span class="sc">.</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="why-scaling-instances-might-not-show-speedup-here">Why scaling instances might not show speedup here<a class="anchor" aria-label="anchor" href="#why-scaling-instances-might-not-show-speedup-here"></a>
