@@ -256,7 +256,7 @@ If you get merge conflicts, be sure to resolve those before moving forward (e.g.
 
 ```python
 # Push with embedded credentials from getpass (avoids interactive prompt)
-github_url = 'github.com/username/AWS_helpers.git' # replace username with your own. THe full address for your fork can be found under Code -> Clone -> HTTPS (remote the https:// before the rest of the address)
+github_url = f'github.com/{username}/AWS_helpers.git' # The full address for your fork can be found under Code -> Clone -> HTTPS (remote the https:// before the rest of the address)
 !git push https://{username}:{token}@{github_url} main
 ```
 	Enumerating objects: 6, done.
