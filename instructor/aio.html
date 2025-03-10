@@ -1812,7 +1812,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-Interacting-with-code-repo"><p>Content from <a href="Interacting-with-code-repo.html">Using a GitHub Personal Access Token (PAT) to Push/Pull from a SageMaker Notebook</a></p>
 <hr>
-<p>Last updated on 2024-11-06 |
+<p>Last updated on 2025-03-10 |
 
         <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker/edit/main/episodes/Interacting-with-code-repo.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 35 minutes</p>
@@ -1903,10 +1903,13 @@ handle the token carefully.</p>
 <h4 id="generate-a-personal-access-token-pat-on-github">Generate a personal access token (PAT) on GitHub<a class="anchor" aria-label="anchor" href="#generate-a-personal-access-token-pat-on-github"></a>
 </h4>
 <ol style="list-style-type: decimal">
-<li>Go to <strong>Settings &gt; Developer settings &gt; Personal access
-tokens</strong> on GitHub.</li>
-<li>Click <strong>Generate new token</strong>, select
-<strong>Classic</strong>.</li>
+<li>Go to <strong>Settings</strong> by clicking on your profile picture
+in the upper-right corner of GitHub.</li>
+<li>Click <strong>Developer settings</strong> at the very bottom of the
+left sidebar.</li>
+<li>Select <strong>Personal access tokens</strong>, then click
+<strong>Tokens (classic)</strong>.</li>
+<li>Click <strong>Generate new token (classic)</strong>.</li>
 <li>Give your token a descriptive name (e.g., “SageMaker Access Token”)
 and set an expiration date if desired for added security.</li>
 <li>
@@ -1931,8 +1934,9 @@ workflows (only if working with GitHub Actions).</li>
 </li>
 </ul>
 </li>
-<li>Generate the token and <strong>copy it</strong> (you won’t be able
-to see it again).</li>
+<li>Click <strong>Generate token</strong> and <strong>copy it
+immediately</strong>—you won’t be able to see it again once you leave
+the page.</li>
 </ol>
 <blockquote>
 <p><strong>Caution</strong>: Treat your PAT like a password. Avoid
@@ -2054,7 +2058,7 @@ files:</li>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="im">import</span> AWS_helpers.helpers <span class="im">as</span> helpers</span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>helpers.convert_files(direction<span class="op">=</span><span class="st">"notebook_to_python"</span>)</span></code></pre>
 </div>
-<p><strong>Once converted, we can move our .py files to the AWS_helpers
+<p><strong>Once converted, move our new .py file to the AWS_helpers
 folder using the file explorer panel in Jupyter Lab.</strong></p>
 </div>
 </section><section><h2 class="section-heading" id="step-4--add-and-commit--py-files">Step 4. Add and commit .py files<a class="anchor" aria-label="anchor" href="#step-4--add-and-commit--py-files"></a>
@@ -2067,7 +2071,12 @@ running the next step.</li>
 <div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="op">!</span>git status</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>AWS_helpers</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb11">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="op">!</span>git status</span></code></pre>
 </div>
 <p>On branch main Your branch is up to date with ‘origin/main’.</p>
 <p>Untracked files: (use “git add <file>…” to include in what will be
@@ -2077,28 +2086,28 @@ track)</p>
 <ol start="2" style="list-style-type: decimal">
 <li>Add and commit changes</li>
 </ol>
-<div class="codewrapper sourceCode" id="cb11">
+<div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="op">!</span>git add . <span class="co"># you may also add files one at a time, for further specificity over the associated commit message</span></span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Updates from Jupyter notebooks"</span> <span class="co"># in general, your commit message should be more specific!</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="op">!</span>git add . <span class="co"># you may also add files one at a time, for further specificity over the associated commit message</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Updates from Jupyter notebooks"</span> <span class="co"># in general, your commit message should be more specific!</span></span></code></pre>
 </div>
 <ol start="3" style="list-style-type: decimal">
 <li>Check status</li>
 </ol>
-<div class="codewrapper sourceCode" id="cb12">
+<div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="op">!</span>git status</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="op">!</span>git status</span></code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb13">
+<div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="ex">On</span> branch main</span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="ex">Your</span> branch is ahead of <span class="st">'origin/main'</span> by 1 commit.</span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="kw">(</span><span class="ex">use</span> <span class="st">"git push"</span> to publish your local commits<span class="kw">)</span></span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a></span>
-<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="ex">nothing</span> to commit, working tree clean</span></code></pre>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="ex">On</span> branch main</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="ex">Your</span> branch is ahead of <span class="st">'origin/main'</span> by 1 commit.</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>  <span class="kw">(</span><span class="ex">use</span> <span class="st">"git push"</span> to publish your local commits<span class="kw">)</span></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="ex">nothing</span> to commit, working tree clean</span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="step-5--adding--ipynb-to-gitigore">Step 5. Adding .ipynb to gitigore<a class="anchor" aria-label="anchor" href="#step-5--adding--ipynb-to-gitigore"></a>
 </h2>
@@ -2113,10 +2122,10 @@ subfolders in the repository.</p>
 <li>
 <p><strong>Cd to git repo folder</strong> First make sure we’re in
 the repo folder</p>
-<div class="codewrapper sourceCode" id="cb14">
+<div class="codewrapper sourceCode" id="cb15">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="op">%</span>cd AWS_helpers</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="op">%</span>cd AWS_helpers</span></code></pre>
 </div>
 </li>
 <li><p><strong>Create the <code>.gitignore</code> file</strong>: This
@@ -2127,11 +2136,11 @@ verify it exists using <code>ls</code>.
 <p><strong>Add <code>.ipynb</code> files to
 <code>.gitignore</code></strong>:</p>
 <p>You can add this line using a command within your notebook:</p>
-<div class="codewrapper sourceCode" id="cb15">
+<div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">".gitignore"</span>, <span class="st">"a"</span>) <span class="im">as</span> gitignore:</span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>    gitignore.write(<span class="st">"</span><span class="ch">\n</span><span class="st"># Ignore all Jupyter Notebook files</span><span class="ch">\n</span><span class="st">*.ipynb</span><span class="ch">\n</span><span class="st">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">".gitignore"</span>, <span class="st">"a"</span>) <span class="im">as</span> gitignore:</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>    gitignore.write(<span class="st">"</span><span class="ch">\n</span><span class="st"># Ignore all Jupyter Notebook files</span><span class="ch">\n</span><span class="st">*.ipynb</span><span class="ch">\n</span><span class="st">"</span>)</span></code></pre>
 </div>
 <p>View file contents <code>python  !cat .gitignore</code></p>
 </li>
@@ -2139,17 +2148,17 @@ verify it exists using <code>ls</code>.
 <p><strong>Ignore other common temp files</strong> While we’re at
 it, let’s ignore other common files that can clutter repos, such as
 cache folders and temporary files.</p>
-<div class="codewrapper sourceCode" id="cb16">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">".gitignore"</span>, <span class="st">"a"</span>) <span class="im">as</span> gitignore:</span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>    gitignore.write(<span class="st">"</span><span class="ch">\n</span><span class="st"># Ignore cache and temp files</span><span class="ch">\n</span><span class="st">__pycache__/</span><span class="ch">\n</span><span class="st">*.tmp</span><span class="ch">\n</span><span class="st">*.log</span><span class="ch">\n</span><span class="st">"</span>)</span></code></pre>
-</div>
-<p>View file contents</p>
 <div class="codewrapper sourceCode" id="cb17">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="op">!</span>cat .gitignore</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">".gitignore"</span>, <span class="st">"a"</span>) <span class="im">as</span> gitignore:</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>    gitignore.write(<span class="st">"</span><span class="ch">\n</span><span class="st"># Ignore cache and temp files</span><span class="ch">\n</span><span class="st">__pycache__/</span><span class="ch">\n</span><span class="st">*.tmp</span><span class="ch">\n</span><span class="st">*.log</span><span class="ch">\n</span><span class="st">"</span>)</span></code></pre>
+</div>
+<p>View file contents</p>
+<div class="codewrapper sourceCode" id="cb18">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="op">!</span>cat .gitignore</span></code></pre>
 </div>
 </li>
 <li>
@@ -2157,11 +2166,11 @@ cache folders and temporary files.</p>
 file</strong>:</p>
 <p>Add and commit the updated <code>.gitignore</code> file to ensure
 it’s applied across the repository.</p>
-<div class="codewrapper sourceCode" id="cb18">
+<div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="op">!</span>git add .gitignore</span>
-<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Add .ipynb files to .gitignore to ignore notebooks"</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="op">!</span>git add .gitignore</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Add .ipynb files to .gitignore to ignore notebooks"</span></span></code></pre>
 </div>
 </li>
 </ol>
@@ -2226,60 +2235,60 @@ history of integration points. For those who prefer a more streamlined
 history and are comfortable with Git, <strong>rebase (pull.rebase
 true)</strong> can be ideal but may require more careful conflict
 handling.</p>
-<div class="codewrapper sourceCode" id="cb19">
+<div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="op">!</span>git config pull.rebase false <span class="co"># Combines the remote changes into your local branch as a merge commit.</span></span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="op">!</span>git pull origin main</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="op">!</span>git config pull.rebase false <span class="co"># Combines the remote changes into your local branch as a merge commit.</span></span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a><span class="op">!</span>git pull origin main</span></code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb20">
+<div class="codewrapper sourceCode" id="cb21">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="ex">From</span> https://github.com/qualiaMachine/AWS_helpers</span>
-<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a> <span class="ex">*</span> branch            main       <span class="at">-</span><span class="op">&gt;</span> FETCH_HEAD</span>
-<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a><span class="ex">Already</span> up to date.</span></code></pre>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="ex">From</span> https://github.com/qualiaMachine/AWS_helpers</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a> <span class="ex">*</span> branch            main       <span class="at">-</span><span class="op">&gt;</span> FETCH_HEAD</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a><span class="ex">Already</span> up to date.</span></code></pre>
 </div>
 <p>If you get merge conflicts, be sure to resolve those before moving
 forward (e.g., use git checkout -&gt; add -&gt; commit). You can skip
 the below code if you don’t have any conflicts.</p>
-<div class="codewrapper sourceCode" id="cb21">
+<div class="codewrapper sourceCode" id="cb22">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="co"># Keep your local changes in one conflicting file</span></span>
-<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a><span class="co"># !git checkout --ours Interacting-with-git.py</span></span>
-<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a></span>
-<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a><span class="co"># Keep remote version for the other conflicting file</span></span>
-<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a><span class="co"># !git checkout --theirs Interacting-with-git.py</span></span>
-<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a></span>
-<span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a><span class="co"># # Stage the files to mark the conflicts as resolved</span></span>
-<span id="cb21-8"><a href="#cb21-8" tabindex="-1"></a><span class="co"># !git add Interacting-with-git.py</span></span>
-<span id="cb21-9"><a href="#cb21-9" tabindex="-1"></a></span>
-<span id="cb21-10"><a href="#cb21-10" tabindex="-1"></a><span class="co"># # Commit the merge result</span></span>
-<span id="cb21-11"><a href="#cb21-11" tabindex="-1"></a><span class="co"># !git commit -m "Resolved merge conflicts by keeping local changes"</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="co"># Keep your local changes in one conflicting file</span></span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a><span class="co"># !git checkout --ours Interacting-with-git.py</span></span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a><span class="co"># Keep remote version for the other conflicting file</span></span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a><span class="co"># !git checkout --theirs Interacting-with-git.py</span></span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a></span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a><span class="co"># # Stage the files to mark the conflicts as resolved</span></span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a><span class="co"># !git add Interacting-with-git.py</span></span>
+<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a></span>
+<span id="cb22-10"><a href="#cb22-10" tabindex="-1"></a><span class="co"># # Commit the merge result</span></span>
+<span id="cb22-11"><a href="#cb22-11" tabindex="-1"></a><span class="co"># !git commit -m "Resolved merge conflicts by keeping local changes"</span></span></code></pre>
 </div>
 </div>
 </div>
 <div class="section level3">
 <h3 id="push-changes-using-pat-creditials">2. Push changes using PAT creditials<a class="anchor" aria-label="anchor" href="#push-changes-using-pat-creditials"></a>
 </h3>
-<div class="codewrapper sourceCode" id="cb22">
+<div class="codewrapper sourceCode" id="cb23">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="co"># Push with embedded credentials from getpass (avoids interactive prompt)</span></span>
-<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>github_url <span class="op">=</span> <span class="st">'github.com/username/AWS_helpers.git'</span> <span class="co"># replace username with your own. THe full address for your fork can be found under Code -&gt; Clone -&gt; HTTPS (remote the https:// before the rest of the address)</span></span>
-<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a><span class="op">!</span>git push https:<span class="op">//</span>{username}:{token}<span class="op">@</span>{github_url} main</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="co"># Push with embedded credentials from getpass (avoids interactive prompt)</span></span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a>github_url <span class="op">=</span> <span class="st">'github.com/username/AWS_helpers.git'</span> <span class="co"># replace username with your own. THe full address for your fork can be found under Code -&gt; Clone -&gt; HTTPS (remote the https:// before the rest of the address)</span></span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a><span class="op">!</span>git push https:<span class="op">//</span>{username}:{token}<span class="op">@</span>{github_url} main</span></code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb23">
+<div class="codewrapper sourceCode" id="cb24">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="ex">Enumerating</span> objects: 6, done.</span>
-<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a><span class="ex">Counting</span> objects: 100% <span class="er">(</span><span class="ex">6/6</span><span class="kw">)</span><span class="ex">,</span> done.</span>
-<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a><span class="ex">Delta</span> compression using up to 2 threads</span>
-<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a><span class="ex">Compressing</span> objects: 100% <span class="er">(</span><span class="ex">5/5</span><span class="kw">)</span><span class="ex">,</span> done.</span>
-<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a><span class="ex">Writing</span> objects: 100% <span class="er">(</span><span class="ex">5/5</span><span class="kw">)</span><span class="ex">,</span> 3.00 KiB <span class="kw">|</span> <span class="ex">3.00</span> MiB/s, done.</span>
-<span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a><span class="ex">Total</span> 5 <span class="er">(</span><span class="ex">delta</span> 0<span class="kw">)</span><span class="ex">,</span> reused 0 <span class="er">(</span><span class="ex">delta</span> 0<span class="kw">)</span><span class="ex">,</span> pack-reused 0</span>
-<span id="cb23-7"><a href="#cb23-7" tabindex="-1"></a><span class="ex">To</span> https://github.com/qualiaMachine/AWS_helpers.git</span>
-<span id="cb23-8"><a href="#cb23-8" tabindex="-1"></a>   <span class="ex">bc47546..6a8bb8b</span>  main <span class="at">-</span><span class="op">&gt;</span> main</span></code></pre>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="ex">Enumerating</span> objects: 6, done.</span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a><span class="ex">Counting</span> objects: 100% <span class="er">(</span><span class="ex">6/6</span><span class="kw">)</span><span class="ex">,</span> done.</span>
+<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a><span class="ex">Delta</span> compression using up to 2 threads</span>
+<span id="cb24-4"><a href="#cb24-4" tabindex="-1"></a><span class="ex">Compressing</span> objects: 100% <span class="er">(</span><span class="ex">5/5</span><span class="kw">)</span><span class="ex">,</span> done.</span>
+<span id="cb24-5"><a href="#cb24-5" tabindex="-1"></a><span class="ex">Writing</span> objects: 100% <span class="er">(</span><span class="ex">5/5</span><span class="kw">)</span><span class="ex">,</span> 3.00 KiB <span class="kw">|</span> <span class="ex">3.00</span> MiB/s, done.</span>
+<span id="cb24-6"><a href="#cb24-6" tabindex="-1"></a><span class="ex">Total</span> 5 <span class="er">(</span><span class="ex">delta</span> 0<span class="kw">)</span><span class="ex">,</span> reused 0 <span class="er">(</span><span class="ex">delta</span> 0<span class="kw">)</span><span class="ex">,</span> pack-reused 0</span>
+<span id="cb24-7"><a href="#cb24-7" tabindex="-1"></a><span class="ex">To</span> https://github.com/qualiaMachine/AWS_helpers.git</span>
+<span id="cb24-8"><a href="#cb24-8" tabindex="-1"></a>   <span class="ex">bc47546..6a8bb8b</span>  main <span class="at">-</span><span class="op">&gt;</span> main</span></code></pre>
 </div>
 <p>After pushing, you should navigate back to your fork on GitHub to
 verify everything worked (e.g., <a href="https://github.com/username/AWS_helpers/tree/main" class="external-link uri">https://github.com/username/AWS_helpers/tree/main</a>)</p>
@@ -2296,11 +2305,11 @@ jupytext to convert your <code>.py</code> files back to
 <ol style="list-style-type: decimal">
 <li>First, pull any updates from the remote main branch.</li>
 </ol>
-<div class="codewrapper sourceCode" id="cb24">
+<div class="codewrapper sourceCode" id="cb25">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="op">!</span>git config pull.rebase false <span class="co"># Combines the remote changes into your local branch as a merge commit.</span></span>
-<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a><span class="op">!</span>git pull origin main</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="op">!</span>git config pull.rebase false <span class="co"># Combines the remote changes into your local branch as a merge commit.</span></span>
+<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a><span class="op">!</span>git pull origin main</span></code></pre>
 </div>
 <ol start="2" style="list-style-type: decimal">
 <li>We can then use jupytext again to convert in the other direction
@@ -2310,21 +2319,21 @@ converting the Python script to a Jupyter Notebook format. Jupytext
 handles the conversion gracefully without expecting the <code>.py</code>
 file to be in JSON format.</li>
 </ol>
-<div class="codewrapper sourceCode" id="cb25">
+<div class="codewrapper sourceCode" id="cb26">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="co"># Replace 'your_script.py' with your actual filename</span></span>
-<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a><span class="op">!</span>jupytext <span class="op">--</span>to notebook Interacting<span class="op">-</span><span class="cf">with</span><span class="op">-</span>S3.py <span class="op">--</span>output Interacting<span class="op">-</span><span class="cf">with</span><span class="op">-</span>S3.ipynb</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="co"># Replace 'your_script.py' with your actual filename</span></span>
+<span id="cb26-2"><a href="#cb26-2" tabindex="-1"></a><span class="op">!</span>jupytext <span class="op">--</span>to notebook Interacting<span class="op">-</span><span class="cf">with</span><span class="op">-</span>S3.py <span class="op">--</span>output Interacting<span class="op">-</span><span class="cf">with</span><span class="op">-</span>S3.ipynb</span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="applying-to-all--py-files">Applying to all .py files<a class="anchor" aria-label="anchor" href="#applying-to-all--py-files"></a>
 </h3>
 <p>To convert all of your .py files to notebooks, you can use our helper
 function as follows</p>
-<div class="codewrapper sourceCode" id="cb26">
+<div class="codewrapper sourceCode" id="cb27">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a>helpers.convert_files(direction<span class="op">=</span><span class="st">"python_to_notebook"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a>helpers.convert_files(direction<span class="op">=</span><span class="st">"python_to_notebook"</span>)</span></code></pre>
 </div>
 <div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
