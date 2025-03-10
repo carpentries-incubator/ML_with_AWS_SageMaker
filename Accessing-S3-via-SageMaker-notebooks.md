@@ -272,14 +272,14 @@ print(f"Estimated annual cost ({storage_size_gb:.4f} GB): ${monthly_cost*12:.5f}
 For detailed and up-to-date information on AWS S3 pricing, please refer to the [AWS S3 Pricing page](https://aws.amazon.com/s3/pricing/).
 
 ## Writing output files to S3
-As your analysis generates new files, you can upload files to your bucket as demonstrated below. For this demo, you can create a blank `results.txt` file to upload to your bucket. To do so, go to **File** -> **New** -> **Text file**, and save it out as `results.txt`.
+As your analysis generates new files or demands additional documentation, you can upload files to your bucket as demonstrated below. For this demo, you can create a blank `Notes.txt` file to upload to your bucket. To do so, go to **File** -> **New** -> **Text file**, and save it out as `Notes.txt`.
 
 ```python
 # Define the S3 bucket name and the file paths
-train_file_path = "results.txt" # assuming your file is in root directory of jupyter notebook (check file explorer tab)
+notes_file_path = "Notes.txt" # assuming your file is in root directory of jupyter notebook (check file explorer tab)
 
-# Upload the training file to a new folder called "results". You can also just place it in the bucket's root directory if you prefer (remove results/ in code below).
-s3.upload_file(train_file_path, bucket_name, "results/results.txt")
+# Upload the training file to a new folder called "docs". You can also just place it in the bucket's root directory if you prefer (remove docs/ in code below).
+s3.upload_file(notes_file_path, bucket_name, "docs/Notes.txt")
 
 print("Files uploaded successfully.")
 
