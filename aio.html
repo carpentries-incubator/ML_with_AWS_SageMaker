@@ -1396,14 +1396,18 @@ management, and deployment.</p>
 <span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co"># Initialize the SageMaker role, session, and s3 client</span></span>
 <span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>role <span class="op">=</span> sagemaker.get_execution_role() <span class="co"># specifies your permissions to use AWS tools</span></span>
 <span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>session <span class="op">=</span> sagemaker.Session() </span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
-<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="co"># Print relevant details </span></span>
-<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>role_name <span class="op">=</span> role.split(<span class="st">"/"</span>)[<span class="op">-</span><span class="dv">1</span>]  <span class="co"># Extracts the last role (the actual name)</span></span>
-<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Execution Role: </span><span class="sc">{</span>role_name<span class="sc">}</span><span class="ss">"</span>)  <span class="co"># Displays the IAM role being used</span></span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>bucket_names <span class="op">=</span> [bucket[<span class="st">"Name"</span>] <span class="cf">for</span> bucket <span class="kw">in</span> s3.list_buckets()[<span class="st">"Buckets"</span>]]</span>
-<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Available S3 Buckets: </span><span class="sc">{</span>bucket_names<span class="sc">}</span><span class="ss">"</span>)  <span class="co"># Shows the default S3 bucket assigned to SageMaker</span></span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"AWS Region: </span><span class="sc">{</span>session<span class="sc">.</span>boto_region_name<span class="sc">}</span><span class="ss">"</span>)  <span class="co"># Prints the region where the SageMaker session is running</span></span></code></pre>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span></code></pre>
+</div>
+<p>Preview variable details.</p>
+<div class="codewrapper sourceCode" id="cb2">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Print relevant details </span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>role_name <span class="op">=</span> role.split(<span class="st">"/"</span>)[<span class="op">-</span><span class="dv">1</span>]  <span class="co"># Extracts the last role (the actual name)</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Execution Role: </span><span class="sc">{</span>role_name<span class="sc">}</span><span class="ss">"</span>)  <span class="co"># Displays the IAM role being used</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>bucket_names <span class="op">=</span> [bucket[<span class="st">"Name"</span>] <span class="cf">for</span> bucket <span class="kw">in</span> s3.list_buckets()[<span class="st">"Buckets"</span>]]</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Available S3 Buckets: </span><span class="sc">{</span>bucket_names<span class="sc">}</span><span class="ss">"</span>)  <span class="co"># Shows the default S3 bucket assigned to SageMaker</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"AWS Region: </span><span class="sc">{</span>session<span class="sc">.</span>boto_region_name<span class="sc">}</span><span class="ss">"</span>)  <span class="co"># Prints the region where the SageMaker session is running</span></span></code></pre>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="reading-data-from-s3">Reading data from S3<a class="anchor" aria-label="anchor" href="#reading-data-from-s3"></a>
@@ -1452,37 +1456,37 @@ if you only need to load data once or infrequently.</li>
 doejohn-titanic-s3). We can use the following code to read data directly
 from S3 into memory in the Jupyter notebook environment, without
 actually downloading a copy of train.csv as a local file.</p>
-<div class="codewrapper sourceCode" id="cb2">
+<div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co"># Define the S3 bucket and object key</span></span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>bucket_name <span class="op">=</span> <span class="st">'doejohn-titanic-s3'</span>  <span class="co"># replace with your S3 bucket name</span></span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co"># Read the train data from S3</span></span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>key <span class="op">=</span> <span class="st">'titanic_train.csv'</span>  <span class="co"># replace with your object key</span></span>
-<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>response <span class="op">=</span> s3.get_object(Bucket<span class="op">=</span>bucket_name, Key<span class="op">=</span>key)</span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>train_data <span class="op">=</span> pd.read_csv(response[<span class="st">'Body'</span>])</span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a></span>
-<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co"># Read the test data from S3</span></span>
-<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>key <span class="op">=</span> <span class="st">'titanic_test.csv'</span>  <span class="co"># replace with your object key</span></span>
-<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>response <span class="op">=</span> s3.get_object(Bucket<span class="op">=</span>bucket_name, Key<span class="op">=</span>key)</span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>test_data <span class="op">=</span> pd.read_csv(response[<span class="st">'Body'</span>])</span>
-<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a></span>
-<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co"># check shape</span></span>
-<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="bu">print</span>(train_data.shape)</span>
-<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="bu">print</span>(test_data.shape)</span>
-<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a></span>
-<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co"># Inspect the first few rows of the DataFrame</span></span>
-<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>train_data.head()</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co"># Define the S3 bucket and object key</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>bucket_name <span class="op">=</span> <span class="st">'doejohn-titanic-s3'</span>  <span class="co"># replace with your S3 bucket name</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co"># Read the train data from S3</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>key <span class="op">=</span> <span class="st">'titanic_train.csv'</span>  <span class="co"># replace with your object key</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>response <span class="op">=</span> s3.get_object(Bucket<span class="op">=</span>bucket_name, Key<span class="op">=</span>key)</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>train_data <span class="op">=</span> pd.read_csv(response[<span class="st">'Body'</span>])</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co"># Read the test data from S3</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>key <span class="op">=</span> <span class="st">'titanic_test.csv'</span>  <span class="co"># replace with your object key</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>response <span class="op">=</span> s3.get_object(Bucket<span class="op">=</span>bucket_name, Key<span class="op">=</span>key)</span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>test_data <span class="op">=</span> pd.read_csv(response[<span class="st">'Body'</span>])</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co"># check shape</span></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="bu">print</span>(train_data.shape)</span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="bu">print</span>(test_data.shape)</span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="co"># Inspect the first few rows of the DataFrame</span></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a>train_data.head()</span></code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb3">
+<div class="codewrapper sourceCode" id="cb4">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="ex">sagemaker.config</span> INFO <span class="at">-</span> Not applying SDK defaults from location: /etc/xdg/sagemaker/config.yaml</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="ex">sagemaker.config</span> INFO <span class="at">-</span> Not applying SDK defaults from location: /home/ec2-user/.config/sagemaker/config.yaml</span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="kw">(</span><span class="ex">712,</span> 12<span class="kw">)</span></span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="kw">(</span><span class="ex">179,</span> 12<span class="kw">)</span></span></code></pre>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="ex">sagemaker.config</span> INFO <span class="at">-</span> Not applying SDK defaults from location: /etc/xdg/sagemaker/config.yaml</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="ex">sagemaker.config</span> INFO <span class="at">-</span> Not applying SDK defaults from location: /home/ec2-user/.config/sagemaker/config.yaml</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="kw">(</span><span class="ex">712,</span> 12<span class="kw">)</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="kw">(</span><span class="ex">179,</span> 12<span class="kw">)</span></span></code></pre>
 </div>
 </div>
 </div>
@@ -1513,16 +1517,16 @@ until deleted.</li>
 <div class="section level4">
 <h4 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h4>
-<div class="codewrapper sourceCode" id="cb4">
+<div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Define the S3 bucket and file location</span></span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>key <span class="op">=</span> <span class="st">"titanic_train.csv"</span>  <span class="co"># Path to your file in the S3 bucket</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>local_file_path <span class="op">=</span> <span class="st">"./titanic_train.csv"</span>  <span class="co"># Local path to save the file</span></span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a></span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co"># Initialize the S3 client and download the file</span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>s3.download_file(bucket_name, key, local_file_path)</span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="op">!</span>ls</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Define the S3 bucket and file location</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>key <span class="op">=</span> <span class="st">"titanic_train.csv"</span>  <span class="co"># Path to your file in the S3 bucket</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>local_file_path <span class="op">=</span> <span class="st">"./titanic_train.csv"</span>  <span class="co"># Local path to save the file</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co"># Initialize the S3 client and download the file</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>s3.download_file(bucket_name, key, local_file_path)</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="op">!</span>ls</span></code></pre>
 </div>
 <p><strong>Note</strong>: You may need to hit refresh on the file
 explorer panel to the left to see this file. If you get any permission
@@ -1559,38 +1563,38 @@ dividing by <code>1024 ** 2</code> converts it to megabytes (MB).</li>
 want to check specific folders within a bucket, you may want to refine
 this code to only fetch certain objects or folders.</p>
 </blockquote>
-<div class="codewrapper sourceCode" id="cb5">
+<div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Initialize the total size counter (bytes)</span></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>total_size_bytes <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a></span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co"># Use a paginator to handle large bucket listings</span></span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co"># This ensures that even if the bucket contains many objects, we can retrieve all of them</span></span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>paginator <span class="op">=</span> s3.get_paginator(<span class="st">"list_objects_v2"</span>)</span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a></span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co"># Iterate through all pages of object listings</span></span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="cf">for</span> page <span class="kw">in</span> paginator.paginate(Bucket<span class="op">=</span>bucket_name):</span>
-<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>    <span class="co"># 'Contents' contains the list of objects in the current page, if available</span></span>
-<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>    <span class="cf">for</span> obj <span class="kw">in</span> page.get(<span class="st">"Contents"</span>, []):  </span>
-<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>        total_size_bytes <span class="op">+=</span> obj[<span class="st">"Size"</span>]  <span class="co"># Add each object's size to the total</span></span>
-<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a></span>
-<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co"># Convert the total size to gigabytes for cost estimation</span></span>
-<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>total_size_gb <span class="op">=</span> total_size_bytes <span class="op">/</span> (<span class="dv">1024</span> <span class="op">**</span> <span class="dv">3</span>)</span>
-<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a></span>
-<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co"># Convert the total size to megabytes for easier readability</span></span>
-<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a>total_size_mb <span class="op">=</span> total_size_bytes <span class="op">/</span> (<span class="dv">1024</span> <span class="op">**</span> <span class="dv">2</span>)</span>
-<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a></span>
-<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co"># Print the total size in MB</span></span>
-<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Total size of bucket '</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">': </span><span class="sc">{</span>total_size_mb<span class="sc">:.2f}</span><span class="ss"> MB"</span>)</span>
-<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a></span>
-<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="co"># Print the total size in GB</span></span>
-<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="co">#print(f"Total size of bucket '{bucket_name}': {total_size_gb:.2f} GB")</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Initialize the total size counter (bytes)</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>total_size_bytes <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co"># Use a paginator to handle large bucket listings</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co"># This ensures that even if the bucket contains many objects, we can retrieve all of them</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>paginator <span class="op">=</span> s3.get_paginator(<span class="st">"list_objects_v2"</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co"># Iterate through all pages of object listings</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="cf">for</span> page <span class="kw">in</span> paginator.paginate(Bucket<span class="op">=</span>bucket_name):</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>    <span class="co"># 'Contents' contains the list of objects in the current page, if available</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>    <span class="cf">for</span> obj <span class="kw">in</span> page.get(<span class="st">"Contents"</span>, []):  </span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>        total_size_bytes <span class="op">+=</span> obj[<span class="st">"Size"</span>]  <span class="co"># Add each object's size to the total</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co"># Convert the total size to gigabytes for cost estimation</span></span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>total_size_gb <span class="op">=</span> total_size_bytes <span class="op">/</span> (<span class="dv">1024</span> <span class="op">**</span> <span class="dv">3</span>)</span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a></span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a><span class="co"># Convert the total size to megabytes for easier readability</span></span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a>total_size_mb <span class="op">=</span> total_size_bytes <span class="op">/</span> (<span class="dv">1024</span> <span class="op">**</span> <span class="dv">2</span>)</span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a></span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a><span class="co"># Print the total size in MB</span></span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Total size of bucket '</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">': </span><span class="sc">{</span>total_size_mb<span class="sc">:.2f}</span><span class="ss"> MB"</span>)</span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a></span>
+<span id="cb6-23"><a href="#cb6-23" tabindex="-1"></a><span class="co"># Print the total size in GB</span></span>
+<span id="cb6-24"><a href="#cb6-24" tabindex="-1"></a><span class="co">#print(f"Total size of bucket '{bucket_name}': {total_size_gb:.2f} GB")</span></span></code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb6">
+<div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">Total</span> size of bucket <span class="st">'doejohn-titanic-s3'</span>: 0.06 MB</span></code></pre>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="ex">Total</span> size of bucket <span class="st">'doejohn-titanic-s3'</span>: 0.06 MB</span></code></pre>
 </div>
 </div>
 </div>
@@ -1611,36 +1615,36 @@ page</a>. Replace “username” below with your GitHub username.</p>
 <p>Let’s make sure we’re starting in the root directory of this
 instance, so that we all have our AWS_helpers.py file located in the
 same path (/test_AWS/scripts/AWS_helpers.py)</p>
-<div class="codewrapper sourceCode" id="cb7">
+<div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span></span></code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb8">
+<div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="ex">/home/ec2-user/SageMaker</span></span></code></pre>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="ex">/home/ec2-user/SageMaker</span></span></code></pre>
 </div>
 <p>To clone the repo to our Jupyter notebook, use the following code,
 adjusting username to your GitHub username.</p>
-<div class="codewrapper sourceCode" id="cb9">
+<div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="op">!</span>git clone https:<span class="op">//</span>github.com<span class="op">/</span>username<span class="op">/</span>AWS_helpers.git <span class="co"># downloads AWS_helpers folder/repo (refresh file explorer to see)</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="op">!</span>git clone https:<span class="op">//</span>github.com<span class="op">/</span>username<span class="op">/</span>AWS_helpers.git <span class="co"># downloads AWS_helpers folder/repo (refresh file explorer to see)</span></span></code></pre>
 </div>
 <p>Our AWS_helpers.py file can be found in
 <code>AWS_helpers/helpers.py</code>. With this file downloaded, you can
 call this function via…</p>
-<div class="codewrapper sourceCode" id="cb10">
+<div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="im">import</span> AWS_helpers.helpers <span class="im">as</span> helpers</span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>helpers.get_s3_bucket_size(bucket_name)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="im">import</span> AWS_helpers.helpers <span class="im">as</span> helpers</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>helpers.get_s3_bucket_size(bucket_name)</span></code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb11">
+<div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="ex">{</span><span class="st">'size_mb'</span><span class="ex">:</span> 0.060057640075683594, <span class="st">'size_gb'</span>: 5.865003913640976e-05}</span></code></pre>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="ex">{</span><span class="st">'size_mb'</span><span class="ex">:</span> 0.060057640075683594, <span class="st">'size_gb'</span>: 5.865003913640976e-05}</span></code></pre>
 </div>
 </div>
 </div>
@@ -1655,51 +1659,51 @@ storage cost based on AWS S3 pricing.</p>
 class. The example below uses the S3 Standard storage class pricing for
 the US East (N. Virginia) region as of November 1, 2024. Please verify
 the current pricing for your specific region and storage class on the <a href="https://aws.amazon.com/s3/pricing/" class="external-link">AWS S3 Pricing page</a>.</p>
-<div class="codewrapper sourceCode" id="cb12">
+<div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># AWS S3 Standard Storage pricing for US East (N. Virginia) region</span></span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co"># Pricing tiers as of November 1, 2024</span></span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>first_50_tb_price_per_gb <span class="op">=</span> <span class="fl">0.023</span>  <span class="co"># per GB for the first 50 TB</span></span>
-<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>next_450_tb_price_per_gb <span class="op">=</span> <span class="fl">0.022</span>  <span class="co"># per GB for the next 450 TB</span></span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>over_500_tb_price_per_gb <span class="op">=</span> <span class="fl">0.021</span>  <span class="co"># per GB for storage over 500 TB</span></span>
-<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a></span>
-<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co"># Calculate the cost based on the size</span></span>
-<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="cf">if</span> total_size_gb <span class="op">&lt;=</span> <span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span>:</span>
-<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>    <span class="co"># Total size is within the first 50 TB</span></span>
-<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a>    cost <span class="op">=</span> total_size_gb <span class="op">*</span> first_50_tb_price_per_gb</span>
-<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="cf">elif</span> total_size_gb <span class="op">&lt;=</span> <span class="dv">500</span> <span class="op">*</span> <span class="dv">1024</span>:</span>
-<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a>    <span class="co"># Total size is within the next 450 TB</span></span>
-<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a>    cost <span class="op">=</span> (<span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> first_50_tb_price_per_gb) <span class="op">+</span> <span class="op">\</span></span>
-<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a>           ((total_size_gb <span class="op">-</span> <span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span>) <span class="op">*</span> next_450_tb_price_per_gb)</span>
-<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a><span class="cf">else</span>:</span>
-<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a>    <span class="co"># Total size is over 500 TB</span></span>
-<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a>    cost <span class="op">=</span> (<span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> first_50_tb_price_per_gb) <span class="op">+</span> <span class="op">\</span></span>
-<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a>           (<span class="dv">450</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> next_450_tb_price_per_gb) <span class="op">+</span> <span class="op">\</span></span>
-<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a>           ((total_size_gb <span class="op">-</span> <span class="dv">500</span> <span class="op">*</span> <span class="dv">1024</span>) <span class="op">*</span> over_500_tb_price_per_gb)</span>
-<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a></span>
-<span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated monthly storage cost: $</span><span class="sc">{</span>cost<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
-<span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated annual storage cost: $</span><span class="sc">{</span>cost<span class="op">*</span><span class="dv">12</span><span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># AWS S3 Standard Storage pricing for US East (N. Virginia) region</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="co"># Pricing tiers as of November 1, 2024</span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>first_50_tb_price_per_gb <span class="op">=</span> <span class="fl">0.023</span>  <span class="co"># per GB for the first 50 TB</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>next_450_tb_price_per_gb <span class="op">=</span> <span class="fl">0.022</span>  <span class="co"># per GB for the next 450 TB</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>over_500_tb_price_per_gb <span class="op">=</span> <span class="fl">0.021</span>  <span class="co"># per GB for storage over 500 TB</span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co"># Calculate the cost based on the size</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="cf">if</span> total_size_gb <span class="op">&lt;=</span> <span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span>:</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>    <span class="co"># Total size is within the first 50 TB</span></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>    cost <span class="op">=</span> total_size_gb <span class="op">*</span> first_50_tb_price_per_gb</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="cf">elif</span> total_size_gb <span class="op">&lt;=</span> <span class="dv">500</span> <span class="op">*</span> <span class="dv">1024</span>:</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>    <span class="co"># Total size is within the next 450 TB</span></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>    cost <span class="op">=</span> (<span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> first_50_tb_price_per_gb) <span class="op">+</span> <span class="op">\</span></span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>           ((total_size_gb <span class="op">-</span> <span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span>) <span class="op">*</span> next_450_tb_price_per_gb)</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a>    <span class="co"># Total size is over 500 TB</span></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>    cost <span class="op">=</span> (<span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> first_50_tb_price_per_gb) <span class="op">+</span> <span class="op">\</span></span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a>           (<span class="dv">450</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> next_450_tb_price_per_gb) <span class="op">+</span> <span class="op">\</span></span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a>           ((total_size_gb <span class="op">-</span> <span class="dv">500</span> <span class="op">*</span> <span class="dv">1024</span>) <span class="op">*</span> over_500_tb_price_per_gb)</span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a></span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated monthly storage cost: $</span><span class="sc">{</span>cost<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated annual storage cost: $</span><span class="sc">{</span>cost<span class="op">*</span><span class="dv">12</span><span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb13">
+<div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="ex">Estimated</span> monthly storage cost: <span class="va">$0</span>.0000</span></code></pre>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="ex">Estimated</span> monthly storage cost: <span class="va">$0</span>.0000</span></code></pre>
 </div>
 <p>For your convenience, we have also added this code to a helper
 function.</p>
-<div class="codewrapper sourceCode" id="cb14">
+<div class="codewrapper sourceCode" id="cb15">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>monthly_cost, storage_size_gb <span class="op">=</span> helpers.calculate_s3_storage_cost(bucket_name)</span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated monthly cost (</span><span class="sc">{</span>storage_size_gb<span class="sc">:.4f}</span><span class="ss"> GB): $</span><span class="sc">{</span>monthly_cost<span class="sc">:.5f}</span><span class="ss">"</span>)</span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated annual cost (</span><span class="sc">{</span>storage_size_gb<span class="sc">:.4f}</span><span class="ss"> GB): $</span><span class="sc">{</span>monthly_cost<span class="op">*</span><span class="dv">12</span><span class="sc">:.5f}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>monthly_cost, storage_size_gb <span class="op">=</span> helpers.calculate_s3_storage_cost(bucket_name)</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated monthly cost (</span><span class="sc">{</span>storage_size_gb<span class="sc">:.4f}</span><span class="ss"> GB): $</span><span class="sc">{</span>monthly_cost<span class="sc">:.5f}</span><span class="ss">"</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated annual cost (</span><span class="sc">{</span>storage_size_gb<span class="sc">:.4f}</span><span class="ss"> GB): $</span><span class="sc">{</span>monthly_cost<span class="op">*</span><span class="dv">12</span><span class="sc">:.5f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb15">
+<div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="ex">Estimated</span> monthly cost <span class="er">(</span><span class="ex">0.0001</span> GB<span class="kw">)</span><span class="bu">:</span> <span class="va">$0</span>.00000</span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="ex">Estimated</span> annual cost <span class="er">(</span><span class="ex">0.0001</span> GB<span class="kw">)</span><span class="bu">:</span> <span class="va">$0</span>.00002</span></code></pre>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="ex">Estimated</span> monthly cost <span class="er">(</span><span class="ex">0.0001</span> GB<span class="kw">)</span><span class="bu">:</span> <span class="va">$0</span>.00000</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="ex">Estimated</span> annual cost <span class="er">(</span><span class="ex">0.0001</span> GB<span class="kw">)</span><span class="bu">:</span> <span class="va">$0</span>.00002</span></code></pre>
 </div>
 <p><strong>Important Considerations</strong>:</p>
 <ul>
@@ -1733,44 +1737,44 @@ bucket as demonstrated below. For this demo, you can create a blank
 <code>results.txt</code> file to upload to your bucket. To do so, go to
 <strong>File</strong> -&gt; <strong>New</strong> -&gt; <strong>Text
 file</strong>, and save it out as <code>results.txt</code>.</p>
-<div class="codewrapper sourceCode" id="cb16">
+<div class="codewrapper sourceCode" id="cb17">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="co"># Define the S3 bucket name and the file paths</span></span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>train_file_path <span class="op">=</span> <span class="st">"results.txt"</span> <span class="co"># assuming your file is in root directory of jupyter notebook (check file explorer tab)</span></span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a></span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a><span class="co"># Upload the training file to a new folder called "results". You can also just place it in the bucket's root directory if you prefer (remove results/ in code below).</span></span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>s3.upload_file(train_file_path, bucket_name, <span class="st">"results/results.txt"</span>)</span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a></span>
-<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Files uploaded successfully."</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="co"># Define the S3 bucket name and the file paths</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>train_file_path <span class="op">=</span> <span class="st">"results.txt"</span> <span class="co"># assuming your file is in root directory of jupyter notebook (check file explorer tab)</span></span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a><span class="co"># Upload the training file to a new folder called "results". You can also just place it in the bucket's root directory if you prefer (remove results/ in code below).</span></span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>s3.upload_file(train_file_path, bucket_name, <span class="st">"results/results.txt"</span>)</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Files uploaded successfully."</span>)</span></code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb17">
+<div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="ex">Files</span> uploaded successfully.</span></code></pre>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="ex">Files</span> uploaded successfully.</span></code></pre>
 </div>
 <p>After uploading, we can view the objects/files available on our
 bucket using…</p>
-<div class="codewrapper sourceCode" id="cb18">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="co"># List and print all objects in the bucket</span></span>
-<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>response <span class="op">=</span> s3.list_objects_v2(Bucket<span class="op">=</span>bucket_name)</span>
-<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a></span>
-<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a><span class="co"># Check if there are objects in the bucket</span></span>
-<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a><span class="cf">if</span> <span class="st">'Contents'</span> <span class="kw">in</span> response:</span>
-<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a>    <span class="cf">for</span> obj <span class="kw">in</span> response[<span class="st">'Contents'</span>]:</span>
-<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a>        <span class="bu">print</span>(obj[<span class="st">'Key'</span>])  <span class="co"># Print the object's key (its path in the bucket)</span></span>
-<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a><span class="cf">else</span>:</span>
-<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"The bucket is empty or does not exist."</span>)</span></code></pre>
-</div>
-<p>Alternatively, we can substitute this for a helper function call as
-well.</p>
 <div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>file_list <span class="op">=</span> helpers.list_S3_objects(bucket_name)</span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>file_list</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="co"># List and print all objects in the bucket</span></span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>response <span class="op">=</span> s3.list_objects_v2(Bucket<span class="op">=</span>bucket_name)</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a></span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a><span class="co"># Check if there are objects in the bucket</span></span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a><span class="cf">if</span> <span class="st">'Contents'</span> <span class="kw">in</span> response:</span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>    <span class="cf">for</span> obj <span class="kw">in</span> response[<span class="st">'Contents'</span>]:</span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>        <span class="bu">print</span>(obj[<span class="st">'Key'</span>])  <span class="co"># Print the object's key (its path in the bucket)</span></span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"The bucket is empty or does not exist."</span>)</span></code></pre>
+</div>
+<p>Alternatively, we can substitute this for a helper function call as
+well.</p>
+<div class="codewrapper sourceCode" id="cb20">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a>file_list <span class="op">=</span> helpers.list_S3_objects(bucket_name)</span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>file_list</span></code></pre>
 </div>
 <p>[‘results/results.txt’, ‘titanic_test.csv’, ‘titanic_train.csv’]</p>
 <div id="keypoints1" class="callout keypoints">
