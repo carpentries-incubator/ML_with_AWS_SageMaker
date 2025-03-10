@@ -129,9 +129,16 @@ In some cases, downloading a local copy of the dataset may be useful, such as wh
 #### Example
 
 ```python
+!pwd
+```
+
+    /home/ec2-user/SageMaker/
+
+
+```python
 # Define the S3 bucket and file location
 key = "titanic_train.csv"  # Path to your file in the S3 bucket
-local_file_path = "./titanic_train.csv"  # Local path to save the file
+local_file_path = "/home/ec2-user/SageMaker/titanic_train.csv"  # Local path to save the file
 
 # Initialize the S3 client and download the file
 s3.download_file(bucket_name, key, local_file_path)
