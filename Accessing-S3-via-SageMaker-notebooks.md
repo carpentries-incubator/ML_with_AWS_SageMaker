@@ -61,34 +61,27 @@ print(f"AWS Region: {session.boto_region_name}")  # Prints the region where the 
 
 ## Reading data from S3
 
-You can either read data from S3 into memory or download a copy of your S3 data into your notebook's instance. While loading into memory can save on storage resources, it can be convenient at times to have a local copy. We'll show you both strategies in this upcoming section. Here's a more detailed look at the pros and cons of each strategy:
+You can either (A) read data from S3 into memory or (B) download a copy of your S3 data into your notebook instance. Since we are using SageMaker notebooks as controllers—rather than performing training or tuning directly in the notebook—the best practice is to **read data directly from S3** whenever possible. However, there are cases where downloading a local copy may be useful. We'll show you both strategies.
 
-1. **Reading data directly from S3 into memory**:
-   - **Pros**:
-     - **Storage efficiency**: By keeping data in memory, you avoid taking up local storage on your notebook instance, which can be particularly beneficial for larger datasets or instances with limited storage.
-     - **Simple data management**: Accessing data directly from S3 avoids the need to manage or clean up local copies after processing.
-   - **Cons**:
-     - **Performance for frequent reads**: Accessing S3 data repeatedly can introduce latency and slow down workflows, as each read requires a network request. This approach works best if you only need to load data once or infrequently.
-     - **Potential cost for high-frequency access**: Multiple GET requests to S3 can accumulate charges over time, especially if your workflow requires repeated access to the same data.
+### A) Reading data directly from S3 into memory  
+This is the recommended approach for most workflows. By keeping data in S3 and reading it into memory when needed, we avoid local storage constraints and ensure that our data remains accessible for SageMaker training and tuning jobs.
 
-2. **Downloading a copy of data from S3 to local storage**:
-   - **Pros**:
-     - **Better performance for intensive workflows**: If you need to access the dataset multiple times during processing, working from a local copy avoids repeated network requests, making operations faster and more efficient.
-     - **Offline access**: Once downloaded, you can access the data without a persistent internet connection, which can be helpful for handling larger data transformations.
-   - **Cons**:
-     - **Storage costs**: Local storage on the instance may come with additional costs or limitations, especially if your instance type has constrained storage capacity.
-     - **Data management overhead**: You'll need to manage local data copies and ensure that they are properly cleaned up to free resources once processing is complete.
+**Pros**:
+- **Scalability**: Data remains in S3, allowing multiple training/tuning jobs to access it without duplication.
+- **Efficiency**: No need to manage local copies or manually clean up storage.
+- **Cost-effective**: Avoids unnecessary instance storage usage.
 
-### Choosing between the two strategies
-If your workflow requires only a single read of the dataset for processing, reading directly into memory can be a quick and resource-efficient solution. However, for cases where you'll perform extensive or iterative processing, downloading a local copy of the data will typically be more performant and may incur fewer request-related costs.
+**Cons**:
+- **Network dependency**: Requires internet access to S3.
+- **Potential latency**: Reading large datasets repeatedly from S3 may introduce small delays. This approach works best if you only need to load data once or infrequently.
 
-## 1A. Read data from S3 into memory
-Our data is stored on an S3 bucket called 'titanic-dataset-test'. We can use the following code to read data directly from S3 into memory in the Jupyter notebook environment, without actually downloading a copy of train.csv as a local file.
+#### Example: Reading data from S3 into memory
+Our data is stored on an S3 bucket called 'name-titanic-s3' (e.g., doejohn-titanic-s3). We can use the following code to read data directly from S3 into memory in the Jupyter notebook environment, without actually downloading a copy of train.csv as a local file.
 
 ```python
 import pandas as pd
 # Define the S3 bucket and object key
-bucket_name = 'myawesometeam-titanic'  # replace with your S3 bucket name
+bucket_name = 'doejohn-titanic-s3'  # replace with your S3 bucket name
 
 # Read the train data from S3
 key = 'titanic_train.csv'  # replace with your object key
@@ -114,12 +107,18 @@ train_data.head()
     (179, 12)
 
 
-## 1B. Download copy into notebook environment
-Download data from S3 to notebook environment. You may need to hit refresh on the file explorer panel to the left to see this file. If you get any permission issues...
+### B) Download copy into notebook environment
+In some cases, downloading a local copy of the dataset may be useful, such as when performing repeated reads in an interactive notebook session.
 
-* check that you have selected the appropriate policy for this notebook
-* check that your bucket has the appropriate policy permissions
+**Pros**:
+- **Faster access for repeated operations**: Avoids repeated S3 requests.
+- **Works offline**: Useful if running in an environment with limited network access.
 
+**Cons**:
+- **Consumes instance storage**: Notebook instances have limited space.
+- **Requires manual cleanup**: Downloaded files remain until deleted.
+
+#### Example
 
 ```python
 # Define the S3 bucket and file location
@@ -131,14 +130,13 @@ s3.download_file(bucket_name, key, local_file_path)
 !ls
 ```
 
-    File downloaded: ./titanic_train.csv
+**Note**: You may need to hit refresh on the file explorer panel to the left to see this file. If you get any permission issues...
 
+* check that you have selected the appropriate policy for this notebook
+* check that your bucket has the appropriate policy permissions
 
-## 2. Check current size and storage costs of bucket
-
-It's a good idea to periodically check how much storage you have used in your bucket. You can do this from a Jupyter notebook in SageMaker by using the **Boto3** library, which is the AWS SDK for Python. This will allow you to calculate the total size of objects within a specified bucket. Here's how you can do it...
-
-### Step 1: Set up the S3 Client and Calculate Bucket Size
+#### Check the current size and storage costs of bucket
+It's a good idea to periodically check how much storage you have used in your bucket. You can do this from a Jupyter notebook in SageMaker by using the **Boto3** library, which is the AWS SDK for Python. This will allow you to calculate the total size of objects within a specified bucket. 
 
 The code below will calculate your bucket size for you. Here is a breakdown of the important pieces in the next code section:
 
@@ -149,33 +147,41 @@ The code below will calculate your bucket size for you. Here is a breakdown of t
 > **Note**: If your bucket has very large objects or you want to check specific folders within a bucket, you may want to refine this code to only fetch certain objects or folders.
 
 ```python
-# Initialize the total size counter
+# Initialize the total size counter (bytes)
 total_size_bytes = 0
 
-# List and sum the size of all objects in the bucket
-paginator = s3.get_paginator('list_objects_v2')
+# Use a paginator to handle large bucket listings
+# This ensures that even if the bucket contains many objects, we can retrieve all of them
+paginator = s3.get_paginator("list_objects_v2")
+
+# Iterate through all pages of object listings
 for page in paginator.paginate(Bucket=bucket_name):
-    for obj in page.get('Contents', []):
-        total_size_bytes += obj['Size']
+    # 'Contents' contains the list of objects in the current page, if available
+    for obj in page.get("Contents", []):  
+        total_size_bytes += obj["Size"]  # Add each object's size to the total
 
 # Convert the total size to gigabytes for cost estimation
 total_size_gb = total_size_bytes / (1024 ** 3)
-# print(f"Total size of bucket '{bucket_name}': {total_size_gb:.2f} GB") # can uncomment this if you want GB reported
 
-# Convert the total size to megabytes for readability
+# Convert the total size to megabytes for easier readability
 total_size_mb = total_size_bytes / (1024 ** 2)
+
+# Print the total size in MB
 print(f"Total size of bucket '{bucket_name}': {total_size_mb:.2f} MB")
+
+# Print the total size in GB
+#print(f"Total size of bucket '{bucket_name}': {total_size_gb:.2f} GB")
 ```
 
     Total size of bucket 'myawesometeam-titanic': 0.06 MB
 
 
-### Using helper functions from lesson repo
+#### Using helper functions from lesson repo
 We have added code to calculate bucket size to a helper function called `get_s3_bucket_size(bucket_name)` for your convenience. There are also some other helper functions in that repo to assist you with common AWS/SageMaker workflows. We'll show you how to clone this code into your notebook environment.
 
 **Note**: Make sure you have already forked the lesson repo as described on the [setup page](https://uw-madison-datascience.github.io/ML_with_Amazon_SageMaker/#workshop-repository-setup). Replace "username" below with your GitHub username.
 
-#### Directory setup
+##### Directory setup
 Let's make sure we're starting in the root directory of this instance, so that we all have our AWS_helpers.py file located in the same path (/test_AWS/scripts/AWS_helpers.py)
 
 ```python
@@ -184,7 +190,7 @@ Let's make sure we're starting in the root directory of this instance, so that w
 
     /home/ec2-user/SageMaker
 
-To clone the repo to our Jupyter notebook, use the following code.
+To clone the repo to our Jupyter notebook, use the following code, adjusting username to your GitHub username.
 ```python
 !git clone https://github.com/username/AWS_helpers.git # downloads AWS_helpers folder/repo (refresh file explorer to see)
 ```
@@ -198,7 +204,7 @@ helpers.get_s3_bucket_size(bucket_name)
 
     {'size_mb': 0.060057640075683594, 'size_gb': 5.865003913640976e-05}
 
-## 3: Check storage costs of bucket
+#### Check storage costs of bucket
 To estimate the storage cost of your Amazon S3 bucket directly from a Jupyter notebook in SageMaker, you can use the following approach. This method calculates the total size of the bucket and estimates the monthly storage cost based on AWS S3 pricing.
 
 **Note**: AWS S3 pricing varies by region and storage class. The example below uses the S3 Standard storage class pricing for the US East (N. Virginia) region as of November 1, 2024. Please verify the current pricing for your specific region and storage class on the [AWS S3 Pricing page](https://aws.amazon.com/s3/pricing/).
@@ -255,7 +261,7 @@ For detailed and up-to-date information on AWS S3 pricing, please refer to the [
 
 
 
-## 4. Pushing new files from notebook environment to bucket
+## Pushing new files from notebook environment to bucket
 As your analysis generates new files, you can upload to your bucket as demonstrated below. For this demo, you can create a blank `results.txt` file to upload to your bucket. To do so, go to **File** -> **New** -> **Text file**, and save it out as `results.txt`.
 
 
