@@ -67,11 +67,13 @@ You can either (A) read data from S3 into memory or (B) download a copy of your 
 This is the recommended approach for most workflows. By keeping data in S3 and reading it into memory when needed, we avoid local storage constraints and ensure that our data remains accessible for SageMaker training and tuning jobs.
 
 **Pros**:
+
 - **Scalability**: Data remains in S3, allowing multiple training/tuning jobs to access it without duplication.
 - **Efficiency**: No need to manage local copies or manually clean up storage.
 - **Cost-effective**: Avoids unnecessary instance storage usage.
 
 **Cons**:
+
 - **Network dependency**: Requires internet access to S3.
 - **Potential latency**: Reading large datasets repeatedly from S3 may introduce small delays. This approach works best if you only need to load data once or infrequently.
 
@@ -111,10 +113,12 @@ train_data.head()
 In some cases, downloading a local copy of the dataset may be useful, such as when performing repeated reads in an interactive notebook session.
 
 **Pros**:
+
 - **Faster access for repeated operations**: Avoids repeated S3 requests.
 - **Works offline**: Useful if running in an environment with limited network access.
 
 **Cons**:
+
 - **Consumes instance storage**: Notebook instances have limited space.
 - **Requires manual cleanup**: Downloaded files remain until deleted.
 
