@@ -177,7 +177,7 @@ print(f"Total size of bucket '{bucket_name}': {total_size_mb:.2f} MB")
 #print(f"Total size of bucket '{bucket_name}': {total_size_gb:.2f} GB")
 ```
 
-    Total size of bucket 'myawesometeam-titanic': 0.06 MB
+    Total size of bucket 'doejohn-titanic-s3': 0.06 MB
 
 
 ### Using helper functions from lesson repo
