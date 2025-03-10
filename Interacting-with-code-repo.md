@@ -139,16 +139,6 @@ helpers.convert_files(direction="notebook_to_python")
 !git status
 ```
 
-On branch main
-Your branch is up to date with 'origin/main'.
-
-Untracked files:
-  (use "git add <file>..." to include in what will be committed)
-	Interacting-with-S3.py
-	Interacting-with-git.py
-
-nothing added to commit but untracked files present (use "git add" to track)
-
 2. Add and commit changes
 
 ```python
@@ -162,11 +152,6 @@ nothing added to commit but untracked files present (use "git add" to track)
 ```python
 !git status
 ```
-    On branch main
-    Your branch is ahead of 'origin/main' by 1 commit.
-      (use "git push" to publish your local commits)
-    
-    nothing to commit, working tree clean
 
 ## Step 5. Adding .ipynb to gitigore
 
@@ -174,23 +159,19 @@ Adding `.ipynb` files to `.gitignore` is a good practice if you plan to only com
 
 Here's how to add `.ipynb` files to `.gitignore` to ignore them project-wide:
 
-1. **Cd to git repo folder**
-    First make sure we're in the repo folder
+1. **Cd to git repo folder**: First make sure we're in the repo folder
     
 ```python
 %cd AWS_helpers
 ```
 
-2. **Create the `.gitignore` file**:
-    This file will be hidden in Jupyter (since it starts with "."), but you can verify it exists using `ls`.
+2. **Create the `.gitignore` file**: This file will be hidden in Jupyter (since it starts with "."), but you can verify it exists using `ls`.
 ```python
 !touch .gitignore
 !ls -a
 ```
 
-3. **Add `.ipynb` files to `.gitignore`**:
-
-You can add this line using a command within your notebook:
+3. **Add `.ipynb` files to `.gitignore`**: You can add this line using a command within your notebook:
 
 ```python
 with open(".gitignore", "a") as gitignore:
