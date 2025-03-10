@@ -48,11 +48,15 @@ train_filename = 'titanic_train.csv'
 test_filename = 'titanic_test.csv'
 ```
 
-We should also record our local instance information to report this information during testing.
+We should also record our local instance information to report this information during testing. First, let's make sure we're starting in the same location to access helper functions
+
+```python
+%cd /home/ec2-user/SageMaker/
+```
 
 ```python
 import AWS_helpers.helpers as helpers
-notebook_instance_name = 'MyAwesomeTeam-ChrisEndemann-Titanic-Train-Tune-Xgboost-NN'
+notebook_instance_name = 'DoeJohn-ExploreSageMaker'
 local_instance_info = helpers.get_notebook_instance_info(notebook_instance_name)
 local_instance = local_instance_info['InstanceType']
 local_instance
@@ -60,7 +64,6 @@ local_instance
 
 ## Training a neural network with SageMaker
 Let's see how to do a similar experiment, but this time using PyTorch neural networks. We will again demonstrate how to test our custom model train script (train_nn.py) before deploying to SageMaker, and discuss some strategies (e.g., using a GPU) for improving train time when needed.
-
 
 ### Preparing the data (compressed npz files)
 When deploying a PyTorch model on SageMaker, it's helpful to prepare the input data in a format that's directly accessible and compatible with PyTorch's data handling methods. The next code cell will prep our npz files from the existing csv versions. 
@@ -121,8 +124,7 @@ np.savez('val_data.npz', X_val=X_val, y_val=y_val)
 
 ```
 
-Next, we will upload our compressed files to our S3 bucket. Storage is farily cheap on AWS (around $0.023 per GB per month), but be mindful of uploading too much data. It may be convenient to store a preprocessed version of the data, just don't store too many versions that aren't being actively used.
-
+Next, we will upload our compressed files to our S3 bucket. Storage is farily cheap on AWS (around $0.023 per GB per month), but be mindful of uploading too much data. It may be convenient to store a preprocessed version of the data at times, but try not to store too many versions that aren't being actively used.
 
 ```python
 import boto3
@@ -203,13 +205,7 @@ end = t.time()
 print(f"Runtime for training on SageMaker: {end - start:.2f} seconds, instance_type: {instance_type}, instance_count: {instance_count}")
 
 ```
-    
-    2024-11-03 21:27:03 Uploading - Uploading generated training model
-    2024-11-03 21:27:03 Completed - Training job completed
-    Training seconds: 135
-    Billable seconds: 135
-    Runtime for training on SageMaker: 197.62 seconds, instance_type: ml.m5.large, instance_count: 1
-
+   
 
 ## Deploying PyTorch neural network via SageMaker with a GPU instance
 
@@ -273,13 +269,6 @@ end = t.time()
 print(f"Runtime for training on SageMaker: {end - start:.2f} seconds, instance_type: {instance_type}, instance_count: {instance_count}")
 
 ```
-    
-    2024-11-03 21:33:56 Uploading - Uploading generated training model
-    2024-11-03 21:33:56 Completed - Training job completed
-    Training seconds: 350
-    Billable seconds: 350
-    Runtime for training on SageMaker: 409.68 seconds, instance_type: ml.g4dn.xlarge, instance_count: 1
-
 
 ::::::::::::::::::::::::::: callout
 #### GPUs can be slow for small datasets/models
@@ -338,13 +327,6 @@ end = t.time()
 print(f"Runtime for training on SageMaker: {end - start:.2f} seconds, instance_type: {instance_type}, instance_count: {instance_count}")
 
 ```
-    
-    2024-11-03 21:36:35 Uploading - Uploading generated training model
-    2024-11-03 21:36:47 Completed - Training job completed
-    Training seconds: 228
-    Billable seconds: 228
-    Runtime for training on SageMaker: 198.36 seconds, instance_type: ml.m5.xlarge, instance_count: 2
-
 
 ### Distributed training for neural nets: how epochs are managed
 Amazon SageMaker provides two main strategies for distributed training: **data parallelism** and **model parallelism**. Understanding which strategy will be used depends on the model size and the configuration of your SageMaker training job, as well as the default settings of the specific SageMaker Estimator you are using.
