@@ -163,6 +163,7 @@ Here's how to add `.ipynb` files to `.gitignore` to ignore them project-wide:
     
 ```python
 !pwd
+#%cd AWS_helpers
 ```
 
 2. **Create the `.gitignore` file**: This file will be hidden in Jupyter (since it starts with "."), but you can verify it exists using `ls`.
