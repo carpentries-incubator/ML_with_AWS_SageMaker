@@ -287,6 +287,8 @@ To launch this training "job", we'll use the XGBoost "Estimator. In SageMaker, E
 For all these Estimators, adding a `requirements.txt` file under `dependencies` ensures that additional packages are installed before training begins. This approach allows the use of specific libraries that may be critical for custom preprocessing, feature engineering, or model modifications. Here's how to include it:
 
 ```python
+# Customizing estimator using requirements.txt
+from sagemaker.sklearn.estimator import SKLearn
 sklearn_estimator = SKLearn(
     entry_point="train_script.py",
     role=role,
