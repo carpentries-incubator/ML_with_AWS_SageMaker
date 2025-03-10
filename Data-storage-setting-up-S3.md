@@ -244,7 +244,7 @@ After you are done using your data, it's important to practice good resource ste
 - Select the bucket, click **Actions > Delete**.
 - Type the bucket name to confirm deletion.
 
-Deleting the bucket stops all costs associated with storage, requests, and data transfer.
+***Please complete option 2 following this workshop***. Deleting the bucket stops all costs associated with storage, requests, and data transfer.
 
 ::::::::::::::::::::::::::::::::::::: keypoints 
 
