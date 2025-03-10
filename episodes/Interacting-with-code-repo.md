@@ -277,7 +277,6 @@ Let's assume you've taken a short break from your work, and others on your team 
 This command will create `Interacting-with-S3.ipynb` in the current directory, converting the Python script to a Jupyter Notebook format. Jupytext handles the conversion gracefully without expecting the `.py` file to be in JSON format.
 
 ```python
-# Replace 'your_script.py' with your actual filename
 !jupytext --to notebook Interacting-with-S3.py --output Interacting-with-S3.ipynb
 ```
 
