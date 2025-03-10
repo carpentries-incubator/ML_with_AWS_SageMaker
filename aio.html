@@ -1178,10 +1178,10 @@ instance”.</p>
 </h4>
 <ul>
 <li>In the AWS Console, search for <strong>SageMaker</strong>.</li>
-<li>Recommended: Select the star icon to save SageMaker as a bookmark in
-your AWS toolbar</li>
-<li>Select <strong>SageMaker - Build, Train, and Deploy
-Models</strong>.</li>
+<li>Recommended: Select the star icon next to <strong>Amazon SageMaker
+AI</strong> to save SageMaker as a bookmark in your AWS toolbar</li>
+<li>Select <strong>Amazon SageMaker AI</strong>
+</li>
 </ul>
 </div>
 <div class="section level4">
@@ -1192,54 +1192,68 @@ Models</strong>.</li>
 <strong>Notebooks</strong>, then click <strong>Create notebook
 instance</strong>.</li>
 <li>
-<strong>Notebook name</strong>: Enter a name that reflects your
-notebook’s primary user (your name), dataset (titanic), purpose
-(train-tune), and models utilized (XGBoost-NN). <strong>Hackathon
-attendees must use the following convention</strong>:
-TeamName-YourName-Dataset-NotebookPurpose(s)-Model(s) (e.g.,
-<code>MyAwesomeTeam-ChrisEndemann-Titanic-Train-Tune-XGBoost-NN</code>).</li>
+<strong>Notebook name</strong>: To easily track this resource in our
+shared account, please use the following naming convention:
+“YourName-ExploreSageMaker”. For example, “DoeJohn-ExploreSageMaker”.
+Can include hyphens, but not spaces.</li>
 <li>
-<strong>Instance type</strong>: Start with a small instance type,
-such as <code>ml.t3.medium</code>. You can scale up later as needed for
-intensive tasks, which will be managed by launching separate training
-jobs from this notebook. For guidance on common instances for ML
-procedures, refer to our supplemental <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
-for ML webpage</a>.</li>
+<strong>Instance type</strong>: SageMaker notebooks run on AWS EC2
+instances. The instance type determines the compute resources allocated
+to the notebook. Since our notebook will act as a <strong>low-resource
+“controller”</strong>, we’ll select a small instance such as
+<code>ml.t3.medium</code>.
+<ul>
+<li>This keeps costs low while allowing us to launch separate
+training/tuning jobs on more powerful instances when needed.<br>
+</li>
+<li>For guidance on common instances for ML procedures, refer to our
+supplemental <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
+for ML webpage</a>.<br>
+</li>
+</ul>
+</li>
 <li>
-<strong>Platform identifier</strong>: You can leave this as the
-default.</li>
+<strong>Platform identifier</strong>: This is an internal AWS
+setting related to the environment version and underlying platform. You
+can leave this as the default.</li>
 <li>
 <strong>Permissions and encryption</strong>:
 <ul>
 <li>
-<strong>IAM role</strong>: Choose an existing role or create a new
-one. <strong>Hackathon attendees should select
-‘ml-sagemaker-use’</strong>. The role should include the
-<code>AmazonSageMakerFullAccess</code> policy to enable access to AWS
-services like S3.</li>
+<strong>IAM role</strong>: For this workshop, we have pre-configured
+the “ml-sagemmaker-use” role to enable access to AWS services like
+SageMaker, with some restrictions to prevent overuse/misuse of
+resources. Select the “ml-sagemmaker-use” role. Outside of the workshop,
+you create/select a role that includes the
+<code>AmazonSageMakerFullAccess</code> policy.</li>
 <li>
-<strong>Root access</strong>: Enable root access to notebook.</li>
+<strong>Root access</strong>: Determines whether the user can run
+administrative commands within the notebook instance. You should
+<strong>Enable root access</strong> to allow installing additional
+packages if/when needed.<br>
+</li>
 <li>
-<strong>Encryption key (optional)</strong>: Specify a KMS key for
-encrypting data at rest if needed. Otherwise, leave it blank.</li>
+<strong>Encryption key (skip)</strong>: While we won’t use this
+feature for the workshop, it is possible to specify a KMS key for
+encrypting data at rest if needed.</li>
 </ul>
 </li>
 <li>
-<strong>Network (optional)</strong>: Networking settings are
-optional. Configure them if you’re working within a specific VPC or need
-network customization.</li>
+<strong>Network (skip)</strong>: Networking settings are optional.
+Configure them if you’re working within a specific VPC or need network
+customization.</li>
 <li>
-<strong>Git repositories configuration (optional)</strong>: You
-don’t need to complete this configuration. Instead, we’ll run a clone
-command from our notebook later to get our repo setup. This approach is
-a common strategy (allowing some flexiblity in which repo you use for
-the notebook.</li>
+<strong>Git repositories configuration (skip)</strong>: You don’t
+need to complete this configuration. Instead, we’ll run a clone command
+from our notebook later to get our repo setup. This approach is a common
+strategy (allowing some flexiblity in which repo you use for the
+notebook).</li>
 <li>
-<strong>Tags (required for hackathon attendees)</strong>: Adding
-tags helps track and organize resources for billing and management. This
-is particularly useful when you need to break down expenses by project,
-task, or team. Please use the tags found in the below image to track
-your notebook’s resource usage.</li>
+<strong>Tags</strong>: Adding tags helps track and organize
+resources for billing and management. This is particularly useful when
+you need to break down expenses by project, task, or team. To help track
+costs on our shared account, please use the tags found in the below
+image.</li>
 </ul>
 <figure><img src="https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/images/notebook_tags.PNG" alt="Tag Setup Example" class="figure mx-auto d-block"><div class="figcaption">Tag Setup Example</div>
 </figure><ul>
