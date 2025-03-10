@@ -23,13 +23,14 @@ exercises: 10
 ## Initial setup 
 
 #### Open .ipynb notebook
-Once your newly created notebook *instance* ("SageMaker notebook") shows as `InService`, open the instance in Jupyter Lab. From there, we will select the standard python3 environment (conda_python3) to start our first .ipynb notebook ("Jupyter notebook"). You can name your Jupyter notebook something along the lines of, `Interacting-with-S3.ipynb`.
+Once your newly created *instance* shows as `InService`, open the instance in Jupyter Lab. From there, we can create as many Jupyter notebooks as we would like within the instance environment. 
 
+We will then select the standard python3 environment (conda_python3) to start our first .ipynb notebook (Jupyter notebook). We can use the standard conda_python3 environment since we aren't doing any training/tuning just yet.
 
-We can use the standard conda_python3 environment since we aren't doing any training/tuning just yet.
+After opening, you can right-click the Jupyter notebook name to "Rename" it to: `Interacting-with-S3.ipynb`, since interacting with S3 will be our focus for now.
 
 #### Set up AWS environment
-To begin each SageMaker notebook, it's important to set up an AWS environment that will allow seamless access to the necessary cloud resources. Here's what we'll do to get started:
+To begin each notebook, it's important to set up an AWS environment that will allow seamless access to the necessary cloud resources. Here's what we'll do to get started:
 
 1. **Define the Role**: We'll use `get_execution_role()` to retrieve the IAM role associated with the SageMaker instance. This role specifies the permissions needed for interacting with AWS services like S3, which allows SageMaker to securely read from and write to storage buckets.
 
@@ -48,6 +49,13 @@ from sagemaker import get_execution_role
 role = sagemaker.get_execution_role() # specifies your permissions to use AWS tools
 session = sagemaker.Session() 
 s3 = boto3.client('s3')
+
+# Print relevant details 
+role_name = role.split("/")[-1]  # Extracts the last role (the actual name)
+print(f"Execution Role: {role_name}")  # Displays the IAM role being used
+bucket_names = [bucket["Name"] for bucket in s3.list_buckets()["Buckets"]]
+print(f"Available S3 Buckets: {bucket_names}")  # Shows the default S3 bucket assigned to SageMaker
+print(f"AWS Region: {session.boto_region_name}")  # Prints the region where the SageMaker session is running
 
 ```
 
