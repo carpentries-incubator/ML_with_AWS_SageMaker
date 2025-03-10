@@ -2865,21 +2865,23 @@ it:</p>
 <div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>sklearn_estimator <span class="op">=</span> SKLearn(</span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>    entry_point<span class="op">=</span><span class="st">"train_script.py"</span>,</span>
-<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
-<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>    instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span>,</span>
-<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>    output_path<span class="op">=</span><span class="st">"s3://your-bucket/output"</span>,</span>
-<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>    framework_version<span class="op">=</span><span class="st">"1.0-1"</span>,</span>
-<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a>    dependencies<span class="op">=</span>[<span class="st">'requirements.txt'</span>],  <span class="co"># Adding custom dependencies</span></span>
-<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a>    hyperparameters<span class="op">=</span>{</span>
-<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a>        <span class="st">"max_depth"</span>: <span class="dv">5</span>,</span>
-<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a>        <span class="st">"eta"</span>: <span class="fl">0.1</span>,</span>
-<span id="cb19-12"><a href="#cb19-12" tabindex="-1"></a>        <span class="st">"subsample"</span>: <span class="fl">0.8</span>,</span>
-<span id="cb19-13"><a href="#cb19-13" tabindex="-1"></a>        <span class="st">"num_round"</span>: <span class="dv">100</span></span>
-<span id="cb19-14"><a href="#cb19-14" tabindex="-1"></a>    }</span>
-<span id="cb19-15"><a href="#cb19-15" tabindex="-1"></a>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="co"># Customizing estimator using requirements.txt</span></span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="im">from</span> sagemaker.sklearn.estimator <span class="im">import</span> SKLearn</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>sklearn_estimator <span class="op">=</span> SKLearn(</span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>    entry_point<span class="op">=</span><span class="st">"train_script.py"</span>,</span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>    instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span>,</span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a>    output_path<span class="op">=</span><span class="st">"s3://your-bucket/output"</span>,</span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a>    framework_version<span class="op">=</span><span class="st">"1.0-1"</span>,</span>
+<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a>    dependencies<span class="op">=</span>[<span class="st">'requirements.txt'</span>],  <span class="co"># Adding custom dependencies</span></span>
+<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a>    hyperparameters<span class="op">=</span>{</span>
+<span id="cb19-12"><a href="#cb19-12" tabindex="-1"></a>        <span class="st">"max_depth"</span>: <span class="dv">5</span>,</span>
+<span id="cb19-13"><a href="#cb19-13" tabindex="-1"></a>        <span class="st">"eta"</span>: <span class="fl">0.1</span>,</span>
+<span id="cb19-14"><a href="#cb19-14" tabindex="-1"></a>        <span class="st">"subsample"</span>: <span class="fl">0.8</span>,</span>
+<span id="cb19-15"><a href="#cb19-15" tabindex="-1"></a>        <span class="st">"num_round"</span>: <span class="dv">100</span></span>
+<span id="cb19-16"><a href="#cb19-16" tabindex="-1"></a>    }</span>
+<span id="cb19-17"><a href="#cb19-17" tabindex="-1"></a>)</span></code></pre>
 </div>
 <p>This setup simplifies training, allowing you to maintain custom
 environments directly within SageMaker’s managed containers, without
