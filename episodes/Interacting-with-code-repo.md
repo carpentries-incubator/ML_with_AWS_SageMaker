@@ -177,53 +177,53 @@ Here's how to add `.ipynb` files to `.gitignore` to ignore them project-wide:
 1. **Cd to git repo folder**
     First make sure we're in the repo folder
     
-    ```python
-    %cd AWS_helpers
-    ```
+```python
+%cd AWS_helpers
+```
 
 2. **Create the `.gitignore` file**:
     This file will be hidden in Jupyter (since it starts with "."), but you can verify it exists using `ls`.
-    ```python
-    !touch .gitignore
-    !ls -a
-    ```
+```python
+!touch .gitignore
+!ls -a
+```
 
 3. **Add `.ipynb` files to `.gitignore`**:
 
-    You can add this line using a command within your notebook:
-   
-    ```python
-    with open(".gitignore", "a") as gitignore:
-        gitignore.write("\n# Ignore all Jupyter Notebook files\n*.ipynb\n")
-    ```
-    
-    View file contents
-    ```python
-    !cat .gitignore
-    ```
+You can add this line using a command within your notebook:
+
+```python
+with open(".gitignore", "a") as gitignore:
+gitignore.write("\n# Ignore all Jupyter Notebook files\n*.ipynb\n")
+```
+
+View file contents
+```python
+!cat .gitignore
+```
 
 4. **Ignore other common temp files**
-    While we're at it, let's ignore other common files that can clutter repos, such as cache folders and temporary files.
+While we're at it, let's ignore other common files that can clutter repos, such as cache folders and temporary files.
 
-    ```python
-    with open(".gitignore", "a") as gitignore:
-        gitignore.write("\n# Ignore cache and temp files\n__pycache__/\n*.tmp\n*.log\n")
-    ```
+```python
+with open(".gitignore", "a") as gitignore:
+gitignore.write("\n# Ignore cache and temp files\n__pycache__/\n*.tmp\n*.log\n")
+```
 
-    View file contents
+View file contents
 
-    ```python
-    !cat .gitignore
-    ```
+```python
+!cat .gitignore
+```
     
 5. **Add and commit the `.gitignore` file**:
 
-    Add and commit the updated `.gitignore` file to ensure it's applied across the repository.
+Add and commit the updated `.gitignore` file to ensure it's applied across the repository.
 
-    ```python
-    !git add .gitignore
-    !git commit -m "Add .ipynb files to .gitignore to ignore notebooks"
-    ```
+```python
+!git add .gitignore
+!git commit -m "Add .ipynb files to .gitignore to ignore notebooks"
+```
 
 This setup will:
 
