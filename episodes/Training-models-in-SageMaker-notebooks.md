@@ -230,9 +230,6 @@ print(f"Test Set Accuracy: {accuracy:.4f}")
 
 ```
 
-    Test Set Accuracy: 0.8156
-
-
 ## Training via SageMaker (using notebook as controller) - custom train.py script
 Unlike "local" training (using this notebook), this next approach leverages SageMaker's managed infrastructure to handle resources, parallelism, and scalability. By specifying instance parameters, such as instance_count and instance_type, you can control the resources allocated for training.
 
@@ -360,9 +357,7 @@ print(f"Runtime for training on SageMaker: {end - start:.2f} seconds, instance_t
 
 ```
 
-    INFO:sagemaker:Creating training-job with name: sagemaker-xgboost-2024-11-03-21-10-03-577
-
-
+When running longer training jobs, you can check on their status periodically from the AWS SageMaker Console (where we originally launched our Notebook instance) on left side panel under "Training".
 
 #### Hyperparameters
 The `hyperparameters` section in this code defines the input arguments of train_XGBoost.py. The first is the name of the training input file, and the others are hyperparameters for the XGBoost model, such as `max_depth`, `eta`, `subsample`, `colsample_bytree`, and `num_round`.
@@ -408,9 +403,6 @@ import tarfile
 with tarfile.open(local_model_path) as tar:
     tar.extractall()
 ```
-
-    xgboost/sagemaker-xgboost-2024-11-03-21-10-03-577/output/model.tar.gz
-
 
 
 ```python
@@ -504,12 +496,6 @@ end = t.time()
 print(f"Runtime for training on SageMaker: {end - start:.2f} seconds, instance_type: {instance_type}, instance_count: {instance_count}")
 
 ```
-    
-    2024-11-03 21:16:19 Uploading - Uploading generated training model
-    2024-11-03 21:16:19 Completed - Training job completed
-    Training seconds: 135
-    Billable seconds: 135
-    Runtime for training on SageMaker: 197.50 seconds, instance_type: ml.m5.large, instance_count: 1
 
 
 ## Monitoring training
@@ -704,36 +690,6 @@ print(f"Runtime for training on SageMaker: {end1 - start1:.2f} seconds, instance
 print(f"Runtime for training on SageMaker: {end2 - start2:.2f} seconds, instance_type: {instance_type}, instance_count: {xgboost_estimator.instance_count}")
 
 ```
-
-    INFO:sagemaker.image_uris:Ignoring unnecessary instance type: None.
-    INFO:sagemaker:Creating training-job with name: sagemaker-xgboost-2024-11-03-21-16-39-216
-
-
-    2024-11-03 21:16:40 Starting - Starting the training job...
-    2024-11-03 21:16:55 Starting - Preparing the instances for training...
-    2024-11-03 21:17:22 Downloading - Downloading input data...
-    2024-11-03 21:18:07 Downloading - Downloading the training image......
-    2024-11-03 21:19:13 Training - Training image download completed. Training in progress.
-    2024-11-03 21:19:13 Uploading - Uploading generated training model[34m/miniconda3/lib/python3.8/site-packages/xgboost/compat.py:36: FutureWarning:
-    2024-11-03 21:19:32 Completed - Training job completed
-
-    INFO:sagemaker:Creating training-job with name: sagemaker-xgboost-2024-11-03-21-19-57-254
-    Training seconds: 130
-    Billable seconds: 130
-    
-    2024-11-03 21:19:58 Starting - Starting the training job...
-    2024-11-03 21:20:13 Starting - Preparing the instances for training...
-    2024-11-03 21:20:46 Downloading - Downloading input data......
-    2024-11-03 21:21:36 Downloading - Downloading the training image...
-    2024-11-03 21:22:27 Training - Training image download completed. Training in progress..[35m/miniconda3/lib/python3.8/site-packages/xgboost/compat.py:36: 
-    
-    2024-11-03 21:23:01 Uploading - Uploading generated training model
-    2024-11-03 21:23:01 Completed - Training job completed
-    Training seconds: 270
-    Billable seconds: 270
-    Runtime for training on SageMaker: 198.04 seconds, instance_type: ml.m5.large, instance_count: 1
-    Runtime for training on SageMaker: 197.66 seconds, instance_type: ml.m5.large, instance_count: 2
-
 
 ### Why scaling instances might not show speedup here
 
