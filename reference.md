@@ -18,7 +18,6 @@ We encourage you to briefly study this glossary before the workshop and refer ba
 
 * **EC2 (Elastic Compute Cloud)**: An AWS service that provides virtual machines (instances) on demand. These instances can be used to run applications, process data, or train machine learning models.  
 * **Auto Scaling**: A feature that automatically adjusts the number of EC2 instances or other cloud resources based on demand to optimize cost and performance.  
-* **Spot Instances**: Discounted EC2 instances that take advantage of unused AWS capacity. These instances are cheaper but can be interrupted if AWS reclaims resources.  
 
 ### Account Governance and Security  
 
