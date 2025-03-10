@@ -79,7 +79,7 @@ In order to upload our titanic dataset to an S3 bucket on AWS, we'll follow the 
 
 ##### 2. Navigate to S3
 - Type "S3" in the search bar
-- Protip: Select the star icon to save S3 as a bookmark in your AWS toolbar 
+- Recommended: Select the star icon to save S3 as a bookmark in your AWS toolbar 
 - Select **S3 - Scalable Storage in the Cloud**
 
 ##### 3. Create a new bucket
