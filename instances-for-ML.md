@@ -10,6 +10,8 @@ The below table provides general recommendations for selecting AWS instances bas
 - **GPU choices** depend on the task (T4 for cost-effective DL, V100/A100 for high performance).
 - The **g4dn** instances are cost-effective GPU options, suitable for moderate-scale deep learning tasks.
 - The **p3** instances offer high-performance GPU processing, best suited for large deep learning models requiring fast training times.
+- **Free Tier Eligibility**: Some smaller instance types, such as `ml.t3.medium`, may be eligible for the AWS Free Tier, which provides limited hours of usage per month. Free Tier eligibility can vary, so check [AWS Free Tier details](https://aws.amazon.com/free/) before launching instances to avoid unexpected costs.
+
 
 | **Dataset Size** | **Recommended Instance Type** | **vCPU** | **Memory (GiB)** | **GPU** | **Price per Hour (USD)** | **Suitable Tasks** |
 |-----------------|------------------------------|----------|------------------|---------|--------------------------|--------------------|
