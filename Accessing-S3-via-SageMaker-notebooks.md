@@ -263,9 +263,6 @@ print(f"Estimated annual cost ({storage_size_gb:.4f} GB): ${monthly_cost*12:.5f}
 
 ```
 
-    Estimated monthly cost (0.0001 GB): $0.00000
-    Estimated annual cost (0.0001 GB): $0.00002
-
 **Important Considerations**:
 
 - **Pricing Tiers**: AWS S3 pricing is tiered. The first 50 TB per month is priced at `$0.023 per GB`, the next 450 TB at `$0.022 per GB`, and storage over 500 TB at `$0.021 per GB`. Ensure you apply the correct pricing tier based on your total storage size.
