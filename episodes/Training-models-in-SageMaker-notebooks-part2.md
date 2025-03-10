@@ -41,7 +41,7 @@ session = sagemaker.Session()
 s3 = boto3.client('s3')
 
 # Define the S3 bucket that we will load from
-bucket_name = 'myawesometeam-titanic'  # replace with your S3 bucket name
+bucket_name = 'doejohn-titanic-s3'  # replace with your S3 bucket name
 
 # Define train/test filenames
 train_filename = 'titanic_train.csv'
@@ -57,10 +57,6 @@ local_instance_info = helpers.get_notebook_instance_info(notebook_instance_name)
 local_instance = local_instance_info['InstanceType']
 local_instance
 ````
-
-    'ml.t3.medium'
-
-  
 
 ## Training a neural network with SageMaker
 Let's see how to do a similar experiment, but this time using PyTorch neural networks. We will again demonstrate how to test our custom model train script (train_nn.py) before deploying to SageMaker, and discuss some strategies (e.g., using a GPU) for improving train time when needed.
@@ -145,9 +141,6 @@ print("Files successfully uploaded to S3.")
 
 ```
 
-    Files successfully uploaded to S3.
-
-
 ## Testing on notebook instance
 You should always test code thoroughly before scaling up and using more resources. Here, we will test our script using a small number of epochs — just to verify our setup is correct.
 
@@ -169,7 +162,7 @@ print(f"Local training time: {t.time() - start_time:.2f} seconds, instance_type 
 ## Deploying PyTorch neural network via SageMaker
 Now that we have tested things locally, we can try to train with a larger number of epochs and a better instance selected. We can do this easily by invoking the PyTorch estimator. Our notebook is currently configured to use ml.m5.large. We can upgrade this to `ml.m5.xlarge` with the below code (using our notebook as a controller). 
 
-**Should we use a GPU?**: Since this dataset is farily small, we don't necessarily need a GPU for training. Considering costs, the m5.xlarge is `$0.17/hour`, while the cheapest GPU instance is `$0.75/hour`. However, for larger datasets (> 1 GB) and models, we may want to consider a GPU if training time becomes cumbersome (see [Instances for ML](https://docs.google.com/spreadsheets/d/1uPT4ZAYl_onIl7zIjv5oEAdwy4Hdn6eiA9wVfOBbHmY/edit?usp=sharing). If that doesn't work, we can try distributed computing (setting instance > 1). More on this in the next section.
+**Should we use a GPU?**: Since this dataset is farily small, we don't necessarily need a GPU for training. Considering costs, the m5.xlarge is `$0.17/hour`, while the cheapest GPU instance is `$0.75/hour`. However, for larger datasets (> 1 GB) and models, we may want to consider a GPU if training time becomes cumbersome (see [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html). If that doesn't work, we can try distributed computing (setting instance > 1). More on this in the next section.
 
 
 ```python
