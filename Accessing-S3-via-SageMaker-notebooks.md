@@ -245,8 +245,8 @@ else:
            (450 * 1024 * next_450_tb_price_per_gb) + \
            ((total_size_gb - 500 * 1024) * over_500_tb_price_per_gb)
 
-print(f"Estimated monthly storage cost: ${cost:.4f}")
-print(f"Estimated annual storage cost: ${cost*12:.4f}")
+print(f"Estimated monthly storage cost: ${cost:.5f}")
+print(f"Estimated annual storage cost: ${cost*12:.5f}")
 
 ```
 
