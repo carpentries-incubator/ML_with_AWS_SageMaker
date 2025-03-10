@@ -125,7 +125,9 @@ If not, change directory using `%cd `.
 
 
 ## Testing train.py on this notebook's instance
-In this next section, we will learn how to take a model training script, and deploy it to more powerful instances (or many instances). This is helpful for machine learning jobs that require extra power, GPUs, or benefit from parallelization. Before we try exploiting this extra power, it is essential that we test our code thoroughly. We don't want to waste unnecessary compute cycles and resources on jobs that produce bugs instead of insights. If you need to, you can use a subset of your data to run quicker tests. You can also select a slightly better instance resource if your current instance insn't meeting your needs. See the [Instances for ML spreadsheet](https://docs.google.com/spreadsheets/d/1uPT4ZAYl_onIl7zIjv5oEAdwy4Hdn6eiA9wVfOBbHmY/edit?usp=sharing) for guidance. 
+In this next section, we will learn how to take a model training script, and deploy it to more powerful instances (or many instances). This is helpful for machine learning jobs that require extra power, GPUs, or benefit from parallelization. 
+
+However, before we try exploiting this extra power, it is essential that we test our code thoroughly! We don't want to waste unnecessary compute cycles and resources on jobs that produce bugs rather than insights. If you need to, you can use a subset of your data to run quicker tests. You can also select a slightly better instance resource if your current instance insn't meeting your needs. Visit the [Instances for ML page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for guidance. 
 
 #### Logging runtime & instance info
 To compare our local runtime with future experiments, we'll need to know what instance was used, as this will greatly impact runtime in many cases. We can extract the instance name for this notebook using...
@@ -133,7 +135,7 @@ To compare our local runtime with future experiments, we'll need to know what in
 ```python
 # Replace with your notebook instance name.
 # This does NOT refer to specific ipynb files, but to the SageMaker notebook instance.
-notebook_instance_name = 'MyAwesomeTeam-ChrisEndemann-Titanic-Train-Tune-Xgboost-NN'
+notebook_instance_name = 'DoeJohn-ExploreSageMaker'
 
 # Initialize SageMaker client
 sagemaker_client = boto3.client('sagemaker')
@@ -147,10 +149,6 @@ local_instance = response['InstanceType']
 print(f"Instance Type: {local_instance}")
 
 ```
-
-    Notebook Instance 'MyAwesomeTeam-ChrisEndemann-Titanic-Train-Tune-Xgboost-NN' status: InService
-    Instance Type: ml.t3.medium
-
 
 #### Helper:  `get_notebook_instance_info()` 
 You can also use the `get_notebook_instance_info()` function found in `AWS_helpers.py` to retrieve this info for your own project.
@@ -170,14 +168,6 @@ Test train.py on this notebook's instance (or when possible, on your own machine
 ```python
 !pip install xgboost # need to add this to environment to run train.py
 ```
-    Collecting xgboost
-      Downloading xgboost-2.1.2-py3-none-manylinux2014_x86_64.whl.metadata (2.0 kB)
-    Requirement already satisfied: numpy in /home/ec2-user/anaconda3/envs/pytorch_p310/lib/python3.10/site-packages (from xgboost) (1.26.4)
-    Requirement already satisfied: scipy in /home/ec2-user/anaconda3/envs/pytorch_p310/lib/python3.10/site-packages (from xgboost) (1.14.1)
-    Downloading xgboost-2.1.2-py3-none-manylinux2014_x86_64.whl (4.5 MB)
-       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.5/4.5 MB 82.5 MB/s eta 0:00:00
-    Installing collected packages: xgboost
-    Successfully installed xgboost-2.1.2
 
 ### Local test
 ```python
@@ -202,25 +192,13 @@ print(f"Total local runtime: {t.time() - start_time:.2f} seconds, instance_type 
 
 ```
 
-    Train size: (569, 8)
-    Val size: (143, 8)
-    Training time: 0.06 seconds
-    Model saved to ./xgboost-model
-    Total local runtime: 1.01 seconds, instance_type = ml.t3.medium
-
-
-    /home/ec2-user/anaconda3/envs/pytorch_p310/lib/python3.10/site-packages/xgboost/core.py:265: FutureWarning: Your system has an old version of glibc (< 2.28). We will stop supporting Linux distros with glibc older than 2.28 after **May 31, 2025**. Please upgrade to a recent Linux distro (with glibc 2.28+) to use future versions of XGBoost.
-    Note: You have installed the 'manylinux2014' variant of XGBoost. Certain features such as GPU algorithms or federated learning are not available. To use these features, please upgrade to a recent Linux distro with glibc 2.28+, and install the 'manylinux_2_28' variant.
-      warnings.warn(
-
-
 Training on this relatively small dataset should take less than a minute, but as we scale up with larger datasets and more complex models in SageMaker, tracking both training time and total runtime becomes essential for efficient debugging and resource management.
 
 **Note**: Our code above includes print statements to monitor dataset size, training time, and total runtime, which provides insights into resource usage for model development. We recommend incorporating similar logging to track not only training time but also total runtime, which includes additional steps like data loading, evaluation, and saving results. Tracking both can help you pinpoint bottlenecks and optimize your workflow as projects grow in size and complexity, especially when scaling with SageMaker's distributed resources.
 
 
-### Quick evaluation on test set
-This next section isn't SageMaker specific, so we'll cover it quickly. Here's how you would apply the outputted model to your test set using your local notebook instance.
+### Sanity check: Quick evaluation on test set
+This next section isn't SageMaker specific, but it does serve as a good sanity check to ensure our model is training properly. Here's how you would apply the outputted model to your test set using your local notebook instance.
 
 ```python
 import xgboost as xgb
