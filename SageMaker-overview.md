@@ -26,3 +26,14 @@ SageMaker provides several features that make it an ideal choice for researchers
 - **Cost management and monitoring**: SageMaker includes built-in monitoring tools to help you track and manage costs, ensuring you can scale up efficiently without unnecessary expenses. With thoughtful usage, SageMaker can be very affordable. For example, training roughly 100 small to medium-sized models (e.g., logistic regression, random forests, or lightweight deep learning models with a few million parameters) on a small dataset (under 10GB) can cost under $20, making it accessible for many research projects.
 
 In summary, Amazon SageMaker is a fully managed machine learning platform that simplifies building, training, tuning, and deploying models at scale. Unlike traditional research computing environments, which often require manual job orchestration and complex dependency management, SageMaker provides an integrated and automated workflow, allowing users to focus on model development rather than infrastructure. With support for on-demand compute resources, parallelized training and hyperparameter tuning, and flexible model deployment options, SageMaker enables researchers to scale experiments efficiently. Built-in cost tracking and monitoring tools also help keep expenses manageable, making SageMaker a practical choice for both small-scale research projects and large-scale ML pipelines. By combining preconfigured machine learning algorithms, support for custom scripts, and robust computing power, SageMaker reduces the complexity of ML development, empowering researchers to iterate faster and bring models to production more seamlessly.
+
+::::::::::::::::::::::::::::::::::::: keypoints
+
+- SageMaker simplifies ML workflows by eliminating the need for manual job orchestration.
+- Flexible compute options allow users to choose CPU, GPU, or memory-optimized instances based on workload needs.
+- Parallelized training and hyperparameter tuning accelerate model development.
+- SageMaker supports both built-in ML algorithms and custom scripts via Docker containers.
+- Cost monitoring tools help track and optimize spending on AWS resources.
+- SageMaker streamlines scaling from experimentation to deployment, making it suitable for both research and production.
+
+:::::::::::::::::::::::::::::::::::::::::::::::: 
