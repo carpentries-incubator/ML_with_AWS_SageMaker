@@ -180,12 +180,12 @@ print(f"Total size of bucket '{bucket_name}': {total_size_mb:.2f} MB")
     Total size of bucket 'myawesometeam-titanic': 0.06 MB
 
 
-#### Using helper functions from lesson repo
+### Using helper functions from lesson repo
 We have added code to calculate bucket size to a helper function called `get_s3_bucket_size(bucket_name)` for your convenience. There are also some other helper functions in that repo to assist you with common AWS/SageMaker workflows. We'll show you how to clone this code into your notebook environment.
 
 **Note**: Make sure you have already forked the lesson repo as described on the [setup page](https://uw-madison-datascience.github.io/ML_with_Amazon_SageMaker/#workshop-repository-setup). Replace "username" below with your GitHub username.
 
-##### Directory setup
+#### Directory setup
 Let's make sure we're starting in the root directory of this instance, so that we all have our AWS_helpers.py file located in the same path (/test_AWS/scripts/AWS_helpers.py)
 
 ```python
@@ -208,7 +208,7 @@ helpers.get_s3_bucket_size(bucket_name)
 
     {'size_mb': 0.060057640075683594, 'size_gb': 5.865003913640976e-05}
 
-#### Check storage costs of bucket
+### Check storage costs of bucket
 To estimate the storage cost of your Amazon S3 bucket directly from a Jupyter notebook in SageMaker, you can use the following approach. This method calculates the total size of the bucket and estimates the monthly storage cost based on AWS S3 pricing.
 
 **Note**: AWS S3 pricing varies by region and storage class. The example below uses the S3 Standard storage class pricing for the US East (N. Virginia) region as of November 1, 2024. Please verify the current pricing for your specific region and storage class on the [AWS S3 Pricing page](https://aws.amazon.com/s3/pricing/).
@@ -263,11 +263,8 @@ print(f"Estimated annual cost ({storage_size_gb:.4f} GB): ${monthly_cost*12:.5f}
 
 For detailed and up-to-date information on AWS S3 pricing, please refer to the [AWS S3 Pricing page](https://aws.amazon.com/s3/pricing/).
 
-
-
-## Pushing new files from notebook environment to bucket
-As your analysis generates new files, you can upload to your bucket as demonstrated below. For this demo, you can create a blank `results.txt` file to upload to your bucket. To do so, go to **File** -> **New** -> **Text file**, and save it out as `results.txt`.
-
+## Writing output files to S3
+As your analysis generates new files, you can upload files to your bucket as demonstrated below. For this demo, you can create a blank `results.txt` file to upload to your bucket. To do so, go to **File** -> **New** -> **Text file**, and save it out as `results.txt`.
 
 ```python
 # Define the S3 bucket name and the file paths
