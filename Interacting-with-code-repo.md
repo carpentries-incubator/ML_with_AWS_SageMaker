@@ -259,16 +259,8 @@ If you get merge conflicts, be sure to resolve those before moving forward (e.g.
 github_url = f'github.com/{username}/AWS_helpers.git' # The full address for your fork can be found under Code -> Clone -> HTTPS (remote the https:// before the rest of the address)
 !git push https://{username}:{token}@{github_url} main
 ```
-	Enumerating objects: 6, done.
-	Counting objects: 100% (6/6), done.
-	Delta compression using up to 2 threads
-	Compressing objects: 100% (5/5), done.
-	Writing objects: 100% (5/5), 3.00 KiB | 3.00 MiB/s, done.
-	Total 5 (delta 0), reused 0 (delta 0), pack-reused 0
-	To https://github.com/qualiaMachine/AWS_helpers.git
-	   bc47546..6a8bb8b  main -> main
    
-After pushing, you should navigate back to your fork on GitHub to verify everything worked (e.g., https://github.com/username/AWS_helpers/tree/main)
+After pushing, you can navigate back to your fork on GitHub to verify everything worked (e.g., https://github.com/username/AWS_helpers/tree/main)
 
 ## Step 7: Pulling .py files and converting back to notebook format
 
