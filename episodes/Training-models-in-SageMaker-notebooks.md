@@ -64,11 +64,6 @@ train_filename = 'titanic_train.csv'
 test_filename = 'titanic_test.csv'
 ```
 
-    sagemaker.config INFO - Not applying SDK defaults from location: /etc/xdg/sagemaker/config.yaml
-    sagemaker.config INFO - Not applying SDK defaults from location: /home/ec2-user/.config/sagemaker/config.yaml
-    role = arn:aws:iam::183295408236:role/ml-sagemaker-use
-
-
 ### 3. Download copy into notebook environment
 It can be convenient to have a "local" copy (i.e., one that you store in your notebook's instance). Run the next code chunk to download data from S3 to notebook environment. You may need to hit refresh on the file explorer panel to the left to see this file. If you get any permission issues...
 
