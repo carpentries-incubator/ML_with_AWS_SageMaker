@@ -213,7 +213,7 @@ This setup will:
 - Keep your repository cleaner, containing only `.py` scripts for easier version control and reduced repository size. 
 
 ## Step 6. Merging local changes with remote/GitHub
-Our local changes have now been committed, and we can begin the process of mergining with the remoate main branch. Before we try to push our changes, it's good practice to first to a pull. This is critical when working on a collaborate repo with multiple users, so that you don't miss any updates from other team members.
+Our local changes have now been committed, and we can begin the process of mergining with the remote main branch. Before we try to push our changes, it's good practice to first to a pull. This is critical when working on a collaborate repo with multiple users, so that you don't miss any updates from other team members.
 
 
 ### 1. Pull the latest changes from the main branch
