@@ -56,8 +56,7 @@ Preview variable details.
 
 ```python
 # Print relevant details 
-role_name = role.split("/")[-1]  # Extracts the last role (the actual name)
-print(f"Execution Role: {role_name}")  # Displays the IAM role being used
+print(f"Execution Role: {role}")  # Displays the IAM role being used
 bucket_names = [bucket["Name"] for bucket in s3.list_buckets()["Buckets"]]
 print(f"Available S3 Buckets: {bucket_names}")  # Shows the default S3 bucket assigned to SageMaker
 print(f"AWS Region: {session.boto_region_name}")  # Prints the region where the SageMaker session is running
