@@ -359,7 +359,7 @@ instance</a></li>
       </div>
       <hr></nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Training Models in SageMaker: PyTorch Example</h1>
-        <p>Last updated on 2025-03-10 |
+        <p>Last updated on 2025-03-11 |
 
         <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker/edit/main/episodes/Training-models-in-SageMaker-notebooks-part2.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -861,18 +861,21 @@ model architectures that exceed memory limits of typical instances.</li>
 </div>
 <div class="section level3">
 <h3 id="determining-which-distributed-training-strategy-is-used">Determining which distributed training strategy is used<a class="anchor" aria-label="anchor" href="#determining-which-distributed-training-strategy-is-used"></a></h3>
-<p>SageMaker will select the distributed strategy based on: -
+<p>SageMaker will select the distributed strategy based on:</p>
+<ul><li>
 <strong>Framework and Estimator configuration</strong>: Most deep
 learning frameworks in SageMaker default to data parallelism, especially
-when using PyTorch or TensorFlow with standard configurations. -
+when using PyTorch or TensorFlow with standard configurations.</li>
+<li>
 <strong>Model and data size</strong>: If you specify a model that
 exceeds a single instance’s memory capacity, SageMaker may switch to
-model parallelism if configured for it. - <strong>Instance
-count</strong>: When you specify <code>instance_count &gt; 1</code> in
-your Estimator with a deep learning model, SageMaker will use data
-parallelism by default unless explicitly configured for model
-parallelism.</p>
-<p>You observed that each instance ran all epochs with
+model parallelism if configured for it.</li>
+<li>
+<strong>Instance count</strong>: When you specify
+<code>instance_count &gt; 1</code> in your Estimator with a deep
+learning model, SageMaker will use data parallelism by default unless
+explicitly configured for model parallelism.</li>
+</ul><p>You observed that each instance ran all epochs with
 <code>instance_count=2</code> and 10,000 epochs, which aligns with data
 parallelism. Here, each instance processed the full set of epochs
 independently, but each batch of data was different, and the gradient
@@ -973,7 +976,7 @@ any links that you are not going to use.
   "url": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/Training-models-in-SageMaker-notebooks-part2.html",
   "identifier": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/Training-models-in-SageMaker-notebooks-part2.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2025-03-10",
+  "dateModified": "2025-03-11",
   "datePublished": "2025-03-11"
 }
 
