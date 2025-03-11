@@ -89,7 +89,7 @@ In this next section, we will learn how to take a model training script that was
 
 ### Understanding the XGBoost Training Script
 
-**Take a moment to review the `AWS_helpers/train_xgboost.py` script** we just cloned into our notebook. This script handles preprocessing, training, and saving an XGBoost model, while also adapting to both **local** and **SageMaker-managed** environments.
+**Take a moment to review the `AWS_helpers/train_xgboost.py` script** we just cloned into our notebook. This script handles preprocessing, training, and saving an XGBoost model, while also adapting to both local and SageMaker-managed environments.
 
 Try answering the following questions:
 
