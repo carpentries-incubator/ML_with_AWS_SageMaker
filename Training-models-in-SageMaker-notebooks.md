@@ -64,8 +64,119 @@ train_filename = 'titanic_train.csv'
 test_filename = 'titanic_test.csv'
 ```
 
-### 3. Download copy into notebook environment
-It can be convenient to have a "local" copy (i.e., one that you store in your notebook's instance). Run the next code chunk to download data from S3 to notebook environment. You may need to hit refresh on the file explorer panel to the left to see this file. If you get any permission issues...
+#### 4. Get code from git repo (skip if completed already from earlier episodes)
+If you didn't complete the earlier episodes, you'll need to clone our code repo before moving forward. Check to make sure we're in our EC2 root folder first (`/home/ec2-user/SageMaker`).
+
+```python
+%cd /home/ec2-user/SageMaker/
+```
+
+```python
+#!git clone https://github.com/username/AWS_helpers.git # uncomment only if you still need to download the code
+```
+
+## Testing train.py on this notebook's instance
+In this next section, we will learn how to take a model training script that was written/designed to run locally, and deploy it to more powerful instances (or many instances) using SageMaker. This is helpful for machine learning jobs that require extra power, GPUs, or benefit from parallelization. However, before we try exploiting this extra power, it is essential that we test our code thoroughly! We don't want to waste unnecessary compute cycles and resources on jobs that produce bugs rather than insights. 
+
+### Guidelines for testing ML pipelines before scaling
+- **Run tests locally first** (if feasible) to avoid unnecessary AWS charges. Here, we assume that local tests are not feasible due to limited local resources. Instead, we use our SageMaker instance to test our script on a minimally sized EC2 instance.
+- **Use a small dataset subset** (e.g., 1-5% of data) to catch issues early and speed up tests.
+- **Start with a small/cheap instance** before committing to larger resources. Visit the [Instances for ML page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for guidance. 
+- **Log everything** to track training times, errors, and key metrics.
+- **Verify correctness first** before optimizing hyperparameters or scaling.
+
+::::::::::::::::::::::::::::::::::::::: challenge
+
+### Understanding the XGBoost Training Script
+
+**Take a moment to review the `AWS_helpers/train_xgboost.py` script** we just cloned into our notebook. This script handles preprocessing, training, and saving an XGBoost model, while also adapting to both **local** and **SageMaker-managed** environments.
+
+Try answering the following questions:
+
+1. **Data Preprocessing**
+   - What transformations are applied to the dataset before training?
+   - Why do we drop the `Name`, `Ticket`, and `Cabin` columns?
+
+2. **Training Function**
+   - What does the `train_model()` function do?
+   - Why do we print the training time?
+
+3. **Command-Line Arguments**
+   - What is the purpose of `argparse` in this script?
+   - How would you modify the script if you wanted to change the number of training rounds?
+
+4. **Handling Local vs. SageMaker Runs**
+   - How does the script determine whether it is running in a SageMaker training job or locally?
+   - What do the environment variables `SM_CHANNEL_TRAIN` and `SM_MODEL_DIR` do?
+   - What happens if these environment variables are not set?
+
+5. **Training and Saving the Model**
+   - What format is the dataset converted to before training, and why?
+   - How is the trained model saved, and where will it be stored?
+
+After reviewing, discuss any questions or observations with your group.
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+::::::::::::::::::::::::::::::::::::::: solution
+
+### Solution
+
+1. **Data Preprocessing**
+   - The script fills missing values (`Age` with median, `Embarked` with mode), converts categorical variables (`Sex` and `Embarked`) to numerical values, and removes columns that don't contribute to prediction (`Name`, `Ticket`, `Cabin`).
+   - `Name`, `Ticket`, and `Cabin` are likely dropped because they don't provide meaningful information for predicting survival (beyond existing features), and they may introduce unnecessary complexity.
+
+2. **Training Function**
+   - The `train_model()` function takes the training dataset (`dtrain`), applies XGBoost training with the specified hyperparameters, and prints the training time.
+   - Printing training time helps compare different runs and ensures that scaling decisions are based on performance metrics.
+
+3. **Command-Line Arguments**
+   - `argparse` allows passing parameters like `max_depth`, `eta`, `num_round`, etc., at runtime without modifying the script.
+   - To change the number of training rounds, you would update the `--num_round` argument when running the script:  `python train_xgboost.py --num_round 200`
+
+4. **Handling Local vs. SageMaker Runs**
+   - The script uses `os.environ.get("SM_CHANNEL_TRAIN", ".")` and `os.environ.get("SM_MODEL_DIR", ".")` to detect whether it’s running in SageMaker.
+   - `SM_CHANNEL_TRAIN` is the directory where SageMaker stores input training data, and `SM_MODEL_DIR` is the directory where trained models should be saved.
+   - If these environment variables are **not set** (e.g., running locally), the script defaults to `"."` (current directory).
+
+5. **Training and Saving the Model**
+   - The dataset is converted into **XGBoost's `DMatrix` format**, which is optimized for memory and computation efficiency.
+   - The trained model is saved using `joblib.dump()` to `xgboost-model`, stored either in the SageMaker `SM_MODEL_DIR` (if running in SageMaker) or in the local directory.
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+### Recommended Sanity Checks (Non-Exhaustive) for XGBoost
+
+#### 1. Data Integrity & Preprocessing
+- Can the dataset be loaded without errors?
+- Are there missing values, and how are they handled?
+- Are all feature distributions reasonable? (Check min/max values)
+- Does the target variable make sense? (Avoid label leakage)
+
+#### 2. Training & Model Behavior
+- **Overfitting check:** Train on a small dataset (e.g., 100 rows). If it doesn't overfit, there may be a problem.
+- **Loss function behavior:** Ensure training loss decreases over time.
+- **Feature importance check:** Run `model.get_booster().get_score()` to confirm expected features are driving predictions.
+- **Tree depth sanity check:** If the model is too deep, it may be overfitting.
+
+#### 3. Performance & Resource Monitoring
+- **Training time estimate:** Run on a small subset to extrapolate full training time.
+- **Memory usage check:** Avoid running out of memory when loading large datasets.
+
+#### 4. Model Saving & Inference
+- **Save & reload test:** Can the model be saved and loaded correctly?
+- **Inference test:** Run predictions on a small batch of test data and check for unexpected values.
+- **Baseline comparison:** Compare against a simple heuristic (e.g., always predicting the mean).
+  
+### Download data into notebook environment
+It can be convenient to have a copy of the data (i.e., one that you store in your notebook's instance) to allow us to test our code before scaling things up. 
+
+:::: callout
+While we demonstrate how to download data into the notebook environment for testing our code (previously setup for local ML pipelines), keep in mind that S3 is the preferred location for dataset storage in a scalable ML pipeline. 
+:::::
+
+Run the next code chunk to download data from S3 to notebook environment. You may need to hit refresh on the file explorer panel to the left to see this file. If you get any permission issues...
 
 * check that you have selected the appropriate policy for this notebook
 * check that your bucket has the appropriate policy permissions
@@ -80,9 +191,6 @@ s3.download_file(bucket_name, file_key, local_file_path)
 print("File downloaded:", local_file_path)
 ```
 
-    File downloaded: ./titanic_train.csv
-
-
 We can do the same for the test set.
 
 
@@ -96,38 +204,6 @@ s3.download_file(bucket_name, file_key, local_file_path)
 print("File downloaded:", local_file_path)
 
 ```
-
-    File downloaded: ./titanic_test.csv
-
-### 4. Get code from git repo (skip if completed already from earlier episodes)
-If you didn't complete the earlier episodes, you'll need to clone our code repo before moving forward. Check to make sure we're in our EC2 root folder (`/home/ec2-user/SageMaker`).
-
-```python
-!pwd
-```
-
-    /home/ec2-user/SageMaker/
-
-
-If not, change directory using `%cd `.
-
-
-```python
-%cd /home/ec2-user/SageMaker/
-```
-
-    /home/ec2-user/SageMaker
-
-
-```python
-!git clone https://github.com/username/AWS_helpers.git
-```
-
-
-## Testing train.py on this notebook's instance
-In this next section, we will learn how to take a model training script, and deploy it to more powerful instances (or many instances). This is helpful for machine learning jobs that require extra power, GPUs, or benefit from parallelization. 
-
-However, before we try exploiting this extra power, it is essential that we test our code thoroughly! We don't want to waste unnecessary compute cycles and resources on jobs that produce bugs rather than insights. If you need to, you can use a subset of your data to run quicker tests. You can also select a slightly better instance resource if your current instance insn't meeting your needs. Visit the [Instances for ML page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for guidance. 
 
 #### Logging runtime & instance info
 To compare our local runtime with future experiments, we'll need to know what instance was used, as this will greatly impact runtime in many cases. We can extract the instance name for this notebook using...
