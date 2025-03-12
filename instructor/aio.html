@@ -981,7 +981,7 @@ sizes: 10 GB, 100 GB, 1 TB</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -2537,6 +2537,7 @@ potential issues early. <strong>In your group, discuss:</strong></p>
 </button>
 <div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
+<p>Which checks do you think are most critical before scaling up?</p>
 <ul>
 <li>
 <strong>Data loads correctly</strong> – Ensure the dataset loads
@@ -2563,20 +2564,31 @@ size.</li>
 <strong>Save &amp; reload test</strong> – Ensure the trained model
 can be saved, reloaded, and used for inference without errors.</li>
 </ul>
-<p>What potential issues might we miss if we skip the above checks? -
+<p>What potential issues might we miss if we skip the above checks?</p>
+<ul>
+<li>
 <strong>Silent data issues</strong> – Missing values, unexpected
 distributions, or incorrect labels could degrade model
 performance.<br>
-- <strong>Code bugs at scale</strong> – Small logic errors might not
+</li>
+<li>
+<strong>Code bugs at scale</strong> – Small logic errors might not
 break on small tests but could fail with larger datasets.<br>
-- <strong>Inefficient training runs</strong> – Without estimating
+</li>
+<li>
+<strong>Inefficient training runs</strong> – Without estimating
 runtime, jobs may take far longer than expected, wasting AWS
 resources.<br>
-- <strong>Memory or compute failures</strong> – Large datasets might
+</li>
+<li>
+<strong>Memory or compute failures</strong> – Large datasets might
 exceed instance memory limits, causing crashes or slowdowns.<br>
-- <strong>Model performance issues</strong> – If a model doesn’t overfit
-a small dataset, there may be problems with features, training logic, or
-hyperparameters.</p>
+</li>
+<li>
+<strong>Model performance issues</strong> – If a model doesn’t
+overfit a small dataset, there may be problems with features, training
+logic, or hyperparameters.</li>
+</ul>
 </div>
 </div>
 </div>
