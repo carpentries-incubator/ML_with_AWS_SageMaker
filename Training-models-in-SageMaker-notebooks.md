@@ -72,7 +72,8 @@ If you didn't complete the earlier episodes, you'll need to clone our code repo 
 ```
 
 ```python
-#!git clone https://github.com/username/AWS_helpers.git # uncomment only if you still need to download the code
+# uncomment below line only if you still need to download the code repo (replace username with your GitHub usernanme)
+#!git clone https://github.com/username/AWS_helpers.git 
 ```
 
 ## Testing train.py on this notebook's instance
