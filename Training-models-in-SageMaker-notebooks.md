@@ -604,119 +604,50 @@ Following these steps helps ensure you only interact with and modify jobs you ow
 
 ## When training takes too long
 
-When training time becomes excessive, two main options can improve efficiency in SageMaker.
+When training time becomes excessive, two main options can improve efficiency in SageMaker:
 
-* **Option 1: Upgrading to a more powerful instance** 
-* **Option 2: Using multiple instances for distributed training**. 
+- **Option 1: Upgrading to a more powerful instance**  
+- **Option 2: Using multiple instances for distributed training**  
 
-Generally, **Option 1 is the preferred approach** and should be explored first.
+Generally, Option 1 is the preferred approach and should be explored first.
 
 ### Option 1: Upgrade to a more powerful instance (preferred starting point)
 
-Upgrading to a more capable instance, particularly one with GPU capabilities (e.g., for deep learning), is often the simplest and most cost-effective way to speed up training. Here's a breakdown of instances to consider. Check the [Instances for ML spreadsheet](https://docs.google.com/spreadsheets/d/1uPT4ZAYl_onIl7zIjv5oEAdwy4Hdn6eiA9wVfOBbHmY/edit?usp=sharing) for guidance on selecting a better instance.
+Upgrading to a more capable instance, particularly one with GPU capabilities, is often the simplest and most cost-effective way to speed up training. Check the [Instances for ML page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for guidance.
 
-**When to use a single instance upgrade**  
-Upgrading a single instance works well if:
+When to use a single instance upgrade:  
+- Dataset size – The dataset is small to moderate (e.g., <10 GB), fitting comfortably within memory.  
+- Model complexity – XGBoost models are typically small enough to fit in memory.  
+- Training time – If training completes in a few hours but could be faster, upgrading may help.  
 
-   - **Dataset size**: The dataset is small to moderate (e.g., <10 GB), fitting comfortably within the memory of a larger instance.
-   - **Model complexity**: The model is not so large that it requires distribution across multiple devices.
-   - **Training time**: Expected training time is within a few hours, but could benefit from additional power.
-
-Upgrading a single instance is typically the most efficient option in terms of both cost and setup complexity. It avoids the communication overhead associated with multi-instance setups (discussed below) and is well-suited for most small to medium-sized datasets.
+Upgrading a single instance is usually the most efficient option. It avoids the communication overhead of multi-instance setups and works well for small to medium datasets.
 
 ### Option 2: Use multiple instances for distributed training
-If upgrading a single instance doesn't sufficiently reduce training time, distributed training across multiple instances may be a viable alternative, particularly for larger datasets and complex models. SageMaker supports two primary distributed training techniques: **data parallelism** and **model parallelism**.
 
-#### Understanding data parallelism vs. model parallelism
+If upgrading a single instance doesn’t sufficiently reduce training time, distributed training across multiple instances may be a viable alternative. For XGBoost, SageMaker applies only data parallelism (not model parallelism).
 
-- **Data parallelism**: This approach splits the dataset across multiple instances, allowing each instance to process a subset of the data independently. After each batch, gradients are synchronized across instances to ensure consistent updates to the model. Data parallelism is effective when the model itself fits within an instance's memory, but the data size or desired training speed requires faster processing through multiple instances.
+#### XGBoost uses data parallelism, not model parallelism
 
-- **Model parallelism**: Model parallelism divides the model itself across multiple instances, making it ideal for very large models (e.g., deep learning models in NLP or image processing) that cannot fit in memory on a single instance. Each instance processes a segment of the model, and results are combined during training. This approach is suitable for memory-intensive models that exceed the capacity of a single instance.
+- Data parallelism – The dataset is split across multiple instances, with each instance training on a portion of the data. The gradient updates are then synchronized and aggregated.  
+- Why not model parallelism? – Unlike deep learning models, XGBoost decision trees are small enough to fit in memory, so there’s no need to split the model itself across multiple instances.  
 
-#### How SageMaker chooses between data and model parallelism
+#### How SageMaker implements data parallelism for XGBoost
 
-In SageMaker, the choice between data and model parallelism is not entirely automatic. Here's how it typically works:
+- When `instance_count > 1`, SageMaker automatically splits the dataset across instances.  
+- Each instance trains on a subset of the data, computing gradient updates in parallel.  
+- Gradient updates are synchronized across instances before the next iteration.  
+- The final trained model is assembled as if it had been trained on the full dataset.  
 
-- **Data parallelism (automatic)**: When you set `instance_count > 1`, SageMaker will automatically apply data parallelism. This splits the dataset across instances, allowing each instance to process a subset independently and synchronize gradients after each batch. Data parallelism works well when the model can fit in the memory of a single instance, but the data size or processing speed needs enhancement with multiple instances.
+### When to consider multiple instances
 
-- **Model parallelism (manual setup)**: To enable model parallelism, you need to configure it explicitly using the **SageMaker Model Parallel Library**, suitable for deep learning models in frameworks like PyTorch or TensorFlow. Model parallelism splits the model itself across multiple instances, which is useful for memory-intensive models that exceed the capacity of a single instance. Configuring model parallelism requires setting up a distribution strategy in SageMaker's Python SDK.
+Using multiple instances makes sense when:  
+- Dataset size – The dataset is large and doesn't fit comfortably in memory.  
+- Expected training time – A single instance takes too long (e.g., >10 hours).  
+- Need for faster training – Parallelization can speed up training but introduces communication overhead.  
 
-- **Hybrid parallelism (manual setup)**: For extremely large datasets and models, SageMaker can support both data and model parallelism together, but this setup requires manual configuration. Hybrid parallelism is beneficial for workloads that are both data- and memory-intensive, where both the model and the data need distributed processing.
+If scaling to multiple instances, monitoring training time and efficiency is critical. In many cases, a single, more powerful instance may be more cost-effective than multiple smaller ones.  
 
-**When to use distributed training with multiple instances**  
-Consider multiple instances if:
-
-   - **Dataset size**: The dataset is large (>10 GB) and doesn't fit comfortably within a single instance's memory.
-   - **Model complexity**: The model is complex, requiring extensive computation that a single instance cannot handle in a reasonable time.
-   - **Expected training time**: Training on a single instance takes prohibitively long (e.g., >10 hours), and distributed computing overhead is manageable.
-
-::::::::::::::::::::::::::::::::: callout
-### Cost of distributed computing 
-**tl;dr** Use 1 instance unless you are finding that you're waiting hours for the training/tuning to complete.
-
-Let's break down some key points for deciding between 1 instance vs. multiple instances from a cost perspective:
-
-1. **Instance cost per hour**:
-   - SageMaker charges per instance-hour. Running multiple instances in parallel can finish training faster, reducing wall-clock time, but the cost per hour will increase with each added instance.
-
-2. **Single instance vs. multiple instance wall-clock time**:
-   - When using a single instance, training will take significantly longer, especially if your data is large. However, the wall-clock time difference between 1 instance and 10 instances may not translate to a direct 10x speedup when using multiple instances due to communication overheads.
-   - For example, with data-parallel training, instances need to synchronize gradients between batches, which introduces communication costs and may slow down training on larger clusters.
-
-3. **Scaling efficiency**:
-   - Parallelizing training does not scale perfectly due to those overheads. Adding instances generally provides diminishing returns on training time reduction.
-   - For example, doubling instances from 1 to 2 may reduce training time by close to 50%, but going from 8 to 16 instances may only reduce training time by around 20-30%, depending on the model and batch sizes.
-
-4. **Typical recommendation**:
-   - For small-to-moderate datasets or cases where training time isn't a critical factor, a single instance may be more cost-effective, as it avoids parallel processing overheads.
-   - For large datasets or where training speed is a high priority (e.g., tuning complex deep learning models), using multiple instances can be beneficial despite the cost increase due to time savings.
-
-5. **Practical cost estimation**:
-   - Suppose a single instance takes `T` hours to train and costs `$C` per hour. For a 10-instance setup, the cost would be approximately:
-     - Single instance: `T * $C`
-     - 10 instances (parallel): `(T / k) * (10 * $C)`, where `k` is the speedup factor (<10 due to overhead).
-   - If the speedup is only about 5x instead of 10x due to communication overhead, then the cost difference may be minimal, with a slight edge to a single instance on total cost but at a higher wall-clock time.
-
-::::::::::::::::::::::::::::::::: 
-
-> In summary:
-> 
-> - **Start by upgrading to a more powerful instance (Option 1)** for datasets up to 10 GB and moderately complex models. A single, more powerful, instance is usually more cost-effective for smaller workloads and where time isn't critical. Running initial tests with a single instance can also provide a benchmark. You can then experiment with small increases in instance count to find a balance between cost and time savings, particularly considering communication overheads that affect parallel efficiency.
-> - **Consider distributed training across multiple instances (Option 2)** only when dataset size, model complexity, or training time demand it.
-
-
-## XGBoost's distributed training mechanism
-In the event that option 2 explained above really is better for your use-case (e.g., you have a very large dataset or model that takes a while to train even with high performance instances), the next example will demo setting this up. Before we do, though, we should ask what distributed computing really means for our specific model/setup. XGBoost's distributed training relies on a data-parallel approach that divides the dataset across multiple instances (or workers), enabling each instance to work on a portion of the data independently. This strategy enhances efficiency, especially for large datasets and computationally intensive tasks. 
-
-> **What about a model parallelism approach?** Unlike deep learning models with vast neural network layers, XGBoost's decision trees are usually small enough to fit in memory on a single instance, even when the dataset is large. Thus, model parallelism is rarely necessary.
-XGBoost does not inherently support model parallelism out of the box in SageMaker because the model architecture doesn't typically exceed memory limits, unlike massive language or image models. Although model parallelism can be theoretically applied (e.g., splitting large tree structures across instances), it's generally not supported natively in SageMaker for XGBoost, as it would require a custom distribution framework to split the model itself.
-
-Here's how distributed training in XGBoost works, particularly in the SageMaker environment:
-
-### Key steps in distributed training with XGBoost
-
-#### 1. Data partitioning
-   - The dataset is divided among multiple instances. For example, with two instances, each instance may receive half of the dataset.
-   - In SageMaker, data partitioning across instances is handled automatically via the input channels you specify during training, reducing manual setup.
-
-#### 2. Parallel gradient boosting
-   - XGBoost performs gradient boosting by constructing trees iteratively based on calculated gradients.
-   - Each instance calculates gradients (first-order derivatives) and Hessians (second-order derivatives of the loss function) independently on its subset of data.
-   - This parallel processing allows each instance to determine which features to split and which trees to add to the model based on its data portion.
-
-#### 3. Communication between instances
-   - After computing gradients and Hessians locally, instances synchronize to share and combine these values.
-   - Synchronization keeps the model parameters consistent across instances. Only computed gradients are communicated, not the raw dataset, minimizing data transfer overhead.
-   - The combined gradients guide global model updates, ensuring that the ensemble of trees reflects the entire dataset, despite its division across multiple instances.
-
-#### 4. Final model aggregation
-   - Once training completes, XGBoost aggregates the trained trees from each instance into a single final model.
-   - This aggregation enables the final model to perform as though it trained on the entire dataset, even if the dataset couldn't fit into a single instance's memory.
-
-SageMaker simplifies these steps by automatically managing the partitioning, synchronization, and aggregation processes during distributed training with XGBoost.
-
-
-## Implementing distributed training with XGBoost in SageMaker
+### Implementing distributed training with XGBoost in SageMaker
 
 In SageMaker, setting up distributed training for XGBoost can offer significant time savings as dataset sizes and computational requirements increase. Here's how you can configure it:
 
@@ -785,8 +716,8 @@ print(f"Runtime for training on SageMaker: {end2 - start2:.2f} seconds, instance
 * Distributed algorithms: XGBoost has a built-in distributed training capability, but models that perform gradient descent, like deep neural networks, gain more obvious benefits because each instance can compute gradients for a batch of data simultaneously, allowing faster convergence.
 
 ### For cost optimization
-* Single-instance training is typically more cost-effective for small or moderately sized datasets, while **multi-instance setups** can reduce wall-clock time for larger datasets and complex models, at a higher instance cost.
-* For **initial testing**, start with data parallelism on a single instance, and increase instance count if training time becomes prohibitive, while being mindful of communication overhead and scaling efficiency.
+* Single-instance training is typically more cost-effective for small or moderately sized datasets, while multi-instance setups can reduce wall-clock time for larger datasets and complex models, at a higher instance cost.
+* Increase instance count only if training time becomes prohibitive even with more powerful single instances, while being mindful of communication overhead and scaling efficiency.
 
 
 ::::::::::::::::::::::::::::::::::::: keypoints
