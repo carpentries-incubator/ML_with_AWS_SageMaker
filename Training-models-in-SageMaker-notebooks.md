@@ -306,6 +306,8 @@ print(f"Test Set Accuracy: {accuracy:.4f}")
 
 ```
 
+A reasonably high test set accuracy suggests our code/model is working correctly.
+
 ## Training via SageMaker (using notebook as controller) - custom train.py script
 Unlike "local" training (using this notebook), this next approach leverages SageMaker's managed infrastructure to handle resources, parallelism, and scalability. By specifying instance parameters, such as instance_count and instance_type, you can control the resources allocated for training.
 
