@@ -89,30 +89,19 @@ In this next section, we will learn how to take a model training script that was
 
 ### Understanding the XGBoost Training Script
 
-**Take a moment to review the `AWS_helpers/train_xgboost.py` script** we just cloned into our notebook. This script handles preprocessing, training, and saving an XGBoost model, while also adapting to both local and SageMaker-managed environments.
+Take a moment to review the `AWS_helpers/train_xgboost.py` script we just cloned into our notebook. This script handles preprocessing, training, and saving an XGBoost model, while also adapting to both local and SageMaker-managed environments.
 
 Try answering the following questions:
 
-1. **Data Preprocessing**
-   - What transformations are applied to the dataset before training?
-   - Why do we drop the `Name`, `Ticket`, and `Cabin` columns?
+1. **Data Preprocessing**: What transformations are applied to the dataset before training?
 
-2. **Training Function**
-   - What does the `train_model()` function do?
-   - Why do we print the training time?
+2. **Training Function**: What does the `train_model()` function do? Why do we print the training time?
 
-3. **Command-Line Arguments**
-   - What is the purpose of `argparse` in this script?
-   - How would you modify the script if you wanted to change the number of training rounds?
+3. **Command-Line Arguments**: What is the purpose of `argparse` in this script? How would you modify the script if you wanted to change the number of training rounds?
 
-4. **Handling Local vs. SageMaker Runs**
-   - How does the script determine whether it is running in a SageMaker training job or locally?
-   - What do the environment variables `SM_CHANNEL_TRAIN` and `SM_MODEL_DIR` do?
-   - What happens if these environment variables are not set?
+4. **Handling Local vs. SageMaker Runs**: How does the script determine whether it is running in a SageMaker training job or locally (within this notebook's instance)?
 
-5. **Training and Saving the Model**
-   - What format is the dataset converted to before training, and why?
-   - How is the trained model saved, and where will it be stored?
+5. **Training and Saving the Model**: What format is the dataset converted to before training, and why? How is the trained model saved, and where will it be stored?
 
 After reviewing, discuss any questions or observations with your group.
 
@@ -123,26 +112,15 @@ After reviewing, discuss any questions or observations with your group.
 
 ### Solution
 
-1. **Data Preprocessing**
-   - The script fills missing values (`Age` with median, `Embarked` with mode), converts categorical variables (`Sex` and `Embarked`) to numerical values, and removes columns that don't contribute to prediction (`Name`, `Ticket`, `Cabin`).
-   - `Name`, `Ticket`, and `Cabin` are likely dropped because they don't provide meaningful information for predicting survival (beyond existing features), and they may introduce unnecessary complexity.
+1. **Data Preprocessing**: The script fills missing values (`Age` with median, `Embarked` with mode), converts categorical variables (`Sex` and `Embarked`) to numerical values, and removes columns that don't contribute to prediction (`Name`, `Ticket`, `Cabin`).
 
-2. **Training Function**
-   - The `train_model()` function takes the training dataset (`dtrain`), applies XGBoost training with the specified hyperparameters, and prints the training time.
-   - Printing training time helps compare different runs and ensures that scaling decisions are based on performance metrics.
+2. **Training Function**: The `train_model()` function takes the training dataset (`dtrain`), applies XGBoost training with the specified hyperparameters, and prints the training time. Printing training time helps compare different runs and ensures that scaling decisions are based on performance metrics.
 
-3. **Command-Line Arguments**
-   - `argparse` allows passing parameters like `max_depth`, `eta`, `num_round`, etc., at runtime without modifying the script.
-   - To change the number of training rounds, you would update the `--num_round` argument when running the script:  `python train_xgboost.py --num_round 200`
+3. **Command-Line Arguments**: `argparse` allows passing parameters like `max_depth`, `eta`, `num_round`, etc., at runtime without modifying the script. To change the number of training rounds, you would update the `--num_round` argument when running the script:  `python train_xgboost.py --num_round 200`
 
-4. **Handling Local vs. SageMaker Runs**
-   - The script uses `os.environ.get("SM_CHANNEL_TRAIN", ".")` and `os.environ.get("SM_MODEL_DIR", ".")` to detect whether it’s running in SageMaker.
-   - `SM_CHANNEL_TRAIN` is the directory where SageMaker stores input training data, and `SM_MODEL_DIR` is the directory where trained models should be saved.
-   - If these environment variables are **not set** (e.g., running locally), the script defaults to `"."` (current directory).
+4. **Handling Local vs. SageMaker Runs**: The script uses `os.environ.get("SM_CHANNEL_TRAIN", ".")` and `os.environ.get("SM_MODEL_DIR", ".")` to detect whether it’s running in SageMaker. `SM_CHANNEL_TRAIN` is the directory where SageMaker stores input training data, and `SM_MODEL_DIR` is the directory where trained models should be saved. If these environment variables are *not set* (e.g., running locally), the script defaults to `"."` (current directory).
 
-5. **Training and Saving the Model**
-   - The dataset is converted into **XGBoost's `DMatrix` format**, which is optimized for memory and computation efficiency.
-   - The trained model is saved using `joblib.dump()` to `xgboost-model`, stored either in the SageMaker `SM_MODEL_DIR` (if running in SageMaker) or in the local directory.
+5. **Training and Saving the Model**: The dataset is converted into **XGBoost's `DMatrix` format**, which is optimized for memory and computation efficiency. The trained model is saved using `joblib.dump()` to `xgboost-model`, stored either in the SageMaker `SM_MODEL_DIR` (if running in SageMaker) or in the local directory.
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::
 
