@@ -498,7 +498,7 @@ power, it is essential that we test our code thoroughly! We don’t want
 to waste unnecessary compute cycles and resources on jobs that produce
 bugs rather than insights.</p>
 <div class="section level3">
-<h3 id="guidelines-for-testing-ml-pipelines-before-scaling">Guidelines for testing ML pipelines before scaling<a class="anchor" aria-label="anchor" href="#guidelines-for-testing-ml-pipelines-before-scaling"></a></h3>
+<h3 id="general-guidelines-for-testing-ml-pipelines-before-scaling">General guidelines for testing ML pipelines before scaling<a class="anchor" aria-label="anchor" href="#general-guidelines-for-testing-ml-pipelines-before-scaling"></a></h3>
 <ul><li>
 <strong>Run tests locally first</strong> (if feasible) to avoid
 unnecessary AWS charges. Here, we assume that local tests are not
@@ -517,7 +517,70 @@ key metrics.</li>
 <li>
 <strong>Verify correctness first</strong> before optimizing
 hyperparameters or scaling.</li>
-</ul><div id="understanding-the-xgboost-training-script" class="callout discussion">
+</ul><div id="what-tests-should-we-do-before-scaling" class="callout discussion">
+<div class="callout-square">
+<i class="callout-icon" data-feather="message-circle"></i>
+</div>
+<div id="what-tests-should-we-do-before-scaling" class="callout-inner">
+<h3 class="callout-title">What tests should we do before scaling?</h3>
+<div class="callout-content">
+<p>Before scaling to mutliple or more powerful instances (e.g., training
+on larger/multiple datsets in parallel or tuning hyperparameters in
+parallel), it’s important to run a few quick sanity checks to catch
+potential issues early. <strong>In your group, discuss:</strong></p>
+<ul><li>What simple tests can we run to verify that our data and model setup
+are correct?<br></li>
+<li>What potential issues might we miss if we skip this step?<br></li>
+<li>Which checks do you think are most critical before scaling up?</li>
+</ul><p>After your discussion, we’ll go over some key sanity checks.</p>
+</div>
+</div>
+</div>
+<div id="accordionSolution1" class="accordion challenge-accordion accordion-flush">
+<div class="accordion-item">
+<button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
+  <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
+</button>
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div class="accordion-body">
+<ul><li>
+<strong>Data loads correctly</strong> – Ensure the dataset loads
+without errors, expected columns exist, and missing values are handled
+properly.<br></li>
+<li>
+<strong>Overfitting check</strong> – Train on a small dataset (e.g.,
+100 rows). If it doesn’t overfit, there may be a data or model setup
+issue.<br></li>
+<li>
+<strong>Loss behavior check</strong> – Verify that training loss
+decreases over time and doesn’t diverge.<br></li>
+<li>
+<strong>Training time estimate</strong> – Run on a small subset to
+estimate how long full training will take.<br></li>
+<li>
+<strong>Save &amp; reload test</strong> – Ensure the trained model
+can be saved, reloaded, and used for inference without errors.</li>
+</ul></div>
+</div>
+</div>
+</div>
+<div id="know-your-data-before-modeling" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<div id="know-your-data-before-modeling" class="callout-inner">
+<h3 class="callout-title"><strong>Know Your Data Before
+Modeling</strong></h3>
+<div class="callout-content">
+<p>The sanity checks above focus on validating the code, but a model is
+only as good as the data it’s trained on. A deeper look at feature
+distributions, correlations, and potential biases is critical before
+scaling up. We won’t cover that here, but it’s something to keep in
+mind.</p>
+</div>
+</div>
+</div>
+<div id="understanding-the-xgboost-training-script" class="callout discussion">
 <div class="callout-square">
 <i class="callout-icon" data-feather="message-circle"></i>
 </div>
@@ -548,12 +611,12 @@ group.</p>
 </div>
 </div>
 </div>
-<div id="accordionSolution1" class="accordion challenge-accordion accordion-flush">
+<div id="accordionSolution2" class="accordion challenge-accordion accordion-flush">
 <div class="accordion-item">
-<button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
-  <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
+<button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
+  <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li><p><strong>Data Preprocessing</strong>: The script fills missing
 values (<code>Age</code> with median, <code>Embarked</code> with mode),
@@ -595,59 +658,11 @@ directory.</p></li>
 </div>
 </div>
 <div class="section level3">
-<h3 id="recommended-sanity-checks-non-exhaustive-for-xgboost">Recommended Sanity Checks (Non-Exhaustive) for XGBoost<a class="anchor" aria-label="anchor" href="#recommended-sanity-checks-non-exhaustive-for-xgboost"></a></h3>
-<div class="section level4">
-<h4 id="data-integrity-preprocessing">1. Data Integrity &amp; Preprocessing<a class="anchor" aria-label="anchor" href="#data-integrity-preprocessing"></a></h4>
-<ul><li>Can the dataset be loaded without errors?</li>
-<li>Are there missing values, and how are they handled?</li>
-<li>Are all feature distributions reasonable? (Check min/max
-values)</li>
-<li>Does the target variable make sense? (Avoid label leakage)</li>
-</ul></div>
-<div class="section level4">
-<h4 id="training-model-behavior">2. Training &amp; Model Behavior<a class="anchor" aria-label="anchor" href="#training-model-behavior"></a></h4>
-<ul><li>
-<strong>Overfitting check:</strong> Train on a small dataset (e.g.,
-100 rows). If it doesn’t overfit, there may be a problem.</li>
-<li>
-<strong>Loss function behavior:</strong> Ensure training loss
-decreases over time.</li>
-<li>
-<strong>Feature importance check:</strong> Run
-<code>model.get_booster().get_score()</code> to confirm expected
-features are driving predictions.</li>
-<li>
-<strong>Tree depth sanity check:</strong> If the model is too deep,
-it may be overfitting.</li>
-</ul></div>
-<div class="section level4">
-<h4 id="performance-resource-monitoring">3. Performance &amp; Resource Monitoring<a class="anchor" aria-label="anchor" href="#performance-resource-monitoring"></a></h4>
-<ul><li>
-<strong>Training time estimate:</strong> Run on a small subset to
-extrapolate full training time.</li>
-<li>
-<strong>Memory usage check:</strong> Avoid running out of memory
-when loading large datasets.</li>
-</ul></div>
-<div class="section level4">
-<h4 id="model-saving-inference">4. Model Saving &amp; Inference<a class="anchor" aria-label="anchor" href="#model-saving-inference"></a></h4>
-<ul><li>
-<strong>Save &amp; reload test:</strong> Can the model be saved and
-loaded correctly?</li>
-<li>
-<strong>Inference test:</strong> Run predictions on a small batch of
-test data and check for unexpected values.</li>
-<li>
-<strong>Baseline comparison:</strong> Compare against a simple
-heuristic (e.g., always predicting the mean).</li>
-</ul></div>
-</div>
-<div class="section level3">
 <h3 id="download-data-into-notebook-environment">Download data into notebook environment<a class="anchor" aria-label="anchor" href="#download-data-into-notebook-environment"></a></h3>
 <p>It can be convenient to have a copy of the data (i.e., one that you
 store in your notebook’s instance) to allow us to test our code before
 scaling things up.</p>
-<div id="callout1" class="callout">
+<div id="callout2" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
 </div>
