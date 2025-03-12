@@ -268,8 +268,6 @@ train.py script</a></li>
 <li><a href="#training-with-sagemakers-built-in-xgboost-image">Training with SageMaker’s Built-in XGBoost Image</a></li>
 <li><a href="#monitoring-training">Monitoring training</a></li>
 <li><a href="#when-training-takes-too-long">When training takes too long</a></li>
-<li><a href="#xgboosts-distributed-training-mechanism">XGBoost’s distributed training mechanism</a></li>
-<li><a href="#implementing-distributed-training-with-xgboost-in-sagemaker">Implementing distributed training with XGBoost in SageMaker</a></li>
         </ul></div><!--/div.accordion-body-->
     </div><!--/div.accordion-collapse-->
 
@@ -541,7 +539,7 @@ potential issues early. <strong>In your group, discuss:</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Which checks do you think are most critical before scaling up?</p>
 <ul><li>
@@ -640,7 +638,7 @@ group.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li><p><strong>Data Preprocessing</strong>: The script fills missing
 values (<code>Age</code> with median, <code>Embarked</code> with mode),
@@ -1361,258 +1359,75 @@ jobs you own, reducing the risk of impacting other users’ training
 processes.</p>
 </section><section><h2 class="section-heading" id="when-training-takes-too-long">When training takes too long<a class="anchor" aria-label="anchor" href="#when-training-takes-too-long"></a></h2>
 <hr class="half-width"><p>When training time becomes excessive, two main options can improve
-efficiency in SageMaker.</p>
-<ul><li><strong>Option 1: Upgrading to a more powerful
-instance</strong></li>
-<li>
-<strong>Option 2: Using multiple instances for distributed
-training</strong>.</li>
-</ul><p>Generally, <strong>Option 1 is the preferred approach</strong> and
-should be explored first.</p>
+efficiency in SageMaker:</p>
+<ul><li>
+<strong>Option 1: Upgrading to a more powerful
+instance</strong><br></li>
+<li><strong>Option 2: Using multiple instances for distributed
+training</strong></li>
+</ul><p>Generally, Option 1 is the preferred approach and should be explored
+first.</p>
 <div class="section level3">
 <h3 id="option-1-upgrade-to-a-more-powerful-instance-preferred-starting-point">Option 1: Upgrade to a more powerful instance (preferred starting
 point)<a class="anchor" aria-label="anchor" href="#option-1-upgrade-to-a-more-powerful-instance-preferred-starting-point"></a></h3>
 <p>Upgrading to a more capable instance, particularly one with GPU
-capabilities (e.g., for deep learning), is often the simplest and most
-cost-effective way to speed up training. Here’s a breakdown of instances
-to consider. Check the <a href="https://docs.google.com/spreadsheets/d/1uPT4ZAYl_onIl7zIjv5oEAdwy4Hdn6eiA9wVfOBbHmY/edit?usp=sharing" class="external-link">Instances
-for ML spreadsheet</a> for guidance on selecting a better instance.</p>
-<p><strong>When to use a single instance upgrade</strong><br>
-Upgrading a single instance works well if:</p>
-<ul><li>
-<strong>Dataset size</strong>: The dataset is small to moderate
-(e.g., &lt;10 GB), fitting comfortably within the memory of a larger
-instance.</li>
-<li>
-<strong>Model complexity</strong>: The model is not so large that it
-requires distribution across multiple devices.</li>
-<li>
-<strong>Training time</strong>: Expected training time is within a
-few hours, but could benefit from additional power.</li>
-</ul><p>Upgrading a single instance is typically the most efficient option in
-terms of both cost and setup complexity. It avoids the communication
-overhead associated with multi-instance setups (discussed below) and is
-well-suited for most small to medium-sized datasets.</p>
+capabilities, is often the simplest and most cost-effective way to speed
+up training. Check the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
+for ML page</a> for guidance.</p>
+<p>When to use a single instance upgrade:<br>
+- Dataset size – The dataset is small to moderate (e.g., &lt;10 GB),
+fitting comfortably within memory.<br>
+- Model complexity – XGBoost models are typically small enough to fit in
+memory.<br>
+- Training time – If training completes in a few hours but could be
+faster, upgrading may help.</p>
+<p>Upgrading a single instance is usually the most efficient option. It
+avoids the communication overhead of multi-instance setups and works
+well for small to medium datasets.</p>
 </div>
 <div class="section level3">
 <h3 id="option-2-use-multiple-instances-for-distributed-training">Option 2: Use multiple instances for distributed training<a class="anchor" aria-label="anchor" href="#option-2-use-multiple-instances-for-distributed-training"></a></h3>
 <p>If upgrading a single instance doesn’t sufficiently reduce training
 time, distributed training across multiple instances may be a viable
-alternative, particularly for larger datasets and complex models.
-SageMaker supports two primary distributed training techniques:
-<strong>data parallelism</strong> and <strong>model
-parallelism</strong>.</p>
+alternative. For XGBoost, SageMaker applies only data parallelism (not
+model parallelism).</p>
 <div class="section level4">
-<h4 id="understanding-data-parallelism-vs--model-parallelism">Understanding data parallelism vs. model parallelism<a class="anchor" aria-label="anchor" href="#understanding-data-parallelism-vs--model-parallelism"></a></h4>
-<ul><li><p><strong>Data parallelism</strong>: This approach splits the
-dataset across multiple instances, allowing each instance to process a
-subset of the data independently. After each batch, gradients are
-synchronized across instances to ensure consistent updates to the model.
-Data parallelism is effective when the model itself fits within an
-instance’s memory, but the data size or desired training speed requires
-faster processing through multiple instances.</p></li>
-<li><p><strong>Model parallelism</strong>: Model parallelism divides the
-model itself across multiple instances, making it ideal for very large
-models (e.g., deep learning models in NLP or image processing) that
-cannot fit in memory on a single instance. Each instance processes a
-segment of the model, and results are combined during training. This
-approach is suitable for memory-intensive models that exceed the
-capacity of a single instance.</p></li>
+<h4 id="xgboost-uses-data-parallelism-not-model-parallelism">XGBoost uses data parallelism, not model parallelism<a class="anchor" aria-label="anchor" href="#xgboost-uses-data-parallelism-not-model-parallelism"></a></h4>
+<ul><li>Data parallelism – The dataset is split across multiple instances,
+with each instance training on a portion of the data. The gradient
+updates are then synchronized and aggregated.<br></li>
+<li>Why not model parallelism? – Unlike deep learning models, XGBoost
+decision trees are small enough to fit in memory, so there’s no need to
+split the model itself across multiple instances.</li>
 </ul></div>
 <div class="section level4">
-<h4 id="how-sagemaker-chooses-between-data-and-model-parallelism">How SageMaker chooses between data and model parallelism<a class="anchor" aria-label="anchor" href="#how-sagemaker-chooses-between-data-and-model-parallelism"></a></h4>
-<p>In SageMaker, the choice between data and model parallelism is not
-entirely automatic. Here’s how it typically works:</p>
-<ul><li><p><strong>Data parallelism (automatic)</strong>: When you set
-<code>instance_count &gt; 1</code>, SageMaker will automatically apply
-data parallelism. This splits the dataset across instances, allowing
-each instance to process a subset independently and synchronize
-gradients after each batch. Data parallelism works well when the model
-can fit in the memory of a single instance, but the data size or
-processing speed needs enhancement with multiple instances.</p></li>
-<li><p><strong>Model parallelism (manual setup)</strong>: To enable
-model parallelism, you need to configure it explicitly using the
-<strong>SageMaker Model Parallel Library</strong>, suitable for deep
-learning models in frameworks like PyTorch or TensorFlow. Model
-parallelism splits the model itself across multiple instances, which is
-useful for memory-intensive models that exceed the capacity of a single
-instance. Configuring model parallelism requires setting up a
-distribution strategy in SageMaker’s Python SDK.</p></li>
-<li><p><strong>Hybrid parallelism (manual setup)</strong>: For extremely
-large datasets and models, SageMaker can support both data and model
-parallelism together, but this setup requires manual configuration.
-Hybrid parallelism is beneficial for workloads that are both data- and
-memory-intensive, where both the model and the data need distributed
-processing.</p></li>
-</ul><p><strong>When to use distributed training with multiple
-instances</strong><br>
-Consider multiple instances if:</p>
-<ul><li>
-<strong>Dataset size</strong>: The dataset is large (&gt;10 GB) and
-doesn’t fit comfortably within a single instance’s memory.</li>
-<li>
-<strong>Model complexity</strong>: The model is complex, requiring
-extensive computation that a single instance cannot handle in a
-reasonable time.</li>
-<li>
-<strong>Expected training time</strong>: Training on a single
-instance takes prohibitively long (e.g., &gt;10 hours), and distributed
-computing overhead is manageable.</li>
-</ul><div id="cost-of-distributed-computing" class="callout">
-<div class="callout-square">
-<i class="callout-icon" data-feather="bell"></i>
+<h4 id="how-sagemaker-implements-data-parallelism-for-xgboost">How SageMaker implements data parallelism for XGBoost<a class="anchor" aria-label="anchor" href="#how-sagemaker-implements-data-parallelism-for-xgboost"></a></h4>
+<ul><li>When <code>instance_count &gt; 1</code>, SageMaker automatically
+splits the dataset across instances.<br></li>
+<li>Each instance trains on a subset of the data, computing gradient
+updates in parallel.<br></li>
+<li>Gradient updates are synchronized across instances before the next
+iteration.<br></li>
+<li>The final trained model is assembled as if it had been trained on
+the full dataset.</li>
+</ul></div>
 </div>
-<div id="cost-of-distributed-computing" class="callout-inner">
-<h3 class="callout-title">Cost of distributed computing</h3>
-<div class="callout-content">
-<p><strong>tl;dr</strong> Use 1 instance unless you are finding that
-you’re waiting hours for the training/tuning to complete.</p>
-<p>Let’s break down some key points for deciding between 1 instance
-vs. multiple instances from a cost perspective:</p>
-<ol style="list-style-type: decimal"><li>
-<strong>Instance cost per hour</strong>:
-<ul><li>SageMaker charges per instance-hour. Running multiple instances in
-parallel can finish training faster, reducing wall-clock time, but the
-cost per hour will increase with each added instance.</li>
-</ul></li>
-<li>
-<strong>Single instance vs. multiple instance wall-clock
-time</strong>:
-<ul><li>When using a single instance, training will take significantly
-longer, especially if your data is large. However, the wall-clock time
-difference between 1 instance and 10 instances may not translate to a
-direct 10x speedup when using multiple instances due to communication
-overheads.</li>
-<li>For example, with data-parallel training, instances need to
-synchronize gradients between batches, which introduces communication
-costs and may slow down training on larger clusters.</li>
-</ul></li>
-<li>
-<strong>Scaling efficiency</strong>:
-<ul><li>Parallelizing training does not scale perfectly due to those
-overheads. Adding instances generally provides diminishing returns on
-training time reduction.</li>
-<li>For example, doubling instances from 1 to 2 may reduce training time
-by close to 50%, but going from 8 to 16 instances may only reduce
-training time by around 20-30%, depending on the model and batch
-sizes.</li>
-</ul></li>
-<li>
-<strong>Typical recommendation</strong>:
-<ul><li>For small-to-moderate datasets or cases where training time isn’t a
-critical factor, a single instance may be more cost-effective, as it
-avoids parallel processing overheads.</li>
-<li>For large datasets or where training speed is a high priority (e.g.,
-tuning complex deep learning models), using multiple instances can be
-beneficial despite the cost increase due to time savings.</li>
-</ul></li>
-<li>
-<strong>Practical cost estimation</strong>:
-<ul><li>Suppose a single instance takes <code>T</code> hours to train and
-costs <code>$C</code> per hour. For a 10-instance setup, the cost would
-be approximately:
-<ul><li>Single instance: <code>T * $C</code>
-</li>
-<li>10 instances (parallel): <code>(T / k) * (10 * $C)</code>, where
-<code>k</code> is the speedup factor (&lt;10 due to overhead).</li>
-</ul></li>
-<li>If the speedup is only about 5x instead of 10x due to communication
-overhead, then the cost difference may be minimal, with a slight edge to
-a single instance on total cost but at a higher wall-clock time.</li>
-</ul></li>
-</ol></div>
-</div>
-</div>
-<blockquote>
-<p>In summary:</p>
-<ul><li>
-<strong>Start by upgrading to a more powerful instance (Option
-1)</strong> for datasets up to 10 GB and moderately complex models. A
-single, more powerful, instance is usually more cost-effective for
-smaller workloads and where time isn’t critical. Running initial tests
-with a single instance can also provide a benchmark. You can then
-experiment with small increases in instance count to find a balance
-between cost and time savings, particularly considering communication
-overheads that affect parallel efficiency.</li>
-<li>
-<strong>Consider distributed training across multiple instances
-(Option 2)</strong> only when dataset size, model complexity, or
-training time demand it.</li>
-</ul></blockquote>
-</div>
-</div>
-</section><section><h2 class="section-heading" id="xgboosts-distributed-training-mechanism">XGBoost’s distributed training mechanism<a class="anchor" aria-label="anchor" href="#xgboosts-distributed-training-mechanism"></a></h2>
-<hr class="half-width"><p>In the event that option 2 explained above really is better for your
-use-case (e.g., you have a very large dataset or model that takes a
-while to train even with high performance instances), the next example
-will demo setting this up. Before we do, though, we should ask what
-distributed computing really means for our specific model/setup.
-XGBoost’s distributed training relies on a data-parallel approach that
-divides the dataset across multiple instances (or workers), enabling
-each instance to work on a portion of the data independently. This
-strategy enhances efficiency, especially for large datasets and
-computationally intensive tasks.</p>
-<blockquote>
-<p><strong>What about a model parallelism approach?</strong> Unlike deep
-learning models with vast neural network layers, XGBoost’s decision
-trees are usually small enough to fit in memory on a single instance,
-even when the dataset is large. Thus, model parallelism is rarely
-necessary. XGBoost does not inherently support model parallelism out of
-the box in SageMaker because the model architecture doesn’t typically
-exceed memory limits, unlike massive language or image models. Although
-model parallelism can be theoretically applied (e.g., splitting large
-tree structures across instances), it’s generally not supported natively
-in SageMaker for XGBoost, as it would require a custom distribution
-framework to split the model itself.</p>
-</blockquote>
-<p>Here’s how distributed training in XGBoost works, particularly in the
-SageMaker environment:</p>
 <div class="section level3">
-<h3 id="key-steps-in-distributed-training-with-xgboost">Key steps in distributed training with XGBoost<a class="anchor" aria-label="anchor" href="#key-steps-in-distributed-training-with-xgboost"></a></h3>
-<div class="section level4">
-<h4 id="data-partitioning">1. Data partitioning<a class="anchor" aria-label="anchor" href="#data-partitioning"></a></h4>
-<ul><li>The dataset is divided among multiple instances. For example, with
-two instances, each instance may receive half of the dataset.</li>
-<li>In SageMaker, data partitioning across instances is handled
-automatically via the input channels you specify during training,
-reducing manual setup.</li>
-</ul></div>
-<div class="section level4">
-<h4 id="parallel-gradient-boosting">2. Parallel gradient boosting<a class="anchor" aria-label="anchor" href="#parallel-gradient-boosting"></a></h4>
-<ul><li>XGBoost performs gradient boosting by constructing trees iteratively
-based on calculated gradients.</li>
-<li>Each instance calculates gradients (first-order derivatives) and
-Hessians (second-order derivatives of the loss function) independently
-on its subset of data.</li>
-<li>This parallel processing allows each instance to determine which
-features to split and which trees to add to the model based on its data
-portion.</li>
-</ul></div>
-<div class="section level4">
-<h4 id="communication-between-instances">3. Communication between instances<a class="anchor" aria-label="anchor" href="#communication-between-instances"></a></h4>
-<ul><li>After computing gradients and Hessians locally, instances
-synchronize to share and combine these values.</li>
-<li>Synchronization keeps the model parameters consistent across
-instances. Only computed gradients are communicated, not the raw
-dataset, minimizing data transfer overhead.</li>
-<li>The combined gradients guide global model updates, ensuring that the
-ensemble of trees reflects the entire dataset, despite its division
-across multiple instances.</li>
-</ul></div>
-<div class="section level4">
-<h4 id="final-model-aggregation">4. Final model aggregation<a class="anchor" aria-label="anchor" href="#final-model-aggregation"></a></h4>
-<ul><li>Once training completes, XGBoost aggregates the trained trees from
-each instance into a single final model.</li>
-<li>This aggregation enables the final model to perform as though it
-trained on the entire dataset, even if the dataset couldn’t fit into a
-single instance’s memory.</li>
-</ul><p>SageMaker simplifies these steps by automatically managing the
-partitioning, synchronization, and aggregation processes during
-distributed training with XGBoost.</p>
+<h3 id="when-to-consider-multiple-instances">When to consider multiple instances<a class="anchor" aria-label="anchor" href="#when-to-consider-multiple-instances"></a></h3>
+<p>Using multiple instances makes sense when:<br>
+- Dataset size – The dataset is large and doesn’t fit comfortably in
+memory.<br>
+- Expected training time – A single instance takes too long (e.g.,
+&gt;10 hours).<br>
+- Need for faster training – Parallelization can speed up training but
+introduces communication overhead.</p>
+<p>If scaling to multiple instances, monitoring training time and
+efficiency is critical. In many cases, a single, more powerful instance
+may be more cost-effective than multiple smaller ones.</p>
 </div>
-</div>
-</section><section><h2 class="section-heading" id="implementing-distributed-training-with-xgboost-in-sagemaker">Implementing distributed training with XGBoost in SageMaker<a class="anchor" aria-label="anchor" href="#implementing-distributed-training-with-xgboost-in-sagemaker"></a></h2>
-<hr class="half-width"><p>In SageMaker, setting up distributed training for XGBoost can offer
+<div class="section level3">
+<h3 id="implementing-distributed-training-with-xgboost-in-sagemaker">Implementing distributed training with XGBoost in SageMaker<a class="anchor" aria-label="anchor" href="#implementing-distributed-training-with-xgboost-in-sagemaker"></a></h3>
+<p>In SageMaker, setting up distributed training for XGBoost can offer
 significant time savings as dataset sizes and computational requirements
 increase. Here’s how you can configure it:</p>
 <ol style="list-style-type: decimal"><li>
@@ -1671,6 +1486,7 @@ computation per instance.</li>
 <span id="cb18-39"><a href="#cb18-39" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end1 <span class="op">-</span> start1<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span>
 <span id="cb18-40"><a href="#cb18-40" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end2 <span class="op">-</span> start2<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>xgboost_estimator<span class="sc">.</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
+</div>
 <div class="section level3">
 <h3 id="why-scaling-instances-might-not-show-speedup-here">Why scaling instances might not show speedup here<a class="anchor" aria-label="anchor" href="#why-scaling-instances-might-not-show-speedup-here"></a></h3>
 <ul><li><p>Small dataset: With only 892 rows, the dataset might be too small
@@ -1707,13 +1523,12 @@ convergence.</p></li>
 <div class="section level3">
 <h3 id="for-cost-optimization">For cost optimization<a class="anchor" aria-label="anchor" href="#for-cost-optimization"></a></h3>
 <ul><li>Single-instance training is typically more cost-effective for small
-or moderately sized datasets, while <strong>multi-instance
-setups</strong> can reduce wall-clock time for larger datasets and
-complex models, at a higher instance cost.</li>
-<li>For <strong>initial testing</strong>, start with data parallelism on
-a single instance, and increase instance count if training time becomes
-prohibitive, while being mindful of communication overhead and scaling
-efficiency.</li>
+or moderately sized datasets, while multi-instance setups can reduce
+wall-clock time for larger datasets and complex models, at a higher
+instance cost.</li>
+<li>Increase instance count only if training time becomes prohibitive
+even with more powerful single instances, while being mindful of
+communication overhead and scaling efficiency.</li>
 </ul><div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
 <i class="callout-icon" data-feather="key"></i>
