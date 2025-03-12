@@ -531,12 +531,9 @@ hyperparameters or scaling.</li>
 on larger/multiple datsets in parallel or tuning hyperparameters in
 parallel), it’s important to run a few quick sanity checks to catch
 potential issues early. <strong>In your group, discuss:</strong></p>
-<ul><li>What simple tests can we run to verify that our data and model setup
-are correct?<br></li>
-<li>What potential issues might we miss if we skip this step?<br></li>
-<li>Which checks do you think are most critical before scaling up?</li>
-</ul><p>After your discussion, we’ll go over some key sanity checks.</p>
-</div>
+<ul><li>Which checks do you think are most critical before scaling up?<br></li>
+<li>What potential issues might we miss if we skip this step?</li>
+</ul></div>
 </div>
 </div>
 <div id="accordionSolution1" class="accordion challenge-accordion accordion-flush">
@@ -544,7 +541,7 @@ are correct?<br></li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ul><li>
 <strong>Data loads correctly</strong> – Ensure the dataset loads
@@ -559,11 +556,29 @@ issue.<br></li>
 decreases over time and doesn’t diverge.<br></li>
 <li>
 <strong>Training time estimate</strong> – Run on a small subset to
-estimate how long full training will take.<br></li>
+estimate how long full training will take.</li>
+<li>
+<strong>Memory estimate</strong> - Estimate the memory needs of the
+algorithm/model you’re using, and understand how this scales with input
+size.</li>
 <li>
 <strong>Save &amp; reload test</strong> – Ensure the trained model
 can be saved, reloaded, and used for inference without errors.</li>
-</ul></div>
+</ul><p>What potential issues might we miss if we skip the above checks? -
+<strong>Silent data issues</strong> – Missing values, unexpected
+distributions, or incorrect labels could degrade model
+performance.<br>
+- <strong>Code bugs at scale</strong> – Small logic errors might not
+break on small tests but could fail with larger datasets.<br>
+- <strong>Inefficient training runs</strong> – Without estimating
+runtime, jobs may take far longer than expected, wasting AWS
+resources.<br>
+- <strong>Memory or compute failures</strong> – Large datasets might
+exceed instance memory limits, causing crashes or slowdowns.<br>
+- <strong>Model performance issues</strong> – If a model doesn’t overfit
+a small dataset, there may be problems with features, training logic, or
+hyperparameters.</p>
+</div>
 </div>
 </div>
 </div>
@@ -578,8 +593,8 @@ Modeling</strong></h3>
 <p>The sanity checks above focus on validating the code, but a model is
 only as good as the data it’s trained on. A deeper look at feature
 distributions, correlations, and potential biases is critical before
-scaling up. We won’t cover that here, but it’s something to keep in
-mind.</p>
+scaling up. We won’t cover that here, but it’s essential to keep in mind
+for any ML/AI practitioner.</p>
 </div>
 </div>
 </div>
@@ -619,7 +634,7 @@ group.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li><p><strong>Data Preprocessing</strong>: The script fills missing
 values (<code>Age</code> with median, <code>Embarked</code> with mode),
