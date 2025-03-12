@@ -36,7 +36,7 @@ To begin each notebook, it's important to set up an AWS environment that will al
 
 2. **Initialize the SageMaker Session**: Next, we'll create a `sagemaker.Session()` object, which will help manage and track the resources and operations we use in SageMaker, such as training jobs and model artifacts. The session acts as a bridge between the SageMaker SDK commands in our notebook and AWS services.
 
-3. **Set Up an S3 Client**: Using `boto3`, we'll initialize an S3 client for accessing S3 buckets directly. This client enables us to handle data storage, retrieve datasets, and manage files in S3, which will be essential as we work through various machine learning tasks.
+3. **Set Up an S3 Client using boto3**: Using `boto3`, we'll initialize an S3 client for accessing S3 buckets directly. Boto3 is the official AWS SDK for Python, allowing developers to interact programmatically with AWS services like S3, EC2, and Lambda.
 
 Starting with these initializations prepares our notebook environment to efficiently interact with AWS resources for model development, data management, and deployment.
 
