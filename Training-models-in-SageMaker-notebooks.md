@@ -92,11 +92,8 @@ In this next section, we will learn how to take a model training script that was
 
 Before scaling to mutliple or more powerful instances (e.g., training on larger/multiple datsets in parallel or tuning hyperparameters in parallel), it's important to run a few quick sanity checks to catch potential issues early. **In your group, discuss:**  
 
-- What simple tests can we run to verify that our data and model setup are correct?  
-- What potential issues might we miss if we skip this step?  
 - Which checks do you think are most critical before scaling up?  
-
-After your discussion, we'll go over some key sanity checks.
+- What potential issues might we miss if we skip this step?  
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -107,8 +104,17 @@ After your discussion, we'll go over some key sanity checks.
 - **Data loads correctly** – Ensure the dataset loads without errors, expected columns exist, and missing values are handled properly.  
 - **Overfitting check** – Train on a small dataset (e.g., 100 rows). If it doesn't overfit, there may be a data or model setup issue.  
 - **Loss behavior check** – Verify that training loss decreases over time and doesn't diverge.  
-- **Training time estimate** – Run on a small subset to estimate how long full training will take.  
-- **Save & reload test** – Ensure the trained model can be saved, reloaded, and used for inference without errors.  
+- **Training time estimate** – Run on a small subset to estimate how long full training will take.
+- **Memory estimate** - Estimate the memory needs of the algorithm/model you're using, and understand how this scales with input size.
+- **Save & reload test** – Ensure the trained model can be saved, reloaded, and used for inference without errors.
+
+What potential issues might we miss if we skip the above checks?
+- **Silent data issues** – Missing values, unexpected distributions, or incorrect labels could degrade model performance.  
+- **Code bugs at scale** – Small logic errors might not break on small tests but could fail with larger datasets.  
+- **Inefficient training runs** – Without estimating runtime, jobs may take far longer than expected, wasting AWS resources.  
+- **Memory or compute failures** – Large datasets might exceed instance memory limits, causing crashes or slowdowns.  
+- **Model performance issues** – If a model doesn't overfit a small dataset, there may be problems with features, training logic, or hyperparameters.  
+
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -116,7 +122,7 @@ After your discussion, we'll go over some key sanity checks.
 ::::::::::::::::::::::::::::::::::::::: callout  
 
 ### **Know Your Data Before Modeling**  
-The sanity checks above focus on validating the code, but a model is only as good as the data it's trained on. A deeper look at feature distributions, correlations, and potential biases is critical before scaling up. We won't cover that here, but it's something to keep in mind.  
+The sanity checks above focus on validating the code, but a model is only as good as the data it's trained on. A deeper look at feature distributions, correlations, and potential biases is critical before scaling up. We won't cover that here, but it's essential to keep in mind for any ML/AI practitioner.
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::
 
