@@ -78,12 +78,46 @@ If you didn't complete the earlier episodes, you'll need to clone our code repo 
 ## Testing train.py on this notebook's instance
 In this next section, we will learn how to take a model training script that was written/designed to run locally, and deploy it to more powerful instances (or many instances) using SageMaker. This is helpful for machine learning jobs that require extra power, GPUs, or benefit from parallelization. However, before we try exploiting this extra power, it is essential that we test our code thoroughly! We don't want to waste unnecessary compute cycles and resources on jobs that produce bugs rather than insights. 
 
-### Guidelines for testing ML pipelines before scaling
+### General guidelines for testing ML pipelines before scaling
 - **Run tests locally first** (if feasible) to avoid unnecessary AWS charges. Here, we assume that local tests are not feasible due to limited local resources. Instead, we use our SageMaker instance to test our script on a minimally sized EC2 instance.
 - **Use a small dataset subset** (e.g., 1-5% of data) to catch issues early and speed up tests.
 - **Start with a small/cheap instance** before committing to larger resources. Visit the [Instances for ML page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for guidance. 
 - **Log everything** to track training times, errors, and key metrics.
 - **Verify correctness first** before optimizing hyperparameters or scaling.
+
+::::::::::::::::::::::::::::::::::::::: discussion
+
+### What tests should we do before scaling?  
+
+Before scaling to mutliple or more powerful instances (e.g., training on larger/multiple datsets in parallel or tuning hyperparameters in parallel), it's important to run a few quick sanity checks to catch potential issues early. **In your group, discuss:**  
+
+- What simple tests can we run to verify that our data and model setup are correct?  
+- What potential issues might we miss if we skip this step?  
+- Which checks do you think are most critical before scaling up?  
+
+After your discussion, we'll go over some key sanity checks.
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+::::::::::::::::::::::::::::::::::::::: solution
+
+### Solution
+- **Data loads correctly** – Ensure the dataset loads without errors, expected columns exist, and missing values are handled properly.  
+- **Overfitting check** – Train on a small dataset (e.g., 100 rows). If it doesn't overfit, there may be a data or model setup issue.  
+- **Loss behavior check** – Verify that training loss decreases over time and doesn't diverge.  
+- **Training time estimate** – Run on a small subset to estimate how long full training will take.  
+- **Save & reload test** – Ensure the trained model can be saved, reloaded, and used for inference without errors.  
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+::::::::::::::::::::::::::::::::::::::: callout  
+
+### **Know Your Data Before Modeling**  
+The sanity checks above focus on validating the code, but a model is only as good as the data it's trained on. A deeper look at feature distributions, correlations, and potential biases is critical before scaling up. We won't cover that here, but it's something to keep in mind.  
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 ::::::::::::::::::::::::::::::::::::::: challenge
 
@@ -124,29 +158,6 @@ After reviewing, discuss any questions or observations with your group.
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-### Recommended Sanity Checks (Non-Exhaustive) for XGBoost
-
-#### 1. Data Integrity & Preprocessing
-- Can the dataset be loaded without errors?
-- Are there missing values, and how are they handled?
-- Are all feature distributions reasonable? (Check min/max values)
-- Does the target variable make sense? (Avoid label leakage)
-
-#### 2. Training & Model Behavior
-- **Overfitting check:** Train on a small dataset (e.g., 100 rows). If it doesn't overfit, there may be a problem.
-- **Loss function behavior:** Ensure training loss decreases over time.
-- **Feature importance check:** Run `model.get_booster().get_score()` to confirm expected features are driving predictions.
-- **Tree depth sanity check:** If the model is too deep, it may be overfitting.
-
-#### 3. Performance & Resource Monitoring
-- **Training time estimate:** Run on a small subset to extrapolate full training time.
-- **Memory usage check:** Avoid running out of memory when loading large datasets.
-
-#### 4. Model Saving & Inference
-- **Save & reload test:** Can the model be saved and loaded correctly?
-- **Inference test:** Run predictions on a small batch of test data and check for unexpected values.
-- **Baseline comparison:** Compare against a simple heuristic (e.g., always predicting the mean).
-  
 ### Download data into notebook environment
 It can be convenient to have a copy of the data (i.e., one that you store in your notebook's instance) to allow us to test our code before scaling things up. 
 
