@@ -101,6 +101,9 @@ Before scaling to mutliple or more powerful instances (e.g., training on larger/
 ::::::::::::::::::::::::::::::::::::::: solution
 
 ### Solution
+
+Which checks do you think are most critical before scaling up?  
+
 - **Data loads correctly** – Ensure the dataset loads without errors, expected columns exist, and missing values are handled properly.  
 - **Overfitting check** – Train on a small dataset (e.g., 100 rows). If it doesn't overfit, there may be a data or model setup issue.  
 - **Loss behavior check** – Verify that training loss decreases over time and doesn't diverge.  
@@ -109,6 +112,7 @@ Before scaling to mutliple or more powerful instances (e.g., training on larger/
 - **Save & reload test** – Ensure the trained model can be saved, reloaded, and used for inference without errors.
 
 What potential issues might we miss if we skip the above checks?
+
 - **Silent data issues** – Missing values, unexpected distributions, or incorrect labels could degrade model performance.  
 - **Code bugs at scale** – Small logic errors might not break on small tests but could fail with larger datasets.  
 - **Inefficient training runs** – Without estimating runtime, jobs may take far longer than expected, wasting AWS resources.  
