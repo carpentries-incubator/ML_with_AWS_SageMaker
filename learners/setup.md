@@ -59,14 +59,12 @@ You will need a copy of our AWS_helpers repo on GitHub to explore how to manage 
 To do this:
 
 1. Go to the [AWS_helpers GitHub repository](https://github.com/UW-Madison-DataScience/AWS_helpers).
-2. Click **Fork** (top right) to create your own copy of the repository under your GitHub account.
- a. You will only need the main branch. You can leave "Copy the main branch only" selected. 
-4. Once forked, you don't need to do anything else. We'll clone this fork once we start working in the AWS Jupyter environment using...
+2. Click **Fork** (top right) to create your own copy of the repository under your GitHub account. You will only need the main branch. You can leave "Copy the main branch only" selected. 
+3. Once forked, you don't need to do anything else. We'll clone this fork once we start working in the AWS Jupyter environment using...
 
 ```python
 !git clone https://github.com/YOUR_GITHUB_USERNAME/AWS_helpers.git
 ```
-
 
 ### 5. Review the Workshop Glossary Page  
 When learning cloud tools for the first time, understanding new terminology is half the battle. We encourage learners to *briefly review* the [Glossary page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/reference.html#glossary) (also accessible from the top menu of each lesson page) before the workshop.  **You don't need to memorize the terms**—just a quick read-through will help familiarize you with key concepts. Once we start running our own AWS SageMaker experiments, these terms will start to make more sense in context. If you feel lost at any point during the workshop, please ask the instructor/helpers for assistance and/or refer back to the glossary.
