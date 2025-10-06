@@ -59,8 +59,9 @@ You will need a copy of our AWS_helpers repo on GitHub to explore how to manage 
 To do this:
 
 1. Go to the [AWS_helpers GitHub repository](https://github.com/UW-Madison-DataScience/AWS_helpers).
-2. Click **Fork** (top right) to create your own copy of the repository under your GitHub account. 
-3. Once forked, you don't need to do anything else. We'll clone this fork once we start working in the AWS Jupyter environment using...
+2. Click **Fork** (top right) to create your own copy of the repository under your GitHub account.
+ a. You will only need the main branch. You can leave "Copy the main branch only" selected. 
+4. Once forked, you don't need to do anything else. We'll clone this fork once we start working in the AWS Jupyter environment using...
 
 ```python
 !git clone https://github.com/YOUR_GITHUB_USERNAME/AWS_helpers.git
