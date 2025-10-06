@@ -12,8 +12,8 @@ To keep costs manageable, this workshop provides tips for tracking and monitorin
 
 Currently, this workshop does not include:
 
-- **AWS Lambda** for serverless function deployment,
-- **MLFlow** or other MLOps tools for experiment tracking,
+- **AWS Lambda** for serverless function deployment
+- **Bedrock**: Amazon Bedrock can be used to build and scale generative AI applications by providing API access to a range of foundation models from AWS and third-party providers, without managing infrastructure. It's designed to simplify integrating text, image, and other generative capabilities into your workflows using familiar AWS tools. Much of what Bedrock enables can also be done in SageMaker, but Bedrock trades off flexibility for simplicity — you get faster access to models and lower setup overhead, but have less control over training, fine-tuning, and the underlying infrastructure, which can matter for research workflows that need custom architectures, reproducibility, or integration with existing pipelines
 - Additional AWS services beyond the core SageMaker ML workflows.
 
 If there's a specific ML or AI workflow or AWS service you'd like to see included in this curriculum, please let us know! We're happy to develop additional content to meet the needs of researchers, students, and ML/AI practitioners. Please [post an issue on the lesson GitHub](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/issues) or contact [endemann@wisc.edu](mailto:endemann@wisc.edu) with suggestions or requests.
