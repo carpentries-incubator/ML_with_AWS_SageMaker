@@ -39,7 +39,7 @@ Once your AWS account is set up, log in to the **AWS Management Console** to get
 
 ### 3. Download the Data
 
-For this workshop, you will need the **Titanic dataset**. 
+For this workshop, you will need the Titanic dataset, which can be used to train a classifier predicting survival. 
 
 1. Please download the following zip file:
 - [data.zip](https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/data/data.zip)
