@@ -47,8 +47,8 @@ For this workshop, you will need the Titanic dataset, which can be used to train
 
 3. Save the two data files (train and test) to a location where they can easily be accessed. E.g., ... 
 
-- `~/Desktop/data/titanic_train.csv`
-- `~/Desktop/data/titanic_test.csv`
+- `~/Downloads/data/titanic_train.csv`
+- `~/Downloads/data/titanic_test.csv`
 
 In the first episode, you will create an S3 bucket and upload this data to use with SageMaker.
 
