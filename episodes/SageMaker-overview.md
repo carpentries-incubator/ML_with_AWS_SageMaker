@@ -16,7 +16,7 @@ SageMaker provides several features that make it an ideal choice for researchers
 
     - **CPU instances (e.g., ml.m5.large)**: Suitable for general ML workloads, feature engineering, and inference tasks.
     - **GPU instances (e.g., ml.p3.2xlarge)**: Optimized for compute-intensive tasks like deep learning training, offering accelerated processing.
-    - **Memory-optimized instances (e.g., ml.r5.xlarge)**: Best for handling large datasets in memory, such as training transformer models.
+    - **Memory-optimized instances (e.g., ml.r5.xlarge)**: Best for handling large datasets in memory, such as training transformer models.  
       
 
 - **Parallelized training and tuning**: SageMaker enables parallelized training across multiple instances, reducing training time for large datasets and complex models. It also supports parallelized hyperparameter tuning, allowing efficient exploration of model configurations with minimal code while maintaining fine-grained control over the process.
