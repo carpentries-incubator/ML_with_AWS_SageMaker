@@ -20,14 +20,17 @@ You will need a GitHub account to access the code provided during this lesson. I
 There are two ways to get access to AWs for this lesson. Please wait for a pre-workshop email from the instructor to confirm which option to choose.
 
 #### Option 1) Shared Account
-If you are attending this lesson as part of the 2025 Research Bazaar, we will provide a shared AWS account for all attendees. You do not need to set up your own AWS account. What to expect:
+If you are attending this lesson as part of the Machine Learning Marathon or Research Bazaar, the instructors will provide a shared AWS account for all attendees. You do not need to set up your own AWS account. What to expect:
 
 * Before the workshop, you will receive an email invitation from the instructor with access details for the shared AWS account.
 * During the lesson, you will log in using the credentials provided in the email.
-* This setup ensures that all participants have the same environment and eliminates concerns about unexpected costs.
+* This setup ensures that all participants have the same environment and eliminates concerns about unexpected costs for attendees.
+* These shared AWS credits should not be wasted, as we repurpose them for additional training events eac year.
+  * Attendees are expected to **stick to the lesson materials** to ensure expensive pipelines (e.g., training/tuning LLMs) do not lead to high costs and wasted credits.
+  * Do not use any tools we do not explictly cover without discussing with the instructors first.
 
 #### Option 2) AWS Free Tier — Skip If Using Shared Account
-**If you are attending this lesson as part of the 2025 Research Bazaar, you can skip this step**. We will provide all attendees with a shared account. Otherwise, please follow these steps:
+**If you are attending this lesson as part of the Machine Learning Marathon or Research Bazaar, you can skip this step**. We will provide all attendees with a shared account. Otherwise, please follow these steps:
 
 1. Go to the [AWS Free Tier page](https://aws.amazon.com/free/) and click **Create a Free Account**.
 2. Complete the sign-up process. AWS offers a free tier with limited monthly usage. Some services, including SageMaker, may incur charges beyond free-tier limits, so be mindful of usage during the workshop. If you follow along with the materials, you can expect to incur around $10 in compute fees (e.g., from training and tuning several different models with GPU enabled at times).
