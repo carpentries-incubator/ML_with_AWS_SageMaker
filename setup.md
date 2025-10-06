@@ -6,7 +6,7 @@ title: Setup
 Before attending this workshop, you'll need to complete a few setup steps to ensure you can follow along smoothly. The main requirements are:
 
 1. **GitHub Account** – Create an account and be ready to fork a repository.
-2. **AWS Access** – Use a **shared AWS account** (if attending the 2025 Research Bazaar) or sign up for an AWS Free Tier account.
+2. **AWS Access** – Use a **shared AWS account** (if attending Machine Learning Marathon or Research Bazaar) or sign up for an AWS Free Tier account.
 3. **Titanic Dataset** – Download the required CSV files in advance.
 4. **Workshop Repository** – Fork the provided GitHub repository for use in AWS.
 5. **Visit Glossary** — Find and briefly review the workshop glossary
