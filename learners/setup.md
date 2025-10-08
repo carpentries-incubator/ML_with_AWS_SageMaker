@@ -10,6 +10,7 @@ Before attending this workshop, you'll need to complete a few setup steps to ens
 3. **Titanic Dataset** – Download the required CSV files in advance.
 4. **Workshop Repository** – Fork the provided GitHub repository for use in AWS.
 5. **Visit Glossary** — Find and briefly review the workshop glossary
+6. **(Optional) AWS Skill Builder** — For a broader overview of AWS, visit the [Getting Started with the AWS Cloud Essentials](AWS Skill Builder — Getting Started with the AWS Cloud Essentials) course
 
 Details on each step are outlined below.
 
@@ -67,5 +68,8 @@ To do this:
 ```
 
 ### 5. Review the Workshop Glossary Page  
-When learning cloud tools for the first time, understanding new terminology is half the battle. We encourage learners to *briefly review* the [Glossary page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/reference.html#glossary) (also accessible from the top menu of each lesson page) before the workshop.  *You don't need to memorize the terms*—just a quick read-through will help familiarize you with key concepts. Once we start running our own AWS SageMaker experiments, these terms will start to make more sense in context. If you feel lost at any point during the workshop, please ask the instructor/helpers for assistance and/or refer back to the glossary.
+When learning cloud tools for the first time, understanding new terminology is half the battle. We encourage learners to *briefly review* the [Glossary page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/reference.html#glossary) (also accessible from the top menu of each lesson page) before the workshop.  *You don't need to memorize the terms*—just a quick read-through will help familiarize you with key concepts. Once we start running our own AWS SageMaker experiments, these terms will start to make more sense in context. If you feel lost at any point during the workshop, please ask the instructor for assistance or refer back to the glossary.
+
+### 6. (Optional) AWS Skill Builder — Getting Started with the AWS Cloud Essentials
+Attendees who want a stronger foundational understanding of AWS before diving into SageMaker and other ML services are encouraged to complete this self-paced course, [Getting Started with the AWS Cloud Essentials](AWS Skill Builder — Getting Started with the AWS Cloud Essentials), as optional pre-work for this workshop. It's designed for beginners and provides a broad overview of the AWS Cloud, including core services, global infrastructure, pricing basics, and security concepts. 
 
