@@ -59,7 +59,7 @@ We should also record our local instance information to report this information 
 
 ```python
 import AWS_helpers.helpers as helpers
-notebook_instance_name = 'DoeJohn-ExploreSageMaker'
+notebook_instance_name = 'sinkorswim-DoeJohn-TrainClassifier'
 
 # Make sure this matches what you see near top right of AWS Console menu
 region = "us-east-2" # United States (Ohio)
