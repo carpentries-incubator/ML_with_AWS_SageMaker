@@ -213,8 +213,11 @@ To compare our local runtime with future experiments, we'll need to know what in
 # This does NOT refer to specific ipynb files, but to the SageMaker notebook instance.
 notebook_instance_name = 'DoeJohn-ExploreSageMaker'
 
+# Make sure this matches what you see near top right of AWS Console menu
+region = "us-east-2" # United States (Ohio)
+
 # Initialize SageMaker client
-sagemaker_client = boto3.client('sagemaker')
+sagemaker_client = boto3.client('sagemaker', region_name=region)
 
 # Describe the notebook instance
 response = sagemaker_client.describe_notebook_instance(NotebookInstanceName=notebook_instance_name)
