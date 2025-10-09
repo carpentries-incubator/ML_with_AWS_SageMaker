@@ -1023,54 +1023,60 @@ and billing time can be more pronounced.</p>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="im">import</span> boto3</span>
 <span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a></span>
-<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co"># Initialize SageMaker client</span></span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>sagemaker_client <span class="op">=</span> boto3.client(<span class="st">"sagemaker"</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co"># Set region</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>region <span class="op">=</span> <span class="st">"us-east-2"</span></span>
 <span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a></span>
-<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co"># Retrieve tuning job details</span></span>
-<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>tuning_job_name <span class="op">=</span> tuner.latest_tuning_job.name  <span class="co"># Replace with your tuning job name if needed</span></span>
-<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>tuning_job_desc <span class="op">=</span> sagemaker_client.describe_hyper_parameter_tuning_job(HyperParameterTuningJobName<span class="op">=</span>tuning_job_name)</span>
-<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a></span>
-<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co"># Extract relevant settings</span></span>
-<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a>instance_type <span class="op">=</span> tuning_job_desc[<span class="st">'TrainingJobDefinition'</span>][<span class="st">'ResourceConfig'</span>][<span class="st">'InstanceType'</span>]</span>
-<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a>max_jobs <span class="op">=</span> tuning_job_desc[<span class="st">'HyperParameterTuningJobConfig'</span>][<span class="st">'ResourceLimits'</span>][<span class="st">'MaxNumberOfTrainingJobs'</span>]</span>
-<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a>max_parallel_jobs <span class="op">=</span> tuning_job_desc[<span class="st">'HyperParameterTuningJobConfig'</span>][<span class="st">'ResourceLimits'</span>][<span class="st">'MaxParallelTrainingJobs'</span>]</span>
-<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a></span>
-<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a><span class="co"># Retrieve all training jobs for the tuning job</span></span>
-<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a>training_jobs <span class="op">=</span> sagemaker_client.list_training_jobs_for_hyper_parameter_tuning_job(</span>
-<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a>    HyperParameterTuningJobName<span class="op">=</span>tuning_job_name, StatusEquals<span class="op">=</span><span class="st">'Completed'</span></span>
-<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a>)[<span class="st">"TrainingJobSummaries"</span>]</span>
-<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a></span>
-<span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a><span class="co"># Calculate total training and billing time</span></span>
-<span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a>total_training_time <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a>total_billing_time <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a></span>
-<span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a><span class="cf">for</span> job <span class="kw">in</span> training_jobs:</span>
-<span id="cb12-26"><a href="#cb12-26" tabindex="-1"></a>    job_name <span class="op">=</span> job[<span class="st">"TrainingJobName"</span>]</span>
-<span id="cb12-27"><a href="#cb12-27" tabindex="-1"></a>    job_desc <span class="op">=</span> sagemaker_client.describe_training_job(TrainingJobName<span class="op">=</span>job_name)</span>
-<span id="cb12-28"><a href="#cb12-28" tabindex="-1"></a>    </span>
-<span id="cb12-29"><a href="#cb12-29" tabindex="-1"></a>    <span class="co"># Calculate training time (in seconds)</span></span>
-<span id="cb12-30"><a href="#cb12-30" tabindex="-1"></a>    training_time <span class="op">=</span> job_desc[<span class="st">"TrainingEndTime"</span>] <span class="op">-</span> job_desc[<span class="st">"TrainingStartTime"</span>]</span>
-<span id="cb12-31"><a href="#cb12-31" tabindex="-1"></a>    total_training_time <span class="op">+=</span> training_time.total_seconds()</span>
-<span id="cb12-32"><a href="#cb12-32" tabindex="-1"></a>    </span>
-<span id="cb12-33"><a href="#cb12-33" tabindex="-1"></a>    <span class="co"># Calculate billed time with rounding up</span></span>
-<span id="cb12-34"><a href="#cb12-34" tabindex="-1"></a>    billed_time <span class="op">=</span> math.ceil(training_time.total_seconds())</span>
-<span id="cb12-35"><a href="#cb12-35" tabindex="-1"></a>    total_billing_time <span class="op">+=</span> billed_time <span class="op">*</span> job_desc[<span class="st">"ResourceConfig"</span>][<span class="st">"InstanceCount"</span>]</span>
-<span id="cb12-36"><a href="#cb12-36" tabindex="-1"></a></span>
-<span id="cb12-37"><a href="#cb12-37" tabindex="-1"></a><span class="co"># Print configuration details and total compute/billing time</span></span>
-<span id="cb12-38"><a href="#cb12-38" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Instance Type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb12-39"><a href="#cb12-39" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Max Jobs: </span><span class="sc">{</span>max_jobs<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb12-40"><a href="#cb12-40" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Max Parallel Jobs: </span><span class="sc">{</span>max_parallel_jobs<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb12-41"><a href="#cb12-41" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Total training time across all jobs: </span><span class="sc">{</span>total_training_time <span class="op">/</span> <span class="dv">3600</span><span class="sc">:.2f}</span><span class="ss"> hours"</span>)</span>
-<span id="cb12-42"><a href="#cb12-42" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated total billing time across all jobs: </span><span class="sc">{</span>total_billing_time <span class="op">/</span> <span class="dv">3600</span><span class="sc">:.2f}</span><span class="ss"> hours"</span>)</span></code></pre>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co"># Initialize SageMaker client</span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>sagemaker_client <span class="op">=</span> boto3.client(<span class="st">"sagemaker"</span>, region_name<span class="op">=</span>region)</span></code></pre>
 </div>
-<p>For convenience, we have added this as a function in helpers.py</p>
 <div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="im">import</span> AWS_helpers.helpers <span class="im">as</span> helpers</span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="im">import</span> importlib</span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>importlib.<span class="bu">reload</span>(helpers)</span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>helpers.calculate_tuning_job_time(tuner)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># Retrieve tuning job details</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>tuning_job_name <span class="op">=</span> tuner.latest_tuning_job.name  <span class="co"># Replace with your tuning job name if needed</span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>tuning_job_desc <span class="op">=</span> sagemaker_client.describe_hyper_parameter_tuning_job(HyperParameterTuningJobName<span class="op">=</span>tuning_job_name)</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co"># Extract relevant settings</span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>instance_type <span class="op">=</span> tuning_job_desc[<span class="st">'TrainingJobDefinition'</span>][<span class="st">'ResourceConfig'</span>][<span class="st">'InstanceType'</span>]</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>max_jobs <span class="op">=</span> tuning_job_desc[<span class="st">'HyperParameterTuningJobConfig'</span>][<span class="st">'ResourceLimits'</span>][<span class="st">'MaxNumberOfTrainingJobs'</span>]</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>max_parallel_jobs <span class="op">=</span> tuning_job_desc[<span class="st">'HyperParameterTuningJobConfig'</span>][<span class="st">'ResourceLimits'</span>][<span class="st">'MaxParallelTrainingJobs'</span>]</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co"># Retrieve all training jobs for the tuning job</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>training_jobs <span class="op">=</span> sagemaker_client.list_training_jobs_for_hyper_parameter_tuning_job(</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>    HyperParameterTuningJobName<span class="op">=</span>tuning_job_name, StatusEquals<span class="op">=</span><span class="st">'Completed'</span></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>)[<span class="st">"TrainingJobSummaries"</span>]</span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a></span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a><span class="co"># Calculate total training and billing time</span></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a>total_training_time <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>total_billing_time <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a></span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a><span class="cf">for</span> job <span class="kw">in</span> training_jobs:</span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a>    job_name <span class="op">=</span> job[<span class="st">"TrainingJobName"</span>]</span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a>    job_desc <span class="op">=</span> sagemaker_client.describe_training_job(TrainingJobName<span class="op">=</span>job_name)</span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a>    </span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a>    <span class="co"># Calculate training time (in seconds)</span></span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a>    training_time <span class="op">=</span> job_desc[<span class="st">"TrainingEndTime"</span>] <span class="op">-</span> job_desc[<span class="st">"TrainingStartTime"</span>]</span>
+<span id="cb13-25"><a href="#cb13-25" tabindex="-1"></a>    total_training_time <span class="op">+=</span> training_time.total_seconds()</span>
+<span id="cb13-26"><a href="#cb13-26" tabindex="-1"></a>    </span>
+<span id="cb13-27"><a href="#cb13-27" tabindex="-1"></a>    <span class="co"># Calculate billed time with rounding up</span></span>
+<span id="cb13-28"><a href="#cb13-28" tabindex="-1"></a>    billed_time <span class="op">=</span> math.ceil(training_time.total_seconds())</span>
+<span id="cb13-29"><a href="#cb13-29" tabindex="-1"></a>    total_billing_time <span class="op">+=</span> billed_time <span class="op">*</span> job_desc[<span class="st">"ResourceConfig"</span>][<span class="st">"InstanceCount"</span>]</span>
+<span id="cb13-30"><a href="#cb13-30" tabindex="-1"></a></span>
+<span id="cb13-31"><a href="#cb13-31" tabindex="-1"></a><span class="co"># Print configuration details and total compute/billing time</span></span>
+<span id="cb13-32"><a href="#cb13-32" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Instance Type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb13-33"><a href="#cb13-33" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Max Jobs: </span><span class="sc">{</span>max_jobs<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb13-34"><a href="#cb13-34" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Max Parallel Jobs: </span><span class="sc">{</span>max_parallel_jobs<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb13-35"><a href="#cb13-35" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Total training time across all jobs: </span><span class="sc">{</span>total_training_time <span class="op">/</span> <span class="dv">3600</span><span class="sc">:.2f}</span><span class="ss"> hours"</span>)</span>
+<span id="cb13-36"><a href="#cb13-36" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estimated total billing time across all jobs: </span><span class="sc">{</span>total_billing_time <span class="op">/</span> <span class="dv">3600</span><span class="sc">:.2f}</span><span class="ss"> hours"</span>)</span></code></pre>
+</div>
+<p>For convenience, we have added this as a function in helpers.py</p>
+<div class="codewrapper sourceCode" id="cb14">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="im">import</span> AWS_helpers.helpers <span class="im">as</span> helpers</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="im">import</span> importlib</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>importlib.<span class="bu">reload</span>(helpers)</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>helpers.calculate_tuning_job_time(tuner, region)</span></code></pre>
 </div>
 <!--
 Place links that you need to refer to multiple times across pages here. Delete
