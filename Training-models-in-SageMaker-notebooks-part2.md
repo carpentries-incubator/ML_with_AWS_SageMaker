@@ -188,6 +188,7 @@ output_path = f's3://{bucket_name}/output_nn/' # this folder will auto-generate 
 
 # Define the PyTorch estimator and pass hyperparameters as arguments
 pytorch_estimator = PyTorch(
+    base_job_name=notebook_instance_name,
     entry_point="AWS_helpers/train_nn.py",
     role=role,
     instance_type=instance_type, # with this small dataset, we don't recessarily need a GPU for fast training. 
@@ -253,6 +254,7 @@ output_path = f's3://{bucket_name}/output_nn/'
 
 # Define the PyTorch estimator and pass hyperparameters as arguments
 pytorch_estimator_gpu = PyTorch(
+    base_job_name=notebook_instance_name,
     entry_point="AWS_helpers/train_nn.py",
     role=role,
     instance_type=instance_type,
@@ -310,6 +312,7 @@ output_path = f's3://{bucket_name}/output_nn/'
 
 # Define the PyTorch estimator and pass hyperparameters as arguments
 pytorch_estimator = PyTorch(
+    base_job_name=notebook_instance_name,
     entry_point="AWS_helpers/train_nn.py",
     role=role,
     instance_type=instance_type, # with this small dataset, we don't recessarily need a GPU for fast training. 
