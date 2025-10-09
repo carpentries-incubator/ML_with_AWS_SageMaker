@@ -235,8 +235,6 @@ import AWS_helpers.helpers as helpers
 helpers.get_notebook_instance_info(notebook_instance_name)
 ```
 
-    {'Status': 'InService', 'InstanceType': 'ml.t3.medium'}
-
 
 Test train.py on this notebook's instance (or when possible, on your own machine) before doing anything more complicated (e.g., hyperparameter tuning on multiple instances)
 
