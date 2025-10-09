@@ -64,6 +64,7 @@ Within the Jupyter notebook, run the following command to clone the lesson repo 
 ```
 
 Then, navigate to `/ML_with_AWS_SageMaker/notebooks/Accessing-S3-via-SageMaker-notebooks.ipynb` to begin the first notebook.
+
 ::::::::::::::::::::::::::::::::::::: keypoints 
 
 - Use a minimal SageMaker notebook instance as a controller to manage larger, resource-intensive tasks.
