@@ -170,10 +170,8 @@ print(f"Total size of bucket '{bucket_name}': {total_size_mb:.2f} MB")
 #print(f"Total size of bucket '{bucket_name}': {total_size_gb:.2f} GB")
 ```
 
-### Using helper functions from lesson repo
-We have added code to calculate bucket size to a helper function called `get_s3_bucket_size(bucket_name)` for your convenience. There are also some other helper functions in that repo to assist you with common AWS/SageMaker workflows. We'll show you how to clone this code into your notebook environment.
-
-**Note**: If you haven't already, make sure to fork the AWS_helpers repo as described on the [setup page](https://uw-madison-datascience.github.io/ML_with_Amazon_SageMaker/#workshop-repository-setup). Replace "username" below with your GitHub username.
+### Using helper functions from GitHub
+We have added code to calculate bucket size to a helper function called `get_s3_bucket_size(bucket_name)` for your convenience. There are also some other helper functions in the AWS_helpers repo to assist you with common AWS/SageMaker workflows. We'll show you how to clone this code into your notebook environment.
 
 #### Directory setup
 Let's make sure we're starting in the root directory of this instance, so that we all have our AWS_helpers.py file located in the same path (/test_AWS/scripts/AWS_helpers.py)
@@ -181,13 +179,10 @@ Let's make sure we're starting in the root directory of this instance, so that w
 ```python
 %cd /home/ec2-user/SageMaker/
 ```
-**Before cloning, visit your fork to make sure there aren't any changes that need to be synced**.
 
-Adjust the following path to find your fork : [`https://github.com/username/AWS_helpers.git](https://github.com/username/AWS_helpers.git). If you still need to fork the original repo, visit [https://github.com/UW-Madison-DataScience/AWS_helpers](https://github.com/UW-Madison-DataScience/AWS_helpers) and create a fork.
-
-To clone the repo to our Jupyter notebook, use the following code, adjusting username to your GitHub username.
+To clone the repo to our Jupyter notebook, use the following code.
 ```python
-!git clone https://github.com/username/AWS_helpers.git # downloads AWS_helpers folder/repo (refresh file explorer to see)
+!git clone https://github.com/W-Madison-DataScience/AWS_helpers.git # downloads AWS_helpers folder/repo (refresh file explorer to see)
 ```
 
 Our AWS_helpers.py file can be found in `AWS_helpers/helpers.py`. With this file downloaded, you can call this function via...
