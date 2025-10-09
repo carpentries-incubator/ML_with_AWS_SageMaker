@@ -20,19 +20,17 @@ exercises: 10
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-## Step 0: Initial setup
+## Step 0: open prefilled .ipynb notebook
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/Hyperparameter-tuning.ipynb.
+
+## Step 1: Initial setup
 In the previous episode, we cloned our fork that we created during the [workshop setup](https://uw-madison-datascience.github.io/ML_with_Amazon_SageMaker/#workshop-repository-setup). In this episode, we'll see how to push our code to this fork. Complete these three setup steps before moving foward.
-
-1. Clone the fork if you haven't already. See previous episode.
-
-2. Start a new Jupyter notebook, and name it something along the lines of "Interacting-with-git.ipynb". We can use the standard conda_python3 environment since we aren't doing any training/tuning just yet.
 
 3. Let's make sure we're starting at the same directory. Cd to the root directory of this instance before going further.
 
 ```python
 %cd /home/ec2-user/SageMaker/
 ```
-    /home/ec2-user/SageMaker
     
 ## Step 1: Using a GitHub personal access token (PAT) to push/pull from a SageMaker notebook
 When working in SageMaker notebooks, you may often need to push code updates to GitHub repositories. However, SageMaker notebooks are typically launched with temporary instances that don't persist configurations, including SSH keys, across sessions. This makes HTTPS-based authentication, secured with a GitHub Personal Access Token (PAT), a practical solution. PATs provide flexibility for authentication and enable seamless interaction with both public and private repositories directly from your notebook. 
