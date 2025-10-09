@@ -378,6 +378,7 @@ For all these Estimators, adding a `requirements.txt` file as a `dependencies` a
 # # Customizing estimator using requirements.txt
 # from sagemaker.sklearn.estimator import SKLearn
 # sklearn_estimator = SKLearn(
+#     base_job_name=notebook_instance_name,
 #     entry_point="train_script.py",
 #     role=role,
 #     instance_count=1,
@@ -418,6 +419,7 @@ output_path = f's3://{bucket_name}/{output_folder}/'
 
 # Set up the SageMaker XGBoost Estimator with custom script
 xgboost_estimator = XGBoost(
+    base_job_name=notebook_instance_name,
     entry_point='train_xgboost.py',      # Custom script path
     source_dir='AWS_helpers',               # Directory where your script is located
     role=role,
@@ -561,6 +563,7 @@ instance_count=1 # always start with 1. Rarely is parallelized training justifie
 
 # Use Estimator directly for built-in container without specifying entry_point
 xgboost_estimator_builtin = Estimator(
+    base_job_name=notebook_instance_name,
     image_uri=sagemaker.image_uris.retrieve("xgboost", session.boto_region_name, version="1.5-1"),
     role=role,
     instance_count=instance_count,
@@ -676,6 +679,7 @@ instance_count=1 # always start with 1. Rarely is parallelized training justifie
 
 # Define the XGBoost estimator for distributed training
 xgboost_estimator = Estimator(
+    base_job_name=notebook_instance_name,
     image_uri=sagemaker.image_uris.retrieve("xgboost", session.boto_region_name, version="1.5-1"),
     role=role,
     instance_count=instance_count,  # Start with 1 instance for baseline
