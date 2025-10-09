@@ -454,11 +454,4 @@ import AWS_helpers.helpers as helpers
 import importlib
 importlib.reload(helpers)
 helpers.calculate_tuning_job_time(tuner)
-
-```
-
-
-```python
-!jupyter nbconvert --to markdown Hyperparameter-tuning.ipynb
-
 ```
