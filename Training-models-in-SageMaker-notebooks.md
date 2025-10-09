@@ -211,7 +211,7 @@ To compare our local runtime with future experiments, we'll need to know what in
 ```python
 # Replace with your notebook instance name.
 # This does NOT refer to specific ipynb files, but to the SageMaker notebook instance.
-notebook_instance_name = 'DoeJohn-ExploreSageMaker'
+notebook_instance_name = 'sinkorswim-DoeJohn-TrainClassifier'
 
 # Make sure this matches what you see near top right of AWS Console menu
 region = "us-east-2" # United States (Ohio)
