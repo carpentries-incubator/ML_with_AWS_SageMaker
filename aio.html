@@ -4632,15 +4632,16 @@ ensure our code is functional before attempting to scale up.</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Tuner configuration</span></span>
 <span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>tuner <span class="op">=</span> HyperparameterTuner(</span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>    estimator<span class="op">=</span>pytorch_estimator,</span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>    metric_definitions<span class="op">=</span>[{<span class="st">"Name"</span>: <span class="st">"validation:accuracy"</span>, <span class="st">"Regex"</span>: <span class="st">"validation:accuracy = ([0-9</span><span class="ch">\\</span><span class="st">.]+)"</span>}],</span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>    objective_metric_name<span class="op">=</span><span class="st">"validation:accuracy"</span>,  <span class="co"># Ensure this matches the metric name exactly</span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>    objective_type<span class="op">=</span><span class="st">"Maximize"</span>,                   <span class="co"># Specify if maximizing or minimizing the metric</span></span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>    hyperparameter_ranges<span class="op">=</span>hyperparameter_ranges,</span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>    strategy<span class="op">=</span><span class="st">"Bayesian"</span>,  <span class="co"># Default setting (recommend sticking with this!); can adjust to "Random" for uniform sampling across the range</span></span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>    max_jobs<span class="op">=</span><span class="dv">1</span>,                <span class="co"># Always start with 1 instance for debugging purposes. Adjust based on exploration needs (keep below 30 to be kind to environment). </span></span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>    max_parallel_jobs<span class="op">=</span><span class="dv">1</span>         <span class="co"># Always start with 1 instance for debugging purposes. Adjust based on available resources and budget. Recommended to keep this value &lt; 4 since SageMaker tests values dynamically.</span></span>
-<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>)</span></code></pre>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>    base_tuning_job_name<span class="op">=</span>bucket_name,</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>    estimator<span class="op">=</span>pytorch_estimator,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>    metric_definitions<span class="op">=</span>[{<span class="st">"Name"</span>: <span class="st">"validation:accuracy"</span>, <span class="st">"Regex"</span>: <span class="st">"validation:accuracy = ([0-9</span><span class="ch">\\</span><span class="st">.]+)"</span>}],</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>    objective_metric_name<span class="op">=</span><span class="st">"validation:accuracy"</span>,  <span class="co"># Ensure this matches the metric name exactly</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>    objective_type<span class="op">=</span><span class="st">"Maximize"</span>,                   <span class="co"># Specify if maximizing or minimizing the metric</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>    hyperparameter_ranges<span class="op">=</span>hyperparameter_ranges,</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>    strategy<span class="op">=</span><span class="st">"Bayesian"</span>,  <span class="co"># Default setting (recommend sticking with this!); can adjust to "Random" for uniform sampling across the range</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>    max_jobs<span class="op">=</span><span class="dv">1</span>,                <span class="co"># Always start with 1 instance for debugging purposes. Adjust based on exploration needs (keep below 30 to be kind to environment). </span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>    max_parallel_jobs<span class="op">=</span><span class="dv">1</span>         <span class="co"># Always start with 1 instance for debugging purposes. Adjust based on available resources and budget. Recommended to keep this value &lt; 4 since SageMaker tests values dynamically.</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>)</span></code></pre>
 </div>
 </div>
 <div class="section level4">
@@ -4743,30 +4744,31 @@ without overloading resources or risking inefficient exploration, making
 <span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a></span>
 <span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co"># Define the Tuner configuration</span></span>
 <span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>tuner <span class="op">=</span> HyperparameterTuner(</span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>    estimator<span class="op">=</span>pytorch_estimator,</span>
-<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>    metric_definitions<span class="op">=</span>[{<span class="st">"Name"</span>: <span class="st">"validation:accuracy"</span>, <span class="st">"Regex"</span>: <span class="st">"validation:accuracy = ([0-9</span><span class="ch">\\</span><span class="st">.]+)"</span>}],</span>
-<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>    objective_metric_name<span class="op">=</span><span class="st">"validation:accuracy"</span>,  <span class="co"># Ensure this matches the metric name exactly</span></span>
-<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>    objective_type<span class="op">=</span><span class="st">"Maximize"</span>,                   <span class="co"># Specify if maximizing or minimizing the metric</span></span>
-<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>    hyperparameter_ranges<span class="op">=</span>hyperparameter_ranges,</span>
-<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>    max_jobs<span class="op">=</span>max_jobs,</span>
-<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>    max_parallel_jobs<span class="op">=</span>max_parallel_jobs</span>
-<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>)</span>
-<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a></span>
-<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a><span class="co"># Define the input paths</span></span>
-<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a>train_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/train_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
-<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a>val_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/val_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
-<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a></span>
-<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a><span class="co"># Track start time</span></span>
-<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a>start_time <span class="op">=</span> t.time()</span>
-<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a></span>
-<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a><span class="co"># Launch the hyperparameter tuning job</span></span>
-<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a>tuner.fit({<span class="st">"train"</span>: train_input, <span class="st">"val"</span>: val_input})</span>
-<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a></span>
-<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a><span class="co"># Calculate runtime</span></span>
-<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a>runtime <span class="op">=</span> t.time() <span class="op">-</span> start_time</span>
-<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a></span>
-<span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a><span class="co"># Print confirmation with runtime and configuration details</span></span>
-<span id="cb7-33"><a href="#cb7-33" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Tuning runtime: </span><span class="sc">{</span>runtime<span class="sc">:.2f}</span><span class="ss"> seconds, Instance Type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, Max Jobs: </span><span class="sc">{</span>max_jobs<span class="sc">}</span><span class="ss">, Max Parallel Jobs: </span><span class="sc">{</span>max_parallel_jobs<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>    base_tuning_job_name<span class="op">=</span>bucket_name,</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>    estimator<span class="op">=</span>pytorch_estimator,</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>    metric_definitions<span class="op">=</span>[{<span class="st">"Name"</span>: <span class="st">"validation:accuracy"</span>, <span class="st">"Regex"</span>: <span class="st">"validation:accuracy = ([0-9</span><span class="ch">\\</span><span class="st">.]+)"</span>}],</span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>    objective_metric_name<span class="op">=</span><span class="st">"validation:accuracy"</span>,  <span class="co"># Ensure this matches the metric name exactly</span></span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>    objective_type<span class="op">=</span><span class="st">"Maximize"</span>,                   <span class="co"># Specify if maximizing or minimizing the metric</span></span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>    hyperparameter_ranges<span class="op">=</span>hyperparameter_ranges,</span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>    max_jobs<span class="op">=</span>max_jobs,</span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>    max_parallel_jobs<span class="op">=</span>max_parallel_jobs</span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a>)</span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a></span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a><span class="co"># Define the input paths</span></span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a>train_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/train_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a>val_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/val_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a></span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a><span class="co"># Track start time</span></span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a>start_time <span class="op">=</span> t.time()</span>
+<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a></span>
+<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a><span class="co"># Launch the hyperparameter tuning job</span></span>
+<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a>tuner.fit({<span class="st">"train"</span>: train_input, <span class="st">"val"</span>: val_input})</span>
+<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a></span>
+<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a><span class="co"># Calculate runtime</span></span>
+<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a>runtime <span class="op">=</span> t.time() <span class="op">-</span> start_time</span>
+<span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a></span>
+<span id="cb7-33"><a href="#cb7-33" tabindex="-1"></a><span class="co"># Print confirmation with runtime and configuration details</span></span>
+<span id="cb7-34"><a href="#cb7-34" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Tuning runtime: </span><span class="sc">{</span>runtime<span class="sc">:.2f}</span><span class="ss"> seconds, Instance Type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, Max Jobs: </span><span class="sc">{</span>max_jobs<span class="sc">}</span><span class="ss">, Max Parallel Jobs: </span><span class="sc">{</span>max_parallel_jobs<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 </div>
 <div class="section level3">
