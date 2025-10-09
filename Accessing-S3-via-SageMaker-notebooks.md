@@ -72,12 +72,12 @@ This is the recommended approach for most workflows. By keeping data in S3 and r
 - **Potential latency**: Reading large datasets repeatedly from S3 may introduce small delays. This approach works best if you only need to load data once or infrequently.
 
 #### Example: Reading data from S3 into memory
-Our data is stored on an S3 bucket called 'name-titanic-s3' (e.g., doejohn-titanic-s3). We can use the following code to read data directly from S3 into memory in the Jupyter notebook environment, without actually downloading a copy of train.csv as a local file.
+Our data is stored on an S3 bucket called 'teamname-name-dataname' (e.g., sinkorswim-doejohn-titanic). We can use the following code to read data directly from S3 into memory in the Jupyter notebook environment, without actually downloading a copy of train.csv as a local file.
 
 ```python
 import pandas as pd
 # Define the S3 bucket and object key
-bucket_name = 'doejohn-titanic-s3'  # replace with your S3 bucket name
+bucket_name = 'sinkorswim-doejohn-titanic'  # replace with your S3 bucket name
 
 # Read the train data from S3
 key = 'titanic_train.csv'  # replace with your object key
