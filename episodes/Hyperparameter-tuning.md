@@ -65,6 +65,8 @@ Here’s the setup for our PyTorch estimator, which includes specifying the entr
 
 We'll use our notebook instance name again to label the training jobs launched in this episode
 ```python
+import boto3
+
 notebook_instance_name = 'sinkorswim-DoeJohn-TrainClassifier' # adjust to your notebook name. we'll use this variable to name the training jobs launched by the tuner.
 
 # the following code just verifies you have the right name for your notebook instance
@@ -80,7 +82,6 @@ print(f"Instance Type: {local_instance}")
 
 Next, we'll configure the baseline estimator that we plan to do hyperparameter search on.
 ```python
-import boto3
 import sagemaker
 from sagemaker.tuner import HyperparameterTuner, IntegerParameter, ContinuousParameter, CategoricalParameter
 from sagemaker.pytorch import PyTorch
@@ -344,7 +345,6 @@ print(f"Best model artifact S3 URI: {best_model_s3_uri}")
 
 
 ```python
-import boto3
 import tarfile
 
 # Initialize S3 client
@@ -423,7 +423,6 @@ Round-Up Policy: SageMaker rounds up the billing time to the nearest second for 
 
 
 ```python
-import boto3
 import math
 
 # Set region
