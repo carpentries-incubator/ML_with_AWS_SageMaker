@@ -21,7 +21,7 @@ exercises: 0
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## Initial setup: open prefilled .ipynb notebook
-Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/Hyperparameter-tuning.ipynb. Select the **pytorch environment**.
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/Hyperparameter-tuning.ipynb`. Select the **pytorch environment**.
 
 ## Hyperparameter tuning in SageMaker
 To conduct efficient hyperparameter tuning with neural networks (or any model) in SageMaker, we’ll leverage SageMaker’s **hyperparameter tuning jobs** while carefully managing parameter ranges and model count. Here’s an overview of the process, with a focus on both efficiency and cost-effectiveness.
@@ -73,10 +73,12 @@ from sagemaker.pytorch import PyTorch
 from sagemaker.inputs import TrainingInput
 from sagemaker import get_execution_role
 
-# Initialize SageMaker session and role
-session = sagemaker.Session()
+# Initialize role, bucket, and SageMaker session variables
 role = get_execution_role()
-bucket_name = 'sinkorswim-doejohn-titanic'  # replace with your S3 bucket name
+bucket_name = 'sinkorswim-endemannchris-titanic'  # replace with your S3 bucket name
+region = "us-east-2" # United States (Ohio). Make sure this matches what you see near top right of AWS Console menu
+boto_session = boto3.Session(region_name=region) # Create a Boto3 session that ensures all AWS service calls (including SageMaker) use the specified region
+session = sagemaker.Session(boto_session=boto_session)
 
 # Define the PyTorch estimator with entry script and environment details
 pytorch_estimator = PyTorch(
@@ -95,7 +97,6 @@ pytorch_estimator = PyTorch(
     },
     sagemaker_session=session,
 )
-
 ```
 
 #### 2. Define hyperparameter ranges
