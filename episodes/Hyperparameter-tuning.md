@@ -75,7 +75,7 @@ from sagemaker import get_execution_role
 
 # Initialize role, bucket, and SageMaker session variables
 role = get_execution_role()
-bucket_name = 'sinkorswim-endemannchris-titanic'  # replace with your S3 bucket name
+bucket_name = 'sinkorswim-doejohn-titanic'  # replace with your S3 bucket name
 region = "us-east-2" # United States (Ohio). Make sure this matches what you see near top right of AWS Console menu
 boto_session = boto3.Session(region_name=region) # Create a Boto3 session that ensures all AWS service calls (including SageMaker) use the specified region
 session = sagemaker.Session(boto_session=boto_session)
