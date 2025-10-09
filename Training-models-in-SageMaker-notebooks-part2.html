@@ -450,9 +450,13 @@ same location to access helper functions</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="im">import</span> AWS_helpers.helpers <span class="im">as</span> helpers</span>
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>notebook_instance_name <span class="op">=</span> <span class="st">'DoeJohn-ExploreSageMaker'</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>local_instance_info <span class="op">=</span> helpers.get_notebook_instance_info(notebook_instance_name)</span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>local_instance <span class="op">=</span> local_instance_info[<span class="st">'InstanceType'</span>]</span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>local_instance</span></code></pre>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co"># Make sure this matches what you see near top right of AWS Console menu</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>region <span class="op">=</span> <span class="st">"us-east-2"</span> <span class="co"># United States (Ohio)</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>local_instance_info <span class="op">=</span> helpers.get_notebook_instance_info(notebook_instance_name, region)</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>local_instance <span class="op">=</span> local_instance_info[<span class="st">'InstanceType'</span>]</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>local_instance</span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="training-a-neural-network-with-sagemaker">Training a neural network with SageMaker<a class="anchor" aria-label="anchor" href="#training-a-neural-network-with-sagemaker"></a></h2>
 <hr class="half-width"><p>Let’s see how to do a similar experiment, but this time using PyTorch
