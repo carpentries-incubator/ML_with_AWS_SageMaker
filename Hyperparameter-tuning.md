@@ -52,8 +52,6 @@ Just to make we are all on the same directory starting point, let's cd to our in
 %cd /home/ec2-user/SageMaker/
 ```
 
-    /home/ec2-user/SageMaker
-
 
 #### 1. Setup estimator
 To kick off our hyperparameter tuning for a neural network model, we’ll start by defining the **SageMaker Estimator**. The estimator setup here is very similar to our previous episode, where we used it to configure and train a model directly. However, this time, rather than directly running a training job with the estimator, we’ll be using it as the foundation for **hyperparameter tuning**.
@@ -94,7 +92,6 @@ pytorch_estimator = PyTorch(
     },
     sagemaker_session=session,
 )
-
 
 ```
 
@@ -197,14 +194,6 @@ print("Hyperparameter tuning job launched.")
 
 ```
 
-    No finished training job found associated with this estimator. Please make sure this estimator is only used for building workflow config
-    No finished training job found associated with this estimator. Please make sure this estimator is only used for building workflow config
-
-
-    .......................................!
-    Hyperparameter tuning job launched.
-
-
 #### 6. Monitor tuning job from SageMaker console
 After running the above cell, we can check on the progress by visiting the SageMaker Console and finding the "Training" tab located on the left panel. Click "Hyperparmater tuning jobs" to view running jobs.
 
@@ -251,14 +240,6 @@ runtime = t.time() - start_time
 print(f"Tuning runtime: {runtime:.2f} seconds, Instance Type: {instance_type}, Max Jobs: {max_jobs}, Max Parallel Jobs: {max_parallel_jobs}")
 
 ```
-
-    No finished training job found associated with this estimator. Please make sure this estimator is only used for building workflow config
-    No finished training job found associated with this estimator. Please make sure this estimator is only used for building workflow config
-
-
-    .......................................!
-    Tuning runtime: 205.53 seconds, Instance Type: ml.m5.large, Max Jobs: 2, Max Parallel Jobs: 2
-
 
 ### Monitoring tuning
 After running the above cell, we can check on the progress by visiting the SageMaker Console and finding the "Training" tab located on the left panel. Click "Hyperparmater tuning jobs" to view running jobs.
@@ -330,11 +311,6 @@ print(f"Best model artifact S3 URI: {best_model_s3_uri}")
 
 ```
 
-    Best training job name: pytorch-training-241107-0025-001-72851d7f
-    Best hyperparameters: {'_tuning_objective_metric': 'validation:accuracy', 'epochs': '"100"', 'learning_rate': '0.005250489250786233', 'sagemaker_container_log_level': '20', 'sagemaker_estimator_class_name': '"PyTorch"', 'sagemaker_estimator_module': '"sagemaker.pytorch.estimator"', 'sagemaker_job_name': '"pytorch-training-2024-11-07-00-25-35-999"', 'sagemaker_program': '"train_nn.py"', 'sagemaker_region': '"us-east-1"', 'sagemaker_submit_directory': '"s3://sagemaker-us-east-1-183295408236/pytorch-training-2024-11-07-00-25-35-999/source/sourcedir.tar.gz"', 'train': '"/opt/ml/input/data/train/train_data.npz"', 'val': '"/opt/ml/input/data/val/val_data.npz"'}
-    Best model artifact S3 URI: s3://sagemaker-us-east-1-183295408236/pytorch-training-241107-0025-001-72851d7f/output/model.tar.gz
-
-
 #### Retrieve and load best model
 
 
@@ -355,8 +331,6 @@ with tarfile.open(local_model_path, 'r:gz') as tar:
     tar.extractall()
 print("Best model downloaded and extracted.")
 ```
-
-    Best model downloaded and extracted.
 
 
 #### Prepare test set as test_data.npz
@@ -405,9 +379,6 @@ with torch.no_grad():
     print(f"Test Accuracy: {accuracy:.4f}")
 
 ```
-
-    Test Accuracy: 98.0894
-
 
 ### Conclusions
 In just under 5 minutes, we produced a model that is almost 100% accurate on the test set. However, this performance does come at a cost (albeit manageable if you've stuck with our advise thus far). This next section will help you assess the total compute time that was used by your tuning job.
@@ -468,13 +439,6 @@ print(f"Estimated total billing time across all jobs: {total_billing_time / 3600
 
 ```
 
-    Instance Type: ml.m5.large
-    Max Jobs: 2
-    Max Parallel Jobs: 2
-    Total training time across all jobs: 0.07 hours
-    Estimated total billing time across all jobs: 0.07 hours
-
-
 For convenience, we have added this as a function in helpers.py
 
 
@@ -486,24 +450,8 @@ helpers.calculate_tuning_job_time(tuner)
 
 ```
 
-    Instance Type: ml.m5.large
-    Max Jobs: 2
-    Max Parallel Jobs: 2
-    Total training time across all jobs: 0.07 hours
-    Estimated total billing time across all jobs: 0.07 hours
-
-
 
 ```python
 !jupyter nbconvert --to markdown Hyperparameter-tuning.ipynb
-
-```
-
-    [NbConvertApp] Converting notebook Hyperparameter-tuning.ipynb to markdown
-    [NbConvertApp] Writing 31418 bytes to Hyperparameter-tuning.md
-
-
-
-```python
 
 ```
