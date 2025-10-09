@@ -361,29 +361,37 @@ To launch this training "job", we'll use the XGBoost "Estimator. In SageMaker, E
       - `dependencies`: Additional dependencies can be listed in `requirements.txt` to install TensorFlow add-ons, custom layers, or preprocessing libraries.
    - **Ideal Use Cases**: NLP, computer vision, and transfer learning applications in TensorFlow.
 
+#### 6. **`HuggingFace` Estimator**
+   - **Purpose**: Provides managed containers for running inference, fine-tuning, and Retrieval-Augmented Generation (RAG) workflows using the Hugging Face `transformers` library.  
+   - **Configuration**:
+      - `entry_point`: Custom script for training or inference (e.g., `train.py` or `rag_inference.py`).  
+      - `transformers_version`, `pytorch_version`, `py_version`: Define framework versions.  
+      - `dependencies`: Optional `requirements.txt` for extra libraries.  
+   - **Ideal Use Cases**: RAG pipelines, LLM inference, NLP, vision, or multimodal tasks using pretrained Transformer models.  
+
 ::::::::::::::::::::::::::::::::::::: callout 
 #### Configuring custom environments with `requirements.txt`
 
-For all these Estimators, adding a `requirements.txt` file under `dependencies` ensures that additional packages are installed before training begins. This approach allows the use of specific libraries that may be critical for custom preprocessing, feature engineering, or model modifications. Here's how to include it:
+For all these Estimators, adding a `requirements.txt` file as a `dependencies` argument ensures that additional packages are installed before training begins. This approach allows the use of specific libraries that may be critical for custom preprocessing, feature engineering, or model modifications. Here's how to include it:
 
 ```python
-# Customizing estimator using requirements.txt
-from sagemaker.sklearn.estimator import SKLearn
-sklearn_estimator = SKLearn(
-    entry_point="train_script.py",
-    role=role,
-    instance_count=1,
-    instance_type="ml.m5.large",
-    output_path="s3://your-bucket/output",
-    framework_version="1.0-1",
-    dependencies=['requirements.txt'],  # Adding custom dependencies
-    hyperparameters={
-        "max_depth": 5,
-        "eta": 0.1,
-        "subsample": 0.8,
-        "num_round": 100
-    }
-)
+# # Customizing estimator using requirements.txt
+# from sagemaker.sklearn.estimator import SKLearn
+# sklearn_estimator = SKLearn(
+#     entry_point="train_script.py",
+#     role=role,
+#     instance_count=1,
+#     instance_type="ml.m5.large",
+#     output_path=f"s3://{bucket_name}/output",
+#     framework_version="1.0-1",
+#     dependencies=['requirements.txt'],  # Adding custom dependencies
+#     hyperparameters={
+#         "max_depth": 5,
+#         "eta": 0.1,
+#         "subsample": 0.8,
+#         "num_round": 100
+#     }
+# )
 ```
 
 This setup simplifies training, allowing you to maintain custom environments directly within SageMaker's managed containers, without needing to build and manage your own Docker images. The [AWS SageMaker Documentation](https://docs.aws.amazon.com/sagemaker/latest/dg/pre-built-containers-frameworks-deep-learning.html) provides lists of pre-built container images for each framework and their standard libraries, including details on pre-installed packages.
