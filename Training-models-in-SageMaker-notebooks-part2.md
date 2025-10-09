@@ -21,8 +21,11 @@ exercises: 10
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-## Initial setup
-To keep things organized, you may wish to open a fresh jupyter notebook (pytorch environment). Name your notebook something along the lines of, "Training-part2.ipynb". Once your notebook is open, we can setup our SageMaker controller as usual:
+## Initial setup: open prefilled .ipynb notebook
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/Training-models-in-SageMaker-notebooks-part2.ipynb. Select the pytorch environment.
+
+## Setup notebook as controller
+Once your notebook is open, we can setup our SageMaker controller as usual:
 
 ```python
 import boto3
