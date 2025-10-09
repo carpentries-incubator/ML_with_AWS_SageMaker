@@ -35,7 +35,7 @@ So we all can reference the helper functions using the same path, CD to...
 ```
 
 #### 3. Initialize SageMaker environment
-This code initializes the AWS SageMaker environment by defining the SageMaker role, session, and S3 client. It also specifies the S3 bucket and key for accessing the Titanic training dataset stored in an S3 bucket.
+This code initializes the AWS SageMaker environment by defining the SageMaker role and S3 client. It also specifies the S3 bucket and key for accessing the Titanic training dataset stored in an S3 bucket.
 
 #### Boto3 API
 > Boto3 is the official AWS SDK for Python, allowing developers to interact programmatically with AWS services like S3, EC2, and Lambda. It provides both high-level and low-level APIs, making it easy to manage AWS resources and automate tasks. With built-in support for paginators, waiters, and session management, Boto3 simplifies working with AWS credentials, regions, and IAM permissions. It's ideal for automating cloud operations and integrating AWS services into Python applications.
@@ -50,9 +50,6 @@ from sagemaker import get_execution_role
 role = sagemaker.get_execution_role()
 print(f'role = {role}')
 
-# Create a SageMaker session to manage interactions with Amazon SageMaker, such as training jobs, model deployments, and data input/output.
-session = sagemaker.Session()
-
 # Initialize an S3 client to interact with Amazon S3, allowing operations like uploading, downloading, and managing objects and buckets.
 s3 = boto3.client('s3')
 
@@ -62,6 +59,13 @@ bucket_name = 'sinkorswim-doejohn-titanic'  # replace with your S3 bucket name
 # Define train/test filenames
 train_filename = 'titanic_train.csv'
 test_filename = 'titanic_test.csv'
+```
+
+Create a SageMaker session to manage interactions with Amazon SageMaker, such as training jobs, model deployments, and data input/output.
+```python
+region = "us-east-2" # United States (Ohio). Make sure this matches what you see near top right of AWS Console menu
+boto_session = boto3.Session(region_name=region) # Create a Boto3 session that ensures all AWS service calls (including SageMaker) use the specified region
+session = sagemaker.Session(boto_session=boto_session)
 ```
 
 #### 4. Get code from git repo (skip if completed already from earlier episodes)
