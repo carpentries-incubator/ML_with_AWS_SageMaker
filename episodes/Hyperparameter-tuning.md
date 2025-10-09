@@ -76,7 +76,7 @@ from sagemaker import get_execution_role
 # Initialize SageMaker session and role
 session = sagemaker.Session()
 role = get_execution_role()
-bucket_name = 'myawesometeam-titanic'  # replace with your S3 bucket name
+bucket_name = 'sinkorswim-doejohn-titanic'  # replace with your S3 bucket name
 
 # Define the PyTorch estimator with entry script and environment details
 pytorch_estimator = PyTorch(
