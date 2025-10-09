@@ -24,8 +24,8 @@ exercises: 10
 
 ## Initial setup 
 
-#### 1. Open a new .ipynb notebook
-Open a fresh .ipynb notebook ("Jupyter notebook"), and select the conda_pytorch_p310 environment. This will save us the trouble of having to install pytorch in this notebook. You can name your Jupyter notebook something along the lines of, `Training-models.ipynb`.
+#### 1. Open prefilled .ipynb notebook
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/Training-models-in-SageMaker-notebooks.ipynb`
 
 #### 2. CD to instance home directory
 So we all can reference the helper functions using the same path, CD to...
