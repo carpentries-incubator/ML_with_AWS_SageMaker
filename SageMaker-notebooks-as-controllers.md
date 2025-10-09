@@ -51,17 +51,19 @@ We'll follow these steps to create our first "SageMaker notebook instance".
 
 - Click **Create notebook instance**. It may take a few minutes for the instance to start. Once its status is **InService**, you can open the notebook instance and start coding.
 
-### Managing training and tuning with the controller notebook
+### Load pre-filled Jupyter notebooks
+Once your newly created *instance* shows as `InService`, open the instance in Jupyter Lab. From there, we can create as many Jupyter notebooks as we would like within the instance environment. 
 
-In the next couple expisodes, we'll use the **SageMaker Python SDK** within the notebook to launch compute-heavy tasks on more powerful instances as needed. Examples of tasks to launch include:
+We will then select the standard python3 environment (conda_python3) to start our first .ipynb notebook (Jupyter notebook). We can use the standard conda_python3 environment since we aren't doing any training/tuning just yet.
 
-- **Training a model**: Use the SDK to submit a training job, specifying a higher-powered instance (e.g., `ml.p2.xlarge` or `ml.m5.4xlarge`) based on your model's resource requirements.
-- **Hyperparameter tuning**: Configure and launch tuning jobs, allowing SageMaker to automatically manage multiple powerful instances for optimal tuning.
+##### Load pre-filled Jupyter notebooks
+Within the Jupyter notebook, run the following command to clone the lesson repo into our Jupyter environment:
 
-This setup allows you to control costs by keeping the notebook instance minimal and only incurring costs for larger instances when they are actively training or tuning models. Detailed guidance on training, tuning, and batch processing will follow in later episodes.
+```sh
+!git clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git
+```
 
-For more details, refer to the [SageMaker Python SDK documentation](https://sagemaker.readthedocs.io/) for example code on launching and managing remote training jobs.
-
+Then, navigate to `/ML_with_AWS_SageMaker/notebooks/Accessing-S3-via-SageMaker-notebooks.ipynb` to begin the first notebook.
 ::::::::::::::::::::::::::::::::::::: keypoints 
 
 - Use a minimal SageMaker notebook instance as a controller to manage larger, resource-intensive tasks.
