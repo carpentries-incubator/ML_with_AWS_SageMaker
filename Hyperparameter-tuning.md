@@ -64,7 +64,9 @@ In SageMaker, the estimator serves as a blueprint for each tuning job, specifyin
 Here’s the setup for our PyTorch estimator, which includes specifying the entry script for training (`train_nn.py`) and defining hyperparameters that will remain fixed across tuning jobs. The hyperparameters we’re setting up to tune include `epochs` and `learning_rate`, with a few specific values or ranges defined:
 
 
-
+```python
+notebook_instance_name = 'sinkorswim-DoeJohn-TrainClassifier' # adjust to your notebook name. we'll use this variable to name the training jobs launched by the tuner.
+```
 
 ```python
 import boto3
@@ -81,12 +83,22 @@ region = "us-east-2" # United States (Ohio). Make sure this matches what you see
 boto_session = boto3.Session(region_name=region) # Create a Boto3 session that ensures all AWS service calls (including SageMaker) use the specified region
 session = sagemaker.Session(boto_session=boto_session)
 
+# Define instance type/count we'll use for training
+instance_type="ml.m5.large"
+instance_count=1 # always start with 1. Rarely is parallelized training justified with data < 50 GB. More on this later.
+
+# Define max runtime in seconds to ensure you don't use more compute time than expected. Use a generous threshold (2x expected time but < 2 days) so that work isn't interrupted without any gains.
+max_run = 2*60*60 # 2 hours
+
+
 # Define the PyTorch estimator with entry script and environment details
 pytorch_estimator = PyTorch(
+    base_job_name=notebook_instance_name, # adjust to your notebook name,
+    max_run=max_run, # in seconds; always include (max 48 hours)
     entry_point="AWS_helpers/train_nn.py",  # Your script for training
     role=role,
-    instance_count=1,
-    instance_type="ml.m5.large",
+    instance_count=instance_count,
+    instance_type=instance_type,
     framework_version="1.9",
     py_version="py38",
     metric_definitions=[{"Name": "validation:accuracy", "Regex": "validation:accuracy = ([0-9\\.]+)"}],
