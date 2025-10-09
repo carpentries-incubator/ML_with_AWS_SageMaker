@@ -37,9 +37,6 @@ from sagemaker import get_execution_role
 role = sagemaker.get_execution_role()
 print(f'role = {role}')
 
-# Create a SageMaker session to manage interactions with Amazon SageMaker, such as training jobs, model deployments, and data input/output.
-session = sagemaker.Session()
-
 # Initialize an S3 client to interact with Amazon S3, allowing operations like uploading, downloading, and managing objects and buckets.
 s3 = boto3.client('s3')
 
@@ -49,6 +46,13 @@ bucket_name = 'sinkorswim-doejohn-titanic'  # replace with your S3 bucket name
 # Define train/test filenames
 train_filename = 'titanic_train.csv'
 test_filename = 'titanic_test.csv'
+```
+
+Create a SageMaker session to manage interactions with Amazon SageMaker, such as training jobs, model deployments, and data input/output.
+```python
+region = "us-east-2" # United States (Ohio). Make sure this matches what you see near top right of AWS Console menu
+boto_session = boto3.Session(region_name=region) # Create a Boto3 session that ensures all AWS service calls (including SageMaker) use the specified region
+session = sagemaker.Session(boto_session=boto_session)
 ```
 
 We should also record our local instance information to report this information during testing. First, let's make sure we're starting in the same location to access helper functions
