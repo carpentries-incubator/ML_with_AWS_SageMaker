@@ -239,7 +239,7 @@ You can also use the `get_notebook_instance_info()` function found in `AWS_helpe
 
 ```python
 import AWS_helpers.helpers as helpers
-helpers.get_notebook_instance_info(notebook_instance_name)
+helpers.get_notebook_instance_info(notebook_instance_name, region)
 ```
 
 
