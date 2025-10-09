@@ -106,12 +106,6 @@ print(test_data.shape)
 train_data.head()
 ```
 
-    sagemaker.config INFO - Not applying SDK defaults from location: /etc/xdg/sagemaker/config.yaml
-    sagemaker.config INFO - Not applying SDK defaults from location: /home/ec2-user/.config/sagemaker/config.yaml
-    (712, 12)
-    (179, 12)
-
-
 ### B) Download copy into notebook environment
 In some cases, downloading a local copy of the dataset may be useful, such as when performing repeated reads in an interactive notebook session.
 
@@ -130,8 +124,6 @@ In some cases, downloading a local copy of the dataset may be useful, such as wh
 ```python
 !pwd
 ```
-
-    /home/ec2-user/SageMaker/
 
 
 ```python
@@ -187,9 +179,6 @@ print(f"Total size of bucket '{bucket_name}': {total_size_mb:.2f} MB")
 #print(f"Total size of bucket '{bucket_name}': {total_size_gb:.2f} GB")
 ```
 
-    Total size of bucket 'doejohn-titanic-s3': 0.06 MB
-
-
 ### Using helper functions from lesson repo
 We have added code to calculate bucket size to a helper function called `get_s3_bucket_size(bucket_name)` for your convenience. There are also some other helper functions in that repo to assist you with common AWS/SageMaker workflows. We'll show you how to clone this code into your notebook environment.
 
@@ -202,7 +191,6 @@ Let's make sure we're starting in the root directory of this instance, so that w
 %cd /home/ec2-user/SageMaker/
 ```
 
-    /home/ec2-user/SageMaker
 
 To clone the repo to our Jupyter notebook, use the following code, adjusting username to your GitHub username.
 ```python
@@ -216,7 +204,6 @@ import AWS_helpers.helpers as helpers
 helpers.get_s3_bucket_size(bucket_name)
 ```
 
-    {'size_mb': 0.060057640075683594, 'size_gb': 5.865003913640976e-05}
 
 ### Check storage costs of bucket
 To estimate the storage cost of your Amazon S3 bucket directly from a Jupyter notebook in SageMaker, you can use the following approach. This method calculates the total size of the bucket and estimates the monthly storage cost based on AWS S3 pricing.
@@ -248,8 +235,6 @@ print(f"Estimated monthly storage cost: ${cost:.5f}")
 print(f"Estimated annual storage cost: ${cost*12:.5f}")
 
 ```
-
-    Estimated monthly storage cost: $0.0000
 
 
 For your convenience, we have also added this code to a helper function.
@@ -284,8 +269,6 @@ print("Files uploaded successfully.")
 
 ```
 
-    Files uploaded successfully.
-
 After uploading, we can view the objects/files available on our bucket using...
 
 ```python
@@ -307,9 +290,6 @@ Alternatively, we can substitute this for a helper function call as well.
 file_list = helpers.list_S3_objects(bucket_name)
 file_list
 ```
-
-   ['results/results.txt', 'titanic_test.csv', 'titanic_train.csv']
-
 
 :::::::::::::::::::::::::::::::::::::: keypoints 
 
