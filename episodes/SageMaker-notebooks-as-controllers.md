@@ -34,7 +34,7 @@ We'll follow these steps to create our first "SageMaker notebook instance".
 
 #### 2. Create a new notebook instance
 - In the SageMaker left-side menu, click on **Notebooks**, then click **Create notebook instance**.
-- **Notebook name**: To easily track this resource in our shared account, please use the following naming convention: "YourName-ExploreSageMaker". For example, "DoeJohn-ExploreSageMaker". Can include hyphens, but not spaces. 
+- **Notebook name**: To easily track this resource in our shared account, please use the following naming convention: "TeamName-LastnameFirstname-TrainClassifier". For example, "TeamName-LastnameFirstname-TrainClassifier". Can include hyphens, but not spaces. 
 - **Instance type**: SageMaker notebooks run on AWS EC2 instances. The instance type determines the compute resources allocated to the notebook. Since our notebook will act as a **low-resource "controller"**, we'll select a small instance such as `ml.t3.medium`.  
   - This keeps costs low while allowing us to launch separate training/tuning jobs on more powerful instances when needed.  
   - For guidance on common instances for ML procedures, refer to our supplemental [Instances for ML webpage](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html).  
