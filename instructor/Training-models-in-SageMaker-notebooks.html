@@ -544,7 +544,7 @@ potential issues early. <strong>In your group, discuss:</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Which checks do you think are most critical before scaling up?</p>
 <ul><li>
@@ -645,7 +645,7 @@ group.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li><p><strong>Data Preprocessing</strong>: The script fills missing
 values (<code>Age</code> with median, <code>Embarked</code> with mode),
@@ -1000,6 +1000,30 @@ layers, or preprocessing libraries.</li>
 <li>
 <strong>Ideal Use Cases</strong>: NLP, computer vision, and transfer
 learning applications in TensorFlow.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="huggingface-estimator">6. <strong><code>HuggingFace</code> Estimator</strong>
+<a class="anchor" aria-label="anchor" href="#huggingface-estimator"></a></h4>
+<ul><li>
+<strong>Purpose</strong>: Provides managed containers for running
+inference, fine-tuning, and Retrieval-Augmented Generation (RAG)
+workflows using the Hugging Face <code>transformers</code>
+library.<br></li>
+<li>
+<strong>Configuration</strong>:
+<ul><li>
+<code>entry_point</code>: Custom script for training or inference
+(e.g., <code>train.py</code> or <code>rag_inference.py</code>).<br></li>
+<li>
+<code>transformers_version</code>, <code>pytorch_version</code>,
+<code>py_version</code>: Define framework versions.<br></li>
+<li>
+<code>dependencies</code>: Optional <code>requirements.txt</code>
+for extra libraries.<br></li>
+</ul></li>
+<li>
+<strong>Ideal Use Cases</strong>: RAG pipelines, LLM inference, NLP,
+vision, or multimodal tasks using pretrained Transformer models.</li>
 </ul><div id="configuring-custom-environments-with-requirements.txt" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -1011,31 +1035,31 @@ learning applications in TensorFlow.</li>
 </h3>
 <div class="callout-content">
 <p>For all these Estimators, adding a <code>requirements.txt</code> file
-under <code>dependencies</code> ensures that additional packages are
-installed before training begins. This approach allows the use of
+as a <code>dependencies</code> argument ensures that additional packages
+are installed before training begins. This approach allows the use of
 specific libraries that may be critical for custom preprocessing,
 feature engineering, or model modifications. Here’s how to include
 it:</p>
 <div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># Customizing estimator using requirements.txt</span></span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="im">from</span> sagemaker.sklearn.estimator <span class="im">import</span> SKLearn</span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>sklearn_estimator <span class="op">=</span> SKLearn(</span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>    entry_point<span class="op">=</span><span class="st">"train_script.py"</span>,</span>
-<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
-<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>    instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span>,</span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>    output_path<span class="op">=</span><span class="st">"s3://your-bucket/output"</span>,</span>
-<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>    framework_version<span class="op">=</span><span class="st">"1.0-1"</span>,</span>
-<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>    dependencies<span class="op">=</span>[<span class="st">'requirements.txt'</span>],  <span class="co"># Adding custom dependencies</span></span>
-<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>    hyperparameters<span class="op">=</span>{</span>
-<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>        <span class="st">"max_depth"</span>: <span class="dv">5</span>,</span>
-<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>        <span class="st">"eta"</span>: <span class="fl">0.1</span>,</span>
-<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>        <span class="st">"subsample"</span>: <span class="fl">0.8</span>,</span>
-<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>        <span class="st">"num_round"</span>: <span class="dv">100</span></span>
-<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a>    }</span>
-<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># # Customizing estimator using requirements.txt</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="co"># from sagemaker.sklearn.estimator import SKLearn</span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="co"># sklearn_estimator = SKLearn(</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co">#     entry_point="train_script.py",</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#     role=role,</span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">#     instance_count=1,</span></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#     instance_type="ml.m5.large",</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#     output_path=f"s3://{bucket_name}/output",</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="co">#     framework_version="1.0-1",</span></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#     dependencies=['requirements.txt'],  # Adding custom dependencies</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co">#     hyperparameters={</span></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="co">#         "max_depth": 5,</span></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="co">#         "eta": 0.1,</span></span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a><span class="co">#         "subsample": 0.8,</span></span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a><span class="co">#         "num_round": 100</span></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a><span class="co">#     }</span></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a><span class="co"># )</span></span></code></pre>
 </div>
 <p>This setup simplifies training, allowing you to maintain custom
 environments directly within SageMaker’s managed containers, without
