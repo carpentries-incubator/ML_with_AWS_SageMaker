@@ -20,10 +20,13 @@ exercises: 0
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
+## Initial setup: open prefilled .ipynb notebook
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/Hyperparameter-tuning.ipynb. Select the pytorch environment.
 
+## Hyperparameter tuning in SageMaker
 To conduct efficient hyperparameter tuning with neural networks (or any model) in SageMaker, we’ll leverage SageMaker’s **hyperparameter tuning jobs** while carefully managing parameter ranges and model count. Here’s an overview of the process, with a focus on both efficiency and cost-effectiveness.
 
-### Key steps for hyperparameter tuning
+### Key steps 
 The overall process involves these five below steps.
 
 1. Setup estimator
