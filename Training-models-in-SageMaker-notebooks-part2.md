@@ -60,7 +60,11 @@ We should also record our local instance information to report this information 
 ```python
 import AWS_helpers.helpers as helpers
 notebook_instance_name = 'DoeJohn-ExploreSageMaker'
-local_instance_info = helpers.get_notebook_instance_info(notebook_instance_name)
+
+# Make sure this matches what you see near top right of AWS Console menu
+region = "us-east-2" # United States (Ohio)
+
+local_instance_info = helpers.get_notebook_instance_info(notebook_instance_name, region)
 local_instance = local_instance_info['InstanceType']
 local_instance
 ````
