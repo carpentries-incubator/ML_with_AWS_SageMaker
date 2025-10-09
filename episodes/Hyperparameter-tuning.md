@@ -404,9 +404,14 @@ Round-Up Policy: SageMaker rounds up the billing time to the nearest second for 
 import boto3
 import math
 
-# Initialize SageMaker client
-sagemaker_client = boto3.client("sagemaker")
+# Set region
+region = "us-east-2"
 
+# Initialize SageMaker client
+sagemaker_client = boto3.client("sagemaker", region_name=region)
+```
+
+```python
 # Retrieve tuning job details
 tuning_job_name = tuner.latest_tuning_job.name  # Replace with your tuning job name if needed
 tuning_job_desc = sagemaker_client.describe_hyper_parameter_tuning_job(HyperParameterTuningJobName=tuning_job_name)
@@ -453,5 +458,5 @@ For convenience, we have added this as a function in helpers.py
 import AWS_helpers.helpers as helpers
 import importlib
 importlib.reload(helpers)
-helpers.calculate_tuning_job_time(tuner)
+helpers.calculate_tuning_job_time(tuner, region)
 ```
