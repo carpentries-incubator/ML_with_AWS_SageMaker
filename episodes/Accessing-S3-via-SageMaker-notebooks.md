@@ -182,7 +182,7 @@ Let's make sure we're starting in the root directory of this instance, so that w
 
 To clone the repo to our Jupyter notebook, use the following code.
 ```python
-!git clone https://github.com/W-Madison-DataScience/AWS_helpers.git # downloads AWS_helpers folder/repo (refresh file explorer to see)
+!git clone https://github.com/UW-Madison-DataScience/AWS_helpers.git # downloads AWS_helpers folder/repo (refresh file explorer to see)
 ```
 
 Our AWS_helpers.py file can be found in `AWS_helpers/helpers.py`. With this file downloaded, you can call this function via...
