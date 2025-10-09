@@ -67,6 +67,7 @@ Here’s the setup for our PyTorch estimator, which includes specifying the entr
 
 
 ```python
+import boto3
 import sagemaker
 from sagemaker.tuner import HyperparameterTuner, IntegerParameter, ContinuousParameter, CategoricalParameter
 from sagemaker.pytorch import PyTorch
