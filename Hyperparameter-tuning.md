@@ -177,8 +177,8 @@ To prepare `train_nn.py` for hyperparameter tuning, we added code to log validat
 **Note**: It's best to use an if statement to only print out metrics periodically (e.g., every 100 epochs), so that you print time does not each up too much of your training time. It may be a little counter-intuitive that printing can slow things down so dramatically, but it truly does become a significant factor if you're doing it every epoch. On the flipside of this, you don't want to print metrics so infrequently that you lose resolution in the monitored validation accuracy. Choose a number between 100-1000 epochs or divide your total epoch count by ~25 to yield a reasonable range. 
 
 ```python
-if (epoch + 1) % 100 == 0 or epoch == epochs - 1:
-    print(f"validation:accuracy = {val_accuracy:.4f}", flush=True)  # Log for SageMaker metric tracking. Needed for hyperparameter tuning later.
+# if (epoch + 1) % 100 == 0 or epoch == epochs - 1:
+#     print(f"validation:accuracy = {val_accuracy:.4f}", flush=True)  # Log for SageMaker metric tracking. Needed for hyperparameter tuning later.
 ```
 
 Paired with this, our `metric_definitions` above uses a regular expression `"validation:accuracy = ([0-9\\.]+)"` to extract the val_accuracy value from each log line. This regex specifically looks for validation:accuracy =, followed by a floating-point number, which corresponds to the format of our log statement in train_nn.py.
