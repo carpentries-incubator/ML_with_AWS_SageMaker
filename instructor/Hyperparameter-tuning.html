@@ -468,11 +468,25 @@ hyperparameters that will remain fixed across tuning jobs. The
 hyperparameters we’re setting up to tune include <code>epochs</code> and
 <code>learning_rate</code>, with a few specific values or ranges
 defined:</p>
+<p>We’ll use our notebook instance name again to label the training jobs
+launched in this episode</p>
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>notebook_instance_name <span class="op">=</span> <span class="st">'sinkorswim-DoeJohn-TrainClassifier'</span> <span class="co"># adjust to your notebook name. we'll use this variable to name the training jobs launched by the tuner.</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>notebook_instance_name <span class="op">=</span> <span class="st">'sinkorswim-DoeJohn-TrainClassifier'</span> <span class="co"># adjust to your notebook name. we'll use this variable to name the training jobs launched by the tuner.</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co"># the following code just verifies you have the right name for your notebook instance</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>region <span class="op">=</span> <span class="st">"us-east-2"</span> <span class="co"># United States (Ohio) —  make sure this matches what you see near top right of AWS Console menu</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>sagemaker_client <span class="op">=</span> boto3.client(<span class="st">'sagemaker'</span>, region_name<span class="op">=</span>region) <span class="co"># Initialize SageMaker client</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>response <span class="op">=</span> sagemaker_client.describe_notebook_instance(NotebookInstanceName<span class="op">=</span>notebook_instance_name) <span class="co"># Describe the notebook instance</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co"># Display the status and instance type</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Notebook Instance '</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">' status: </span><span class="sc">{</span>response[<span class="st">'NotebookInstanceStatus'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>local_instance <span class="op">=</span> response[<span class="st">'InstanceType'</span>]</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Instance Type: </span><span class="sc">{</span>local_instance<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
+<p>Next, we’ll configure the baseline estimator that we plan to do
+hyperparameter search on.</p>
 <div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -497,26 +511,25 @@ defined:</p>
 <span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="co"># Define max runtime in seconds to ensure you don't use more compute time than expected. Use a generous threshold (2x expected time but &lt; 2 days) so that work isn't interrupted without any gains.</span></span>
 <span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a>max_run <span class="op">=</span> <span class="dv">2</span><span class="op">*</span><span class="dv">60</span><span class="op">*</span><span class="dv">60</span> <span class="co"># 2 hours</span></span>
 <span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a></span>
-<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a></span>
-<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="co"># Define the PyTorch estimator with entry script and environment details</span></span>
-<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a>pytorch_estimator <span class="op">=</span> PyTorch(</span>
-<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a>    base_job_name<span class="op">=</span>notebook_instance_name, <span class="co"># adjust to your notebook name,</span></span>
-<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
-<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a>    entry_point<span class="op">=</span><span class="st">"AWS_helpers/train_nn.py"</span>,  <span class="co"># Your script for training</span></span>
-<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
-<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a>    instance_count<span class="op">=</span>instance_count,</span>
-<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a>    instance_type<span class="op">=</span>instance_type,</span>
-<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a>    framework_version<span class="op">=</span><span class="st">"1.9"</span>,</span>
-<span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a>    py_version<span class="op">=</span><span class="st">"py38"</span>,</span>
-<span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a>    metric_definitions<span class="op">=</span>[{<span class="st">"Name"</span>: <span class="st">"validation:accuracy"</span>, <span class="st">"Regex"</span>: <span class="st">"validation:accuracy = ([0-9</span><span class="ch">\\</span><span class="st">.]+)"</span>}],</span>
-<span id="cb3-34"><a href="#cb3-34" tabindex="-1"></a>    hyperparameters<span class="op">=</span>{</span>
-<span id="cb3-35"><a href="#cb3-35" tabindex="-1"></a>        <span class="st">"train"</span>: <span class="st">"/opt/ml/input/data/train/train_data.npz"</span>,  <span class="co"># SageMaker will mount this path</span></span>
-<span id="cb3-36"><a href="#cb3-36" tabindex="-1"></a>        <span class="st">"val"</span>: <span class="st">"/opt/ml/input/data/val/val_data.npz"</span>,        <span class="co"># SageMaker will mount this path</span></span>
-<span id="cb3-37"><a href="#cb3-37" tabindex="-1"></a>        <span class="st">"epochs"</span>: <span class="dv">100</span>, <span class="co"># Placeholder initial value. Will be overridden by tuning by tuning values tested</span></span>
-<span id="cb3-38"><a href="#cb3-38" tabindex="-1"></a>        <span class="st">"learning_rate"</span>: <span class="fl">0.001</span> <span class="co"># Placeholder initial value. Will be overridden by tuning values tested</span></span>
-<span id="cb3-39"><a href="#cb3-39" tabindex="-1"></a>    },</span>
-<span id="cb3-40"><a href="#cb3-40" tabindex="-1"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb3-41"><a href="#cb3-41" tabindex="-1"></a>)</span></code></pre>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co"># Define the PyTorch estimator with entry script and environment details</span></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a>pytorch_estimator <span class="op">=</span> PyTorch(</span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a>    base_job_name<span class="op">=</span>notebook_instance_name, <span class="co"># adjust to your notebook name,</span></span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a>    entry_point<span class="op">=</span><span class="st">"AWS_helpers/train_nn.py"</span>,  <span class="co"># Your script for training</span></span>
+<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
+<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a>    instance_count<span class="op">=</span>instance_count,</span>
+<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a>    instance_type<span class="op">=</span>instance_type,</span>
+<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a>    framework_version<span class="op">=</span><span class="st">"1.9"</span>,</span>
+<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a>    py_version<span class="op">=</span><span class="st">"py38"</span>,</span>
+<span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a>    metric_definitions<span class="op">=</span>[{<span class="st">"Name"</span>: <span class="st">"validation:accuracy"</span>, <span class="st">"Regex"</span>: <span class="st">"validation:accuracy = ([0-9</span><span class="ch">\\</span><span class="st">.]+)"</span>}],</span>
+<span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a>    hyperparameters<span class="op">=</span>{</span>
+<span id="cb3-34"><a href="#cb3-34" tabindex="-1"></a>        <span class="st">"train"</span>: <span class="st">"/opt/ml/input/data/train/train_data.npz"</span>,  <span class="co"># SageMaker will mount this path</span></span>
+<span id="cb3-35"><a href="#cb3-35" tabindex="-1"></a>        <span class="st">"val"</span>: <span class="st">"/opt/ml/input/data/val/val_data.npz"</span>,        <span class="co"># SageMaker will mount this path</span></span>
+<span id="cb3-36"><a href="#cb3-36" tabindex="-1"></a>        <span class="st">"epochs"</span>: <span class="dv">100</span>, <span class="co"># Placeholder initial value. Will be overridden by tuning by tuning values tested</span></span>
+<span id="cb3-37"><a href="#cb3-37" tabindex="-1"></a>        <span class="st">"learning_rate"</span>: <span class="fl">0.001</span> <span class="co"># Placeholder initial value. Will be overridden by tuning values tested</span></span>
+<span id="cb3-38"><a href="#cb3-38" tabindex="-1"></a>    },</span>
+<span id="cb3-39"><a href="#cb3-39" tabindex="-1"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb3-40"><a href="#cb3-40" tabindex="-1"></a>)</span></code></pre>
 </div>
 </div>
 <div class="section level4">
