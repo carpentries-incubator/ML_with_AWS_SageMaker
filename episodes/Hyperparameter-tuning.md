@@ -63,11 +63,22 @@ In SageMaker, the estimator serves as a blueprint for each tuning job, specifyin
 
 Here’s the setup for our PyTorch estimator, which includes specifying the entry script for training (`train_nn.py`) and defining hyperparameters that will remain fixed across tuning jobs. The hyperparameters we’re setting up to tune include `epochs` and `learning_rate`, with a few specific values or ranges defined:
 
-
+We'll use our notebook instance name again to label the training jobs launched in this episode
 ```python
 notebook_instance_name = 'sinkorswim-DoeJohn-TrainClassifier' # adjust to your notebook name. we'll use this variable to name the training jobs launched by the tuner.
+
+# the following code just verifies you have the right name for your notebook instance
+region = "us-east-2" # United States (Ohio) —  make sure this matches what you see near top right of AWS Console menu
+sagemaker_client = boto3.client('sagemaker', region_name=region) # Initialize SageMaker client
+response = sagemaker_client.describe_notebook_instance(NotebookInstanceName=notebook_instance_name) # Describe the notebook instance
+
+# Display the status and instance type
+print(f"Notebook Instance '{notebook_instance_name}' status: {response['NotebookInstanceStatus']}")
+local_instance = response['InstanceType']
+print(f"Instance Type: {local_instance}")
 ```
 
+Next, we'll configure the baseline estimator that we plan to do hyperparameter search on.
 ```python
 import boto3
 import sagemaker
@@ -89,7 +100,6 @@ instance_count=1 # always start with 1. Rarely is parallelized training justifie
 
 # Define max runtime in seconds to ensure you don't use more compute time than expected. Use a generous threshold (2x expected time but < 2 days) so that work isn't interrupted without any gains.
 max_run = 2*60*60 # 2 hours
-
 
 # Define the PyTorch estimator with entry script and environment details
 pytorch_estimator = PyTorch(
