@@ -182,7 +182,7 @@ Before running the full search, let's test our setup by setting max_jobs = 1. Th
 ```python
 # Tuner configuration
 tuner = HyperparameterTuner(
-    base_tuning_job_name=bucket_name,
+    base_tuning_job_name=notebook_instance_name,
     estimator=pytorch_estimator,
     metric_definitions=[{"Name": "validation:accuracy", "Regex": "validation:accuracy = ([0-9\\.]+)"}],
     objective_metric_name="validation:accuracy",  # Ensure this matches the metric name exactly
@@ -243,7 +243,7 @@ max_parallel_jobs = 2
 
 # Define the Tuner configuration
 tuner = HyperparameterTuner(
-    base_tuning_job_name=bucket_name,
+    base_tuning_job_name=notebook_instance_name,
     estimator=pytorch_estimator,
     metric_definitions=[{"Name": "validation:accuracy", "Regex": "validation:accuracy = ([0-9\\.]+)"}],
     objective_metric_name="validation:accuracy",  # Ensure this matches the metric name exactly
