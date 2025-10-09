@@ -20,15 +20,6 @@ exercises: 10
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-## Initial setup 
-
-#### Open .ipynb notebook
-Once your newly created *instance* shows as `InService`, open the instance in Jupyter Lab. From there, we can create as many Jupyter notebooks as we would like within the instance environment. 
-
-We will then select the standard python3 environment (conda_python3) to start our first .ipynb notebook (Jupyter notebook). We can use the standard conda_python3 environment since we aren't doing any training/tuning just yet.
-
-After opening, you can right-click the Jupyter notebook name to "Rename" it to: `Interacting-with-S3.ipynb`, since interacting with S3 will be our focus for now.
-
 #### Set up AWS environment
 To begin each notebook, it's important to set up an AWS environment that will allow seamless access to the necessary cloud resources. Here's what we'll do to get started:
 
