@@ -8,11 +8,13 @@ We encourage you to briefly study this glossary before the workshop and refer ba
 
 ### Cloud Compute Essentials  
 
+* **Serverless**: A way of running code without setting up or managing servers yourself. The cloud provider automatically handles the servers, scaling, and maintenance in the background, and you only pay when your code runs. This model is common in cloud platforms like AWS and is useful for short tasks, event-driven workflows, or connecting parts of a pipeline without keeping a server on all the time (for example, using AWS Lambda to run code when a new file is uploaded).
 * **Virtual Machine (VM)**: A software-based computer that runs in a cloud or on-premises environment. In AWS, EC2 instances act as virtual machines with configurable CPU, memory, and storage resources.  
 * **Instance**: A virtual machine that runs in the cloud. AWS provides different types of instances for various computing needs, including general-purpose, memory-optimized, and GPU-powered instances for machine learning.  
 * **Container**: A lightweight virtualized environment that packages applications and their dependencies together. Containers allow for consistent execution across different computing environments and can be deployed on AWS services like ECS, EKS, and SageMaker.  
 * **Docker**: A popular platform for developing, shipping, and running containerized applications. Docker containers encapsulate an application and its dependencies, making them portable across different cloud and local environments.  
-* **Elasticity**: The ability to automatically scale computing resources up or down based on demand. Cloud platforms like AWS provide elasticity to help manage costs and performance.  
+* **Elasticity**: The ability to automatically scale computing resources up or down based on demand. Cloud platforms like AWS provide elasticity to help manage costs and performance.
+
 
 ### AWS General  
 
