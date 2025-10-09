@@ -410,6 +410,9 @@ from sagemaker.xgboost.estimator import XGBoost
 instance_type="ml.m5.large"
 instance_count=1 # always start with 1. Rarely is parallelized training justified with data < 50 GB. More on this later.
 
+# Define max runtime in seconds to ensure you don't use more compute time than expected. Use a generous threshold (2x expected time but < 2 days) so that work isn't interrupted without any gains.
+max_run = 2*60*60 # 2 hours
+
 # Define S3 paths for input and output
 train_s3_path = f's3://{bucket_name}/{train_filename}'
 
@@ -420,6 +423,7 @@ output_path = f's3://{bucket_name}/{output_folder}/'
 # Set up the SageMaker XGBoost Estimator with custom script
 xgboost_estimator = XGBoost(
     base_job_name=notebook_instance_name,
+    max_run=max_run, # in seconds; always include (max 48 hours)
     entry_point='train_xgboost.py',      # Custom script path
     source_dir='AWS_helpers',               # Directory where your script is located
     role=role,
@@ -564,6 +568,7 @@ instance_count=1 # always start with 1. Rarely is parallelized training justifie
 # Use Estimator directly for built-in container without specifying entry_point
 xgboost_estimator_builtin = Estimator(
     base_job_name=notebook_instance_name,
+    max_run=max_run, # in seconds; always include (max 48 hours)
     image_uri=sagemaker.image_uris.retrieve("xgboost", session.boto_region_name, version="1.5-1"),
     role=role,
     instance_count=instance_count,
@@ -680,6 +685,7 @@ instance_count=1 # always start with 1. Rarely is parallelized training justifie
 # Define the XGBoost estimator for distributed training
 xgboost_estimator = Estimator(
     base_job_name=notebook_instance_name,
+    max_run=max_run, # in seconds; always include (max 48 hours)
     image_uri=sagemaker.image_uris.retrieve("xgboost", session.boto_region_name, version="1.5-1"),
     role=role,
     instance_count=instance_count,  # Start with 1 instance for baseline
