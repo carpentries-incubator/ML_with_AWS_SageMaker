@@ -471,36 +471,37 @@ defined:</p>
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="im">import</span> sagemaker</span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="im">from</span> sagemaker.tuner <span class="im">import</span> HyperparameterTuner, IntegerParameter, ContinuousParameter, CategoricalParameter</span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="im">from</span> sagemaker.pytorch <span class="im">import</span> PyTorch</span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="im">from</span> sagemaker.inputs <span class="im">import</span> TrainingInput</span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co"># Initialize role, bucket, and SageMaker session variables</span></span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>role <span class="op">=</span> get_execution_role()</span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn-titanic'</span>  <span class="co"># replace with your S3 bucket name</span></span>
-<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>region <span class="op">=</span> <span class="st">"us-east-2"</span> <span class="co"># United States (Ohio). Make sure this matches what you see near top right of AWS Console menu</span></span>
-<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>boto_session <span class="op">=</span> boto3.Session(region_name<span class="op">=</span>region) <span class="co"># Create a Boto3 session that ensures all AWS service calls (including SageMaker) use the specified region</span></span>
-<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>session <span class="op">=</span> sagemaker.Session(boto_session<span class="op">=</span>boto_session)</span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a></span>
-<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co"># Define the PyTorch estimator with entry script and environment details</span></span>
-<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>pytorch_estimator <span class="op">=</span> PyTorch(</span>
-<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a>    entry_point<span class="op">=</span><span class="st">"AWS_helpers/train_nn.py"</span>,  <span class="co"># Your script for training</span></span>
-<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
-<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>    instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span>,</span>
-<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>    framework_version<span class="op">=</span><span class="st">"1.9"</span>,</span>
-<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a>    py_version<span class="op">=</span><span class="st">"py38"</span>,</span>
-<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a>    metric_definitions<span class="op">=</span>[{<span class="st">"Name"</span>: <span class="st">"validation:accuracy"</span>, <span class="st">"Regex"</span>: <span class="st">"validation:accuracy = ([0-9</span><span class="ch">\\</span><span class="st">.]+)"</span>}],</span>
-<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a>    hyperparameters<span class="op">=</span>{</span>
-<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a>        <span class="st">"train"</span>: <span class="st">"/opt/ml/input/data/train/train_data.npz"</span>,  <span class="co"># SageMaker will mount this path</span></span>
-<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a>        <span class="st">"val"</span>: <span class="st">"/opt/ml/input/data/val/val_data.npz"</span>,        <span class="co"># SageMaker will mount this path</span></span>
-<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a>        <span class="st">"epochs"</span>: <span class="dv">100</span>, <span class="co"># Placeholder initial value. Will be overridden by tuning by tuning values tested</span></span>
-<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a>        <span class="st">"learning_rate"</span>: <span class="fl">0.001</span> <span class="co"># Placeholder initial value. Will be overridden by tuning values tested</span></span>
-<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a>    },</span>
-<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="im">import</span> boto3</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="im">import</span> sagemaker</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="im">from</span> sagemaker.tuner <span class="im">import</span> HyperparameterTuner, IntegerParameter, ContinuousParameter, CategoricalParameter</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="im">from</span> sagemaker.pytorch <span class="im">import</span> PyTorch</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="im">from</span> sagemaker.inputs <span class="im">import</span> TrainingInput</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co"># Initialize role, bucket, and SageMaker session variables</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>role <span class="op">=</span> get_execution_role()</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn-titanic'</span>  <span class="co"># replace with your S3 bucket name</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>region <span class="op">=</span> <span class="st">"us-east-2"</span> <span class="co"># United States (Ohio). Make sure this matches what you see near top right of AWS Console menu</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>boto_session <span class="op">=</span> boto3.Session(region_name<span class="op">=</span>region) <span class="co"># Create a Boto3 session that ensures all AWS service calls (including SageMaker) use the specified region</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>session <span class="op">=</span> sagemaker.Session(boto_session<span class="op">=</span>boto_session)</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co"># Define the PyTorch estimator with entry script and environment details</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a>pytorch_estimator <span class="op">=</span> PyTorch(</span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>    entry_point<span class="op">=</span><span class="st">"AWS_helpers/train_nn.py"</span>,  <span class="co"># Your script for training</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>    instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span>,</span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a>    framework_version<span class="op">=</span><span class="st">"1.9"</span>,</span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a>    py_version<span class="op">=</span><span class="st">"py38"</span>,</span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a>    metric_definitions<span class="op">=</span>[{<span class="st">"Name"</span>: <span class="st">"validation:accuracy"</span>, <span class="st">"Regex"</span>: <span class="st">"validation:accuracy = ([0-9</span><span class="ch">\\</span><span class="st">.]+)"</span>}],</span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a>    hyperparameters<span class="op">=</span>{</span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a>        <span class="st">"train"</span>: <span class="st">"/opt/ml/input/data/train/train_data.npz"</span>,  <span class="co"># SageMaker will mount this path</span></span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a>        <span class="st">"val"</span>: <span class="st">"/opt/ml/input/data/val/val_data.npz"</span>,        <span class="co"># SageMaker will mount this path</span></span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a>        <span class="st">"epochs"</span>: <span class="dv">100</span>, <span class="co"># Placeholder initial value. Will be overridden by tuning by tuning values tested</span></span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a>        <span class="st">"learning_rate"</span>: <span class="fl">0.001</span> <span class="co"># Placeholder initial value. Will be overridden by tuning values tested</span></span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a>    },</span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a>)</span></code></pre>
 </div>
 </div>
 <div class="section level4">
