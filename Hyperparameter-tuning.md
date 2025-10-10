@@ -41,6 +41,7 @@ The overall process involves these five below steps.
 We'll walk through each step in detail by tuning a neural network. Specifcially, we will test out different values for our `epochs` and `learning_rate` parameters. We are sticking to just two hyperparameters for demonstration purposes, but you may wish to explore additional parameters in your own work. 
  
 This setup provides:
+
 - **Explicit control** over `epochs` using `CategoricalParameter`, allowing targeted testing of specific values.
 - **Efficient sampling** for `learning_rate` using `ContinuousParameter`, covering a defined range for a balanced approach.
 - **Cost control** by setting moderate `max_jobs` and `max_parallel_jobs`.
