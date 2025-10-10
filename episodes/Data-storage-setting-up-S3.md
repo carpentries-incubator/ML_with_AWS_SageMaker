@@ -90,7 +90,7 @@ In order to upload our titanic dataset to an S3 bucket on AWS, we'll follow the 
 - **Public Access**: Turn on "Block all public access" (recommended). This setting prevents unauthorized access and accidental data exposure. If you need external access, use IAM policies or signed URLs instead.
 - **Versioning**: Disable unless you need multiple versions of objects (unnecessary for ML Marathon). Enable only if needed, as versioning increases storage costs. Useful when tracking changes to datasets over time but unnecessary for static datasets.  
 - **Tags**: Adding tags to your S3 buckets is a great way to track project-specific costs and usage over time, especially as data and resources scale up. To easily track costs associated with your bucket in our shared AWS account, add the following fields:
-	- **Team**: teamname (if participating in ML Marathon)
+	- **Project**: teamname (if participating in ML Marathon)
 	- **Name**: yourname
   	- **Purpose**: Bucket-titanic
 
