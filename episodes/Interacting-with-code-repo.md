@@ -20,16 +20,24 @@ exercises: 10
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-## Step 0: open prefilled .ipynb notebook
-Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/Hyperparameter-tuning.ipynb.
+## Open prefilled .ipynb notebook
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/Interacting-with-code-repo.ipynb.ipynb`.
 
-## Step 1: Initial setup
-In the previous episode, we cloned our fork that we created during the [workshop setup](https://uw-madison-datascience.github.io/ML_with_Amazon_SageMaker/#workshop-repository-setup). In this episode, we'll see how to push our code to this fork. Complete these three setup steps before moving foward.
+## Step 0: Initial setup
+In this episode, we'll demonstrate how to push code to GitHub from a SageMaker Jupyter Notebook.
 
-3. Let's make sure we're starting at the same directory. Cd to the root directory of this instance before going further.
+To begin, we will clone the fork we had you creat during the [workshop setup](https://uw-madison-datascience.github.io/ML_with_Amazon_SageMaker/#workshop-repository-setup).
+
+Let's make sure we're starting at the same directory. Cd to the root directory of this instance before going further.
 
 ```python
 %cd /home/ec2-user/SageMaker/
+```
+
+Then, clone the fork. Replace "USERNAME" below with your GitHub username.
+
+```python
+!git clone https://github.com/USERNAME/AWS_helpers.git # replace username with your GitHub username
 ```
     
 ## Step 1: Using a GitHub personal access token (PAT) to push/pull from a SageMaker notebook
