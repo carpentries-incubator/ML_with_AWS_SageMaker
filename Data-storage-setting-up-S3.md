@@ -94,7 +94,7 @@ In order to upload our titanic dataset to an S3 bucket on AWS, we'll follow the 
 	- **Name**: yourname
   	- **Purpose**: Bucket-titanic
 
-	![Example of Tags for an S3 Bucket](https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/images/bucket_tags2.png){alt="Screenshot showing required tags for an S3 bucket"}
+![Example of Tags for an S3 Bucket](https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/images/bucket_tags2.png){alt="Screenshot showing required tags for an S3 bucket"}
 
 - Click **Create Bucket** at the bottom once everything above has been configured
 
