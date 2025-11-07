@@ -4,6 +4,19 @@ teaching: 10
 exercises: 0
 ---
 
+:::::::::::::::::::::::::::::::::::::::::::::: questions
+
+- Why use SageMaker for machine learning?
+  
+::::::::::::::::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::: objectives
+
+- Introduce SageMaker
+  
+::::::::::::::::::::::::::::::::::::::::::::::
+
+
 Amazon SageMaker is a comprehensive machine learning (ML) platform that empowers users to build, train, tune, and deploy models at scale. Designed to streamline the ML workflow, SageMaker supports data scientists and researchers in tackling complex machine learning problems without needing to manage underlying infrastructure. This allows you to focus on developing and refining your models while leveraging AWS's robust computing resources for efficient training and deployment.
 
 ### Why use SageMaker for machine learning?
