@@ -13,7 +13,7 @@ We encourage you to briefly study this glossary before the workshop and refer ba
 * **Instance**: A virtual machine that runs in the cloud. AWS provides different types of instances for various computing needs, including general-purpose, memory-optimized, and GPU-powered instances for machine learning.  
 * **Container**: A lightweight virtualized environment that packages applications and their dependencies together. Containers allow for consistent execution across different computing environments and can be deployed on AWS services like ECS, EKS, and SageMaker.  
 * **Docker**: A popular platform for developing, shipping, and running containerized applications. Docker containers encapsulate an application and its dependencies, making them portable across different cloud and local environments.  
-* **Elasticity**: The ability to automatically scale computing resources up or down based on demand. Cloud platforms like AWS provide elasticity to help manage costs and performance.
+* **Elasticity**: The ability to automatically scale computing resources up or down based on demand. Cloud platforms like AWS provide elasticity to help manage costs and performance. 
 
 
 ### AWS General  
