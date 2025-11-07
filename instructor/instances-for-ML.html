@@ -342,7 +342,7 @@
       </div>
       <hr></nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Instances for ML</h1>
-        <p>Last updated on 2025-03-10 |
+        <p>Last updated on 2025-11-07 |
 
         <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker/edit/main/learners/instances-for-ML.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -381,141 +381,166 @@ such as <code>ml.t3.medium</code>, may be eligible for the AWS Free
 Tier, which provides limited hours of usage per month. Free Tier
 eligibility can vary, so check <a href="https://aws.amazon.com/free/" class="external-link">AWS Free Tier details</a> before
 launching instances to avoid unexpected costs.</li>
-</ul><table class="table"><colgroup><col width="13%"><col width="23%"><col width="7%"><col width="13%"><col width="6%"><col width="20%"><col width="15%"></colgroup><thead><tr class="header"><th><strong>Dataset Size</strong></th>
+</ul><table class="table"><colgroup><col width="9%"><col width="15%"><col width="5%"><col width="9%"><col width="4%"><col width="13%"><col width="27%"><col width="15%"></colgroup><thead><tr class="header"><th align="right"><strong>Dataset Size</strong></th>
 <th><strong>Recommended Instance Type</strong></th>
 <th><strong>vCPU</strong></th>
 <th><strong>Memory (GiB)</strong></th>
 <th><strong>GPU</strong></th>
 <th><strong>Price per Hour (USD)</strong></th>
 <th><strong>Suitable Tasks</strong></th>
-</tr></thead><tbody><tr class="odd"><td>&lt; 1GB</td>
+<th><strong>Max Model Size (Approx.)</strong></th>
+</tr></thead><tbody><tr class="odd"><td align="right">&lt; 1 GB</td>
 <td><code>ml.t3.medium</code></td>
 <td>2</td>
 <td>4</td>
 <td>None</td>
 <td>$0.04</td>
-<td>Preprocessing, lightweight model training</td>
-</tr><tr class="even"><td>&lt; 1GB</td>
+<td>Lightweight preprocessing or small models (&lt; 50 M params)</td>
+<td>Up to 100 M params</td>
+</tr><tr class="even"><td align="right">&lt; 1 GB</td>
 <td><code>ml.m5.large</code></td>
 <td>2</td>
 <td>8</td>
 <td>None</td>
 <td>$0.10</td>
-<td>Preprocessing, regression, feature engineering, small model
-training</td>
-</tr><tr class="odd"><td>&lt; 1GB</td>
+<td>Regression, feature engineering, small CNNs or tree ensembles (50
+M–200 M params)</td>
+<td>Up to 500 M params</td>
+</tr><tr class="odd"><td align="right">&lt; 1 GB</td>
 <td>
 <code>g4dn.xlarge</code> (T4 GPU)</td>
 <td>4</td>
 <td>16</td>
-<td>1x NVIDIA T4</td>
+<td>1 × T4 (16 GB VRAM)</td>
 <td>$0.75</td>
-<td>GPU processing for small-scale deep learning, cost-effective GPU
-option</td>
-</tr><tr class="even"><td>&lt; 1GB</td>
+<td>Cost-effective GPU training for compact DL models (500 M–3 B params
+– e.g., BERT-base, CLIP-ViT-B)</td>
+<td>Up to 3 B params</td>
+</tr><tr class="even"><td align="right">&lt; 1 GB</td>
 <td>
 <code>p3.2xlarge</code> (V100 GPU)</td>
 <td>8</td>
 <td>61</td>
-<td>1x NVIDIA V100</td>
+<td>1 × V100 (16 GB VRAM)</td>
 <td><strong>$3.83</strong></td>
-<td>High-performance GPU processing, faster training for deep learning
-models, higher cost but faster than <code>g4dn</code>
-</td>
-</tr><tr class="odd"><td>10GB</td>
+<td>High-performance GPU jobs; fine-tuning or inference for 3 B–7 B
+models (e.g., LLaMA-2-7B, Mistral-7B)</td>
+<td>Up to 7 B params</td>
+</tr><tr class="odd"><td align="right">10 GB</td>
 <td><code>ml.c5.2xlarge</code></td>
 <td>8</td>
 <td>16</td>
 <td>None</td>
 <td>$0.34</td>
-<td>CPU-heavy processing, model training</td>
-</tr><tr class="even"><td>10GB</td>
+<td>CPU-heavy processing, tabular/ensemble models (&lt; 200 M
+params)</td>
+<td>Up to 500 M params</td>
+</tr><tr class="even"><td align="right">10 GB</td>
 <td><code>ml.m5.2xlarge</code></td>
 <td>8</td>
 <td>32</td>
 <td>None</td>
 <td>$0.38</td>
-<td>Preprocessing, feature engineering, model training</td>
-</tr><tr class="odd"><td>10GB</td>
+<td>Preprocessing, feature engineering, boosting or linear models (200
+M–500 M params)</td>
+<td>Up to 1 B params</td>
+</tr><tr class="odd"><td align="right">10 GB</td>
 <td>
 <code>g4dn.2xlarge</code> (T4 GPU)</td>
 <td>8</td>
 <td>32</td>
-<td>1x NVIDIA T4</td>
+<td>1 × T4</td>
 <td>$0.94</td>
-<td>Moderate-scale deep learning, cost-effective GPU training</td>
-</tr><tr class="even"><td>10GB</td>
+<td>Moderate-scale DL; training/inference for 1 B–4 B models (e.g.,
+BERT-large, ViT-L/16)</td>
+<td>Up to 3 B–4 B params</td>
+</tr><tr class="even"><td align="right">10 GB</td>
 <td>
 <code>p3.2xlarge</code> (V100 GPU)</td>
 <td>8</td>
 <td>61</td>
-<td>1x NVIDIA V100</td>
+<td>1 × V100</td>
 <td><strong>$3.83</strong></td>
-<td>Faster GPU processing for deep learning, better suited for larger
-models if budget allows</td>
-</tr><tr class="odd"><td>50GB</td>
+<td>Deep learning workloads; 3 B–7 B models (e.g., Mistral-7B,
+Gemma-7B)</td>
+<td>Up to 7 B params</td>
+</tr><tr class="odd"><td align="right">50 GB</td>
 <td><code>ml.c5.4xlarge</code></td>
 <td>16</td>
 <td>64</td>
 <td>None</td>
 <td>$0.77</td>
-<td>CPU-heavy processing, large model training</td>
-</tr><tr class="even"><td>50GB</td>
+<td>Large-scale CPU modeling or preprocessing (&lt; 500 M params)</td>
+<td>Up to 1 B params</td>
+</tr><tr class="even"><td align="right">50 GB</td>
 <td><code>ml.m5.4xlarge</code></td>
 <td>16</td>
 <td>64</td>
 <td>None</td>
 <td>$0.77</td>
-<td>Preprocessing, feature engineering, large model training</td>
-</tr><tr class="odd"><td>50GB</td>
+<td>Feature engineering, classic ML on wide data (200 M–500 M
+params)</td>
+<td>Up to 1 B params</td>
+</tr><tr class="odd"><td align="right">50 GB</td>
 <td>
 <code>g4dn.4xlarge</code> (T4 GPU)</td>
 <td>16</td>
 <td>64</td>
-<td>1x NVIDIA T4</td>
+<td>1 × T4</td>
 <td>$1.48</td>
-<td>Moderate-scale deep learning, balanced performance and cost</td>
-</tr><tr class="even"><td>100GB</td>
+<td>Moderate DL models (1 B–4 B params); efficient for batch
+inference</td>
+<td>Up to 4 B params</td>
+</tr><tr class="even"><td align="right">100 GB</td>
 <td>
 <code>g4dn.8xlarge</code> (T4 GPU)</td>
 <td>32</td>
 <td>128</td>
-<td>1x NVIDIA T4</td>
+<td>1 × T4</td>
 <td><strong>$2.76</strong></td>
-<td>Large-scale model training with cost-effective GPU acceleration</td>
-</tr><tr class="odd"><td>100GB</td>
+<td>Large-scale DL training (2 B–5 B params; e.g., LLaMA-2-3B–5B) with
+mixed precision</td>
+<td>Up to 5 B params</td>
+</tr><tr class="odd"><td align="right">100 GB</td>
 <td>
 <code>p3.8xlarge</code> (V100 GPU)</td>
 <td>32</td>
 <td>244</td>
-<td>4x NVIDIA V100</td>
+<td>4 × V100</td>
 <td><strong>$15.20</strong></td>
-<td>High-performance GPU processing for large deep learning models
-(e.g., transformers, CNNs)</td>
-</tr><tr class="even"><td>100GB</td>
+<td>Multi-GPU training (7 B–30 B params; e.g., Falcon-40B, Mixtral
+8×7B)</td>
+<td>Up to 30 B params</td>
+</tr><tr class="even"><td align="right">100 GB</td>
 <td>
 <code>p4d.24xlarge</code> (A100 GPU)</td>
 <td>96</td>
 <td>1,152</td>
-<td>8x NVIDIA A100</td>
+<td>8 × A100 (40 GB each)</td>
 <td><strong>$32.77</strong></td>
-<td>High-performance DL for large datasets with batch streaming</td>
-</tr><tr class="odd"><td>1TB+</td>
+<td>High-end DL or fine-tuning for very large models (30 B–70 B+ params;
+e.g., LLaMA-3-70B, GPT-3)</td>
+<td>Up to 70 B+ params</td>
+</tr><tr class="odd"><td align="right">1 TB+</td>
 <td>
 <code>p3.16xlarge</code> (V100 GPU)</td>
 <td>64</td>
 <td>488</td>
-<td>8x NVIDIA V100</td>
+<td>8 × V100</td>
 <td><strong>$30.40</strong></td>
-<td>Extreme-scale deep learning, large transformer training</td>
-</tr><tr class="even"><td>1TB+</td>
+<td>Extreme-scale transformer training (30 B–60 B params) with
+distributed data parallelism</td>
+<td>Up to 65 B params</td>
+</tr><tr class="even"><td align="right">1 TB+</td>
 <td>
 <code>p4d.24xlarge</code> (A100 GPU)</td>
 <td>96</td>
 <td>1,152</td>
-<td>8x NVIDIA A100</td>
+<td>8 × A100</td>
 <td><strong>$32.77</strong></td>
-<td>Deep learning with batch processing for 1TB+ datasets</td>
+<td>Batch or distributed training for foundation-scale models (60 B–70
+B+)</td>
+<td>Up to 70 B+ params</td>
 </tr></tbody></table><!--
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
@@ -581,8 +606,8 @@ any links that you are not going to use.
   "url": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/instances-for-ML.html",
   "identifier": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/instances-for-ML.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2025-03-10",
-  "datePublished": "2025-10-21"
+  "dateModified": "2025-11-07",
+  "datePublished": "2025-11-07"
 }
 
   </script><script>
