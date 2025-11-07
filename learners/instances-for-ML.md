@@ -13,7 +13,7 @@ The below table provides general recommendations for selecting AWS instances bas
 - **Free Tier Eligibility**: Some smaller instance types, such as `ml.t3.medium`, may be eligible for the AWS Free Tier, which provides limited hours of usage per month. Free Tier eligibility can vary, so check [AWS Free Tier details](https://aws.amazon.com/free/) before launching instances to avoid unexpected costs.
 
 
-| **Dataset Size** | **Recommended Instance Type** | **vCPU** | **Memory (GiB)** | **GPU** | **Price per Hour (USD)** | **Suitable Tasks (incl. typical model size range)** | **Max Model Size (Approx.)** |
+| **Dataset Size** | **Recommended Instance Type** | **vCPU** | **Memory (GiB)** | **GPU** | **Price per Hour (USD)** | **Suitable Tasks** | **Max Model Size (Approx.)** |
 |------------------:|------------------------------|----------|------------------|---------|--------------------------|------------------------------------------------------|------------------------------|
 | < 1 GB | `ml.t3.medium` | 2 | 4 | None | $0.04 | Lightweight preprocessing or small regression/classification models (< 50 M params) | Up to 100 M params |
 | < 1 GB | `ml.m5.large` | 2 | 8 | None | $0.10 | Regression, feature engineering, small CNNs or tree ensembles (50 M–200 M params) | Up to 500 M params |
