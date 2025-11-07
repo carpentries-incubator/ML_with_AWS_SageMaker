@@ -15,7 +15,7 @@ The below table provides general recommendations for selecting AWS instances bas
 
 | **Dataset Size** | **Recommended Instance Type** | **vCPU** | **Memory (GiB)** | **GPU** | **Price per Hour (USD)** | **Suitable Tasks** | **Max Model Size (Approx.)** |
 |------------------:|------------------------------|----------|------------------|---------|--------------------------|------------------------------------------------------|------------------------------|
-| < 1 GB | `ml.t3.medium` | 2 | 4 | None | $0.04 | Lightweight preprocessing or small models (< 50 M params) | Up to 100 M params |
+| < 1 GB | `ml.t3.medium` | 2 | 4 | None | $0.04 | Lightweight preprocessing or small models (< 50 M params)  | Up to 100 M params |
 | < 1 GB | `ml.m5.large` | 2 | 8 | None | $0.10 | Regression, feature engineering, small CNNs or tree ensembles (50 M–200 M params) | Up to 500 M params |
 | < 1 GB | `g4dn.xlarge` (T4 GPU) | 4 | 16 | 1 × T4 (16 GB VRAM) | $0.75 | Cost-effective GPU training for compact DL models (500 M–3 B params – e.g., BERT-base, CLIP-ViT-B) | Up to 3 B params |
 | < 1 GB | `p3.2xlarge` (V100 GPU) | 8 | 61 | 1 × V100 (16 GB VRAM) | **$3.83** | High-performance GPU jobs; fine-tuning or inference for 3 B–7 B models (e.g., LLaMA-2-7B, Mistral-7B) | Up to 7 B params |
