@@ -341,7 +341,19 @@
 <div class="accordion accordion-flush" id="accordionFlush10">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading10">
-        <a href="Resource-management-cleanup.html">9. Resource Management and Monitoring</a>
+        <a href="Overview-RAG-on-AWS.html">9. Overview of RAG Workflows on AWS</a>
+    </div>
+<!--/div.accordion-header-->
+
+  </div>
+<!--/div.accordion-item-->
+</div>
+<!--/div.accordion-flush-->
+
+<div class="accordion accordion-flush" id="accordionFlush11">
+  <div class="accordion-item">
+    <div class="accordion-header" id="flush-heading11">
+        <a href="Resource-management-cleanup.html">10. Resource Management and Monitoring</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -1042,7 +1054,7 @@ sizes: 10 GB, 100 GB, 1 TB (1024 GB)</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -5191,6 +5203,175 @@ Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
  -->
 </div>
+</section></section><section id="aio-Overview-RAG-on-AWS"><p>Content from <a href="Overview-RAG-on-AWS.html">Overview of RAG Workflows on AWS</a></p>
+<hr>
+<p>Last updated on 2025-11-21 |
+
+        <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker/edit/main/episodes/Overview-RAG-on-AWS.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
+<p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 10 minutes</p>
+<div class="text-end">
+          <button role="button" aria-pressed="false" tabindex="0" id="expand-code" class="pull-right" data-expand="Expand All Solutions " data-collapse="Collapse All Solutions "> Expand All Solutions <i aria-hidden="true" data-feather="plus"></i></button>
+        </div>
+<section><h2 class="section-heading" id="retrieval-augmented-generation-rag-on-aws">Retrieval-Augmented Generation (RAG) on AWS<a class="anchor" aria-label="anchor" href="#retrieval-augmented-generation-rag-on-aws"></a>
+</h2>
+<hr class="half-width">
+<p>Retrieval-Augmented Generation (RAG) is a pattern where you
+<strong>retrieve</strong> relevant context from your data and then
+<strong>generate</strong> an answer using that context. Unlike model
+training, a standard RAG workflow does <strong>not</strong> fine‑tune or
+train a model — it combines retrieval + inference only.</p>
+<p>This episode introduces the major ways to build RAG systems on AWS
+and prepares us for later episodes where we experiment with each
+approach.</p>
+<div class="overview card">
+<h2 class="card-header">Overview</h2>
+<div class="row g-0">
+<div class="col-md-4">
+<div class="card-body">
+<div class="inner">
+<h3 class="card-title">Questions</h3>
+<ul>
+<li>What is Retrieval‑Augmented Generation (RAG)?</li>
+<li>What are the main architectural options for running RAG on AWS?</li>
+<li>When is each RAG workflow appropriate?</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="col-md-8">
+<div class="card-body">
+<div class="inner bordered">
+<h3 class="card-title">Objectives</h3>
+<ul>
+<li>Understand that RAG does <em>not</em> require training or
+fine‑tuning a model.</li>
+<li>Recognize the three major architectural patterns for RAG systems on
+AWS.</li>
+<li>Understand the core trade‑offs that drive which approach to
+use.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section><section><h2 class="section-heading" id="what-is-rag">What is RAG?<a class="anchor" aria-label="anchor" href="#what-is-rag"></a>
+</h2>
+<hr class="half-width">
+<p>RAG combines two steps:</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>Retrieve</strong>: Search your document store (vector DB or
+FAISS index) to find relevant text.</li>
+<li>
+<strong>Generate</strong>: Provide those retrieved chunks to a large
+language model (LLM) to answer a question.</li>
+</ol>
+<p>No model weights are updated. No backprop. No training job.<br>
+RAG is an inference‑only pattern that layers retrieval logic around an
+LLM.</p>
+</section><section><h2 class="section-heading" id="approaches-to-running-rag-on-aws">Approaches to Running RAG on AWS<a class="anchor" aria-label="anchor" href="#approaches-to-running-rag-on-aws"></a>
+</h2>
+<hr class="half-width">
+<p>Below are the three common patterns used across research and
+industry.</p>
+<div class="section level3">
+<h3 id="notebookbased-rag-single-gpu-instance">1. <strong>Notebook‑based RAG (single GPU instance)</strong>
+<a class="anchor" aria-label="anchor" href="#notebookbased-rag-single-gpu-instance"></a>
+</h3>
+<p>Load embedding + generation models inside a GPU‑backed SageMaker
+notebook instance.</p>
+<p><strong>When this works well</strong> - Small/medium models (&lt;
+8–12B). Large models also work, but be mindful of instance costs! -
+Workshops, demos, prototyping, exploratory RAG - RAG pipelines that only
+need to be run once (not live in production mode where you can
+constantly query your bot) - You want everything in one place with
+minimal architecture - You are feeling lazy and don’t want to convert
+your code to a processing job or API calls</p>
+<p><strong>Trade‑offs</strong> - Must shut down instance to avoid cost
+leakage - Limited by single‑GPU memory - Not all of the time spent in
+your notebook requires a GPU (wasteful for chunking + indexing) - If you
+want to use a better instance later, you have to stop your notebook,
+change the instance type, and restart it (annoying but doable)</p>
+</div>
+<div class="section level3">
+<h3 id="batch-rag-with-sagemaker-processing-jobs-effecient">2. <strong>Batch RAG with SageMaker Processing Jobs</strong>
+(effecient!)<a class="anchor" aria-label="anchor" href="#batch-rag-with-sagemaker-processing-jobs-effecient"></a>
+</h3>
+<p>Use short‑lived processing jobs for embedding corpora or offline
+batch generation.</p>
+<p><strong>When this works well</strong> - Only pay for the GPU time
+that you actually need (embedding and generation steps) - “Compute once,
+use many times” tasks - Repeatable pipelines where you want clean logs +
+reproducibility</p>
+<p><strong>Trade‑offs</strong> - Not suitable for <em>interactive</em>
+or per‑query RAG (startup time too slow) - Requires setting up
+processing jobs in SageMaker, similar to how we’ve done training jobs
+before. This isn’t terribly difficult once you learn the basics, but it
+can slow progress the first time through.</p>
+</div>
+<div class="section level3">
+<h3 id="fully-managed-rag-using-amazon-bedrock-apis">3. <strong>Fully managed RAG using Amazon Bedrock APIs</strong>
+<a class="anchor" aria-label="anchor" href="#fully-managed-rag-using-amazon-bedrock-apis"></a>
+</h3>
+<p>Use Bedrock models for embedding + generation via API calls.</p>
+<p><strong>When this works well</strong> - No desire to host or manage
+models - Need scalability without managing GPUs - Want access to the
+largest and greatest foundation models with guaranteed availability</p>
+<p><strong>Trade‑offs</strong> - Per‑token cost may be higher than
+renting an instance/GPU if you have a large corpus or high query volume
+- Latency may be higher due to network calls</p>
+<div id="rag-pipeline-responsibilities" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<span class="callout-header">Callout</span>
+<div id="rag-pipeline-responsibilities" class="callout-inner">
+<h3 class="callout-title">RAG Pipeline Responsibilities</h3>
+<div class="callout-content">
+<p>Even with Bedrock, <em>you</em> still manage: - Chunking - Embedding
+storage - Vector search - Retrieval logic</p>
+<p>Bedrock only handles the embedding + generation models.</p>
+</div>
+</div>
+</div>
+</div>
+</section><section><h2 class="section-heading" id="when-do-you-use-which-approach">When Do You Use Which Approach?<a class="anchor" aria-label="anchor" href="#when-do-you-use-which-approach"></a>
+</h2>
+<hr class="half-width">
+<p><strong>Notebook RAG</strong><br>
+Fastest to build. Great for learning, prototyping, and small‑scale
+research.</p>
+<p><strong>Processing‑job RAG</strong><br>
+Ideal for embedding large corpora and running periodic batch generation.
+Clean, reproducible, cost‑efficient.</p>
+<p><strong>Bedrock RAG</strong><br>
+Best for production or long‑term research tools that need scalability
+without hosting models.</p>
+<div id="keypoints1" class="callout keypoints">
+<div class="callout-square">
+<i class="callout-icon" data-feather="key"></i>
+</div>
+<span class="callout-header">Key Points</span>
+<div class="callout-inner">
+<div class="callout-content">
+<ul>
+<li>RAG is an inference‑only workflow: no training or fine‑tuning
+required.</li>
+<li>AWS supports three broad approaches: notebook RAG, batch RAG, and
+Bedrock‑managed RAG.</li>
+<li>The right choice depends on latency needs, scale, cost sensitivity,
+and model‑management preferences.</li>
+<li>Later episodes will walk through each pattern in depth using
+hands‑on examples.</li>
+</ul>
+</div>
+</div>
+</div>
+<!--
+Place links that you need to refer to multiple times across pages here. Delete
+any links that you are not going to use.
+ -->
 </section></section><section id="aio-Resource-management-cleanup"><p>Content from <a href="Resource-management-cleanup.html">Resource Management and Monitoring</a></p>
 <hr>
 <p>Last updated on 2024-11-08 |
