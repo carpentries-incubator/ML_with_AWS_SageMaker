@@ -1,8 +1,22 @@
+---
+title: "RAG with Amazon Bedrock"
+teaching: 20
+exercises: 10
+---
+:::::::::::::::::::::::::::::::::::::: questions
+- What is the goal of this RAG workflow?
+- How do we run this RAG variant?
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+::::::::::::::::::::::::::::::::::::: objectives
+- Understand this RAG approach.
+- Run the workflow end-to-end.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
 # RAG with Amazon Bedrock (Embeddings + Generation)
 This notebook demonstrates a Bedrock-based RAG pipeline using Titan embeddings and Claude 3 Haiku.
 
-
-```
+```python
 import os, json, boto3, numpy as np, requests
 region="us-east-1"
 bedrock=boto3.client("bedrock-runtime", region_name=region)
@@ -11,8 +25,7 @@ GEN_MODEL_ID="anthropic.claude-3-haiku-20240307-v1:0"
 
 ```
 
-
-```
+```python
 url="https://www.gutenberg.org/cache/epub/1112/pg1112.txt"
 raw_text=requests.get(url).text
 
@@ -31,8 +44,7 @@ chunks=simple_paragraph_chunks(raw_text,800)
 len(chunks)
 ```
 
-
-```
+```python
 def embed_texts_bedrock(texts):
     vecs=[]
     for t in texts:
@@ -45,8 +57,7 @@ chunk_embeddings=embed_texts_bedrock(chunks)
 chunk_embeddings.shape
 ```
 
-
-```
+```python
 def cosine_sim(q,mat):
     q=q/(np.linalg.norm(q)+1e-9)
     m=mat/(np.linalg.norm(mat,axis=1,keepdims=True)+1e-9)
@@ -61,8 +72,7 @@ def retrieve_top_k(query,k=5):
 retrieve_top_k("Who kills Mercutio?",3)[0]
 ```
 
-
-```
+```python
 def rag_answer_bedrock_claude(query,k=5,temperature=0.0):
     retrieved=retrieve_top_k(query,k)
     ctx="\n\n---\n\n".join([f"[Chunk {r['index']}]\n{r['text']}" for r in retrieved])
@@ -86,3 +96,7 @@ print(rag_answer_bedrock_claude("Who kills Mercutio?",5))
 
 ## Notes
 This notebook compares Bedrock-based RAG vs SageMaker training workflows.
+
+::::::::::::::::::::::::::::::::::::: keypoints
+- This episode demonstrates a complete RAG workflow.
+- Components include retrieval, embedding, and generation.
