@@ -38,7 +38,23 @@ RAG is an inference‑only pattern that layers retrieval logic around an LLM.
 
 ## Approaches to Running RAG on AWS
 
-Below are the three common patterns used across research and industry.
+Below are the four common patterns used across research and industry.
+
+### New Cloud Stuff
+
+There are several general approaches for setting up a Retrieval-Augmented Generation (RAG) workflow on AWS, each suited to different scales and constraints.
+
+
+1. **Run everything inside a single GPU-backed notebook instance**
+For small- to medium-sized models (< 8 B), it's often simplest to just pick a GPU instance (e.g., [p3.2xlarge](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html)), load your embedding and generation models directly in the notebook, and run RAG end-to-end there. This keeps the architecture simple and avoids extra moving parts, as long as you're disciplined about shutting down the instance when you’re done so you don’t leak cost. It's also possible to do this with larger models, but the costs to use more powerful GPUs (e.g., $15/hour) may be a limiting factor.
+
+2. **Use SageMaker Estimators to run batch jobs for embeddings and/or generation.**
+For large corpora or workflows where you want repeatable, offline computation, you can treat parts of the RAG pipeline—especially embedding—like a batch processing job rather than a live model. Instead of deploying an inference endpoint, you run a short-lived Hugging Face Estimator job that spins up a GPU instance, loads your embedding or generation model, processes all the chunked text in one shot, and saves the results back to S3. This pattern is ideal for “compute once, use many times” workloads, such as generating embeddings for thousands of documents or producing long-form outputs that don’t require low latency. Because the Estimator only exists while the batch completes, you avoid the continuous cost of an always-on endpoint. However, this approach is not suited for per-query RAG retrieval—launching an Estimator per user request would be far too slow, since starting a training job can take several minutes.
+
+3. **Use Amazon Bedrock for managed embedding and generation APIs.** If you prefer fully managed foundation models and don’t want to own model hosting at all, Bedrock lets you call embedding and generation models via API from your RAG pipeline. You still manage your vector store and retrieval logic (for example in Lambda, ECS, or SageMaker), but you outsource the heavy model lifecycle work—at the trade-off of less control over architectures and sometimes higher per-token cost.
+
+4. **Use long-lived inference endpoints for online RAG workloads.** For applications that need low-latency, interactive RAG (APIs, chatbots, dashboards), you can deploy your own embedding and generation models as SageMaker inference endpoints (or Bedrock-like managed endpoints) and call them from your retrieval service. This gives you control over the model, scaling policies, and autoscaling, but it’s also the most expensive option if traffic is low or bursty, since you’re keeping capacity online even when no one is querying the system.
+
 
 ### 1. **Notebook‑based RAG (single GPU instance)**
 Load embedding + generation models inside a GPU‑backed SageMaker notebook instance.
