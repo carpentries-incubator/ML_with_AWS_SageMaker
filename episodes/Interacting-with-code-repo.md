@@ -26,9 +26,14 @@ Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/Interacting-with-code-
 ## Step 0: Initial setup
 In this episode, we'll demonstrate how to push code to GitHub from a SageMaker Jupyter Notebook.
 
-To begin, we will clone the fork we had you creat during the [workshop setup](https://uw-madison-datascience.github.io/ML_with_Amazon_SageMaker/#workshop-repository-setup).
+To begin, we will first create a GitHub repo that we have read/write access to. Feel free to supplement the instructions below with your own personal GitHub repo if you have one ou want to use with SageMaker already. Else, we can simply create a fork of the lesson repo. 
 
-Let's make sure we're starting at the same directory. Cd to the root directory of this instance before going further.
+1. Navigate to [https://github.com/carpentries-incubator/ML_with_AWS_SageMaker](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker)
+2. Click the fork button
+3. Select yourself as the owner of the fork, and "Copy the main branch only" selected. You will only need the main branch.
+
+
+Next, let's make sure we're starting at the same directory. Back in our SageMaker Jupyter Lab notebook, change directory to the root directory of this instance before going further.
 
 ```python
 %cd /home/ec2-user/SageMaker/
@@ -37,7 +42,7 @@ Let's make sure we're starting at the same directory. Cd to the root directory o
 Then, clone the fork. Replace "USERNAME" below with your GitHub username.
 
 ```python
-!git clone https://github.com/USERNAME/AWS_helpers.git # replace username with your GitHub username
+!git clone https://github.com/USERNAME/ML_with_AWS_SageMaker.git # replace username with your GitHub username
 ```
     
 ## Step 1: Using a GitHub personal access token (PAT) to push/pull from a SageMaker notebook
@@ -86,7 +91,7 @@ Setting this globally (`--global`) will ensure the configuration persists across
 ```
 
 ## Step 3: Convert json .ipynb files to .py
-We'd like to track our notebook files within our AWS_helpers fork. However, to avoid tracking ipynb files directly, which are formatted as json, we may want to convert our notebook to .py first (plain text). Converting notebooks to `.py` files helps maintain code (and version-control) readability and minimizes potential issues with notebook-specific metadata in Git history. 
+We'd like to track our notebook files within our repo fork. However, to avoid tracking ipynb files directly, which are formatted as json, we may want to convert our notebook to .py first (plain text). Converting notebooks to `.py` files helps maintain code (and version-control) readability and minimizes potential issues with notebook-specific metadata in Git history. 
 
 #### Benefits of converting to `.py` before Committing
 - **Cleaner version control**: `.py` files have cleaner diffs and are easier to review and merge in Git.
@@ -98,6 +103,12 @@ Here's how to convert `.ipynb` files to `.py` in SageMaker without needing to ex
 1. First, install Jupytext.
 ```python
 !pip install jupytext
+```
+
+2. Cd to location containing notebook files
+```bash
+cd ML_with_AWS_SageMaker/notebooks
+ls
 ```
 
 2. Then, run the following command in a notebook cell to convert both of our notebooks to `.py` files
