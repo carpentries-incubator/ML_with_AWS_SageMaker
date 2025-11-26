@@ -113,11 +113,11 @@ In the AWS console:
 ### Step 3 – Upload the WattBot files to S3
 
 1. In your new bucket, click **Upload**.
-2. Drag **the `data/wattbot/` folder** from `data.zip` into the upload dialog.
+2. Drag the `data/wattbot/` folder contents from `data.zip` into the upload dialog.
 3. Upload it so that your bucket contains paths like:
 
-   - `wattbot/metadata.csv`
-   - `wattbot/train_QA.csv`
+   - `metadata.csv`
+   - `train_QA.csv`
 
 We’ll pull these files from S3 into the notebook in the next steps.
 
