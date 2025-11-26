@@ -351,7 +351,7 @@
       </div>
       <hr></nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Instances for ML</h1>
-        <p>Last updated on 2025-11-25 |
+        <p>Last updated on 2025-11-26 |
 
         <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker/edit/main/learners/instances-for-ML.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -438,43 +438,130 @@ launching instances to avoid unexpected costs.</li>
 <td>1 × V100 (16 GB)</td>
 <td>$3.83</td>
 <td>High-performance GPU jobs; fine-tuning or inference</td>
-</tr></tbody></table><div class="line-block">10 GB | Up to 500 M params | ml.c5.2xlarge | 8 |
-16 | None | $0.34 | CPU-heavy processing, tabular/ensemble models
-|<br>
-10 GB | Up to 1 B params | ml.m5.2xlarge | 8 | 32 | None | $0.38 |
-Feature engineering, boosting or linear models |<br>
-10 GB | Up to 3–4 B params | g4dn.2xlarge (T4 GPU) | 8 | 32 | 1 × T4 |
-$0.94 | Moderate-scale DL; training/inference |<br>
-10 GB | Up to 10–12 B params | g5.2xlarge (A10G GPU) | 8 | 32 | 1 × A10G
-| $1.69 | Larger 7–10B models; faster than g4dn |<br>
-10 GB | Up to 7 B params | p3.2xlarge (V100 GPU) | 8 | 61 | 1 × V100 |
-$3.83 | Deep learning workloads |</div>
-<div class="line-block">50 GB | Up to 1 B params | ml.c5.4xlarge | 16 |
-64 | None | $0.77 | Large CPU modeling / preprocessing |<br>
-50 GB | Up to 1 B params | ml.m5.4xlarge | 16 | 64 | None | $0.77 |
-Classic ML on wide data |<br>
-50 GB | Up to 4 B params | g4dn.4xlarge (T4 GPU) | 16 | 64 | 1 × T4 |
-$1.48 | Moderate DL models; batch inference |<br>
-50 GB | Up to 14 B params | g5.4xlarge (A10G GPU) | 16 | 64 | 1 × A10G |
-$2.54 | Solid for 7–14B models (fp16 or 4/8-bit) |</div>
-<div class="line-block">100 GB | Up to 5 B params | g4dn.8xlarge (T4
-GPU) | 32 | 128 | 1 × T4 | $2.76 | Large-scale DL training |<br>
-100 GB | Up to 40–50 B params | g5.12xlarge (A10G GPU) | 48 | 192 | 4 ×
-A10G | $10.18 | Multi-GPU training; distributed finetuning |<br>
-100 GB | Up to 30 B params | p3.8xlarge (V100 GPU) | 32 | 244 | 4 × V100
-| $15.20 | Multi-GPU training |<br>
-100 GB | Up to 70 B+ params | p4d.24xlarge (A100 GPU) | 96 | 1,152 | 8 ×
-A100 | $32.77 | High-end DL / LLM finetuning |</div>
-<div class="line-block">1 TB+ | Up to 65 B params | p3.16xlarge (V100
-GPU) | 64 | 488 | 8 × V100 | $30.40 | Extreme-scale transformer training
-|<br>
-1 TB+ | Up to 70 B+ params | p4d.24xlarge (A100 GPU) | 96 | 1,152 | 8 ×
-A100 | $32.77 | Distributed training for foundation-scale models |</div>
-<!--
+</tr><tr class="even"><td align="right">10 GB</td>
+<td>Up to 500 M params</td>
+<td>ml.c5.2xlarge</td>
+<td>8</td>
+<td>16</td>
+<td>None</td>
+<td>$0.34</td>
+<td>CPU-heavy processing, tabular/ensemble models</td>
+</tr><tr class="odd"><td align="right">10 GB</td>
+<td>Up to 1 B params</td>
+<td>ml.m5.2xlarge</td>
+<td>8</td>
+<td>32</td>
+<td>None</td>
+<td>$0.38</td>
+<td>Feature engineering, boosting or linear models</td>
+</tr><tr class="even"><td align="right">10 GB</td>
+<td>Up to 3–4 B params</td>
+<td>g4dn.2xlarge (T4 GPU)</td>
+<td>8</td>
+<td>32</td>
+<td>1 × T4</td>
+<td>$0.94</td>
+<td>Moderate-scale DL; training/inference</td>
+</tr><tr class="odd"><td align="right">10 GB</td>
+<td>Up to 10–12 B params</td>
+<td>g5.2xlarge (A10G GPU)</td>
+<td>8</td>
+<td>32</td>
+<td>1 × A10G</td>
+<td>$1.69</td>
+<td>Larger 7–10B models; faster than g4dn</td>
+</tr><tr class="even"><td align="right">10 GB</td>
+<td>Up to 7 B params</td>
+<td>p3.2xlarge (V100 GPU)</td>
+<td>8</td>
+<td>61</td>
+<td>1 × V100</td>
+<td>$3.83</td>
+<td>Deep learning workloads</td>
+</tr><tr class="odd"><td align="right">50 GB</td>
+<td>Up to 1 B params</td>
+<td>ml.c5.4xlarge</td>
+<td>16</td>
+<td>64</td>
+<td>None</td>
+<td>$0.77</td>
+<td>Large CPU modeling / preprocessing</td>
+</tr><tr class="even"><td align="right">50 GB</td>
+<td>Up to 1 B params</td>
+<td>ml.m5.4xlarge</td>
+<td>16</td>
+<td>64</td>
+<td>None</td>
+<td>$0.77</td>
+<td>Classic ML on wide data</td>
+</tr><tr class="odd"><td align="right">50 GB</td>
+<td>Up to 4 B params</td>
+<td>g4dn.4xlarge (T4 GPU)</td>
+<td>16</td>
+<td>64</td>
+<td>1 × T4</td>
+<td>$1.48</td>
+<td>Moderate DL models; batch inference</td>
+</tr><tr class="even"><td align="right">50 GB</td>
+<td>Up to 14 B params</td>
+<td>g5.4xlarge (A10G GPU)</td>
+<td>16</td>
+<td>64</td>
+<td>1 × A10G</td>
+<td>$2.54</td>
+<td>Solid for 7–14B models (fp16 or 4/8-bit)</td>
+</tr><tr class="odd"><td align="right">100 GB</td>
+<td>Up to 5 B params</td>
+<td>g4dn.8xlarge (T4 GPU)</td>
+<td>32</td>
+<td>128</td>
+<td>1 × T4</td>
+<td>$2.76</td>
+<td>Large-scale DL training</td>
+</tr><tr class="even"><td align="right">100 GB</td>
+<td>Up to 40–50 B params</td>
+<td>g5.12xlarge (A10G GPU)</td>
+<td>48</td>
+<td>192</td>
+<td>4 × A10G</td>
+<td>$10.18</td>
+<td>Multi-GPU training; distributed finetuning</td>
+</tr><tr class="odd"><td align="right">100 GB</td>
+<td>Up to 30 B params</td>
+<td>p3.8xlarge (V100 GPU)</td>
+<td>32</td>
+<td>244</td>
+<td>4 × V100</td>
+<td>$15.20</td>
+<td>Multi-GPU training</td>
+</tr><tr class="even"><td align="right">100 GB</td>
+<td>Up to 70 B+ params</td>
+<td>p4d.24xlarge (A100 GPU)</td>
+<td>96</td>
+<td>1,152</td>
+<td>8 × A100</td>
+<td>$32.77</td>
+<td>High-end DL / LLM finetuning</td>
+</tr><tr class="odd"><td align="right">1 TB+</td>
+<td>Up to 65 B params</td>
+<td>p3.16xlarge (V100 GPU)</td>
+<td>64</td>
+<td>488</td>
+<td>8 × V100</td>
+<td>$30.40</td>
+<td>Extreme-scale transformer training</td>
+</tr><tr class="even"><td align="right">1 TB+</td>
+<td>Up to 70 B+ params</td>
+<td>p4d.24xlarge (A100 GPU)</td>
+<td>96</td>
+<td>1,152</td>
+<td>8 × A100</td>
+<td>$32.77</td>
+<td>Distributed training for foundation-scale models</td>
+</tr></tbody></table><!--
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
- -->
-</div>
+ --></div>
 
 
 
@@ -536,7 +623,7 @@ any links that you are not going to use.
   "url": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/instances-for-ML.html",
   "identifier": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/instances-for-ML.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2025-11-25",
+  "dateModified": "2025-11-26",
   "datePublished": "2025-11-26"
 }
 
