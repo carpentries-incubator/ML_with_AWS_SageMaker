@@ -587,7 +587,8 @@ def make_chunked_docs(
 ```python
 import os, json
 
-chunks_jsonl_path = os.path.join(local_data_dir, "chunks.jsonl")
+chunks_s3_key = 'chunks.jsonl'
+chunks_jsonl_path = os.path.join(local_data_dir, chunks_s3_key)
 
 def save_chunked_docs_jsonl(path, chunks):
     with open(path, "w", encoding="utf-8") as f:
@@ -619,6 +620,14 @@ print("Chunked docs:", len(chunked_docs))
 chunked_docs[0] if chunked_docs else None
 
 ```
+
+```python
+# Upload to S3 so future runs (or other instances) can reuse
+print(f"Uploading chunked docs to s3 ...")
+s3_client.upload_file(chunks_jsonl_path, bucket_name, chunks_s3_key)
+print("Upload complete.")
+```
+
 
 ## Step 5 – Build an embedding matrix
 
