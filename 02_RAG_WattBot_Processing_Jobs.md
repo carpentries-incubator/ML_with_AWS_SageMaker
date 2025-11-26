@@ -35,8 +35,21 @@ With this approach, we can more effectively use GPU resources only when needed, 
 
 ## Setup
 
+We'll first need to clone in some .py files that contain helper functions for embedding and RAG processing jobs. Since we're using containerized Processing jobs, we can't just import local Python functions from the notebook. Instead, we create standalone scripts that the jobs can run.
 
+```python
+!git clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git
+```
 
+Create a /code directory and copy over the relevant scripts from ML_with_AWS_SageMaker/scripts into /code:
+
+```python
+
+- `embedding_inference.py` – generic embedding script
+- `wattbot_rag_batch.py` – WattBot-specific RAG logic for batch processing job
+```
+
+Next, setup your AWS SDK, SageMaker session, and S3 bucket information.
 ```python
 
 import os
