@@ -548,180 +548,29 @@ on the notebook file system, we download them from S3.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="step-2-regenerate-pages-and-chunks-local">Step 2 – Regenerate pages and chunks (local)<a class="anchor" aria-label="anchor" href="#step-2-regenerate-pages-and-chunks-local"></a></h2>
-<p>We reuse the same PDF → pages → overlapping chunks pipeline from
-Episode 1. For clarity, we keep this logic in the notebook so learners
-can see exactly how context is constructed.</p>
+<h2 id="step-2-verify-chunks-exist-on-s3-from-previous-episode">Step 2 – Verify chunks exist on S3 (from previous episode)<a class="anchor" aria-label="anchor" href="#step-2-verify-chunks-exist-on-s3-from-previous-episode"></a></h2>
+<p>For our processing job, we’ll reuse the same chunks generated in
+prev. episode. The code below just verifies you have this file available
+in S3 (for calling from the processing job).</p>
 <div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="op">!</span>pip install pypdf</span></code></pre>
-</div>
-<div class="codewrapper sourceCode" id="cb9">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="im">from</span> pypdf <span class="im">import</span> PdfReader</span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> List, Dict, Any</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="kw">def</span> pdfs_to_page_docs(metadata: pd.DataFrame, pdf_dir: <span class="bu">str</span>) <span class="op">-&gt;</span> List[Dict[<span class="bu">str</span>, Any]]:</span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>    <span class="co">"""Load each PDF into a list of page-level dictionaries.</span></span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a></span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">    Each dict has keys: text, doc_id, title, url, page_num, page_label, total_pages.</span></span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">    """</span></span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>    page_docs: List[Dict[<span class="bu">str</span>, Any]] <span class="op">=</span> []</span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a></span>
-<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>    <span class="cf">for</span> _, row <span class="kw">in</span> metadata.iterrows():</span>
-<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>        doc_id <span class="op">=</span> <span class="bu">str</span>(row[<span class="st">"id"</span>]).strip()</span>
-<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>        title <span class="op">=</span> <span class="bu">str</span>(row.get(<span class="st">"title"</span>, <span class="st">""</span>)).strip()</span>
-<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>        url <span class="op">=</span> <span class="bu">str</span>(row.get(<span class="st">"url"</span>, <span class="st">""</span>)).strip()</span>
-<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a></span>
-<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>        pdf_path <span class="op">=</span> os.path.join(pdf_dir, <span class="ss">f"</span><span class="sc">{</span>doc_id<span class="sc">}</span><span class="ss">.pdf"</span>)</span>
-<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> os.path.exists(pdf_path):</span>
-<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"Missing PDF for </span><span class="sc">{</span>doc_id<span class="sc">}</span><span class="ss">, skipping."</span>)</span>
-<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a>            <span class="cf">continue</span></span>
-<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a></span>
-<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a>        <span class="cf">try</span>:</span>
-<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a>            reader <span class="op">=</span> PdfReader(pdf_path)</span>
-<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a>        <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
-<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"Failed to read </span><span class="sc">{</span>pdf_path<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a>            <span class="cf">continue</span></span>
-<span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a></span>
-<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a>        total_pages <span class="op">=</span> <span class="bu">len</span>(reader.pages)</span>
-<span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a>        <span class="cf">for</span> i, page <span class="kw">in</span> <span class="bu">enumerate</span>(reader.pages):</span>
-<span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a>            <span class="cf">try</span>:</span>
-<span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a>                text <span class="op">=</span> page.extract_text() <span class="kw">or</span> <span class="st">""</span></span>
-<span id="cb9-32"><a href="#cb9-32" tabindex="-1"></a>            <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
-<span id="cb9-33"><a href="#cb9-33" tabindex="-1"></a>                <span class="bu">print</span>(<span class="ss">f"Failed to extract text from </span><span class="sc">{</span>doc_id<span class="sc">}</span><span class="ss"> page </span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb9-34"><a href="#cb9-34" tabindex="-1"></a>                text <span class="op">=</span> <span class="st">""</span></span>
-<span id="cb9-35"><a href="#cb9-35" tabindex="-1"></a></span>
-<span id="cb9-36"><a href="#cb9-36" tabindex="-1"></a>            text <span class="op">=</span> text.strip()</span>
-<span id="cb9-37"><a href="#cb9-37" tabindex="-1"></a>            <span class="cf">if</span> <span class="kw">not</span> text:</span>
-<span id="cb9-38"><a href="#cb9-38" tabindex="-1"></a>                <span class="co"># Still keep the page so we know it exists, but mark it as empty</span></span>
-<span id="cb9-39"><a href="#cb9-39" tabindex="-1"></a>                text <span class="op">=</span> <span class="st">"[[EMPTY PAGE TEXT – see original PDF for tables/figures]]"</span></span>
-<span id="cb9-40"><a href="#cb9-40" tabindex="-1"></a></span>
-<span id="cb9-41"><a href="#cb9-41" tabindex="-1"></a>            page_docs.append(</span>
-<span id="cb9-42"><a href="#cb9-42" tabindex="-1"></a>                {</span>
-<span id="cb9-43"><a href="#cb9-43" tabindex="-1"></a>                    <span class="st">"text"</span>: text,</span>
-<span id="cb9-44"><a href="#cb9-44" tabindex="-1"></a>                    <span class="st">"doc_id"</span>: doc_id,</span>
-<span id="cb9-45"><a href="#cb9-45" tabindex="-1"></a>                    <span class="st">"title"</span>: title,</span>
-<span id="cb9-46"><a href="#cb9-46" tabindex="-1"></a>                    <span class="st">"url"</span>: url,</span>
-<span id="cb9-47"><a href="#cb9-47" tabindex="-1"></a>                    <span class="st">"page_num"</span>: i,</span>
-<span id="cb9-48"><a href="#cb9-48" tabindex="-1"></a>                    <span class="st">"page_label"</span>: <span class="bu">str</span>(i <span class="op">+</span> <span class="dv">1</span>),</span>
-<span id="cb9-49"><a href="#cb9-49" tabindex="-1"></a>                    <span class="st">"total_pages"</span>: total_pages,</span>
-<span id="cb9-50"><a href="#cb9-50" tabindex="-1"></a>                }</span>
-<span id="cb9-51"><a href="#cb9-51" tabindex="-1"></a>            )</span>
-<span id="cb9-52"><a href="#cb9-52" tabindex="-1"></a></span>
-<span id="cb9-53"><a href="#cb9-53" tabindex="-1"></a>    <span class="cf">return</span> page_docs</span>
-<span id="cb9-54"><a href="#cb9-54" tabindex="-1"></a></span>
-<span id="cb9-55"><a href="#cb9-55" tabindex="-1"></a></span>
-<span id="cb9-56"><a href="#cb9-56" tabindex="-1"></a>page_docs <span class="op">=</span> pdfs_to_page_docs(metadata_df, corpus_dir)</span>
-<span id="cb9-57"><a href="#cb9-57" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Loaded </span><span class="sc">{</span><span class="bu">len</span>(page_docs)<span class="sc">}</span><span class="ss"> page-level records from </span><span class="sc">{</span><span class="bu">len</span>(metadata_df)<span class="sc">}</span><span class="ss"> PDFs."</span>)</span>
-<span id="cb9-58"><a href="#cb9-58" tabindex="-1"></a>page_docs[<span class="dv">0</span>] <span class="cf">if</span> page_docs <span class="cf">else</span> <span class="va">None</span></span>
-<span id="cb9-59"><a href="#cb9-59" tabindex="-1"></a></span>
-<span id="cb9-60"><a href="#cb9-60" tabindex="-1"></a></span>
-<span id="cb9-61"><a href="#cb9-61" tabindex="-1"></a><span class="kw">def</span> split_text_into_chunks(</span>
-<span id="cb9-62"><a href="#cb9-62" tabindex="-1"></a>    text: <span class="bu">str</span>,</span>
-<span id="cb9-63"><a href="#cb9-63" tabindex="-1"></a>    chunk_size_chars: <span class="bu">int</span> <span class="op">=</span> <span class="dv">1200</span>,</span>
-<span id="cb9-64"><a href="#cb9-64" tabindex="-1"></a>    chunk_overlap_chars: <span class="bu">int</span> <span class="op">=</span> <span class="dv">200</span>,</span>
-<span id="cb9-65"><a href="#cb9-65" tabindex="-1"></a>) <span class="op">-&gt;</span> List[<span class="bu">str</span>]:</span>
-<span id="cb9-66"><a href="#cb9-66" tabindex="-1"></a>    <span class="co">"""Split `text` into overlapping character-based chunks.</span></span>
-<span id="cb9-67"><a href="#cb9-67" tabindex="-1"></a></span>
-<span id="cb9-68"><a href="#cb9-68" tabindex="-1"></a><span class="co">    This is a simple baseline; more advanced versions might:</span></span>
-<span id="cb9-69"><a href="#cb9-69" tabindex="-1"></a><span class="co">    - split on sentence boundaries, or</span></span>
-<span id="cb9-70"><a href="#cb9-70" tabindex="-1"></a><span class="co">    - merge short paragraphs and respect section headings.</span></span>
-<span id="cb9-71"><a href="#cb9-71" tabindex="-1"></a><span class="co">    """</span></span>
-<span id="cb9-72"><a href="#cb9-72" tabindex="-1"></a>    text <span class="op">=</span> text.strip()</span>
-<span id="cb9-73"><a href="#cb9-73" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> text:</span>
-<span id="cb9-74"><a href="#cb9-74" tabindex="-1"></a>        <span class="cf">return</span> []</span>
-<span id="cb9-75"><a href="#cb9-75" tabindex="-1"></a></span>
-<span id="cb9-76"><a href="#cb9-76" tabindex="-1"></a>    chunks: List[<span class="bu">str</span>] <span class="op">=</span> []</span>
-<span id="cb9-77"><a href="#cb9-77" tabindex="-1"></a>    start <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb9-78"><a href="#cb9-78" tabindex="-1"></a>    text_len <span class="op">=</span> <span class="bu">len</span>(text)</span>
-<span id="cb9-79"><a href="#cb9-79" tabindex="-1"></a></span>
-<span id="cb9-80"><a href="#cb9-80" tabindex="-1"></a>    <span class="cf">while</span> start <span class="op">&lt;</span> text_len:</span>
-<span id="cb9-81"><a href="#cb9-81" tabindex="-1"></a>        end <span class="op">=</span> <span class="bu">min</span>(start <span class="op">+</span> chunk_size_chars, text_len)</span>
-<span id="cb9-82"><a href="#cb9-82" tabindex="-1"></a>        chunk <span class="op">=</span> text[start:end]</span>
-<span id="cb9-83"><a href="#cb9-83" tabindex="-1"></a>        chunks.append(chunk)</span>
-<span id="cb9-84"><a href="#cb9-84" tabindex="-1"></a>        <span class="cf">if</span> end <span class="op">==</span> text_len:</span>
-<span id="cb9-85"><a href="#cb9-85" tabindex="-1"></a>            <span class="cf">break</span></span>
-<span id="cb9-86"><a href="#cb9-86" tabindex="-1"></a>        <span class="co"># Move the window forward, keeping some overlap</span></span>
-<span id="cb9-87"><a href="#cb9-87" tabindex="-1"></a>        start <span class="op">=</span> end <span class="op">-</span> chunk_overlap_chars</span>
-<span id="cb9-88"><a href="#cb9-88" tabindex="-1"></a></span>
-<span id="cb9-89"><a href="#cb9-89" tabindex="-1"></a>    <span class="cf">return</span> chunks</span>
-<span id="cb9-90"><a href="#cb9-90" tabindex="-1"></a></span>
-<span id="cb9-91"><a href="#cb9-91" tabindex="-1"></a></span>
-<span id="cb9-92"><a href="#cb9-92" tabindex="-1"></a><span class="kw">def</span> make_chunked_docs(</span>
-<span id="cb9-93"><a href="#cb9-93" tabindex="-1"></a>    page_docs: List[Dict[<span class="bu">str</span>, Any]],</span>
-<span id="cb9-94"><a href="#cb9-94" tabindex="-1"></a>    chunk_size_chars: <span class="bu">int</span> <span class="op">=</span> <span class="dv">1200</span>,</span>
-<span id="cb9-95"><a href="#cb9-95" tabindex="-1"></a>    chunk_overlap_chars: <span class="bu">int</span> <span class="op">=</span> <span class="dv">200</span>,</span>
-<span id="cb9-96"><a href="#cb9-96" tabindex="-1"></a>) <span class="op">-&gt;</span> List[Dict[<span class="bu">str</span>, Any]]:</span>
-<span id="cb9-97"><a href="#cb9-97" tabindex="-1"></a>    <span class="co">"""Turn page-level records into smaller overlapping text chunks.</span></span>
-<span id="cb9-98"><a href="#cb9-98" tabindex="-1"></a></span>
-<span id="cb9-99"><a href="#cb9-99" tabindex="-1"></a><span class="co">    Each chunk keeps a pointer back to its document and page metadata.</span></span>
-<span id="cb9-100"><a href="#cb9-100" tabindex="-1"></a><span class="co">    """</span></span>
-<span id="cb9-101"><a href="#cb9-101" tabindex="-1"></a>    chunked: List[Dict[<span class="bu">str</span>, Any]] <span class="op">=</span> []</span>
-<span id="cb9-102"><a href="#cb9-102" tabindex="-1"></a>    <span class="cf">for</span> page <span class="kw">in</span> page_docs:</span>
-<span id="cb9-103"><a href="#cb9-103" tabindex="-1"></a>        page_text <span class="op">=</span> page[<span class="st">"text"</span>]</span>
-<span id="cb9-104"><a href="#cb9-104" tabindex="-1"></a>        chunks <span class="op">=</span> split_text_into_chunks(</span>
-<span id="cb9-105"><a href="#cb9-105" tabindex="-1"></a>            page_text,</span>
-<span id="cb9-106"><a href="#cb9-106" tabindex="-1"></a>            chunk_size_chars<span class="op">=</span>chunk_size_chars,</span>
-<span id="cb9-107"><a href="#cb9-107" tabindex="-1"></a>            chunk_overlap_chars<span class="op">=</span>chunk_overlap_chars,</span>
-<span id="cb9-108"><a href="#cb9-108" tabindex="-1"></a>        )</span>
-<span id="cb9-109"><a href="#cb9-109" tabindex="-1"></a>        <span class="cf">for</span> idx, chunk_text <span class="kw">in</span> <span class="bu">enumerate</span>(chunks):</span>
-<span id="cb9-110"><a href="#cb9-110" tabindex="-1"></a>            chunked.append(</span>
-<span id="cb9-111"><a href="#cb9-111" tabindex="-1"></a>                {</span>
-<span id="cb9-112"><a href="#cb9-112" tabindex="-1"></a>                    <span class="st">"text"</span>: chunk_text,</span>
-<span id="cb9-113"><a href="#cb9-113" tabindex="-1"></a>                    <span class="st">"doc_id"</span>: page[<span class="st">"doc_id"</span>],</span>
-<span id="cb9-114"><a href="#cb9-114" tabindex="-1"></a>                    <span class="st">"title"</span>: page[<span class="st">"title"</span>],</span>
-<span id="cb9-115"><a href="#cb9-115" tabindex="-1"></a>                    <span class="st">"url"</span>: page[<span class="st">"url"</span>],</span>
-<span id="cb9-116"><a href="#cb9-116" tabindex="-1"></a>                    <span class="st">"page_num"</span>: page[<span class="st">"page_num"</span>],</span>
-<span id="cb9-117"><a href="#cb9-117" tabindex="-1"></a>                    <span class="st">"page_label"</span>: page[<span class="st">"page_label"</span>],</span>
-<span id="cb9-118"><a href="#cb9-118" tabindex="-1"></a>                    <span class="st">"total_pages"</span>: page[<span class="st">"total_pages"</span>],</span>
-<span id="cb9-119"><a href="#cb9-119" tabindex="-1"></a>                    <span class="st">"chunk_idx_in_page"</span>: idx,</span>
-<span id="cb9-120"><a href="#cb9-120" tabindex="-1"></a>                }</span>
-<span id="cb9-121"><a href="#cb9-121" tabindex="-1"></a>            )</span>
-<span id="cb9-122"><a href="#cb9-122" tabindex="-1"></a>    <span class="cf">return</span> chunked</span>
-<span id="cb9-123"><a href="#cb9-123" tabindex="-1"></a></span>
-<span id="cb9-124"><a href="#cb9-124" tabindex="-1"></a></span>
-<span id="cb9-125"><a href="#cb9-125" tabindex="-1"></a>chunked_docs <span class="op">=</span> make_chunked_docs(page_docs)</span>
-<span id="cb9-126"><a href="#cb9-126" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Raw pages:"</span>, <span class="bu">len</span>(page_docs))</span>
-<span id="cb9-127"><a href="#cb9-127" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Chunked docs:"</span>, <span class="bu">len</span>(chunked_docs))</span>
-<span id="cb9-128"><a href="#cb9-128" tabindex="-1"></a>chunked_docs[<span class="dv">0</span>] <span class="cf">if</span> chunked_docs <span class="cf">else</span> <span class="va">None</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># load chunks from s3</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>chunks_s3_key <span class="op">=</span> <span class="st">'chunks.jsonl'</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>chunks_s3_uri <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>chunks_s3_key<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>local_chunks_path <span class="op">=</span> os.path.join(local_data_dir, chunks_s3_key)</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> os.path.exists(local_chunks_path):</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>    s3_client.download_file(bucket_name, chunks_s3_key, local_chunks_path)</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(local_chunks_path, <span class="st">"r"</span>, encoding<span class="op">=</span><span class="st">"utf-8"</span>) <span class="im">as</span> f:</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>    chunked_docs <span class="op">=</span> [json.loads(line) <span class="cf">for</span> line <span class="kw">in</span> f]</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Loaded </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss"> chunks from </span><span class="sc">{</span>local_chunks_path<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 </div>
 <div class="section level2">
-<h2 id="step-3-serialize-chunks-to-jsonl-and-upload-to-s3">Step 3 – Serialize chunks to JSONL and upload to S3<a class="anchor" aria-label="anchor" href="#step-3-serialize-chunks-to-jsonl-and-upload-to-s3"></a></h2>
-<p>The Processing jobs will not have access to your Python variables.
-Instead, we serialize <code>chunked_docs</code> to
-<code>wattbot_chunks.jsonl</code> and upload it to S3 under this
-episode’s prefix.</p>
-<p>Each line is one JSON object representing a chunk, including its text
-and metadata.</p>
-<div class="codewrapper sourceCode" id="cb10">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a></span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>chunks_jsonl_path <span class="op">=</span> os.path.join(local_data_dir, <span class="st">"wattbot_chunks.jsonl"</span>)</span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a></span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(chunks_jsonl_path, <span class="st">"w"</span>, encoding<span class="op">=</span><span class="st">"utf-8"</span>) <span class="im">as</span> f:</span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>    <span class="cf">for</span> ch <span class="kw">in</span> chunked_docs:</span>
-<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>        f.write(json.dumps(ch, ensure_ascii<span class="op">=</span><span class="va">False</span>) <span class="op">+</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span>)</span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a></span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Wrote </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss"> chunks to </span><span class="sc">{</span>chunks_jsonl_path<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a></span>
-<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>chunks_key <span class="op">=</span> <span class="st">"wattbot_chunks.jsonl"</span></span>
-<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>s3_client.upload_file(chunks_jsonl_path, bucket_name, chunks_key)</span>
-<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a></span>
-<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>chunks_s3_uri <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>chunks_key<span class="sc">}</span><span class="ss">"</span></span>
-<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Chunks JSONL in S3:"</span>, chunks_s3_uri)</span></code></pre>
-</div>
-</div>
-<div class="section level2">
-<h2 id="step-4-processing-job-1-embed-all-chunks-on-a-gpu">Step 4 – Processing Job 1: embed all chunks on a GPU<a class="anchor" aria-label="anchor" href="#step-4-processing-job-1-embed-all-chunks-on-a-gpu"></a></h2>
+<h2 id="step-3-processing-job-1-embed-all-chunks-on-a-gpu">Step 3 – Processing Job 1: embed all chunks on a GPU<a class="anchor" aria-label="anchor" href="#step-3-processing-job-1-embed-all-chunks-on-a-gpu"></a></h2>
 <p>Now we launch a short-lived Hugging Face <strong>Processing
 job</strong> that:</p>
-<ol style="list-style-type: decimal"><li>Downloads <code>wattbot_chunks.jsonl</code> from S3.</li>
+<ol style="list-style-type: decimal"><li>Downloads <code>chunks.jsonl</code> from S3.</li>
 <li>Loads <code>thenlper/gte-large</code> from Hugging Face.</li>
 <li>Encodes each chunk into an embedding vector.</li>
 <li>Saves the full matrix as <code>embeddings.npy</code> back to
@@ -737,68 +586,68 @@ environment we’ll run our embedding_inference.py script in. For the
 processing job to recognize this dependence, we’ll add it to the
 source_dir (code/) referenced when we call embedding_processor.run()
 below.</p>
-<div class="codewrapper sourceCode" id="cb11">
+<div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>requirements <span class="op">=</span> [</span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>    <span class="st">"sentence-transformers"</span>,</span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>    <span class="co"># add more packages here if needed</span></span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>]</span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a></span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>req_path <span class="op">=</span> <span class="st">"code/requirements.txt"</span></span>
-<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(req_path, <span class="st">"w"</span>) <span class="im">as</span> f:</span>
-<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>    f.write(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span>.join(requirements))</span>
-<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a></span>
-<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Created requirements.txt at </span><span class="sc">{</span>req_path<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>requirements <span class="op">=</span> [</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>    <span class="st">"sentence-transformers"</span>,</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>    <span class="co"># add more packages here if needed</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>]</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>req_path <span class="op">=</span> <span class="st">"code/requirements.txt"</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(req_path, <span class="st">"w"</span>) <span class="im">as</span> f:</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>    f.write(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span>.join(requirements))</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Created requirements.txt at </span><span class="sc">{</span>req_path<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb12">
+<div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a></span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>embedding_model_id <span class="op">=</span> <span class="st">"thenlper/gte-large"</span></span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>script_path <span class="op">=</span> <span class="st">"embedding_inference.py"</span></span>
-<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a></span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>emb_output_prefix <span class="op">=</span> <span class="st">"embeddings"</span></span>
-<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>emb_output_path <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>emb_output_prefix<span class="sc">}</span><span class="ss">/"</span></span>
-<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a></span>
-<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>embedding_processor <span class="op">=</span> HuggingFaceProcessor(</span>
-<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>    base_job_name<span class="op">=</span><span class="st">"WattBot-embed-gte-large"</span>,</span>
-<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
-<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>,</span>
-<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,</span>
-<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
-<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
-<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a>    max_runtime_in_seconds<span class="op">=</span><span class="dv">2</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span>,</span>
-<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a>)</span>
-<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a></span>
-<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a>embedding_processor.run(</span>
-<span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a>    code<span class="op">=</span>script_path,</span>
-<span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a>    source_dir<span class="op">=</span><span class="st">"code/"</span>,</span>
-<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
-<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a>        ProcessingInput(</span>
-<span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a>            source<span class="op">=</span>chunks_s3_uri,</span>
-<span id="cb12-26"><a href="#cb12-26" tabindex="-1"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input"</span>,</span>
-<span id="cb12-27"><a href="#cb12-27" tabindex="-1"></a>        )</span>
-<span id="cb12-28"><a href="#cb12-28" tabindex="-1"></a>    ],</span>
-<span id="cb12-29"><a href="#cb12-29" tabindex="-1"></a>    outputs<span class="op">=</span>[</span>
-<span id="cb12-30"><a href="#cb12-30" tabindex="-1"></a>        ProcessingOutput(</span>
-<span id="cb12-31"><a href="#cb12-31" tabindex="-1"></a>            output_name<span class="op">=</span><span class="st">"embeddings"</span>,</span>
-<span id="cb12-32"><a href="#cb12-32" tabindex="-1"></a>            source<span class="op">=</span><span class="st">"/opt/ml/processing/output"</span>,</span>
-<span id="cb12-33"><a href="#cb12-33" tabindex="-1"></a>            destination<span class="op">=</span>emb_output_path,</span>
-<span id="cb12-34"><a href="#cb12-34" tabindex="-1"></a>        )</span>
-<span id="cb12-35"><a href="#cb12-35" tabindex="-1"></a>    ],</span>
-<span id="cb12-36"><a href="#cb12-36" tabindex="-1"></a>    arguments<span class="op">=</span>[</span>
-<span id="cb12-37"><a href="#cb12-37" tabindex="-1"></a>        <span class="st">"--model_id"</span>, embedding_model_id,</span>
-<span id="cb12-38"><a href="#cb12-38" tabindex="-1"></a>        <span class="st">"--input_filename"</span>, <span class="st">"wattbot_chunks.jsonl"</span>,</span>
-<span id="cb12-39"><a href="#cb12-39" tabindex="-1"></a>        <span class="st">"--text_key"</span>, <span class="st">"text"</span>,</span>
-<span id="cb12-40"><a href="#cb12-40" tabindex="-1"></a>        <span class="st">"--input_dir"</span>, <span class="st">"/opt/ml/processing/input"</span>,</span>
-<span id="cb12-41"><a href="#cb12-41" tabindex="-1"></a>        <span class="st">"--output_dir"</span>, <span class="st">"/opt/ml/processing/output"</span>,</span>
-<span id="cb12-42"><a href="#cb12-42" tabindex="-1"></a>    ],</span>
-<span id="cb12-43"><a href="#cb12-43" tabindex="-1"></a>)</span>
-<span id="cb12-44"><a href="#cb12-44" tabindex="-1"></a></span>
-<span id="cb12-45"><a href="#cb12-45" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Embedding job complete."</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>embedding_model_id <span class="op">=</span> <span class="st">"thenlper/gte-large"</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>script_path <span class="op">=</span> <span class="st">"embedding_inference.py"</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>emb_output_prefix <span class="op">=</span> <span class="st">"embeddings"</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>emb_output_path <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>emb_output_prefix<span class="sc">}</span><span class="ss">/"</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>embedding_processor <span class="op">=</span> HuggingFaceProcessor(</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>    base_job_name<span class="op">=</span><span class="st">"WattBot-embed-gte-large"</span>,</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>,</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,</span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>    max_runtime_in_seconds<span class="op">=</span><span class="dv">2</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span>,</span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>)</span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a></span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a>embedding_processor.run(</span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a>    code<span class="op">=</span>script_path,</span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a>    source_dir<span class="op">=</span><span class="st">"code/"</span>,</span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a>        ProcessingInput(</span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a>            source<span class="op">=</span>chunks_s3_uri,</span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input"</span>,</span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a>        )</span>
+<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a>    ],</span>
+<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a>    outputs<span class="op">=</span>[</span>
+<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a>        ProcessingOutput(</span>
+<span id="cb10-31"><a href="#cb10-31" tabindex="-1"></a>            output_name<span class="op">=</span><span class="st">"embeddings"</span>,</span>
+<span id="cb10-32"><a href="#cb10-32" tabindex="-1"></a>            source<span class="op">=</span><span class="st">"/opt/ml/processing/output"</span>,</span>
+<span id="cb10-33"><a href="#cb10-33" tabindex="-1"></a>            destination<span class="op">=</span>emb_output_path,</span>
+<span id="cb10-34"><a href="#cb10-34" tabindex="-1"></a>        )</span>
+<span id="cb10-35"><a href="#cb10-35" tabindex="-1"></a>    ],</span>
+<span id="cb10-36"><a href="#cb10-36" tabindex="-1"></a>    arguments<span class="op">=</span>[</span>
+<span id="cb10-37"><a href="#cb10-37" tabindex="-1"></a>        <span class="st">"--model_id"</span>, embedding_model_id,</span>
+<span id="cb10-38"><a href="#cb10-38" tabindex="-1"></a>        <span class="st">"--input_filename"</span>, <span class="st">"chunks.jsonl"</span>,</span>
+<span id="cb10-39"><a href="#cb10-39" tabindex="-1"></a>        <span class="st">"--text_key"</span>, <span class="st">"text"</span>,</span>
+<span id="cb10-40"><a href="#cb10-40" tabindex="-1"></a>        <span class="st">"--input_dir"</span>, <span class="st">"/opt/ml/processing/input"</span>,</span>
+<span id="cb10-41"><a href="#cb10-41" tabindex="-1"></a>        <span class="st">"--output_dir"</span>, <span class="st">"/opt/ml/processing/output"</span>,</span>
+<span id="cb10-42"><a href="#cb10-42" tabindex="-1"></a>    ],</span>
+<span id="cb10-43"><a href="#cb10-43" tabindex="-1"></a>)</span>
+<span id="cb10-44"><a href="#cb10-44" tabindex="-1"></a></span>
+<span id="cb10-45"><a href="#cb10-45" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Embedding job complete."</span>)</span></code></pre>
 </div>
 </div>
 <div class="section level3">
@@ -817,17 +666,17 @@ processing job.</p>
 <h3 id="sanity-check-the-embeddings-locally">Sanity-check the embeddings locally<a class="anchor" aria-label="anchor" href="#sanity-check-the-embeddings-locally"></a></h3>
 <p>We can download <code>embeddings.npy</code> back into the notebook
 and inspect its shape to confirm the job ran successfully.</p>
-<div class="codewrapper sourceCode" id="cb13">
+<div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a></span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>local_embeddings_path <span class="op">=</span> os.path.join(local_data_dir, <span class="st">"embeddings.npy"</span>)</span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>embeddings_key <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>emb_output_prefix<span class="sc">}</span><span class="ss">/embeddings.npy"</span></span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a></span>
-<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>s3_client.download_file(bucket_name, embeddings_key, local_embeddings_path)</span>
-<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>chunk_embeddings <span class="op">=</span> np.load(local_embeddings_path)</span>
-<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a></span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Embeddings shape:"</span>, chunk_embeddings.shape)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>local_embeddings_path <span class="op">=</span> os.path.join(local_data_dir, <span class="st">"embeddings.npy"</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>embeddings_key <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>emb_output_prefix<span class="sc">}</span><span class="ss">/embeddings.npy"</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>s3_client.download_file(bucket_name, embeddings_key, local_embeddings_path)</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>chunk_embeddings <span class="op">=</span> np.load(local_embeddings_path)</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Embeddings shape:"</span>, chunk_embeddings.shape)</span></code></pre>
 </div>
 </div>
 </div>
@@ -858,81 +707,81 @@ ref_ids, is_blank)</li>
 threshold + LLM is_blank)</li>
 </ul><p>The job writes out <code>wattbot_solutions.csv</code> in the WattBot
 submission format.</p>
-<div class="codewrapper sourceCode" id="cb14">
+<div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a></span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="co"># Upload CSVs so the job can read them</span></span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>train_qa_key <span class="op">=</span> <span class="st">"train_QA.csv"</span></span>
-<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>metadata_key <span class="op">=</span> <span class="st">"metadata.csv"</span></span>
-<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a></span>
-<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>train_qa_s3 <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>train_qa_key<span class="sc">}</span><span class="ss">"</span></span>
-<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>metadata_s3 <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>metadata_key<span class="sc">}</span><span class="ss">"</span></span>
-<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>emb_output_s3 <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>emb_output_prefix<span class="sc">}</span><span class="ss">/embeddings.npy"</span></span>
-<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a></span>
-<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"train_QA:"</span>, train_qa_s3)</span>
-<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"metadata:"</span>, metadata_s3)</span>
-<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"embeddings:"</span>, emb_output_s3)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co"># Upload CSVs so the job can read them</span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>train_qa_key <span class="op">=</span> <span class="st">"train_QA.csv"</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>metadata_key <span class="op">=</span> <span class="st">"metadata.csv"</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>train_qa_s3 <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>train_qa_key<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>metadata_s3 <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>metadata_key<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>emb_output_s3 <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>emb_output_prefix<span class="sc">}</span><span class="ss">/embeddings.npy"</span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"train_QA:"</span>, train_qa_s3)</span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"metadata:"</span>, metadata_s3)</span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"embeddings:"</span>, emb_output_s3)</span></code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb15">
+<div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a></span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>rag_script <span class="op">=</span> <span class="st">"wattbot_rag_batch.py"</span></span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a></span>
-<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>rag_output_prefix <span class="op">=</span> <span class="st">"solutions"</span></span>
-<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>rag_output_path <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>rag_output_prefix<span class="sc">}</span><span class="ss">/"</span></span>
-<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a></span>
-<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a>rag_processor <span class="op">=</span> HuggingFaceProcessor(</span>
-<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>    base_job_name<span class="op">=</span><span class="st">"WattBot-rag-batch"</span>,</span>
-<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
-<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>,</span>
-<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,</span>
-<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
-<span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
-<span id="cb15-15"><a href="#cb15-15" tabindex="-1"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb15-16"><a href="#cb15-16" tabindex="-1"></a>    max_runtime_in_seconds<span class="op">=</span><span class="dv">4</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span>,</span>
-<span id="cb15-17"><a href="#cb15-17" tabindex="-1"></a>)</span>
-<span id="cb15-18"><a href="#cb15-18" tabindex="-1"></a></span>
-<span id="cb15-19"><a href="#cb15-19" tabindex="-1"></a>rag_processor.run(</span>
-<span id="cb15-20"><a href="#cb15-20" tabindex="-1"></a>    code<span class="op">=</span>rag_script,</span>
-<span id="cb15-21"><a href="#cb15-21" tabindex="-1"></a>    source_dir<span class="op">=</span><span class="st">"code/"</span>,</span>
-<span id="cb15-22"><a href="#cb15-22" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
-<span id="cb15-23"><a href="#cb15-23" tabindex="-1"></a>        ProcessingInput(</span>
-<span id="cb15-24"><a href="#cb15-24" tabindex="-1"></a>            source<span class="op">=</span>chunks_s3_uri,</span>
-<span id="cb15-25"><a href="#cb15-25" tabindex="-1"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/chunks"</span>,</span>
-<span id="cb15-26"><a href="#cb15-26" tabindex="-1"></a>        ),</span>
-<span id="cb15-27"><a href="#cb15-27" tabindex="-1"></a>        ProcessingInput(</span>
-<span id="cb15-28"><a href="#cb15-28" tabindex="-1"></a>            source<span class="op">=</span>emb_output_s3,</span>
-<span id="cb15-29"><a href="#cb15-29" tabindex="-1"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/embeddings"</span>,</span>
-<span id="cb15-30"><a href="#cb15-30" tabindex="-1"></a>        ),</span>
-<span id="cb15-31"><a href="#cb15-31" tabindex="-1"></a>        ProcessingInput(</span>
-<span id="cb15-32"><a href="#cb15-32" tabindex="-1"></a>            source<span class="op">=</span>train_qa_s3,</span>
-<span id="cb15-33"><a href="#cb15-33" tabindex="-1"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/train"</span>,</span>
-<span id="cb15-34"><a href="#cb15-34" tabindex="-1"></a>        ),</span>
-<span id="cb15-35"><a href="#cb15-35" tabindex="-1"></a>        ProcessingInput(</span>
-<span id="cb15-36"><a href="#cb15-36" tabindex="-1"></a>            source<span class="op">=</span>metadata_s3,</span>
-<span id="cb15-37"><a href="#cb15-37" tabindex="-1"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/metadata"</span>,</span>
-<span id="cb15-38"><a href="#cb15-38" tabindex="-1"></a>        ),</span>
-<span id="cb15-39"><a href="#cb15-39" tabindex="-1"></a>    ],</span>
-<span id="cb15-40"><a href="#cb15-40" tabindex="-1"></a>    outputs<span class="op">=</span>[</span>
-<span id="cb15-41"><a href="#cb15-41" tabindex="-1"></a>        ProcessingOutput(</span>
-<span id="cb15-42"><a href="#cb15-42" tabindex="-1"></a>            output_name<span class="op">=</span><span class="st">"solutions"</span>,</span>
-<span id="cb15-43"><a href="#cb15-43" tabindex="-1"></a>            source<span class="op">=</span><span class="st">"/opt/ml/processing/output"</span>,</span>
-<span id="cb15-44"><a href="#cb15-44" tabindex="-1"></a>            destination<span class="op">=</span>rag_output_path,</span>
-<span id="cb15-45"><a href="#cb15-45" tabindex="-1"></a>        )</span>
-<span id="cb15-46"><a href="#cb15-46" tabindex="-1"></a>    ],</span>
-<span id="cb15-47"><a href="#cb15-47" tabindex="-1"></a>    arguments<span class="op">=</span>[</span>
-<span id="cb15-48"><a href="#cb15-48" tabindex="-1"></a>        <span class="st">"--input_dir"</span>, <span class="st">"/opt/ml/processing/input"</span>,</span>
-<span id="cb15-49"><a href="#cb15-49" tabindex="-1"></a>        <span class="st">"--output_dir"</span>, <span class="st">"/opt/ml/processing/output"</span>,</span>
-<span id="cb15-50"><a href="#cb15-50" tabindex="-1"></a>        <span class="st">"--embedding_model_id"</span>, embedding_model_id,</span>
-<span id="cb15-51"><a href="#cb15-51" tabindex="-1"></a>        <span class="st">"--top_k"</span>, <span class="st">"8"</span>,</span>
-<span id="cb15-52"><a href="#cb15-52" tabindex="-1"></a>    ],</span>
-<span id="cb15-53"><a href="#cb15-53" tabindex="-1"></a>)</span>
-<span id="cb15-54"><a href="#cb15-54" tabindex="-1"></a></span>
-<span id="cb15-55"><a href="#cb15-55" tabindex="-1"></a></span>
-<span id="cb15-56"><a href="#cb15-56" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"RAG batch job complete."</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>rag_script <span class="op">=</span> <span class="st">"wattbot_rag_batch.py"</span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>rag_output_prefix <span class="op">=</span> <span class="st">"solutions"</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>rag_output_path <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>rag_output_prefix<span class="sc">}</span><span class="ss">/"</span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>rag_processor <span class="op">=</span> HuggingFaceProcessor(</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>    base_job_name<span class="op">=</span><span class="st">"WattBot-rag-batch"</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>    role<span class="op">=</span>role,</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>,</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,</span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a>    max_runtime_in_seconds<span class="op">=</span><span class="dv">4</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span>,</span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>)</span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a></span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a>rag_processor.run(</span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a>    code<span class="op">=</span>rag_script,</span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a>    source_dir<span class="op">=</span><span class="st">"code/"</span>,</span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a>        ProcessingInput(</span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a>            source<span class="op">=</span>chunks_s3_uri,</span>
+<span id="cb13-25"><a href="#cb13-25" tabindex="-1"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/chunks"</span>,</span>
+<span id="cb13-26"><a href="#cb13-26" tabindex="-1"></a>        ),</span>
+<span id="cb13-27"><a href="#cb13-27" tabindex="-1"></a>        ProcessingInput(</span>
+<span id="cb13-28"><a href="#cb13-28" tabindex="-1"></a>            source<span class="op">=</span>emb_output_s3,</span>
+<span id="cb13-29"><a href="#cb13-29" tabindex="-1"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/embeddings"</span>,</span>
+<span id="cb13-30"><a href="#cb13-30" tabindex="-1"></a>        ),</span>
+<span id="cb13-31"><a href="#cb13-31" tabindex="-1"></a>        ProcessingInput(</span>
+<span id="cb13-32"><a href="#cb13-32" tabindex="-1"></a>            source<span class="op">=</span>train_qa_s3,</span>
+<span id="cb13-33"><a href="#cb13-33" tabindex="-1"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/train"</span>,</span>
+<span id="cb13-34"><a href="#cb13-34" tabindex="-1"></a>        ),</span>
+<span id="cb13-35"><a href="#cb13-35" tabindex="-1"></a>        ProcessingInput(</span>
+<span id="cb13-36"><a href="#cb13-36" tabindex="-1"></a>            source<span class="op">=</span>metadata_s3,</span>
+<span id="cb13-37"><a href="#cb13-37" tabindex="-1"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/metadata"</span>,</span>
+<span id="cb13-38"><a href="#cb13-38" tabindex="-1"></a>        ),</span>
+<span id="cb13-39"><a href="#cb13-39" tabindex="-1"></a>    ],</span>
+<span id="cb13-40"><a href="#cb13-40" tabindex="-1"></a>    outputs<span class="op">=</span>[</span>
+<span id="cb13-41"><a href="#cb13-41" tabindex="-1"></a>        ProcessingOutput(</span>
+<span id="cb13-42"><a href="#cb13-42" tabindex="-1"></a>            output_name<span class="op">=</span><span class="st">"solutions"</span>,</span>
+<span id="cb13-43"><a href="#cb13-43" tabindex="-1"></a>            source<span class="op">=</span><span class="st">"/opt/ml/processing/output"</span>,</span>
+<span id="cb13-44"><a href="#cb13-44" tabindex="-1"></a>            destination<span class="op">=</span>rag_output_path,</span>
+<span id="cb13-45"><a href="#cb13-45" tabindex="-1"></a>        )</span>
+<span id="cb13-46"><a href="#cb13-46" tabindex="-1"></a>    ],</span>
+<span id="cb13-47"><a href="#cb13-47" tabindex="-1"></a>    arguments<span class="op">=</span>[</span>
+<span id="cb13-48"><a href="#cb13-48" tabindex="-1"></a>        <span class="st">"--input_dir"</span>, <span class="st">"/opt/ml/processing/input"</span>,</span>
+<span id="cb13-49"><a href="#cb13-49" tabindex="-1"></a>        <span class="st">"--output_dir"</span>, <span class="st">"/opt/ml/processing/output"</span>,</span>
+<span id="cb13-50"><a href="#cb13-50" tabindex="-1"></a>        <span class="st">"--embedding_model_id"</span>, embedding_model_id,</span>
+<span id="cb13-51"><a href="#cb13-51" tabindex="-1"></a>        <span class="st">"--top_k"</span>, <span class="st">"8"</span>,</span>
+<span id="cb13-52"><a href="#cb13-52" tabindex="-1"></a>    ],</span>
+<span id="cb13-53"><a href="#cb13-53" tabindex="-1"></a>)</span>
+<span id="cb13-54"><a href="#cb13-54" tabindex="-1"></a></span>
+<span id="cb13-55"><a href="#cb13-55" tabindex="-1"></a></span>
+<span id="cb13-56"><a href="#cb13-56" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"RAG batch job complete."</span>)</span></code></pre>
 </div>
 </div>
 <div class="section level2">
@@ -940,235 +789,235 @@ submission format.</p>
 <p>Finally, we download <code>wattbot_solutions.csv</code> from S3,
 inspect a few rows, and (optionally) compute the WattBot score against
 <code>train_QA.csv</code> using the <code>Score.py</code> logic.</p>
+<div class="codewrapper sourceCode" id="cb14">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>solutions_key <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>rag_output_prefix<span class="sc">}</span><span class="ss">/wattbot_solutions.csv"</span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>local_solutions_path <span class="op">=</span> os.path.join(local_data_dir, <span class="st">"wattbot_solutions.csv"</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>s3_client.download_file(bucket_name, solutions_key, local_solutions_path)</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>solutions_df <span class="op">=</span> pd.read_csv(local_solutions_path)</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>solutions_df.head()</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb15">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="kw">def</span> _to_bool_flag(x):</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>    <span class="co">"""Convert typical truthy/falsey strings to bool."""</span></span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">isinstance</span>(x, <span class="bu">str</span>):</span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a>        s <span class="op">=</span> x.strip().lower()</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>        <span class="cf">if</span> s <span class="kw">in</span> {<span class="st">"1"</span>, <span class="st">"True"</span>, <span class="st">"true"</span>, <span class="st">"yes"</span>}:</span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a>            <span class="cf">return</span> <span class="va">True</span></span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a>        <span class="cf">if</span> s <span class="kw">in</span> {<span class="st">"0"</span>, <span class="st">"False"</span>, <span class="st">"false"</span>, <span class="st">"no"</span>}:</span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a>            <span class="cf">return</span> <span class="va">False</span></span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">bool</span>(x)</span>
+<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a></span>
+<span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a><span class="kw">def</span> _parse_float_or_none(x):</span>
+<span id="cb15-15"><a href="#cb15-15" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb15-16"><a href="#cb15-16" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">float</span>(<span class="bu">str</span>(x).strip())</span>
+<span id="cb15-17"><a href="#cb15-17" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span>:</span>
+<span id="cb15-18"><a href="#cb15-18" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span></span>
+<span id="cb15-19"><a href="#cb15-19" tabindex="-1"></a></span>
+<span id="cb15-20"><a href="#cb15-20" tabindex="-1"></a><span class="kw">def</span> _answer_value_correct(gt_val, pred_val, rel_tol<span class="op">=</span><span class="fl">1e-3</span>):</span>
+<span id="cb15-21"><a href="#cb15-21" tabindex="-1"></a>    <span class="co">"""</span></span>
+<span id="cb15-22"><a href="#cb15-22" tabindex="-1"></a><span class="co">    gt_val, pred_val: values from answer_value columns.</span></span>
+<span id="cb15-23"><a href="#cb15-23" tabindex="-1"></a><span class="co">    rel_tol = 0.001 =&gt; 0.1% relative tolerance.</span></span>
+<span id="cb15-24"><a href="#cb15-24" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb15-25"><a href="#cb15-25" tabindex="-1"></a>    gt_str <span class="op">=</span> <span class="bu">str</span>(gt_val).strip()</span>
+<span id="cb15-26"><a href="#cb15-26" tabindex="-1"></a>    pred_str <span class="op">=</span> <span class="bu">str</span>(pred_val).strip()</span>
+<span id="cb15-27"><a href="#cb15-27" tabindex="-1"></a>    </span>
+<span id="cb15-28"><a href="#cb15-28" tabindex="-1"></a>    <span class="co"># If either is 'is_blank', treat as categorical</span></span>
+<span id="cb15-29"><a href="#cb15-29" tabindex="-1"></a>    <span class="cf">if</span> gt_str.lower() <span class="op">==</span> <span class="st">"is_blank"</span> <span class="kw">or</span> pred_str.lower() <span class="op">==</span> <span class="st">"is_blank"</span>:</span>
+<span id="cb15-30"><a href="#cb15-30" tabindex="-1"></a>        <span class="cf">return</span> gt_str.lower() <span class="op">==</span> pred_str.lower()</span>
+<span id="cb15-31"><a href="#cb15-31" tabindex="-1"></a>    </span>
+<span id="cb15-32"><a href="#cb15-32" tabindex="-1"></a>    gt_num <span class="op">=</span> _parse_float_or_none(gt_val)</span>
+<span id="cb15-33"><a href="#cb15-33" tabindex="-1"></a>    pred_num <span class="op">=</span> _parse_float_or_none(pred_val)</span>
+<span id="cb15-34"><a href="#cb15-34" tabindex="-1"></a>    </span>
+<span id="cb15-35"><a href="#cb15-35" tabindex="-1"></a>    <span class="co"># If both numeric, use relative tolerance</span></span>
+<span id="cb15-36"><a href="#cb15-36" tabindex="-1"></a>    <span class="cf">if</span> gt_num <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> pred_num <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb15-37"><a href="#cb15-37" tabindex="-1"></a>        <span class="cf">if</span> gt_num <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb15-38"><a href="#cb15-38" tabindex="-1"></a>            <span class="cf">return</span> <span class="bu">abs</span>(pred_num <span class="op">-</span> gt_num) <span class="op">&lt;=</span> rel_tol  <span class="co"># small absolute tolerance around 0</span></span>
+<span id="cb15-39"><a href="#cb15-39" tabindex="-1"></a>        rel_err <span class="op">=</span> <span class="bu">abs</span>(pred_num <span class="op">-</span> gt_num) <span class="op">/</span> <span class="bu">max</span>(<span class="bu">abs</span>(gt_num), <span class="fl">1e-12</span>)</span>
+<span id="cb15-40"><a href="#cb15-40" tabindex="-1"></a>        <span class="cf">return</span> rel_err <span class="op">&lt;=</span> rel_tol</span>
+<span id="cb15-41"><a href="#cb15-41" tabindex="-1"></a>    </span>
+<span id="cb15-42"><a href="#cb15-42" tabindex="-1"></a>    <span class="co"># Otherwise, fall back to normalized string match</span></span>
+<span id="cb15-43"><a href="#cb15-43" tabindex="-1"></a>    <span class="cf">return</span> gt_str.lower() <span class="op">==</span> pred_str.lower()</span>
+<span id="cb15-44"><a href="#cb15-44" tabindex="-1"></a></span>
+<span id="cb15-45"><a href="#cb15-45" tabindex="-1"></a><span class="kw">def</span> _ref_id_jaccard(gt_ref, pred_ref):</span>
+<span id="cb15-46"><a href="#cb15-46" tabindex="-1"></a>    <span class="co">"""</span></span>
+<span id="cb15-47"><a href="#cb15-47" tabindex="-1"></a><span class="co">    Jaccard overlap between sets of ref_ids.</span></span>
+<span id="cb15-48"><a href="#cb15-48" tabindex="-1"></a><span class="co">    Strings may contain semicolon-separated IDs, or 'is_blank'.</span></span>
+<span id="cb15-49"><a href="#cb15-49" tabindex="-1"></a><span class="co">    Case-insensitive.</span></span>
+<span id="cb15-50"><a href="#cb15-50" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb15-51"><a href="#cb15-51" tabindex="-1"></a>    <span class="kw">def</span> to_set(s):</span>
+<span id="cb15-52"><a href="#cb15-52" tabindex="-1"></a>        <span class="cf">if</span> s <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb15-53"><a href="#cb15-53" tabindex="-1"></a>            <span class="cf">return</span> <span class="bu">set</span>()</span>
+<span id="cb15-54"><a href="#cb15-54" tabindex="-1"></a>        s <span class="op">=</span> <span class="bu">str</span>(s).strip()</span>
+<span id="cb15-55"><a href="#cb15-55" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> s <span class="kw">or</span> s.lower() <span class="op">==</span> <span class="st">"is_blank"</span>:</span>
+<span id="cb15-56"><a href="#cb15-56" tabindex="-1"></a>            <span class="cf">return</span> <span class="bu">set</span>()</span>
+<span id="cb15-57"><a href="#cb15-57" tabindex="-1"></a>        parts <span class="op">=</span> [p.strip().lower() <span class="cf">for</span> p <span class="kw">in</span> s.split(<span class="st">";"</span>) <span class="cf">if</span> p.strip()]</span>
+<span id="cb15-58"><a href="#cb15-58" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">set</span>(parts)</span>
+<span id="cb15-59"><a href="#cb15-59" tabindex="-1"></a>    </span>
+<span id="cb15-60"><a href="#cb15-60" tabindex="-1"></a>    gt_set <span class="op">=</span> to_set(gt_ref)</span>
+<span id="cb15-61"><a href="#cb15-61" tabindex="-1"></a>    pred_set <span class="op">=</span> to_set(pred_ref)</span>
+<span id="cb15-62"><a href="#cb15-62" tabindex="-1"></a>    </span>
+<span id="cb15-63"><a href="#cb15-63" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> gt_set <span class="kw">and</span> <span class="kw">not</span> pred_set:</span>
+<span id="cb15-64"><a href="#cb15-64" tabindex="-1"></a>        <span class="cf">return</span> <span class="fl">1.0</span></span>
+<span id="cb15-65"><a href="#cb15-65" tabindex="-1"></a>    union <span class="op">=</span> gt_set <span class="op">|</span> pred_set</span>
+<span id="cb15-66"><a href="#cb15-66" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> union:</span>
+<span id="cb15-67"><a href="#cb15-67" tabindex="-1"></a>        <span class="cf">return</span> <span class="fl">0.0</span></span>
+<span id="cb15-68"><a href="#cb15-68" tabindex="-1"></a>    inter <span class="op">=</span> gt_set <span class="op">&amp;</span> pred_set</span>
+<span id="cb15-69"><a href="#cb15-69" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">len</span>(inter) <span class="op">/</span> <span class="bu">len</span>(union)</span>
+<span id="cb15-70"><a href="#cb15-70" tabindex="-1"></a></span>
+<span id="cb15-71"><a href="#cb15-71" tabindex="-1"></a><span class="kw">def</span> compute_wattbot_score(</span>
+<span id="cb15-72"><a href="#cb15-72" tabindex="-1"></a>    train_qa_path<span class="op">=</span><span class="st">"train_QA.csv"</span>,</span>
+<span id="cb15-73"><a href="#cb15-73" tabindex="-1"></a>    preds_path<span class="op">=</span><span class="st">"train_solutions_qwen.csv"</span>,</span>
+<span id="cb15-74"><a href="#cb15-74" tabindex="-1"></a>    id_col<span class="op">=</span><span class="st">"id"</span>,</span>
+<span id="cb15-75"><a href="#cb15-75" tabindex="-1"></a>    gt_answer_col<span class="op">=</span><span class="st">"answer_value"</span>,</span>
+<span id="cb15-76"><a href="#cb15-76" tabindex="-1"></a>    gt_ref_col<span class="op">=</span><span class="st">"ref_id"</span>,</span>
+<span id="cb15-77"><a href="#cb15-77" tabindex="-1"></a>    gt_is_na_col<span class="op">=</span><span class="st">"is_NA"</span>,   <span class="co"># can also pass "is_blank" or None</span></span>
+<span id="cb15-78"><a href="#cb15-78" tabindex="-1"></a>    pred_answer_col<span class="op">=</span><span class="st">"answer_value"</span>,</span>
+<span id="cb15-79"><a href="#cb15-79" tabindex="-1"></a>    pred_ref_col<span class="op">=</span><span class="st">"ref_id"</span>,</span>
+<span id="cb15-80"><a href="#cb15-80" tabindex="-1"></a>    pred_is_na_col<span class="op">=</span><span class="va">None</span>,    <span class="co"># can pass "is_blank", or leave None to auto</span></span>
+<span id="cb15-81"><a href="#cb15-81" tabindex="-1"></a>    n_examples<span class="op">=</span><span class="dv">10</span>,          <span class="co"># how many incorrect examples to print</span></span>
+<span id="cb15-82"><a href="#cb15-82" tabindex="-1"></a>):</span>
+<span id="cb15-83"><a href="#cb15-83" tabindex="-1"></a>    <span class="co">"""</span></span>
+<span id="cb15-84"><a href="#cb15-84" tabindex="-1"></a><span class="co">    Compare your solutions to train_QA.csv using a WattBot-style score.</span></span>
+<span id="cb15-85"><a href="#cb15-85" tabindex="-1"></a></span>
+<span id="cb15-86"><a href="#cb15-86" tabindex="-1"></a><span class="co">    NA logic:</span></span>
+<span id="cb15-87"><a href="#cb15-87" tabindex="-1"></a><span class="co">    - If an explicit NA column is found/used (e.g. is_NA), we use it via _to_bool_flag.</span></span>
+<span id="cb15-88"><a href="#cb15-88" tabindex="-1"></a><span class="co">    - If you pass gt_is_na_col="is_blank" or pred_is_na_col="is_blank",</span></span>
+<span id="cb15-89"><a href="#cb15-89" tabindex="-1"></a><span class="co">      we *derive* NA from answer_value == "is_blank" instead of expecting a real column.</span></span>
+<span id="cb15-90"><a href="#cb15-90" tabindex="-1"></a><span class="co">    - If no NA column is available at all, we derive from answer_value == "is_blank".</span></span>
+<span id="cb15-91"><a href="#cb15-91" tabindex="-1"></a></span>
+<span id="cb15-92"><a href="#cb15-92" tabindex="-1"></a><span class="co">    Also prints up to `n_examples` rows where the model is not perfect</span></span>
+<span id="cb15-93"><a href="#cb15-93" tabindex="-1"></a><span class="co">    (answer_score &lt; 1, ref_id_score &lt; 1, or is_NA_score &lt; 1).</span></span>
+<span id="cb15-94"><a href="#cb15-94" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb15-95"><a href="#cb15-95" tabindex="-1"></a>    gt <span class="op">=</span> pd.read_csv(train_qa_path)</span>
+<span id="cb15-96"><a href="#cb15-96" tabindex="-1"></a>    preds <span class="op">=</span> pd.read_csv(preds_path)</span>
+<span id="cb15-97"><a href="#cb15-97" tabindex="-1"></a>    </span>
+<span id="cb15-98"><a href="#cb15-98" tabindex="-1"></a>    <span class="co"># Inner join on id to be strict</span></span>
+<span id="cb15-99"><a href="#cb15-99" tabindex="-1"></a>    merged <span class="op">=</span> gt.merge(preds, on<span class="op">=</span>id_col, suffixes<span class="op">=</span>(<span class="st">"_gt"</span>, <span class="st">"_pred"</span>))</span>
+<span id="cb15-100"><a href="#cb15-100" tabindex="-1"></a>    <span class="cf">if</span> merged.empty:</span>
+<span id="cb15-101"><a href="#cb15-101" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"No overlapping ids between ground truth and predictions."</span>)</span>
+<span id="cb15-102"><a href="#cb15-102" tabindex="-1"></a></span>
+<span id="cb15-103"><a href="#cb15-103" tabindex="-1"></a>    <span class="co"># ----- ground truth NA flags -----</span></span>
+<span id="cb15-104"><a href="#cb15-104" tabindex="-1"></a>    <span class="cf">if</span> gt_is_na_col <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> gt_is_na_col <span class="kw">in</span> merged.columns:</span>
+<span id="cb15-105"><a href="#cb15-105" tabindex="-1"></a>        <span class="co"># Use explicit column (e.g. "is_NA")</span></span>
+<span id="cb15-106"><a href="#cb15-106" tabindex="-1"></a>        gt_is_na_series <span class="op">=</span> merged[gt_is_na_col].<span class="bu">map</span>(_to_bool_flag)</span>
+<span id="cb15-107"><a href="#cb15-107" tabindex="-1"></a>    <span class="cf">elif</span> gt_is_na_col <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> gt_is_na_col.lower() <span class="op">==</span> <span class="st">"is_blank"</span>:</span>
+<span id="cb15-108"><a href="#cb15-108" tabindex="-1"></a>        <span class="co"># Special meaning: derive NA from answer_value_gt == "is_blank"</span></span>
+<span id="cb15-109"><a href="#cb15-109" tabindex="-1"></a>        gt_is_na_series <span class="op">=</span> merged[<span class="ss">f"</span><span class="sc">{</span>gt_answer_col<span class="sc">}</span><span class="ss">_gt"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"is_blank"</span>)</span>
+<span id="cb15-110"><a href="#cb15-110" tabindex="-1"></a>        merged[<span class="st">"gt_is_blank_flag"</span>] <span class="op">=</span> gt_is_na_series</span>
+<span id="cb15-111"><a href="#cb15-111" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb15-112"><a href="#cb15-112" tabindex="-1"></a>        <span class="co"># Fallback: if we have is_NA or is_blank col, use it; else derive</span></span>
+<span id="cb15-113"><a href="#cb15-113" tabindex="-1"></a>        <span class="cf">if</span> <span class="st">"is_NA"</span> <span class="kw">in</span> merged.columns:</span>
+<span id="cb15-114"><a href="#cb15-114" tabindex="-1"></a>            gt_is_na_series <span class="op">=</span> merged[<span class="st">"is_NA"</span>].<span class="bu">map</span>(_to_bool_flag)</span>
+<span id="cb15-115"><a href="#cb15-115" tabindex="-1"></a>        <span class="cf">elif</span> <span class="st">"is_blank"</span> <span class="kw">in</span> merged.columns:</span>
+<span id="cb15-116"><a href="#cb15-116" tabindex="-1"></a>            gt_is_na_series <span class="op">=</span> merged[<span class="st">"is_blank"</span>].<span class="bu">map</span>(_to_bool_flag)</span>
+<span id="cb15-117"><a href="#cb15-117" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb15-118"><a href="#cb15-118" tabindex="-1"></a>            gt_is_na_series <span class="op">=</span> merged[<span class="ss">f"</span><span class="sc">{</span>gt_answer_col<span class="sc">}</span><span class="ss">_gt"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"is_blank"</span>)</span>
+<span id="cb15-119"><a href="#cb15-119" tabindex="-1"></a>            merged[<span class="st">"gt_is_blank_flag"</span>] <span class="op">=</span> gt_is_na_series</span>
+<span id="cb15-120"><a href="#cb15-120" tabindex="-1"></a></span>
+<span id="cb15-121"><a href="#cb15-121" tabindex="-1"></a>    <span class="co"># ----- prediction NA flags -----</span></span>
+<span id="cb15-122"><a href="#cb15-122" tabindex="-1"></a>    <span class="cf">if</span> pred_is_na_col <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> pred_is_na_col <span class="kw">in</span> merged.columns:</span>
+<span id="cb15-123"><a href="#cb15-123" tabindex="-1"></a>        pred_is_na_series <span class="op">=</span> merged[pred_is_na_col].<span class="bu">map</span>(_to_bool_flag)</span>
+<span id="cb15-124"><a href="#cb15-124" tabindex="-1"></a>    <span class="cf">elif</span> pred_is_na_col <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> pred_is_na_col.lower() <span class="op">==</span> <span class="st">"is_blank"</span>:</span>
+<span id="cb15-125"><a href="#cb15-125" tabindex="-1"></a>        <span class="co"># Same convention: derive from answer_value_pred</span></span>
+<span id="cb15-126"><a href="#cb15-126" tabindex="-1"></a>        pred_is_na_series <span class="op">=</span> merged[<span class="ss">f"</span><span class="sc">{</span>pred_answer_col<span class="sc">}</span><span class="ss">_pred"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"is_blank"</span>)</span>
+<span id="cb15-127"><a href="#cb15-127" tabindex="-1"></a>        merged[<span class="st">"pred_is_blank_flag"</span>] <span class="op">=</span> pred_is_na_series</span>
+<span id="cb15-128"><a href="#cb15-128" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb15-129"><a href="#cb15-129" tabindex="-1"></a>        <span class="co"># Auto-detect or derive if no NA column in preds</span></span>
+<span id="cb15-130"><a href="#cb15-130" tabindex="-1"></a>        <span class="cf">if</span> <span class="st">"is_NA"</span> <span class="kw">in</span> merged.columns:</span>
+<span id="cb15-131"><a href="#cb15-131" tabindex="-1"></a>            pred_is_na_series <span class="op">=</span> merged[<span class="st">"is_NA"</span>].<span class="bu">map</span>(_to_bool_flag)</span>
+<span id="cb15-132"><a href="#cb15-132" tabindex="-1"></a>        <span class="cf">elif</span> <span class="st">"is_blank"</span> <span class="kw">in</span> merged.columns:</span>
+<span id="cb15-133"><a href="#cb15-133" tabindex="-1"></a>            pred_is_na_series <span class="op">=</span> merged[<span class="st">"is_blank"</span>].<span class="bu">map</span>(_to_bool_flag)</span>
+<span id="cb15-134"><a href="#cb15-134" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb15-135"><a href="#cb15-135" tabindex="-1"></a>            pred_is_na_series <span class="op">=</span> merged[<span class="ss">f"</span><span class="sc">{</span>pred_answer_col<span class="sc">}</span><span class="ss">_pred"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"is_blank"</span>)</span>
+<span id="cb15-136"><a href="#cb15-136" tabindex="-1"></a>            merged[<span class="st">"pred_is_blank_flag"</span>] <span class="op">=</span> pred_is_na_series</span>
+<span id="cb15-137"><a href="#cb15-137" tabindex="-1"></a></span>
+<span id="cb15-138"><a href="#cb15-138" tabindex="-1"></a>    ans_scores <span class="op">=</span> []</span>
+<span id="cb15-139"><a href="#cb15-139" tabindex="-1"></a>    ref_scores <span class="op">=</span> []</span>
+<span id="cb15-140"><a href="#cb15-140" tabindex="-1"></a>    na_scores <span class="op">=</span> []</span>
+<span id="cb15-141"><a href="#cb15-141" tabindex="-1"></a>    </span>
+<span id="cb15-142"><a href="#cb15-142" tabindex="-1"></a>    <span class="cf">for</span> idx, row <span class="kw">in</span> merged.iterrows():</span>
+<span id="cb15-143"><a href="#cb15-143" tabindex="-1"></a>        gt_ans <span class="op">=</span> row[<span class="ss">f"</span><span class="sc">{</span>gt_answer_col<span class="sc">}</span><span class="ss">_gt"</span>]</span>
+<span id="cb15-144"><a href="#cb15-144" tabindex="-1"></a>        pred_ans <span class="op">=</span> row[<span class="ss">f"</span><span class="sc">{</span>pred_answer_col<span class="sc">}</span><span class="ss">_pred"</span>]</span>
+<span id="cb15-145"><a href="#cb15-145" tabindex="-1"></a>        gt_ref <span class="op">=</span> row[<span class="ss">f"</span><span class="sc">{</span>gt_ref_col<span class="sc">}</span><span class="ss">_gt"</span>]</span>
+<span id="cb15-146"><a href="#cb15-146" tabindex="-1"></a>        pred_ref <span class="op">=</span> row[<span class="ss">f"</span><span class="sc">{</span>pred_ref_col<span class="sc">}</span><span class="ss">_pred"</span>]</span>
+<span id="cb15-147"><a href="#cb15-147" tabindex="-1"></a>        </span>
+<span id="cb15-148"><a href="#cb15-148" tabindex="-1"></a>        gt_is_na <span class="op">=</span> <span class="bu">bool</span>(gt_is_na_series.iloc[idx])</span>
+<span id="cb15-149"><a href="#cb15-149" tabindex="-1"></a>        pred_is_na <span class="op">=</span> <span class="bu">bool</span>(pred_is_na_series.iloc[idx])</span>
+<span id="cb15-150"><a href="#cb15-150" tabindex="-1"></a>        </span>
+<span id="cb15-151"><a href="#cb15-151" tabindex="-1"></a>        <span class="co"># 1. answer_value component</span></span>
+<span id="cb15-152"><a href="#cb15-152" tabindex="-1"></a>        ans_correct <span class="op">=</span> _answer_value_correct(gt_ans, pred_ans)</span>
+<span id="cb15-153"><a href="#cb15-153" tabindex="-1"></a>        ans_scores.append(<span class="fl">1.0</span> <span class="op">*</span> ans_correct)</span>
+<span id="cb15-154"><a href="#cb15-154" tabindex="-1"></a>        </span>
+<span id="cb15-155"><a href="#cb15-155" tabindex="-1"></a>        <span class="co"># 2. ref_id Jaccard</span></span>
+<span id="cb15-156"><a href="#cb15-156" tabindex="-1"></a>        ref_j <span class="op">=</span> _ref_id_jaccard(gt_ref, pred_ref)</span>
+<span id="cb15-157"><a href="#cb15-157" tabindex="-1"></a>        ref_scores.append(ref_j)</span>
+<span id="cb15-158"><a href="#cb15-158" tabindex="-1"></a>        </span>
+<span id="cb15-159"><a href="#cb15-159" tabindex="-1"></a>        <span class="co"># 3. is_NA component (simple: must match ground truth flag)</span></span>
+<span id="cb15-160"><a href="#cb15-160" tabindex="-1"></a>        na_scores.append(<span class="fl">1.0</span> <span class="cf">if</span> gt_is_na <span class="op">==</span> pred_is_na <span class="cf">else</span> <span class="fl">0.0</span>)</span>
+<span id="cb15-161"><a href="#cb15-161" tabindex="-1"></a>    </span>
+<span id="cb15-162"><a href="#cb15-162" tabindex="-1"></a>    merged[<span class="st">"answer_score"</span>] <span class="op">=</span> ans_scores</span>
+<span id="cb15-163"><a href="#cb15-163" tabindex="-1"></a>    merged[<span class="st">"ref_id_score"</span>] <span class="op">=</span> ref_scores</span>
+<span id="cb15-164"><a href="#cb15-164" tabindex="-1"></a>    merged[<span class="st">"is_NA_score"</span>] <span class="op">=</span> na_scores</span>
+<span id="cb15-165"><a href="#cb15-165" tabindex="-1"></a>    </span>
+<span id="cb15-166"><a href="#cb15-166" tabindex="-1"></a>    merged[<span class="st">"wattbot_score"</span>] <span class="op">=</span> (</span>
+<span id="cb15-167"><a href="#cb15-167" tabindex="-1"></a>        <span class="fl">0.75</span> <span class="op">*</span> merged[<span class="st">"answer_score"</span>]</span>
+<span id="cb15-168"><a href="#cb15-168" tabindex="-1"></a>        <span class="op">+</span> <span class="fl">0.15</span> <span class="op">*</span> merged[<span class="st">"ref_id_score"</span>]</span>
+<span id="cb15-169"><a href="#cb15-169" tabindex="-1"></a>        <span class="op">+</span> <span class="fl">0.10</span> <span class="op">*</span> merged[<span class="st">"is_NA_score"</span>]</span>
+<span id="cb15-170"><a href="#cb15-170" tabindex="-1"></a>    )</span>
+<span id="cb15-171"><a href="#cb15-171" tabindex="-1"></a>    </span>
+<span id="cb15-172"><a href="#cb15-172" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Rows compared: </span><span class="sc">{</span><span class="bu">len</span>(merged)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb15-173"><a href="#cb15-173" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Mean answer_value score: </span><span class="sc">{</span>merged[<span class="st">'answer_score'</span>]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb15-174"><a href="#cb15-174" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Mean ref_id score:       </span><span class="sc">{</span>merged[<span class="st">'ref_id_score'</span>]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb15-175"><a href="#cb15-175" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Mean is_NA score:        </span><span class="sc">{</span>merged[<span class="st">'is_NA_score'</span>]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb15-176"><a href="#cb15-176" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Overall WattBot score:   </span><span class="sc">{</span>merged[<span class="st">'wattbot_score'</span>]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb15-177"><a href="#cb15-177" tabindex="-1"></a>    </span>
+<span id="cb15-178"><a href="#cb15-178" tabindex="-1"></a>    <span class="co"># ----- Show some incorrect examples -----</span></span>
+<span id="cb15-179"><a href="#cb15-179" tabindex="-1"></a>    incorrect <span class="op">=</span> merged[</span>
+<span id="cb15-180"><a href="#cb15-180" tabindex="-1"></a>        (merged[<span class="st">"answer_score"</span>] <span class="op">&lt;</span> <span class="fl">1.0</span>)</span>
+<span id="cb15-181"><a href="#cb15-181" tabindex="-1"></a>        <span class="op">|</span> (merged[<span class="st">"ref_id_score"</span>] <span class="op">&lt;</span> <span class="fl">1.0</span>)</span>
+<span id="cb15-182"><a href="#cb15-182" tabindex="-1"></a>        <span class="op">|</span> (merged[<span class="st">"is_NA_score"</span>] <span class="op">&lt;</span> <span class="fl">1.0</span>)</span>
+<span id="cb15-183"><a href="#cb15-183" tabindex="-1"></a>    ]</span>
+<span id="cb15-184"><a href="#cb15-184" tabindex="-1"></a>    </span>
+<span id="cb15-185"><a href="#cb15-185" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> incorrect.empty <span class="kw">and</span> n_examples <span class="op">&gt;</span> <span class="dv">0</span>:</span>
+<span id="cb15-186"><a href="#cb15-186" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">Examples of incorrect / partially correct responses "</span></span>
+<span id="cb15-187"><a href="#cb15-187" tabindex="-1"></a>              <span class="ss">f"(up to </span><span class="sc">{</span>n_examples<span class="sc">}</span><span class="ss"> rows):</span><span class="ch">\n</span><span class="ss">"</span>)</span>
+<span id="cb15-188"><a href="#cb15-188" tabindex="-1"></a>        <span class="co"># Grab up to n_examples "worst" rows by wattbot_score</span></span>
+<span id="cb15-189"><a href="#cb15-189" tabindex="-1"></a>        <span class="cf">for</span> _, row <span class="kw">in</span> incorrect.sort_values(<span class="st">"wattbot_score"</span>).head(n_examples).iterrows():</span>
+<span id="cb15-190"><a href="#cb15-190" tabindex="-1"></a>            q <span class="op">=</span> row[<span class="st">"question_gt"</span>] <span class="cf">if</span> <span class="st">"question_gt"</span> <span class="kw">in</span> row.index <span class="cf">else</span> <span class="va">None</span></span>
+<span id="cb15-191"><a href="#cb15-191" tabindex="-1"></a>            <span class="bu">print</span>(<span class="st">"-"</span> <span class="op">*</span> <span class="dv">80</span>)</span>
+<span id="cb15-192"><a href="#cb15-192" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"id: </span><span class="sc">{</span>row[id_col]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb15-193"><a href="#cb15-193" tabindex="-1"></a>            <span class="cf">if</span> q <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb15-194"><a href="#cb15-194" tabindex="-1"></a>                <span class="bu">print</span>(<span class="ss">f"Question: </span><span class="sc">{</span>q<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb15-195"><a href="#cb15-195" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"GT answer_value:   </span><span class="sc">{</span>row[<span class="ss">f'</span><span class="sc">{</span>gt_answer_col<span class="sc">}</span><span class="ss">_gt'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb15-196"><a href="#cb15-196" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"Pred answer_value: </span><span class="sc">{</span>row[<span class="ss">f'</span><span class="sc">{</span>pred_answer_col<span class="sc">}</span><span class="ss">_pred'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb15-197"><a href="#cb15-197" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"GT ref_id:         </span><span class="sc">{</span>row[<span class="ss">f'</span><span class="sc">{</span>gt_ref_col<span class="sc">}</span><span class="ss">_gt'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb15-198"><a href="#cb15-198" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"Pred ref_id:       </span><span class="sc">{</span>row[<span class="ss">f'</span><span class="sc">{</span>pred_ref_col<span class="sc">}</span><span class="ss">_pred'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb15-199"><a href="#cb15-199" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"answer_score: </span><span class="sc">{</span>row[<span class="st">'answer_score'</span>]<span class="sc">:.3f}</span><span class="ss">, "</span></span>
+<span id="cb15-200"><a href="#cb15-200" tabindex="-1"></a>                  <span class="ss">f"ref_id_score: </span><span class="sc">{</span>row[<span class="st">'ref_id_score'</span>]<span class="sc">:.3f}</span><span class="ss">, "</span></span>
+<span id="cb15-201"><a href="#cb15-201" tabindex="-1"></a>                  <span class="ss">f"is_NA_score: </span><span class="sc">{</span>row[<span class="st">'is_NA_score'</span>]<span class="sc">:.3f}</span><span class="ss">, "</span></span>
+<span id="cb15-202"><a href="#cb15-202" tabindex="-1"></a>                  <span class="ss">f"wattbot_score: </span><span class="sc">{</span>row[<span class="st">'wattbot_score'</span>]<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb15-203"><a href="#cb15-203" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">"-"</span> <span class="op">*</span> <span class="dv">80</span>)</span>
+<span id="cb15-204"><a href="#cb15-204" tabindex="-1"></a>    </span>
+<span id="cb15-205"><a href="#cb15-205" tabindex="-1"></a>    <span class="cf">return</span> merged</span></code></pre>
+</div>
 <div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a></span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>solutions_key <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>rag_output_prefix<span class="sc">}</span><span class="ss">/wattbot_solutions.csv"</span></span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>local_solutions_path <span class="op">=</span> os.path.join(local_data_dir, <span class="st">"wattbot_solutions.csv"</span>)</span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a></span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>s3_client.download_file(bucket_name, solutions_key, local_solutions_path)</span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>solutions_df <span class="op">=</span> pd.read_csv(local_solutions_path)</span>
-<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a>solutions_df.head()</span></code></pre>
-</div>
-<div class="codewrapper sourceCode" id="cb17">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a></span>
-<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a><span class="kw">def</span> _to_bool_flag(x):</span>
-<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>    <span class="co">"""Convert typical truthy/falsey strings to bool."""</span></span>
-<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">isinstance</span>(x, <span class="bu">str</span>):</span>
-<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>        s <span class="op">=</span> x.strip().lower()</span>
-<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a>        <span class="cf">if</span> s <span class="kw">in</span> {<span class="st">"1"</span>, <span class="st">"True"</span>, <span class="st">"true"</span>, <span class="st">"yes"</span>}:</span>
-<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a>            <span class="cf">return</span> <span class="va">True</span></span>
-<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a>        <span class="cf">if</span> s <span class="kw">in</span> {<span class="st">"0"</span>, <span class="st">"False"</span>, <span class="st">"false"</span>, <span class="st">"no"</span>}:</span>
-<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a>            <span class="cf">return</span> <span class="va">False</span></span>
-<span id="cb17-12"><a href="#cb17-12" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">bool</span>(x)</span>
-<span id="cb17-13"><a href="#cb17-13" tabindex="-1"></a></span>
-<span id="cb17-14"><a href="#cb17-14" tabindex="-1"></a><span class="kw">def</span> _parse_float_or_none(x):</span>
-<span id="cb17-15"><a href="#cb17-15" tabindex="-1"></a>    <span class="cf">try</span>:</span>
-<span id="cb17-16"><a href="#cb17-16" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">float</span>(<span class="bu">str</span>(x).strip())</span>
-<span id="cb17-17"><a href="#cb17-17" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span>:</span>
-<span id="cb17-18"><a href="#cb17-18" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span></span>
-<span id="cb17-19"><a href="#cb17-19" tabindex="-1"></a></span>
-<span id="cb17-20"><a href="#cb17-20" tabindex="-1"></a><span class="kw">def</span> _answer_value_correct(gt_val, pred_val, rel_tol<span class="op">=</span><span class="fl">1e-3</span>):</span>
-<span id="cb17-21"><a href="#cb17-21" tabindex="-1"></a>    <span class="co">"""</span></span>
-<span id="cb17-22"><a href="#cb17-22" tabindex="-1"></a><span class="co">    gt_val, pred_val: values from answer_value columns.</span></span>
-<span id="cb17-23"><a href="#cb17-23" tabindex="-1"></a><span class="co">    rel_tol = 0.001 =&gt; 0.1% relative tolerance.</span></span>
-<span id="cb17-24"><a href="#cb17-24" tabindex="-1"></a><span class="co">    """</span></span>
-<span id="cb17-25"><a href="#cb17-25" tabindex="-1"></a>    gt_str <span class="op">=</span> <span class="bu">str</span>(gt_val).strip()</span>
-<span id="cb17-26"><a href="#cb17-26" tabindex="-1"></a>    pred_str <span class="op">=</span> <span class="bu">str</span>(pred_val).strip()</span>
-<span id="cb17-27"><a href="#cb17-27" tabindex="-1"></a>    </span>
-<span id="cb17-28"><a href="#cb17-28" tabindex="-1"></a>    <span class="co"># If either is 'is_blank', treat as categorical</span></span>
-<span id="cb17-29"><a href="#cb17-29" tabindex="-1"></a>    <span class="cf">if</span> gt_str.lower() <span class="op">==</span> <span class="st">"is_blank"</span> <span class="kw">or</span> pred_str.lower() <span class="op">==</span> <span class="st">"is_blank"</span>:</span>
-<span id="cb17-30"><a href="#cb17-30" tabindex="-1"></a>        <span class="cf">return</span> gt_str.lower() <span class="op">==</span> pred_str.lower()</span>
-<span id="cb17-31"><a href="#cb17-31" tabindex="-1"></a>    </span>
-<span id="cb17-32"><a href="#cb17-32" tabindex="-1"></a>    gt_num <span class="op">=</span> _parse_float_or_none(gt_val)</span>
-<span id="cb17-33"><a href="#cb17-33" tabindex="-1"></a>    pred_num <span class="op">=</span> _parse_float_or_none(pred_val)</span>
-<span id="cb17-34"><a href="#cb17-34" tabindex="-1"></a>    </span>
-<span id="cb17-35"><a href="#cb17-35" tabindex="-1"></a>    <span class="co"># If both numeric, use relative tolerance</span></span>
-<span id="cb17-36"><a href="#cb17-36" tabindex="-1"></a>    <span class="cf">if</span> gt_num <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> pred_num <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
-<span id="cb17-37"><a href="#cb17-37" tabindex="-1"></a>        <span class="cf">if</span> gt_num <span class="op">==</span> <span class="dv">0</span>:</span>
-<span id="cb17-38"><a href="#cb17-38" tabindex="-1"></a>            <span class="cf">return</span> <span class="bu">abs</span>(pred_num <span class="op">-</span> gt_num) <span class="op">&lt;=</span> rel_tol  <span class="co"># small absolute tolerance around 0</span></span>
-<span id="cb17-39"><a href="#cb17-39" tabindex="-1"></a>        rel_err <span class="op">=</span> <span class="bu">abs</span>(pred_num <span class="op">-</span> gt_num) <span class="op">/</span> <span class="bu">max</span>(<span class="bu">abs</span>(gt_num), <span class="fl">1e-12</span>)</span>
-<span id="cb17-40"><a href="#cb17-40" tabindex="-1"></a>        <span class="cf">return</span> rel_err <span class="op">&lt;=</span> rel_tol</span>
-<span id="cb17-41"><a href="#cb17-41" tabindex="-1"></a>    </span>
-<span id="cb17-42"><a href="#cb17-42" tabindex="-1"></a>    <span class="co"># Otherwise, fall back to normalized string match</span></span>
-<span id="cb17-43"><a href="#cb17-43" tabindex="-1"></a>    <span class="cf">return</span> gt_str.lower() <span class="op">==</span> pred_str.lower()</span>
-<span id="cb17-44"><a href="#cb17-44" tabindex="-1"></a></span>
-<span id="cb17-45"><a href="#cb17-45" tabindex="-1"></a><span class="kw">def</span> _ref_id_jaccard(gt_ref, pred_ref):</span>
-<span id="cb17-46"><a href="#cb17-46" tabindex="-1"></a>    <span class="co">"""</span></span>
-<span id="cb17-47"><a href="#cb17-47" tabindex="-1"></a><span class="co">    Jaccard overlap between sets of ref_ids.</span></span>
-<span id="cb17-48"><a href="#cb17-48" tabindex="-1"></a><span class="co">    Strings may contain semicolon-separated IDs, or 'is_blank'.</span></span>
-<span id="cb17-49"><a href="#cb17-49" tabindex="-1"></a><span class="co">    Case-insensitive.</span></span>
-<span id="cb17-50"><a href="#cb17-50" tabindex="-1"></a><span class="co">    """</span></span>
-<span id="cb17-51"><a href="#cb17-51" tabindex="-1"></a>    <span class="kw">def</span> to_set(s):</span>
-<span id="cb17-52"><a href="#cb17-52" tabindex="-1"></a>        <span class="cf">if</span> s <span class="kw">is</span> <span class="va">None</span>:</span>
-<span id="cb17-53"><a href="#cb17-53" tabindex="-1"></a>            <span class="cf">return</span> <span class="bu">set</span>()</span>
-<span id="cb17-54"><a href="#cb17-54" tabindex="-1"></a>        s <span class="op">=</span> <span class="bu">str</span>(s).strip()</span>
-<span id="cb17-55"><a href="#cb17-55" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> s <span class="kw">or</span> s.lower() <span class="op">==</span> <span class="st">"is_blank"</span>:</span>
-<span id="cb17-56"><a href="#cb17-56" tabindex="-1"></a>            <span class="cf">return</span> <span class="bu">set</span>()</span>
-<span id="cb17-57"><a href="#cb17-57" tabindex="-1"></a>        parts <span class="op">=</span> [p.strip().lower() <span class="cf">for</span> p <span class="kw">in</span> s.split(<span class="st">";"</span>) <span class="cf">if</span> p.strip()]</span>
-<span id="cb17-58"><a href="#cb17-58" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">set</span>(parts)</span>
-<span id="cb17-59"><a href="#cb17-59" tabindex="-1"></a>    </span>
-<span id="cb17-60"><a href="#cb17-60" tabindex="-1"></a>    gt_set <span class="op">=</span> to_set(gt_ref)</span>
-<span id="cb17-61"><a href="#cb17-61" tabindex="-1"></a>    pred_set <span class="op">=</span> to_set(pred_ref)</span>
-<span id="cb17-62"><a href="#cb17-62" tabindex="-1"></a>    </span>
-<span id="cb17-63"><a href="#cb17-63" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> gt_set <span class="kw">and</span> <span class="kw">not</span> pred_set:</span>
-<span id="cb17-64"><a href="#cb17-64" tabindex="-1"></a>        <span class="cf">return</span> <span class="fl">1.0</span></span>
-<span id="cb17-65"><a href="#cb17-65" tabindex="-1"></a>    union <span class="op">=</span> gt_set <span class="op">|</span> pred_set</span>
-<span id="cb17-66"><a href="#cb17-66" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> union:</span>
-<span id="cb17-67"><a href="#cb17-67" tabindex="-1"></a>        <span class="cf">return</span> <span class="fl">0.0</span></span>
-<span id="cb17-68"><a href="#cb17-68" tabindex="-1"></a>    inter <span class="op">=</span> gt_set <span class="op">&amp;</span> pred_set</span>
-<span id="cb17-69"><a href="#cb17-69" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">len</span>(inter) <span class="op">/</span> <span class="bu">len</span>(union)</span>
-<span id="cb17-70"><a href="#cb17-70" tabindex="-1"></a></span>
-<span id="cb17-71"><a href="#cb17-71" tabindex="-1"></a><span class="kw">def</span> compute_wattbot_score(</span>
-<span id="cb17-72"><a href="#cb17-72" tabindex="-1"></a>    train_qa_path<span class="op">=</span><span class="st">"train_QA.csv"</span>,</span>
-<span id="cb17-73"><a href="#cb17-73" tabindex="-1"></a>    preds_path<span class="op">=</span><span class="st">"train_solutions_qwen.csv"</span>,</span>
-<span id="cb17-74"><a href="#cb17-74" tabindex="-1"></a>    id_col<span class="op">=</span><span class="st">"id"</span>,</span>
-<span id="cb17-75"><a href="#cb17-75" tabindex="-1"></a>    gt_answer_col<span class="op">=</span><span class="st">"answer_value"</span>,</span>
-<span id="cb17-76"><a href="#cb17-76" tabindex="-1"></a>    gt_ref_col<span class="op">=</span><span class="st">"ref_id"</span>,</span>
-<span id="cb17-77"><a href="#cb17-77" tabindex="-1"></a>    gt_is_na_col<span class="op">=</span><span class="st">"is_NA"</span>,   <span class="co"># can also pass "is_blank" or None</span></span>
-<span id="cb17-78"><a href="#cb17-78" tabindex="-1"></a>    pred_answer_col<span class="op">=</span><span class="st">"answer_value"</span>,</span>
-<span id="cb17-79"><a href="#cb17-79" tabindex="-1"></a>    pred_ref_col<span class="op">=</span><span class="st">"ref_id"</span>,</span>
-<span id="cb17-80"><a href="#cb17-80" tabindex="-1"></a>    pred_is_na_col<span class="op">=</span><span class="va">None</span>,    <span class="co"># can pass "is_blank", or leave None to auto</span></span>
-<span id="cb17-81"><a href="#cb17-81" tabindex="-1"></a>    n_examples<span class="op">=</span><span class="dv">10</span>,          <span class="co"># how many incorrect examples to print</span></span>
-<span id="cb17-82"><a href="#cb17-82" tabindex="-1"></a>):</span>
-<span id="cb17-83"><a href="#cb17-83" tabindex="-1"></a>    <span class="co">"""</span></span>
-<span id="cb17-84"><a href="#cb17-84" tabindex="-1"></a><span class="co">    Compare your solutions to train_QA.csv using a WattBot-style score.</span></span>
-<span id="cb17-85"><a href="#cb17-85" tabindex="-1"></a></span>
-<span id="cb17-86"><a href="#cb17-86" tabindex="-1"></a><span class="co">    NA logic:</span></span>
-<span id="cb17-87"><a href="#cb17-87" tabindex="-1"></a><span class="co">    - If an explicit NA column is found/used (e.g. is_NA), we use it via _to_bool_flag.</span></span>
-<span id="cb17-88"><a href="#cb17-88" tabindex="-1"></a><span class="co">    - If you pass gt_is_na_col="is_blank" or pred_is_na_col="is_blank",</span></span>
-<span id="cb17-89"><a href="#cb17-89" tabindex="-1"></a><span class="co">      we *derive* NA from answer_value == "is_blank" instead of expecting a real column.</span></span>
-<span id="cb17-90"><a href="#cb17-90" tabindex="-1"></a><span class="co">    - If no NA column is available at all, we derive from answer_value == "is_blank".</span></span>
-<span id="cb17-91"><a href="#cb17-91" tabindex="-1"></a></span>
-<span id="cb17-92"><a href="#cb17-92" tabindex="-1"></a><span class="co">    Also prints up to `n_examples` rows where the model is not perfect</span></span>
-<span id="cb17-93"><a href="#cb17-93" tabindex="-1"></a><span class="co">    (answer_score &lt; 1, ref_id_score &lt; 1, or is_NA_score &lt; 1).</span></span>
-<span id="cb17-94"><a href="#cb17-94" tabindex="-1"></a><span class="co">    """</span></span>
-<span id="cb17-95"><a href="#cb17-95" tabindex="-1"></a>    gt <span class="op">=</span> pd.read_csv(train_qa_path)</span>
-<span id="cb17-96"><a href="#cb17-96" tabindex="-1"></a>    preds <span class="op">=</span> pd.read_csv(preds_path)</span>
-<span id="cb17-97"><a href="#cb17-97" tabindex="-1"></a>    </span>
-<span id="cb17-98"><a href="#cb17-98" tabindex="-1"></a>    <span class="co"># Inner join on id to be strict</span></span>
-<span id="cb17-99"><a href="#cb17-99" tabindex="-1"></a>    merged <span class="op">=</span> gt.merge(preds, on<span class="op">=</span>id_col, suffixes<span class="op">=</span>(<span class="st">"_gt"</span>, <span class="st">"_pred"</span>))</span>
-<span id="cb17-100"><a href="#cb17-100" tabindex="-1"></a>    <span class="cf">if</span> merged.empty:</span>
-<span id="cb17-101"><a href="#cb17-101" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"No overlapping ids between ground truth and predictions."</span>)</span>
-<span id="cb17-102"><a href="#cb17-102" tabindex="-1"></a></span>
-<span id="cb17-103"><a href="#cb17-103" tabindex="-1"></a>    <span class="co"># ----- ground truth NA flags -----</span></span>
-<span id="cb17-104"><a href="#cb17-104" tabindex="-1"></a>    <span class="cf">if</span> gt_is_na_col <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> gt_is_na_col <span class="kw">in</span> merged.columns:</span>
-<span id="cb17-105"><a href="#cb17-105" tabindex="-1"></a>        <span class="co"># Use explicit column (e.g. "is_NA")</span></span>
-<span id="cb17-106"><a href="#cb17-106" tabindex="-1"></a>        gt_is_na_series <span class="op">=</span> merged[gt_is_na_col].<span class="bu">map</span>(_to_bool_flag)</span>
-<span id="cb17-107"><a href="#cb17-107" tabindex="-1"></a>    <span class="cf">elif</span> gt_is_na_col <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> gt_is_na_col.lower() <span class="op">==</span> <span class="st">"is_blank"</span>:</span>
-<span id="cb17-108"><a href="#cb17-108" tabindex="-1"></a>        <span class="co"># Special meaning: derive NA from answer_value_gt == "is_blank"</span></span>
-<span id="cb17-109"><a href="#cb17-109" tabindex="-1"></a>        gt_is_na_series <span class="op">=</span> merged[<span class="ss">f"</span><span class="sc">{</span>gt_answer_col<span class="sc">}</span><span class="ss">_gt"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"is_blank"</span>)</span>
-<span id="cb17-110"><a href="#cb17-110" tabindex="-1"></a>        merged[<span class="st">"gt_is_blank_flag"</span>] <span class="op">=</span> gt_is_na_series</span>
-<span id="cb17-111"><a href="#cb17-111" tabindex="-1"></a>    <span class="cf">else</span>:</span>
-<span id="cb17-112"><a href="#cb17-112" tabindex="-1"></a>        <span class="co"># Fallback: if we have is_NA or is_blank col, use it; else derive</span></span>
-<span id="cb17-113"><a href="#cb17-113" tabindex="-1"></a>        <span class="cf">if</span> <span class="st">"is_NA"</span> <span class="kw">in</span> merged.columns:</span>
-<span id="cb17-114"><a href="#cb17-114" tabindex="-1"></a>            gt_is_na_series <span class="op">=</span> merged[<span class="st">"is_NA"</span>].<span class="bu">map</span>(_to_bool_flag)</span>
-<span id="cb17-115"><a href="#cb17-115" tabindex="-1"></a>        <span class="cf">elif</span> <span class="st">"is_blank"</span> <span class="kw">in</span> merged.columns:</span>
-<span id="cb17-116"><a href="#cb17-116" tabindex="-1"></a>            gt_is_na_series <span class="op">=</span> merged[<span class="st">"is_blank"</span>].<span class="bu">map</span>(_to_bool_flag)</span>
-<span id="cb17-117"><a href="#cb17-117" tabindex="-1"></a>        <span class="cf">else</span>:</span>
-<span id="cb17-118"><a href="#cb17-118" tabindex="-1"></a>            gt_is_na_series <span class="op">=</span> merged[<span class="ss">f"</span><span class="sc">{</span>gt_answer_col<span class="sc">}</span><span class="ss">_gt"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"is_blank"</span>)</span>
-<span id="cb17-119"><a href="#cb17-119" tabindex="-1"></a>            merged[<span class="st">"gt_is_blank_flag"</span>] <span class="op">=</span> gt_is_na_series</span>
-<span id="cb17-120"><a href="#cb17-120" tabindex="-1"></a></span>
-<span id="cb17-121"><a href="#cb17-121" tabindex="-1"></a>    <span class="co"># ----- prediction NA flags -----</span></span>
-<span id="cb17-122"><a href="#cb17-122" tabindex="-1"></a>    <span class="cf">if</span> pred_is_na_col <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> pred_is_na_col <span class="kw">in</span> merged.columns:</span>
-<span id="cb17-123"><a href="#cb17-123" tabindex="-1"></a>        pred_is_na_series <span class="op">=</span> merged[pred_is_na_col].<span class="bu">map</span>(_to_bool_flag)</span>
-<span id="cb17-124"><a href="#cb17-124" tabindex="-1"></a>    <span class="cf">elif</span> pred_is_na_col <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> pred_is_na_col.lower() <span class="op">==</span> <span class="st">"is_blank"</span>:</span>
-<span id="cb17-125"><a href="#cb17-125" tabindex="-1"></a>        <span class="co"># Same convention: derive from answer_value_pred</span></span>
-<span id="cb17-126"><a href="#cb17-126" tabindex="-1"></a>        pred_is_na_series <span class="op">=</span> merged[<span class="ss">f"</span><span class="sc">{</span>pred_answer_col<span class="sc">}</span><span class="ss">_pred"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"is_blank"</span>)</span>
-<span id="cb17-127"><a href="#cb17-127" tabindex="-1"></a>        merged[<span class="st">"pred_is_blank_flag"</span>] <span class="op">=</span> pred_is_na_series</span>
-<span id="cb17-128"><a href="#cb17-128" tabindex="-1"></a>    <span class="cf">else</span>:</span>
-<span id="cb17-129"><a href="#cb17-129" tabindex="-1"></a>        <span class="co"># Auto-detect or derive if no NA column in preds</span></span>
-<span id="cb17-130"><a href="#cb17-130" tabindex="-1"></a>        <span class="cf">if</span> <span class="st">"is_NA"</span> <span class="kw">in</span> merged.columns:</span>
-<span id="cb17-131"><a href="#cb17-131" tabindex="-1"></a>            pred_is_na_series <span class="op">=</span> merged[<span class="st">"is_NA"</span>].<span class="bu">map</span>(_to_bool_flag)</span>
-<span id="cb17-132"><a href="#cb17-132" tabindex="-1"></a>        <span class="cf">elif</span> <span class="st">"is_blank"</span> <span class="kw">in</span> merged.columns:</span>
-<span id="cb17-133"><a href="#cb17-133" tabindex="-1"></a>            pred_is_na_series <span class="op">=</span> merged[<span class="st">"is_blank"</span>].<span class="bu">map</span>(_to_bool_flag)</span>
-<span id="cb17-134"><a href="#cb17-134" tabindex="-1"></a>        <span class="cf">else</span>:</span>
-<span id="cb17-135"><a href="#cb17-135" tabindex="-1"></a>            pred_is_na_series <span class="op">=</span> merged[<span class="ss">f"</span><span class="sc">{</span>pred_answer_col<span class="sc">}</span><span class="ss">_pred"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"is_blank"</span>)</span>
-<span id="cb17-136"><a href="#cb17-136" tabindex="-1"></a>            merged[<span class="st">"pred_is_blank_flag"</span>] <span class="op">=</span> pred_is_na_series</span>
-<span id="cb17-137"><a href="#cb17-137" tabindex="-1"></a></span>
-<span id="cb17-138"><a href="#cb17-138" tabindex="-1"></a>    ans_scores <span class="op">=</span> []</span>
-<span id="cb17-139"><a href="#cb17-139" tabindex="-1"></a>    ref_scores <span class="op">=</span> []</span>
-<span id="cb17-140"><a href="#cb17-140" tabindex="-1"></a>    na_scores <span class="op">=</span> []</span>
-<span id="cb17-141"><a href="#cb17-141" tabindex="-1"></a>    </span>
-<span id="cb17-142"><a href="#cb17-142" tabindex="-1"></a>    <span class="cf">for</span> idx, row <span class="kw">in</span> merged.iterrows():</span>
-<span id="cb17-143"><a href="#cb17-143" tabindex="-1"></a>        gt_ans <span class="op">=</span> row[<span class="ss">f"</span><span class="sc">{</span>gt_answer_col<span class="sc">}</span><span class="ss">_gt"</span>]</span>
-<span id="cb17-144"><a href="#cb17-144" tabindex="-1"></a>        pred_ans <span class="op">=</span> row[<span class="ss">f"</span><span class="sc">{</span>pred_answer_col<span class="sc">}</span><span class="ss">_pred"</span>]</span>
-<span id="cb17-145"><a href="#cb17-145" tabindex="-1"></a>        gt_ref <span class="op">=</span> row[<span class="ss">f"</span><span class="sc">{</span>gt_ref_col<span class="sc">}</span><span class="ss">_gt"</span>]</span>
-<span id="cb17-146"><a href="#cb17-146" tabindex="-1"></a>        pred_ref <span class="op">=</span> row[<span class="ss">f"</span><span class="sc">{</span>pred_ref_col<span class="sc">}</span><span class="ss">_pred"</span>]</span>
-<span id="cb17-147"><a href="#cb17-147" tabindex="-1"></a>        </span>
-<span id="cb17-148"><a href="#cb17-148" tabindex="-1"></a>        gt_is_na <span class="op">=</span> <span class="bu">bool</span>(gt_is_na_series.iloc[idx])</span>
-<span id="cb17-149"><a href="#cb17-149" tabindex="-1"></a>        pred_is_na <span class="op">=</span> <span class="bu">bool</span>(pred_is_na_series.iloc[idx])</span>
-<span id="cb17-150"><a href="#cb17-150" tabindex="-1"></a>        </span>
-<span id="cb17-151"><a href="#cb17-151" tabindex="-1"></a>        <span class="co"># 1. answer_value component</span></span>
-<span id="cb17-152"><a href="#cb17-152" tabindex="-1"></a>        ans_correct <span class="op">=</span> _answer_value_correct(gt_ans, pred_ans)</span>
-<span id="cb17-153"><a href="#cb17-153" tabindex="-1"></a>        ans_scores.append(<span class="fl">1.0</span> <span class="op">*</span> ans_correct)</span>
-<span id="cb17-154"><a href="#cb17-154" tabindex="-1"></a>        </span>
-<span id="cb17-155"><a href="#cb17-155" tabindex="-1"></a>        <span class="co"># 2. ref_id Jaccard</span></span>
-<span id="cb17-156"><a href="#cb17-156" tabindex="-1"></a>        ref_j <span class="op">=</span> _ref_id_jaccard(gt_ref, pred_ref)</span>
-<span id="cb17-157"><a href="#cb17-157" tabindex="-1"></a>        ref_scores.append(ref_j)</span>
-<span id="cb17-158"><a href="#cb17-158" tabindex="-1"></a>        </span>
-<span id="cb17-159"><a href="#cb17-159" tabindex="-1"></a>        <span class="co"># 3. is_NA component (simple: must match ground truth flag)</span></span>
-<span id="cb17-160"><a href="#cb17-160" tabindex="-1"></a>        na_scores.append(<span class="fl">1.0</span> <span class="cf">if</span> gt_is_na <span class="op">==</span> pred_is_na <span class="cf">else</span> <span class="fl">0.0</span>)</span>
-<span id="cb17-161"><a href="#cb17-161" tabindex="-1"></a>    </span>
-<span id="cb17-162"><a href="#cb17-162" tabindex="-1"></a>    merged[<span class="st">"answer_score"</span>] <span class="op">=</span> ans_scores</span>
-<span id="cb17-163"><a href="#cb17-163" tabindex="-1"></a>    merged[<span class="st">"ref_id_score"</span>] <span class="op">=</span> ref_scores</span>
-<span id="cb17-164"><a href="#cb17-164" tabindex="-1"></a>    merged[<span class="st">"is_NA_score"</span>] <span class="op">=</span> na_scores</span>
-<span id="cb17-165"><a href="#cb17-165" tabindex="-1"></a>    </span>
-<span id="cb17-166"><a href="#cb17-166" tabindex="-1"></a>    merged[<span class="st">"wattbot_score"</span>] <span class="op">=</span> (</span>
-<span id="cb17-167"><a href="#cb17-167" tabindex="-1"></a>        <span class="fl">0.75</span> <span class="op">*</span> merged[<span class="st">"answer_score"</span>]</span>
-<span id="cb17-168"><a href="#cb17-168" tabindex="-1"></a>        <span class="op">+</span> <span class="fl">0.15</span> <span class="op">*</span> merged[<span class="st">"ref_id_score"</span>]</span>
-<span id="cb17-169"><a href="#cb17-169" tabindex="-1"></a>        <span class="op">+</span> <span class="fl">0.10</span> <span class="op">*</span> merged[<span class="st">"is_NA_score"</span>]</span>
-<span id="cb17-170"><a href="#cb17-170" tabindex="-1"></a>    )</span>
-<span id="cb17-171"><a href="#cb17-171" tabindex="-1"></a>    </span>
-<span id="cb17-172"><a href="#cb17-172" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Rows compared: </span><span class="sc">{</span><span class="bu">len</span>(merged)<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb17-173"><a href="#cb17-173" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Mean answer_value score: </span><span class="sc">{</span>merged[<span class="st">'answer_score'</span>]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
-<span id="cb17-174"><a href="#cb17-174" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Mean ref_id score:       </span><span class="sc">{</span>merged[<span class="st">'ref_id_score'</span>]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
-<span id="cb17-175"><a href="#cb17-175" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Mean is_NA score:        </span><span class="sc">{</span>merged[<span class="st">'is_NA_score'</span>]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
-<span id="cb17-176"><a href="#cb17-176" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Overall WattBot score:   </span><span class="sc">{</span>merged[<span class="st">'wattbot_score'</span>]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
-<span id="cb17-177"><a href="#cb17-177" tabindex="-1"></a>    </span>
-<span id="cb17-178"><a href="#cb17-178" tabindex="-1"></a>    <span class="co"># ----- Show some incorrect examples -----</span></span>
-<span id="cb17-179"><a href="#cb17-179" tabindex="-1"></a>    incorrect <span class="op">=</span> merged[</span>
-<span id="cb17-180"><a href="#cb17-180" tabindex="-1"></a>        (merged[<span class="st">"answer_score"</span>] <span class="op">&lt;</span> <span class="fl">1.0</span>)</span>
-<span id="cb17-181"><a href="#cb17-181" tabindex="-1"></a>        <span class="op">|</span> (merged[<span class="st">"ref_id_score"</span>] <span class="op">&lt;</span> <span class="fl">1.0</span>)</span>
-<span id="cb17-182"><a href="#cb17-182" tabindex="-1"></a>        <span class="op">|</span> (merged[<span class="st">"is_NA_score"</span>] <span class="op">&lt;</span> <span class="fl">1.0</span>)</span>
-<span id="cb17-183"><a href="#cb17-183" tabindex="-1"></a>    ]</span>
-<span id="cb17-184"><a href="#cb17-184" tabindex="-1"></a>    </span>
-<span id="cb17-185"><a href="#cb17-185" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> incorrect.empty <span class="kw">and</span> n_examples <span class="op">&gt;</span> <span class="dv">0</span>:</span>
-<span id="cb17-186"><a href="#cb17-186" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">Examples of incorrect / partially correct responses "</span></span>
-<span id="cb17-187"><a href="#cb17-187" tabindex="-1"></a>              <span class="ss">f"(up to </span><span class="sc">{</span>n_examples<span class="sc">}</span><span class="ss"> rows):</span><span class="ch">\n</span><span class="ss">"</span>)</span>
-<span id="cb17-188"><a href="#cb17-188" tabindex="-1"></a>        <span class="co"># Grab up to n_examples "worst" rows by wattbot_score</span></span>
-<span id="cb17-189"><a href="#cb17-189" tabindex="-1"></a>        <span class="cf">for</span> _, row <span class="kw">in</span> incorrect.sort_values(<span class="st">"wattbot_score"</span>).head(n_examples).iterrows():</span>
-<span id="cb17-190"><a href="#cb17-190" tabindex="-1"></a>            q <span class="op">=</span> row[<span class="st">"question_gt"</span>] <span class="cf">if</span> <span class="st">"question_gt"</span> <span class="kw">in</span> row.index <span class="cf">else</span> <span class="va">None</span></span>
-<span id="cb17-191"><a href="#cb17-191" tabindex="-1"></a>            <span class="bu">print</span>(<span class="st">"-"</span> <span class="op">*</span> <span class="dv">80</span>)</span>
-<span id="cb17-192"><a href="#cb17-192" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"id: </span><span class="sc">{</span>row[id_col]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb17-193"><a href="#cb17-193" tabindex="-1"></a>            <span class="cf">if</span> q <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
-<span id="cb17-194"><a href="#cb17-194" tabindex="-1"></a>                <span class="bu">print</span>(<span class="ss">f"Question: </span><span class="sc">{</span>q<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb17-195"><a href="#cb17-195" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"GT answer_value:   </span><span class="sc">{</span>row[<span class="ss">f'</span><span class="sc">{</span>gt_answer_col<span class="sc">}</span><span class="ss">_gt'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb17-196"><a href="#cb17-196" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"Pred answer_value: </span><span class="sc">{</span>row[<span class="ss">f'</span><span class="sc">{</span>pred_answer_col<span class="sc">}</span><span class="ss">_pred'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb17-197"><a href="#cb17-197" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"GT ref_id:         </span><span class="sc">{</span>row[<span class="ss">f'</span><span class="sc">{</span>gt_ref_col<span class="sc">}</span><span class="ss">_gt'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb17-198"><a href="#cb17-198" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"Pred ref_id:       </span><span class="sc">{</span>row[<span class="ss">f'</span><span class="sc">{</span>pred_ref_col<span class="sc">}</span><span class="ss">_pred'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb17-199"><a href="#cb17-199" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"answer_score: </span><span class="sc">{</span>row[<span class="st">'answer_score'</span>]<span class="sc">:.3f}</span><span class="ss">, "</span></span>
-<span id="cb17-200"><a href="#cb17-200" tabindex="-1"></a>                  <span class="ss">f"ref_id_score: </span><span class="sc">{</span>row[<span class="st">'ref_id_score'</span>]<span class="sc">:.3f}</span><span class="ss">, "</span></span>
-<span id="cb17-201"><a href="#cb17-201" tabindex="-1"></a>                  <span class="ss">f"is_NA_score: </span><span class="sc">{</span>row[<span class="st">'is_NA_score'</span>]<span class="sc">:.3f}</span><span class="ss">, "</span></span>
-<span id="cb17-202"><a href="#cb17-202" tabindex="-1"></a>                  <span class="ss">f"wattbot_score: </span><span class="sc">{</span>row[<span class="st">'wattbot_score'</span>]<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
-<span id="cb17-203"><a href="#cb17-203" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">"-"</span> <span class="op">*</span> <span class="dv">80</span>)</span>
-<span id="cb17-204"><a href="#cb17-204" tabindex="-1"></a>    </span>
-<span id="cb17-205"><a href="#cb17-205" tabindex="-1"></a>    <span class="cf">return</span> merged</span></code></pre>
-</div>
-<div class="codewrapper sourceCode" id="cb18">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>results_df <span class="op">=</span> compute_wattbot_score(</span>
-<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>    train_qa_path<span class="op">=</span><span class="st">"./data/train_QA.csv"</span>,</span>
-<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>    preds_path<span class="op">=</span><span class="st">"./data/wattbot_solutions.csv"</span>,</span>
-<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>    gt_is_na_col<span class="op">=</span><span class="st">"is_blank"</span>,</span>
-<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a>    pred_is_na_col<span class="op">=</span><span class="st">"is_blank"</span>,</span>
-<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>results_df <span class="op">=</span> compute_wattbot_score(</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>    train_qa_path<span class="op">=</span><span class="st">"./data/train_QA.csv"</span>,</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>    preds_path<span class="op">=</span><span class="st">"./data/wattbot_solutions.csv"</span>,</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>    gt_is_na_col<span class="op">=</span><span class="st">"is_blank"</span>,</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>    pred_is_na_col<span class="op">=</span><span class="st">"is_blank"</span>,</span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>)</span></code></pre>
 </div>
 <div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
