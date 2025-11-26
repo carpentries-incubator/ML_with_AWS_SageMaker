@@ -352,7 +352,43 @@
 <div class="accordion accordion-flush" id="accordionFlush11">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading11">
-        <a href="Resource-management-cleanup.html">10. Resource Management and Monitoring</a>
+        <a href="01_RAG_WattBot_GPU-instance.html">10. RAG with a Notebook GPU</a>
+    </div>
+<!--/div.accordion-header-->
+
+  </div>
+<!--/div.accordion-item-->
+</div>
+<!--/div.accordion-flush-->
+
+<div class="accordion accordion-flush" id="accordionFlush12">
+  <div class="accordion-item">
+    <div class="accordion-header" id="flush-heading12">
+        <a href="02_RAG_WattBot_Processing_Jobs.html">11. RAG with Processing Jobs</a>
+    </div>
+<!--/div.accordion-header-->
+
+  </div>
+<!--/div.accordion-item-->
+</div>
+<!--/div.accordion-flush-->
+
+<div class="accordion accordion-flush" id="accordionFlush13">
+  <div class="accordion-item">
+    <div class="accordion-header" id="flush-heading13">
+        <a href="03_RAG_WattBot_Bedrock.html">12. RAG with Bedrock</a>
+    </div>
+<!--/div.accordion-header-->
+
+  </div>
+<!--/div.accordion-item-->
+</div>
+<!--/div.accordion-flush-->
+
+<div class="accordion accordion-flush" id="accordionFlush14">
+  <div class="accordion-item">
+    <div class="accordion-header" id="flush-heading14">
+        <a href="Resource-management-cleanup.html">13. Resource Management and Monitoring</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -541,6 +577,41 @@ Bedrock‑managed RAG.</li>
 and model‑management preferences.</li>
 <li>Later episodes will walk through each pattern in depth using
 hands‑on examples.</li>
+</ul></section><section id="01_RAG_WattBot_GPU-instance"><h2 class="section-heading"><a href="01_RAG_WattBot_GPU-instance.html">RAG with a Notebook GPU</a></h2>
+<hr class="half-width">
+<ul>
+<li>
+<strong>Notebook setup</strong>: Start by provisioning a GPU-backed
+notebook instance (e.g., <code>ml.g5.xlarge</code>) so that both the
+embedding model and Qwen2.5-7B can run comfortably.</li>
+<li>
+<strong>Local-first RAG</strong>: For teaching (and small corpora),
+we avoid an external vector database and instead perform cosine
+similarity search over in-memory embeddings.</li>
+<li>
+<strong>Ground-truth units</strong>: The <code>answer_unit</code>
+column is always copied directly from <code>train_QA.csv</code>, never
+guessed by the LLM.</li>
+<li>
+<strong>Two-stage LLM use</strong>: One call focuses on
+<em>answering and citing</em>; a second, lighter call produces a short
+explanation tagged with an evidence type.</li>
+<li>
+<strong>WattBot conventions</strong>: We respect the Kaggle
+competition format, using <code>is_blank</code> for unanswerable
+questions and for missing fields.</li>
+<li>
+<strong>Scalability path</strong>: The same logic can later be
+swapped to FAISS/Chroma and larger models, while preserving the
+interface used here.</li>
+</ul></section><section id="02_RAG_WattBot_Processing_Jobs"><h2 class="section-heading"><a href="02_RAG_WattBot_Processing_Jobs.html">RAG with Processing JobsRAG with Processing Jobs<a class="anchor" aria-label="anchor" href="#rag-with-processing-jobs"></a></a></h2>
+<hr class="half-width">
+<ul>
+<li>TODO</li>
+</ul></section><section id="03_RAG_WattBot_Bedrock"><h2 class="section-heading"><a href="03_RAG_WattBot_Bedrock.html">RAG with Bedrock</a></h2>
+<hr class="half-width">
+<ul>
+<li>TODO</li>
 </ul></section><section id="Resource-management-cleanup"><h2 class="section-heading"><a href="Resource-management-cleanup.html">Resource Management and Monitoring</a></h2>
 <hr class="half-width">
 <ul>
