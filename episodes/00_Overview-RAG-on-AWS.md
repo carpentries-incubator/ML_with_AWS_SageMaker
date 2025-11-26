@@ -53,15 +53,14 @@ For large corpora or workflows where you want repeatable, offline computation, y
 
 ## When Do You Use Which Approach?
 
-**Notebook RAG**  
-Fastest to build. Great for learning, prototyping, and small‑scale research.
+1. **Notebook RAG**: Fastest to build. Great for learning, prototyping, and small‑scale research.
 
-**Processing‑job RAG**  
-Ideal for embedding large corpora and running periodic batch generation. Clean, reproducible, cost‑efficient (especially if you spend a lot of time in your notebook viewing results, rather than generating them).
+2. **Processing‑job RAG**: Ideal for embedding large corpora and running periodic batch generation. Clean, reproducible, cost‑efficient (especially if you spend a lot of time in your notebook viewing results, rather than generating them).
 
-**Bedrock RAG**  
-Best for production or long‑term research tools that need scalability without hosting models. Bedrock can also give RAG systems access to proprietary models which would need to be purhcased separately otherwise.
+3. **Bedrock RAG**: Best for production or long‑term research tools that need scalability without hosting models. Bedrock can also give RAG systems access to proprietary models which would need to be purhcased separately otherwise.
 
+4. TODO
+   
 :::::::::::::::::::::::::::::::::::::: keypoints
 
 - RAG is an inference‑only workflow: no training or fine‑tuning required.
