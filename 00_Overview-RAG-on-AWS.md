@@ -38,12 +38,7 @@ RAG is an inference‑only pattern that layers retrieval logic around an LLM.
 
 ## Approaches to Running RAG on AWS
 
-Below are the four common patterns used across research and industry.
-
-### New Cloud Stuff
-
 There are several general approaches for setting up a Retrieval-Augmented Generation (RAG) workflow on AWS, each suited to different scales and constraints.
-
 
 1. **Run everything inside a single GPU-backed notebook instance**
 For small- to medium-sized models (< 70 B), it's often simplest to just pick a GPU instance (e.g., [p3.2xlarge](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html)), load your embedding and generation models directly in the notebook, and run RAG end-to-end there. This keeps the architecture simple and avoids extra moving parts, as long as you're disciplined about shutting down the instance when you’re done so you don’t leak cost. It's also possible to do this with larger models, but the costs to use more powerful GPUs (e.g., $15/hour) may be a limiting factor.
