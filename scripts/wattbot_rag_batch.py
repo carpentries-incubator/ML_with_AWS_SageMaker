@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import torch
 from sentence_transformers import SentenceTransformer
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
 
 # ---------------------- similarity + retrieval ----------------------
@@ -91,18 +92,22 @@ def normalize_answer_value(raw_value: str) -> str:
     if s.lower() == "is_blank":
         return "is_blank"
 
+    # If we got something like "1438 kWh", keep just the first token
     if " " in s:
         first, *_ = s.split()
         s = first
 
+    # Strip commas from numbers
     s = s.replace(",", "")
 
+    # Try numeric normalization
     try:
         val = float(s)
         if val.is_integer():
             return str(int(val))
         return f"{val:.10g}"  # avoid scientific notation
     except ValueError:
+        # Categorical value (e.g., TRUE, FALSE, Water consumption)
         return s
 
 
@@ -128,26 +133,21 @@ def explanation_system_prompt() -> str:
     )
 
 
-# ---------------------- Qwen wrapper ----------------------
+# ---------------------- Qwen loading + wrapper ----------------------
 
 
-def call_qwen_chat(
-    question: str,
-    context: str,
-    system_prompt: str,
-    model_id: str = "Qwen/Qwen2.5-7B-Instruct",
-    max_new_tokens: int = 512,
-):
+def load_qwen_pipeline(model_id: str = "Qwen/Qwen2.5-7B-Instruct"):
     """
-    Simple local Qwen chat wrapper using transformers pipeline.
-    """
-    from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+    Load Qwen once and return a text-generation pipeline.
 
-    print(f"Loading Qwen model: {model_id}")
+    This should be called a single time per processing job and then reused
+    for all calls to `call_qwen_chat`.
+    """
+    print(f"Loading model: {model_id}", flush=True)
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     model = AutoModelForCausalLM.from_pretrained(
         model_id,
-        torch_dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32,
+        dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32,
         device_map="auto",
     )
 
@@ -156,7 +156,19 @@ def call_qwen_chat(
         model=model,
         tokenizer=tokenizer,
     )
+    return generator
 
+
+def call_qwen_chat(
+    question: str,
+    context: str,
+    system_prompt: str,
+    generator,
+    max_new_tokens: int = 512,
+):
+    """
+    Qwen chat wrapper using a pre-loaded `generator` pipeline.
+    """
     messages = [
         {"role": "system", "content": system_prompt},
         {
@@ -180,9 +192,7 @@ def call_qwen_chat(
     outputs = generator(
         prompt_text,
         max_new_tokens=max_new_tokens,
-        do_sample=True,
-        temperature=0.3,
-        top_p=0.9,
+        do_sample=False,
     )
 
     return outputs[0]["generated_text"][len(prompt_text) :].strip()
@@ -208,7 +218,7 @@ def explanation_phase_for_question(
     question: str,
     answer: str,
     supporting_materials: str,
-    model_id: str = "Qwen/Qwen2.5-7B-Instruct",
+    generator,
 ):
     sys_prompt = explanation_system_prompt()
     prompt = build_explanation_prompt(question, answer, supporting_materials)
@@ -217,7 +227,7 @@ def explanation_phase_for_question(
         question=prompt,
         context="",
         system_prompt=sys_prompt,
-        model_id=model_id,
+        generator=generator,
         max_new_tokens=256,
     )
     return raw_explanation.strip()
@@ -227,7 +237,7 @@ def answer_phase_for_question(
     qid: str,
     question: str,
     retrieved_chunks,
-    qwen_model_id: str = "Qwen/Qwen2.5-7B-Instruct",
+    generator,
 ):
     """
     Use Qwen to answer a single WattBot question given retrieved chunks.
@@ -260,7 +270,7 @@ def answer_phase_for_question(
         question=user_prompt,
         context="",
         system_prompt=system_prompt,
-        model_id=qwen_model_id,
+        generator=generator,
         max_new_tokens=512,
     )
 
@@ -320,8 +330,8 @@ def run_single_qa(
     chunk_embeddings: np.ndarray,
     chunked_docs,
     docid_to_url: dict,
+    qwen_generator,
     top_k: int = 8,
-    qwen_model_id: str = "Qwen/Qwen2.5-7B-Instruct",
     retrieval_threshold: float = 0.25,
 ):
     """
@@ -350,9 +360,10 @@ def run_single_qa(
         qid=qid,
         question=question,
         retrieved_chunks=retrieved,
-        qwen_model_id=qwen_model_id,
+        generator=qwen_generator,
     )
 
+    # Combine retrieval confidence + LLM signal for unanswerable detection
     is_blank = bool(is_blank_llm) or (top_score < retrieval_threshold)
 
     if is_blank:
@@ -365,6 +376,7 @@ def run_single_qa(
         supporting_materials = "is_blank"
         explanation = ""
     else:
+        # Final normalization in case the model gave us something messy
         answer_value = normalize_answer_value(answer_value)
         answer_unit = "is_blank"
 
@@ -385,7 +397,7 @@ def run_single_qa(
             question=question,
             answer=answer,
             supporting_materials=supporting_materials,
-            model_id=qwen_model_id,
+            generator=qwen_generator,
         )
 
     return {
@@ -410,6 +422,12 @@ def main():
     parser.add_argument("--output_dir", type=str, default="/opt/ml/processing/output")
     parser.add_argument("--embedding_model_id", type=str, default="thenlper/gte-large")
     parser.add_argument("--top_k", type=int, default=8)
+    parser.add_argument(
+        "--qwen_model_id",
+        type=str,
+        default="Qwen/Qwen2.5-7B-Instruct",
+        help="Which Qwen chat model to use for generation.",
+    )
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
@@ -426,7 +444,12 @@ def main():
 
     chunk_embeddings = np.load(emb_path)
     train_df = pd.read_csv(train_qa_path)
-    metadata_df = pd.read_csv(metadata_path)
+
+    # Robust metadata load: handle non-UTF-8 characters
+    try:
+        metadata_df = pd.read_csv(metadata_path)
+    except UnicodeDecodeError:
+        metadata_df = pd.read_csv(metadata_path, encoding="latin1")
 
     print(f"Chunks: {len(chunked_docs)}")
     print(f"Train QAs: {len(train_df)}")
@@ -440,7 +463,11 @@ def main():
         if doc_id and isinstance(url, str) and url.strip():
             docid_to_url[doc_id] = url.strip()
 
+    # Load embedding model
     embedder = SentenceTransformer(args.embedding_model_id)
+
+    # Load Qwen ONCE and reuse
+    qwen_generator = load_qwen_pipeline(args.qwen_model_id)
 
     results = []
     for _, row in train_df.iterrows():
@@ -450,6 +477,7 @@ def main():
             chunk_embeddings=chunk_embeddings,
             chunked_docs=chunked_docs,
             docid_to_url=docid_to_url,
+            qwen_generator=qwen_generator,
             top_k=args.top_k,
         )
         results.append(out)
