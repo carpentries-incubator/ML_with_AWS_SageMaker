@@ -52,7 +52,7 @@ Bedrock-hosted models.
 
 This notebook assumes you have already run the earlier WattBot episodes so that:
 
-- the WattBot corpus has been chunked into `wattbot_chunks.jsonl`
+- the WattBot corpus has been chunked into `chunks.jsonl`
 - the WattBot training questions `train_QA.csv` and `metadata.csv` live under a `data/` folder
 - (optionally) you have a local embedding file from earlier experiments, e.g. `embeddings.npy`
 
@@ -117,7 +117,7 @@ bedrock_model_id = "deepseek.v3-v1:0"
 # S3 bucket + keys where Episode 02 wrote the artifacts.
 # TODO: Update these keys to match your pipeline.
 bucket_name = "chris-rag"  # <-- change to your bucket
-chunks_key = "wattbot_chunks.jsonl"
+chunks_key = "chunks.jsonl"
 # embeddings_key = "embeddings/embeddings.npy"
 train_key = "train_QA.csv"
 metadata_key = "metadata.csv"
@@ -142,7 +142,7 @@ def download_from_s3(key: str, local_name: str) -> str:
     return local_path
 
 
-chunks_path = download_from_s3(chunks_key, "wattbot_chunks.jsonl")
+chunks_path = download_from_s3(chunks_key, "chunks.jsonl")
 # emb_path = download_from_s3(embeddings_key, "embeddings.npy")
 train_qa_path = download_from_s3(train_key, "train_QA.csv")
 metadata_path = download_from_s3(metadata_key, "metadata.csv")
