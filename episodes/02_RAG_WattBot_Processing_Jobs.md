@@ -136,182 +136,29 @@ corpus_dir
 ```
 
 
-## Step 2 – Regenerate pages and chunks (local)
+## Step 2 – Verify chunks exist on S3 (from previous episode)
 
-We reuse the same PDF → pages → overlapping chunks pipeline from Episode 1. For clarity, we keep this logic in the notebook so learners can see exactly how context is constructed.
-
-
+For our processing job, we'll reuse the same  chunks generated in prev. episode. The code below just verifies you have this file available in S3 (for calling from the processing job).
 
 ```python
-!pip install pypdf
+# load chunks from s3
+chunks_s3_key = 'chunks.jsonl'
+chunks_s3_uri = f"s3://{bucket_name}/{chunks_s3_key}"
+local_chunks_path = os.path.join(local_data_dir, chunks_s3_key)
+if not os.path.exists(local_chunks_path):
+    s3_client.download_file(bucket_name, chunks_s3_key, local_chunks_path)
+with open(local_chunks_path, "r", encoding="utf-8") as f:
+    chunked_docs = [json.loads(line) for line in f]
+print(f"Loaded {len(chunked_docs)} chunks from {local_chunks_path}")
 
 ```
 
 
-```python
-from pypdf import PdfReader
-from typing import List, Dict, Any
-
-
-def pdfs_to_page_docs(metadata: pd.DataFrame, pdf_dir: str) -> List[Dict[str, Any]]:
-    """Load each PDF into a list of page-level dictionaries.
-
-    Each dict has keys: text, doc_id, title, url, page_num, page_label, total_pages.
-    """
-    page_docs: List[Dict[str, Any]] = []
-
-    for _, row in metadata.iterrows():
-        doc_id = str(row["id"]).strip()
-        title = str(row.get("title", "")).strip()
-        url = str(row.get("url", "")).strip()
-
-        pdf_path = os.path.join(pdf_dir, f"{doc_id}.pdf")
-        if not os.path.exists(pdf_path):
-            print(f"Missing PDF for {doc_id}, skipping.")
-            continue
-
-        try:
-            reader = PdfReader(pdf_path)
-        except Exception as e:
-            print(f"Failed to read {pdf_path}: {e}")
-            continue
-
-        total_pages = len(reader.pages)
-        for i, page in enumerate(reader.pages):
-            try:
-                text = page.extract_text() or ""
-            except Exception as e:
-                print(f"Failed to extract text from {doc_id} page {i}: {e}")
-                text = ""
-
-            text = text.strip()
-            if not text:
-                # Still keep the page so we know it exists, but mark it as empty
-                text = "[[EMPTY PAGE TEXT – see original PDF for tables/figures]]"
-
-            page_docs.append(
-                {
-                    "text": text,
-                    "doc_id": doc_id,
-                    "title": title,
-                    "url": url,
-                    "page_num": i,
-                    "page_label": str(i + 1),
-                    "total_pages": total_pages,
-                }
-            )
-
-    return page_docs
-
-
-page_docs = pdfs_to_page_docs(metadata_df, corpus_dir)
-print(f"Loaded {len(page_docs)} page-level records from {len(metadata_df)} PDFs.")
-page_docs[0] if page_docs else None
-
-
-def split_text_into_chunks(
-    text: str,
-    chunk_size_chars: int = 1200,
-    chunk_overlap_chars: int = 200,
-) -> List[str]:
-    """Split `text` into overlapping character-based chunks.
-
-    This is a simple baseline; more advanced versions might:
-    - split on sentence boundaries, or
-    - merge short paragraphs and respect section headings.
-    """
-    text = text.strip()
-    if not text:
-        return []
-
-    chunks: List[str] = []
-    start = 0
-    text_len = len(text)
-
-    while start < text_len:
-        end = min(start + chunk_size_chars, text_len)
-        chunk = text[start:end]
-        chunks.append(chunk)
-        if end == text_len:
-            break
-        # Move the window forward, keeping some overlap
-        start = end - chunk_overlap_chars
-
-    return chunks
-
-
-def make_chunked_docs(
-    page_docs: List[Dict[str, Any]],
-    chunk_size_chars: int = 1200,
-    chunk_overlap_chars: int = 200,
-) -> List[Dict[str, Any]]:
-    """Turn page-level records into smaller overlapping text chunks.
-
-    Each chunk keeps a pointer back to its document and page metadata.
-    """
-    chunked: List[Dict[str, Any]] = []
-    for page in page_docs:
-        page_text = page["text"]
-        chunks = split_text_into_chunks(
-            page_text,
-            chunk_size_chars=chunk_size_chars,
-            chunk_overlap_chars=chunk_overlap_chars,
-        )
-        for idx, chunk_text in enumerate(chunks):
-            chunked.append(
-                {
-                    "text": chunk_text,
-                    "doc_id": page["doc_id"],
-                    "title": page["title"],
-                    "url": page["url"],
-                    "page_num": page["page_num"],
-                    "page_label": page["page_label"],
-                    "total_pages": page["total_pages"],
-                    "chunk_idx_in_page": idx,
-                }
-            )
-    return chunked
-
-
-chunked_docs = make_chunked_docs(page_docs)
-print("Raw pages:", len(page_docs))
-print("Chunked docs:", len(chunked_docs))
-chunked_docs[0] if chunked_docs else None
-```
-
-
-## Step 3 – Serialize chunks to JSONL and upload to S3
-
-The Processing jobs will not have access to your Python variables. Instead, we serialize `chunked_docs` to `wattbot_chunks.jsonl` and upload it to S3 under this episode's prefix.
-
-Each line is one JSON object representing a chunk, including its text and metadata.
-
-
-
-```python
-
-chunks_jsonl_path = os.path.join(local_data_dir, "wattbot_chunks.jsonl")
-
-with open(chunks_jsonl_path, "w", encoding="utf-8") as f:
-    for ch in chunked_docs:
-        f.write(json.dumps(ch, ensure_ascii=False) + "\n")
-
-print(f"Wrote {len(chunked_docs)} chunks to {chunks_jsonl_path}")
-
-chunks_key = "wattbot_chunks.jsonl"
-s3_client.upload_file(chunks_jsonl_path, bucket_name, chunks_key)
-
-chunks_s3_uri = f"s3://{bucket_name}/{chunks_key}"
-print("Chunks JSONL in S3:", chunks_s3_uri)
-
-```
-
-
-## Step 4 – Processing Job 1: embed all chunks on a GPU
+## Step 3 – Processing Job 1: embed all chunks on a GPU
 
 Now we launch a short-lived Hugging Face **Processing job** that:
 
-1. Downloads `wattbot_chunks.jsonl` from S3.
+1. Downloads `chunks.jsonl` from S3.
 2. Loads `thenlper/gte-large` from Hugging Face.
 3. Encodes each chunk into an embedding vector.
 4. Saves the full matrix as `embeddings.npy` back to S3.
@@ -376,7 +223,7 @@ embedding_processor.run(
     ],
     arguments=[
         "--model_id", embedding_model_id,
-        "--input_filename", "wattbot_chunks.jsonl",
+        "--input_filename", "chunks.jsonl",
         "--text_key", "text",
         "--input_dir", "/opt/ml/processing/input",
         "--output_dir", "/opt/ml/processing/output",
