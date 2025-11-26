@@ -475,7 +475,7 @@ onto Bedrock-hosted models.</p>
 <hr class="half-width"><p>This notebook assumes you have already run the earlier WattBot
 episodes so that:</p>
 <ul><li>the WattBot corpus has been chunked into
-<code>wattbot_chunks.jsonl</code>
+<code>chunks.jsonl</code>
 </li>
 <li>the WattBot training questions <code>train_QA.csv</code> and
 <code>metadata.csv</code> live under a <code>data/</code> folder</li>
@@ -573,7 +573,7 @@ learners can explore alternatives for their own RAG systems.</p>
 <span id="cb1-23"><a href="#cb1-23" tabindex="-1"></a><span class="co"># S3 bucket + keys where Episode 02 wrote the artifacts.</span></span>
 <span id="cb1-24"><a href="#cb1-24" tabindex="-1"></a><span class="co"># </span><span class="al">TODO</span><span class="co">: Update these keys to match your pipeline.</span></span>
 <span id="cb1-25"><a href="#cb1-25" tabindex="-1"></a>bucket_name <span class="op">=</span> <span class="st">"chris-rag"</span>  <span class="co"># &lt;-- change to your bucket</span></span>
-<span id="cb1-26"><a href="#cb1-26" tabindex="-1"></a>chunks_key <span class="op">=</span> <span class="st">"wattbot_chunks.jsonl"</span></span>
+<span id="cb1-26"><a href="#cb1-26" tabindex="-1"></a>chunks_key <span class="op">=</span> <span class="st">"chunks.jsonl"</span></span>
 <span id="cb1-27"><a href="#cb1-27" tabindex="-1"></a><span class="co"># embeddings_key = "embeddings/embeddings.npy"</span></span>
 <span id="cb1-28"><a href="#cb1-28" tabindex="-1"></a>train_key <span class="op">=</span> <span class="st">"train_QA.csv"</span></span>
 <span id="cb1-29"><a href="#cb1-29" tabindex="-1"></a>metadata_key <span class="op">=</span> <span class="st">"metadata.csv"</span></span>
@@ -597,7 +597,7 @@ learners can explore alternatives for their own RAG systems.</p>
 <span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>    <span class="cf">return</span> local_path</span>
 <span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a></span>
 <span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a></span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>chunks_path <span class="op">=</span> download_from_s3(chunks_key, <span class="st">"wattbot_chunks.jsonl"</span>)</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>chunks_path <span class="op">=</span> download_from_s3(chunks_key, <span class="st">"chunks.jsonl"</span>)</span>
 <span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co"># emb_path = download_from_s3(embeddings_key, "embeddings.npy")</span></span>
 <span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>train_qa_path <span class="op">=</span> download_from_s3(train_key, <span class="st">"train_QA.csv"</span>)</span>
 <span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>metadata_path <span class="op">=</span> download_from_s3(metadata_key, <span class="st">"metadata.csv"</span>)</span>
