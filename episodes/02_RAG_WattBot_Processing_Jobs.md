@@ -1,9 +1,20 @@
 ---
-title: "RAG with Processing Jobs: WattBot 2025"
+title: "RAG with Processing Jobs"
 teaching: 30
 exercises: 20
 ---
 
+:::::::::::::::::::::::::::::::::::::: questions
+
+- TODO
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::: objectives
+
+- TODO
+
+::::::::::::::::::::::::::::::::::::::::::::::::
 
 
 # RAG with Processing Jobs
@@ -725,12 +736,8 @@ results_df = compute_wattbot_score(
 
 ```
 
+::::::::::::::::::::::::::::::::::::: keypoints
 
-```python
+- TODO
 
-```
-
-
-```python
-
-```
+::::::::::::::::::::::::::::::::::::::::::::::::

@@ -1,11 +1,24 @@
-# Episode 03 – Evaluating WattBot RAG with Amazon Bedrock
+---
+title: "RAG with Bedrock"
+teaching: 30
+exercises: 20
+---
 
-In the previous episodes you built a basic RAG pipeline for WattBot using a local GPU instance
-and then an offline SageMaker Processing job. Both approaches gave you full control over the
-models, but you were responsible for provisioning compute and keeping model versions up to date.
+:::::::::::::::::::::::::::::::::::::: questions
 
-In this episode we move the core model work — **both text embeddings and answer generation** —
-onto **Amazon Bedrock**. We'll use:
+- TODO
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::: objectives
+
+- TODO
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+In the previous episodes you built a basic RAG pipeline for WattBot using a local GPU instance and then an offline SageMaker Processing job. Both approaches gave you full control over the models, but you were responsible for provisioning compute and keeping model versions up to date.
+
+In this episode we move the core model work — **both text embeddings and answer generation** — onto **Amazon Bedrock**. We'll use:
 
 - an **Amazon Titan Text Embeddings V2** model to turn WattBot chunks into vectors, and  
 - an **Anthropic Claude** model hosted on Bedrock to generate answers and explanations.
@@ -1134,3 +1147,9 @@ tunable component** in a larger system. Iterating on chunking, indexing, and
 retrieval policies will almost always give you more headroom than swapping
 between already-good models.
 
+
+::::::::::::::::::::::::::::::::::::: keypoints
+
+- TODO
+
+::::::::::::::::::::::::::::::::::::::::::::::::
