@@ -392,7 +392,7 @@
       </div>
       <hr></nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Overview of RAG Workflows on AWS</h1>
-        <p>Last updated on 2025-11-26 |
+        <p>Last updated on 2025-12-01 |
 
         <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker/edit/main/episodes/00_Overview-RAG-on-AWS.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -470,25 +470,27 @@ to do this with larger models, but the costs to use more powerful GPUs
 <li><p><strong>Use SageMaker Processing Jobs to run batch jobs for
 embeddings and/or generation.</strong> For large corpora or workflows
 where you want repeatable, offline computation, you can treat parts of
-the RAG pipeline—especially embedding—like a batch processing job rather
-than a live model. Instead of deploying an inference endpoint, you run a
-short-lived Hugging Face Processing job that spins up a GPU instance,
-loads your embedding or generation model, processes all the chunked text
-in one shot, and saves the results back to S3. This pattern is ideal for
-“compute once, use many times” workloads, such as generating embeddings
-for thousands of documents or producing long-form outputs that don’t
-require low latency. Because the job only exists while the batch
-completes, you avoid the continuous cost of an always-on endpoint.
-However, this approach is not suited for per-query RAG
+the RAG pipeline—especially embedding and generation—like batch
+processing jobs rather than a live model. Instead of using a notebook
+GPU, you run a short-lived Hugging Face Processing job that spins up a
+GPU instance, loads your embedding or generation model, processes all
+the chunked text in one shot, and saves the results back to S3. This
+pattern is ideal for “compute once, use many times” workloads, such as
+generating embeddings for thousands of documents or producing long-form
+outputs that don’t require low latency. Because the job only exists
+while the batch completes, you avoid the continuous cost of an always-on
+endpoint. However, this approach is not suited for per-query RAG
 retrieval—launching a job per user request would be far too slow, since
-starting a training job can take several minutes.</p></li>
+starting a Processing job can take several minutes.</p></li>
 <li><p><strong>Use Amazon Bedrock for managed embedding and generation
 APIs.</strong> If you prefer fully managed foundation models and don’t
 want to own model hosting at all, Bedrock lets you call embedding and
 generation models via API from your RAG pipeline. You still can still
 manage retrieval logic (e.g., add reranking), but you outsource the
 heavy model lifecycle work—at the trade-off of less control over
-architectures and sometimes higher per-token cost.</p></li>
+architectures and sometimes higher per-token cost. Bedrock can also give
+RAG systems access to proprietary models which would need to be
+purhcased separately otherwise.</p></li>
 <li><p><strong>Use long-lived inference endpoints for online RAG
 workloads.</strong> For applications that need low-latency, interactive
 RAG (APIs, chatbots, dashboards), you can deploy your own embedding and
@@ -590,8 +592,8 @@ any links that you are not going to use.
   "url": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/00_Overview-RAG-on-AWS.html",
   "identifier": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/00_Overview-RAG-on-AWS.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2025-11-26",
-  "datePublished": "2025-11-26"
+  "dateModified": "2025-12-01",
+  "datePublished": "2025-12-01"
 }
 
   </script><script>
