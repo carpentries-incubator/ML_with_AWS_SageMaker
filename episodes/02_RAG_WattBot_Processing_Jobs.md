@@ -263,7 +263,7 @@ print("Embeddings shape:", chunk_embeddings.shape)
 
 For the second job, we pass four inputs:
 
-- `wattbot_chunks.jsonl` – serialized chunks
+- `chunks.jsonl` – serialized chunks
 - `embeddings.npy` – precomputed chunk embeddings
 - `train_QA.csv` – training questions (to compare with ground truth)
 - `metadata.csv` – to resolve `ref_id` → URL
