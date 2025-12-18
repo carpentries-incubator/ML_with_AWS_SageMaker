@@ -401,6 +401,23 @@ This setup simplifies training, allowing you to maintain custom environments dir
 ### Deploying to other instances
 For this deployment, we configure the "XGBoost" estimator with a custom training script, train_xgboost.py, and define hyperparameters directly within the SageMaker setup. Here's the full code, with some additional explanation following the code.
 
+#### Cost tracking
+When you launch a SageMaker training job from a notebook, SageMaker creates new managed resources (EC2 instances, attached storage, logs) on your behalf. These resources do not automatically inherit the notebook instance's tags. 
+
+To avoid this, we explicitly tag each training job at launch time. This ensures that compute usage is traceable to a project, a purpose, and a human-readable name, even after the job has completed.
+```python
+name = "John Doe" # replace with your name
+project = "sinkorswim" # replace with your team name
+purpose = "train_XGBoost"
+
+job_tags = [
+    {"Key": "Name", "Value": name},
+    {"Key": "Project", "Value": project},
+    {"Key": "Purpose", "Value": purpose},
+]
+
+```
+
 
 ```python
 from sagemaker.inputs import TrainingInput
@@ -427,6 +444,7 @@ xgboost_estimator = XGBoost(
     entry_point='train_xgboost.py',      # Custom script path
     source_dir='AWS_helpers',               # Directory where your script is located
     role=role,
+    tags=job_tags,
     instance_count=instance_count,
     instance_type=instance_type,
     output_path=output_path,
@@ -571,6 +589,7 @@ xgboost_estimator_builtin = Estimator(
     max_run=max_run, # in seconds; always include (max 48 hours)
     image_uri=sagemaker.image_uris.retrieve("xgboost", session.boto_region_name, version="1.5-1"),
     role=role,
+    tags=job_tags,
     instance_count=instance_count,
     instance_type=instance_type,
     output_path=output_path,
@@ -688,6 +707,7 @@ xgboost_estimator = Estimator(
     max_run=max_run, # in seconds; always include (max 48 hours)
     image_uri=sagemaker.image_uris.retrieve("xgboost", session.boto_region_name, version="1.5-1"),
     role=role,
+    tags=job_tags,
     instance_count=instance_count,  # Start with 1 instance for baseline
     instance_type=instance_type,
     output_path=output_path,
