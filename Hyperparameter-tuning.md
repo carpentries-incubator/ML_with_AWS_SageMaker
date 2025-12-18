@@ -81,6 +81,21 @@ local_instance = response['InstanceType']
 print(f"Instance Type: {local_instance}")
 ```
 
+**Cost tracking**: Just like in the previous episode, we explicitly tag each training job at launch time. This ensures that compute usage is traceable to a project, a purpose, and a human-readable name, even after the job has completed.
+```python
+name = "John Doe" # replace with your name
+project = "sinkorswim" # replace with your team name
+purpose = "train_XGBoost"
+
+job_tags = [
+    {"Key": "Name", "Value": name},
+    {"Key": "Project", "Value": project},
+    {"Key": "Purpose", "Value": purpose},
+]
+
+```
+
+
 Next, we'll configure the baseline estimator that we plan to do hyperparameter search on.
 ```python
 import sagemaker
@@ -109,6 +124,7 @@ pytorch_estimator = PyTorch(
     max_run=max_run, # in seconds; always include (max 48 hours)
     entry_point="AWS_helpers/train_nn.py",  # Your script for training
     role=role,
+    tags=job_tags,
     instance_count=instance_count,
     instance_type=instance_type,
     framework_version="1.9",
@@ -179,6 +195,18 @@ In step 3, we set up the `HyperparameterTuner`, which controls the tuning proces
 **Always start with `max_jobs = 1` and `max_parallel_jobs=1`.**
 Before running the full search, let's test our setup by setting max_jobs = 1. This will test just one possible hyperparameter configuration. This critical step helps ensure our code is functional before attempting to scale up. 
 
+**Adjust cost tracking "purpose" tag to include mention of tuning.**
+
+```python
+purpose = "tune_NeurnalNet"
+
+tune_job_tags = [
+    {"Key": "Name", "Value": name},
+    {"Key": "Project", "Value": project},
+    {"Key": "Purpose", "Value": purpose},
+]
+
+```
 
 ```python
 # Tuner configuration
@@ -191,7 +219,8 @@ tuner = HyperparameterTuner(
     hyperparameter_ranges=hyperparameter_ranges,
     strategy="Bayesian",  # Default setting (recommend sticking with this!); can adjust to "Random" for uniform sampling across the range
     max_jobs=1,                # Always start with 1 instance for debugging purposes. Adjust based on exploration needs (keep below 30 to be kind to environment). 
-    max_parallel_jobs=1         # Always start with 1 instance for debugging purposes. Adjust based on available resources and budget. Recommended to keep this value < 4 since SageMaker tests values dynamically.
+    max_parallel_jobs=1,         # Always start with 1 instance for debugging purposes. Adjust based on available resources and budget. Recommended to keep this value < 4 since SageMaker tests values dynamically.
+    tags=tune_job_tags,
 )
 
 ```
@@ -251,7 +280,8 @@ tuner = HyperparameterTuner(
     objective_type="Maximize",                   # Specify if maximizing or minimizing the metric
     hyperparameter_ranges=hyperparameter_ranges,
     max_jobs=max_jobs,
-    max_parallel_jobs=max_parallel_jobs
+    max_parallel_jobs=max_parallel_jobs,
+    tags=tune_job_tags,
 )
 
 # Define the input paths
