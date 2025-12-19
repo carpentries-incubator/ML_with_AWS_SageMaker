@@ -105,10 +105,42 @@ In the AWS console:
 2. Create a new bucket named something like:  
    `teamname-yourname-wattbot`
 3. Keep **Block all public access** enabled.
-4. (Optional, but recommended) Add tags so we can track costs:  
+4. Add tags so we can track costs:  
    - `Project = your-team-name`  
    - `Name = your-name`  
    - `Purpose = RAG-demo`
+5. Once the bucket is created, you'll be brought to a page that shows all of your current buckets (and those on our shared account). We'll have to edit our bucket's policy to allow ourselves proper access to any files stored there (e.g., read from bucket, write to bucket). To set these permissions...
+
+a. Click on the name of your bucket to bring up additional options and settings.
+   b. Click the Permissions tab
+   c. Scroll down to Bucket policy and click Edit. Paste the following policy, editing the bucket name "sinkorswim-doejohn-wattbot" to reflect your bucket's nameAs we did in the "setting up S3 episode, edit your bucket's policy to include the following:
+
+```json
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Principal": {
+			    "AWS": [
+			        "arn:aws:iam::183295408236:role/ml-sagemaker-use",
+			        "arn:aws:iam::183295408236:role/ml-sagemaker-bedrock-use"
+		        ]
+			},
+			"Action": [
+				"s3:GetObject",
+				"s3:PutObject",
+				"s3:DeleteObject",
+				"s3:ListMultipartUploadParts"
+			],
+			"Resource": [
+				"arn:aws:s3:::sinkorswim-chrisendemann-titanic",
+				"arn:aws:s3:::sinkorswim-chrisendemann-titanic/*"
+			]
+		}
+	]
+}
+```
 
 ### Step 3 – Upload the WattBot files to S3
 
