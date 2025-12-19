@@ -113,9 +113,9 @@ Once the bucket is created, you'll be brought to a page that shows all of your c
 		{
 			"Effect": "Allow",
 			"Principal": {
-		        "AWS": [
-		          "arn:aws:iam::183295408236:role/ml-sagemaker-use",
-		          "arn:aws:iam::183295408236:role/ml-sagemaker-bedrock-use",
+			    "AWS": [
+			        "arn:aws:iam::183295408236:role/ml-sagemaker-use",
+			        "arn:aws:iam::183295408236:role/ml-sagemaker-bedrock-use"
 		        ]
 			},
 			"Action": [
@@ -125,8 +125,8 @@ Once the bucket is created, you'll be brought to a page that shows all of your c
 				"s3:ListMultipartUploadParts"
 			],
 			"Resource": [
-				"arn:aws:s3:::sinkorswim-doejohn-titanic",
-				"arn:aws:s3:::sinkorswim-doejohn-titanic/*"
+				"arn:aws:s3:::sinkorswim-chrisendemann-titanic",
+				"arn:aws:s3:::sinkorswim-chrisendemann-titanic/*"
 			]
 		}
 	]
