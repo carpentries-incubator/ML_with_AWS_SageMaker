@@ -113,7 +113,6 @@ Once the bucket is created, you'll be brought to a page that shows all of your c
 		{
 			"Effect": "Allow",
 			"Principal": {
-				"AWS": "arn:aws:iam::183295408236:role/ml-sagemaker-use"
 		        "AWS": [
 		          "arn:aws:iam::183295408236:role/ml-sagemaker-use",
 		          "arn:aws:iam::183295408236:role/ml-sagemaker-bedrock-use",
