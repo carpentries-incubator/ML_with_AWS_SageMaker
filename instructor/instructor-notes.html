@@ -448,11 +448,149 @@
         <h1>Instructor Notes</h1>
         
 
-<p>This is a placeholder file. Please add content here.</p>
+<p>Hello all! In this document, we will show you how to run an AWS Nuke
+script within the ML-Marathon Sagemaker server. As you progress through
+the Sagemaker workshop, towards the end of the workshop you’ll be tasked
+to remove and empty your notebooks &amp; buckets. However, depending on
+the size of your data, it can take a long time to remove them
+altogether.</p>
+<p>This is where the AWS Nuke script comes in handy, instead of removing
+your notebooks and buckets one-by-one, the script automates this process
+and removes it for you!</p>
+<p>Here are the following steps on how to launch and run the AWS-Nuke
+Script:</p>
+<div class="section level3">
+<h3 id="open-cloudshell-in-the-correct-aws-account">1. Open CloudShell in the correct AWS account<a class="anchor" aria-label="anchor" href="#open-cloudshell-in-the-correct-aws-account"></a>
+</h3>
+<ol style="list-style-type: decimal">
+<li>Sign in to the AWS Console for the account you intend to clean.</li>
+<li>In the top-right Region, select the Region where you want CloudShell
+storage to live. In this case, we will choose US-East-2 (OHIO) since
+that’s where we store our servers.</li>
+<li>Open CloudShell from the console toolbar.</li>
+<li>Verify exactly which account/role you are using:</li>
+</ol>
+<p><strong>aws sts get-caller-identity</strong></p>
+</div>
+<div class="section level3">
+<h3 id="create-a-config-file">2. Create a config file<a class="anchor" aria-label="anchor" href="#create-a-config-file"></a>
+</h3>
+<p><strong>In order to run the script, you’ll need to make a config
+file. This file MUST be in .yml or .yaml format or else your script will
+FAIL.</strong></p>
+<ol style="list-style-type: decimal">
+<li>Select Windows + E to open file-explorer.</li>
+<li>Click on the documents tab on the left. Then click on the “New”
+button in the top left corner.</li>
+<li>Select “Text Document,” please use notepad for this as it will be
+easy to edit.</li>
+<li>Once you’ve opened notepad. This is the format our config file will
+follow:</li>
+</ol>
+<p>regions: - global - us-east-2 # do not change</p>
+<p>blocklist: - “551379999285” # production, do not modify</p>
+<p>accounts: “183295408236”: # aws-nuke-account resource-types:
+includes: #Specifies which types of resources you want to clean out -
+S3Bucket - SageMakerNotebookInstance</p>
+<p><strong>MAKE SURE TO USE SPACE INDENTING AND NOT TAB INDENTING AS IT
+IS SENSITIVE TO USE IN CLOUDSHELL AND MAY CAUSE THE SCRIPT TO
+FAIL</strong></p>
+<ol start="5" style="list-style-type: decimal">
+<li>Once you’ve gotten your config file set up, click on <strong>“FILE”
+&gt; “SAVE AS”</strong>
+</li>
+<li>Label your doc as “nuke-config.yml” under “File Name:” &amp; Ensure
+“All files (*)” is selected under “Save as type:”</li>
+</ol>
+</div>
+<div class="section level3">
+<h3 id="upload-your-config-file-to-cloudshell">3. Upload your config file to CloudShell<a class="anchor" aria-label="anchor" href="#upload-your-config-file-to-cloudshell"></a>
+</h3>
+<p>In CloudShell, choose <strong>“Actions” &gt; “Upload file”</strong>,
+then upload “nuke-config.yml”</p>
+<p>To confirm it’s inside your Shell:</p>
+<p><strong>pwd ls -l nuke-config.yml cat nuke-config.yml</strong></p>
+</div>
+<div class="section level3">
+<h3 id="download-and-install-the-linux-version">4. Download and install the linux version<a class="anchor" aria-label="anchor" href="#download-and-install-the-linux-version"></a>
+</h3>
+<p>AWS CloudShell uses Linux as their base distribution. So you will
+need to download the linux version of AWS Nuke from Github. You should
+download only from the official ekristen/aws-nuke releases-not use any
+local verision.</p>
+<p>Link: <a href="https://github.com/ekristen/aws-nuke/releases" class="external-link uri">https://github.com/ekristen/aws-nuke/releases</a></p>
+<p>Run the following script:</p>
+<p>mkdir -p “<span class="math inline">\(HOME/bin"
+cd "\)</span>HOME”</p>
+<p>curl -fL<br>
+-o aws-nuke-v3.67.0-linux-amd64.tar.gz<br><a href="https://github.com/ekristen/aws-nuke/releases/download/v3.67.0/aws-nuke-v3.67.0-linux-amd64.tar.gz" class="external-link uri">https://github.com/ekristen/aws-nuke/releases/download/v3.67.0/aws-nuke-v3.67.0-linux-amd64.tar.gz</a></p>
+<p>tar -xzf aws-nuke-v3.67.0-linux-amd64.tar.gz mv aws-nuke “<span class="math inline">\(HOME/bin/aws-nuke"
+chmod 700 "\)</span>HOME/bin/aws-nuke”</p>
+<p>export PATH=“<span class="math inline">\(HOME/bin:\)</span>PATH”
+aws-nuke –version</p>
+<p>To make aws-nuke stay on your PATH in later CloudShell sessions:</p>
+<p><strong>echo ‘export PATH=“<span class="math inline">\(HOME/bin:\)</span>PATH”’ &gt;&gt; ~/.bashrc source
+~/.bashrc</strong></p>
+<p>Reminder: CloudShell is based on Amazon Linux, and software saved in
+$HOME persists; software installed elsewhere may disappear after the
+session ends.</p>
+</div>
+<div class="section level3">
+<h3 id="do-a-dry-run-first">5. DO a dry run first<a class="anchor" aria-label="anchor" href="#do-a-dry-run-first"></a>
+</h3>
+<p>It is important that you first run a dry-run so that you can verify
+which files you want to remove before executing the actual script.</p>
+<p>Here is the script to do so:</p>
+<p><strong>aws-nuke run –config “$HOME/nuke-config.yml”</strong></p>
+<p>This should list resources it would remove, without deleting them.
+Review the output carefully—especially S3 buckets, IAM-related
+resources, and the displayed account identity.</p>
+</div>
+<div class="section level3">
+<h3 id="only-after-review-actual-deletion">6. Only after review: actual deletion<a class="anchor" aria-label="anchor" href="#only-after-review-actual-deletion"></a>
+</h3>
+<p>Only if the dry-run output is correct and this is truly the intended
+non-production account:</p>
+<p><strong>aws-nuke run –config “$HOME/nuke-config.yml”
+–no-dry-run</strong></p>
+<p>Do not add –no-prompt / –force on your first real run; leave the
+confirmation prompt enabled as an additional safeguard.</p>
+<p>Oftentimes when running <strong>aws-nuke run –config
+“$HOME/nuke-config.yml”</strong>, you will run into an error
+stating:</p>
+<p>WARN[0000] ‘targets’ is deprecated. Please use ‘includes’ instead.
+aws-nuke - v3.67.0 - 9cc98ccaed6303dac29001642879320ab584d41a FATA[0000]
+specified account doesn’t have an alias. For safety reasons you need to
+specify an account alias. Your production account should contain the
+term ‘prod’</p>
+<p>Do not panic, this isn’t related to CloudShell or credentials.
+Rather, it connected to AWS successfully but stopped abruptly since the
+account you are trying to target has <strong>no AWS account
+alias.</strong> By default, aws-nuke requires an alias so you must
+visually confirm a recognizable account name before proceeding. It also
+blocks aliases containing prod by default</p>
+<p>Recommended: create a non-production account alias First, verify the
+exact account:</p>
+<p><strong>aws sts get-caller-identity</strong></p>
+<p>Then add an alias in the AWS Console:</p>
+<ol style="list-style-type: decimal">
+<li>Go to IAM</li>
+<li>Open Dashboard</li>
+<li>Under AWS Account, choose Create Alias</li>
+<li>Set a clear, unique non-production alias—e.g. mycompany-sandbox or
+training-cleanup</li>
+<li>Do not use a name containing prod, production, or live.</li>
+</ol>
+<p>Then run the dry-run again: <strong>aws-nuke run –config
+“$HOME/nuke-config.yml”</strong></p>
+<p>Congratulations, you have reached the end of this tutorial! By now,
+all scripts should work and the specified notebooks/buckets you wanted
+to clean should now be all empty!</p>
 <!--
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
  -->
+</div>
 
 
       <section id="aggregate-instructor-notes"><section id="SageMaker-overview"><h2 class="section-heading"><a href="SageMaker-overview.html">Overview of Amazon SageMaker</a></h2>
