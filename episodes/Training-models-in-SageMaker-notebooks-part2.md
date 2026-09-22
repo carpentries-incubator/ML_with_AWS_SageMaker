@@ -157,6 +157,9 @@ print("Files successfully uploaded to S3.")
 ## Testing on notebook instance
 You should always test code thoroughly before scaling up and using more resources. Here, we will test our script using a small number of epochs — just to verify our setup is correct.
 
+WARNING: As you progress through this workshop, your storage can build up quickly within the AWS Sagemaker AI notebook directory leading to issues with install/running packages within JupyterLab. Naturally, this is a common issue that occurs when users run **"%pip install torch."** The output will result in an OS error stating **"OSError: [Errno 28] No space left on device."**  A simple workaround is to run the following pip command instead: **"pip install torch --index-url https://download.pytorch.org/whl/cpu"** (Reference URL: https://stackoverflow.com/questions/79780565/python-cannot-install-torch). 
+
+Make you are using the **64-bit version of Python** before you run this command or else it will fail since PyTorch does not support 32-bit builds. In order to verify what version of Python you are using, run the following command within your **terminal** INSIDE of JupyterLab: **python -c "import struct; print(struct.calcsize('P') * 8)"**
 
 ```python
 import torch
