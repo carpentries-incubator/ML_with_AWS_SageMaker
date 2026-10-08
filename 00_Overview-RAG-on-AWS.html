@@ -123,7 +123,7 @@
     <a id="search-button-nav" class="btn btn-primary" href="aio.html" role="button" aria-label="Search the All In One page">Search the All In One page</a>
   </div><!--/div.container-fluid -->
 </nav><aside class="col-md-12 lesson-progress"><div class="progress incubator">
-    <div class="progress-bar incubator" role="progressbar" style="width: 57%" aria-valuenow="57" aria-valuemin="0" aria-valuemax="100" aria-label="Lesson Progress">57%</div>
+    <div class="progress-bar incubator" role="progressbar" style="width: 56%" aria-valuenow="56" aria-valuemin="0" aria-valuemax="100" aria-label="Lesson Progress">56%</div>
   </div>
 </aside><div class="container">
       <div class="row">
@@ -292,7 +292,9 @@
       <div class="accordion-body">
         <ul><li><a href="#retrieval-augmented-generation-rag-on-aws">Retrieval-Augmented Generation (RAG) on AWS</a></li>
 <li><a href="#what-is-rag">What is RAG?</a></li>
+<li><a href="#start-here-bedrock-is-the-default">Start Here: Bedrock Is the Default</a></li>
 <li><a href="#approaches-to-running-rag-on-aws">Approaches to Running RAG on AWS</a></li>
+<li><a href="#tagging-every-billable-resource-needs-its-own-tags">Tagging: Every Billable Resource Needs Its Own Tags</a></li>
 <li><a href="#when-do-you-use-which-approach">When Do You Use Which Approach?</a></li>
         </ul></div><!--/div.accordion-body-->
     </div><!--/div.accordion-collapse-->
@@ -408,7 +410,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Overview of RAG Workflows on AWS</h1>
-        <p>Last updated on 2025-12-01 |
+        <p>Last updated on 2026-10-08 |
 
         <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker/edit/main/episodes/00_Overview-RAG-on-AWS.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -426,8 +428,9 @@
 <strong>generate</strong> an answer using that context. Unlike model
 training, a standard RAG workflow does <strong>not</strong> fine‑tune or
 train a model — it combines retrieval + inference only.</p>
-<p>This episode introduces the major ways to build RAG systems on AWS
-and prepares us for later episodes where we experiment with each
+<p>This episode introduces the major ways to build RAG systems on AWS,
+explains why <strong>Amazon Bedrock should be your default</strong>, and
+prepares us for later episodes where we experiment with each
 approach.</p>
 <div class="overview card">
 <h2 class="card-header">Overview</h2>
@@ -438,7 +441,10 @@ approach.</p>
 <h3 class="card-title">Questions</h3>
 <ul><li>What is Retrieval‑Augmented Generation (RAG)?</li>
 <li>What are the main architectural options for running RAG on AWS?</li>
-<li>When is each RAG workflow appropriate?</li>
+<li>Why is Bedrock the recommended default, and when should you reach
+for SageMaker instead?</li>
+<li>How do the billing models differ, and what does it cost if you
+forget to shut something down?</li>
 </ul></div>
 </div>
 </div>
@@ -448,10 +454,15 @@ approach.</p>
 <h3 class="card-title">Objectives</h3>
 <ul><li>Understand that RAG does <em>not</em> require training or
 fine‑tuning a model.</li>
-<li>Recognize the three major architectural patterns for RAG systems on
+<li>Recognize the major architectural patterns for RAG systems on
 AWS.</li>
-<li>Understand the core trade‑offs that drive which approach to
-use.</li>
+<li>Explain why pay‑per‑token Bedrock inference is the safe default for
+most research RAG work.</li>
+<li>Identify the specific situations where self‑managed GPU compute
+(Processing Jobs, notebook GPUs, or endpoints) is actually worth
+it.</li>
+<li>Understand the core cost and control trade‑offs that drive which
+approach to use.</li>
 </ul></div>
 </div>
 </div>
@@ -468,65 +479,343 @@ language model (LLM) to answer a question.</li>
 </ol><p>No model weights are updated. No backprop. No training job.<br>
 RAG is an inference‑only pattern that layers retrieval logic around an
 LLM.</p>
+<p>This matters for how you should think about compute. The
+<em>only</em> things a RAG pipeline needs from a model are two stateless
+calls:</p>
+<ul><li>“Turn this text into an embedding vector.”</li>
+<li>“Given this prompt (question + retrieved chunks), generate an
+answer.”</li>
+</ul><p>Neither of those requires you to own a GPU. They are exactly the kind
+of calls that a managed inference API is built to serve.</p>
+</section><section><h2 class="section-heading" id="start-here-bedrock-is-the-default">Start Here: Bedrock Is the Default<a class="anchor" aria-label="anchor" href="#start-here-bedrock-is-the-default"></a></h2>
+<hr class="half-width"><p><strong>For standard RAG inference, use Amazon Bedrock.</strong>
+Bedrock exposes embedding and generation models (Amazon Titan, Anthropic
+Claude, Meta Llama, and others) as pay‑per‑token APIs. Your retrieval
+code — chunking, indexing, similarity search, reranking, evaluation —
+stays entirely under your control and can run on a cheap CPU notebook or
+your laptop. Only the two model calls above are sent to Bedrock.</p>
+<p>The reason this is the default comes down to <strong>how you are
+billed</strong>:</p>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th></th>
+<th>Bedrock (managed API)</th>
+<th>SageMaker GPU instance / endpoint</th>
+</tr></thead><tbody><tr><td><strong>Billing unit</strong></td>
+<td>Per token processed</td>
+<td>Per hour the instance exists</td>
+</tr><tr><td><strong>Cost while idle</strong></td>
+<td>$0 — nothing is running between calls</td>
+<td>Full hourly rate, 24/7, whether or not you use it</td>
+</tr><tr><td><strong>What you must remember to do</strong></td>
+<td>Nothing</td>
+<td>Stop or delete the instance every time you finish</td>
+</tr><tr><td><strong>Model updates</strong></td>
+<td>Managed by AWS / the provider</td>
+<td>Your problem (containers, CUDA, VRAM)</td>
+</tr><tr><td><strong>Model choice</strong></td>
+<td>Curated catalog (incl. proprietary models)</td>
+<td>Any open‑weight model you can load</td>
+</tr></tbody></table><p>A GPU instance is a rental that keeps the meter running until
+<em>you</em> turn it off. Forgetting to do so is the single most common
+way research teams burn through cloud budgets. Bedrock has no equivalent
+failure mode: if you stop calling it, you stop paying.</p>
+<div class="section level3">
+<h3 id="what-forgetting-actually-costs">What forgetting actually costs<a class="anchor" aria-label="anchor" href="#what-forgetting-actually-costs"></a></h3>
+<p>To make this concrete, here is what a GPU notebook instance costs if
+it is left running after you close your laptop (on‑demand prices at time
+of writing; see the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">instances
+page</a>):</p>
+<table style="width:100%;" class="table"><colgroup><col width="16%"><col width="16%"><col width="16%"><col width="16%"><col width="16%"><col width="16%"></colgroup><thead><tr><th>Instance</th>
+<th>GPU</th>
+<th>$/hour</th>
+<th>Forgotten overnight (12 h)</th>
+<th>Forgotten over a weekend (64 h)</th>
+<th>Forgotten for a month (730 h)</th>
+</tr></thead><tbody><tr><td>ml.g5.xlarge</td>
+<td>1 × A10G</td>
+<td>$1.21</td>
+<td>~$15</td>
+<td>~$77</td>
+<td>~$880</td>
+</tr><tr><td>ml.g5.2xlarge</td>
+<td>1 × A10G</td>
+<td>$1.69</td>
+<td>~$20</td>
+<td>~$108</td>
+<td>~$1,230</td>
+</tr><tr><td>ml.p3.8xlarge</td>
+<td>4 × V100</td>
+<td>$15.20</td>
+<td>~$182</td>
+<td>~$973</td>
+<td>~$11,100</td>
+</tr></tbody></table><p>Compare that to running the <strong>entire WattBot pipeline</strong>
+from this lesson on Bedrock. Using Claude 3 Haiku ($0.25 per million
+input tokens, $1.25 per million output tokens) and Titan Text Embeddings
+V2 ($0.02 per million tokens):</p>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>Step</th>
+<th>Rough volume</th>
+<th>Cost</th>
+</tr></thead><tbody><tr><td>Embed ~3,000 chunks (~1M tokens)</td>
+<td>1M input tokens</td>
+<td>~$0.02</td>
+</tr><tr><td>Answer 100 questions (~3K‑token prompt + ~300‑token answer
+each)</td>
+<td>300K in / 30K out</td>
+<td>~$0.11</td>
+</tr><tr><td>Explanation pass over 100 answers</td>
+<td>300K in / 30K out</td>
+<td>~$0.11</td>
+</tr><tr><td><strong>Total</strong></td>
+<td></td>
+<td><strong>well under $1</strong></td>
+</tr></tbody></table><p>A single forgotten weekend on the <em>cheapest</em> GPU instance
+costs more than a hundred full runs of the pipeline on Bedrock. That
+asymmetry is why Bedrock is the default, not just an alternative.</p>
+<div id="bedrock-trade-offs-to-know-about" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<span class="callout-header">Callout</span>
+<div id="bedrock-trade-offs-to-know-about" class="callout-inner">
+<h3 class="callout-title">Bedrock trade-offs to know about</h3>
+<div class="callout-content">
+<p>Bedrock is not free of downsides; it’s just that none of them are
+“you forgot and it kept charging you.”</p>
+<ul><li>
+<strong>Less control over architecture.</strong> You can only call
+models in the Bedrock catalog. If your research depends on a specific
+open‑weight model, a custom fine‑tune, or hacking on the model
+internals, you’ll need to host it yourself.</li>
+<li>
+<strong>Per‑token cost can exceed GPU cost for very large offline
+batches.</strong> If you are embedding tens of millions of chunks with a
+small open model, a short‑lived GPU job may be cheaper per unit of work.
+Do the arithmetic before assuming either way.</li>
+<li>
+<strong>Model access and region availability.</strong> Some models
+must be enabled in the console first, and the catalog varies by region.
+Plan for this before a workshop or deadline.</li>
+<li>
+<strong>Quotas.</strong> On‑demand throughput is rate‑limited per
+model and per account. For large batch workloads, use the Bedrock batch
+inference API or request a quota increase rather than hammering the
+on‑demand endpoint.</li>
+<li>
+<strong>Data handling.</strong> Bedrock does not use your prompts to
+train models and keeps data in‑region, but you should still check your
+institution’s policy before sending sensitive documents to any hosted
+API.</li>
+<li>
+<strong>Cost tracking needs one extra step.</strong> On‑demand
+Bedrock calls carry no tags. To attribute spend to a project you route
+calls through a tagged <em>application inference profile</em> (see
+“Tagging” below and the Bedrock episode). It is a one‑time setup, but
+skipping it leaves the usage anonymous on the bill.</li>
+</ul></div>
+</div>
+</div>
+</div>
 </section><section><h2 class="section-heading" id="approaches-to-running-rag-on-aws">Approaches to Running RAG on AWS<a class="anchor" aria-label="anchor" href="#approaches-to-running-rag-on-aws"></a></h2>
-<hr class="half-width"><p>There are several general approaches for setting up a
-Retrieval-Augmented Generation (RAG) workflow on AWS, each suited to
-different scales and constraints.</p>
-<ol style="list-style-type: decimal"><li><p><strong>Run everything inside a single GPU-backed notebook
-instance</strong> For small- to medium-sized models (&lt; 70 B), it’s
-often simplest to just pick a GPU instance (e.g., <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">p3.2xlarge</a>),
+<hr class="half-width"><p>With that framing, here are the main patterns, ordered from “reach
+for this first” to “only when you really need it.”</p>
+<div class="section level3">
+<h3 id="amazon-bedrock-managed-embedding-and-generation-apis-default">1. Amazon Bedrock — managed embedding and generation APIs
+(default)<a class="anchor" aria-label="anchor" href="#amazon-bedrock-managed-embedding-and-generation-apis-default"></a></h3>
+<p>Call embedding and generation models via API from your RAG pipeline.
+You still own and manage retrieval logic (chunking, indexing, reranking,
+evaluation), but you outsource the heavy model lifecycle work entirely.
+You pay per token, nothing runs between calls, and there is nothing to
+shut down. Bedrock also gives RAG systems access to proprietary models
+(e.g., Claude) that would otherwise need to be purchased and integrated
+separately.</p>
+<p><strong>Use it for:</strong> essentially any RAG system where a model
+in the Bedrock catalog is acceptable — prototyping, research tools,
+course projects, and production chatbots alike.</p>
+</div>
+<div class="section level3">
+<h3 id="sagemaker-processing-jobs-short-lived-batch-gpu-compute">2. SageMaker Processing Jobs — short-lived batch GPU compute<a class="anchor" aria-label="anchor" href="#sagemaker-processing-jobs-short-lived-batch-gpu-compute"></a></h3>
+<p>For large corpora, or when you need a specific open‑weight model that
+Bedrock doesn’t offer, treat parts of the RAG pipeline — especially
+embedding and batch generation — as offline batch jobs rather than a
+live model. You run a short‑lived Hugging Face Processing job that spins
+up a GPU instance, loads your model, processes all the chunked text in
+one shot, saves the results to S3, <strong>and then terminates
+itself</strong>. Because the GPU only exists while the job runs, you get
+self‑managed models <em>without</em> the forgot‑to‑shut‑it‑down risk.
+This is the safest way to use a GPU on SageMaker.</p>
+<p>The trade‑off is latency: starting a Processing job takes several
+minutes, so this pattern is for “compute once, use many times”
+workloads, not per‑query retrieval. Launching a job per user question
+would be far too slow.</p>
+<p><strong>Use it for:</strong> embedding very large corpora with an
+open model, periodic batch regeneration, or research that requires a
+model you can’t get through Bedrock.</p>
+</div>
+<div class="section level3">
+<h3 id="a-single-gpu-backed-notebook-instance-for-learning-and-debugging">3. A single GPU-backed notebook instance — for learning and
+debugging<a class="anchor" aria-label="anchor" href="#a-single-gpu-backed-notebook-instance-for-learning-and-debugging"></a></h3>
+<p>For small‑ to medium‑sized models (&lt; 70 B), you <em>can</em> pick
+a GPU instance (e.g., <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">ml.g5.xlarge</a>),
 load your embedding and generation models directly in the notebook, and
-run RAG end-to-end there. This keeps the architecture simple and avoids
-extra moving parts, as long as you’re disciplined about shutting down
-the instance when you’re done so you don’t leak cost. It’s also possible
-to do this with larger models, but the costs to use more powerful GPUs
-(e.g., $15/hour) may be a limiting factor.</p></li>
-<li><p><strong>Use SageMaker Processing Jobs to run batch jobs for
-embeddings and/or generation.</strong> For large corpora or workflows
-where you want repeatable, offline computation, you can treat parts of
-the RAG pipeline—especially embedding and generation—like batch
-processing jobs rather than a live model. Instead of using a notebook
-GPU, you run a short-lived Hugging Face Processing job that spins up a
-GPU instance, loads your embedding or generation model, processes all
-the chunked text in one shot, and saves the results back to S3. This
-pattern is ideal for “compute once, use many times” workloads, such as
-generating embeddings for thousands of documents or producing long-form
-outputs that don’t require low latency. Because the job only exists
-while the batch completes, you avoid the continuous cost of an always-on
-endpoint. However, this approach is not suited for per-query RAG
-retrieval—launching a job per user request would be far too slow, since
-starting a Processing job can take several minutes.</p></li>
-<li><p><strong>Use Amazon Bedrock for managed embedding and generation
-APIs.</strong> If you prefer fully managed foundation models and don’t
-want to own model hosting at all, Bedrock lets you call embedding and
-generation models via API from your RAG pipeline. You still can still
-manage retrieval logic (e.g., add reranking), but you outsource the
-heavy model lifecycle work—at the trade-off of less control over
-architectures and sometimes higher per-token cost. Bedrock can also give
-RAG systems access to proprietary models which would need to be
-purhcased separately otherwise.</p></li>
-<li><p><strong>Use long-lived inference endpoints for online RAG
-workloads.</strong> For applications that need low-latency, interactive
-RAG (APIs, chatbots, dashboards), you can deploy your own embedding and
-generation models as SageMaker inference endpoints (or Bedrock-like
-managed endpoints) and call them from your retrieval service. This gives
-you control over the model, scaling policies, and autoscaling, but it’s
-also the most expensive option if traffic is low or bursty, since you’re
-keeping capacity online even when no one is querying the
-system.</p></li>
+run RAG end‑to‑end there. The architecture is the simplest to
+understand, and it’s genuinely the best way to <em>learn</em> what
+happens inside a RAG pipeline, because every step is a line of Python
+you can inspect.</p>
+<p>But it is the <strong>most expensive way to run RAG and the easiest
+one to get wrong</strong>. The GPU bills by the hour from the moment the
+instance starts until you stop it, including the long stretches while
+you download PDFs, chunk text, read results, or go to lunch. It is also
+the route most likely to be forgotten, because a notebook instance looks
+like a workspace rather than a running job. If you use this
+approach:</p>
+<ul><li>Treat it as a learning exercise, not a deployment pattern.</li>
+<li>Stop the instance the moment you are done, and
+<strong>verify</strong> the status in the console.</li>
+<li>Set up an <a href="https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html" class="external-link">AWS
+Budget</a> alert and consider a <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/notebook-lifecycle-config.html" class="external-link">lifecycle
+configuration</a> that auto‑stops idle notebooks.</li>
+<li>For larger models the hourly rate (e.g., $15/hour for a p3.8xlarge)
+becomes a limiting factor very quickly.</li>
+</ul><p><strong>Use it for:</strong> walking through RAG internals step by
+step, debugging a model locally before packaging it as a job, or short
+experiments where you will be at the keyboard the whole time.</p>
+</div>
+<div class="section level3">
+<h3 id="long-lived-sagemaker-inference-endpoints-self-hosted-interactive-serving">4. Long-lived SageMaker inference endpoints — self-hosted
+interactive serving<a class="anchor" aria-label="anchor" href="#long-lived-sagemaker-inference-endpoints-self-hosted-interactive-serving"></a></h3>
+<p>For applications that need low‑latency, interactive RAG (APIs,
+chatbots, dashboards) <em>and</em> that must use a model you host
+yourself, you can deploy your own embedding and generation models as
+SageMaker inference endpoints and call them from your retrieval service.
+This gives you full control over the model, scaling policies, and
+autoscaling.</p>
+<p>It is also the <strong>most expensive option when traffic is low or
+bursty</strong>, because you are paying for capacity that stays online
+even when nobody is querying the system — the same always‑on problem as
+a notebook GPU, but now intentionally and indefinitely. Before choosing
+this route, ask whether Bedrock already serves an acceptable model: it
+provides exactly this interactive, low‑latency experience with none of
+the idle cost. Endpoints are the right answer only when the model itself
+is the reason Bedrock won’t work.</p>
+<p><strong>Use it for:</strong> production systems with steady traffic
+that require a custom or open‑weight model. We do not build one hands‑on
+in this lesson.</p>
+</div>
+</section><section><h2 class="section-heading" id="tagging-every-billable-resource-needs-its-own-tags">Tagging: Every Billable Resource Needs Its Own Tags<a class="anchor" aria-label="anchor" href="#tagging-every-billable-resource-needs-its-own-tags"></a></h2>
+<hr class="half-width"><p>Cost tracking in this workshop relies on three tags —
+<code>Name</code>, <code>Project</code>, <code>Purpose</code> — so that
+Cost Explorer can break the shared bill down by team. The part that
+trips people up is that <strong>tags never propagate</strong>. Tagging
+your notebook instance tags the notebook instance and nothing else.
+Every other resource you create is a separate line item that is
+anonymous unless you tag it yourself at creation time.</p>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>Resource</th>
+<th>What it bills</th>
+<th>How it gets tagged</th>
+</tr></thead><tbody><tr><td>Notebook instance</td>
+<td>Hourly, while running</td>
+<td>Tags you set in the console when creating it</td>
+</tr><tr><td>S3 bucket</td>
+<td>Storage + requests</td>
+<td>Tags you set in the console when creating it</td>
+</tr><tr><td>Training / tuning job</td>
+<td>Hourly, while the job runs</td>
+<td>
+<code>tags=</code> argument on the estimator or tuner, <strong>every
+job</strong>
+</td>
+</tr><tr><td>Processing job</td>
+<td>Hourly, while the job runs</td>
+<td>
+<code>tags=</code> argument on the processor, <strong>every
+job</strong>
+</td>
+</tr><tr><td>Inference endpoint</td>
+<td>Hourly, while deployed</td>
+<td>
+<code>tags=</code> argument on <code>deploy()</code>
+</td>
+</tr><tr><td>Bedrock on‑demand call</td>
+<td>Per token</td>
+<td>
+<strong>Cannot be tagged directly.</strong> Create an
+<em>application inference profile</em> with tags and pass its ARN as
+<code>modelId</code> instead of the model ID</td>
+</tr></tbody></table><p>Three things follow from this:</p>
+<ol style="list-style-type: decimal"><li>
+<strong>Each job gets its own tags.</strong> A SageMaker job
+launched from a tagged notebook does not inherit the notebook’s tags.
+Pass <code>tags=job_tags</code> on every estimator, tuner, and
+processor, exactly as the training, tuning, and Processing‑job episodes
+do. Vary <code>Purpose</code> per job so the bill tells you what the
+money went to.</li>
+<li>
+<strong>Bedrock is tagged through a profile, not a call.</strong>
+<code>invoke_model</code> and <code>converse</code> have no tags
+parameter. An application inference profile is a free, model‑specific
+wrapper that carries tags; usage routed through it is attributed to
+those tags. One profile per base model (so one for the embedding model
+and one for the generation model). Note that Bedrock’s tag format is
+lowercase <code>key</code>/<code>value</code>, while SageMaker’s is
+<code>Key</code>/<code>Value</code>; the tag <em>names</em> stay the
+same.</li>
+<li>
+<strong>Tags only show up on the bill once the keys are
+activated.</strong> An account administrator has to activate
+<code>Name</code>, <code>Project</code>, and <code>Purpose</code> as
+cost allocation tags in the Billing console, once per account. Until
+then the tags exist on the resources but are not available as filters in
+Cost Explorer. On a shared workshop account the organizers handle this;
+on your own account, do it before you start.</li>
 </ol></section><section><h2 class="section-heading" id="when-do-you-use-which-approach">When Do You Use Which Approach?<a class="anchor" aria-label="anchor" href="#when-do-you-use-which-approach"></a></h2>
-<hr class="half-width"><ol style="list-style-type: decimal"><li><p><strong>Notebook RAG</strong>: Fastest to build. Great for
-learning, prototyping, and small‑scale research.</p></li>
-<li><p><strong>Processing‑job RAG</strong>: Ideal for embedding large
-corpora and running periodic batch generation. Clean, reproducible,
-cost‑efficient (especially if you spend a lot of time in your notebook
-viewing results, rather than generating them).</p></li>
-<li><p><strong>Bedrock RAG</strong>: Best for production or long‑term
-research tools that need scalability without hosting models. Bedrock can
-also give RAG systems access to proprietary models which would need to
-be purhcased separately otherwise.</p></li>
-<li><p>TODO</p></li>
-</ol><div id="keypoints1" class="callout keypoints">
+<hr class="half-width"><table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>Your situation</th>
+<th>Recommended route</th>
+</tr></thead><tbody><tr><td>You need to embed and query a document collection and a catalog
+model (Titan, Claude, Llama, …) is fine</td>
+<td><strong>Bedrock</strong></td>
+</tr><tr><td>You want an interactive chatbot or API over your documents</td>
+<td><strong>Bedrock</strong></td>
+</tr><tr><td>You need a specific open‑weight model and the work is batch
+(embedding a corpus, bulk generation)</td>
+<td><strong>Processing Jobs</strong></td>
+</tr><tr><td>Your corpus is enormous and per‑token pricing would exceed a few
+GPU‑hours</td>
+<td>
+<strong>Processing Jobs</strong> (check the math first)</td>
+</tr><tr><td>You are learning how RAG works, or debugging a model step by
+step</td>
+<td>
+<strong>Notebook GPU</strong> — and stop it when you leave</td>
+</tr><tr><td>You need interactive serving of a model Bedrock doesn’t offer, with
+steady traffic</td>
+<td><strong>Inference endpoint</strong></td>
+</tr></tbody></table><p>If you are unsure, pick Bedrock. The worst case is a slightly higher
+per‑token bill; the worst case with the other routes is a four‑figure
+surprise on next month’s invoice.</p>
+<div id="why-the-hands-on-episodes-are-in-a-different-order" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<span class="callout-header">Callout</span>
+<div id="why-the-hands-on-episodes-are-in-a-different-order" class="callout-inner">
+<h3 class="callout-title">Why the hands-on episodes are in a different
+order</h3>
+<div class="callout-content">
+<p>The next three episodes walk through RAG on a <strong>notebook
+GPU</strong>, then <strong>Processing Jobs</strong>, then
+<strong>Bedrock</strong>. That is a <em>teaching</em> order, not a
+recommendation: we start with the notebook GPU because every step of the
+pipeline is visible in plain Python, then show how to move the GPU work
+into self‑terminating jobs, and finally replace the self‑hosted models
+with Bedrock calls. By the end you will have seen the same WattBot
+pipeline run all three ways and can compare cost, latency, and
+complexity directly.</p>
+<p>When you build your own RAG system afterward, start from the Bedrock
+episode.</p>
+</div>
+</div>
+</div>
+<div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
 <i class="callout-icon" data-feather="key"></i>
 </div>
@@ -534,13 +823,26 @@ be purhcased separately otherwise.</p></li>
 <div class="callout-inner">
 <div class="callout-content">
 <ul><li>RAG is an inference‑only workflow: no training or fine‑tuning
-required.</li>
-<li>AWS supports three broad approaches: notebook RAG, batch RAG, and
-Bedrock‑managed RAG.</li>
-<li>The right choice depends on latency needs, scale, cost sensitivity,
-and model‑management preferences.</li>
-<li>Later episodes will walk through each pattern in depth using
-hands‑on examples.</li>
+required, so you do not need to own a GPU to run one.</li>
+<li>
+<strong>Amazon Bedrock is the default for RAG inference</strong>:
+you pay per token, nothing runs between calls, and there is nothing to
+forget to shut down.</li>
+<li>Self‑managed GPU compute (Processing Jobs, notebook GPUs, inference
+endpoints) is justified when you need a model Bedrock doesn’t offer or
+when very large batch volumes make per‑token pricing uncompetitive — not
+as a starting point.</li>
+<li>Among the GPU options, Processing Jobs are the safest because the
+instance terminates itself; notebook GPUs and endpoints bill by the hour
+until you stop them.</li>
+<li>A forgotten GPU instance costs tens of dollars overnight and
+hundreds to thousands over a month; a full WattBot run on Bedrock costs
+well under a dollar.</li>
+<li>Tags never propagate: tag every job at launch, and route Bedrock
+calls through a tagged application inference profile, or the spend is
+untraceable.</li>
+<li>Later episodes walk through each pattern hands‑on, in teaching order
+(notebook GPU → Processing Jobs → Bedrock).</li>
 </ul></div>
 </div>
 </div>
@@ -608,8 +910,8 @@ any links that you are not going to use.
   "url": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/00_Overview-RAG-on-AWS.html",
   "identifier": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/00_Overview-RAG-on-AWS.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2025-12-01",
-  "datePublished": "2026-10-06"
+  "dateModified": "2026-10-08",
+  "datePublished": "2026-10-08"
 }
 
   </script><script>

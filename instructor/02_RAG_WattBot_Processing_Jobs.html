@@ -398,7 +398,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>RAG with Processing Jobs</h1>
-        <p>Last updated on 2025-12-05 |
+        <p>Last updated on 2026-10-08 |
 
         <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker/edit/main/episodes/02_RAG_WattBot_Processing_Jobs.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -618,54 +618,82 @@ below.</p>
 <span id="cb9-9"><a href="#cb9-9" tabindex="-1" aria-label="code-block-9-9"></a></span>
 <span id="cb9-10"><a href="#cb9-10" tabindex="-1" aria-label="code-block-9-10"></a><span class="bu">print</span>(<span class="ss">f"Created requirements.txt at </span><span class="sc">{</span>req_path<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
+</div>
+<div class="section level3">
+<h3 id="cost-tracking-tag-every-job">Cost tracking: tag every job<a class="anchor" aria-label="anchor" href="#cost-tracking-tag-every-job"></a></h3>
+<p>Tags do <strong>not</strong> propagate in AWS. The tags you put on
+your notebook instance cover the notebook’s hourly cost and nothing
+else. Each Processing job below launches its own GPU instance, which is
+a separate billable resource with no tags unless we pass them at launch,
+exactly as we did for training and tuning jobs earlier in the workshop.
+An untagged job shows up in Cost Explorer as anonymous SageMaker spend
+that nobody can attribute to a team.</p>
+<p>Define the tags once and pass <code>tags=job_tags</code> to
+<strong>every</strong> <code>HuggingFaceProcessor</code> you create. Use
+a distinct <code>Purpose</code> per job so you can tell the embedding
+job from the batch RAG job on the bill.</p>
 <div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a></span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a>embedding_model_id <span class="op">=</span> <span class="st">"thenlper/gte-large"</span></span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1" aria-label="code-block-10-3"></a>script_path <span class="op">=</span> <span class="st">"embedding_inference.py"</span></span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1" aria-label="code-block-10-4"></a></span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1" aria-label="code-block-10-5"></a>emb_output_prefix <span class="op">=</span> <span class="st">"embeddings"</span></span>
-<span id="cb10-6"><a href="#cb10-6" tabindex="-1" aria-label="code-block-10-6"></a>emb_output_path <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>emb_output_prefix<span class="sc">}</span><span class="ss">/"</span></span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1" aria-label="code-block-10-7"></a></span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1" aria-label="code-block-10-8"></a>embedding_processor <span class="op">=</span> HuggingFaceProcessor(</span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1" aria-label="code-block-10-9"></a>    base_job_name<span class="op">=</span><span class="st">"WattBot-embed-gte-large"</span>,</span>
-<span id="cb10-10"><a href="#cb10-10" tabindex="-1" aria-label="code-block-10-10"></a>    role<span class="op">=</span>role,</span>
-<span id="cb10-11"><a href="#cb10-11" tabindex="-1" aria-label="code-block-10-11"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>,</span>
-<span id="cb10-12"><a href="#cb10-12" tabindex="-1" aria-label="code-block-10-12"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb10-13"><a href="#cb10-13" tabindex="-1" aria-label="code-block-10-13"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,</span>
-<span id="cb10-14"><a href="#cb10-14" tabindex="-1" aria-label="code-block-10-14"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
-<span id="cb10-15"><a href="#cb10-15" tabindex="-1" aria-label="code-block-10-15"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
-<span id="cb10-16"><a href="#cb10-16" tabindex="-1" aria-label="code-block-10-16"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb10-17"><a href="#cb10-17" tabindex="-1" aria-label="code-block-10-17"></a>    max_runtime_in_seconds<span class="op">=</span><span class="dv">2</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span>,</span>
-<span id="cb10-18"><a href="#cb10-18" tabindex="-1" aria-label="code-block-10-18"></a>)</span>
-<span id="cb10-19"><a href="#cb10-19" tabindex="-1" aria-label="code-block-10-19"></a></span>
-<span id="cb10-20"><a href="#cb10-20" tabindex="-1" aria-label="code-block-10-20"></a>embedding_processor.run(</span>
-<span id="cb10-21"><a href="#cb10-21" tabindex="-1" aria-label="code-block-10-21"></a>    code<span class="op">=</span>script_path,</span>
-<span id="cb10-22"><a href="#cb10-22" tabindex="-1" aria-label="code-block-10-22"></a>    source_dir<span class="op">=</span><span class="st">"code/"</span>,</span>
-<span id="cb10-23"><a href="#cb10-23" tabindex="-1" aria-label="code-block-10-23"></a>    inputs<span class="op">=</span>[</span>
-<span id="cb10-24"><a href="#cb10-24" tabindex="-1" aria-label="code-block-10-24"></a>        ProcessingInput(</span>
-<span id="cb10-25"><a href="#cb10-25" tabindex="-1" aria-label="code-block-10-25"></a>            source<span class="op">=</span>chunks_s3_uri,</span>
-<span id="cb10-26"><a href="#cb10-26" tabindex="-1" aria-label="code-block-10-26"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input"</span>,</span>
-<span id="cb10-27"><a href="#cb10-27" tabindex="-1" aria-label="code-block-10-27"></a>        )</span>
-<span id="cb10-28"><a href="#cb10-28" tabindex="-1" aria-label="code-block-10-28"></a>    ],</span>
-<span id="cb10-29"><a href="#cb10-29" tabindex="-1" aria-label="code-block-10-29"></a>    outputs<span class="op">=</span>[</span>
-<span id="cb10-30"><a href="#cb10-30" tabindex="-1" aria-label="code-block-10-30"></a>        ProcessingOutput(</span>
-<span id="cb10-31"><a href="#cb10-31" tabindex="-1" aria-label="code-block-10-31"></a>            output_name<span class="op">=</span><span class="st">"embeddings"</span>,</span>
-<span id="cb10-32"><a href="#cb10-32" tabindex="-1" aria-label="code-block-10-32"></a>            source<span class="op">=</span><span class="st">"/opt/ml/processing/output"</span>,</span>
-<span id="cb10-33"><a href="#cb10-33" tabindex="-1" aria-label="code-block-10-33"></a>            destination<span class="op">=</span>emb_output_path,</span>
-<span id="cb10-34"><a href="#cb10-34" tabindex="-1" aria-label="code-block-10-34"></a>        )</span>
-<span id="cb10-35"><a href="#cb10-35" tabindex="-1" aria-label="code-block-10-35"></a>    ],</span>
-<span id="cb10-36"><a href="#cb10-36" tabindex="-1" aria-label="code-block-10-36"></a>    arguments<span class="op">=</span>[</span>
-<span id="cb10-37"><a href="#cb10-37" tabindex="-1" aria-label="code-block-10-37"></a>        <span class="st">"--model_id"</span>, embedding_model_id,</span>
-<span id="cb10-38"><a href="#cb10-38" tabindex="-1" aria-label="code-block-10-38"></a>        <span class="st">"--input_filename"</span>, <span class="st">"chunks.jsonl"</span>,</span>
-<span id="cb10-39"><a href="#cb10-39" tabindex="-1" aria-label="code-block-10-39"></a>        <span class="st">"--text_key"</span>, <span class="st">"text"</span>,</span>
-<span id="cb10-40"><a href="#cb10-40" tabindex="-1" aria-label="code-block-10-40"></a>        <span class="st">"--input_dir"</span>, <span class="st">"/opt/ml/processing/input"</span>,</span>
-<span id="cb10-41"><a href="#cb10-41" tabindex="-1" aria-label="code-block-10-41"></a>        <span class="st">"--output_dir"</span>, <span class="st">"/opt/ml/processing/output"</span>,</span>
-<span id="cb10-42"><a href="#cb10-42" tabindex="-1" aria-label="code-block-10-42"></a>    ],</span>
-<span id="cb10-43"><a href="#cb10-43" tabindex="-1" aria-label="code-block-10-43"></a>)</span>
-<span id="cb10-44"><a href="#cb10-44" tabindex="-1" aria-label="code-block-10-44"></a></span>
-<span id="cb10-45"><a href="#cb10-45" tabindex="-1" aria-label="code-block-10-45"></a><span class="bu">print</span>(<span class="st">"Embedding job complete."</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a>name <span class="op">=</span> <span class="st">"John Doe"</span>        <span class="co"># replace with your name</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a>project <span class="op">=</span> <span class="st">"sinkorswim"</span>   <span class="co"># replace with your team name</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1" aria-label="code-block-10-3"></a></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1" aria-label="code-block-10-4"></a><span class="kw">def</span> make_job_tags(purpose: <span class="bu">str</span>):</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1" aria-label="code-block-10-5"></a>    <span class="cf">return</span> [</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1" aria-label="code-block-10-6"></a>        {<span class="st">"Key"</span>: <span class="st">"Name"</span>, <span class="st">"Value"</span>: name},</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1" aria-label="code-block-10-7"></a>        {<span class="st">"Key"</span>: <span class="st">"Project"</span>, <span class="st">"Value"</span>: project},</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1" aria-label="code-block-10-8"></a>        {<span class="st">"Key"</span>: <span class="st">"Purpose"</span>, <span class="st">"Value"</span>: purpose},</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1" aria-label="code-block-10-9"></a>    ]</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb11">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a>embedding_model_id <span class="op">=</span> <span class="st">"thenlper/gte-large"</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a>script_path <span class="op">=</span> <span class="st">"embedding_inference.py"</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1" aria-label="code-block-11-5"></a>emb_output_prefix <span class="op">=</span> <span class="st">"embeddings"</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1" aria-label="code-block-11-6"></a>emb_output_path <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>emb_output_prefix<span class="sc">}</span><span class="ss">/"</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1" aria-label="code-block-11-7"></a></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1" aria-label="code-block-11-8"></a>embedding_processor <span class="op">=</span> HuggingFaceProcessor(</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1" aria-label="code-block-11-9"></a>    base_job_name<span class="op">=</span><span class="st">"WattBot-embed-gte-large"</span>,</span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1" aria-label="code-block-11-10"></a>    role<span class="op">=</span>role,</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1" aria-label="code-block-11-11"></a>    tags<span class="op">=</span>make_job_tags(<span class="st">"RAG-embed"</span>),   <span class="co"># tags are per job; nothing is inherited from the notebook</span></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1" aria-label="code-block-11-12"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>,</span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1" aria-label="code-block-11-13"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1" aria-label="code-block-11-14"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,</span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1" aria-label="code-block-11-15"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1" aria-label="code-block-11-16"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1" aria-label="code-block-11-17"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb11-18"><a href="#cb11-18" tabindex="-1" aria-label="code-block-11-18"></a>    max_runtime_in_seconds<span class="op">=</span><span class="dv">2</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span>,</span>
+<span id="cb11-19"><a href="#cb11-19" tabindex="-1" aria-label="code-block-11-19"></a>)</span>
+<span id="cb11-20"><a href="#cb11-20" tabindex="-1" aria-label="code-block-11-20"></a></span>
+<span id="cb11-21"><a href="#cb11-21" tabindex="-1" aria-label="code-block-11-21"></a>embedding_processor.run(</span>
+<span id="cb11-22"><a href="#cb11-22" tabindex="-1" aria-label="code-block-11-22"></a>    code<span class="op">=</span>script_path,</span>
+<span id="cb11-23"><a href="#cb11-23" tabindex="-1" aria-label="code-block-11-23"></a>    source_dir<span class="op">=</span><span class="st">"code/"</span>,</span>
+<span id="cb11-24"><a href="#cb11-24" tabindex="-1" aria-label="code-block-11-24"></a>    inputs<span class="op">=</span>[</span>
+<span id="cb11-25"><a href="#cb11-25" tabindex="-1" aria-label="code-block-11-25"></a>        ProcessingInput(</span>
+<span id="cb11-26"><a href="#cb11-26" tabindex="-1" aria-label="code-block-11-26"></a>            source<span class="op">=</span>chunks_s3_uri,</span>
+<span id="cb11-27"><a href="#cb11-27" tabindex="-1" aria-label="code-block-11-27"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input"</span>,</span>
+<span id="cb11-28"><a href="#cb11-28" tabindex="-1" aria-label="code-block-11-28"></a>        )</span>
+<span id="cb11-29"><a href="#cb11-29" tabindex="-1" aria-label="code-block-11-29"></a>    ],</span>
+<span id="cb11-30"><a href="#cb11-30" tabindex="-1" aria-label="code-block-11-30"></a>    outputs<span class="op">=</span>[</span>
+<span id="cb11-31"><a href="#cb11-31" tabindex="-1" aria-label="code-block-11-31"></a>        ProcessingOutput(</span>
+<span id="cb11-32"><a href="#cb11-32" tabindex="-1" aria-label="code-block-11-32"></a>            output_name<span class="op">=</span><span class="st">"embeddings"</span>,</span>
+<span id="cb11-33"><a href="#cb11-33" tabindex="-1" aria-label="code-block-11-33"></a>            source<span class="op">=</span><span class="st">"/opt/ml/processing/output"</span>,</span>
+<span id="cb11-34"><a href="#cb11-34" tabindex="-1" aria-label="code-block-11-34"></a>            destination<span class="op">=</span>emb_output_path,</span>
+<span id="cb11-35"><a href="#cb11-35" tabindex="-1" aria-label="code-block-11-35"></a>        )</span>
+<span id="cb11-36"><a href="#cb11-36" tabindex="-1" aria-label="code-block-11-36"></a>    ],</span>
+<span id="cb11-37"><a href="#cb11-37" tabindex="-1" aria-label="code-block-11-37"></a>    arguments<span class="op">=</span>[</span>
+<span id="cb11-38"><a href="#cb11-38" tabindex="-1" aria-label="code-block-11-38"></a>        <span class="st">"--model_id"</span>, embedding_model_id,</span>
+<span id="cb11-39"><a href="#cb11-39" tabindex="-1" aria-label="code-block-11-39"></a>        <span class="st">"--input_filename"</span>, <span class="st">"chunks.jsonl"</span>,</span>
+<span id="cb11-40"><a href="#cb11-40" tabindex="-1" aria-label="code-block-11-40"></a>        <span class="st">"--text_key"</span>, <span class="st">"text"</span>,</span>
+<span id="cb11-41"><a href="#cb11-41" tabindex="-1" aria-label="code-block-11-41"></a>        <span class="st">"--input_dir"</span>, <span class="st">"/opt/ml/processing/input"</span>,</span>
+<span id="cb11-42"><a href="#cb11-42" tabindex="-1" aria-label="code-block-11-42"></a>        <span class="st">"--output_dir"</span>, <span class="st">"/opt/ml/processing/output"</span>,</span>
+<span id="cb11-43"><a href="#cb11-43" tabindex="-1" aria-label="code-block-11-43"></a>    ],</span>
+<span id="cb11-44"><a href="#cb11-44" tabindex="-1" aria-label="code-block-11-44"></a>)</span>
+<span id="cb11-45"><a href="#cb11-45" tabindex="-1" aria-label="code-block-11-45"></a></span>
+<span id="cb11-46"><a href="#cb11-46" tabindex="-1" aria-label="code-block-11-46"></a><span class="bu">print</span>(<span class="st">"Embedding job complete."</span>)</span></code></pre>
 </div>
 </div>
 <div class="section level3">
@@ -684,17 +712,17 @@ processing job.</p>
 <h3 id="sanity-check-the-embeddings-locally">Sanity-check the embeddings locally<a class="anchor" aria-label="anchor" href="#sanity-check-the-embeddings-locally"></a></h3>
 <p>We can download <code>embeddings.npy</code> back into the notebook
 and inspect its shape to confirm the job ran successfully.</p>
-<div class="codewrapper sourceCode" id="cb11">
+<div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a></span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a>local_embeddings_path <span class="op">=</span> os.path.join(local_data_dir, <span class="st">"embeddings.npy"</span>)</span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a>embeddings_key <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>emb_output_prefix<span class="sc">}</span><span class="ss">/embeddings.npy"</span></span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a></span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1" aria-label="code-block-11-5"></a>s3_client.download_file(bucket_name, embeddings_key, local_embeddings_path)</span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1" aria-label="code-block-11-6"></a>chunk_embeddings <span class="op">=</span> np.load(local_embeddings_path)</span>
-<span id="cb11-7"><a href="#cb11-7" tabindex="-1" aria-label="code-block-11-7"></a></span>
-<span id="cb11-8"><a href="#cb11-8" tabindex="-1" aria-label="code-block-11-8"></a><span class="bu">print</span>(<span class="st">"Embeddings shape:"</span>, chunk_embeddings.shape)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1" aria-label="code-block-12-1"></a></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1" aria-label="code-block-12-2"></a>local_embeddings_path <span class="op">=</span> os.path.join(local_data_dir, <span class="st">"embeddings.npy"</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1" aria-label="code-block-12-3"></a>embeddings_key <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>emb_output_prefix<span class="sc">}</span><span class="ss">/embeddings.npy"</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1" aria-label="code-block-12-4"></a></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1" aria-label="code-block-12-5"></a>s3_client.download_file(bucket_name, embeddings_key, local_embeddings_path)</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1" aria-label="code-block-12-6"></a>chunk_embeddings <span class="op">=</span> np.load(local_embeddings_path)</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1" aria-label="code-block-12-7"></a></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1" aria-label="code-block-12-8"></a><span class="bu">print</span>(<span class="st">"Embeddings shape:"</span>, chunk_embeddings.shape)</span></code></pre>
 </div>
 </div>
 </div>
@@ -725,81 +753,82 @@ ref_ids, is_blank)</li>
 threshold + LLM is_blank)</li>
 </ul><p>The job writes out <code>wattbot_solutions.csv</code> in the WattBot
 submission format.</p>
-<div class="codewrapper sourceCode" id="cb12">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1" aria-label="code-block-12-1"></a></span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1" aria-label="code-block-12-2"></a><span class="co"># Upload CSVs so the job can read them</span></span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1" aria-label="code-block-12-3"></a>train_qa_key <span class="op">=</span> <span class="st">"train_QA.csv"</span></span>
-<span id="cb12-4"><a href="#cb12-4" tabindex="-1" aria-label="code-block-12-4"></a>metadata_key <span class="op">=</span> <span class="st">"metadata.csv"</span></span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1" aria-label="code-block-12-5"></a></span>
-<span id="cb12-6"><a href="#cb12-6" tabindex="-1" aria-label="code-block-12-6"></a>train_qa_s3 <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>train_qa_key<span class="sc">}</span><span class="ss">"</span></span>
-<span id="cb12-7"><a href="#cb12-7" tabindex="-1" aria-label="code-block-12-7"></a>metadata_s3 <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>metadata_key<span class="sc">}</span><span class="ss">"</span></span>
-<span id="cb12-8"><a href="#cb12-8" tabindex="-1" aria-label="code-block-12-8"></a>emb_output_s3 <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>emb_output_prefix<span class="sc">}</span><span class="ss">/embeddings.npy"</span></span>
-<span id="cb12-9"><a href="#cb12-9" tabindex="-1" aria-label="code-block-12-9"></a></span>
-<span id="cb12-10"><a href="#cb12-10" tabindex="-1" aria-label="code-block-12-10"></a><span class="bu">print</span>(<span class="st">"train_QA:"</span>, train_qa_s3)</span>
-<span id="cb12-11"><a href="#cb12-11" tabindex="-1" aria-label="code-block-12-11"></a><span class="bu">print</span>(<span class="st">"metadata:"</span>, metadata_s3)</span>
-<span id="cb12-12"><a href="#cb12-12" tabindex="-1" aria-label="code-block-12-12"></a><span class="bu">print</span>(<span class="st">"embeddings:"</span>, emb_output_s3)</span></code></pre>
-</div>
 <div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1" aria-label="code-block-13-1"></a></span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1" aria-label="code-block-13-2"></a>rag_script <span class="op">=</span> <span class="st">"wattbot_rag_batch.py"</span></span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a></span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1" aria-label="code-block-13-4"></a>rag_output_prefix <span class="op">=</span> <span class="st">"solutions"</span></span>
-<span id="cb13-5"><a href="#cb13-5" tabindex="-1" aria-label="code-block-13-5"></a>rag_output_path <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>rag_output_prefix<span class="sc">}</span><span class="ss">/"</span></span>
-<span id="cb13-6"><a href="#cb13-6" tabindex="-1" aria-label="code-block-13-6"></a></span>
-<span id="cb13-7"><a href="#cb13-7" tabindex="-1" aria-label="code-block-13-7"></a>rag_processor <span class="op">=</span> HuggingFaceProcessor(</span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1" aria-label="code-block-13-8"></a>    base_job_name<span class="op">=</span><span class="st">"WattBot-rag-batch"</span>,</span>
-<span id="cb13-9"><a href="#cb13-9" tabindex="-1" aria-label="code-block-13-9"></a>    role<span class="op">=</span>role,</span>
-<span id="cb13-10"><a href="#cb13-10" tabindex="-1" aria-label="code-block-13-10"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>,</span>
-<span id="cb13-11"><a href="#cb13-11" tabindex="-1" aria-label="code-block-13-11"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb13-12"><a href="#cb13-12" tabindex="-1" aria-label="code-block-13-12"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,</span>
-<span id="cb13-13"><a href="#cb13-13" tabindex="-1" aria-label="code-block-13-13"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
-<span id="cb13-14"><a href="#cb13-14" tabindex="-1" aria-label="code-block-13-14"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
-<span id="cb13-15"><a href="#cb13-15" tabindex="-1" aria-label="code-block-13-15"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb13-16"><a href="#cb13-16" tabindex="-1" aria-label="code-block-13-16"></a>    max_runtime_in_seconds<span class="op">=</span><span class="dv">4</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span>,</span>
-<span id="cb13-17"><a href="#cb13-17" tabindex="-1" aria-label="code-block-13-17"></a>)</span>
-<span id="cb13-18"><a href="#cb13-18" tabindex="-1" aria-label="code-block-13-18"></a></span>
-<span id="cb13-19"><a href="#cb13-19" tabindex="-1" aria-label="code-block-13-19"></a>rag_processor.run(</span>
-<span id="cb13-20"><a href="#cb13-20" tabindex="-1" aria-label="code-block-13-20"></a>    code<span class="op">=</span>rag_script,</span>
-<span id="cb13-21"><a href="#cb13-21" tabindex="-1" aria-label="code-block-13-21"></a>    source_dir<span class="op">=</span><span class="st">"code/"</span>,</span>
-<span id="cb13-22"><a href="#cb13-22" tabindex="-1" aria-label="code-block-13-22"></a>    inputs<span class="op">=</span>[</span>
-<span id="cb13-23"><a href="#cb13-23" tabindex="-1" aria-label="code-block-13-23"></a>        ProcessingInput(</span>
-<span id="cb13-24"><a href="#cb13-24" tabindex="-1" aria-label="code-block-13-24"></a>            source<span class="op">=</span>chunks_s3_uri,</span>
-<span id="cb13-25"><a href="#cb13-25" tabindex="-1" aria-label="code-block-13-25"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/chunks"</span>,</span>
-<span id="cb13-26"><a href="#cb13-26" tabindex="-1" aria-label="code-block-13-26"></a>        ),</span>
-<span id="cb13-27"><a href="#cb13-27" tabindex="-1" aria-label="code-block-13-27"></a>        ProcessingInput(</span>
-<span id="cb13-28"><a href="#cb13-28" tabindex="-1" aria-label="code-block-13-28"></a>            source<span class="op">=</span>emb_output_s3,</span>
-<span id="cb13-29"><a href="#cb13-29" tabindex="-1" aria-label="code-block-13-29"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/embeddings"</span>,</span>
-<span id="cb13-30"><a href="#cb13-30" tabindex="-1" aria-label="code-block-13-30"></a>        ),</span>
-<span id="cb13-31"><a href="#cb13-31" tabindex="-1" aria-label="code-block-13-31"></a>        ProcessingInput(</span>
-<span id="cb13-32"><a href="#cb13-32" tabindex="-1" aria-label="code-block-13-32"></a>            source<span class="op">=</span>train_qa_s3,</span>
-<span id="cb13-33"><a href="#cb13-33" tabindex="-1" aria-label="code-block-13-33"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/train"</span>,</span>
-<span id="cb13-34"><a href="#cb13-34" tabindex="-1" aria-label="code-block-13-34"></a>        ),</span>
-<span id="cb13-35"><a href="#cb13-35" tabindex="-1" aria-label="code-block-13-35"></a>        ProcessingInput(</span>
-<span id="cb13-36"><a href="#cb13-36" tabindex="-1" aria-label="code-block-13-36"></a>            source<span class="op">=</span>metadata_s3,</span>
-<span id="cb13-37"><a href="#cb13-37" tabindex="-1" aria-label="code-block-13-37"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/metadata"</span>,</span>
-<span id="cb13-38"><a href="#cb13-38" tabindex="-1" aria-label="code-block-13-38"></a>        ),</span>
-<span id="cb13-39"><a href="#cb13-39" tabindex="-1" aria-label="code-block-13-39"></a>    ],</span>
-<span id="cb13-40"><a href="#cb13-40" tabindex="-1" aria-label="code-block-13-40"></a>    outputs<span class="op">=</span>[</span>
-<span id="cb13-41"><a href="#cb13-41" tabindex="-1" aria-label="code-block-13-41"></a>        ProcessingOutput(</span>
-<span id="cb13-42"><a href="#cb13-42" tabindex="-1" aria-label="code-block-13-42"></a>            output_name<span class="op">=</span><span class="st">"solutions"</span>,</span>
-<span id="cb13-43"><a href="#cb13-43" tabindex="-1" aria-label="code-block-13-43"></a>            source<span class="op">=</span><span class="st">"/opt/ml/processing/output"</span>,</span>
-<span id="cb13-44"><a href="#cb13-44" tabindex="-1" aria-label="code-block-13-44"></a>            destination<span class="op">=</span>rag_output_path,</span>
-<span id="cb13-45"><a href="#cb13-45" tabindex="-1" aria-label="code-block-13-45"></a>        )</span>
-<span id="cb13-46"><a href="#cb13-46" tabindex="-1" aria-label="code-block-13-46"></a>    ],</span>
-<span id="cb13-47"><a href="#cb13-47" tabindex="-1" aria-label="code-block-13-47"></a>    arguments<span class="op">=</span>[</span>
-<span id="cb13-48"><a href="#cb13-48" tabindex="-1" aria-label="code-block-13-48"></a>        <span class="st">"--input_dir"</span>, <span class="st">"/opt/ml/processing/input"</span>,</span>
-<span id="cb13-49"><a href="#cb13-49" tabindex="-1" aria-label="code-block-13-49"></a>        <span class="st">"--output_dir"</span>, <span class="st">"/opt/ml/processing/output"</span>,</span>
-<span id="cb13-50"><a href="#cb13-50" tabindex="-1" aria-label="code-block-13-50"></a>        <span class="st">"--embedding_model_id"</span>, embedding_model_id,</span>
-<span id="cb13-51"><a href="#cb13-51" tabindex="-1" aria-label="code-block-13-51"></a>        <span class="st">"--top_k"</span>, <span class="st">"8"</span>,</span>
-<span id="cb13-52"><a href="#cb13-52" tabindex="-1" aria-label="code-block-13-52"></a>    ],</span>
-<span id="cb13-53"><a href="#cb13-53" tabindex="-1" aria-label="code-block-13-53"></a>)</span>
-<span id="cb13-54"><a href="#cb13-54" tabindex="-1" aria-label="code-block-13-54"></a></span>
-<span id="cb13-55"><a href="#cb13-55" tabindex="-1" aria-label="code-block-13-55"></a></span>
-<span id="cb13-56"><a href="#cb13-56" tabindex="-1" aria-label="code-block-13-56"></a><span class="bu">print</span>(<span class="st">"RAG batch job complete."</span>)</span></code></pre>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1" aria-label="code-block-13-2"></a><span class="co"># Upload CSVs so the job can read them</span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a>train_qa_key <span class="op">=</span> <span class="st">"train_QA.csv"</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1" aria-label="code-block-13-4"></a>metadata_key <span class="op">=</span> <span class="st">"metadata.csv"</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1" aria-label="code-block-13-5"></a></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1" aria-label="code-block-13-6"></a>train_qa_s3 <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>train_qa_key<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1" aria-label="code-block-13-7"></a>metadata_s3 <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>metadata_key<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1" aria-label="code-block-13-8"></a>emb_output_s3 <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>emb_output_prefix<span class="sc">}</span><span class="ss">/embeddings.npy"</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1" aria-label="code-block-13-9"></a></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1" aria-label="code-block-13-10"></a><span class="bu">print</span>(<span class="st">"train_QA:"</span>, train_qa_s3)</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1" aria-label="code-block-13-11"></a><span class="bu">print</span>(<span class="st">"metadata:"</span>, metadata_s3)</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1" aria-label="code-block-13-12"></a><span class="bu">print</span>(<span class="st">"embeddings:"</span>, emb_output_s3)</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb14">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1" aria-label="code-block-14-2"></a>rag_script <span class="op">=</span> <span class="st">"wattbot_rag_batch.py"</span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1" aria-label="code-block-14-3"></a></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1" aria-label="code-block-14-4"></a>rag_output_prefix <span class="op">=</span> <span class="st">"solutions"</span></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1" aria-label="code-block-14-5"></a>rag_output_path <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>rag_output_prefix<span class="sc">}</span><span class="ss">/"</span></span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1" aria-label="code-block-14-6"></a></span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1" aria-label="code-block-14-7"></a>rag_processor <span class="op">=</span> HuggingFaceProcessor(</span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1" aria-label="code-block-14-8"></a>    base_job_name<span class="op">=</span><span class="st">"WattBot-rag-batch"</span>,</span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1" aria-label="code-block-14-9"></a>    role<span class="op">=</span>role,</span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1" aria-label="code-block-14-10"></a>    tags<span class="op">=</span>make_job_tags(<span class="st">"RAG-batch"</span>),   <span class="co"># separate job, separate tags</span></span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1" aria-label="code-block-14-11"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>,</span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1" aria-label="code-block-14-12"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1" aria-label="code-block-14-13"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,</span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1" aria-label="code-block-14-14"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1" aria-label="code-block-14-15"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1" aria-label="code-block-14-16"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1" aria-label="code-block-14-17"></a>    max_runtime_in_seconds<span class="op">=</span><span class="dv">4</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span>,</span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1" aria-label="code-block-14-18"></a>)</span>
+<span id="cb14-19"><a href="#cb14-19" tabindex="-1" aria-label="code-block-14-19"></a></span>
+<span id="cb14-20"><a href="#cb14-20" tabindex="-1" aria-label="code-block-14-20"></a>rag_processor.run(</span>
+<span id="cb14-21"><a href="#cb14-21" tabindex="-1" aria-label="code-block-14-21"></a>    code<span class="op">=</span>rag_script,</span>
+<span id="cb14-22"><a href="#cb14-22" tabindex="-1" aria-label="code-block-14-22"></a>    source_dir<span class="op">=</span><span class="st">"code/"</span>,</span>
+<span id="cb14-23"><a href="#cb14-23" tabindex="-1" aria-label="code-block-14-23"></a>    inputs<span class="op">=</span>[</span>
+<span id="cb14-24"><a href="#cb14-24" tabindex="-1" aria-label="code-block-14-24"></a>        ProcessingInput(</span>
+<span id="cb14-25"><a href="#cb14-25" tabindex="-1" aria-label="code-block-14-25"></a>            source<span class="op">=</span>chunks_s3_uri,</span>
+<span id="cb14-26"><a href="#cb14-26" tabindex="-1" aria-label="code-block-14-26"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/chunks"</span>,</span>
+<span id="cb14-27"><a href="#cb14-27" tabindex="-1" aria-label="code-block-14-27"></a>        ),</span>
+<span id="cb14-28"><a href="#cb14-28" tabindex="-1" aria-label="code-block-14-28"></a>        ProcessingInput(</span>
+<span id="cb14-29"><a href="#cb14-29" tabindex="-1" aria-label="code-block-14-29"></a>            source<span class="op">=</span>emb_output_s3,</span>
+<span id="cb14-30"><a href="#cb14-30" tabindex="-1" aria-label="code-block-14-30"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/embeddings"</span>,</span>
+<span id="cb14-31"><a href="#cb14-31" tabindex="-1" aria-label="code-block-14-31"></a>        ),</span>
+<span id="cb14-32"><a href="#cb14-32" tabindex="-1" aria-label="code-block-14-32"></a>        ProcessingInput(</span>
+<span id="cb14-33"><a href="#cb14-33" tabindex="-1" aria-label="code-block-14-33"></a>            source<span class="op">=</span>train_qa_s3,</span>
+<span id="cb14-34"><a href="#cb14-34" tabindex="-1" aria-label="code-block-14-34"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/train"</span>,</span>
+<span id="cb14-35"><a href="#cb14-35" tabindex="-1" aria-label="code-block-14-35"></a>        ),</span>
+<span id="cb14-36"><a href="#cb14-36" tabindex="-1" aria-label="code-block-14-36"></a>        ProcessingInput(</span>
+<span id="cb14-37"><a href="#cb14-37" tabindex="-1" aria-label="code-block-14-37"></a>            source<span class="op">=</span>metadata_s3,</span>
+<span id="cb14-38"><a href="#cb14-38" tabindex="-1" aria-label="code-block-14-38"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/metadata"</span>,</span>
+<span id="cb14-39"><a href="#cb14-39" tabindex="-1" aria-label="code-block-14-39"></a>        ),</span>
+<span id="cb14-40"><a href="#cb14-40" tabindex="-1" aria-label="code-block-14-40"></a>    ],</span>
+<span id="cb14-41"><a href="#cb14-41" tabindex="-1" aria-label="code-block-14-41"></a>    outputs<span class="op">=</span>[</span>
+<span id="cb14-42"><a href="#cb14-42" tabindex="-1" aria-label="code-block-14-42"></a>        ProcessingOutput(</span>
+<span id="cb14-43"><a href="#cb14-43" tabindex="-1" aria-label="code-block-14-43"></a>            output_name<span class="op">=</span><span class="st">"solutions"</span>,</span>
+<span id="cb14-44"><a href="#cb14-44" tabindex="-1" aria-label="code-block-14-44"></a>            source<span class="op">=</span><span class="st">"/opt/ml/processing/output"</span>,</span>
+<span id="cb14-45"><a href="#cb14-45" tabindex="-1" aria-label="code-block-14-45"></a>            destination<span class="op">=</span>rag_output_path,</span>
+<span id="cb14-46"><a href="#cb14-46" tabindex="-1" aria-label="code-block-14-46"></a>        )</span>
+<span id="cb14-47"><a href="#cb14-47" tabindex="-1" aria-label="code-block-14-47"></a>    ],</span>
+<span id="cb14-48"><a href="#cb14-48" tabindex="-1" aria-label="code-block-14-48"></a>    arguments<span class="op">=</span>[</span>
+<span id="cb14-49"><a href="#cb14-49" tabindex="-1" aria-label="code-block-14-49"></a>        <span class="st">"--input_dir"</span>, <span class="st">"/opt/ml/processing/input"</span>,</span>
+<span id="cb14-50"><a href="#cb14-50" tabindex="-1" aria-label="code-block-14-50"></a>        <span class="st">"--output_dir"</span>, <span class="st">"/opt/ml/processing/output"</span>,</span>
+<span id="cb14-51"><a href="#cb14-51" tabindex="-1" aria-label="code-block-14-51"></a>        <span class="st">"--embedding_model_id"</span>, embedding_model_id,</span>
+<span id="cb14-52"><a href="#cb14-52" tabindex="-1" aria-label="code-block-14-52"></a>        <span class="st">"--top_k"</span>, <span class="st">"8"</span>,</span>
+<span id="cb14-53"><a href="#cb14-53" tabindex="-1" aria-label="code-block-14-53"></a>    ],</span>
+<span id="cb14-54"><a href="#cb14-54" tabindex="-1" aria-label="code-block-14-54"></a>)</span>
+<span id="cb14-55"><a href="#cb14-55" tabindex="-1" aria-label="code-block-14-55"></a></span>
+<span id="cb14-56"><a href="#cb14-56" tabindex="-1" aria-label="code-block-14-56"></a></span>
+<span id="cb14-57"><a href="#cb14-57" tabindex="-1" aria-label="code-block-14-57"></a><span class="bu">print</span>(<span class="st">"RAG batch job complete."</span>)</span></code></pre>
 </div>
 </div>
 <div class="section level2">
@@ -807,235 +836,235 @@ submission format.</p>
 <p>Finally, we download <code>wattbot_solutions.csv</code> from S3,
 inspect a few rows, and (optionally) compute the WattBot score against
 <code>train_QA.csv</code> using the <code>Score.py</code> logic.</p>
-<div class="codewrapper sourceCode" id="cb14">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a></span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1" aria-label="code-block-14-2"></a>solutions_key <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>rag_output_prefix<span class="sc">}</span><span class="ss">/wattbot_solutions.csv"</span></span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1" aria-label="code-block-14-3"></a>local_solutions_path <span class="op">=</span> os.path.join(local_data_dir, <span class="st">"wattbot_solutions.csv"</span>)</span>
-<span id="cb14-4"><a href="#cb14-4" tabindex="-1" aria-label="code-block-14-4"></a></span>
-<span id="cb14-5"><a href="#cb14-5" tabindex="-1" aria-label="code-block-14-5"></a>s3_client.download_file(bucket_name, solutions_key, local_solutions_path)</span>
-<span id="cb14-6"><a href="#cb14-6" tabindex="-1" aria-label="code-block-14-6"></a>solutions_df <span class="op">=</span> pd.read_csv(local_solutions_path)</span>
-<span id="cb14-7"><a href="#cb14-7" tabindex="-1" aria-label="code-block-14-7"></a>solutions_df.head()</span></code></pre>
-</div>
 <div class="codewrapper sourceCode" id="cb15">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1" aria-label="code-block-15-3"></a></span>
-<span id="cb15-4"><a href="#cb15-4" tabindex="-1" aria-label="code-block-15-4"></a><span class="kw">def</span> _to_bool_flag(x):</span>
-<span id="cb15-5"><a href="#cb15-5" tabindex="-1" aria-label="code-block-15-5"></a>    <span class="co">"""Convert typical truthy/falsey strings to bool."""</span></span>
-<span id="cb15-6"><a href="#cb15-6" tabindex="-1" aria-label="code-block-15-6"></a>    <span class="cf">if</span> <span class="bu">isinstance</span>(x, <span class="bu">str</span>):</span>
-<span id="cb15-7"><a href="#cb15-7" tabindex="-1" aria-label="code-block-15-7"></a>        s <span class="op">=</span> x.strip().lower()</span>
-<span id="cb15-8"><a href="#cb15-8" tabindex="-1" aria-label="code-block-15-8"></a>        <span class="cf">if</span> s <span class="kw">in</span> {<span class="st">"1"</span>, <span class="st">"True"</span>, <span class="st">"true"</span>, <span class="st">"yes"</span>}:</span>
-<span id="cb15-9"><a href="#cb15-9" tabindex="-1" aria-label="code-block-15-9"></a>            <span class="cf">return</span> <span class="va">True</span></span>
-<span id="cb15-10"><a href="#cb15-10" tabindex="-1" aria-label="code-block-15-10"></a>        <span class="cf">if</span> s <span class="kw">in</span> {<span class="st">"0"</span>, <span class="st">"False"</span>, <span class="st">"false"</span>, <span class="st">"no"</span>}:</span>
-<span id="cb15-11"><a href="#cb15-11" tabindex="-1" aria-label="code-block-15-11"></a>            <span class="cf">return</span> <span class="va">False</span></span>
-<span id="cb15-12"><a href="#cb15-12" tabindex="-1" aria-label="code-block-15-12"></a>    <span class="cf">return</span> <span class="bu">bool</span>(x)</span>
-<span id="cb15-13"><a href="#cb15-13" tabindex="-1" aria-label="code-block-15-13"></a></span>
-<span id="cb15-14"><a href="#cb15-14" tabindex="-1" aria-label="code-block-15-14"></a><span class="kw">def</span> _parse_float_or_none(x):</span>
-<span id="cb15-15"><a href="#cb15-15" tabindex="-1" aria-label="code-block-15-15"></a>    <span class="cf">try</span>:</span>
-<span id="cb15-16"><a href="#cb15-16" tabindex="-1" aria-label="code-block-15-16"></a>        <span class="cf">return</span> <span class="bu">float</span>(<span class="bu">str</span>(x).strip())</span>
-<span id="cb15-17"><a href="#cb15-17" tabindex="-1" aria-label="code-block-15-17"></a>    <span class="cf">except</span> <span class="pp">Exception</span>:</span>
-<span id="cb15-18"><a href="#cb15-18" tabindex="-1" aria-label="code-block-15-18"></a>        <span class="cf">return</span> <span class="va">None</span></span>
-<span id="cb15-19"><a href="#cb15-19" tabindex="-1" aria-label="code-block-15-19"></a></span>
-<span id="cb15-20"><a href="#cb15-20" tabindex="-1" aria-label="code-block-15-20"></a><span class="kw">def</span> _answer_value_correct(gt_val, pred_val, rel_tol<span class="op">=</span><span class="fl">1e-3</span>):</span>
-<span id="cb15-21"><a href="#cb15-21" tabindex="-1" aria-label="code-block-15-21"></a>    <span class="co">"""</span></span>
-<span id="cb15-22"><a href="#cb15-22" tabindex="-1" aria-label="code-block-15-22"></a><span class="co">    gt_val, pred_val: values from answer_value columns.</span></span>
-<span id="cb15-23"><a href="#cb15-23" tabindex="-1" aria-label="code-block-15-23"></a><span class="co">    rel_tol = 0.001 =&gt; 0.1% relative tolerance.</span></span>
-<span id="cb15-24"><a href="#cb15-24" tabindex="-1" aria-label="code-block-15-24"></a><span class="co">    """</span></span>
-<span id="cb15-25"><a href="#cb15-25" tabindex="-1" aria-label="code-block-15-25"></a>    gt_str <span class="op">=</span> <span class="bu">str</span>(gt_val).strip()</span>
-<span id="cb15-26"><a href="#cb15-26" tabindex="-1" aria-label="code-block-15-26"></a>    pred_str <span class="op">=</span> <span class="bu">str</span>(pred_val).strip()</span>
-<span id="cb15-27"><a href="#cb15-27" tabindex="-1" aria-label="code-block-15-27"></a>    </span>
-<span id="cb15-28"><a href="#cb15-28" tabindex="-1" aria-label="code-block-15-28"></a>    <span class="co"># If either is 'is_blank', treat as categorical</span></span>
-<span id="cb15-29"><a href="#cb15-29" tabindex="-1" aria-label="code-block-15-29"></a>    <span class="cf">if</span> gt_str.lower() <span class="op">==</span> <span class="st">"is_blank"</span> <span class="kw">or</span> pred_str.lower() <span class="op">==</span> <span class="st">"is_blank"</span>:</span>
-<span id="cb15-30"><a href="#cb15-30" tabindex="-1" aria-label="code-block-15-30"></a>        <span class="cf">return</span> gt_str.lower() <span class="op">==</span> pred_str.lower()</span>
-<span id="cb15-31"><a href="#cb15-31" tabindex="-1" aria-label="code-block-15-31"></a>    </span>
-<span id="cb15-32"><a href="#cb15-32" tabindex="-1" aria-label="code-block-15-32"></a>    gt_num <span class="op">=</span> _parse_float_or_none(gt_val)</span>
-<span id="cb15-33"><a href="#cb15-33" tabindex="-1" aria-label="code-block-15-33"></a>    pred_num <span class="op">=</span> _parse_float_or_none(pred_val)</span>
-<span id="cb15-34"><a href="#cb15-34" tabindex="-1" aria-label="code-block-15-34"></a>    </span>
-<span id="cb15-35"><a href="#cb15-35" tabindex="-1" aria-label="code-block-15-35"></a>    <span class="co"># If both numeric, use relative tolerance</span></span>
-<span id="cb15-36"><a href="#cb15-36" tabindex="-1" aria-label="code-block-15-36"></a>    <span class="cf">if</span> gt_num <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> pred_num <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
-<span id="cb15-37"><a href="#cb15-37" tabindex="-1" aria-label="code-block-15-37"></a>        <span class="cf">if</span> gt_num <span class="op">==</span> <span class="dv">0</span>:</span>
-<span id="cb15-38"><a href="#cb15-38" tabindex="-1" aria-label="code-block-15-38"></a>            <span class="cf">return</span> <span class="bu">abs</span>(pred_num <span class="op">-</span> gt_num) <span class="op">&lt;=</span> rel_tol  <span class="co"># small absolute tolerance around 0</span></span>
-<span id="cb15-39"><a href="#cb15-39" tabindex="-1" aria-label="code-block-15-39"></a>        rel_err <span class="op">=</span> <span class="bu">abs</span>(pred_num <span class="op">-</span> gt_num) <span class="op">/</span> <span class="bu">max</span>(<span class="bu">abs</span>(gt_num), <span class="fl">1e-12</span>)</span>
-<span id="cb15-40"><a href="#cb15-40" tabindex="-1" aria-label="code-block-15-40"></a>        <span class="cf">return</span> rel_err <span class="op">&lt;=</span> rel_tol</span>
-<span id="cb15-41"><a href="#cb15-41" tabindex="-1" aria-label="code-block-15-41"></a>    </span>
-<span id="cb15-42"><a href="#cb15-42" tabindex="-1" aria-label="code-block-15-42"></a>    <span class="co"># Otherwise, fall back to normalized string match</span></span>
-<span id="cb15-43"><a href="#cb15-43" tabindex="-1" aria-label="code-block-15-43"></a>    <span class="cf">return</span> gt_str.lower() <span class="op">==</span> pred_str.lower()</span>
-<span id="cb15-44"><a href="#cb15-44" tabindex="-1" aria-label="code-block-15-44"></a></span>
-<span id="cb15-45"><a href="#cb15-45" tabindex="-1" aria-label="code-block-15-45"></a><span class="kw">def</span> _ref_id_jaccard(gt_ref, pred_ref):</span>
-<span id="cb15-46"><a href="#cb15-46" tabindex="-1" aria-label="code-block-15-46"></a>    <span class="co">"""</span></span>
-<span id="cb15-47"><a href="#cb15-47" tabindex="-1" aria-label="code-block-15-47"></a><span class="co">    Jaccard overlap between sets of ref_ids.</span></span>
-<span id="cb15-48"><a href="#cb15-48" tabindex="-1" aria-label="code-block-15-48"></a><span class="co">    Strings may contain semicolon-separated IDs, or 'is_blank'.</span></span>
-<span id="cb15-49"><a href="#cb15-49" tabindex="-1" aria-label="code-block-15-49"></a><span class="co">    Case-insensitive.</span></span>
-<span id="cb15-50"><a href="#cb15-50" tabindex="-1" aria-label="code-block-15-50"></a><span class="co">    """</span></span>
-<span id="cb15-51"><a href="#cb15-51" tabindex="-1" aria-label="code-block-15-51"></a>    <span class="kw">def</span> to_set(s):</span>
-<span id="cb15-52"><a href="#cb15-52" tabindex="-1" aria-label="code-block-15-52"></a>        <span class="cf">if</span> s <span class="kw">is</span> <span class="va">None</span>:</span>
-<span id="cb15-53"><a href="#cb15-53" tabindex="-1" aria-label="code-block-15-53"></a>            <span class="cf">return</span> <span class="bu">set</span>()</span>
-<span id="cb15-54"><a href="#cb15-54" tabindex="-1" aria-label="code-block-15-54"></a>        s <span class="op">=</span> <span class="bu">str</span>(s).strip()</span>
-<span id="cb15-55"><a href="#cb15-55" tabindex="-1" aria-label="code-block-15-55"></a>        <span class="cf">if</span> <span class="kw">not</span> s <span class="kw">or</span> s.lower() <span class="op">==</span> <span class="st">"is_blank"</span>:</span>
-<span id="cb15-56"><a href="#cb15-56" tabindex="-1" aria-label="code-block-15-56"></a>            <span class="cf">return</span> <span class="bu">set</span>()</span>
-<span id="cb15-57"><a href="#cb15-57" tabindex="-1" aria-label="code-block-15-57"></a>        parts <span class="op">=</span> [p.strip().lower() <span class="cf">for</span> p <span class="kw">in</span> s.split(<span class="st">";"</span>) <span class="cf">if</span> p.strip()]</span>
-<span id="cb15-58"><a href="#cb15-58" tabindex="-1" aria-label="code-block-15-58"></a>        <span class="cf">return</span> <span class="bu">set</span>(parts)</span>
-<span id="cb15-59"><a href="#cb15-59" tabindex="-1" aria-label="code-block-15-59"></a>    </span>
-<span id="cb15-60"><a href="#cb15-60" tabindex="-1" aria-label="code-block-15-60"></a>    gt_set <span class="op">=</span> to_set(gt_ref)</span>
-<span id="cb15-61"><a href="#cb15-61" tabindex="-1" aria-label="code-block-15-61"></a>    pred_set <span class="op">=</span> to_set(pred_ref)</span>
-<span id="cb15-62"><a href="#cb15-62" tabindex="-1" aria-label="code-block-15-62"></a>    </span>
-<span id="cb15-63"><a href="#cb15-63" tabindex="-1" aria-label="code-block-15-63"></a>    <span class="cf">if</span> <span class="kw">not</span> gt_set <span class="kw">and</span> <span class="kw">not</span> pred_set:</span>
-<span id="cb15-64"><a href="#cb15-64" tabindex="-1" aria-label="code-block-15-64"></a>        <span class="cf">return</span> <span class="fl">1.0</span></span>
-<span id="cb15-65"><a href="#cb15-65" tabindex="-1" aria-label="code-block-15-65"></a>    union <span class="op">=</span> gt_set <span class="op">|</span> pred_set</span>
-<span id="cb15-66"><a href="#cb15-66" tabindex="-1" aria-label="code-block-15-66"></a>    <span class="cf">if</span> <span class="kw">not</span> union:</span>
-<span id="cb15-67"><a href="#cb15-67" tabindex="-1" aria-label="code-block-15-67"></a>        <span class="cf">return</span> <span class="fl">0.0</span></span>
-<span id="cb15-68"><a href="#cb15-68" tabindex="-1" aria-label="code-block-15-68"></a>    inter <span class="op">=</span> gt_set <span class="op">&amp;</span> pred_set</span>
-<span id="cb15-69"><a href="#cb15-69" tabindex="-1" aria-label="code-block-15-69"></a>    <span class="cf">return</span> <span class="bu">len</span>(inter) <span class="op">/</span> <span class="bu">len</span>(union)</span>
-<span id="cb15-70"><a href="#cb15-70" tabindex="-1" aria-label="code-block-15-70"></a></span>
-<span id="cb15-71"><a href="#cb15-71" tabindex="-1" aria-label="code-block-15-71"></a><span class="kw">def</span> compute_wattbot_score(</span>
-<span id="cb15-72"><a href="#cb15-72" tabindex="-1" aria-label="code-block-15-72"></a>    train_qa_path<span class="op">=</span><span class="st">"train_QA.csv"</span>,</span>
-<span id="cb15-73"><a href="#cb15-73" tabindex="-1" aria-label="code-block-15-73"></a>    preds_path<span class="op">=</span><span class="st">"train_solutions_qwen.csv"</span>,</span>
-<span id="cb15-74"><a href="#cb15-74" tabindex="-1" aria-label="code-block-15-74"></a>    id_col<span class="op">=</span><span class="st">"id"</span>,</span>
-<span id="cb15-75"><a href="#cb15-75" tabindex="-1" aria-label="code-block-15-75"></a>    gt_answer_col<span class="op">=</span><span class="st">"answer_value"</span>,</span>
-<span id="cb15-76"><a href="#cb15-76" tabindex="-1" aria-label="code-block-15-76"></a>    gt_ref_col<span class="op">=</span><span class="st">"ref_id"</span>,</span>
-<span id="cb15-77"><a href="#cb15-77" tabindex="-1" aria-label="code-block-15-77"></a>    gt_is_na_col<span class="op">=</span><span class="st">"is_NA"</span>,   <span class="co"># can also pass "is_blank" or None</span></span>
-<span id="cb15-78"><a href="#cb15-78" tabindex="-1" aria-label="code-block-15-78"></a>    pred_answer_col<span class="op">=</span><span class="st">"answer_value"</span>,</span>
-<span id="cb15-79"><a href="#cb15-79" tabindex="-1" aria-label="code-block-15-79"></a>    pred_ref_col<span class="op">=</span><span class="st">"ref_id"</span>,</span>
-<span id="cb15-80"><a href="#cb15-80" tabindex="-1" aria-label="code-block-15-80"></a>    pred_is_na_col<span class="op">=</span><span class="va">None</span>,    <span class="co"># can pass "is_blank", or leave None to auto</span></span>
-<span id="cb15-81"><a href="#cb15-81" tabindex="-1" aria-label="code-block-15-81"></a>    n_examples<span class="op">=</span><span class="dv">10</span>,          <span class="co"># how many incorrect examples to print</span></span>
-<span id="cb15-82"><a href="#cb15-82" tabindex="-1" aria-label="code-block-15-82"></a>):</span>
-<span id="cb15-83"><a href="#cb15-83" tabindex="-1" aria-label="code-block-15-83"></a>    <span class="co">"""</span></span>
-<span id="cb15-84"><a href="#cb15-84" tabindex="-1" aria-label="code-block-15-84"></a><span class="co">    Compare your solutions to train_QA.csv using a WattBot-style score.</span></span>
-<span id="cb15-85"><a href="#cb15-85" tabindex="-1" aria-label="code-block-15-85"></a></span>
-<span id="cb15-86"><a href="#cb15-86" tabindex="-1" aria-label="code-block-15-86"></a><span class="co">    NA logic:</span></span>
-<span id="cb15-87"><a href="#cb15-87" tabindex="-1" aria-label="code-block-15-87"></a><span class="co">    - If an explicit NA column is found/used (e.g. is_NA), we use it via _to_bool_flag.</span></span>
-<span id="cb15-88"><a href="#cb15-88" tabindex="-1" aria-label="code-block-15-88"></a><span class="co">    - If you pass gt_is_na_col="is_blank" or pred_is_na_col="is_blank",</span></span>
-<span id="cb15-89"><a href="#cb15-89" tabindex="-1" aria-label="code-block-15-89"></a><span class="co">      we *derive* NA from answer_value == "is_blank" instead of expecting a real column.</span></span>
-<span id="cb15-90"><a href="#cb15-90" tabindex="-1" aria-label="code-block-15-90"></a><span class="co">    - If no NA column is available at all, we derive from answer_value == "is_blank".</span></span>
-<span id="cb15-91"><a href="#cb15-91" tabindex="-1" aria-label="code-block-15-91"></a></span>
-<span id="cb15-92"><a href="#cb15-92" tabindex="-1" aria-label="code-block-15-92"></a><span class="co">    Also prints up to `n_examples` rows where the model is not perfect</span></span>
-<span id="cb15-93"><a href="#cb15-93" tabindex="-1" aria-label="code-block-15-93"></a><span class="co">    (answer_score &lt; 1, ref_id_score &lt; 1, or is_NA_score &lt; 1).</span></span>
-<span id="cb15-94"><a href="#cb15-94" tabindex="-1" aria-label="code-block-15-94"></a><span class="co">    """</span></span>
-<span id="cb15-95"><a href="#cb15-95" tabindex="-1" aria-label="code-block-15-95"></a>    gt <span class="op">=</span> pd.read_csv(train_qa_path)</span>
-<span id="cb15-96"><a href="#cb15-96" tabindex="-1" aria-label="code-block-15-96"></a>    preds <span class="op">=</span> pd.read_csv(preds_path)</span>
-<span id="cb15-97"><a href="#cb15-97" tabindex="-1" aria-label="code-block-15-97"></a>    </span>
-<span id="cb15-98"><a href="#cb15-98" tabindex="-1" aria-label="code-block-15-98"></a>    <span class="co"># Inner join on id to be strict</span></span>
-<span id="cb15-99"><a href="#cb15-99" tabindex="-1" aria-label="code-block-15-99"></a>    merged <span class="op">=</span> gt.merge(preds, on<span class="op">=</span>id_col, suffixes<span class="op">=</span>(<span class="st">"_gt"</span>, <span class="st">"_pred"</span>))</span>
-<span id="cb15-100"><a href="#cb15-100" tabindex="-1" aria-label="code-block-15-100"></a>    <span class="cf">if</span> merged.empty:</span>
-<span id="cb15-101"><a href="#cb15-101" tabindex="-1" aria-label="code-block-15-101"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"No overlapping ids between ground truth and predictions."</span>)</span>
-<span id="cb15-102"><a href="#cb15-102" tabindex="-1" aria-label="code-block-15-102"></a></span>
-<span id="cb15-103"><a href="#cb15-103" tabindex="-1" aria-label="code-block-15-103"></a>    <span class="co"># ----- ground truth NA flags -----</span></span>
-<span id="cb15-104"><a href="#cb15-104" tabindex="-1" aria-label="code-block-15-104"></a>    <span class="cf">if</span> gt_is_na_col <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> gt_is_na_col <span class="kw">in</span> merged.columns:</span>
-<span id="cb15-105"><a href="#cb15-105" tabindex="-1" aria-label="code-block-15-105"></a>        <span class="co"># Use explicit column (e.g. "is_NA")</span></span>
-<span id="cb15-106"><a href="#cb15-106" tabindex="-1" aria-label="code-block-15-106"></a>        gt_is_na_series <span class="op">=</span> merged[gt_is_na_col].<span class="bu">map</span>(_to_bool_flag)</span>
-<span id="cb15-107"><a href="#cb15-107" tabindex="-1" aria-label="code-block-15-107"></a>    <span class="cf">elif</span> gt_is_na_col <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> gt_is_na_col.lower() <span class="op">==</span> <span class="st">"is_blank"</span>:</span>
-<span id="cb15-108"><a href="#cb15-108" tabindex="-1" aria-label="code-block-15-108"></a>        <span class="co"># Special meaning: derive NA from answer_value_gt == "is_blank"</span></span>
-<span id="cb15-109"><a href="#cb15-109" tabindex="-1" aria-label="code-block-15-109"></a>        gt_is_na_series <span class="op">=</span> merged[<span class="ss">f"</span><span class="sc">{</span>gt_answer_col<span class="sc">}</span><span class="ss">_gt"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"is_blank"</span>)</span>
-<span id="cb15-110"><a href="#cb15-110" tabindex="-1" aria-label="code-block-15-110"></a>        merged[<span class="st">"gt_is_blank_flag"</span>] <span class="op">=</span> gt_is_na_series</span>
-<span id="cb15-111"><a href="#cb15-111" tabindex="-1" aria-label="code-block-15-111"></a>    <span class="cf">else</span>:</span>
-<span id="cb15-112"><a href="#cb15-112" tabindex="-1" aria-label="code-block-15-112"></a>        <span class="co"># Fallback: if we have is_NA or is_blank col, use it; else derive</span></span>
-<span id="cb15-113"><a href="#cb15-113" tabindex="-1" aria-label="code-block-15-113"></a>        <span class="cf">if</span> <span class="st">"is_NA"</span> <span class="kw">in</span> merged.columns:</span>
-<span id="cb15-114"><a href="#cb15-114" tabindex="-1" aria-label="code-block-15-114"></a>            gt_is_na_series <span class="op">=</span> merged[<span class="st">"is_NA"</span>].<span class="bu">map</span>(_to_bool_flag)</span>
-<span id="cb15-115"><a href="#cb15-115" tabindex="-1" aria-label="code-block-15-115"></a>        <span class="cf">elif</span> <span class="st">"is_blank"</span> <span class="kw">in</span> merged.columns:</span>
-<span id="cb15-116"><a href="#cb15-116" tabindex="-1" aria-label="code-block-15-116"></a>            gt_is_na_series <span class="op">=</span> merged[<span class="st">"is_blank"</span>].<span class="bu">map</span>(_to_bool_flag)</span>
-<span id="cb15-117"><a href="#cb15-117" tabindex="-1" aria-label="code-block-15-117"></a>        <span class="cf">else</span>:</span>
-<span id="cb15-118"><a href="#cb15-118" tabindex="-1" aria-label="code-block-15-118"></a>            gt_is_na_series <span class="op">=</span> merged[<span class="ss">f"</span><span class="sc">{</span>gt_answer_col<span class="sc">}</span><span class="ss">_gt"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"is_blank"</span>)</span>
-<span id="cb15-119"><a href="#cb15-119" tabindex="-1" aria-label="code-block-15-119"></a>            merged[<span class="st">"gt_is_blank_flag"</span>] <span class="op">=</span> gt_is_na_series</span>
-<span id="cb15-120"><a href="#cb15-120" tabindex="-1" aria-label="code-block-15-120"></a></span>
-<span id="cb15-121"><a href="#cb15-121" tabindex="-1" aria-label="code-block-15-121"></a>    <span class="co"># ----- prediction NA flags -----</span></span>
-<span id="cb15-122"><a href="#cb15-122" tabindex="-1" aria-label="code-block-15-122"></a>    <span class="cf">if</span> pred_is_na_col <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> pred_is_na_col <span class="kw">in</span> merged.columns:</span>
-<span id="cb15-123"><a href="#cb15-123" tabindex="-1" aria-label="code-block-15-123"></a>        pred_is_na_series <span class="op">=</span> merged[pred_is_na_col].<span class="bu">map</span>(_to_bool_flag)</span>
-<span id="cb15-124"><a href="#cb15-124" tabindex="-1" aria-label="code-block-15-124"></a>    <span class="cf">elif</span> pred_is_na_col <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> pred_is_na_col.lower() <span class="op">==</span> <span class="st">"is_blank"</span>:</span>
-<span id="cb15-125"><a href="#cb15-125" tabindex="-1" aria-label="code-block-15-125"></a>        <span class="co"># Same convention: derive from answer_value_pred</span></span>
-<span id="cb15-126"><a href="#cb15-126" tabindex="-1" aria-label="code-block-15-126"></a>        pred_is_na_series <span class="op">=</span> merged[<span class="ss">f"</span><span class="sc">{</span>pred_answer_col<span class="sc">}</span><span class="ss">_pred"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"is_blank"</span>)</span>
-<span id="cb15-127"><a href="#cb15-127" tabindex="-1" aria-label="code-block-15-127"></a>        merged[<span class="st">"pred_is_blank_flag"</span>] <span class="op">=</span> pred_is_na_series</span>
-<span id="cb15-128"><a href="#cb15-128" tabindex="-1" aria-label="code-block-15-128"></a>    <span class="cf">else</span>:</span>
-<span id="cb15-129"><a href="#cb15-129" tabindex="-1" aria-label="code-block-15-129"></a>        <span class="co"># Auto-detect or derive if no NA column in preds</span></span>
-<span id="cb15-130"><a href="#cb15-130" tabindex="-1" aria-label="code-block-15-130"></a>        <span class="cf">if</span> <span class="st">"is_NA"</span> <span class="kw">in</span> merged.columns:</span>
-<span id="cb15-131"><a href="#cb15-131" tabindex="-1" aria-label="code-block-15-131"></a>            pred_is_na_series <span class="op">=</span> merged[<span class="st">"is_NA"</span>].<span class="bu">map</span>(_to_bool_flag)</span>
-<span id="cb15-132"><a href="#cb15-132" tabindex="-1" aria-label="code-block-15-132"></a>        <span class="cf">elif</span> <span class="st">"is_blank"</span> <span class="kw">in</span> merged.columns:</span>
-<span id="cb15-133"><a href="#cb15-133" tabindex="-1" aria-label="code-block-15-133"></a>            pred_is_na_series <span class="op">=</span> merged[<span class="st">"is_blank"</span>].<span class="bu">map</span>(_to_bool_flag)</span>
-<span id="cb15-134"><a href="#cb15-134" tabindex="-1" aria-label="code-block-15-134"></a>        <span class="cf">else</span>:</span>
-<span id="cb15-135"><a href="#cb15-135" tabindex="-1" aria-label="code-block-15-135"></a>            pred_is_na_series <span class="op">=</span> merged[<span class="ss">f"</span><span class="sc">{</span>pred_answer_col<span class="sc">}</span><span class="ss">_pred"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"is_blank"</span>)</span>
-<span id="cb15-136"><a href="#cb15-136" tabindex="-1" aria-label="code-block-15-136"></a>            merged[<span class="st">"pred_is_blank_flag"</span>] <span class="op">=</span> pred_is_na_series</span>
-<span id="cb15-137"><a href="#cb15-137" tabindex="-1" aria-label="code-block-15-137"></a></span>
-<span id="cb15-138"><a href="#cb15-138" tabindex="-1" aria-label="code-block-15-138"></a>    ans_scores <span class="op">=</span> []</span>
-<span id="cb15-139"><a href="#cb15-139" tabindex="-1" aria-label="code-block-15-139"></a>    ref_scores <span class="op">=</span> []</span>
-<span id="cb15-140"><a href="#cb15-140" tabindex="-1" aria-label="code-block-15-140"></a>    na_scores <span class="op">=</span> []</span>
-<span id="cb15-141"><a href="#cb15-141" tabindex="-1" aria-label="code-block-15-141"></a>    </span>
-<span id="cb15-142"><a href="#cb15-142" tabindex="-1" aria-label="code-block-15-142"></a>    <span class="cf">for</span> idx, row <span class="kw">in</span> merged.iterrows():</span>
-<span id="cb15-143"><a href="#cb15-143" tabindex="-1" aria-label="code-block-15-143"></a>        gt_ans <span class="op">=</span> row[<span class="ss">f"</span><span class="sc">{</span>gt_answer_col<span class="sc">}</span><span class="ss">_gt"</span>]</span>
-<span id="cb15-144"><a href="#cb15-144" tabindex="-1" aria-label="code-block-15-144"></a>        pred_ans <span class="op">=</span> row[<span class="ss">f"</span><span class="sc">{</span>pred_answer_col<span class="sc">}</span><span class="ss">_pred"</span>]</span>
-<span id="cb15-145"><a href="#cb15-145" tabindex="-1" aria-label="code-block-15-145"></a>        gt_ref <span class="op">=</span> row[<span class="ss">f"</span><span class="sc">{</span>gt_ref_col<span class="sc">}</span><span class="ss">_gt"</span>]</span>
-<span id="cb15-146"><a href="#cb15-146" tabindex="-1" aria-label="code-block-15-146"></a>        pred_ref <span class="op">=</span> row[<span class="ss">f"</span><span class="sc">{</span>pred_ref_col<span class="sc">}</span><span class="ss">_pred"</span>]</span>
-<span id="cb15-147"><a href="#cb15-147" tabindex="-1" aria-label="code-block-15-147"></a>        </span>
-<span id="cb15-148"><a href="#cb15-148" tabindex="-1" aria-label="code-block-15-148"></a>        gt_is_na <span class="op">=</span> <span class="bu">bool</span>(gt_is_na_series.iloc[idx])</span>
-<span id="cb15-149"><a href="#cb15-149" tabindex="-1" aria-label="code-block-15-149"></a>        pred_is_na <span class="op">=</span> <span class="bu">bool</span>(pred_is_na_series.iloc[idx])</span>
-<span id="cb15-150"><a href="#cb15-150" tabindex="-1" aria-label="code-block-15-150"></a>        </span>
-<span id="cb15-151"><a href="#cb15-151" tabindex="-1" aria-label="code-block-15-151"></a>        <span class="co"># 1. answer_value component</span></span>
-<span id="cb15-152"><a href="#cb15-152" tabindex="-1" aria-label="code-block-15-152"></a>        ans_correct <span class="op">=</span> _answer_value_correct(gt_ans, pred_ans)</span>
-<span id="cb15-153"><a href="#cb15-153" tabindex="-1" aria-label="code-block-15-153"></a>        ans_scores.append(<span class="fl">1.0</span> <span class="op">*</span> ans_correct)</span>
-<span id="cb15-154"><a href="#cb15-154" tabindex="-1" aria-label="code-block-15-154"></a>        </span>
-<span id="cb15-155"><a href="#cb15-155" tabindex="-1" aria-label="code-block-15-155"></a>        <span class="co"># 2. ref_id Jaccard</span></span>
-<span id="cb15-156"><a href="#cb15-156" tabindex="-1" aria-label="code-block-15-156"></a>        ref_j <span class="op">=</span> _ref_id_jaccard(gt_ref, pred_ref)</span>
-<span id="cb15-157"><a href="#cb15-157" tabindex="-1" aria-label="code-block-15-157"></a>        ref_scores.append(ref_j)</span>
-<span id="cb15-158"><a href="#cb15-158" tabindex="-1" aria-label="code-block-15-158"></a>        </span>
-<span id="cb15-159"><a href="#cb15-159" tabindex="-1" aria-label="code-block-15-159"></a>        <span class="co"># 3. is_NA component (simple: must match ground truth flag)</span></span>
-<span id="cb15-160"><a href="#cb15-160" tabindex="-1" aria-label="code-block-15-160"></a>        na_scores.append(<span class="fl">1.0</span> <span class="cf">if</span> gt_is_na <span class="op">==</span> pred_is_na <span class="cf">else</span> <span class="fl">0.0</span>)</span>
-<span id="cb15-161"><a href="#cb15-161" tabindex="-1" aria-label="code-block-15-161"></a>    </span>
-<span id="cb15-162"><a href="#cb15-162" tabindex="-1" aria-label="code-block-15-162"></a>    merged[<span class="st">"answer_score"</span>] <span class="op">=</span> ans_scores</span>
-<span id="cb15-163"><a href="#cb15-163" tabindex="-1" aria-label="code-block-15-163"></a>    merged[<span class="st">"ref_id_score"</span>] <span class="op">=</span> ref_scores</span>
-<span id="cb15-164"><a href="#cb15-164" tabindex="-1" aria-label="code-block-15-164"></a>    merged[<span class="st">"is_NA_score"</span>] <span class="op">=</span> na_scores</span>
-<span id="cb15-165"><a href="#cb15-165" tabindex="-1" aria-label="code-block-15-165"></a>    </span>
-<span id="cb15-166"><a href="#cb15-166" tabindex="-1" aria-label="code-block-15-166"></a>    merged[<span class="st">"wattbot_score"</span>] <span class="op">=</span> (</span>
-<span id="cb15-167"><a href="#cb15-167" tabindex="-1" aria-label="code-block-15-167"></a>        <span class="fl">0.75</span> <span class="op">*</span> merged[<span class="st">"answer_score"</span>]</span>
-<span id="cb15-168"><a href="#cb15-168" tabindex="-1" aria-label="code-block-15-168"></a>        <span class="op">+</span> <span class="fl">0.15</span> <span class="op">*</span> merged[<span class="st">"ref_id_score"</span>]</span>
-<span id="cb15-169"><a href="#cb15-169" tabindex="-1" aria-label="code-block-15-169"></a>        <span class="op">+</span> <span class="fl">0.10</span> <span class="op">*</span> merged[<span class="st">"is_NA_score"</span>]</span>
-<span id="cb15-170"><a href="#cb15-170" tabindex="-1" aria-label="code-block-15-170"></a>    )</span>
-<span id="cb15-171"><a href="#cb15-171" tabindex="-1" aria-label="code-block-15-171"></a>    </span>
-<span id="cb15-172"><a href="#cb15-172" tabindex="-1" aria-label="code-block-15-172"></a>    <span class="bu">print</span>(<span class="ss">f"Rows compared: </span><span class="sc">{</span><span class="bu">len</span>(merged)<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb15-173"><a href="#cb15-173" tabindex="-1" aria-label="code-block-15-173"></a>    <span class="bu">print</span>(<span class="ss">f"Mean answer_value score: </span><span class="sc">{</span>merged[<span class="st">'answer_score'</span>]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
-<span id="cb15-174"><a href="#cb15-174" tabindex="-1" aria-label="code-block-15-174"></a>    <span class="bu">print</span>(<span class="ss">f"Mean ref_id score:       </span><span class="sc">{</span>merged[<span class="st">'ref_id_score'</span>]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
-<span id="cb15-175"><a href="#cb15-175" tabindex="-1" aria-label="code-block-15-175"></a>    <span class="bu">print</span>(<span class="ss">f"Mean is_NA score:        </span><span class="sc">{</span>merged[<span class="st">'is_NA_score'</span>]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
-<span id="cb15-176"><a href="#cb15-176" tabindex="-1" aria-label="code-block-15-176"></a>    <span class="bu">print</span>(<span class="ss">f"Overall WattBot score:   </span><span class="sc">{</span>merged[<span class="st">'wattbot_score'</span>]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
-<span id="cb15-177"><a href="#cb15-177" tabindex="-1" aria-label="code-block-15-177"></a>    </span>
-<span id="cb15-178"><a href="#cb15-178" tabindex="-1" aria-label="code-block-15-178"></a>    <span class="co"># ----- Show some incorrect examples -----</span></span>
-<span id="cb15-179"><a href="#cb15-179" tabindex="-1" aria-label="code-block-15-179"></a>    incorrect <span class="op">=</span> merged[</span>
-<span id="cb15-180"><a href="#cb15-180" tabindex="-1" aria-label="code-block-15-180"></a>        (merged[<span class="st">"answer_score"</span>] <span class="op">&lt;</span> <span class="fl">1.0</span>)</span>
-<span id="cb15-181"><a href="#cb15-181" tabindex="-1" aria-label="code-block-15-181"></a>        <span class="op">|</span> (merged[<span class="st">"ref_id_score"</span>] <span class="op">&lt;</span> <span class="fl">1.0</span>)</span>
-<span id="cb15-182"><a href="#cb15-182" tabindex="-1" aria-label="code-block-15-182"></a>        <span class="op">|</span> (merged[<span class="st">"is_NA_score"</span>] <span class="op">&lt;</span> <span class="fl">1.0</span>)</span>
-<span id="cb15-183"><a href="#cb15-183" tabindex="-1" aria-label="code-block-15-183"></a>    ]</span>
-<span id="cb15-184"><a href="#cb15-184" tabindex="-1" aria-label="code-block-15-184"></a>    </span>
-<span id="cb15-185"><a href="#cb15-185" tabindex="-1" aria-label="code-block-15-185"></a>    <span class="cf">if</span> <span class="kw">not</span> incorrect.empty <span class="kw">and</span> n_examples <span class="op">&gt;</span> <span class="dv">0</span>:</span>
-<span id="cb15-186"><a href="#cb15-186" tabindex="-1" aria-label="code-block-15-186"></a>        <span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">Examples of incorrect / partially correct responses "</span></span>
-<span id="cb15-187"><a href="#cb15-187" tabindex="-1" aria-label="code-block-15-187"></a>              <span class="ss">f"(up to </span><span class="sc">{</span>n_examples<span class="sc">}</span><span class="ss"> rows):</span><span class="ch">\n</span><span class="ss">"</span>)</span>
-<span id="cb15-188"><a href="#cb15-188" tabindex="-1" aria-label="code-block-15-188"></a>        <span class="co"># Grab up to n_examples "worst" rows by wattbot_score</span></span>
-<span id="cb15-189"><a href="#cb15-189" tabindex="-1" aria-label="code-block-15-189"></a>        <span class="cf">for</span> _, row <span class="kw">in</span> incorrect.sort_values(<span class="st">"wattbot_score"</span>).head(n_examples).iterrows():</span>
-<span id="cb15-190"><a href="#cb15-190" tabindex="-1" aria-label="code-block-15-190"></a>            q <span class="op">=</span> row[<span class="st">"question_gt"</span>] <span class="cf">if</span> <span class="st">"question_gt"</span> <span class="kw">in</span> row.index <span class="cf">else</span> <span class="va">None</span></span>
-<span id="cb15-191"><a href="#cb15-191" tabindex="-1" aria-label="code-block-15-191"></a>            <span class="bu">print</span>(<span class="st">"-"</span> <span class="op">*</span> <span class="dv">80</span>)</span>
-<span id="cb15-192"><a href="#cb15-192" tabindex="-1" aria-label="code-block-15-192"></a>            <span class="bu">print</span>(<span class="ss">f"id: </span><span class="sc">{</span>row[id_col]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb15-193"><a href="#cb15-193" tabindex="-1" aria-label="code-block-15-193"></a>            <span class="cf">if</span> q <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
-<span id="cb15-194"><a href="#cb15-194" tabindex="-1" aria-label="code-block-15-194"></a>                <span class="bu">print</span>(<span class="ss">f"Question: </span><span class="sc">{</span>q<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb15-195"><a href="#cb15-195" tabindex="-1" aria-label="code-block-15-195"></a>            <span class="bu">print</span>(<span class="ss">f"GT answer_value:   </span><span class="sc">{</span>row[<span class="ss">f'</span><span class="sc">{</span>gt_answer_col<span class="sc">}</span><span class="ss">_gt'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb15-196"><a href="#cb15-196" tabindex="-1" aria-label="code-block-15-196"></a>            <span class="bu">print</span>(<span class="ss">f"Pred answer_value: </span><span class="sc">{</span>row[<span class="ss">f'</span><span class="sc">{</span>pred_answer_col<span class="sc">}</span><span class="ss">_pred'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb15-197"><a href="#cb15-197" tabindex="-1" aria-label="code-block-15-197"></a>            <span class="bu">print</span>(<span class="ss">f"GT ref_id:         </span><span class="sc">{</span>row[<span class="ss">f'</span><span class="sc">{</span>gt_ref_col<span class="sc">}</span><span class="ss">_gt'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb15-198"><a href="#cb15-198" tabindex="-1" aria-label="code-block-15-198"></a>            <span class="bu">print</span>(<span class="ss">f"Pred ref_id:       </span><span class="sc">{</span>row[<span class="ss">f'</span><span class="sc">{</span>pred_ref_col<span class="sc">}</span><span class="ss">_pred'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb15-199"><a href="#cb15-199" tabindex="-1" aria-label="code-block-15-199"></a>            <span class="bu">print</span>(<span class="ss">f"answer_score: </span><span class="sc">{</span>row[<span class="st">'answer_score'</span>]<span class="sc">:.3f}</span><span class="ss">, "</span></span>
-<span id="cb15-200"><a href="#cb15-200" tabindex="-1" aria-label="code-block-15-200"></a>                  <span class="ss">f"ref_id_score: </span><span class="sc">{</span>row[<span class="st">'ref_id_score'</span>]<span class="sc">:.3f}</span><span class="ss">, "</span></span>
-<span id="cb15-201"><a href="#cb15-201" tabindex="-1" aria-label="code-block-15-201"></a>                  <span class="ss">f"is_NA_score: </span><span class="sc">{</span>row[<span class="st">'is_NA_score'</span>]<span class="sc">:.3f}</span><span class="ss">, "</span></span>
-<span id="cb15-202"><a href="#cb15-202" tabindex="-1" aria-label="code-block-15-202"></a>                  <span class="ss">f"wattbot_score: </span><span class="sc">{</span>row[<span class="st">'wattbot_score'</span>]<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
-<span id="cb15-203"><a href="#cb15-203" tabindex="-1" aria-label="code-block-15-203"></a>        <span class="bu">print</span>(<span class="st">"-"</span> <span class="op">*</span> <span class="dv">80</span>)</span>
-<span id="cb15-204"><a href="#cb15-204" tabindex="-1" aria-label="code-block-15-204"></a>    </span>
-<span id="cb15-205"><a href="#cb15-205" tabindex="-1" aria-label="code-block-15-205"></a>    <span class="cf">return</span> merged</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a>solutions_key <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>rag_output_prefix<span class="sc">}</span><span class="ss">/wattbot_solutions.csv"</span></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1" aria-label="code-block-15-3"></a>local_solutions_path <span class="op">=</span> os.path.join(local_data_dir, <span class="st">"wattbot_solutions.csv"</span>)</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1" aria-label="code-block-15-4"></a></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1" aria-label="code-block-15-5"></a>s3_client.download_file(bucket_name, solutions_key, local_solutions_path)</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1" aria-label="code-block-15-6"></a>solutions_df <span class="op">=</span> pd.read_csv(local_solutions_path)</span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1" aria-label="code-block-15-7"></a>solutions_df.head()</span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a>results_df <span class="op">=</span> compute_wattbot_score(</span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a>    train_qa_path<span class="op">=</span><span class="st">"./data/train_QA.csv"</span>,</span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a>    preds_path<span class="op">=</span><span class="st">"./data/wattbot_solutions.csv"</span>,</span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a>    gt_is_na_col<span class="op">=</span><span class="st">"is_blank"</span>,</span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a>    pred_is_na_col<span class="op">=</span><span class="st">"is_blank"</span>,</span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a></span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a><span class="kw">def</span> _to_bool_flag(x):</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a>    <span class="co">"""Convert typical truthy/falsey strings to bool."""</span></span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a>    <span class="cf">if</span> <span class="bu">isinstance</span>(x, <span class="bu">str</span>):</span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1" aria-label="code-block-16-7"></a>        s <span class="op">=</span> x.strip().lower()</span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1" aria-label="code-block-16-8"></a>        <span class="cf">if</span> s <span class="kw">in</span> {<span class="st">"1"</span>, <span class="st">"True"</span>, <span class="st">"true"</span>, <span class="st">"yes"</span>}:</span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1" aria-label="code-block-16-9"></a>            <span class="cf">return</span> <span class="va">True</span></span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1" aria-label="code-block-16-10"></a>        <span class="cf">if</span> s <span class="kw">in</span> {<span class="st">"0"</span>, <span class="st">"False"</span>, <span class="st">"false"</span>, <span class="st">"no"</span>}:</span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1" aria-label="code-block-16-11"></a>            <span class="cf">return</span> <span class="va">False</span></span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1" aria-label="code-block-16-12"></a>    <span class="cf">return</span> <span class="bu">bool</span>(x)</span>
+<span id="cb16-13"><a href="#cb16-13" tabindex="-1" aria-label="code-block-16-13"></a></span>
+<span id="cb16-14"><a href="#cb16-14" tabindex="-1" aria-label="code-block-16-14"></a><span class="kw">def</span> _parse_float_or_none(x):</span>
+<span id="cb16-15"><a href="#cb16-15" tabindex="-1" aria-label="code-block-16-15"></a>    <span class="cf">try</span>:</span>
+<span id="cb16-16"><a href="#cb16-16" tabindex="-1" aria-label="code-block-16-16"></a>        <span class="cf">return</span> <span class="bu">float</span>(<span class="bu">str</span>(x).strip())</span>
+<span id="cb16-17"><a href="#cb16-17" tabindex="-1" aria-label="code-block-16-17"></a>    <span class="cf">except</span> <span class="pp">Exception</span>:</span>
+<span id="cb16-18"><a href="#cb16-18" tabindex="-1" aria-label="code-block-16-18"></a>        <span class="cf">return</span> <span class="va">None</span></span>
+<span id="cb16-19"><a href="#cb16-19" tabindex="-1" aria-label="code-block-16-19"></a></span>
+<span id="cb16-20"><a href="#cb16-20" tabindex="-1" aria-label="code-block-16-20"></a><span class="kw">def</span> _answer_value_correct(gt_val, pred_val, rel_tol<span class="op">=</span><span class="fl">1e-3</span>):</span>
+<span id="cb16-21"><a href="#cb16-21" tabindex="-1" aria-label="code-block-16-21"></a>    <span class="co">"""</span></span>
+<span id="cb16-22"><a href="#cb16-22" tabindex="-1" aria-label="code-block-16-22"></a><span class="co">    gt_val, pred_val: values from answer_value columns.</span></span>
+<span id="cb16-23"><a href="#cb16-23" tabindex="-1" aria-label="code-block-16-23"></a><span class="co">    rel_tol = 0.001 =&gt; 0.1% relative tolerance.</span></span>
+<span id="cb16-24"><a href="#cb16-24" tabindex="-1" aria-label="code-block-16-24"></a><span class="co">    """</span></span>
+<span id="cb16-25"><a href="#cb16-25" tabindex="-1" aria-label="code-block-16-25"></a>    gt_str <span class="op">=</span> <span class="bu">str</span>(gt_val).strip()</span>
+<span id="cb16-26"><a href="#cb16-26" tabindex="-1" aria-label="code-block-16-26"></a>    pred_str <span class="op">=</span> <span class="bu">str</span>(pred_val).strip()</span>
+<span id="cb16-27"><a href="#cb16-27" tabindex="-1" aria-label="code-block-16-27"></a>    </span>
+<span id="cb16-28"><a href="#cb16-28" tabindex="-1" aria-label="code-block-16-28"></a>    <span class="co"># If either is 'is_blank', treat as categorical</span></span>
+<span id="cb16-29"><a href="#cb16-29" tabindex="-1" aria-label="code-block-16-29"></a>    <span class="cf">if</span> gt_str.lower() <span class="op">==</span> <span class="st">"is_blank"</span> <span class="kw">or</span> pred_str.lower() <span class="op">==</span> <span class="st">"is_blank"</span>:</span>
+<span id="cb16-30"><a href="#cb16-30" tabindex="-1" aria-label="code-block-16-30"></a>        <span class="cf">return</span> gt_str.lower() <span class="op">==</span> pred_str.lower()</span>
+<span id="cb16-31"><a href="#cb16-31" tabindex="-1" aria-label="code-block-16-31"></a>    </span>
+<span id="cb16-32"><a href="#cb16-32" tabindex="-1" aria-label="code-block-16-32"></a>    gt_num <span class="op">=</span> _parse_float_or_none(gt_val)</span>
+<span id="cb16-33"><a href="#cb16-33" tabindex="-1" aria-label="code-block-16-33"></a>    pred_num <span class="op">=</span> _parse_float_or_none(pred_val)</span>
+<span id="cb16-34"><a href="#cb16-34" tabindex="-1" aria-label="code-block-16-34"></a>    </span>
+<span id="cb16-35"><a href="#cb16-35" tabindex="-1" aria-label="code-block-16-35"></a>    <span class="co"># If both numeric, use relative tolerance</span></span>
+<span id="cb16-36"><a href="#cb16-36" tabindex="-1" aria-label="code-block-16-36"></a>    <span class="cf">if</span> gt_num <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> pred_num <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb16-37"><a href="#cb16-37" tabindex="-1" aria-label="code-block-16-37"></a>        <span class="cf">if</span> gt_num <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb16-38"><a href="#cb16-38" tabindex="-1" aria-label="code-block-16-38"></a>            <span class="cf">return</span> <span class="bu">abs</span>(pred_num <span class="op">-</span> gt_num) <span class="op">&lt;=</span> rel_tol  <span class="co"># small absolute tolerance around 0</span></span>
+<span id="cb16-39"><a href="#cb16-39" tabindex="-1" aria-label="code-block-16-39"></a>        rel_err <span class="op">=</span> <span class="bu">abs</span>(pred_num <span class="op">-</span> gt_num) <span class="op">/</span> <span class="bu">max</span>(<span class="bu">abs</span>(gt_num), <span class="fl">1e-12</span>)</span>
+<span id="cb16-40"><a href="#cb16-40" tabindex="-1" aria-label="code-block-16-40"></a>        <span class="cf">return</span> rel_err <span class="op">&lt;=</span> rel_tol</span>
+<span id="cb16-41"><a href="#cb16-41" tabindex="-1" aria-label="code-block-16-41"></a>    </span>
+<span id="cb16-42"><a href="#cb16-42" tabindex="-1" aria-label="code-block-16-42"></a>    <span class="co"># Otherwise, fall back to normalized string match</span></span>
+<span id="cb16-43"><a href="#cb16-43" tabindex="-1" aria-label="code-block-16-43"></a>    <span class="cf">return</span> gt_str.lower() <span class="op">==</span> pred_str.lower()</span>
+<span id="cb16-44"><a href="#cb16-44" tabindex="-1" aria-label="code-block-16-44"></a></span>
+<span id="cb16-45"><a href="#cb16-45" tabindex="-1" aria-label="code-block-16-45"></a><span class="kw">def</span> _ref_id_jaccard(gt_ref, pred_ref):</span>
+<span id="cb16-46"><a href="#cb16-46" tabindex="-1" aria-label="code-block-16-46"></a>    <span class="co">"""</span></span>
+<span id="cb16-47"><a href="#cb16-47" tabindex="-1" aria-label="code-block-16-47"></a><span class="co">    Jaccard overlap between sets of ref_ids.</span></span>
+<span id="cb16-48"><a href="#cb16-48" tabindex="-1" aria-label="code-block-16-48"></a><span class="co">    Strings may contain semicolon-separated IDs, or 'is_blank'.</span></span>
+<span id="cb16-49"><a href="#cb16-49" tabindex="-1" aria-label="code-block-16-49"></a><span class="co">    Case-insensitive.</span></span>
+<span id="cb16-50"><a href="#cb16-50" tabindex="-1" aria-label="code-block-16-50"></a><span class="co">    """</span></span>
+<span id="cb16-51"><a href="#cb16-51" tabindex="-1" aria-label="code-block-16-51"></a>    <span class="kw">def</span> to_set(s):</span>
+<span id="cb16-52"><a href="#cb16-52" tabindex="-1" aria-label="code-block-16-52"></a>        <span class="cf">if</span> s <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb16-53"><a href="#cb16-53" tabindex="-1" aria-label="code-block-16-53"></a>            <span class="cf">return</span> <span class="bu">set</span>()</span>
+<span id="cb16-54"><a href="#cb16-54" tabindex="-1" aria-label="code-block-16-54"></a>        s <span class="op">=</span> <span class="bu">str</span>(s).strip()</span>
+<span id="cb16-55"><a href="#cb16-55" tabindex="-1" aria-label="code-block-16-55"></a>        <span class="cf">if</span> <span class="kw">not</span> s <span class="kw">or</span> s.lower() <span class="op">==</span> <span class="st">"is_blank"</span>:</span>
+<span id="cb16-56"><a href="#cb16-56" tabindex="-1" aria-label="code-block-16-56"></a>            <span class="cf">return</span> <span class="bu">set</span>()</span>
+<span id="cb16-57"><a href="#cb16-57" tabindex="-1" aria-label="code-block-16-57"></a>        parts <span class="op">=</span> [p.strip().lower() <span class="cf">for</span> p <span class="kw">in</span> s.split(<span class="st">";"</span>) <span class="cf">if</span> p.strip()]</span>
+<span id="cb16-58"><a href="#cb16-58" tabindex="-1" aria-label="code-block-16-58"></a>        <span class="cf">return</span> <span class="bu">set</span>(parts)</span>
+<span id="cb16-59"><a href="#cb16-59" tabindex="-1" aria-label="code-block-16-59"></a>    </span>
+<span id="cb16-60"><a href="#cb16-60" tabindex="-1" aria-label="code-block-16-60"></a>    gt_set <span class="op">=</span> to_set(gt_ref)</span>
+<span id="cb16-61"><a href="#cb16-61" tabindex="-1" aria-label="code-block-16-61"></a>    pred_set <span class="op">=</span> to_set(pred_ref)</span>
+<span id="cb16-62"><a href="#cb16-62" tabindex="-1" aria-label="code-block-16-62"></a>    </span>
+<span id="cb16-63"><a href="#cb16-63" tabindex="-1" aria-label="code-block-16-63"></a>    <span class="cf">if</span> <span class="kw">not</span> gt_set <span class="kw">and</span> <span class="kw">not</span> pred_set:</span>
+<span id="cb16-64"><a href="#cb16-64" tabindex="-1" aria-label="code-block-16-64"></a>        <span class="cf">return</span> <span class="fl">1.0</span></span>
+<span id="cb16-65"><a href="#cb16-65" tabindex="-1" aria-label="code-block-16-65"></a>    union <span class="op">=</span> gt_set <span class="op">|</span> pred_set</span>
+<span id="cb16-66"><a href="#cb16-66" tabindex="-1" aria-label="code-block-16-66"></a>    <span class="cf">if</span> <span class="kw">not</span> union:</span>
+<span id="cb16-67"><a href="#cb16-67" tabindex="-1" aria-label="code-block-16-67"></a>        <span class="cf">return</span> <span class="fl">0.0</span></span>
+<span id="cb16-68"><a href="#cb16-68" tabindex="-1" aria-label="code-block-16-68"></a>    inter <span class="op">=</span> gt_set <span class="op">&amp;</span> pred_set</span>
+<span id="cb16-69"><a href="#cb16-69" tabindex="-1" aria-label="code-block-16-69"></a>    <span class="cf">return</span> <span class="bu">len</span>(inter) <span class="op">/</span> <span class="bu">len</span>(union)</span>
+<span id="cb16-70"><a href="#cb16-70" tabindex="-1" aria-label="code-block-16-70"></a></span>
+<span id="cb16-71"><a href="#cb16-71" tabindex="-1" aria-label="code-block-16-71"></a><span class="kw">def</span> compute_wattbot_score(</span>
+<span id="cb16-72"><a href="#cb16-72" tabindex="-1" aria-label="code-block-16-72"></a>    train_qa_path<span class="op">=</span><span class="st">"train_QA.csv"</span>,</span>
+<span id="cb16-73"><a href="#cb16-73" tabindex="-1" aria-label="code-block-16-73"></a>    preds_path<span class="op">=</span><span class="st">"train_solutions_qwen.csv"</span>,</span>
+<span id="cb16-74"><a href="#cb16-74" tabindex="-1" aria-label="code-block-16-74"></a>    id_col<span class="op">=</span><span class="st">"id"</span>,</span>
+<span id="cb16-75"><a href="#cb16-75" tabindex="-1" aria-label="code-block-16-75"></a>    gt_answer_col<span class="op">=</span><span class="st">"answer_value"</span>,</span>
+<span id="cb16-76"><a href="#cb16-76" tabindex="-1" aria-label="code-block-16-76"></a>    gt_ref_col<span class="op">=</span><span class="st">"ref_id"</span>,</span>
+<span id="cb16-77"><a href="#cb16-77" tabindex="-1" aria-label="code-block-16-77"></a>    gt_is_na_col<span class="op">=</span><span class="st">"is_NA"</span>,   <span class="co"># can also pass "is_blank" or None</span></span>
+<span id="cb16-78"><a href="#cb16-78" tabindex="-1" aria-label="code-block-16-78"></a>    pred_answer_col<span class="op">=</span><span class="st">"answer_value"</span>,</span>
+<span id="cb16-79"><a href="#cb16-79" tabindex="-1" aria-label="code-block-16-79"></a>    pred_ref_col<span class="op">=</span><span class="st">"ref_id"</span>,</span>
+<span id="cb16-80"><a href="#cb16-80" tabindex="-1" aria-label="code-block-16-80"></a>    pred_is_na_col<span class="op">=</span><span class="va">None</span>,    <span class="co"># can pass "is_blank", or leave None to auto</span></span>
+<span id="cb16-81"><a href="#cb16-81" tabindex="-1" aria-label="code-block-16-81"></a>    n_examples<span class="op">=</span><span class="dv">10</span>,          <span class="co"># how many incorrect examples to print</span></span>
+<span id="cb16-82"><a href="#cb16-82" tabindex="-1" aria-label="code-block-16-82"></a>):</span>
+<span id="cb16-83"><a href="#cb16-83" tabindex="-1" aria-label="code-block-16-83"></a>    <span class="co">"""</span></span>
+<span id="cb16-84"><a href="#cb16-84" tabindex="-1" aria-label="code-block-16-84"></a><span class="co">    Compare your solutions to train_QA.csv using a WattBot-style score.</span></span>
+<span id="cb16-85"><a href="#cb16-85" tabindex="-1" aria-label="code-block-16-85"></a></span>
+<span id="cb16-86"><a href="#cb16-86" tabindex="-1" aria-label="code-block-16-86"></a><span class="co">    NA logic:</span></span>
+<span id="cb16-87"><a href="#cb16-87" tabindex="-1" aria-label="code-block-16-87"></a><span class="co">    - If an explicit NA column is found/used (e.g. is_NA), we use it via _to_bool_flag.</span></span>
+<span id="cb16-88"><a href="#cb16-88" tabindex="-1" aria-label="code-block-16-88"></a><span class="co">    - If you pass gt_is_na_col="is_blank" or pred_is_na_col="is_blank",</span></span>
+<span id="cb16-89"><a href="#cb16-89" tabindex="-1" aria-label="code-block-16-89"></a><span class="co">      we *derive* NA from answer_value == "is_blank" instead of expecting a real column.</span></span>
+<span id="cb16-90"><a href="#cb16-90" tabindex="-1" aria-label="code-block-16-90"></a><span class="co">    - If no NA column is available at all, we derive from answer_value == "is_blank".</span></span>
+<span id="cb16-91"><a href="#cb16-91" tabindex="-1" aria-label="code-block-16-91"></a></span>
+<span id="cb16-92"><a href="#cb16-92" tabindex="-1" aria-label="code-block-16-92"></a><span class="co">    Also prints up to `n_examples` rows where the model is not perfect</span></span>
+<span id="cb16-93"><a href="#cb16-93" tabindex="-1" aria-label="code-block-16-93"></a><span class="co">    (answer_score &lt; 1, ref_id_score &lt; 1, or is_NA_score &lt; 1).</span></span>
+<span id="cb16-94"><a href="#cb16-94" tabindex="-1" aria-label="code-block-16-94"></a><span class="co">    """</span></span>
+<span id="cb16-95"><a href="#cb16-95" tabindex="-1" aria-label="code-block-16-95"></a>    gt <span class="op">=</span> pd.read_csv(train_qa_path)</span>
+<span id="cb16-96"><a href="#cb16-96" tabindex="-1" aria-label="code-block-16-96"></a>    preds <span class="op">=</span> pd.read_csv(preds_path)</span>
+<span id="cb16-97"><a href="#cb16-97" tabindex="-1" aria-label="code-block-16-97"></a>    </span>
+<span id="cb16-98"><a href="#cb16-98" tabindex="-1" aria-label="code-block-16-98"></a>    <span class="co"># Inner join on id to be strict</span></span>
+<span id="cb16-99"><a href="#cb16-99" tabindex="-1" aria-label="code-block-16-99"></a>    merged <span class="op">=</span> gt.merge(preds, on<span class="op">=</span>id_col, suffixes<span class="op">=</span>(<span class="st">"_gt"</span>, <span class="st">"_pred"</span>))</span>
+<span id="cb16-100"><a href="#cb16-100" tabindex="-1" aria-label="code-block-16-100"></a>    <span class="cf">if</span> merged.empty:</span>
+<span id="cb16-101"><a href="#cb16-101" tabindex="-1" aria-label="code-block-16-101"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"No overlapping ids between ground truth and predictions."</span>)</span>
+<span id="cb16-102"><a href="#cb16-102" tabindex="-1" aria-label="code-block-16-102"></a></span>
+<span id="cb16-103"><a href="#cb16-103" tabindex="-1" aria-label="code-block-16-103"></a>    <span class="co"># ----- ground truth NA flags -----</span></span>
+<span id="cb16-104"><a href="#cb16-104" tabindex="-1" aria-label="code-block-16-104"></a>    <span class="cf">if</span> gt_is_na_col <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> gt_is_na_col <span class="kw">in</span> merged.columns:</span>
+<span id="cb16-105"><a href="#cb16-105" tabindex="-1" aria-label="code-block-16-105"></a>        <span class="co"># Use explicit column (e.g. "is_NA")</span></span>
+<span id="cb16-106"><a href="#cb16-106" tabindex="-1" aria-label="code-block-16-106"></a>        gt_is_na_series <span class="op">=</span> merged[gt_is_na_col].<span class="bu">map</span>(_to_bool_flag)</span>
+<span id="cb16-107"><a href="#cb16-107" tabindex="-1" aria-label="code-block-16-107"></a>    <span class="cf">elif</span> gt_is_na_col <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> gt_is_na_col.lower() <span class="op">==</span> <span class="st">"is_blank"</span>:</span>
+<span id="cb16-108"><a href="#cb16-108" tabindex="-1" aria-label="code-block-16-108"></a>        <span class="co"># Special meaning: derive NA from answer_value_gt == "is_blank"</span></span>
+<span id="cb16-109"><a href="#cb16-109" tabindex="-1" aria-label="code-block-16-109"></a>        gt_is_na_series <span class="op">=</span> merged[<span class="ss">f"</span><span class="sc">{</span>gt_answer_col<span class="sc">}</span><span class="ss">_gt"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"is_blank"</span>)</span>
+<span id="cb16-110"><a href="#cb16-110" tabindex="-1" aria-label="code-block-16-110"></a>        merged[<span class="st">"gt_is_blank_flag"</span>] <span class="op">=</span> gt_is_na_series</span>
+<span id="cb16-111"><a href="#cb16-111" tabindex="-1" aria-label="code-block-16-111"></a>    <span class="cf">else</span>:</span>
+<span id="cb16-112"><a href="#cb16-112" tabindex="-1" aria-label="code-block-16-112"></a>        <span class="co"># Fallback: if we have is_NA or is_blank col, use it; else derive</span></span>
+<span id="cb16-113"><a href="#cb16-113" tabindex="-1" aria-label="code-block-16-113"></a>        <span class="cf">if</span> <span class="st">"is_NA"</span> <span class="kw">in</span> merged.columns:</span>
+<span id="cb16-114"><a href="#cb16-114" tabindex="-1" aria-label="code-block-16-114"></a>            gt_is_na_series <span class="op">=</span> merged[<span class="st">"is_NA"</span>].<span class="bu">map</span>(_to_bool_flag)</span>
+<span id="cb16-115"><a href="#cb16-115" tabindex="-1" aria-label="code-block-16-115"></a>        <span class="cf">elif</span> <span class="st">"is_blank"</span> <span class="kw">in</span> merged.columns:</span>
+<span id="cb16-116"><a href="#cb16-116" tabindex="-1" aria-label="code-block-16-116"></a>            gt_is_na_series <span class="op">=</span> merged[<span class="st">"is_blank"</span>].<span class="bu">map</span>(_to_bool_flag)</span>
+<span id="cb16-117"><a href="#cb16-117" tabindex="-1" aria-label="code-block-16-117"></a>        <span class="cf">else</span>:</span>
+<span id="cb16-118"><a href="#cb16-118" tabindex="-1" aria-label="code-block-16-118"></a>            gt_is_na_series <span class="op">=</span> merged[<span class="ss">f"</span><span class="sc">{</span>gt_answer_col<span class="sc">}</span><span class="ss">_gt"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"is_blank"</span>)</span>
+<span id="cb16-119"><a href="#cb16-119" tabindex="-1" aria-label="code-block-16-119"></a>            merged[<span class="st">"gt_is_blank_flag"</span>] <span class="op">=</span> gt_is_na_series</span>
+<span id="cb16-120"><a href="#cb16-120" tabindex="-1" aria-label="code-block-16-120"></a></span>
+<span id="cb16-121"><a href="#cb16-121" tabindex="-1" aria-label="code-block-16-121"></a>    <span class="co"># ----- prediction NA flags -----</span></span>
+<span id="cb16-122"><a href="#cb16-122" tabindex="-1" aria-label="code-block-16-122"></a>    <span class="cf">if</span> pred_is_na_col <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> pred_is_na_col <span class="kw">in</span> merged.columns:</span>
+<span id="cb16-123"><a href="#cb16-123" tabindex="-1" aria-label="code-block-16-123"></a>        pred_is_na_series <span class="op">=</span> merged[pred_is_na_col].<span class="bu">map</span>(_to_bool_flag)</span>
+<span id="cb16-124"><a href="#cb16-124" tabindex="-1" aria-label="code-block-16-124"></a>    <span class="cf">elif</span> pred_is_na_col <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> pred_is_na_col.lower() <span class="op">==</span> <span class="st">"is_blank"</span>:</span>
+<span id="cb16-125"><a href="#cb16-125" tabindex="-1" aria-label="code-block-16-125"></a>        <span class="co"># Same convention: derive from answer_value_pred</span></span>
+<span id="cb16-126"><a href="#cb16-126" tabindex="-1" aria-label="code-block-16-126"></a>        pred_is_na_series <span class="op">=</span> merged[<span class="ss">f"</span><span class="sc">{</span>pred_answer_col<span class="sc">}</span><span class="ss">_pred"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"is_blank"</span>)</span>
+<span id="cb16-127"><a href="#cb16-127" tabindex="-1" aria-label="code-block-16-127"></a>        merged[<span class="st">"pred_is_blank_flag"</span>] <span class="op">=</span> pred_is_na_series</span>
+<span id="cb16-128"><a href="#cb16-128" tabindex="-1" aria-label="code-block-16-128"></a>    <span class="cf">else</span>:</span>
+<span id="cb16-129"><a href="#cb16-129" tabindex="-1" aria-label="code-block-16-129"></a>        <span class="co"># Auto-detect or derive if no NA column in preds</span></span>
+<span id="cb16-130"><a href="#cb16-130" tabindex="-1" aria-label="code-block-16-130"></a>        <span class="cf">if</span> <span class="st">"is_NA"</span> <span class="kw">in</span> merged.columns:</span>
+<span id="cb16-131"><a href="#cb16-131" tabindex="-1" aria-label="code-block-16-131"></a>            pred_is_na_series <span class="op">=</span> merged[<span class="st">"is_NA"</span>].<span class="bu">map</span>(_to_bool_flag)</span>
+<span id="cb16-132"><a href="#cb16-132" tabindex="-1" aria-label="code-block-16-132"></a>        <span class="cf">elif</span> <span class="st">"is_blank"</span> <span class="kw">in</span> merged.columns:</span>
+<span id="cb16-133"><a href="#cb16-133" tabindex="-1" aria-label="code-block-16-133"></a>            pred_is_na_series <span class="op">=</span> merged[<span class="st">"is_blank"</span>].<span class="bu">map</span>(_to_bool_flag)</span>
+<span id="cb16-134"><a href="#cb16-134" tabindex="-1" aria-label="code-block-16-134"></a>        <span class="cf">else</span>:</span>
+<span id="cb16-135"><a href="#cb16-135" tabindex="-1" aria-label="code-block-16-135"></a>            pred_is_na_series <span class="op">=</span> merged[<span class="ss">f"</span><span class="sc">{</span>pred_answer_col<span class="sc">}</span><span class="ss">_pred"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"is_blank"</span>)</span>
+<span id="cb16-136"><a href="#cb16-136" tabindex="-1" aria-label="code-block-16-136"></a>            merged[<span class="st">"pred_is_blank_flag"</span>] <span class="op">=</span> pred_is_na_series</span>
+<span id="cb16-137"><a href="#cb16-137" tabindex="-1" aria-label="code-block-16-137"></a></span>
+<span id="cb16-138"><a href="#cb16-138" tabindex="-1" aria-label="code-block-16-138"></a>    ans_scores <span class="op">=</span> []</span>
+<span id="cb16-139"><a href="#cb16-139" tabindex="-1" aria-label="code-block-16-139"></a>    ref_scores <span class="op">=</span> []</span>
+<span id="cb16-140"><a href="#cb16-140" tabindex="-1" aria-label="code-block-16-140"></a>    na_scores <span class="op">=</span> []</span>
+<span id="cb16-141"><a href="#cb16-141" tabindex="-1" aria-label="code-block-16-141"></a>    </span>
+<span id="cb16-142"><a href="#cb16-142" tabindex="-1" aria-label="code-block-16-142"></a>    <span class="cf">for</span> idx, row <span class="kw">in</span> merged.iterrows():</span>
+<span id="cb16-143"><a href="#cb16-143" tabindex="-1" aria-label="code-block-16-143"></a>        gt_ans <span class="op">=</span> row[<span class="ss">f"</span><span class="sc">{</span>gt_answer_col<span class="sc">}</span><span class="ss">_gt"</span>]</span>
+<span id="cb16-144"><a href="#cb16-144" tabindex="-1" aria-label="code-block-16-144"></a>        pred_ans <span class="op">=</span> row[<span class="ss">f"</span><span class="sc">{</span>pred_answer_col<span class="sc">}</span><span class="ss">_pred"</span>]</span>
+<span id="cb16-145"><a href="#cb16-145" tabindex="-1" aria-label="code-block-16-145"></a>        gt_ref <span class="op">=</span> row[<span class="ss">f"</span><span class="sc">{</span>gt_ref_col<span class="sc">}</span><span class="ss">_gt"</span>]</span>
+<span id="cb16-146"><a href="#cb16-146" tabindex="-1" aria-label="code-block-16-146"></a>        pred_ref <span class="op">=</span> row[<span class="ss">f"</span><span class="sc">{</span>pred_ref_col<span class="sc">}</span><span class="ss">_pred"</span>]</span>
+<span id="cb16-147"><a href="#cb16-147" tabindex="-1" aria-label="code-block-16-147"></a>        </span>
+<span id="cb16-148"><a href="#cb16-148" tabindex="-1" aria-label="code-block-16-148"></a>        gt_is_na <span class="op">=</span> <span class="bu">bool</span>(gt_is_na_series.iloc[idx])</span>
+<span id="cb16-149"><a href="#cb16-149" tabindex="-1" aria-label="code-block-16-149"></a>        pred_is_na <span class="op">=</span> <span class="bu">bool</span>(pred_is_na_series.iloc[idx])</span>
+<span id="cb16-150"><a href="#cb16-150" tabindex="-1" aria-label="code-block-16-150"></a>        </span>
+<span id="cb16-151"><a href="#cb16-151" tabindex="-1" aria-label="code-block-16-151"></a>        <span class="co"># 1. answer_value component</span></span>
+<span id="cb16-152"><a href="#cb16-152" tabindex="-1" aria-label="code-block-16-152"></a>        ans_correct <span class="op">=</span> _answer_value_correct(gt_ans, pred_ans)</span>
+<span id="cb16-153"><a href="#cb16-153" tabindex="-1" aria-label="code-block-16-153"></a>        ans_scores.append(<span class="fl">1.0</span> <span class="op">*</span> ans_correct)</span>
+<span id="cb16-154"><a href="#cb16-154" tabindex="-1" aria-label="code-block-16-154"></a>        </span>
+<span id="cb16-155"><a href="#cb16-155" tabindex="-1" aria-label="code-block-16-155"></a>        <span class="co"># 2. ref_id Jaccard</span></span>
+<span id="cb16-156"><a href="#cb16-156" tabindex="-1" aria-label="code-block-16-156"></a>        ref_j <span class="op">=</span> _ref_id_jaccard(gt_ref, pred_ref)</span>
+<span id="cb16-157"><a href="#cb16-157" tabindex="-1" aria-label="code-block-16-157"></a>        ref_scores.append(ref_j)</span>
+<span id="cb16-158"><a href="#cb16-158" tabindex="-1" aria-label="code-block-16-158"></a>        </span>
+<span id="cb16-159"><a href="#cb16-159" tabindex="-1" aria-label="code-block-16-159"></a>        <span class="co"># 3. is_NA component (simple: must match ground truth flag)</span></span>
+<span id="cb16-160"><a href="#cb16-160" tabindex="-1" aria-label="code-block-16-160"></a>        na_scores.append(<span class="fl">1.0</span> <span class="cf">if</span> gt_is_na <span class="op">==</span> pred_is_na <span class="cf">else</span> <span class="fl">0.0</span>)</span>
+<span id="cb16-161"><a href="#cb16-161" tabindex="-1" aria-label="code-block-16-161"></a>    </span>
+<span id="cb16-162"><a href="#cb16-162" tabindex="-1" aria-label="code-block-16-162"></a>    merged[<span class="st">"answer_score"</span>] <span class="op">=</span> ans_scores</span>
+<span id="cb16-163"><a href="#cb16-163" tabindex="-1" aria-label="code-block-16-163"></a>    merged[<span class="st">"ref_id_score"</span>] <span class="op">=</span> ref_scores</span>
+<span id="cb16-164"><a href="#cb16-164" tabindex="-1" aria-label="code-block-16-164"></a>    merged[<span class="st">"is_NA_score"</span>] <span class="op">=</span> na_scores</span>
+<span id="cb16-165"><a href="#cb16-165" tabindex="-1" aria-label="code-block-16-165"></a>    </span>
+<span id="cb16-166"><a href="#cb16-166" tabindex="-1" aria-label="code-block-16-166"></a>    merged[<span class="st">"wattbot_score"</span>] <span class="op">=</span> (</span>
+<span id="cb16-167"><a href="#cb16-167" tabindex="-1" aria-label="code-block-16-167"></a>        <span class="fl">0.75</span> <span class="op">*</span> merged[<span class="st">"answer_score"</span>]</span>
+<span id="cb16-168"><a href="#cb16-168" tabindex="-1" aria-label="code-block-16-168"></a>        <span class="op">+</span> <span class="fl">0.15</span> <span class="op">*</span> merged[<span class="st">"ref_id_score"</span>]</span>
+<span id="cb16-169"><a href="#cb16-169" tabindex="-1" aria-label="code-block-16-169"></a>        <span class="op">+</span> <span class="fl">0.10</span> <span class="op">*</span> merged[<span class="st">"is_NA_score"</span>]</span>
+<span id="cb16-170"><a href="#cb16-170" tabindex="-1" aria-label="code-block-16-170"></a>    )</span>
+<span id="cb16-171"><a href="#cb16-171" tabindex="-1" aria-label="code-block-16-171"></a>    </span>
+<span id="cb16-172"><a href="#cb16-172" tabindex="-1" aria-label="code-block-16-172"></a>    <span class="bu">print</span>(<span class="ss">f"Rows compared: </span><span class="sc">{</span><span class="bu">len</span>(merged)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb16-173"><a href="#cb16-173" tabindex="-1" aria-label="code-block-16-173"></a>    <span class="bu">print</span>(<span class="ss">f"Mean answer_value score: </span><span class="sc">{</span>merged[<span class="st">'answer_score'</span>]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb16-174"><a href="#cb16-174" tabindex="-1" aria-label="code-block-16-174"></a>    <span class="bu">print</span>(<span class="ss">f"Mean ref_id score:       </span><span class="sc">{</span>merged[<span class="st">'ref_id_score'</span>]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb16-175"><a href="#cb16-175" tabindex="-1" aria-label="code-block-16-175"></a>    <span class="bu">print</span>(<span class="ss">f"Mean is_NA score:        </span><span class="sc">{</span>merged[<span class="st">'is_NA_score'</span>]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb16-176"><a href="#cb16-176" tabindex="-1" aria-label="code-block-16-176"></a>    <span class="bu">print</span>(<span class="ss">f"Overall WattBot score:   </span><span class="sc">{</span>merged[<span class="st">'wattbot_score'</span>]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb16-177"><a href="#cb16-177" tabindex="-1" aria-label="code-block-16-177"></a>    </span>
+<span id="cb16-178"><a href="#cb16-178" tabindex="-1" aria-label="code-block-16-178"></a>    <span class="co"># ----- Show some incorrect examples -----</span></span>
+<span id="cb16-179"><a href="#cb16-179" tabindex="-1" aria-label="code-block-16-179"></a>    incorrect <span class="op">=</span> merged[</span>
+<span id="cb16-180"><a href="#cb16-180" tabindex="-1" aria-label="code-block-16-180"></a>        (merged[<span class="st">"answer_score"</span>] <span class="op">&lt;</span> <span class="fl">1.0</span>)</span>
+<span id="cb16-181"><a href="#cb16-181" tabindex="-1" aria-label="code-block-16-181"></a>        <span class="op">|</span> (merged[<span class="st">"ref_id_score"</span>] <span class="op">&lt;</span> <span class="fl">1.0</span>)</span>
+<span id="cb16-182"><a href="#cb16-182" tabindex="-1" aria-label="code-block-16-182"></a>        <span class="op">|</span> (merged[<span class="st">"is_NA_score"</span>] <span class="op">&lt;</span> <span class="fl">1.0</span>)</span>
+<span id="cb16-183"><a href="#cb16-183" tabindex="-1" aria-label="code-block-16-183"></a>    ]</span>
+<span id="cb16-184"><a href="#cb16-184" tabindex="-1" aria-label="code-block-16-184"></a>    </span>
+<span id="cb16-185"><a href="#cb16-185" tabindex="-1" aria-label="code-block-16-185"></a>    <span class="cf">if</span> <span class="kw">not</span> incorrect.empty <span class="kw">and</span> n_examples <span class="op">&gt;</span> <span class="dv">0</span>:</span>
+<span id="cb16-186"><a href="#cb16-186" tabindex="-1" aria-label="code-block-16-186"></a>        <span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">Examples of incorrect / partially correct responses "</span></span>
+<span id="cb16-187"><a href="#cb16-187" tabindex="-1" aria-label="code-block-16-187"></a>              <span class="ss">f"(up to </span><span class="sc">{</span>n_examples<span class="sc">}</span><span class="ss"> rows):</span><span class="ch">\n</span><span class="ss">"</span>)</span>
+<span id="cb16-188"><a href="#cb16-188" tabindex="-1" aria-label="code-block-16-188"></a>        <span class="co"># Grab up to n_examples "worst" rows by wattbot_score</span></span>
+<span id="cb16-189"><a href="#cb16-189" tabindex="-1" aria-label="code-block-16-189"></a>        <span class="cf">for</span> _, row <span class="kw">in</span> incorrect.sort_values(<span class="st">"wattbot_score"</span>).head(n_examples).iterrows():</span>
+<span id="cb16-190"><a href="#cb16-190" tabindex="-1" aria-label="code-block-16-190"></a>            q <span class="op">=</span> row[<span class="st">"question_gt"</span>] <span class="cf">if</span> <span class="st">"question_gt"</span> <span class="kw">in</span> row.index <span class="cf">else</span> <span class="va">None</span></span>
+<span id="cb16-191"><a href="#cb16-191" tabindex="-1" aria-label="code-block-16-191"></a>            <span class="bu">print</span>(<span class="st">"-"</span> <span class="op">*</span> <span class="dv">80</span>)</span>
+<span id="cb16-192"><a href="#cb16-192" tabindex="-1" aria-label="code-block-16-192"></a>            <span class="bu">print</span>(<span class="ss">f"id: </span><span class="sc">{</span>row[id_col]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb16-193"><a href="#cb16-193" tabindex="-1" aria-label="code-block-16-193"></a>            <span class="cf">if</span> q <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb16-194"><a href="#cb16-194" tabindex="-1" aria-label="code-block-16-194"></a>                <span class="bu">print</span>(<span class="ss">f"Question: </span><span class="sc">{</span>q<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb16-195"><a href="#cb16-195" tabindex="-1" aria-label="code-block-16-195"></a>            <span class="bu">print</span>(<span class="ss">f"GT answer_value:   </span><span class="sc">{</span>row[<span class="ss">f'</span><span class="sc">{</span>gt_answer_col<span class="sc">}</span><span class="ss">_gt'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb16-196"><a href="#cb16-196" tabindex="-1" aria-label="code-block-16-196"></a>            <span class="bu">print</span>(<span class="ss">f"Pred answer_value: </span><span class="sc">{</span>row[<span class="ss">f'</span><span class="sc">{</span>pred_answer_col<span class="sc">}</span><span class="ss">_pred'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb16-197"><a href="#cb16-197" tabindex="-1" aria-label="code-block-16-197"></a>            <span class="bu">print</span>(<span class="ss">f"GT ref_id:         </span><span class="sc">{</span>row[<span class="ss">f'</span><span class="sc">{</span>gt_ref_col<span class="sc">}</span><span class="ss">_gt'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb16-198"><a href="#cb16-198" tabindex="-1" aria-label="code-block-16-198"></a>            <span class="bu">print</span>(<span class="ss">f"Pred ref_id:       </span><span class="sc">{</span>row[<span class="ss">f'</span><span class="sc">{</span>pred_ref_col<span class="sc">}</span><span class="ss">_pred'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb16-199"><a href="#cb16-199" tabindex="-1" aria-label="code-block-16-199"></a>            <span class="bu">print</span>(<span class="ss">f"answer_score: </span><span class="sc">{</span>row[<span class="st">'answer_score'</span>]<span class="sc">:.3f}</span><span class="ss">, "</span></span>
+<span id="cb16-200"><a href="#cb16-200" tabindex="-1" aria-label="code-block-16-200"></a>                  <span class="ss">f"ref_id_score: </span><span class="sc">{</span>row[<span class="st">'ref_id_score'</span>]<span class="sc">:.3f}</span><span class="ss">, "</span></span>
+<span id="cb16-201"><a href="#cb16-201" tabindex="-1" aria-label="code-block-16-201"></a>                  <span class="ss">f"is_NA_score: </span><span class="sc">{</span>row[<span class="st">'is_NA_score'</span>]<span class="sc">:.3f}</span><span class="ss">, "</span></span>
+<span id="cb16-202"><a href="#cb16-202" tabindex="-1" aria-label="code-block-16-202"></a>                  <span class="ss">f"wattbot_score: </span><span class="sc">{</span>row[<span class="st">'wattbot_score'</span>]<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb16-203"><a href="#cb16-203" tabindex="-1" aria-label="code-block-16-203"></a>        <span class="bu">print</span>(<span class="st">"-"</span> <span class="op">*</span> <span class="dv">80</span>)</span>
+<span id="cb16-204"><a href="#cb16-204" tabindex="-1" aria-label="code-block-16-204"></a>    </span>
+<span id="cb16-205"><a href="#cb16-205" tabindex="-1" aria-label="code-block-16-205"></a>    <span class="cf">return</span> merged</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb17">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1" aria-label="code-block-17-1"></a>results_df <span class="op">=</span> compute_wattbot_score(</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1" aria-label="code-block-17-2"></a>    train_qa_path<span class="op">=</span><span class="st">"./data/train_QA.csv"</span>,</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1" aria-label="code-block-17-3"></a>    preds_path<span class="op">=</span><span class="st">"./data/wattbot_solutions.csv"</span>,</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1" aria-label="code-block-17-4"></a>    gt_is_na_col<span class="op">=</span><span class="st">"is_blank"</span>,</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1" aria-label="code-block-17-5"></a>    pred_is_na_col<span class="op">=</span><span class="st">"is_blank"</span>,</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1" aria-label="code-block-17-6"></a>)</span></code></pre>
 </div>
 <div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
@@ -1117,8 +1146,8 @@ any links that you are not going to use.
   "url": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/02_RAG_WattBot_Processing_Jobs.html",
   "identifier": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/02_RAG_WattBot_Processing_Jobs.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2025-12-05",
-  "datePublished": "2026-10-06"
+  "dateModified": "2026-10-08",
+  "datePublished": "2026-10-08"
 }
 
   </script><script>

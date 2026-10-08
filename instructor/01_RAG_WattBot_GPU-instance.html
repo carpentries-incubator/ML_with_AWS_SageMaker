@@ -123,7 +123,7 @@
     <a id="search-button-nav" class="btn btn-primary" href="../instructor/aio.html" role="button" aria-label="Search the All In One page">Search the All In One page</a>
   </div><!--/div.container-fluid -->
 </nav><aside class="col-md-12 lesson-progress"><div class="progress incubator">
-    <div class="progress-bar incubator" role="progressbar" style="width: 59%" aria-valuenow="59" aria-valuemin="0" aria-valuemax="100" aria-label="Lesson Progress">59%</div>
+    <div class="progress-bar incubator" role="progressbar" style="width: 60%" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" aria-label="Lesson Progress">60%</div>
   </div>
 </aside><div class="container">
       <div class="row">
@@ -414,7 +414,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>RAG with a Notebook GPU</h1>
-        <p>Last updated on 2025-12-19 |
+        <p>Last updated on 2026-10-08 |
 
         <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker/edit/main/episodes/01_RAG_WattBot_GPU-instance.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -472,10 +472,16 @@ combination.</li>
 </div>
 </div>
 <section><h2 class="section-heading" id="working-with-aws-for-rag-experiments">Working with AWS for RAG Experiments<a class="anchor" aria-label="anchor" href="#working-with-aws-for-rag-experiments"></a></h2>
-<hr class="half-width"><p>In the previous episode, we briefly introduced several approaches for
-implementing RAG in AWS. Here, we are simply selecting a good GPU
-instance that can handle whatever RAG system we want to build. This
-approach is:</p>
+<hr class="half-width"><p>In the previous episode, we introduced several approaches for
+implementing RAG in AWS and recommended <strong>Amazon Bedrock as the
+default</strong> for standard RAG inference, because it bills per token
+and leaves nothing running between calls. In this episode we
+deliberately start with the <em>least</em> cost-efficient route — a
+single GPU notebook instance — because it makes every step of the
+pipeline visible as plain Python. Treat it as a learning exercise, not a
+deployment pattern. Here, we are simply selecting a good GPU instance
+that can handle whatever RAG system we want to build. This approach
+is:</p>
 <ul><li>Very easy to understand core on the AWS side of things (just select
 GPU instance and you’re good to move on)</li>
 <li>Ideal for learning retrieval and generation steps<br></li>
@@ -491,8 +497,9 @@ production‑aligned GPU strategies, including:</p>
 </ul><p>Those techniques bring you closer to best practice for scalable and
 budget‑friendly research computing.</p>
 <p><strong>Remember to Shut Down Your AWS Instance</strong>: GPU
-notebook instances continue billing <strong>even when idle</strong>.
-Always:</p>
+notebook instances continue billing <strong>even when idle</strong> — an
+<code>ml.g5.xlarge</code> left running over a weekend costs roughly $77,
+and a month costs roughly $880, whether or not you use it. Always:</p>
 <ul><li>Save your work<br></li>
 <li>Shut down or stop the instance when not in use</li>
 <li>Verify the status in the AWS console</li>
@@ -572,7 +579,12 @@ answers.</li>
 <li>
 <code>Name = your-name</code><br></li>
 <li><code>Purpose = RAG-demo</code></li>
-</ul></li>
+</ul>
+These tags cover the bucket’s storage costs only. Your notebook instance
+carries the tags you gave it when you created it, and in this episode
+those two resources are the only things being billed. Once we start
+launching jobs and calling Bedrock in later episodes, each of those
+needs its own tags as well.</li>
 <li>Once the bucket is created, you’ll be brought to a page that shows
 all of your current buckets (and those on our shared account). We’ll
 have to edit our bucket’s policy to allow ourselves proper access to any
@@ -2411,8 +2423,8 @@ any links that you are not going to use.
   "url": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/01_RAG_WattBot_GPU-instance.html",
   "identifier": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/01_RAG_WattBot_GPU-instance.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2025-12-19",
-  "datePublished": "2026-10-06"
+  "dateModified": "2026-10-08",
+  "datePublished": "2026-10-08"
 }
 
   </script><script>

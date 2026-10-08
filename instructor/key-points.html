@@ -592,13 +592,26 @@ correctness and efficient resource usage.</li>
 <hr class="half-width">
 <ul>
 <li>RAG is an inference‑only workflow: no training or fine‑tuning
-required.</li>
-<li>AWS supports three broad approaches: notebook RAG, batch RAG, and
-Bedrock‑managed RAG.</li>
-<li>The right choice depends on latency needs, scale, cost sensitivity,
-and model‑management preferences.</li>
-<li>Later episodes will walk through each pattern in depth using
-hands‑on examples.</li>
+required, so you do not need to own a GPU to run one.</li>
+<li>
+<strong>Amazon Bedrock is the default for RAG inference</strong>:
+you pay per token, nothing runs between calls, and there is nothing to
+forget to shut down.</li>
+<li>Self‑managed GPU compute (Processing Jobs, notebook GPUs, inference
+endpoints) is justified when you need a model Bedrock doesn’t offer or
+when very large batch volumes make per‑token pricing uncompetitive — not
+as a starting point.</li>
+<li>Among the GPU options, Processing Jobs are the safest because the
+instance terminates itself; notebook GPUs and endpoints bill by the hour
+until you stop them.</li>
+<li>A forgotten GPU instance costs tens of dollars overnight and
+hundreds to thousands over a month; a full WattBot run on Bedrock costs
+well under a dollar.</li>
+<li>Tags never propagate: tag every job at launch, and route Bedrock
+calls through a tagged application inference profile, or the spend is
+untraceable.</li>
+<li>Later episodes walk through each pattern hands‑on, in teaching order
+(notebook GPU → Processing Jobs → Bedrock).</li>
 </ul></section><section id="01_RAG_WattBot_GPU-instance"><h2 class="section-heading"><a href="01_RAG_WattBot_GPU-instance.html">RAG with a Notebook GPU</a></h2>
 <hr class="half-width">
 <ul>
@@ -697,8 +710,8 @@ significantly reduce costs and improve efficiency.</li>
   "url": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/key-points.html",
   "identifier": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/key-points.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-06",
-  "datePublished": "2026-10-06"
+  "dateModified": "2026-10-08",
+  "datePublished": "2026-10-08"
 }
 
   </script><script>

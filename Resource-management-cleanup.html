@@ -409,7 +409,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Resource Management and Monitoring</h1>
-        <p>Last updated on 2024-11-08 |
+        <p>Last updated on 2026-10-08 |
 
         <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker/edit/main/episodes/Resource-management-cleanup.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -512,9 +512,23 @@ to view detailed expenses by service, such as SageMaker and S3.</li>
 </ul></li>
 <li>
 <strong>Use tags for cost tracking:</strong>
-<ul><li>Refer to the tags you set up earlier in the workshop for your
-notebooks and S3 buckets. These tags help you identify and monitor costs
-associated with specific resources.</li>
+<ul><li>Refer to the tags you set up earlier in the workshop. Remember that
+tags never propagate between resources: your notebook instance, each S3
+bucket, each training/tuning/Processing job, and each Bedrock
+application inference profile carries its own tags, and anything you
+launched without tags is untraceable after the fact.</li>
+<li>Tags only appear as filters in Cost Explorer after the tag
+<em>keys</em> (<code>Name</code>, <code>Project</code>,
+<code>Purpose</code>) have been activated as cost allocation tags in the
+Billing console by an account administrator. On a shared workshop
+account this is done once by the organizers; on your own account, do it
+once under <strong>Billing and Cost Management → Cost allocation
+tags</strong>. Activation applies only to usage recorded after that
+point, and new tags can take up to 24 hours to show up.</li>
+<li>Bedrock application inference profiles cost nothing to keep, but you
+can delete the ones you created from the Bedrock console or with
+<code>bedrock.delete_inference_profile(...)</code> once a project is
+finished.</li>
 </ul></li>
 </ol></section><section><h2 class="section-heading" id="best-practices-for-resource-management">Best practices for resource management<a class="anchor" aria-label="anchor" href="#best-practices-for-resource-management"></a></h2>
 <hr class="half-width"><p>Efficient resource management can save significant costs and improve
@@ -624,8 +638,8 @@ any links that you are not going to use.
   "url": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/Resource-management-cleanup.html",
   "identifier": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/Resource-management-cleanup.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2024-11-08",
-  "datePublished": "2026-10-06"
+  "dateModified": "2026-10-08",
+  "datePublished": "2026-10-08"
 }
 
   </script><script>
