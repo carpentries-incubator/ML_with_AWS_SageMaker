@@ -185,6 +185,24 @@ print(f"Created requirements.txt at {req_path}")
 ```
 
 
+### Cost tracking: tag every job
+
+Tags do **not** propagate in AWS. The tags you put on your notebook instance cover the notebook's hourly cost and nothing else. Each Processing job below launches its own GPU instance, which is a separate billable resource with no tags unless we pass them at launch, exactly as we did for training and tuning jobs earlier in the workshop. An untagged job shows up in Cost Explorer as anonymous SageMaker spend that nobody can attribute to a team.
+
+Define the tags once and pass `tags=job_tags` to **every** `HuggingFaceProcessor` you create. Use a distinct `Purpose` per job so you can tell the embedding job from the batch RAG job on the bill.
+
+```python
+name = "John Doe"        # replace with your name
+project = "sinkorswim"   # replace with your team name
+
+def make_job_tags(purpose: str):
+    return [
+        {"Key": "Name", "Value": name},
+        {"Key": "Project", "Value": project},
+        {"Key": "Purpose", "Value": purpose},
+    ]
+```
+
 ```python
 
 embedding_model_id = "thenlper/gte-large"
@@ -196,6 +214,7 @@ emb_output_path = f"s3://{bucket_name}/{emb_output_prefix}/"
 embedding_processor = HuggingFaceProcessor(
     base_job_name="WattBot-embed-gte-large",
     role=role,
+    tags=make_job_tags("RAG-embed"),   # tags are per job; nothing is inherited from the notebook
     instance_type="ml.g5.xlarge",
     instance_count=1,
     transformers_version="4.56",
@@ -307,6 +326,7 @@ rag_output_path = f"s3://{bucket_name}/{rag_output_prefix}/"
 rag_processor = HuggingFaceProcessor(
     base_job_name="WattBot-rag-batch",
     role=role,
+    tags=make_job_tags("RAG-batch"),   # separate job, separate tags
     instance_type="ml.g5.xlarge",
     instance_count=1,
     transformers_version="4.56",

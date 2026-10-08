@@ -28,7 +28,7 @@ exercises: 15
 
 ## Working with AWS for RAG Experiments 
 
-In the previous episode, we briefly introduced several approaches for implementing RAG in AWS. Here, we are simply selecting a good GPU instance that can handle whatever RAG system we want to build. This approach is:
+In the previous episode, we introduced several approaches for implementing RAG in AWS and recommended **Amazon Bedrock as the default** for standard RAG inference, because it bills per token and leaves nothing running between calls. In this episode we deliberately start with the *least* cost-efficient route — a single GPU notebook instance — because it makes every step of the pipeline visible as plain Python. Treat it as a learning exercise, not a deployment pattern. Here, we are simply selecting a good GPU instance that can handle whatever RAG system we want to build. This approach is:
 
 - Very easy to understand core on the AWS side of things (just select GPU instance and you're good to move on)
 - Ideal for learning retrieval and generation steps  
@@ -44,7 +44,7 @@ However, it is **not the most cost‑efficient method**. In upcoming episodes we
 
 Those techniques bring you closer to best practice for scalable and budget‑friendly research computing.
 
-**Remember to Shut Down Your AWS Instance**: GPU notebook instances continue billing **even when idle**.  Always:
+**Remember to Shut Down Your AWS Instance**: GPU notebook instances continue billing **even when idle** — an `ml.g5.xlarge` left running over a weekend costs roughly $77, and a month costs roughly $880, whether or not you use it.  Always:
 
 - Save your work  
 - Shut down or stop the instance when not in use
@@ -109,6 +109,8 @@ In the AWS console:
    - `Project = your-team-name`  
    - `Name = your-name`  
    - `Purpose = RAG-demo`
+
+   These tags cover the bucket's storage costs only. Your notebook instance carries the tags you gave it when you created it, and in this episode those two resources are the only things being billed. Once we start launching jobs and calling Bedrock in later episodes, each of those needs its own tags as well.
 5. Once the bucket is created, you'll be brought to a page that shows all of your current buckets (and those on our shared account). We'll have to edit our bucket's policy to allow ourselves proper access to any files stored there (e.g., read from bucket, write to bucket). To set these permissions...
 
 a. Click on the name of your bucket to bring up additional options and settings.

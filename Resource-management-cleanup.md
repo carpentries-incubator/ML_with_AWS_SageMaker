@@ -68,7 +68,9 @@ Managing your AWS expenses is vital to staying within budget. Follow these steps
 2. **Review usage and costs:**
    - Use the AWS **Cost Explorer** in the Billing Dashboard to view detailed expenses by service, such as SageMaker and S3.
 3. **Use tags for cost tracking:**
-   - Refer to the tags you set up earlier in the workshop for your notebooks and S3 buckets. These tags help you identify and monitor costs associated with specific resources.
+   - Refer to the tags you set up earlier in the workshop. Remember that tags never propagate between resources: your notebook instance, each S3 bucket, each training/tuning/Processing job, and each Bedrock application inference profile carries its own tags, and anything you launched without tags is untraceable after the fact.
+   - Tags only appear as filters in Cost Explorer after the tag *keys* (`Name`, `Project`, `Purpose`) have been activated as cost allocation tags in the Billing console by an account administrator. On a shared workshop account this is done once by the organizers; on your own account, do it once under **Billing and Cost Management → Cost allocation tags**. Activation applies only to usage recorded after that point, and new tags can take up to 24 hours to show up.
+   - Bedrock application inference profiles cost nothing to keep, but you can delete the ones you created from the Bedrock console or with `bedrock.delete_inference_profile(...)` once a project is finished.
 
 ## Best practices for resource management
 
