@@ -7,7 +7,7 @@ exercises: 15
 :::::::::::::::::::::::::::::::::::::: questions
 
 - How can we run a basic Retrieval-Augmented Generation (RAG) pipeline entirely from a single GPU-backed SageMaker notebook?
-- How do we go from raw PDFs and CSV files to a searchable embedding space for WattBot documents?
+- How do we go from cached text chunks to a searchable embedding space using a self-hosted model?
 - How can we generate WattBot-style answers (including citations and evidence) that follow the competition’s scoring conventions?
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
@@ -15,9 +15,8 @@ exercises: 15
 ::::::::::::::::::::::::::::::::::::: objectives
 
 - Verify that our SageMaker notebook instance has a working GPU and compatible Python environment.
-- Load the WattBot metadata and question–answer files from local storage and inspect their structure.
-- Download all referenced PDFs from `metadata.csv` and turn them into a collection of text pages with useful metadata attached.
-- Implement a simple, explicit “from scratch” text-chunking and embedding pipeline without relying on FAISS or production vector DBs.
+- Reuse the WattBot metadata, questions, and `chunks.jsonl` that the Bedrock episode stored in S3.
+- Implement a simple, explicit “from scratch” embedding pipeline with a self-hosted sentence-transformer, without relying on FAISS or production vector DBs.
 - Build a small retrieval helper that finds the most relevant chunks for a question using cosine similarity in embedding space.
 - Wire the retriever to a local Qwen 7B-style generator to produce WattBot-format answers (including `answer`, `ref_id`, `ref_url`, and `supporting_materials`).
 - Add a second LLM pass that generates short explanations and marks whether the evidence comes from text, figures, tables, or a combination.
@@ -28,7 +27,7 @@ exercises: 15
 
 ## Working with AWS for RAG Experiments 
 
-In the previous episode, we introduced several approaches for implementing RAG in AWS and recommended **Amazon Bedrock as the default** for standard RAG inference, because it bills per token and leaves nothing running between calls. In this episode we deliberately start with the *least* cost-efficient route — a single GPU notebook instance — because it makes every step of the pipeline visible as plain Python. Treat it as a learning exercise, not a deployment pattern. Here, we are simply selecting a good GPU instance that can handle whatever RAG system we want to build. This approach is:
+In the previous episode we built the full WattBot pipeline on **Amazon Bedrock**, the recommended default for RAG inference because it bills per token and leaves nothing running between calls. In this episode we rerun the same pipeline on the *least* cost-efficient route — a single GPU notebook instance with self-hosted models — because it makes everything Bedrock abstracts away (loading an embedding model, loading a generator, managing GPU memory) visible as plain Python. Treat it as a learning exercise, not a deployment pattern. Here, we are simply selecting a good GPU instance that can handle whatever RAG system we want to build. This approach is:
 
 - Very easy to understand core on the AWS side of things (just select GPU instance and you're good to move on)
 - Ideal for learning retrieval and generation steps  
@@ -55,17 +54,14 @@ This habit prevents accidental ongoing GPU charges.
 
 ## Overview: WattBot RAG on a single notebook GPU
 
-In this episode we build a **minimal but realistic RAG pipeline** from the [WattBot 2025](https://www.kaggle.com/competitions/WattBot2025/overview) challenge that runs entirely from a single GPU-backed SageMaker notebook.
+In this episode we rerun the [WattBot 2025](https://www.kaggle.com/competitions/WattBot2025/overview) RAG pipeline from the Bedrock episode, this time entirely from a single GPU-backed SageMaker notebook with self-hosted models.
 
 In this episode we will:
 
-1. **Work directly with the WattBot data.**
-   - Use `train_QA.csv` and `metadata.csv` from the competition dataset.
-   - Download all referenced PDFs (our RAG corpus) using the URLs in `metadata.csv`.
-2. **Implement the core RAG steps explicitly in code.**
-   - Read PDFs, extract per-page text, and attach document metadata.
-   - Chunk text into overlapping segments suitable for embedding.
-   - Embed chunks with a sentence-transformer (`thenlper/gte-base`)
+1. **Reuse the WattBot data you prepared in the Bedrock episode.**
+   - Pull `train_QA.csv`, `metadata.csv`, and the cached `chunks.jsonl` from your S3 bucket.
+2. **Implement the model steps explicitly in code.**
+   - Embed chunks with a sentence-transformer (`thenlper/gte-large`) running on the notebook's GPU.
    - Implement cosine-similarity search over the embedding matrix.
 3. **Connect to a local Qwen-style generator.**
    - Use a quantized 7B model on a GPU-backed instance (e.g., `ml.g5.xlarge`).
@@ -82,78 +78,9 @@ For this episode, we assume you are running on an AWS SageMaker notebook instanc
 - `ml.g5.xlarge` (recommended) or
 - `ml.g4dn.xlarge` (may work with smaller models / more aggressive quantization).
 
-See [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for further guidance.
+See [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for further guidance. This instance bills by the hour from the moment it starts, whether or not it is doing anything: **stop it when you leave**.
 
-
-### Step 1 – Download `data.zip` locally
-
-We’ll use the **WattBot 2025** dataset. Download the workshop data archive to your laptop or desktop:
-
-- Open this link in your browser: https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/data/data.zip
-- Save `data.zip` somewhere you can find it easily and unzip the folder contents
-
-This archive should include a `data/wattbot/` folder containing:
-
-- `metadata.csv` – index of all WattBot papers.
-- `train_QA.csv` – labeled questions + ground truth answers.
-
-### Step 2 – Create a WattBot S3 bucket
-
-In the AWS console:
-
-1. Go to **S3**.
-2. Create a new bucket named something like:  
-   `teamname-yourname-wattbot`
-3. Keep **Block all public access** enabled.
-4. Add tags so we can track costs:  
-   - `Project = your-team-name`  
-   - `Name = your-name`  
-   - `Purpose = RAG-demo`
-
-   These tags cover the bucket's storage costs only. Your notebook instance carries the tags you gave it when you created it, and in this episode those two resources are the only things being billed. Once we start launching jobs and calling Bedrock in later episodes, each of those needs its own tags as well.
-5. Once the bucket is created, you'll be brought to a page that shows all of your current buckets (and those on our shared account). We'll have to edit our bucket's policy to allow ourselves proper access to any files stored there (e.g., read from bucket, write to bucket). To set these permissions...
-
-a. Click on the name of your bucket to bring up additional options and settings.
-   b. Click the Permissions tab
-   c. Scroll down to Bucket policy and click Edit. Paste the following policy, editing the bucket name "sinkorswim-doejohn-wattbot" to reflect your bucket's nameAs we did in the "setting up S3 episode, edit your bucket's policy to include the following:
-
-```json
-{
-	"Version": "2012-10-17",
-	"Statement": [
-		{
-			"Effect": "Allow",
-			"Principal": {
-			    "AWS": [
-			        "arn:aws:iam::183295408236:role/ml-sagemaker-use",
-			        "arn:aws:iam::183295408236:role/ml-sagemaker-bedrock-use"
-		        ]
-			},
-			"Action": [
-				"s3:GetObject",
-				"s3:PutObject",
-				"s3:DeleteObject",
-				"s3:ListMultipartUploadParts"
-			],
-			"Resource": [
-				"arn:aws:s3:::sinkorswim-chrisendemann-titanic",
-				"arn:aws:s3:::sinkorswim-chrisendemann-titanic/*"
-			]
-		}
-	]
-}
-```
-
-### Step 3 – Upload the WattBot files to S3
-
-1. In your new bucket, click **Upload**.
-2. Drag the `data/wattbot/` folder contents from `data.zip` into the upload dialog.
-3. Upload it so that your bucket contains paths like:
-
-   - `metadata.csv`
-   - `train_QA.csv`
-
-We’ll pull these files from S3 into the notebook in the next steps.
+We reuse the S3 bucket from the Bedrock episode, which should already contain `metadata.csv`, `train_QA.csv`, `corpus.zip`, and `chunks.jsonl`. If you skipped that episode, go back and run its setup and chunking steps first. Your notebook instance carries the tags you gave it when you created it and the bucket carries its own tags, so in this episode those two resources are the only things being billed.
 
 
 ###  Verify GPU and basic environment
@@ -293,377 +220,31 @@ print("Number of metadata rows:", len(metadata_df))
 train_df.head(15)
 ```
 
-## Step 2 – Download all PDFs from `metadata.csv`
+## Step 2 – Load the cached chunks from S3
 
-Next we will...
-
-1. Read the `url` column from `metadata.csv`.
-2. Download each PDF via HTTP and save it locally as `<id>.pdf` under `pdfs/`.
-3. Report any failures (e.g., missing or malformed URLs) at the end.
-4. Upload zipped version of corpus to S3
-
-
+In the Bedrock episode we turned every PDF into page-level records, split those pages into overlapping chunks, and uploaded the result to S3 as `chunks.jsonl`. Chunking is CPU work, so there is no reason to repeat it while a GPU is billing. We download the cached file and load it.
 
 
 ```python
-PDF_DIR = os.path.join(local_data_dir, "pdfs")
-os.makedirs(PDF_DIR, exist_ok=True)
-
-def download_all_pdfs_from_urls(
-    metadata: pd.DataFrame,
-    local_pdf_dir: str,
-    url_col: str = "url",
-    id_col: str = "id",
-    timeout: int = 20,
-) -> None:
-    """Download all PDFs referenced in `metadata` using their URLs.
-
-    - Saves each file as `<id>.pdf` in `local_pdf_dir`.
-    - Strips whitespace from the URL (to avoid trailing spaces becoming `%20`).
-    - Skips rows with missing or non-HTTP URLs.
-    - Prints a short summary of any failures.
-    """
-    os.makedirs(local_pdf_dir, exist_ok=True)
-    errors: List[Tuple[str, str]] = []
-
-    print(f"Saving PDFs to: {local_pdf_dir}\n")
-
-    for _, row in metadata.iterrows():
-        doc_id = str(row[id_col]).strip()
-
-        raw_url = row.get(url_col, None)
-        if not isinstance(raw_url, str):
-            errors.append((doc_id, "URL is not a string"))
-            continue
-
-        pdf_url = raw_url.strip()  # important: strip trailing whitespace
-        if not pdf_url.startswith("http"):
-            errors.append((doc_id, f"Invalid URL: {pdf_url!r}"))
-            continue
-
-        local_path = os.path.join(local_pdf_dir, f"{doc_id}.pdf")
-
-        try:
-            print(f"Downloading {doc_id} from {pdf_url} ...")
-            resp = requests.get(pdf_url, timeout=timeout, allow_redirects=True)
-            resp.raise_for_status()
-
-            content_type = resp.headers.get("Content-Type", "")
-
-            if "pdf" not in content_type.lower() and not pdf_url.lower().endswith(".pdf"):
-                print(f"  Warning: Content-Type for {doc_id} does not look like PDF ({content_type})")
-
-            with open(local_path, "wb") as f:
-                f.write(resp.content)
-
-        except Exception as e:
-            print(f"  -> FAILED for {doc_id}: {e}")
-            errors.append((doc_id, str(e)))
-
-    if errors:
-        print("\nSome PDFs could not be downloaded:")
-        for doc_id, err in errors:
-            print(f"  {doc_id}: {err}")
-    else:
-        print("\nAll PDFs downloaded successfully!")
-
-
-download_all_pdfs_from_urls(
-    metadata_df,
-    PDF_DIR,
-    url_col="url",
-    id_col="id",
-    timeout=20,
-)
-
-len(os.listdir(PDF_DIR))
-```
-
-### Zip all PDFs and upload to S3
-
-Once we have all PDFs locally, it can be convenient and efficient to:
-
-1. Zip them into a single file (e.g., `wattbot_pdfs.zip`).  
-2. Upload that ZIP archive to an S3 bucket, such as `s3://<your-wattbot-bucket>/data/wattbot/wattbot_pdfs.zip`.
-
-We’ll include a short code example here, but feel free to skip this during the workshop if time is tight.
-
-
-
-```python
-import os
-import zipfile
-import boto3
-
-def zip_and_upload_pdfs(
-    local_pdf_dir: str,
-    bucket: str,
-    zip_name: str = "corpus.zip"
-) -> str:
-    """
-    Zips all PDFs in local_pdf_dir and uploads the ZIP file to:
-        s3://<bucket>/<prefix>/<zip_name>
-
-    Returns the full S3 URI of the uploaded zip file.
-    """
-
-    # Ensure directory exists
-    if not os.path.exists(local_pdf_dir):
-        raise ValueError(f"Directory not found: {local_pdf_dir}")
-
-    # Path for the ZIP file
-    zip_path = os.path.join(local_pdf_dir, zip_name)
-
-    # Create ZIP archive
-    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-        for fname in os.listdir(local_pdf_dir):
-            if fname.lower().endswith(".pdf"):
-                fpath = os.path.join(local_pdf_dir, fname)
-                zipf.write(fpath, arcname=fname)
-                print(f"Added to ZIP: {fname}")
-
-    print(f"\nZIP created: {zip_path}")
-
-    # Upload to S3
-    s3_client = boto3.client("s3")
-    s3_key = f"{zip_name}"
-
-    print(f"Uploading to s3://{bucket}/{s3_key} ...")
-    s3_client.upload_file(zip_path, bucket, s3_key)
-    print("Upload complete.")
-
-    return f"s3://{bucket}/{s3_key}"
-
-
-zip_s3_uri = zip_and_upload_pdfs(
-    local_pdf_dir=PDF_DIR,
-    bucket=bucket_name
-)
-
-```
-
-## Step 3 – Turn PDFs into page-level “documents”
-
-Next, we convert each PDF into a list of **page-level records**. Each record stores:
-
-- `text`: page text (as extracted by `pypdf`).
-- `doc_id`: short ID from `metadata.csv` (e.g., `strubell2019`).
-- `title`: title of the document.
-- `url`: original PDF URL.
-- `page_num`: zero-based page index.
-- `page_label`: label used inside the PDF (often 1-based).
-
-Later, we will **chunk these pages** into smaller overlapping segments for embedding.
-
-### Why we page-chunk first
-
-We split the PDF into **pages before chunking** because pages give us a stable, easy-to-interpret unit.  
-This helps with:
-
-- **Keeping metadata** (doc ID, URL, page labels) tied to the text.  
-- **Debugging retrieval** — it’s much easier to understand what the model saw if we know which page(s) were used.  
-- **Cleaning text** before making smaller overlapping chunks.  
-- **Flexibility later** — once pages are structured, we can try different chunk sizes or strategies without re-extracting the PDF.
-
-In short: **pages first → then chunks** keeps the workflow cleaner and easier to reason about.
-
-
-
-```python
-!pip install pypdf
-```
-
-
-```python
-from pypdf import PdfReader
-
-def pdfs_to_page_docs(metadata: pd.DataFrame, pdf_dir: str) -> List[Dict[str, Any]]:
-    """Load each PDF into a list of page-level dictionaries.
-
-    Each dict has keys: text, doc_id, title, url, page_num, page_label, total_pages.
-    """
-    page_docs: List[Dict[str, Any]] = []
-
-    for _, row in metadata.iterrows():
-        doc_id = str(row["id"]).strip()
-        title = str(row.get("title", "")).strip()
-        url = str(row.get("url", "")).strip()
-
-        pdf_path = os.path.join(pdf_dir, f"{doc_id}.pdf")
-        if not os.path.exists(pdf_path):
-            print(f"Missing PDF for {doc_id}, skipping.")
-            continue
-
-        try:
-            reader = PdfReader(pdf_path)
-        except Exception as e:
-            print(f"Failed to read {pdf_path}: {e}")
-            continue
-
-        total_pages = len(reader.pages)
-        for i, page in enumerate(reader.pages):
-            try:
-                text = page.extract_text() or ""
-            except Exception as e:
-                print(f"Failed to extract text from {doc_id} page {i}: {e}")
-                text = ""
-
-            text = text.strip()
-            if not text:
-                # Still keep the page so we know it exists, but mark it as empty
-                text = "[[EMPTY PAGE TEXT – see original PDF for tables/figures]]"
-
-            page_docs.append(
-                {
-                    "text": text,
-                    "doc_id": doc_id,
-                    "title": title,
-                    "url": url,
-                    "page_num": i,
-                    "page_label": str(i + 1),
-                    "total_pages": total_pages,
-                }
-            )
-
-    return page_docs
-
-
-page_docs = pdfs_to_page_docs(metadata_df, PDF_DIR)
-print(f"Loaded {len(page_docs)} page-level records from {len(metadata_df)} PDFs.")
-page_docs[0] if page_docs else None
-```
-
-## Step 4 – Simple, explicit text chunking
-
-RAG systems typically break documents into **chunks** so that:
-
-- Each chunk is long enough to carry meaningful context.
-- No chunk is so long that it blows up the embedding/LLM context window.
-
-For this workshop we will implement a **simple sliding-window chunker** that operates on characters:
-
-- `chunk_size_chars`: maximum characters per chunk (e.g., 1,000–1,500).
-- `chunk_overlap_chars`: overlap between consecutive chunks (e.g., 200).
-
-In our own work, you may wish to plug in more sophisticated *semantic chunking*  methods(e.g., splitting on headings, section titles, or sentence boundaries). For now, we'll keep the implementation explicit and easy to debug.
-
-
-
-```python
-def split_text_into_chunks(
-    text: str,
-    chunk_size_chars: int = 1200,
-    chunk_overlap_chars: int = 200,
-) -> List[str]:
-    """Split `text` into overlapping character-based chunks.
-
-    This is a simple baseline; more advanced versions might:
-    - split on sentence boundaries, or
-    - merge short paragraphs and respect section headings.
-    """
-    text = text.strip()
-    if not text:
-        return []
-
-    chunks: List[str] = []
-    start = 0
-    text_len = len(text)
-
-    while start < text_len:
-        end = min(start + chunk_size_chars, text_len)
-        chunk = text[start:end]
-        chunks.append(chunk)
-        if end == text_len:
-            break
-        # Move the window forward, keeping some overlap
-        start = end - chunk_overlap_chars
-
-    return chunks
-
-
-def make_chunked_docs(
-    page_docs: List[Dict[str, Any]],
-    chunk_size_chars: int = 1200,
-    chunk_overlap_chars: int = 200,
-) -> List[Dict[str, Any]]:
-    """Turn page-level records into smaller overlapping text chunks.
-
-    Each chunk keeps a pointer back to its document and page metadata.
-    """
-    chunked: List[Dict[str, Any]] = []
-    for page in page_docs:
-        page_text = page["text"]
-        chunks = split_text_into_chunks(
-            page_text,
-            chunk_size_chars=chunk_size_chars,
-            chunk_overlap_chars=chunk_overlap_chars,
-        )
-        for idx, chunk_text in enumerate(chunks):
-            chunked.append(
-                {
-                    "text": chunk_text,
-                    "doc_id": page["doc_id"],
-                    "title": page["title"],
-                    "url": page["url"],
-                    "page_num": page["page_num"],
-                    "page_label": page["page_label"],
-                    "total_pages": page["total_pages"],
-                    "chunk_idx_in_page": idx,
-                }
-            )
-    return chunked
-
-
-
-```
-
-
-```python
-import os, json
-
-chunks_s3_key = 'chunks.jsonl'
+chunks_s3_key = "chunks.jsonl"
 chunks_jsonl_path = os.path.join(local_data_dir, chunks_s3_key)
-
-def save_chunked_docs_jsonl(path, chunks):
-    with open(path, "w", encoding="utf-8") as f:
-        for rec in chunks:
-            json.dump(rec, f, ensure_ascii=False)
-            f.write("\n")
-
 
 def load_chunked_docs_jsonl(path):
     with open(path, "r", encoding="utf-8") as f:
         return [json.loads(line) for line in f]
 
-# -------------------------------------------------------------------
-# Cached chunking logic
-# -------------------------------------------------------------------
-if os.path.exists(chunks_jsonl_path):
-    print(f"Found existing chunk file: {chunks_jsonl_path}")
-    chunked_docs = load_chunked_docs_jsonl(chunks_jsonl_path)
-    print("Loaded chunked docs:", len(chunked_docs))
-else:
-    print("No chunk file found. Running chunking step...")
-    chunked_docs = make_chunked_docs(page_docs)
-    save_chunked_docs_jsonl(chunks_jsonl_path, chunked_docs)
-    print(f"Saved chunked docs to {chunks_jsonl_path}")
+if not os.path.exists(chunks_jsonl_path):
+    download_s3_object(bucket_name, chunks_s3_key, chunks_jsonl_path)
 
-# Show first chunk
-print("Raw pages:", len(page_docs))
+chunked_docs = load_chunked_docs_jsonl(chunks_jsonl_path)
 print("Chunked docs:", len(chunked_docs))
 chunked_docs[0] if chunked_docs else None
-
 ```
 
-```python
-# Upload to S3 so future runs (or other instances) can reuse
-print(f"Uploading chunked docs to s3 ...")
-s3_client.upload_file(chunks_jsonl_path, bucket_name, chunks_s3_key)
-print("Upload complete.")
-```
+Each chunk keeps a pointer back to its document and page metadata (`doc_id`, `title`, `url`, `page_num`, `page_label`, `chunk_idx_in_page`), which we use later to cite sources.
 
 
-## Step 5 – Build an embedding matrix
+## Step 3 – Build an embedding matrix
 
 Now we embed each chunk into a vector using a **sentence-transformer** model. For WattBot, a strong and relatively efficient choice is:
 
@@ -744,7 +325,7 @@ chunk_embeddings.shape
 ```
 
 
-### 6. Build a simple retrieval step (cosine similarity)
+### 4. Build a simple retrieval step (cosine similarity)
 
 We are **not** using a heavy vector database in this first episode.
 
@@ -865,7 +446,7 @@ for r in test_retrieved:
 ```
 
 
-### 7. Load the Qwen model for answer generation
+### 5. Load the Qwen model for answer generation
 
 For this episode we use **Qwen2.5-7B-Instruct** via the Hugging Face `transformers` library.
 
@@ -957,7 +538,7 @@ print(f"Generator ({qwen_model_id}) test response: {test_response}")
 ```
 
 
-### 8. Build prompts for answers and explanations
+### 6. Build prompts for answers and explanations
 
 We keep the prompts **very explicit**:
 
@@ -1012,7 +593,7 @@ Remember:
 ```
 
 
-### 9. Run over the full WattBot training set
+### 7. Run over the full WattBot training set
 
 Now we:
 
@@ -1719,8 +1300,7 @@ results_df = compute_wattbot_score(
 
 In this episode, we:
 
-- Loaded a small corpus of AI / ML energy papers into our notebook environment.
-- Split long documents into manageable chunks and cached those chunks to disk so we don’t have to re-run the chunking step every time.
+- Pulled the WattBot corpus chunks that the Bedrock episode cached on S3 into our notebook environment.
 - Created vector embeddings for each chunk and used similarity search to retrieve relevant context for a given question.
 - Used an LLM to generate answers from retrieved context and wrote results out to a CSV for later scoring and analysis.
 - Handled unanswerable questions with an `is_blank` flag so the system can explicitly say “I don’t know” when the evidence isn’t there.
@@ -1746,7 +1326,7 @@ This is just a first pass at a RAG pipeline: it works, but there’s a lot of he
 
 As you iterate, the goal is to treat this notebook as a baseline RAG “workbench”: you can swap in better models, smarter retrieval strategies, and richer document preprocessing without changing the overall pipeline structure.
 
-In the next episodes, we will repeat largely the same exact RAG pipeline using slightly different approaches on AWS (processing jobs and Bedrock).
+In the next episode, we move the GPU work out of the notebook and into short-lived SageMaker Processing jobs, so the GPU only bills while it is actually embedding or generating.
 
 
 
