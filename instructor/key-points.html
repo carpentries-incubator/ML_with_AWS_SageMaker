@@ -354,7 +354,7 @@
 <div class="accordion accordion-flush" id="accordionFlush11">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading11">
-        <a href="01_RAG_WattBot_GPU-instance.html">10. RAG with a Notebook GPU</a>
+        <a href="01_RAG_WattBot_Bedrock.html">10. RAG with Bedrock</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -366,7 +366,7 @@
 <div class="accordion accordion-flush" id="accordionFlush12">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading12">
-        <a href="02_RAG_WattBot_Processing_Jobs.html">11. RAG with Processing Jobs</a>
+        <a href="02_RAG_WattBot_GPU-instance.html">11. RAG with a Notebook GPU</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -378,7 +378,7 @@
 <div class="accordion accordion-flush" id="accordionFlush13">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading13">
-        <a href="03_RAG_WattBot_Bedrock.html">12. RAG with Bedrock</a>
+        <a href="03_RAG_WattBot_Processing_Jobs.html">12. RAG with Processing Jobs</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -610,9 +610,23 @@ well under a dollar.</li>
 <li>Tags never propagate: tag every job at launch, and route Bedrock
 calls through a tagged application inference profile, or the spend is
 untraceable.</li>
-<li>Later episodes walk through each pattern hands‑on, in teaching order
-(notebook GPU → Processing Jobs → Bedrock).</li>
-</ul></section><section id="01_RAG_WattBot_GPU-instance"><h2 class="section-heading"><a href="01_RAG_WattBot_GPU-instance.html">RAG with a Notebook GPU</a></h2>
+<li>The hands‑on episodes start with Bedrock, then show the same
+pipeline on a notebook GPU and on Processing Jobs.</li>
+</ul></section><section id="01_RAG_WattBot_Bedrock"><h2 class="section-heading"><a href="01_RAG_WattBot_Bedrock.html">RAG with Bedrock</a></h2>
+<hr class="half-width">
+<ul>
+<li>A complete RAG pipeline on AWS needs no GPU: a CPU notebook plus
+Bedrock-hosted embedding and generation models is enough.</li>
+<li>Corpus preparation (PDF download, page extraction, chunking) is
+cheap CPU work; cache <code>chunks.jsonl</code> on S3 so later episodes
+and runs can reuse it.</li>
+<li>Bedrock calls carry no tags; route them through a tagged application
+inference profile or the spend is anonymous on the bill.</li>
+<li>Bedrock bills per token and leaves nothing running between calls,
+which is why it is the default route for RAG inference.</li>
+<li>The model is one tunable component; most accuracy gains come from
+chunking, retrieval, and post-processing.</li>
+</ul></section><section id="02_RAG_WattBot_GPU-instance"><h2 class="section-heading"><a href="02_RAG_WattBot_GPU-instance.html">RAG with a Notebook GPU</a></h2>
 <hr class="half-width">
 <ul>
 <li>
@@ -639,11 +653,7 @@ questions and for missing fields.</li>
 <strong>Scalability path</strong>: The same logic can later be
 swapped to FAISS/Chroma and larger models, while preserving the
 interface used here.</li>
-</ul></section><section id="02_RAG_WattBot_Processing_Jobs"><h2 class="section-heading"><a href="02_RAG_WattBot_Processing_Jobs.html">RAG with Processing JobsRAG with Processing Jobs<a class="anchor" aria-label="anchor" href="#rag-with-processing-jobs"></a></a></h2>
-<hr class="half-width">
-<ul>
-<li>TODO</li>
-</ul></section><section id="03_RAG_WattBot_Bedrock"><h2 class="section-heading"><a href="03_RAG_WattBot_Bedrock.html">RAG with Bedrock</a></h2>
+</ul></section><section id="03_RAG_WattBot_Processing_Jobs"><h2 class="section-heading"><a href="03_RAG_WattBot_Processing_Jobs.html">RAG with Processing JobsRAG with Processing Jobs<a class="anchor" aria-label="anchor" href="#rag-with-processing-jobs"></a></a></h2>
 <hr class="half-width">
 <ul>
 <li>TODO</li>
@@ -710,8 +720,8 @@ significantly reduce costs and improve efficiency.</li>
   "url": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/key-points.html",
   "identifier": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/key-points.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-13",
-  "datePublished": "2026-10-13"
+  "dateModified": "2026-10-16",
+  "datePublished": "2026-10-16"
 }
 
   </script><script>

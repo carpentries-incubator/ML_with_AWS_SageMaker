@@ -305,7 +305,7 @@
 <div class="accordion accordion-flush" id="accordionFlush11">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading11">
-        <a href="01_RAG_WattBot_GPU-instance.html">10. RAG with a Notebook GPU</a>
+        <a href="01_RAG_WattBot_Bedrock.html">10. RAG with Bedrock</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -314,7 +314,7 @@
 <div class="accordion accordion-flush" id="accordionFlush12">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading12">
-        <a href="02_RAG_WattBot_Processing_Jobs.html">11. RAG with Processing Jobs</a>
+        <a href="02_RAG_WattBot_GPU-instance.html">11. RAG with a Notebook GPU</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -323,7 +323,7 @@
 <div class="accordion accordion-flush" id="accordionFlush13">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading13">
-        <a href="03_RAG_WattBot_Bedrock.html">12. RAG with Bedrock</a>
+        <a href="03_RAG_WattBot_Processing_Jobs.html">12. RAG with Processing Jobs</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -395,7 +395,7 @@
   <div class="col-xl-8 col-lg-12 primary-content">
     <nav class="lesson-content mx-md-4" aria-label="Previous and Next Chapter Top"><!-- content for small screens --><div class="d-block d-sm-block d-md-none">
         <a class="chapter-link" href="Hyperparameter-tuning.html" rel="prev"><i aria-hidden="true" class="small-arrow" data-feather="arrow-left"></i>Previous</a>
-        <a class="chapter-link float-end" href="01_RAG_WattBot_GPU-instance.html" rel="next">Next<i aria-hidden="true" class="small-arrow" data-feather="arrow-right"></i></a>
+        <a class="chapter-link float-end" href="01_RAG_WattBot_Bedrock.html" rel="next">Next<i aria-hidden="true" class="small-arrow" data-feather="arrow-right"></i></a>
       </div>
       <!-- content for large screens -->
       <div class="d-none d-sm-none d-md-block">
@@ -403,14 +403,14 @@
           <i aria-hidden="true" class="small-arrow" data-feather="arrow-left"></i>
           Previous: Hyperparameter Tuning in SageMaker:...
         </a>
-        <a class="chapter-link float-end" href="01_RAG_WattBot_GPU-instance.html" rel="next">
-          Next: RAG with a Notebook GPU...
+        <a class="chapter-link float-end" href="01_RAG_WattBot_Bedrock.html" rel="next">
+          Next: RAG with Bedrock...
           <i aria-hidden="true" class="small-arrow" data-feather="arrow-right"></i>
         </a>
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Overview of RAG Workflows on AWS</h1>
-        <p>Last updated on 2026-10-08 |
+        <p>Last updated on 2026-10-16 |
 
         <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker/edit/main/episodes/00_Overview-RAG-on-AWS.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -792,24 +792,24 @@ steady traffic</td>
 </tr></tbody></table><p>If you are unsure, pick Bedrock. The worst case is a slightly higher
 per‑token bill; the worst case with the other routes is a four‑figure
 surprise on next month’s invoice.</p>
-<div id="why-the-hands-on-episodes-are-in-a-different-order" class="callout">
+<div id="how-the-hands-on-episodes-are-ordered" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
 </div>
 <span class="callout-header">Callout</span>
-<div id="why-the-hands-on-episodes-are-in-a-different-order" class="callout-inner">
-<h3 class="callout-title">Why the hands-on episodes are in a different
-order</h3>
+<div id="how-the-hands-on-episodes-are-ordered" class="callout-inner">
+<h3 class="callout-title">How the hands-on episodes are ordered</h3>
 <div class="callout-content">
-<p>The next three episodes walk through RAG on a <strong>notebook
-GPU</strong>, then <strong>Processing Jobs</strong>, then
-<strong>Bedrock</strong>. That is a <em>teaching</em> order, not a
-recommendation: we start with the notebook GPU because every step of the
-pipeline is visible in plain Python, then show how to move the GPU work
-into self‑terminating jobs, and finally replace the self‑hosted models
-with Bedrock calls. By the end you will have seen the same WattBot
-pipeline run all three ways and can compare cost, latency, and
-complexity directly.</p>
+<p>The next three episodes walk through RAG on <strong>Bedrock</strong>
+first, then a <strong>notebook GPU</strong>, then <strong>Processing
+Jobs</strong>. The Bedrock episode is the one to start from: it builds
+the whole WattBot pipeline, including downloading and chunking the
+corpus, from a cheap CPU notebook with nothing left running afterward.
+The two GPU episodes then rerun the same pipeline on self‑hosted models
+so you can see what Bedrock abstracts away, and what it costs to do
+yourself. By the end you will have seen the same WattBot pipeline run
+all three ways and can compare cost, latency, and complexity
+directly.</p>
 <p>When you build your own RAG system afterward, start from the Bedrock
 episode.</p>
 </div>
@@ -841,8 +841,8 @@ well under a dollar.</li>
 <li>Tags never propagate: tag every job at launch, and route Bedrock
 calls through a tagged application inference profile, or the spend is
 untraceable.</li>
-<li>Later episodes walk through each pattern hands‑on, in teaching order
-(notebook GPU → Processing Jobs → Bedrock).</li>
+<li>The hands‑on episodes start with Bedrock, then show the same
+pipeline on a notebook GPU and on Processing Jobs.</li>
 </ul></div>
 </div>
 </div>
@@ -853,7 +853,7 @@ any links that you are not going to use.
 </section></div> <!-- / div.lesson-content -->
     </main><!-- / main#main-content.main-content --><nav class="bottom-pagination mx-md-4" aria-label="Previous and Next Chapter Bottom"><div class="d-block d-sm-block d-md-none">
         <a class="chapter-link" href="Hyperparameter-tuning.html"><i aria-hidden="true" class="small-arrow" data-feather="arrow-left"></i>Previous</a>
-        <a class="chapter-link float-end" href="01_RAG_WattBot_GPU-instance.html">Next<i aria-hidden="true" class="small-arrow" data-feather="arrow-right"></i></a>
+        <a class="chapter-link float-end" href="01_RAG_WattBot_Bedrock.html">Next<i aria-hidden="true" class="small-arrow" data-feather="arrow-right"></i></a>
       </div>
       <!-- content for large screens -->
       <div class="d-none d-sm-none d-md-block">
@@ -861,8 +861,8 @@ any links that you are not going to use.
           <i aria-hidden="true" class="small-arrow" data-feather="arrow-left"></i>
           Previous: Hyperparameter Tuning in SageMaker:...
         </a>
-        <a class="chapter-link float-end" href="01_RAG_WattBot_GPU-instance.html" rel="next">
-          Next: RAG with a Notebook GPU...
+        <a class="chapter-link float-end" href="01_RAG_WattBot_Bedrock.html" rel="next">
+          Next: RAG with Bedrock...
           <i aria-hidden="true" class="small-arrow" data-feather="arrow-right"></i>
         </a>
       </div>
@@ -910,8 +910,8 @@ any links that you are not going to use.
   "url": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/00_Overview-RAG-on-AWS.html",
   "identifier": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/00_Overview-RAG-on-AWS.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-08",
-  "datePublished": "2026-10-13"
+  "dateModified": "2026-10-16",
+  "datePublished": "2026-10-16"
 }
 
   </script><script>
