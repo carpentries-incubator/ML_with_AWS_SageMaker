@@ -21,16 +21,15 @@ exercises: 20
 
 In the previous episode, we ran the entire WattBot RAG pipeline on a single GPU-backed SageMaker notebook. That was simple to teach, but the GPU sat idle while we downloaded PDFs, chunked text, and evaluated results.
 
-In this Episode 2 notebook, we will keep the same WattBot corpus and RAG logic, but restructure how we use AWS:
+In this episode, we will keep the same WattBot corpus and RAG logic, but restructure how we use AWS:
 
 - The notebook itself can run on a small CPU-only instance.
-- We regenerate pages and chunks locally, as before.
-- We save the chunks to S3.
+- We reuse the chunks already cached on S3 in the Bedrock episode.
 - We run two short-lived SageMaker Processing jobs on a GPU:
   1. One job computes embeddings for all chunks.
   2. A second job runs the full RAG loop (retrieval + Qwen) over all training questions.
 
-With this approach, we can more effectively use GPU resources only when needed, and we can scale out to larger corpora, models, and hardware more easily. The downside here is that you have to wait for processing jobs to spin up and run in batch mode on your queries. For many research applications of RAG, this is fine. However, if you want a near-real time chatbot you can have back and forth discussion with, this approach will not work. In the following episodes, we will discuss how we can use *Bedrock* or our own *model inference endpoints* to query models more rapidly.
+With this approach, we can more effectively use GPU resources only when needed, and we can scale out to larger corpora, models, and hardware more easily. The downside here is that you have to wait for processing jobs to spin up and run in batch mode on your queries. For many research applications of RAG, this is fine. However, if you want a near-real time chatbot you can have back and forth discussion with, this approach will not work. For that, use *Bedrock* (as in the first RAG episode) or your own *model inference endpoints*, which answer individual queries in seconds.
 
 
 ## Setup
@@ -67,7 +66,7 @@ session = sagemaker.Session()
 region = session.boto_region_name
 role = get_execution_role()
 
-bucket_name = "chris-rag-2"          # reuse your bucket from Episode 1
+bucket_name = "chris-rag-2"          # reuse your bucket from the Bedrock episode
 # bucket_region = "us-east-1"
 s3_client = boto3.client("s3", region_name=region)
 
@@ -85,7 +84,7 @@ print("Bucket:", bucket_name)
 
 ## Step 1 – Load WattBot metadata and training questions
 
-We reuse the same `metadata.csv` and `train_QA.csv` files from Episode 1. If they are not already on the notebook file system, we download them from S3.
+We reuse the same `metadata.csv` and `train_QA.csv` files from the earlier RAG episodes. If they are not already on the notebook file system, we download them from S3.
 
 
 
@@ -136,9 +135,9 @@ corpus_dir
 ```
 
 
-## Step 2 – Verify chunks exist on S3 (from previous episode)
+## Step 2 – Verify chunks exist on S3 (from the Bedrock episode)
 
-For our processing job, we'll reuse the same  chunks generated in prev. episode. The code below just verifies you have this file available in S3 (for calling from the processing job).
+For our processing job, we'll reuse the same chunks generated in the Bedrock episode. The code below just verifies you have this file available in S3 (for calling from the processing job).
 
 ```python
 # load chunks from s3
@@ -287,7 +286,7 @@ For the second job, we pass four inputs:
 - `train_QA.csv` – training questions (to compare with ground truth)
 - `metadata.csv` – to resolve `ref_id` → URL
 
-The script `wattbot_rag_batch.py` reuses the RAG helpers from Episode 1:
+The script `wattbot_rag_batch.py` reuses the RAG helpers from the notebook GPU episode:
 
 - cosine similarity + `retrieve_top_k`
 - `retrieve_context_for_question`

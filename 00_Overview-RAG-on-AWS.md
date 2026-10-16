@@ -171,9 +171,9 @@ If you are unsure, pick Bedrock. The worst case is a slightly higher per‑token
 
 ::::::::::::::::::::::::::::::::::::: callout
 
-### Why the hands-on episodes are in a different order
+### How the hands-on episodes are ordered
 
-The next three episodes walk through RAG on a **notebook GPU**, then **Processing Jobs**, then **Bedrock**. That is a *teaching* order, not a recommendation: we start with the notebook GPU because every step of the pipeline is visible in plain Python, then show how to move the GPU work into self‑terminating jobs, and finally replace the self‑hosted models with Bedrock calls. By the end you will have seen the same WattBot pipeline run all three ways and can compare cost, latency, and complexity directly.
+The next three episodes walk through RAG on **Bedrock** first, then a **notebook GPU**, then **Processing Jobs**. The Bedrock episode is the one to start from: it builds the whole WattBot pipeline, including downloading and chunking the corpus, from a cheap CPU notebook with nothing left running afterward. The two GPU episodes then rerun the same pipeline on self‑hosted models so you can see what Bedrock abstracts away, and what it costs to do yourself. By the end you will have seen the same WattBot pipeline run all three ways and can compare cost, latency, and complexity directly.
 
 When you build your own RAG system afterward, start from the Bedrock episode.
 
@@ -187,6 +187,6 @@ When you build your own RAG system afterward, start from the Bedrock episode.
 - Among the GPU options, Processing Jobs are the safest because the instance terminates itself; notebook GPUs and endpoints bill by the hour until you stop them.
 - A forgotten GPU instance costs tens of dollars overnight and hundreds to thousands over a month; a full WattBot run on Bedrock costs well under a dollar.
 - Tags never propagate: tag every job at launch, and route Bedrock calls through a tagged application inference profile, or the spend is untraceable.
-- Later episodes walk through each pattern hands‑on, in teaching order (notebook GPU → Processing Jobs → Bedrock).
+- The hands‑on episodes start with Bedrock, then show the same pipeline on a notebook GPU and on Processing Jobs.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
