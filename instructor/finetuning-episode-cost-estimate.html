@@ -107,7 +107,7 @@
           <button class="nav-link dropdown-toggle" id="navbarDropdown" data-bs-toggle="dropdown" aria-expanded="false">
             More <i data-feather="chevron-down"></i>
           </button>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdown"><li><a class="dropdown-item" href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li><li><a class="dropdown-item" href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li><li><a class="dropdown-item" href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown"><li><a class="dropdown-item" href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li><li><a class="dropdown-item" href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li><li><a class="dropdown-item" href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li><li><a class="dropdown-item" href="shared-data-bucket.html">Shared data bucket: staging before each term</a></li><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
           </ul></li>
       </ul></div>
     <!--
@@ -364,7 +364,7 @@
                 </h2>
                 <div id="flush-collapse-resources-toggle" class="accordion-collapse collapse" data-bs-parent="#accordion-resources-toggle">
                   <div class="accordion-body">
-                    <ul><li><a href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li><li><a href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li><li><a href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
+                    <ul><li><a href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li><li><a href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li><li><a href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li><li><a href="shared-data-bucket.html">Shared data bucket: staging before each term</a></li><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
                     </ul></div>
                 </div>
               </div>
@@ -492,7 +492,7 @@ steps is about $6 per student.</p>
 </section><section><h2 class="section-heading" id="what-the-class-spends">What the class spends<a class="anchor" aria-label="anchor" href="#what-the-class-spends"></a></h2>
 <hr class="half-width"><table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>Scenario</th>
 <th>Per student</th>
-<th>50 students</th>
+<th>50 students (double for 100)</th>
 </tr></thead><tbody><tr><td>In class, one clean pass each (mini job + Exercise 1)</td>
 <td>$1.55</td>
 <td>$80</td>
@@ -544,15 +544,15 @@ forward: the comparison against your full run needs no student job.</p>
 the session. In Service Quotas → Amazon SageMaker, per region:</p>
 <ul><li>
 <code>ml.g5.xlarge for training job usage</code>: at least the
-number of students launching at once. Request <strong>60</strong>.</li>
+number of students launching at once. Request <strong>100</strong>.</li>
 <li>
 <code>ml.g5.xlarge for processing job usage</code>: only needed for
-the homework. Request <strong>20</strong>; the two jobs per student will
-not all run at once.</li>
+the homework, where each student launches two jobs at once. Request
+<strong>200</strong>.</li>
 <li>
 <code>Maximum number of instances across all training jobs</code>:
 check it is not lower than the above.</li>
-<li>If you want <code>ml.g6e.xlarge</code> for Exercise 2, request 10–20
+<li>If you want <code>ml.g6e.xlarge</code> for Exercise 2, request 100
 of those too.</li>
 </ul><p>New accounts often have these at 0 to 4. Quota increases for GPU
 instances can take days and sometimes a back-and-forth with support, so
@@ -584,50 +584,13 @@ simultaneous spot requests will see interruptions and capacity waits,
 and the script does not checkpoint. Keep it as the exercise it is.</p>
 </section><section><h2 class="section-heading" id="before-class">Before class<a class="anchor" aria-label="anchor" href="#before-class"></a></h2>
 <hr class="half-width"><div class="section level3">
-<h3 id="stage-the-data-in-a-shared-read-only-bucket">1. Stage the data in a shared read-only bucket<a class="anchor" aria-label="anchor" href="#stage-the-data-in-a-shared-read-only-bucket"></a></h3>
+<h3 id="stage-the-data-in-the-shared-read-only-bucket">1. Stage the data in the shared read-only bucket<a class="anchor" aria-label="anchor" href="#stage-the-data-in-the-shared-read-only-bucket"></a></h3>
 <p>Students do not create a bucket or upload anything for this episode,
 and nobody needs a Kaggle account. The data lives as a release on the
-lesson repository (see the <em>Badger Scribe data: publishing a
-release</em> page for how to publish a new version and the exact staging
-commands). Stage it once per term so the bucket has this layout:</p>
-<ul><li>
-<code>badger-scribe/train.csv</code>, <code>test.csv</code>,
-<code>metadata.csv</code>, <code>metric.py</code>,
-<code>sample_submission.csv</code>
-</li>
-<li><code>badger-scribe/images/&lt;page_id&gt;.jpg</code></li>
-</ul><p>Then attach a bucket policy that lets the students’ execution role
-read it. This mirrors the policy from the S3 episode, read-only (edit
-the bucket name and the account/role ARNs to match yours):</p>
-<div class="codewrapper sourceCode" id="cb1">
-<h3 class="code-label">JSON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode json" tabindex="0"><code class="sourceCode json"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="fu">{</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a>    <span class="dt">"Version"</span><span class="fu">:</span> <span class="st">"2012-10-17"</span><span class="fu">,</span></span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1" aria-label="code-block-1-3"></a>    <span class="dt">"Statement"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1" aria-label="code-block-1-4"></a>        <span class="fu">{</span></span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1" aria-label="code-block-1-5"></a>            <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Allow"</span><span class="fu">,</span></span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1" aria-label="code-block-1-6"></a>            <span class="dt">"Principal"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-7"><a href="#cb1-7" tabindex="-1" aria-label="code-block-1-7"></a>                <span class="dt">"AWS"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1" aria-label="code-block-1-8"></a>                    <span class="st">"arn:aws:iam::183295408236:role/ml-sagemaker-use"</span></span>
-<span id="cb1-9"><a href="#cb1-9" tabindex="-1" aria-label="code-block-1-9"></a>                <span class="ot">]</span></span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1" aria-label="code-block-1-10"></a>            <span class="fu">},</span></span>
-<span id="cb1-11"><a href="#cb1-11" tabindex="-1" aria-label="code-block-1-11"></a>            <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-12"><a href="#cb1-12" tabindex="-1" aria-label="code-block-1-12"></a>                <span class="st">"s3:GetObject"</span><span class="ot">,</span></span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1" aria-label="code-block-1-13"></a>                <span class="st">"s3:ListBucket"</span></span>
-<span id="cb1-14"><a href="#cb1-14" tabindex="-1" aria-label="code-block-1-14"></a>            <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1" aria-label="code-block-1-15"></a>            <span class="dt">"Resource"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1" aria-label="code-block-1-16"></a>                <span class="st">"arn:aws:s3:::ml-marathon-shared"</span><span class="ot">,</span></span>
-<span id="cb1-17"><a href="#cb1-17" tabindex="-1" aria-label="code-block-1-17"></a>                <span class="st">"arn:aws:s3:::ml-marathon-shared/*"</span></span>
-<span id="cb1-18"><a href="#cb1-18" tabindex="-1" aria-label="code-block-1-18"></a>            <span class="ot">]</span></span>
-<span id="cb1-19"><a href="#cb1-19" tabindex="-1" aria-label="code-block-1-19"></a>        <span class="fu">}</span></span>
-<span id="cb1-20"><a href="#cb1-20" tabindex="-1" aria-label="code-block-1-20"></a>    <span class="ot">]</span></span>
-<span id="cb1-21"><a href="#cb1-21" tabindex="-1" aria-label="code-block-1-21"></a><span class="fu">}</span></span></code></pre>
-</div>
-<p><code>s3:ListBucket</code> is required: the training job’s
-<code>train</code> channel lists the prefix before downloading it.
-S3-to-SageMaker transfer within a region is free, and 50 jobs each
-copying 2 GB is not a concern.</p>
+lesson repository and is staged once per term under
+<code>badger-scribe/</code> in the shared bucket, next to the WattBot
+data. The bucket policy, layout and exact commands are on the <em>Shared
+data bucket: staging before each term</em> page.</p>
 </div>
 <div class="section level3">
 <h3 id="run-the-full-fine-tune-yourself-and-stage-its-output">2. Run the full fine-tune yourself and stage its output<a class="anchor" aria-label="anchor" href="#run-the-full-fine-tune-yourself-and-stage-its-output"></a></h3>

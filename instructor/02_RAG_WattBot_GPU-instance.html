@@ -107,7 +107,7 @@
           <button class="nav-link dropdown-toggle" id="navbarDropdown" data-bs-toggle="dropdown" aria-expanded="false">
             More <i data-feather="chevron-down"></i>
           </button>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdown"><li><a class="dropdown-item" href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li><li><a class="dropdown-item" href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li><li><a class="dropdown-item" href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown"><li><a class="dropdown-item" href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li><li><a class="dropdown-item" href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li><li><a class="dropdown-item" href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li><li><a class="dropdown-item" href="shared-data-bucket.html">Shared data bucket: staging before each term</a></li><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
           </ul></li>
       </ul></div>
     <!--
@@ -385,7 +385,7 @@
                 </h2>
                 <div id="flush-collapse-resources-toggle" class="accordion-collapse collapse" data-bs-parent="#accordion-resources-toggle">
                   <div class="accordion-body">
-                    <ul><li><a href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li><li><a href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li><li><a href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
+                    <ul><li><a href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li><li><a href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li><li><a href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li><li><a href="shared-data-bucket.html">Shared data bucket: staging before each term</a></li><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
                     </ul></div>
                 </div>
               </div>
@@ -457,8 +457,9 @@ evidence) that follow the competition’s scoring conventions?</li>
 <h3 class="card-title">Objectives</h3>
 <ul><li>Verify that our SageMaker notebook instance has a working GPU and
 compatible Python environment.</li>
-<li>Reuse the WattBot metadata, questions, and <code>chunks.jsonl</code>
-that the Bedrock episode stored in S3.</li>
+<li>Reuse the WattBot metadata and questions from the shared bucket, and
+the <code>chunks.jsonl</code> the Bedrock episode cached in your own
+bucket.</li>
 <li>Implement a simple, explicit “from scratch” embedding pipeline with
 a self-hosted sentence-transformer, without relying on FAISS or
 production vector DBs.</li>
@@ -585,8 +586,9 @@ a single GPU-backed SageMaker notebook with self-hosted models.</p>
 <ol style="list-style-type: decimal"><li>
 <strong>Reuse the WattBot data you prepared in the Bedrock
 episode.</strong>
-<ul><li>Pull <code>train_QA.csv</code>, <code>metadata.csv</code>, and the
-cached <code>chunks.jsonl</code> from your S3 bucket.</li>
+<ul><li>Pull <code>train_QA.csv</code> and <code>metadata.csv</code> from
+the shared bucket and the cached <code>chunks.jsonl</code> from your
+own.</li>
 </ul></li>
 <li>
 <strong>Implement the model steps explicitly in code.</strong>
@@ -636,13 +638,13 @@ for ML</a> for further guidance. This instance bills by the hour from
 the moment it starts, whether or not it is doing anything: <strong>stop
 it when you leave</strong>, and <strong>delete it</strong> when the
 episode is over.</p>
-<p>We reuse the S3 bucket from the Bedrock episode, which should already
-contain <code>metadata.csv</code>, <code>train_QA.csv</code>,
-<code>corpus.zip</code>, and <code>chunks.jsonl</code>. If you skipped
-that episode, go back and run its setup and chunking steps first. Your
-notebook instance carries the tags you gave it when you created it and
-the bucket carries its own tags, so in this episode those two resources
-are the only things being billed.</p>
+<p>We reuse the same two buckets as the Bedrock episode: the shared
+bucket for <code>metadata.csv</code> and <code>train_QA.csv</code>, and
+your own bucket for the <code>wattbot/chunks.jsonl</code> you cached
+there. If you skipped that episode, go back and run its chunking step
+first. Your notebook instance carries the tags you gave it when you
+created it and your bucket carries its own tags, so in this episode
+those two resources are the only things being billed.</p>
 <div class="section level3">
 <h3 id="verify-gpu-and-basic-environment">Verify GPU and basic environment<a class="anchor" aria-label="anchor" href="#verify-gpu-and-basic-environment"></a></h3>
 <div class="codewrapper sourceCode" id="cb1">
@@ -697,8 +699,8 @@ are the only things being billed.</p>
 <div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="co"># </span><span class="al">TODO</span><span class="co">: update this to your bucket name</span></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a>bucket_name <span class="op">=</span> <span class="st">"chris-rag"</span>  <span class="co"># &lt;-- EDIT ME</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a>shared_bucket <span class="op">=</span> <span class="st">"ml-marathon-shared"</span>   <span class="co"># &lt;-- EDIT ME: read-only inputs, from your instructor</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>     <span class="co"># &lt;-- EDIT ME: your own bucket (chunks live here)</span></span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a></span>
 <span id="cb5-4"><a href="#cb5-4" tabindex="-1" aria-label="code-block-5-4"></a><span class="co"># Local working directory in the notebook instance</span></span>
 <span id="cb5-5"><a href="#cb5-5" tabindex="-1" aria-label="code-block-5-5"></a>local_data_dir <span class="op">=</span> <span class="st">"./data"</span></span>
@@ -708,15 +710,15 @@ are the only things being billed.</p>
 <div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="co"># Download metadata.csv and train_QA.csv</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a>metadata_key <span class="op">=</span> <span class="st">"metadata.csv"</span></span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a>train_qa_key <span class="op">=</span> <span class="st">"train_QA.csv"</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="co"># Download metadata.csv and train_QA.csv from the shared bucket</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a>metadata_key <span class="op">=</span> <span class="st">"wattbot/metadata.csv"</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a>train_qa_key <span class="op">=</span> <span class="st">"wattbot/train_QA.csv"</span></span>
 <span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a></span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1" aria-label="code-block-6-5"></a>metadata_path <span class="op">=</span> os.path.join(local_data_dir, metadata_key)</span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1" aria-label="code-block-6-6"></a>train_qa_path <span class="op">=</span> os.path.join(local_data_dir, train_qa_key)</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1" aria-label="code-block-6-5"></a>metadata_path <span class="op">=</span> os.path.join(local_data_dir, <span class="st">"metadata.csv"</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1" aria-label="code-block-6-6"></a>train_qa_path <span class="op">=</span> os.path.join(local_data_dir, <span class="st">"train_QA.csv"</span>)</span>
 <span id="cb6-7"><a href="#cb6-7" tabindex="-1" aria-label="code-block-6-7"></a></span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1" aria-label="code-block-6-8"></a>download_s3_object(bucket_name, metadata_key, metadata_path)</span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1" aria-label="code-block-6-9"></a>download_s3_object(bucket_name, train_qa_key, train_qa_path)</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1" aria-label="code-block-6-8"></a>download_s3_object(shared_bucket, metadata_key, metadata_path)</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1" aria-label="code-block-6-9"></a>download_s3_object(shared_bucket, train_qa_key, train_qa_path)</span>
 <span id="cb6-10"><a href="#cb6-10" tabindex="-1" aria-label="code-block-6-10"></a></span>
 <span id="cb6-11"><a href="#cb6-11" tabindex="-1" aria-label="code-block-6-11"></a></span></code></pre>
 </div>
@@ -783,8 +785,8 @@ and load it.</p>
 <div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a>chunks_s3_key <span class="op">=</span> <span class="st">"chunks.jsonl"</span></span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a>chunks_jsonl_path <span class="op">=</span> os.path.join(local_data_dir, chunks_s3_key)</span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a>chunks_s3_key <span class="op">=</span> <span class="st">"wattbot/chunks.jsonl"</span>          <span class="co"># in YOUR bucket, written by the Bedrock episode</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a>chunks_jsonl_path <span class="op">=</span> os.path.join(local_data_dir, <span class="st">"chunks.jsonl"</span>)</span>
 <span id="cb9-3"><a href="#cb9-3" tabindex="-1" aria-label="code-block-9-3"></a></span>
 <span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a><span class="kw">def</span> load_chunked_docs_jsonl(path):</span>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a>    <span class="cf">with</span> <span class="bu">open</span>(path, <span class="st">"r"</span>, encoding<span class="op">=</span><span class="st">"utf-8"</span>) <span class="im">as</span> f:</span>

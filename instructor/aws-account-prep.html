@@ -107,7 +107,7 @@
           <button class="nav-link dropdown-toggle" id="navbarDropdown" data-bs-toggle="dropdown" aria-expanded="false">
             More <i data-feather="chevron-down"></i>
           </button>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdown"><li><a class="dropdown-item" href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li><li><a class="dropdown-item" href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li><li><a class="dropdown-item" href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown"><li><a class="dropdown-item" href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li><li><a class="dropdown-item" href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li><li><a class="dropdown-item" href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li><li><a class="dropdown-item" href="shared-data-bucket.html">Shared data bucket: staging before each term</a></li><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
           </ul></li>
       </ul></div>
     <!--
@@ -364,7 +364,7 @@
                 </h2>
                 <div id="flush-collapse-resources-toggle" class="accordion-collapse collapse" data-bs-parent="#accordion-resources-toggle">
                   <div class="accordion-body">
-                    <ul><li><a href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li><li><a href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li><li><a href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
+                    <ul><li><a href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li><li><a href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li><li><a href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li><li><a href="shared-data-bucket.html">Shared data bucket: staging before each term</a></li><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
                     </ul></div>
                 </div>
               </div>
@@ -410,11 +410,13 @@
         
 
 <p>Everything that has to be requested or configured on the class AWS
-account before the workshop, sized for <strong>50 students</strong>. GPU
-quota increases often take days and sometimes a support exchange, so
-file them three to four weeks ahead. Instance usage per episode is taken
-from the code in the episodes; if you change an instance type in an
-episode, change the quota here.</p>
+account before the workshop, sized for a class of up to <strong>100
+students</strong> (100 for one-per-student resources, 200 for anything a
+student can have two of at once). GPU quota increases often take days
+and sometimes a support exchange, so file them three to four weeks
+ahead. Instance usage per episode is taken from the code in the
+episodes; if you change an instance type in an episode, change the quota
+here.</p>
 <section><h2 class="section-heading" id="sagemaker-service-quotas">SageMaker service quotas<a class="anchor" aria-label="anchor" href="#sagemaker-service-quotas"></a></h2>
 <hr class="half-width"><p>Console: <strong>Service Quotas → AWS services → Amazon
 SageMaker</strong>, in the region the class uses. Names below are the
@@ -423,48 +425,61 @@ quota names as the console lists them.</p>
 <th>Request</th>
 <th>Used by</th>
 </tr></thead><tbody><tr><td><code>ml.t3.medium for notebook instance usage</code></td>
-<td>60</td>
+<td>100</td>
 <td>controller notebook, every episode</td>
 </tr><tr><td><code>ml.g6e.xlarge for notebook instance usage</code></td>
-<td>60</td>
+<td>100</td>
 <td>GPU RAG episode (Qwen3.8-27B via vLLM). <strong>Default is usually
 0</strong>
 </td>
 </tr><tr><td><code>Total number of notebook instances</code></td>
-<td>120</td>
-<td>two per student</td>
+<td>200</td>
+<td>two per student (controller + GPU)</td>
 </tr><tr><td><code>ml.m5.large for training job usage</code></td>
-<td>120</td>
+<td>200</td>
 <td>XGBoost episode; PyTorch part 2; tuning (2 parallel jobs each)</td>
 </tr><tr><td><code>ml.m5.xlarge for training job usage</code></td>
-<td>120</td>
+<td>200</td>
 <td>PyTorch part 2 runs <code>instance_count=2</code>
 </td>
 </tr><tr><td><code>ml.g4dn.xlarge for training job usage</code></td>
-<td>60</td>
+<td>100</td>
 <td>PyTorch part 2 GPU comparison</td>
 </tr><tr><td><code>ml.g5.xlarge for training job usage</code></td>
-<td>60</td>
+<td>100</td>
 <td>fine-tuning episode (one job per student at once)</td>
 </tr><tr><td><code>ml.g6e.xlarge for training job usage</code></td>
-<td>20</td>
+<td>100</td>
 <td>optional: fine-tuning Exercise 2</td>
-</tr><tr><td><code>Maximum number of instances across all training jobs</code></td>
-<td>250</td>
-<td>must exceed the largest concurrent total above</td>
+</tr><tr><td><code>Number of instances across all training jobs</code></td>
+<td>250 (already applied)</td>
+<td>account-level ceiling; 250 covers 100 students</td>
 </tr><tr><td><code>ml.g5.xlarge for processing job usage</code></td>
-<td>60</td>
-<td>Processing Jobs episode (two jobs per student, sequential);
-fine-tuning homework</td>
+<td>200</td>
+<td>Processing Jobs episode and fine-tuning homework (two jobs per
+student, possibly at once)</td>
 </tr><tr><td><code>ml.g6e.xlarge for processing job usage</code></td>
-<td>60</td>
+<td>200</td>
 <td>only if the Processing Jobs episode is moved to the 27B model</td>
-</tr><tr><td><code>Maximum number of instances across all processing jobs</code></td>
-<td>60</td>
-<td></td>
+</tr><tr><td><code>Number of instances across all processing jobs</code></td>
+<td>250 (already applied)</td>
+<td>account-level ceiling</td>
 </tr></tbody></table><p>Also check <code>ml.g5.xlarge for training warm pool usage</code> is
 left at its default of 0; the episodes do not use warm pools and a
 nonzero quota lets a student leave an idle GPU billing.</p>
+</section><section><h2 class="section-heading" id="learner-access">Learner access<a class="anchor" aria-label="anchor" href="#learner-access"></a></h2>
+<hr class="half-width"><p>Learners sign in through IAM Identity Center with their university
+login. Before the workshop, add every registered user to the group that
+carries the workshop permission set, then email them the Identity Center
+console link for that account and permission set (the
+<code>.../start/#/console?account_id=...&amp;role_name=...</code> deep
+link), together with the account name and region to expect. The link is
+deliberately not printed in the public lesson: it is not a credential,
+but a public start URL plus role name is the raw material for a
+convincing phishing page, and the lesson is reused outside UW. Ask
+learners to run the “verify your access” steps in the setup page; a
+missing assignment is the most common day-one problem and it cannot be
+fixed from the classroom in a hurry.</p>
 </section><section><h2 class="section-heading" id="bedrock">Bedrock<a class="anchor" aria-label="anchor" href="#bedrock"></a></h2>
 <hr class="half-width"><p>Console: <strong>Service Quotas → Amazon Bedrock</strong>, and
 <strong>Bedrock → Model access</strong>.</p>
@@ -494,10 +509,11 @@ The lesson uses exactly those three everywhere.</li>
 <li>Set a Budgets alert on the account at the planned class total, and a
 Cost Explorer saved report filtered on <code>Project</code>.</li>
 </ul></section><section><h2 class="section-heading" id="data-and-files">Data and files<a class="anchor" aria-label="anchor" href="#data-and-files"></a></h2>
-<hr class="half-width"><ul><li>Shared read-only bucket with the Badger Scribe data and your full
-fine-tune outputs: see the fine-tuning cost page.</li>
-<li>WattBot data: students upload <code>data.zip</code> contents to
-their own bucket in the Bedrock episode; nothing to stage.</li>
+<hr class="half-width"><ul><li>One shared read-only bucket holds the WattBot inputs (metadata,
+questions, PDF corpus) and the Badger Scribe data plus your full
+fine-tune outputs. Staging commands and the bucket policy: <em>Shared
+data bucket: staging before each term</em>. Learners create one bucket
+each in the S3 episode and write all outputs there.</li>
 </ul></section><section><h2 class="section-heading" id="capacity-fallbacks-to-have-on-a-slide">Capacity fallbacks to have on a slide<a class="anchor" aria-label="anchor" href="#capacity-fallbacks-to-have-on-a-slide"></a></h2>
 <hr class="half-width"><ul><li>GPU notebook episode: if <code>ml.g6e.xlarge</code> capacity is
 short, <code>ml.g6e.2xlarge</code> ($2.80/h, same GPU) is the only

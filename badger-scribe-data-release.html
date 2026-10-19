@@ -508,25 +508,10 @@ same data.</p>
 <span id="cb2-19"><a href="#cb2-19" tabindex="-1" aria-label="code-block-2-19"></a>Not for redistribution or commercial use; do not crawl the UWDC catalogs.</span></code></pre>
 </div>
 </div>
-</section><section><h2 class="section-heading" id="staging-the-release-in-the-shared-bucket-before-each-term">Staging the release in the shared bucket (before each term)<a class="anchor" aria-label="anchor" href="#staging-the-release-in-the-shared-bucket-before-each-term"></a></h2>
-<hr class="half-width"><p>Students read the data from a shared read-only bucket; nothing is
-downloaded from GitHub during class. From any machine with the AWS CLI
-(CloudShell works):</p>
-<div class="codewrapper sourceCode" id="cb3">
-<h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a><span class="va">V</span><span class="op">=</span>1</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a><span class="va">R</span><span class="op">=</span>https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/releases/download/badger-scribe-data-v<span class="va">$V</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1" aria-label="code-block-3-3"></a><span class="fu">mkdir</span> <span class="at">-p</span> badger-scribe <span class="kw">&amp;&amp;</span> <span class="bu">cd</span> badger-scribe</span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a><span class="cf">for</span> a <span class="kw">in</span> labels images-train images-test<span class="kw">;</span> <span class="cf">do</span></span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1" aria-label="code-block-3-5"></a>  <span class="ex">curl</span> <span class="at">-L</span> <span class="at">-o</span> <span class="va">$a</span>.zip <span class="va">$R</span>/badger-scribe-v<span class="va">$V</span>-<span class="va">$a</span>.zip <span class="kw">&amp;&amp;</span> <span class="fu">unzip</span> <span class="at">-q</span> <span class="at">-o</span> <span class="va">$a</span>.zip <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> <span class="va">$a</span>.zip</span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1" aria-label="code-block-3-6"></a><span class="cf">done</span></span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1" aria-label="code-block-3-7"></a><span class="bu">cd</span> ..</span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1" aria-label="code-block-3-8"></a><span class="ex">aws</span> s3 sync badger-scribe/ s3://<span class="op">&lt;</span>shared-bucket<span class="op">&gt;</span>/badger-scribe/</span></code></pre>
-</div>
-<p>Then attach the read-only bucket policy from the fine-tuning cost
-page, and add your full fine-tune outputs under
-<code>badger-scribe/instructor/full-run/</code>.</p>
+</section><section><h2 class="section-heading" id="staging-the-release-in-the-shared-bucket">Staging the release in the shared bucket<a class="anchor" aria-label="anchor" href="#staging-the-release-in-the-shared-bucket"></a></h2>
+<hr class="half-width"><p>Done once per term together with the WattBot data; the commands and
+the read-only bucket policy are on the <em>Shared data bucket: staging
+before each term</em> page.</p>
 </section><section><h2 class="section-heading" id="self-paced-learners">Self-paced learners<a class="anchor" aria-label="anchor" href="#self-paced-learners"></a></h2>
 <hr class="half-width"><p>The episode tells learners working on their own account to download
 the same three assets and <code>aws s3 sync</code> them into a bucket of

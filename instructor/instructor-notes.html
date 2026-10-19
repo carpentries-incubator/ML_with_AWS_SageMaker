@@ -134,6 +134,7 @@
 <li><a class="dropdown-item" href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li>
 <li><a class="dropdown-item" href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li>
 <li><a class="dropdown-item" href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li>
+<li><a class="dropdown-item" href="shared-data-bucket.html">Shared data bucket: staging before each term</a></li>
 <hr>
 <li><a class="dropdown-item" href="reference.html">Glossary</a></li>
 <li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
@@ -460,6 +461,7 @@
 <li><a href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li>
 <li><a href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li>
 <li><a href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li>
+<li><a href="shared-data-bucket.html">Shared data bucket: staging before each term</a></li>
 <hr>
 <li><a class="dropdown-item" href="reference.html">Glossary</a></li>
 <li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
@@ -660,14 +662,13 @@ in place before the session. Each is written out in the instructor
 pages.</p>
 <ol style="list-style-type: decimal">
 <li>
-<strong>Stage the data in a shared read-only bucket</strong> from
+<strong>Stage the data in the shared read-only bucket</strong> from
 the lesson’s data release (<code>badger-scribe-data-v1</code>): about
-ten minutes from CloudShell, commands in <em>Badger Scribe data:
-publishing a release</em>. Attach the read-only bucket policy from
-<em>Fine-tuning episode: cost, capacity and setup</em> so the student
-execution role can <code>GetObject</code> and <code>ListBucket</code>.
-The bucket must survive the end-of-workshop cleanup, or be recreated
-from the release next term.</li>
+ten minutes from CloudShell, commands and the read-only bucket policy in
+<em>Shared data bucket: staging before each term</em> (the same bucket
+holds the WattBot data for the RAG episodes). The bucket must survive
+the end-of-workshop cleanup, or be recreated from the release next
+term.</li>
 <li>
 <strong>Run the full fine-tune once</strong> (the estimator in the
 Homework section, all 251 training pages, <code>eval_pages</code> 40)
@@ -679,7 +680,7 @@ the job’s real <code>BillableTimeInSeconds</code>.</li>
 <li>
 <strong>Quotas</strong>:
 <code>ml.g5.xlarge for training job usage</code> at least the class size
-(request 60). Default is often 0 to 4 and increases take days; file
+(request 100). Default is often 0 to 4 and increases take days; file
 three to four weeks ahead. Full list in <em>Account preparation
 checklist</em>.</li>
 <li>
