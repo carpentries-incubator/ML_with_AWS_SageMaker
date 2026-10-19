@@ -293,7 +293,7 @@
 <div class="accordion accordion-flush" id="accordionFlush6">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading6">
-        <a href="Interacting-with-code-repo.html">5. Using a GitHub Personal Access Token (PAT) to Push/Pull from a SageMaker Notebook</a>
+        <a href="Interacting-with-code-repo.html">5. (Optional) Pushing to GitHub from a SageMaker Notebook with a Personal Access Token</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -341,7 +341,7 @@
 <div class="accordion accordion-flush" id="accordionFlush10">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading10">
-        <a href="00_Overview-RAG-on-AWS.html">9. Overview of RAG Workflows on AWS</a>
+        <a href="RAG-overview.html">9. Overview of RAG Workflows on AWS</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -353,7 +353,7 @@
 <div class="accordion accordion-flush" id="accordionFlush11">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading11">
-        <a href="01_RAG_WattBot_Bedrock.html">10. RAG with Bedrock</a>
+        <a href="RAG-Bedrock.html">10. RAG with Bedrock</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -365,7 +365,7 @@
 <div class="accordion accordion-flush" id="accordionFlush12">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading12">
-        <a href="03_RAG_WattBot_Processing_Jobs.html">11. RAG with Processing Jobs</a>
+        <a href="RAG-Processing-jobs.html">11. RAG with Processing Jobs</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -377,7 +377,7 @@
 <div class="accordion accordion-flush" id="accordionFlush13">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading13">
-        <a href="04_Finetuning_BadgerScribe.html">12. Fine-tuning a Vision-Language Model with Training Jobs</a>
+        <a href="Finetuning-BadgerScribe.html">12. Fine-tuning a Vision-Language Model with Training Jobs</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -389,7 +389,7 @@
 <div class="accordion accordion-flush" id="accordionFlush14">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading14">
-        <a href="02_RAG_WattBot_GPU-instance.html">13. (Optional) RAG with a Notebook GPU</a>
+        <a href="RAG-GPU-notebook.html">13. (Optional) RAG with a Notebook GPU</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -526,12 +526,20 @@ follow:</li>
 </ol>
 <p>regions: - global - us-east-2 # do not change</p>
 <p>blocklist: - “551379999285” # production, do not modify</p>
-<p>accounts: “183295408236”: # aws-nuke-account resource-types:
-includes: #Specifies which types of resources you want to clean out -
-S3Bucket - SageMakerNotebookInstance</p>
+<p>accounts: “183295408236”: # the shared workshop account
+resource-types: includes: # only these types are deleted; the key must
+be “includes” (v3) - S3Bucket - SageMakerNotebookInstance filters:
+S3Bucket: - property: Name value: “ml-marathon-shared” # the
+instructor-staged data bucket survives</p>
 <p><strong>MAKE SURE TO USE SPACE INDENTING AND NOT TAB INDENTING AS IT
 IS SENSITIVE TO USE IN CLOUDSHELL AND MAY CAUSE THE SCRIPT TO
-FAIL</strong></p>
+FAIL.</strong> The committed copy at
+<code>instructors/nuke-config.yml</code> is the reference. Two things it
+deliberately does <em>not</em> delete: the shared data bucket (the
+<code>filters</code> block) and Bedrock application inference profiles,
+which learners remove themselves in the cleanup episode. Everything else
+the lesson creates (training, processing and tuning jobs) has already
+ended and holds no billable resource.</p>
 <ol start="5" style="list-style-type: decimal">
 <li>Once you’ve gotten your config file set up, click on <strong>“FILE”
 &gt; “SAVE AS”</strong>

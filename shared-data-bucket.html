@@ -241,7 +241,7 @@
 <div class="accordion accordion-flush" id="accordionFlush6">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading6">
-        <a href="Interacting-with-code-repo.html">5. Using a GitHub Personal Access Token (PAT) to Push/Pull from a SageMaker Notebook</a>
+        <a href="Interacting-with-code-repo.html">5. (Optional) Pushing to GitHub from a SageMaker Notebook with a Personal Access Token</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -277,7 +277,7 @@
 <div class="accordion accordion-flush" id="accordionFlush10">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading10">
-        <a href="00_Overview-RAG-on-AWS.html">9. Overview of RAG Workflows on AWS</a>
+        <a href="RAG-overview.html">9. Overview of RAG Workflows on AWS</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -286,7 +286,7 @@
 <div class="accordion accordion-flush" id="accordionFlush11">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading11">
-        <a href="01_RAG_WattBot_Bedrock.html">10. RAG with Bedrock</a>
+        <a href="RAG-Bedrock.html">10. RAG with Bedrock</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -295,7 +295,7 @@
 <div class="accordion accordion-flush" id="accordionFlush12">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading12">
-        <a href="03_RAG_WattBot_Processing_Jobs.html">11. RAG with Processing Jobs</a>
+        <a href="RAG-Processing-jobs.html">11. RAG with Processing Jobs</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -304,7 +304,7 @@
 <div class="accordion accordion-flush" id="accordionFlush13">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading13">
-        <a href="04_Finetuning_BadgerScribe.html">12. Fine-tuning a Vision-Language Model with Training Jobs</a>
+        <a href="Finetuning-BadgerScribe.html">12. Fine-tuning a Vision-Language Model with Training Jobs</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -313,7 +313,7 @@
 <div class="accordion accordion-flush" id="accordionFlush14">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading14">
-        <a href="02_RAG_WattBot_GPU-instance.html">13. (Optional) RAG with a Notebook GPU</a>
+        <a href="RAG-GPU-notebook.html">13. (Optional) RAG with a Notebook GPU</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -423,6 +423,7 @@ layout below.</p>
         train.csv  test.csv  metadata.csv  metric.py
         sample_submission.csv  transcription_conventions.md
         images/&lt;page_id&gt;.jpg
+        model/churro-3B/       the CHURRO-3B weights, copied once from Hugging Face (~7.5 GB)
         instructor/full-run/   train_summary.json, eval_before.csv, eval_after.csv</code></pre>
 <p>Learners set
 <code>shared_bucket = "&lt;this bucket's name&gt;"</code> in the first
@@ -481,34 +482,60 @@ clone of the lesson repo:</p>
 whether to drop or fix those before staging. The corpus only needs
 rebuilding when <code>metadata.csv</code> changes.</p>
 </section><section><h2 class="section-heading" id="stage-badger-scribe-fine-tuning-episode">3. Stage Badger Scribe (fine-tuning episode)<a class="anchor" aria-label="anchor" href="#stage-badger-scribe-fine-tuning-episode"></a></h2>
-<hr class="half-width"><p>From the lesson’s data release (see <em>Badger Scribe data:
-publishing a release</em> for how versions are published):</p>
+<hr class="half-width"><p>Run this from a laptop or a notebook instance, or from CloudShell for
+the ~130 MB Badger Scribe release only (CloudShell’s home directory is 1
+GB, which is why the loop handles one asset at a time in
+<code>/tmp</code>: download, unzip, sync, delete, so nothing larger than
+one zip is ever on disk). From the lesson’s data release (see <em>Badger
+Scribe data: publishing a release</em> for how versions are
+published):</p>
 <div class="codewrapper sourceCode" id="cb4">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="va">V</span><span class="op">=</span>1</span>
 <span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a><span class="va">R</span><span class="op">=</span>https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/releases/download/badger-scribe-data-v<span class="va">$V</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a><span class="fu">mkdir</span> <span class="at">-p</span> badger-scribe <span class="kw">&amp;&amp;</span> <span class="bu">cd</span> badger-scribe</span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a><span class="cf">for</span> a <span class="kw">in</span> labels images-train images-test<span class="kw">;</span> <span class="cf">do</span></span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1" aria-label="code-block-4-5"></a>  <span class="ex">curl</span> <span class="at">-L</span> <span class="at">-o</span> <span class="va">$a</span>.zip <span class="va">$R</span>/badger-scribe-v<span class="va">$V</span>-<span class="va">$a</span>.zip <span class="kw">&amp;&amp;</span> <span class="fu">unzip</span> <span class="at">-q</span> <span class="at">-o</span> <span class="va">$a</span>.zip <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> <span class="va">$a</span>.zip</span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1" aria-label="code-block-4-6"></a><span class="cf">done</span></span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1" aria-label="code-block-4-7"></a><span class="bu">cd</span> .. <span class="kw">&amp;&amp;</span> <span class="ex">aws</span> s3 sync badger-scribe/ s3://<span class="op">&lt;</span>shared-bucket<span class="op">&gt;</span>/badger-scribe/</span></code></pre>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a><span class="cf">for</span> a <span class="kw">in</span> labels images-train images-test<span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a>  <span class="fu">rm</span> <span class="at">-rf</span> /tmp/bs <span class="kw">&amp;&amp;</span> <span class="fu">mkdir</span> <span class="at">-p</span> /tmp/bs</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1" aria-label="code-block-4-5"></a>  <span class="ex">curl</span> <span class="at">-L</span> <span class="at">-o</span> /tmp/bs/<span class="va">$a</span>.zip <span class="va">$R</span>/badger-scribe-v<span class="va">$V</span>-<span class="va">$a</span>.zip</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1" aria-label="code-block-4-6"></a>  <span class="fu">unzip</span> <span class="at">-q</span> <span class="at">-o</span> /tmp/bs/<span class="va">$a</span>.zip <span class="at">-d</span> /tmp/bs/badger-scribe <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> /tmp/bs/<span class="va">$a</span>.zip</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1" aria-label="code-block-4-7"></a>  <span class="ex">aws</span> s3 sync /tmp/bs/badger-scribe/ s3://<span class="op">&lt;</span>shared-bucket<span class="op">&gt;</span>/badger-scribe/</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1" aria-label="code-block-4-8"></a>  <span class="fu">rm</span> <span class="at">-rf</span> /tmp/bs</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1" aria-label="code-block-4-9"></a><span class="cf">done</span></span></code></pre>
 </div>
 <p>Then run the full fine-tune once (homework estimator in the episode)
 and copy <code>train_summary.json</code>, <code>eval_before.csv</code>,
 <code>eval_after.csv</code> from its <code>model.tar.gz</code> to
 <code>s3://&lt;shared-bucket&gt;/badger-scribe/instructor/full-run/</code>.</p>
-</section><section><h2 class="section-heading" id="keep-it-or-rebuild-it">4. Keep it, or rebuild it<a class="anchor" aria-label="anchor" href="#keep-it-or-rebuild-it"></a></h2>
+</section><section><h2 class="section-heading" id="stage-the-churro-3b-weights-fine-tuning-episode">4. Stage the CHURRO-3B weights (fine-tuning episode)<a class="anchor" aria-label="anchor" href="#stage-the-churro-3b-weights-fine-tuning-episode"></a></h2>
+<hr class="half-width"><p>Every training and processing job in the episode reads the base model
+from the bucket as a <code>model</code> channel, so that 100 jobs
+starting in the same minute copy it from S3 instead of each pulling 7.5
+GB from Hugging Face. Do this once per bucket, from a laptop or a
+notebook instance with at least 10 GB free (not CloudShell):</p>
+<div class="codewrapper sourceCode" id="cb5">
+<h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="ex">pip</span> install huggingface_hub</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a><span class="ex">huggingface-cli</span> download stanford-oval/churro-3B <span class="at">--local-dir</span> churro-3B</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a><span class="ex">aws</span> s3 sync churro-3B/ s3://<span class="op">&lt;</span>shared-bucket<span class="op">&gt;</span>/badger-scribe/model/churro-3B/</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1" aria-label="code-block-5-4"></a><span class="fu">rm</span> <span class="at">-rf</span> churro-3B</span></code></pre>
+</div>
+<p>About 7.5 GB; it only needs redoing if the Hub repository changes or
+the bucket is rebuilt.</p>
+</section><section><h2 class="section-heading" id="keep-it-or-rebuild-it">5. Keep it, or rebuild it<a class="anchor" aria-label="anchor" href="#keep-it-or-rebuild-it"></a></h2>
 <hr class="half-width"><p>The end-of-workshop cleanup
 (<code>instructors/instructor-notes.md</code>, aws-nuke) deletes every
 S3 bucket in the account unless excluded. Either add the shared bucket
 to the nuke config’s exclude filter, or accept that it goes and redo
-steps 1 to 3 next term; both take about fifteen minutes. Storage is ~150
-MB for Badger Scribe plus the WattBot corpus, a few cents a month.</p>
+steps 1 to 4 next term; the data steps take about fifteen minutes and
+the model copy as long as a 7.5 GB download takes where you are. Storage
+is ~130 MB for Badger Scribe plus the WattBot corpus, and ~7.5 GB for
+the model copy: well under a dollar a month.</p>
 </section><section><h2 class="section-heading" id="self-paced-learners">Self-paced learners<a class="anchor" aria-label="anchor" href="#self-paced-learners"></a></h2>
-<hr class="half-width"><p>Anyone working outside the shared account does the same three steps
-into a bucket of their own and sets <code>shared_bucket</code> to its
-name. The episodes say so where it matters.</p>
+<hr class="half-width"><p>Anyone working outside the shared account does steps 1, 3 and 4 (and
+2 for the RAG episodes) into a bucket of their own and sets
+<code>shared_bucket</code> to its name. The episodes say so where it
+matters.</p>
 <!--
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.

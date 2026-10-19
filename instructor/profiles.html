@@ -241,7 +241,7 @@
 <div class="accordion accordion-flush" id="accordionFlush6">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading6">
-        <a href="Interacting-with-code-repo.html">5. Using a GitHub Personal Access Token (PAT) to Push/Pull from a SageMaker Notebook</a>
+        <a href="Interacting-with-code-repo.html">5. (Optional) Pushing to GitHub from a SageMaker Notebook with a Personal Access Token</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -277,7 +277,7 @@
 <div class="accordion accordion-flush" id="accordionFlush10">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading10">
-        <a href="00_Overview-RAG-on-AWS.html">9. Overview of RAG Workflows on AWS</a>
+        <a href="RAG-overview.html">9. Overview of RAG Workflows on AWS</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -286,7 +286,7 @@
 <div class="accordion accordion-flush" id="accordionFlush11">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading11">
-        <a href="01_RAG_WattBot_Bedrock.html">10. RAG with Bedrock</a>
+        <a href="RAG-Bedrock.html">10. RAG with Bedrock</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -295,7 +295,7 @@
 <div class="accordion accordion-flush" id="accordionFlush12">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading12">
-        <a href="03_RAG_WattBot_Processing_Jobs.html">11. RAG with Processing Jobs</a>
+        <a href="RAG-Processing-jobs.html">11. RAG with Processing Jobs</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -304,7 +304,7 @@
 <div class="accordion accordion-flush" id="accordionFlush13">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading13">
-        <a href="04_Finetuning_BadgerScribe.html">12. Fine-tuning a Vision-Language Model with Training Jobs</a>
+        <a href="Finetuning-BadgerScribe.html">12. Fine-tuning a Vision-Language Model with Training Jobs</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -313,7 +313,7 @@
 <div class="accordion accordion-flush" id="accordionFlush14">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading14">
-        <a href="02_RAG_WattBot_GPU-instance.html">13. (Optional) RAG with a Notebook GPU</a>
+        <a href="RAG-GPU-notebook.html">13. (Optional) RAG with a Notebook GPU</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -388,11 +388,54 @@
         
 <div class="section level1">
 <h1 id="learner-profiles">Learner Profiles<a class="anchor" aria-label="anchor" href="#learner-profiles"></a></h1>
-<p>This page describes the target learners for this AWS SageMaker
-workshop. <!--
+<p>This page describes the target learners for this lesson. Both are
+researchers, not cloud engineers; both have a dataset and a question,
+and neither has access to a GPU cluster with someone else paying the
+bill.</p>
+<div class="section level2">
+<h2 id="priya-a-graduate-student-with-a-lab-dataset">Priya, a graduate student with a lab dataset<a class="anchor" aria-label="anchor" href="#priya-a-graduate-student-with-a-lab-dataset"></a></h2>
+<p>Priya is a third-year PhD student in an engineering lab with about 20
+GB of tabular sensor data and a few thousand labeled images. She has
+trained scikit-learn and PyTorch models on her laptop and on the
+department’s one shared workstation, where a hyperparameter sweep means
+leaving a job overnight and hoping nobody reboots it. Her lab has a
+small AWS allocation through the university, and her advisor has asked
+her to “just use the cloud”, but she has never created a bucket and is
+worried about running up a bill she cannot explain. She has a GitHub
+account and uses git for her own code, without much ceremony.</p>
+<p>From the lesson she gets a workflow she can repeat without a cluster:
+data in one S3 bucket, a $0.05-an-hour notebook that launches training
+and tuning jobs on instances that exist only while the job runs, a rule
+for choosing CPU vs. GPU for her data, and the habit of writing down an
+estimate, capping the runtime, tagging the job and comparing the
+estimate to the bill. By the end she can run a parallel tuning job on
+her own data and tell her advisor what it cost.</p>
+</div>
+<div class="section level2">
+<h2 id="marcus-a-digital-collections-librarian">Marcus, a digital-collections librarian<a class="anchor" aria-label="anchor" href="#marcus-a-digital-collections-librarian"></a></h2>
+<p>Marcus manages digitization at a university library and has tens of
+thousands of scanned pages: letters, ledgers and reports, many in old
+handwriting, plus a growing set of PDFs of published papers that patrons
+ask questions about. He is comfortable with Python for metadata cleanup
+and has used a commercial OCR service, but the per-page pricing does not
+scale to the backlog and the output on historical handwriting is poor.
+He wants a pipeline his small team can rerun each quarter as new
+material is scanned, with a cost per page he can put in a budget
+request, and he needs to be sure patron data never ends up somewhere it
+should not.</p>
+<p>From the lesson he gets two concrete pipelines and the cost of each:
+retrieval-augmented question answering over a paper corpus on Bedrock
+(pay per token, nothing left running) and as a Processing job serving an
+open-weight model, and a LoRA fine-tune of a small vision-language model
+on a few hundred transcribed pages that improves transcription of
+exactly his kind of handwriting. He also gets the operational pieces a
+repeatable pipeline needs: one bucket with prefixes per step, tags that
+make the quarterly bill legible, and a cleanup checklist.</p>
+<!--
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
- --></p>
+ -->
+</div>
 </div>
 
       </div>

@@ -241,7 +241,7 @@
 <div class="accordion accordion-flush" id="accordionFlush6">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading6">
-        <a href="Interacting-with-code-repo.html">5. Using a GitHub Personal Access Token (PAT) to Push/Pull from a SageMaker Notebook</a>
+        <a href="Interacting-with-code-repo.html">5. (Optional) Pushing to GitHub from a SageMaker Notebook with a Personal Access Token</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -277,7 +277,7 @@
 <div class="accordion accordion-flush" id="accordionFlush10">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading10">
-        <a href="00_Overview-RAG-on-AWS.html">9. Overview of RAG Workflows on AWS</a>
+        <a href="RAG-overview.html">9. Overview of RAG Workflows on AWS</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -286,7 +286,7 @@
 <div class="accordion accordion-flush" id="accordionFlush11">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading11">
-        <a href="01_RAG_WattBot_Bedrock.html">10. RAG with Bedrock</a>
+        <a href="RAG-Bedrock.html">10. RAG with Bedrock</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -295,7 +295,7 @@
 <div class="accordion accordion-flush" id="accordionFlush12">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading12">
-        <a href="03_RAG_WattBot_Processing_Jobs.html">11. RAG with Processing Jobs</a>
+        <a href="RAG-Processing-jobs.html">11. RAG with Processing Jobs</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -304,7 +304,7 @@
 <div class="accordion accordion-flush" id="accordionFlush13">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading13">
-        <a href="04_Finetuning_BadgerScribe.html">12. Fine-tuning a Vision-Language Model with Training Jobs</a>
+        <a href="Finetuning-BadgerScribe.html">12. Fine-tuning a Vision-Language Model with Training Jobs</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -313,7 +313,7 @@
 <div class="accordion accordion-flush" id="accordionFlush14">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading14">
-        <a href="02_RAG_WattBot_GPU-instance.html">13. (Optional) RAG with a Notebook GPU</a>
+        <a href="RAG-GPU-notebook.html">13. (Optional) RAG with a Notebook GPU</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -395,7 +395,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Instances for ML</h1>
-        <p>Last updated on 2025-11-26 |
+        <p>Last updated on 2026-10-19 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/learners/instances-for-ML.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -408,24 +408,51 @@
         
 
 <p>The below table provides general recommendations for selecting AWS
-instances based on dataset size, computational needs, and cost
-considerations.</p>
+SageMaker instances based on dataset size, computational needs, and cost
+considerations. Prices are <strong>us-east-1 on-demand, from the AWS
+price list of 2026-10-16</strong>; other regions (including the
+workshop’s US East (Ohio), <code>us-east-2</code>) are the same or
+within a few percent. Rows marked <em>approx.</em> were not re-verified
+against that list.</p>
 <div class="section level4">
-<h4 id="genearl-notes">Genearl Notes:<a class="anchor" aria-label="anchor" href="#genearl-notes"></a></h4>
+<h4 id="general-notes">General Notes:<a class="anchor" aria-label="anchor" href="#general-notes"></a></h4>
 <ul><li>
 <strong>Minimum RAM</strong> should be at least 1.5X dataset size
 unless using batch processing (common in deep learning).</li>
 <li>The <strong>m5</strong> and <strong>c5</strong> instances are
 optimized for CPU-heavy tasks, such as preprocessing, feature
-engineering, and model training without GPUs.</li>
+engineering, and model training without GPUs. Tabular and tree-ensemble
+models (XGBoost, random forests) belong here; a GPU does not make them
+faster.</li>
 <li>
-<strong>GPU choices</strong> depend on the task (T4 for
-cost-effective DL, V100/A100 for high performance).</li>
+<strong>GPU choices</strong> depend on the task. The GPUs you will
+meet, cheapest first:
+<ul><li>
+<strong>T4</strong> (16 GB, <code>g4dn</code>): the cheapest GPU;
+fine for small CNNs, inference of models up to a few billion parameters
+in 4- or 8-bit, and learning the workflow. No bf16 support, so modern
+LLM fine-tuning is slow or fails on it.</li>
+<li>
+<strong>A10G</strong> (24 GB, <code>g5</code>): the lesson’s
+workhorse for fine-tuning: bf16, enough memory for a 3B vision-language
+model with LoRA, or a 7B LLM in 4-bit.</li>
+<li>
+<strong>L4</strong> (24 GB, <code>g6</code>): the same memory as an
+A10G at a lower price, somewhat slower for training, good for inference
+and embeddings.</li>
+<li>
+<strong>L40S</strong> (48 GB, <code>g6e</code>): twice the memory of
+an A10G; what the optional GPU-notebook episode uses to serve a 7B model
+in fp16 interactively. The <code>ml.g6e.xlarge</code> is the GPU
+notebook instance that costs about $60 a day if left running.</li>
+<li>
+<strong>A100 / H100</strong> (<code>p4d</code> / <code>p5</code>):
+multi-GPU, 8 per instance, for training or fine-tuning models of tens of
+billions of parameters. Nothing in this lesson needs one; they are
+listed so the price is not a surprise.</li>
+</ul></li>
 <li>The <strong>g4dn</strong> instances are cost-effective GPU options,
 suitable for moderate-scale deep learning tasks.</li>
-<li>The <strong>p3</strong> instances offer high-performance GPU
-processing, best suited for large deep learning models requiring fast
-training times.</li>
 <li>
 <strong>Free Tier Eligibility</strong>: Some smaller instance types,
 such as <code>ml.t3.medium</code>, may be eligible for the AWS Free
@@ -446,47 +473,64 @@ launching instances to avoid unexpected costs.</li>
 <td>2</td>
 <td>4</td>
 <td>None</td>
-<td>$0.04</td>
-<td>Lightweight preprocessing or small models</td>
+<td>$0.05</td>
+<td>Controller notebook; lightweight preprocessing or small models</td>
 </tr><tr><td align="right">&lt; 1 GB</td>
 <td>Up to 500 M params</td>
 <td>ml.m5.large</td>
 <td>2</td>
 <td>8</td>
 <td>None</td>
-<td>$0.10</td>
+<td>$0.115</td>
 <td>Regression, feature engineering, small CNNs or tree ensembles</td>
 </tr><tr><td align="right">&lt; 1 GB</td>
+<td>Up to 1 B params</td>
+<td>ml.m5.xlarge</td>
+<td>4</td>
+<td>16</td>
+<td>None</td>
+<td>$0.23</td>
+<td>Classic ML with room for a wider feature frame</td>
+</tr><tr><td align="right">&lt; 1 GB</td>
 <td>Up to 3 B params</td>
-<td>g4dn.xlarge (T4 GPU)</td>
+<td>ml.g4dn.xlarge (T4)</td>
 <td>4</td>
 <td>16</td>
 <td>1 × T4 (16 GB)</td>
-<td>$0.75</td>
+<td>$0.74</td>
 <td>Cost-effective GPU training for compact DL models</td>
 </tr><tr><td align="right">&lt; 1 GB</td>
+<td>Up to 3 B params</td>
+<td>ml.g6.xlarge (L4)</td>
+<td>4</td>
+<td>16</td>
+<td>1 × L4 (24 GB)</td>
+<td>$1.13</td>
+<td>Inference and embeddings; cheaper than g5 for serving</td>
+</tr><tr><td align="right">&lt; 1 GB</td>
 <td>Up to 8–10 B params</td>
-<td>g5.xlarge (A10G GPU)</td>
+<td>ml.g5.xlarge (A10G)</td>
 <td>4</td>
 <td>16</td>
 <td>1 × A10G (24 GB)</td>
-<td>$1.21</td>
-<td>Stronger inference &amp; training; good for 7B LLMs</td>
+<td>$1.41</td>
+<td>LoRA fine-tuning of 3B models (this lesson); 7B LLM inference in
+4-bit</td>
 </tr><tr><td align="right">&lt; 1 GB</td>
-<td>Up to 7 B params</td>
-<td>p3.2xlarge (V100 GPU)</td>
-<td>8</td>
-<td>61</td>
-<td>1 × V100 (16 GB)</td>
-<td>$3.83</td>
-<td>High-performance GPU jobs; fine-tuning or inference</td>
+<td>Up to 13 B params</td>
+<td>ml.g6e.xlarge (L40S)</td>
+<td>4</td>
+<td>32</td>
+<td>1 × L40S (48 GB)</td>
+<td>$2.61</td>
+<td>7B model served in fp16; the optional GPU-notebook episode</td>
 </tr><tr><td align="right">10 GB</td>
 <td>Up to 500 M params</td>
 <td>ml.c5.2xlarge</td>
 <td>8</td>
 <td>16</td>
 <td>None</td>
-<td>$0.34</td>
+<td>$0.34 (approx.)</td>
 <td>CPU-heavy processing, tabular/ensemble models</td>
 </tr><tr><td align="right">10 GB</td>
 <td>Up to 1 B params</td>
@@ -494,39 +538,47 @@ launching instances to avoid unexpected costs.</li>
 <td>8</td>
 <td>32</td>
 <td>None</td>
-<td>$0.38</td>
+<td>$0.46 (approx.)</td>
 <td>Feature engineering, boosting or linear models</td>
 </tr><tr><td align="right">10 GB</td>
 <td>Up to 3–4 B params</td>
-<td>g4dn.2xlarge (T4 GPU)</td>
+<td>ml.g4dn.2xlarge (T4)</td>
 <td>8</td>
 <td>32</td>
 <td>1 × T4</td>
 <td>$0.94</td>
 <td>Moderate-scale DL; training/inference</td>
 </tr><tr><td align="right">10 GB</td>
+<td>Up to 3–4 B params</td>
+<td>ml.g6.2xlarge (L4)</td>
+<td>8</td>
+<td>32</td>
+<td>1 × L4</td>
+<td>$1.22</td>
+<td>Moderate-scale DL with more RAM; batch inference</td>
+</tr><tr><td align="right">10 GB</td>
 <td>Up to 10–12 B params</td>
-<td>g5.2xlarge (A10G GPU)</td>
+<td>ml.g5.2xlarge (A10G)</td>
 <td>8</td>
 <td>32</td>
 <td>1 × A10G</td>
-<td>$1.69</td>
+<td>$1.52</td>
 <td>Larger 7–10B models; faster than g4dn</td>
 </tr><tr><td align="right">10 GB</td>
-<td>Up to 7 B params</td>
-<td>p3.2xlarge (V100 GPU)</td>
+<td>Up to 13 B params</td>
+<td>ml.g6e.2xlarge (L40S)</td>
 <td>8</td>
-<td>61</td>
-<td>1 × V100</td>
-<td>$3.83</td>
-<td>Deep learning workloads</td>
+<td>64</td>
+<td>1 × L40S</td>
+<td>$2.80</td>
+<td>7–13B models in fp16; RAG serving over larger corpora</td>
 </tr><tr><td align="right">50 GB</td>
 <td>Up to 1 B params</td>
 <td>ml.c5.4xlarge</td>
 <td>16</td>
-<td>64</td>
+<td>32</td>
 <td>None</td>
-<td>$0.77</td>
+<td>$0.68 (approx.)</td>
 <td>Large CPU modeling / preprocessing</td>
 </tr><tr><td align="right">50 GB</td>
 <td>Up to 1 B params</td>
@@ -534,76 +586,76 @@ launching instances to avoid unexpected costs.</li>
 <td>16</td>
 <td>64</td>
 <td>None</td>
-<td>$0.77</td>
+<td>$0.92 (approx.)</td>
 <td>Classic ML on wide data</td>
 </tr><tr><td align="right">50 GB</td>
-<td>Up to 4 B params</td>
-<td>g4dn.4xlarge (T4 GPU)</td>
-<td>16</td>
-<td>64</td>
-<td>1 × T4</td>
-<td>$1.48</td>
-<td>Moderate DL models; batch inference</td>
-</tr><tr><td align="right">50 GB</td>
 <td>Up to 14 B params</td>
-<td>g5.4xlarge (A10G GPU)</td>
+<td>ml.g5.4xlarge (A10G)</td>
 <td>16</td>
 <td>64</td>
 <td>1 × A10G</td>
-<td>$2.54</td>
+<td>$2.03</td>
 <td>Solid for 7–14B models (fp16 or 4/8-bit)</td>
-</tr><tr><td align="right">100 GB</td>
-<td>Up to 5 B params</td>
-<td>g4dn.8xlarge (T4 GPU)</td>
-<td>32</td>
+</tr><tr><td align="right">50 GB</td>
+<td>Up to 14 B params</td>
+<td>ml.g6e.4xlarge (L40S)</td>
+<td>16</td>
 <td>128</td>
-<td>1 × T4</td>
-<td>$2.76</td>
-<td>Large-scale DL training</td>
+<td>1 × L40S</td>
+<td>$3.76</td>
+<td>13B models in fp16 with headroom</td>
 </tr><tr><td align="right">100 GB</td>
 <td>Up to 40–50 B params</td>
-<td>g5.12xlarge (A10G GPU)</td>
+<td>ml.g5.12xlarge (A10G)</td>
 <td>48</td>
 <td>192</td>
 <td>4 × A10G</td>
-<td>$10.18</td>
-<td>Multi-GPU training; distributed finetuning</td>
+<td>$7.09</td>
+<td>Multi-GPU training; distributed fine-tuning</td>
 </tr><tr><td align="right">100 GB</td>
-<td>Up to 30 B params</td>
-<td>p3.8xlarge (V100 GPU)</td>
-<td>32</td>
-<td>244</td>
-<td>4 × V100</td>
-<td>$15.20</td>
-<td>Multi-GPU training</td>
+<td>Up to 70 B params</td>
+<td>ml.g6e.12xlarge (L40S)</td>
+<td>48</td>
+<td>384</td>
+<td>4 × L40S</td>
+<td>$13.12</td>
+<td>Multi-GPU fine-tuning of 30–70B models with LoRA</td>
 </tr><tr><td align="right">100 GB</td>
 <td>Up to 70 B+ params</td>
-<td>p4d.24xlarge (A100 GPU)</td>
+<td>ml.p4d.24xlarge (A100)</td>
 <td>96</td>
 <td>1,152</td>
-<td>8 × A100</td>
-<td>$32.77</td>
-<td>High-end DL / LLM finetuning</td>
-</tr><tr><td align="right">1 TB+</td>
-<td>Up to 65 B params</td>
-<td>p3.16xlarge (V100 GPU)</td>
-<td>64</td>
-<td>488</td>
-<td>8 × V100</td>
-<td>$30.40</td>
-<td>Extreme-scale transformer training</td>
+<td>8 × A100 (40 GB)</td>
+<td>$25.25</td>
+<td>High-end DL / LLM fine-tuning</td>
 </tr><tr><td align="right">1 TB+</td>
 <td>Up to 70 B+ params</td>
-<td>p4d.24xlarge (A100 GPU)</td>
+<td>ml.p4d.24xlarge (A100)</td>
 <td>96</td>
 <td>1,152</td>
-<td>8 × A100</td>
-<td>$32.77</td>
+<td>8 × A100 (40 GB)</td>
+<td>$25.25</td>
 <td>Distributed training for foundation-scale models</td>
-</tr></tbody></table><!--
+</tr><tr><td align="right">1 TB+</td>
+<td>70 B+ params, full fine-tunes</td>
+<td>ml.p5.48xlarge (H100)</td>
+<td>192</td>
+<td>2,048</td>
+<td>8 × H100 (80 GB)</td>
+<td>$63.30</td>
+<td>Full (non-LoRA) fine-tuning and pretraining; where five-figure bills
+come from</td>
+</tr></tbody></table><p>A quick way to read the table: find the row whose memory is at least
+1.5× your dataset, then move down to the first GPU row only if the task
+is deep learning. For the workshop, the controller is always
+<code>ml.t3.medium</code>, the Titanic training jobs use
+<code>ml.m5.large</code> or <code>ml.g4dn.xlarge</code>, and the
+fine-tuning job uses <code>ml.g5.xlarge</code>.</p>
+<!--
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
- --></div>
+ -->
+</div>
 
 
 
@@ -662,7 +714,7 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2025-11-26",
+  "dateModified": "2026-10-19",
   "datePublished": "2026-10-19"
 }
 

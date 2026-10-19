@@ -252,7 +252,7 @@
 <div class="accordion accordion-flush" id="accordionFlush6">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading6">
-        <a href="Interacting-with-code-repo.html">5. Using a GitHub Personal Access Token (PAT) to Push/Pull from a SageMaker Notebook</a>
+        <a href="Interacting-with-code-repo.html">5. (Optional) Pushing to GitHub from a SageMaker Notebook with a Personal Access Token</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -288,7 +288,7 @@
 <div class="accordion accordion-flush" id="accordionFlush10">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading10">
-        <a href="00_Overview-RAG-on-AWS.html">9. Overview of RAG Workflows on AWS</a>
+        <a href="RAG-overview.html">9. Overview of RAG Workflows on AWS</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -297,7 +297,7 @@
 <div class="accordion accordion-flush" id="accordionFlush11">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading11">
-        <a href="01_RAG_WattBot_Bedrock.html">10. RAG with Bedrock</a>
+        <a href="RAG-Bedrock.html">10. RAG with Bedrock</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -306,7 +306,7 @@
 <div class="accordion accordion-flush" id="accordionFlush12">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading12">
-        <a href="03_RAG_WattBot_Processing_Jobs.html">11. RAG with Processing Jobs</a>
+        <a href="RAG-Processing-jobs.html">11. RAG with Processing Jobs</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -315,7 +315,7 @@
 <div class="accordion accordion-flush" id="accordionFlush13">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading13">
-        <a href="04_Finetuning_BadgerScribe.html">12. Fine-tuning a Vision-Language Model with Training Jobs</a>
+        <a href="Finetuning-BadgerScribe.html">12. Fine-tuning a Vision-Language Model with Training Jobs</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -324,7 +324,7 @@
 <div class="accordion accordion-flush" id="accordionFlush14">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading14">
-        <a href="02_RAG_WattBot_GPU-instance.html">13. (Optional) RAG with a Notebook GPU</a>
+        <a href="RAG-GPU-notebook.html">13. (Optional) RAG with a Notebook GPU</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -413,14 +413,17 @@ in three parts:</p>
 a small notebook instance as a <em>controller</em>, training jobs
 (XGBoost and PyTorch) and hyperparameter tuning on the Titanic dataset,
 with guidance on CPU vs. GPU instances and when parallel instances pay
-off.</li>
+off. The episode on pushing to GitHub with a personal access token is
+optional self-study.</li>
 <li>
 <strong>Retrieval-Augmented Generation (RAG).</strong> The <a href="https://www.kaggle.com/competitions/WattBot2025" class="external-link">WattBot</a>
 energy-literature question-answering challenge built three ways: on
 <strong>Amazon Bedrock</strong> (pay per token, nothing left running),
 then as SageMaker <strong>Processing jobs</strong> serving an
 open-weight model that Bedrock does not offer, and, as optional
-self-study, interactively on a GPU notebook instance.</li>
+self-study, interactively on a GPU notebook instance. The two optional
+episodes (GitHub PAT and GPU notebook) are not needed to follow the rest
+of the lesson.</li>
 <li>
 <strong>Fine-tuning.</strong> A LoRA fine-tune of a 3B open-weight
 vision-language model as a SageMaker training job, on the <a href="https://www.kaggle.com/competitions/badger-scribe" class="external-link">Badger
@@ -434,10 +437,11 @@ afterwards, back-of-the-envelope rules for what a fine-tune will need in
 memory and GPU-hours, and explicit cleanup. AWS is not free, but used
 this way it is affordable for research: training a hundred small models
 on a small dataset costs under $20, a full WattBot evaluation on Bedrock
-costs cents, and the in-class fine-tune costs about a dollar. The lesson
-is equally explicit about what goes wrong: a forgotten GPU notebook
-instance is about $60 a day, and a full fine-tune of a large model is
-where five-figure bills come from.</p>
+costs cents, and the fine-tuning episode costs about $1.55 in class
+(plus about $1.75 for the optional homework). The lesson is equally
+explicit about what goes wrong: a forgotten GPU notebook instance is
+about $60 a day, and a full fine-tune of a large model is where
+five-figure bills come from.</p>
 <div class="section level3">
 <h3 id="what-this-workshop-does-not-cover-yet">What This Workshop Does Not Cover (Yet)<a class="anchor" aria-label="anchor" href="#what-this-workshop-does-not-cover-yet"></a></h3>
 <p>Currently, this workshop does not include:</p>
@@ -560,19 +564,22 @@ this workshop: SageMaker GPU instances, Bedrock calls and Processing
 jobs are all billed. Following the materials end to end costs about
 <strong>$30</strong> (the Titanic episodes a few dollars, the Bedrock
 episode cents, the Processing Jobs episode about $2, the fine-tuning
-episode about $3). The one way to spend much more is to leave a GPU
-notebook instance running: about $60 a day. Set a <a href="https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html" class="external-link">Budgets
+episode about $1.55 in class plus about $1.75 for the optional
+homework). The one way to spend much more is to leave a GPU notebook
+instance running: about $60 a day. Set a <a href="https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html" class="external-link">Budgets
 alert</a> at $50 before you start.</li>
 <li>
-<strong>Request GPU quotas at least two weeks before the
+<strong>Request GPU quotas three to four weeks before the
 workshop.</strong> New accounts have a quota of 0 for GPU instances, and
-increases take days. In the console, go to <strong>Service Quotas →
+increases can take weeks. In the console, go to <strong>Service Quotas →
 Amazon SageMaker</strong> and request:
 <code>ml.g5.xlarge for training job usage</code> (1),
 <code>ml.g4dn.xlarge for training job usage</code> (1),
-<code>ml.g5.xlarge for processing job usage</code> (2), and
-<code>ml.g6e.xlarge for processing job usage</code> (1). A justification
-like “self-paced machine learning workshop” is enough.</li>
+<code>ml.g5.xlarge for processing job usage</code> (2),
+<code>ml.g6e.xlarge for processing job usage</code> (1), and
+<code>ml.g6e.xlarge for notebook instance usage</code> (1, optional
+GPU-notebook episode only). A justification like “self-paced machine
+learning workshop” is enough.</li>
 <li>Enable the two Bedrock models the RAG episode uses, under
 <strong>Amazon Bedrock → Model access</strong>: DeepSeek V3 and Titan
 Text Embeddings V2.</li>
@@ -595,8 +602,8 @@ Windows; Double-click on mac)</p></li>
 can easily be accessed. E.g., …</p></li>
 </ol><ul><li><code>~/Downloads/data/titanic_train.csv</code></li>
 <li><code>~/Downloads/data/titanic_test.csv</code></li>
-</ul><p>In the first episode, you will create an S3 bucket and upload this
-data to use with SageMaker.</p>
+</ul><p>In the S3 episode (<em>Data Storage: Setting up S3</em>), you will
+create an S3 bucket and upload this data to use with SageMaker.</p>
 <p>The later episodes use two more datasets, and you do
 <strong>not</strong> need to download them: the WattBot papers (RAG
 episodes) and the Badger Scribe handwriting data (fine-tuning episode,
@@ -618,13 +625,12 @@ GitHub repository</a>.</li>
 <li>Click <strong>Fork</strong> (top right) to create your own copy of
 the repository under your GitHub account. You will only need the main
 branch. You can leave “Copy the main branch only” selected.</li>
-<li>Once forked, you don’t need to do anything else. We’ll clone this
-fork once we start working in the AWS Jupyter environment using…</li>
-</ol><div class="codewrapper sourceCode" id="cb1">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="op">!</span>git clone https:<span class="op">//</span>github.com<span class="op">/</span>YOUR_GITHUB_USERNAME<span class="op">/</span>AWS_helpers.git</span></code></pre>
-</div>
+<li>Once forked, you don’t need to do anything else. The fork is cloned
+<strong>once</strong>, in the <em>Accessing S3</em> episode, into
+<code>/home/ec2-user/SageMaker/AWS_helpers/</code> on your notebook
+instance, and the optional GitHub PAT episode pushes changes back to it
+from that same clone. The clone command you will run there is:</li>
+</ol><pre class="text"><code>!git clone https://github.com/YOUR_GITHUB_USERNAME/AWS_helpers.git</code></pre>
 </div>
 <div class="section level3">
 <h3 id="review-the-workshop-glossary-page">5. Review the Workshop Glossary Page<a class="anchor" aria-label="anchor" href="#review-the-workshop-glossary-page"></a></h3>

@@ -298,7 +298,7 @@
 <div class="accordion accordion-flush" id="accordionFlush6">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading6">
-        <a href="Interacting-with-code-repo.html">5. Using a GitHub Personal Access Token (PAT) to Push/Pull from a SageMaker Notebook</a>
+        <a href="Interacting-with-code-repo.html">5. (Optional) Pushing to GitHub from a SageMaker Notebook with a Personal Access Token</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -346,7 +346,7 @@
 <div class="accordion accordion-flush" id="accordionFlush10">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading10">
-        <a href="00_Overview-RAG-on-AWS.html">9. Overview of RAG Workflows on AWS</a>
+        <a href="RAG-overview.html">9. Overview of RAG Workflows on AWS</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -358,7 +358,7 @@
 <div class="accordion accordion-flush" id="accordionFlush11">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading11">
-        <a href="01_RAG_WattBot_Bedrock.html">10. RAG with Bedrock</a>
+        <a href="RAG-Bedrock.html">10. RAG with Bedrock</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -370,7 +370,7 @@
 <div class="accordion accordion-flush" id="accordionFlush12">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading12">
-        <a href="03_RAG_WattBot_Processing_Jobs.html">11. RAG with Processing Jobs</a>
+        <a href="RAG-Processing-jobs.html">11. RAG with Processing Jobs</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -382,7 +382,7 @@
 <div class="accordion accordion-flush" id="accordionFlush13">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading13">
-        <a href="04_Finetuning_BadgerScribe.html">12. Fine-tuning a Vision-Language Model with Training Jobs</a>
+        <a href="Finetuning-BadgerScribe.html">12. Fine-tuning a Vision-Language Model with Training Jobs</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -394,7 +394,7 @@
 <div class="accordion accordion-flush" id="accordionFlush14">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading14">
-        <a href="02_RAG_WattBot_GPU-instance.html">13. (Optional) RAG with a Notebook GPU</a>
+        <a href="RAG-GPU-notebook.html">13. (Optional) RAG with a Notebook GPU</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -536,12 +536,20 @@ follow:</li>
 </ol>
 <p>regions: - global - us-east-2 # do not change</p>
 <p>blocklist: - “551379999285” # production, do not modify</p>
-<p>accounts: “183295408236”: # aws-nuke-account resource-types:
-includes: #Specifies which types of resources you want to clean out -
-S3Bucket - SageMakerNotebookInstance</p>
+<p>accounts: “183295408236”: # the shared workshop account
+resource-types: includes: # only these types are deleted; the key must
+be “includes” (v3) - S3Bucket - SageMakerNotebookInstance filters:
+S3Bucket: - property: Name value: “ml-marathon-shared” # the
+instructor-staged data bucket survives</p>
 <p><strong>MAKE SURE TO USE SPACE INDENTING AND NOT TAB INDENTING AS IT
 IS SENSITIVE TO USE IN CLOUDSHELL AND MAY CAUSE THE SCRIPT TO
-FAIL</strong></p>
+FAIL.</strong> The committed copy at
+<code>instructors/nuke-config.yml</code> is the reference. Two things it
+deliberately does <em>not</em> delete: the shared data bucket (the
+<code>filters</code> block) and Bedrock application inference profiles,
+which learners remove themselves in the cleanup episode. Everything else
+the lesson creates (training, processing and tuning jobs) has already
+ended and holds no billable resource.</p>
 <ol start="5" style="list-style-type: decimal">
 <li>Once you’ve gotten your config file set up, click on <strong>“FILE”
 &gt; “SAVE AS”</strong>
@@ -644,30 +652,36 @@ any links that you are not going to use.
 <hr class="half-width"></section><section id="Data-storage-setting-up-S3"><h2 class="section-heading"><a href="Data-storage-setting-up-S3.html">Data Storage: Setting up S3</a></h2>
 <hr class="half-width"></section><section id="SageMaker-notebooks-as-controllers"><h2 class="section-heading"><a href="SageMaker-notebooks-as-controllers.html">Notebooks as Controllers</a></h2>
 <hr class="half-width"></section><section id="Accessing-S3-via-SageMaker-notebooks"><h2 class="section-heading"><a href="Accessing-S3-via-SageMaker-notebooks.html">Accessing and Managing Data in S3 with SageMaker Notebooks</a></h2>
-<hr class="half-width"></section><section id="Interacting-with-code-repo"><h2 class="section-heading"><a href="Interacting-with-code-repo.html">Using a GitHub Personal Access Token (PAT) to Push/Pull from a SageMaker Notebook</a></h2>
+<hr class="half-width"></section><section id="Interacting-with-code-repo"><h2 class="section-heading"><a href="Interacting-with-code-repo.html">(Optional) Pushing to GitHub from a SageMaker Notebook with a Personal Access Token</a></h2>
 <hr class="half-width"></section><section id="Training-models-in-SageMaker-notebooks"><h2 class="section-heading"><a href="Training-models-in-SageMaker-notebooks.html">Training Models in SageMaker: Intro</a></h2>
 <hr class="half-width"></section><section id="Training-models-in-SageMaker-notebooks-part2"><h2 class="section-heading"><a href="Training-models-in-SageMaker-notebooks-part2.html">Training Models in SageMaker: PyTorch Example</a></h2>
 <hr class="half-width"></section><section id="Hyperparameter-tuning"><h2 class="section-heading"><a href="Hyperparameter-tuning.html">Hyperparameter Tuning in SageMaker: Neural Network Example</a></h2>
-<hr class="half-width"></section><section id="00_Overview-RAG-on-AWS"><h2 class="section-heading"><a href="00_Overview-RAG-on-AWS.html">Overview of RAG Workflows on AWS</a></h2>
-<hr class="half-width"></section><section id="01_RAG_WattBot_Bedrock"><h2 class="section-heading"><a href="01_RAG_WattBot_Bedrock.html">RAG with Bedrock</a></h2>
-<hr class="half-width"></section><section id="03_RAG_WattBot_Processing_Jobs"><h2 class="section-heading"><a href="03_RAG_WattBot_Processing_Jobs.html">RAG with Processing JobsRAG with Processing Jobs<a class="anchor" aria-label="anchor" href="#rag-with-processing-jobs"></a></a></h2>
-<hr class="half-width"></section><section id="04_Finetuning_BadgerScribe"><h2 class="section-heading"><a href="04_Finetuning_BadgerScribe.html">Fine-tuning a Vision-Language Model with Training Jobs</a></h2>
+<hr class="half-width"></section><section id="RAG-overview"><h2 class="section-heading"><a href="RAG-overview.html">Overview of RAG Workflows on AWS</a></h2>
+<hr class="half-width"></section><section id="RAG-Bedrock"><h2 class="section-heading"><a href="RAG-Bedrock.html">RAG with Bedrock</a></h2>
+<hr class="half-width"></section><section id="RAG-Processing-jobs"><h2 class="section-heading"><a href="RAG-Processing-jobs.html">RAG with Processing Jobs</a></h2>
+<hr class="half-width"></section><section id="Finetuning-BadgerScribe"><h2 class="section-heading"><a href="Finetuning-BadgerScribe.html">Fine-tuning a Vision-Language Model with Training Jobs</a></h2>
 <hr class="half-width">
-<h3 id="04_Finetuning_BadgerScribe-headingInstructor1">
-<a href="04_Finetuning_BadgerScribe.html#headingInstructor1">Before class (instructor checklist)</a><a class="anchor" aria-label="anchor" href="#04_Finetuning_BadgerScribe-headingInstructor1"></a>
+<h3 id="Finetuning-BadgerScribe-headingInstructor1">
+<a href="Finetuning-BadgerScribe.html#headingInstructor1">Before class (instructor checklist)</a><a class="anchor" aria-label="anchor" href="#Finetuning-BadgerScribe-headingInstructor1"></a>
 </h3>
-<p>Students never download the data themselves; four things have to be
+<p>Students never download the data themselves; five things have to be
 in place before the session. Each is written out in the instructor
 pages.</p>
 <ol style="list-style-type: decimal">
 <li>
 <strong>Stage the data in the shared read-only bucket</strong> from
-the lesson’s data release (<code>badger-scribe-data-v1</code>): about
-ten minutes from CloudShell, commands and the read-only bucket policy in
-<em>Shared data bucket: staging before each term</em> (the same bucket
-holds the WattBot data for the RAG episodes). The bucket must survive
-the end-of-workshop cleanup, or be recreated from the release next
-term.</li>
+the lesson’s data release (<code>badger-scribe-data-v1</code>, ~130 MB):
+a few minutes from CloudShell, a laptop or a notebook instance; commands
+and the read-only bucket policy in <em>Shared data bucket: staging
+before each term</em> (the same bucket holds the WattBot data for the
+RAG episodes). The bucket must survive the end-of-workshop cleanup, or
+be recreated from the release next term.</li>
+<li>
+<strong>Stage the base model in the same bucket</strong>
+(<code>badger-scribe/model/churro-3B/</code>, ~7.5 GB, once, from a
+laptop or notebook instance, not CloudShell). Every job reads the
+weights from S3 as a <code>model</code> channel instead of 100 students
+pulling 7.5 GB each from Hugging Face in the same minute.</li>
 <li>
 <strong>Run the full fine-tune once</strong> (the estimator in the
 Homework section, all 251 training pages, <code>eval_pages</code> 40)
@@ -689,7 +703,7 @@ the <code>shared_bucket</code> value in the first code cell.</li>
 <p>Fallback instance if g5 capacity is short: <code>ml.g6.xlarge</code>
 (L4, 24 GB, $1.13/h).</p>
 <hr>
-<br></section><section id="02_RAG_WattBot_GPU-instance"><h2 class="section-heading"><a href="02_RAG_WattBot_GPU-instance.html">(Optional) RAG with a Notebook GPU</a></h2>
+<br></section><section id="RAG-GPU-notebook"><h2 class="section-heading"><a href="RAG-GPU-notebook.html">(Optional) RAG with a Notebook GPU</a></h2>
 <hr class="half-width"></section><section id="Resource-management-cleanup"><h2 class="section-heading"><a href="Resource-management-cleanup.html">Resource Management and Monitoring</a></h2>
 <hr class="half-width"></section></section>
 </div>

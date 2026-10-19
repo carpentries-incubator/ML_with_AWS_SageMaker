@@ -241,7 +241,7 @@
 <div class="accordion accordion-flush" id="accordionFlush6">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading6">
-        <a href="Interacting-with-code-repo.html">5. Using a GitHub Personal Access Token (PAT) to Push/Pull from a SageMaker Notebook</a>
+        <a href="Interacting-with-code-repo.html">5. (Optional) Pushing to GitHub from a SageMaker Notebook with a Personal Access Token</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -277,7 +277,7 @@
 <div class="accordion accordion-flush" id="accordionFlush10">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading10">
-        <a href="00_Overview-RAG-on-AWS.html">9. Overview of RAG Workflows on AWS</a>
+        <a href="RAG-overview.html">9. Overview of RAG Workflows on AWS</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -286,7 +286,7 @@
 <div class="accordion accordion-flush" id="accordionFlush11">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading11">
-        <a href="01_RAG_WattBot_Bedrock.html">10. RAG with Bedrock</a>
+        <a href="RAG-Bedrock.html">10. RAG with Bedrock</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -295,7 +295,7 @@
 <div class="accordion accordion-flush" id="accordionFlush12">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading12">
-        <a href="03_RAG_WattBot_Processing_Jobs.html">11. RAG with Processing Jobs</a>
+        <a href="RAG-Processing-jobs.html">11. RAG with Processing Jobs</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -304,7 +304,7 @@
 <div class="accordion accordion-flush" id="accordionFlush13">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading13">
-        <a href="04_Finetuning_BadgerScribe.html">12. Fine-tuning a Vision-Language Model with Training Jobs</a>
+        <a href="Finetuning-BadgerScribe.html">12. Fine-tuning a Vision-Language Model with Training Jobs</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -313,7 +313,7 @@
 <div class="accordion accordion-flush" id="accordionFlush14">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading14">
-        <a href="02_RAG_WattBot_GPU-instance.html">13. (Optional) RAG with a Notebook GPU</a>
+        <a href="RAG-GPU-notebook.html">13. (Optional) RAG with a Notebook GPU</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -395,7 +395,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Glossary</h1>
-        <p>Last updated on 2025-11-07 |
+        <p>Last updated on 2026-10-19 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/learners/reference.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -479,18 +479,23 @@ assigning direct permissions to a user, an IAM role allows a service
 like SageMaker or EC2 to access other AWS resources (e.g., an EC2
 instance reading data from an S3 bucket).
 <ul><li>
-<strong>Relation to Bucket Policy</strong>: IAM roles grant
-permissions at the AWS account level, while bucket policies control
-access at the bucket level. Both must be configured correctly for secure
-and functional data access.<br></li>
+<strong>Relation to Bucket Policy</strong>: An IAM role’s policies
+say what the role may do; a bucket policy says who may do what to that
+bucket. Within a single AWS account (the workshop’s case), a request is
+allowed if <em>either</em> the role’s policy <em>or</em> the bucket
+policy allows it and nothing explicitly denies it. Across accounts, both
+the caller’s IAM policy and the bucket policy must allow it.<br></li>
 </ul></li>
 <li>
 <strong>Bucket Policy</strong>: A set of rules attached to an S3
 bucket that define access permissions. Bucket policies allow
 administrators to specify who can read, write, or manage objects in a
-bucket. They work in conjunction with IAM roles—<strong>a user or
-service must have both IAM role permissions and a bucket policy that
-grants access</strong> to perform actions on an S3 bucket.<br></li>
+bucket. They work in conjunction with IAM policies: in the same account,
+access is granted if either the identity’s IAM policy or the bucket
+policy allows the action and nothing denies it; across accounts, both
+must allow it. This is why the S3 episode has you add a bucket policy
+naming the <code>ml-sagemaker-use</code> role: it is the grant that lets
+the role read and write your bucket.<br></li>
 <li>
 <strong>Access Control List (ACLs)</strong>: A legacy method for
 defining access to individual objects in an S3 bucket. AWS now
@@ -526,7 +531,7 @@ options. Data is accessed via unique S3 URIs (e.g.,
 <strong>S3 URI or Object URI</strong>: The Uniform Resource
 Identifier (URI) is a unique address that specifies the location of the
 file within S3 (e.g.,
-<code>s3://doejohn-titanic-s3/titanic_train.csv</code>). This URI is
+<code>s3://sinkorswim-doejohn/titanic_train.csv</code>). This URI is
 essential for referencing data in AWS services like SageMaker, where it
 will be used to load data for processing and model training.</li>
 <li>
@@ -624,7 +629,7 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/reference.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/reference.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2025-11-07",
+  "dateModified": "2026-10-19",
   "datePublished": "2026-10-19"
 }
 
