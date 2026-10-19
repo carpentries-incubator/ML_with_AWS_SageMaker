@@ -511,51 +511,50 @@
 <section id="SageMaker-overview"><h2 class="section-heading"><a href="SageMaker-overview.html">Overview of Amazon SageMaker</a></h2>
 <hr class="half-width">
 <ul>
-<li>SageMaker simplifies ML workflows by eliminating the need for manual
-job orchestration.</li>
-<li>Flexible compute options allow users to choose CPU, GPU, or
-memory-optimized instances based on workload needs.</li>
-<li>The lesson’s pattern: a cheap controller notebook launches jobs that
-run elsewhere and end on their own, each launched with tags, a runtime
-cap, a written estimate, and a cleanup step.</li>
-<li>Parallelized training and hyperparameter tuning accelerate model
-development.</li>
-<li>SageMaker supports both built-in ML algorithms and custom scripts
-via Docker containers.</li>
-<li>Cost monitoring tools help track and optimize spending on AWS
-resources.</li>
-<li>SageMaker streamlines scaling from experimentation to deployment,
-making it suitable for both research and production.</li>
+<li><p>SageMaker simplifies ML workflows by eliminating the need for
+manual job orchestration.</p></li>
+<li><p>Flexible compute options allow users to choose CPU, GPU, or
+memory-optimized instances based on workload needs.</p></li>
+<li><p>A cheap controller notebook launches jobs that run on separate
+instances and end on their own; each job is launched with tags, a
+runtime cap, a cost estimate, and a cleanup step.</p></li>
+<li><p>Parallelized training and hyperparameter tuning accelerate model
+development.</p></li>
+<li><p>SageMaker supports both built-in ML algorithms and custom scripts
+via Docker containers.</p></li>
+<li><p>Cost monitoring tools help track and optimize spending on AWS
+resources.</p></li>
+<li><p>SageMaker streamlines scaling from experimentation to deployment,
+making it suitable for both research and production.</p></li>
 </ul></section><section id="Data-storage-setting-up-S3"><h2 class="section-heading"><a href="Data-storage-setting-up-S3.html">Data Storage: Setting up S3</a></h2>
 <hr class="half-width">
 <ul>
-<li>Use S3 for scalable, cost-effective, and flexible storage.</li>
-<li>Instance storage is fairly uncommon for data, but may be suitable
-for small, temporary files; only <code>/home/ec2-user/SageMaker</code>
-survives a Stop, and nothing survives a Delete.</li>
-<li>Create the bucket in the same region as your SageMaker notebook, and
-tag it with the same three keys (<code>Name</code>,
+<li><p>Use S3 for scalable, cost-effective, and flexible
+storage.</p></li>
+<li><p>EC2 storage is fairly uncommon, but may be suitable for small,
+temporary datasets; only <code>/home/ec2-user/SageMaker</code> survives
+a Stop, and nothing survives a Delete.</p></li>
+<li><p>Create the bucket in the same region as your SageMaker notebook,
+and tag it with the same three keys (<code>Name</code>,
 <code>Project</code>, <code>Purpose</code>) you will put on every other
-resource.</li>
-<li>Track your S3 storage costs, data transfer, and requests to manage
-expenses.</li>
-<li>Regularly delete unused data or buckets to avoid ongoing costs.</li>
+resource.</p></li>
+<li><p>Track your S3 storage costs, data transfer, and requests to
+manage expenses.</p></li>
+<li><p>Regularly delete unused data or buckets to avoid ongoing
+costs.</p></li>
 </ul></section><section id="SageMaker-notebooks-as-controllers"><h2 class="section-heading"><a href="SageMaker-notebooks-as-controllers.html">Notebooks as Controllers</a></h2>
 <hr class="half-width">
 <ul>
-<li>Use a minimal SageMaker notebook instance as a controller to manage
-larger, resource-intensive tasks.</li>
-<li>The controller pattern: the notebook launches work (training,
-tuning, processing, fine-tuning) that runs on separate instances and
-ends on its own; the notebook itself never needs to be big.</li>
-<li>Tags can help track costs effectively, especially in multi-project
-or team settings; the same three keys (<code>Name</code>,
-<code>Project</code>, <code>Purpose</code>) go on every resource, and
-tags never propagate.</li>
-<li>Stop the notebook instance whenever you leave, and delete it when
-the workshop is over.</li>
-<li>Use the SageMaker SDK documentation to explore additional options
-for managing compute resources in AWS.</li>
+<li><p>Use a minimal SageMaker notebook instance as a controller to
+manage larger, resource-intensive tasks.</p></li>
+<li><p>Launch training and tuning jobs on scalable instances using the
+SageMaker SDK.</p></li>
+<li><p>Tags can help track costs effectively, especially in
+multi-project or team settings.</p></li>
+<li><p>Stop the notebook instance whenever you leave, and delete it when
+the workshop is over.</p></li>
+<li><p>Use the SageMaker SDK documentation to explore additional options
+for managing compute resources in AWS.</p></li>
 </ul></section><section id="Accessing-S3-via-SageMaker-notebooks"><h2 class="section-heading"><a href="Accessing-S3-via-SageMaker-notebooks.html">Accessing and Managing Data in S3 with SageMaker Notebooks</a></h2>
 <hr class="half-width">
 <ul>
@@ -563,13 +562,11 @@ for managing compute resources in AWS.</li>
 processing.</li>
 <li>Periodically check storage usage and costs to manage S3
 budgets.</li>
-<li>Upload analysis results to your bucket under a prefix per episode
-(<code>docs/</code>, <code>xgboost/</code>, …) and keep one bucket for
-the whole workshop.</li>
+<li>Use SageMaker to upload analysis results and maintain an organized
+workflow.</li>
 <li>Clone the lesson repository once, into
 <code>/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/</code>; every
-later episode starts with the same guarded clone-and-import cell, so the
-code is there whichever episode you open first.</li>
+later episode starts with the same guarded clone-and-import cell.</li>
 </ul></section><section id="Interacting-with-code-repo"><h2 class="section-heading"><a href="Interacting-with-code-repo.html">(Optional) Pushing Your Notebooks to GitHub from SageMaker</a></h2>
 <hr class="half-width">
 <ul>
@@ -591,8 +588,7 @@ folder needs <code>--allow-unrelated-histories</code>.</li>
 <li>
 <strong>Environment initialization</strong>: Setting up a SageMaker
 session, defining roles, and specifying the S3 bucket are essential for
-managing data and running jobs in SageMaker. Read the region from the
-session rather than hard-coding it.</li>
+managing data and running jobs in SageMaker.</li>
 <li>
 <strong>Local vs. managed training</strong>: Always test your code
 locally (on a smaller scale) before scaling things up. This avoids
@@ -602,16 +598,16 @@ results.</li>
 <strong>Estimator classes</strong>: SageMaker provides
 framework-specific Estimator classes (e.g., XGBoost, PyTorch, SKLearn)
 to streamline training setups, each suited to different model types and
-workflows. Always set <code>max_run</code> and <code>tags</code>.</li>
+workflows.</li>
 <li>
 <strong>Custom scripts vs. built-in images</strong>: Custom training
 scripts offer flexibility with preprocessing and custom logic, while
-built-in images are optimized for rapid deployment but expect data in a
-fixed layout (headerless, numeric, label first for XGBoost).</li>
+built-in images are optimized for rapid deployment and simpler
+setups.</li>
 <li>
-<strong>Training data channels</strong>: <code>TrainingInput</code>
-tells SageMaker which S3 objects to download onto the training instance
-before your script starts.</li>
+<strong>Training data channels</strong>: Using
+<code>TrainingInput</code> ensures SageMaker manages data
+efficiently.</li>
 <li>
 <strong>Cost habit</strong>: Estimate cost before launching (rate x
 minutes + ~3 minutes startup), then read back
@@ -627,28 +623,32 @@ run takes more than ~10 hours.</li>
 <li>
 <strong>Efficient data handling</strong>: The <code>.npz</code>
 format is optimized for efficient loading, reducing I/O overhead and
-enabling batch compatibility for PyTorch’s <code>DataLoader</code>. Save
-the fitted scaler alongside it so the test set can be transformed
-identically later.</li>
+enabling batch compatibility for PyTorch’s <code>DataLoader</code>.</li>
 <li>
 <strong>Startup dominates small jobs</strong>: Every SageMaker
 training job pays a few minutes of provisioning, container pull and data
 download; <code>job_cost_report()</code> shows how much of the bill that
 is.</li>
 <li>
-<strong>GPU training</strong>: Beneficial for larger models or
-datasets, but for a tiny network the GPU sits idle while you pay ~6x the
-CPU rate; choose the instance to match the per-step work.</li>
+<strong>GPU training</strong>: While beneficial for larger models or
+datasets, GPUs may introduce overhead for smaller tasks; selecting the
+right instance type is critical for cost-efficiency.</li>
+<li>
+<strong>Data parallelism vs. model parallelism</strong>: Data
+parallelism splits data across instances and synchronizes model weights,
+suitable for typical neural network tasks. Model parallelism, which
+divides model layers, is ideal for very large models that exceed memory
+capacity.</li>
 <li>
 <strong><code>instance_count</code> alone is not distributed
 training</strong>: Without <code>distribution=</code> on the estimator
 and distributed code in the script, <code>instance_count=2</code> runs
 the full script on the full data on each instance and bills twice.</li>
 <li>
-<strong>Data vs. model parallelism</strong>: Data parallelism (DDP,
-each instance on a data shard, gradients all-reduced) is the usual tool
-when it is needed; model parallelism is for models that do not fit on
-one device.</li>
+<strong>SageMaker configuration</strong>: By adjusting instance
+counts and types, SageMaker supports scalable training setups. Starting
+with CPU training and scaling as needed with GPUs or distributed setups
+allows for performance optimization.</li>
 <li>
 <strong>Testing locally first</strong>: Before deploying large-scale
 training in SageMaker, test locally with a smaller setup to ensure code
@@ -715,8 +715,8 @@ fine-tuning episode, is optional self-study.</li>
 <li>A complete RAG pipeline on AWS needs no GPU: a CPU notebook plus
 Bedrock-hosted embedding and generation models is enough.</li>
 <li>Corpus preparation (unpacking the staged PDFs, page extraction,
-chunking) is cheap CPU work; cache <code>chunks.jsonl</code> in your
-bucket so the Processing Jobs episode and later runs can reuse it.</li>
+chunking) is cheap CPU work; cache <code>chunks.jsonl</code> on S3 so
+later episodes and runs can reuse it.</li>
 <li>Bedrock calls carry no tags; route them through a tagged application
 inference profile or the spend is anonymous on the bill.</li>
 <li>
@@ -830,22 +830,21 @@ should too.</li>
 </ul></section><section id="Resource-management-cleanup"><h2 class="section-heading"><a href="Resource-management-cleanup.html">Resource Management and Monitoring</a></h2>
 <hr class="half-width">
 <ul>
-<li>Always stop notebook instances when not in use, and delete them (not
-just stop) once a project is over: a stopped instance still bills for
-its volume.</li>
-<li>Stop any training, tuning or Processing job you no longer need;
-runtime caps are the safety net.</li>
-<li>Lifecycle configurations and Bedrock application inference profiles
-are not swept by the instructors’ aws-nuke run; remove them
-yourself.</li>
-<li>Regularly clean up unused S3 buckets and objects to save on storage
-costs.</li>
-<li>Monitor your expenses through the AWS Billing Dashboard and set up
-alerts.</li>
-<li>Use tags (set up earlier in the workshop) to track and monitor costs
-by resource.</li>
-<li>Following best practices for AWS resource management can
-significantly reduce costs and improve efficiency.</li>
+<li><p>Always stop or delete notebook instances when not in use to avoid
+charges.</p></li>
+<li><p>Stop any training, tuning or Processing job you no longer
+need.</p></li>
+<li><p>Lifecycle configurations and Bedrock application inference
+profiles are not swept by the instructors’ aws-nuke run; remove them
+yourself.</p></li>
+<li><p>Regularly clean up unused S3 buckets and objects to save on
+storage costs.</p></li>
+<li><p>Monitor your expenses through the AWS Billing Dashboard and set
+up alerts.</p></li>
+<li><p>Use tags (set up earlier in the workshop) to track and monitor
+costs by resource.</p></li>
+<li><p>Following best practices for AWS resource management can
+significantly reduce costs and improve efficiency.</p></li>
 </ul></section>
 </div>
     </main>

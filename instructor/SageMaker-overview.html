@@ -445,10 +445,9 @@
 <div class="card-body">
 <div class="inner bordered">
 <h3 class="card-title">Objectives</h3>
-<ul><li>Introduce SageMaker and the controller-plus-jobs pattern the whole
-lesson is built on.</li>
-<li>Preview the three parts of the lesson and the cost-control thread
-that runs through them.</li>
+<ul><li>Introduce SageMaker</li>
+<li>Preview the three parts of the lesson and the cost practices used in
+all of them.</li>
 </ul></div>
 </div>
 </div>
@@ -536,24 +535,20 @@ under $20, making it accessible for many research projects.</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="what-this-lesson-covers">What this lesson covers<a class="anchor" aria-label="anchor" href="#what-this-lesson-covers"></a></h3>
-<p>The lesson has three parts, and one thread runs through all of them.
-In <strong>part one</strong> you build the foundations: an S3 bucket for
-your data, a small notebook instance that acts as a <em>controller</em>,
-and then SageMaker training jobs (XGBoost and PyTorch) and
-hyperparameter tuning on the Titanic dataset, with guidance on CPU
-vs. GPU instances and when parallel instances pay off. In <strong>part
-two</strong> you build retrieval-augmented generation (RAG) three ways
-for the WattBot energy-literature question-answering challenge: on
-Amazon Bedrock (pay per token, nothing left running), as SageMaker
-Processing jobs serving an open-weight model, and, as optional
-self-study, interactively on a GPU notebook instance. In <strong>part
-three</strong> you fine-tune a 3B open-weight vision-language model with
-LoRA as a training job, on the Badger Scribe handwriting-transcription
-challenge, and score it before and after. The thread is cost control,
-taught as practice rather than as a warning: tags on every resource, a
-runtime cap on every job, a cost estimate written down before each
-launch and compared to the bill afterwards, and explicit cleanup at the
-end.</p>
+<p>The lesson has three parts. <strong>Part one</strong> covers the
+foundations: an S3 bucket for your data, a small notebook instance that
+acts as a <em>controller</em>, then SageMaker training jobs (XGBoost and
+PyTorch) and hyperparameter tuning, with guidance on CPU vs. GPU
+instances and when parallel instances help. <strong>Part two</strong>
+builds a retrieval-augmented generation (RAG) pipeline over a corpus of
+research papers two ways: on Amazon Bedrock (pay per token, nothing left
+running) and as SageMaker Processing jobs serving an open-weight model
+that Bedrock does not offer. <strong>Part three</strong> fine-tunes a 3B
+open-weight vision-language model with LoRA as a training job, for
+handwriting transcription, and scores it before and after. Every episode
+applies the same cost controls: tags on every resource, a runtime cap on
+every job, a cost estimate before each launch compared to the bill
+after, and cleanup at the end.</p>
 <div id="challenge-controller-or-job" class="callout challenge">
 <div class="callout-square">
 <i class="callout-icon" data-feather="zap"></i>
@@ -589,7 +584,7 @@ the result is a quick look at a DataFrame. Launching a job would cost
 more in startup time than the work itself.</li>
 <li>
 <strong>Job</strong> (a hyperparameter tuning job). Fifty training
-runs is real compute, and a tuning job runs them in parallel on
+runs is a lot of compute, and a tuning job runs them in parallel on
 instances that exist only for as long as the training lasts. The
 controller just submits the job and reads the results back from S3.</li>
 <li>
@@ -625,21 +620,21 @@ seamlessly.</p>
 <span class="callout-header">Key Points</span>
 <div class="callout-inner">
 <div class="callout-content">
-<ul><li>SageMaker simplifies ML workflows by eliminating the need for manual
-job orchestration.</li>
-<li>Flexible compute options allow users to choose CPU, GPU, or
-memory-optimized instances based on workload needs.</li>
-<li>The lesson’s pattern: a cheap controller notebook launches jobs that
-run elsewhere and end on their own, each launched with tags, a runtime
-cap, a written estimate, and a cleanup step.</li>
-<li>Parallelized training and hyperparameter tuning accelerate model
-development.</li>
-<li>SageMaker supports both built-in ML algorithms and custom scripts
-via Docker containers.</li>
-<li>Cost monitoring tools help track and optimize spending on AWS
-resources.</li>
-<li>SageMaker streamlines scaling from experimentation to deployment,
-making it suitable for both research and production.</li>
+<ul><li><p>SageMaker simplifies ML workflows by eliminating the need for
+manual job orchestration.</p></li>
+<li><p>Flexible compute options allow users to choose CPU, GPU, or
+memory-optimized instances based on workload needs.</p></li>
+<li><p>A cheap controller notebook launches jobs that run on separate
+instances and end on their own; each job is launched with tags, a
+runtime cap, a cost estimate, and a cleanup step.</p></li>
+<li><p>Parallelized training and hyperparameter tuning accelerate model
+development.</p></li>
+<li><p>SageMaker supports both built-in ML algorithms and custom scripts
+via Docker containers.</p></li>
+<li><p>Cost monitoring tools help track and optimize spending on AWS
+resources.</p></li>
+<li><p>SageMaker streamlines scaling from experimentation to deployment,
+making it suitable for both research and production.</p></li>
 </ul></div>
 </div>
 </div>

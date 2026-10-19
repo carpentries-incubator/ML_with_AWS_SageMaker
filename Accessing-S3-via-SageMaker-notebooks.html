@@ -674,23 +674,23 @@ this code to only fetch certain objects or folders.</p>
 </div>
 </div>
 <div class="section level3">
-<h3 id="using-the-lessons-helper-functions">Using the lesson’s helper functions<a class="anchor" aria-label="anchor" href="#using-the-lessons-helper-functions"></a></h3>
+<h3 id="using-helper-functions-from-github">Using helper functions from GitHub<a class="anchor" aria-label="anchor" href="#using-helper-functions-from-github"></a></h3>
 <p>We have added code to calculate bucket size to a helper function
 called <code>get_s3_bucket_size(bucket_name)</code> for your
-convenience, in <code>scripts/helpers.py</code> of the lesson
-repository, alongside the training and processing scripts that later
-episodes launch as jobs. Everything the workshop needs lives in that one
-repository, so we clone it once onto the notebook instance and use it
-from there.</p>
+convenience. There are also some other helper functions in
+<code>scripts/helpers.py</code> of the lesson repository to assist you
+with common AWS/SageMaker workflows. We’ll show you how to clone this
+code into your notebook environment.</p>
 <div class="section level4">
-<h4 id="clone-the-lesson-repository-once">Clone the lesson repository (once)<a class="anchor" aria-label="anchor" href="#clone-the-lesson-repository-once"></a></h4>
-<p>Start in the root directory of this instance,
-<code>/home/ec2-user/SageMaker/</code>: it is the one directory that
-survives stopping the instance, so a clone placed there is still present
-next session. The <code>test -d ... ||</code> guard makes the cell a
-no-op if the folder already exists, which is why every later episode
-starts with the same cell: whichever episode you open first, the code is
-there.</p>
+<h4 id="directory-setup">Directory setup<a class="anchor" aria-label="anchor" href="#directory-setup"></a></h4>
+<p>Let’s make sure we’re starting in the root directory of this
+instance, so that we all have our helpers.py file located in the same
+path
+(/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/helpers.py).
+This directory survives stopping the instance, so a clone placed there
+is still present next session. The <code>test -d ... ||</code> guard
+skips the clone if the folder already exists; every later episode starts
+with the same cell.</p>
 <div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -702,9 +702,10 @@ there.</p>
 </div>
 <p><code>sys.path.insert</code> tells Python where to find the lesson’s
 <code>scripts/</code> folder; after it, <code>import helpers</code>
-works from any directory. No GitHub account is involved: this is a
-read-only clone of a public repository.</p>
-<p>With the repo cloned, you can call the bucket-size function via…</p>
+works from any directory.</p>
+<p>Our helpers.py file can be found in
+<code>ML_with_AWS_SageMaker/scripts/helpers.py</code>. With this file
+downloaded, you can call this function via…</p>
 <div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -782,26 +783,23 @@ page</a>.</p>
 </section><section><h2 class="section-heading" id="writing-output-files-to-s3">Writing output files to S3<a class="anchor" aria-label="anchor" href="#writing-output-files-to-s3"></a></h2>
 <hr class="half-width"><p>As your analysis generates new files or demands additional
 documentation, you can upload files to your bucket as demonstrated
-below. For this demo, we create a small <code>Notes.txt</code> file in
-the notebook’s working directory and upload it under a
-<code>docs/</code> prefix. (You could also create the file by hand with
-<strong>File</strong> -&gt; <strong>New</strong> -&gt; <strong>Text
-file</strong>; the code below does the same thing so the notebook runs
-end to end.)</p>
+below. For this demo, you can create a blank <code>Notes.txt</code> file
+to upload to your bucket. To do so, go to <strong>File</strong> -&gt;
+<strong>New</strong> -&gt; <strong>Text file</strong>, and save it out
+as <code>Notes.txt</code>. (The code below also writes the file, so the
+notebook runs end to end.)</p>
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a><span class="co"># Create a small text file to upload (in the current working directory, /home/ec2-user/SageMaker)</span></span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a>notes_file_path <span class="op">=</span> <span class="st">"Notes.txt"</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a><span class="co"># Define the S3 bucket name and the file paths</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a>notes_file_path <span class="op">=</span> <span class="st">"Notes.txt"</span> <span class="co"># assuming your file is in root directory of jupyter notebook (check file explorer tab)</span></span>
 <span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a><span class="cf">with</span> <span class="bu">open</span>(notes_file_path, <span class="st">"w"</span>) <span class="im">as</span> f:</span>
 <span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a>    f.write(<span class="st">"Workshop notes: Titanic data uploaded from the S3 episode; outputs go under per-episode prefixes.</span><span class="ch">\n</span><span class="st">"</span>)</span>
 <span id="cb11-5"><a href="#cb11-5" tabindex="-1" aria-label="code-block-11-5"></a></span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1" aria-label="code-block-11-6"></a><span class="co"># Upload it under a prefix called "docs/". A prefix is S3's version of a folder: there is no folder to</span></span>
-<span id="cb11-7"><a href="#cb11-7" tabindex="-1" aria-label="code-block-11-7"></a><span class="co"># create first; the key "docs/Notes.txt" is enough. Every later episode writes under its own prefix</span></span>
-<span id="cb11-8"><a href="#cb11-8" tabindex="-1" aria-label="code-block-11-8"></a><span class="co"># (xgboost/, pytorch/, wattbot/, badger-scribe/) in this same bucket.</span></span>
-<span id="cb11-9"><a href="#cb11-9" tabindex="-1" aria-label="code-block-11-9"></a>s3.upload_file(notes_file_path, bucket_name, <span class="st">"docs/Notes.txt"</span>)</span>
-<span id="cb11-10"><a href="#cb11-10" tabindex="-1" aria-label="code-block-11-10"></a></span>
-<span id="cb11-11"><a href="#cb11-11" tabindex="-1" aria-label="code-block-11-11"></a><span class="bu">print</span>(<span class="st">"File uploaded successfully."</span>)</span></code></pre>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1" aria-label="code-block-11-6"></a><span class="co"># Upload the training file to a new folder called "docs". You can also just place it in the bucket's root directory if you prefer (remove docs/ in code below).</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1" aria-label="code-block-11-7"></a>s3.upload_file(notes_file_path, bucket_name, <span class="st">"docs/Notes.txt"</span>)</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1" aria-label="code-block-11-8"></a></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1" aria-label="code-block-11-9"></a><span class="bu">print</span>(<span class="st">"Files uploaded successfully."</span>)</span></code></pre>
 </div>
 <p>After uploading, we can view the objects/files available on our
 bucket using…</p>
@@ -869,11 +867,10 @@ prefixes instead of a new bucket per episode?</li>
 <span id="cb14-8"><a href="#cb14-8" tabindex="-1" aria-label="code-block-14-8"></a><span class="bu">print</span>(size_before, size_after)</span></code></pre>
 </div>
 <p>The bucket grows by the size of the file (a few hundred bytes here),
-and at $0.023 per GB-month that is a rounding error: well under a
-thousandth of a cent per month. The point of the exercise is the habit,
-not the number. The same two lines, run before and after a training job,
-tell you what the job wrote and whether something is accumulating that
-you should clean up.</p>
+and at $0.023 per GB-month that is well under a thousandth of a cent per
+month. The same two lines, run before and after a training job, tell you
+what the job wrote and whether something is accumulating that you should
+clean up.</p>
 <ol start="2" style="list-style-type: decimal"><li>The training episode writes under <code>xgboost/</code>
 (<code>s3://sinkorswim-doejohn/xgboost/</code>), the same way this
 episode wrote under <code>docs/</code>; the PyTorch episode uses
@@ -898,13 +895,11 @@ longer cleanup list.</li>
 processing.</li>
 <li>Periodically check storage usage and costs to manage S3
 budgets.</li>
-<li>Upload analysis results to your bucket under a prefix per episode
-(<code>docs/</code>, <code>xgboost/</code>, …) and keep one bucket for
-the whole workshop.</li>
+<li>Use SageMaker to upload analysis results and maintain an organized
+workflow.</li>
 <li>Clone the lesson repository once, into
 <code>/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/</code>; every
-later episode starts with the same guarded clone-and-import cell, so the
-code is there whichever episode you open first.</li>
+later episode starts with the same guarded clone-and-import cell.</li>
 </ul></div>
 </div>
 </div>

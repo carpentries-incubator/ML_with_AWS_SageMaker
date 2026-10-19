@@ -535,10 +535,9 @@
 <div class="inner bordered">
 <h3 class="card-title">Objectives</h3>
 <ul>
-<li>Introduce SageMaker and the controller-plus-jobs pattern the whole
-lesson is built on.</li>
-<li>Preview the three parts of the lesson and the cost-control thread
-that runs through them.</li>
+<li>Introduce SageMaker</li>
+<li>Preview the three parts of the lesson and the cost practices used in
+all of them.</li>
 </ul>
 </div>
 </div>
@@ -633,24 +632,20 @@ under $20, making it accessible for many research projects.</p></li>
 <div class="section level3">
 <h3 id="what-this-lesson-covers">What this lesson covers<a class="anchor" aria-label="anchor" href="#what-this-lesson-covers"></a>
 </h3>
-<p>The lesson has three parts, and one thread runs through all of them.
-In <strong>part one</strong> you build the foundations: an S3 bucket for
-your data, a small notebook instance that acts as a <em>controller</em>,
-and then SageMaker training jobs (XGBoost and PyTorch) and
-hyperparameter tuning on the Titanic dataset, with guidance on CPU
-vs. GPU instances and when parallel instances pay off. In <strong>part
-two</strong> you build retrieval-augmented generation (RAG) three ways
-for the WattBot energy-literature question-answering challenge: on
-Amazon Bedrock (pay per token, nothing left running), as SageMaker
-Processing jobs serving an open-weight model, and, as optional
-self-study, interactively on a GPU notebook instance. In <strong>part
-three</strong> you fine-tune a 3B open-weight vision-language model with
-LoRA as a training job, on the Badger Scribe handwriting-transcription
-challenge, and score it before and after. The thread is cost control,
-taught as practice rather than as a warning: tags on every resource, a
-runtime cap on every job, a cost estimate written down before each
-launch and compared to the bill afterwards, and explicit cleanup at the
-end.</p>
+<p>The lesson has three parts. <strong>Part one</strong> covers the
+foundations: an S3 bucket for your data, a small notebook instance that
+acts as a <em>controller</em>, then SageMaker training jobs (XGBoost and
+PyTorch) and hyperparameter tuning, with guidance on CPU vs. GPU
+instances and when parallel instances help. <strong>Part two</strong>
+builds a retrieval-augmented generation (RAG) pipeline over a corpus of
+research papers two ways: on Amazon Bedrock (pay per token, nothing left
+running) and as SageMaker Processing jobs serving an open-weight model
+that Bedrock does not offer. <strong>Part three</strong> fine-tunes a 3B
+open-weight vision-language model with LoRA as a training job, for
+handwriting transcription, and scores it before and after. Every episode
+applies the same cost controls: tags on every resource, a runtime cap on
+every job, a cost estimate before each launch compared to the bill
+after, and cleanup at the end.</p>
 <div id="challenge-controller-or-job" class="callout challenge">
 <div class="callout-square">
 <i class="callout-icon" data-feather="zap"></i>
@@ -689,7 +684,7 @@ the result is a quick look at a DataFrame. Launching a job would cost
 more in startup time than the work itself.</li>
 <li>
 <strong>Job</strong> (a hyperparameter tuning job). Fifty training
-runs is real compute, and a tuning job runs them in parallel on
+runs is a lot of compute, and a tuning job runs them in parallel on
 instances that exist only for as long as the training lasts. The
 controller just submits the job and reads the results back from S3.</li>
 <li>
@@ -727,21 +722,21 @@ seamlessly.</p>
 <div class="callout-inner">
 <div class="callout-content">
 <ul>
-<li>SageMaker simplifies ML workflows by eliminating the need for manual
-job orchestration.</li>
-<li>Flexible compute options allow users to choose CPU, GPU, or
-memory-optimized instances based on workload needs.</li>
-<li>The lesson’s pattern: a cheap controller notebook launches jobs that
-run elsewhere and end on their own, each launched with tags, a runtime
-cap, a written estimate, and a cleanup step.</li>
-<li>Parallelized training and hyperparameter tuning accelerate model
-development.</li>
-<li>SageMaker supports both built-in ML algorithms and custom scripts
-via Docker containers.</li>
-<li>Cost monitoring tools help track and optimize spending on AWS
-resources.</li>
-<li>SageMaker streamlines scaling from experimentation to deployment,
-making it suitable for both research and production.</li>
+<li><p>SageMaker simplifies ML workflows by eliminating the need for
+manual job orchestration.</p></li>
+<li><p>Flexible compute options allow users to choose CPU, GPU, or
+memory-optimized instances based on workload needs.</p></li>
+<li><p>A cheap controller notebook launches jobs that run on separate
+instances and end on their own; each job is launched with tags, a
+runtime cap, a cost estimate, and a cleanup step.</p></li>
+<li><p>Parallelized training and hyperparameter tuning accelerate model
+development.</p></li>
+<li><p>SageMaker supports both built-in ML algorithms and custom scripts
+via Docker containers.</p></li>
+<li><p>Cost monitoring tools help track and optimize spending on AWS
+resources.</p></li>
+<li><p>SageMaker streamlines scaling from experimentation to deployment,
+making it suitable for both research and production.</p></li>
 </ul>
 </div>
 </div>
@@ -834,14 +829,13 @@ notebooks, enabling direct data processing.</p>
 </h3>
 <p>Using an EC2 instance for data storage can be useful for temporary or
 small datasets, especially during processing within a Jupyter notebook.
-But this storage is tied to the instance. On a SageMaker notebook
-instance, files under <code>/home/ec2-user/SageMaker</code> survive a
-<strong>Stop</strong> (they live on an attached volume that persists
-while the instance exists) and are lost when the instance is
-<strong>Deleted</strong>; <code>pip install</code>s and files anywhere
-else on the instance are lost on every Stop. So EC2 storage is fine for
-one-off experiments or intermediate steps, not for anything you need to
-keep.</p>
+However, this storage is not persistent; if the instance is deleted, the
+data is erased. (On a SageMaker notebook instance, files under
+<code>/home/ec2-user/SageMaker</code> survive a <strong>Stop</strong>
+and are lost when the instance is <strong>Deleted</strong>;
+<code>pip install</code>s and files anywhere else on the instance are
+lost on every Stop.) Therefore, EC2 is ideal for one-off experiments or
+intermediate steps in data processing.</p>
 <div id="limitations-of-ec2-storage" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -859,10 +853,11 @@ datasets.</li>
 <strong>Cost</strong>: EC2 storage can be more costly for long-term
 use compared to S3.</li>
 <li>
-<strong>Data Persistence</strong>: Only
+<strong>Data Persistence</strong>: EC2 data may be lost if the
+instance is stopped or terminated, unless using Elastic Block Store
+(EBS) for persistent storage. On a SageMaker notebook instance, only
 <code>/home/ec2-user/SageMaker</code> survives a Stop, and nothing
-survives a Delete. Anything you want to keep belongs in S3 (or in a git
-repository).</li>
+survives a Delete.</li>
 </ul>
 </div>
 </div>
@@ -964,29 +959,29 @@ AWS toolbar</li>
 <h5 id="create-a-new-bucket">3. Create a new bucket<a class="anchor" aria-label="anchor" href="#create-a-new-bucket"></a>
 </h5>
 <ul>
-<li><p><strong>AWS Region</strong>: the region your instructor named
-(the same one your SageMaker notebook will use; in the workshop account
-it is US East (Ohio), <code>us-east-2</code>). SageMaker jobs can only
-read buckets in their own region, so a bucket created in another region
-shows up later as “access denied” or “no such bucket” errors from your
-jobs.</p></li>
-<li><p>Click <strong>Create Bucket</strong> and enter a unique name. Use
-the naming convention <code>challenge-lastnamefirstname</code>, all
-lowercase, e.g. <code>sinkorswim-doejohn</code>: the challenge you are
-working on (<code>wattbot2026</code>, <code>badgerscribe</code>,
-<code>badgercode</code>, …), a hyphen, then your last and first name run
-together. S3 requires bucket names to be lowercase letters, digits and
-hyphens only (3 to 63 characters, starting and ending with a letter or
-digit, no underscores, no spaces), and the same lowercase string is what
-we will use for your notebook instance and your <code>Project</code>
-tag, so one name works everywhere. <strong>This is the only bucket you
-will create in the workshop.</strong> Every later episode writes its
-outputs (trained models, embeddings, predictions) into this same bucket
-under its own prefix, such as <code>xgboost/</code>,
-<code>wattbot/</code> or <code>badger-scribe/</code>.</p></li>
 <li>
-<p><strong>Access Control (ACLs)</strong>: Disable ACLs
-(recommended).</p>
+<strong>AWS Region</strong>: the region your instructor named (the
+same one your SageMaker notebook will use; in the workshop account it is
+US East (Ohio), <code>us-east-2</code>). SageMaker jobs can only read
+buckets in their own region, so a bucket created in another region shows
+up later as “access denied” or “no such bucket” errors from your
+jobs.</li>
+<li>Click <strong>Create Bucket</strong> and enter a unique name, and
+note that bucket name must not contain uppercase characters. To easily
+find this bucket later in our shared AWS account, please use the
+following naming convention: <code>challenge-lastnamefirstname</code>,
+all lowercase, e.g. <code>sinkorswim-doejohn</code>: the challenge you
+are working on (<code>wattbot2026</code>, <code>badgerscribe</code>,
+<code>badgercode</code>, …), a hyphen, then your last and first name run
+together. The same lowercase string is what we will use for your
+notebook instance and your <code>Project</code> tag. <strong>This is the
+only bucket you will create in the workshop.</strong> Every later
+episode writes its outputs (trained models, embeddings, predictions)
+into this same bucket under its own prefix, such as
+<code>xgboost/</code>, <code>wattbot/</code> or
+<code>badger-scribe/</code>.</li>
+<li>
+<strong>Access Control (ACLs)</strong>: Disable ACLs (recommended).
 <ul>
 <li>
 <strong>What are ACLs?</strong> Access Control Lists (ACLs) define
@@ -1001,54 +996,42 @@ security and are easier to manage at scale. Unless you have a specific
 need for ACLs, disabling them is the best practice.</li>
 </ul>
 </li>
-<li><p><strong>Public Access</strong>: Turn on “Block all public access”
+<li>
+<strong>Public Access</strong>: Turn on “Block all public access”
 (recommended). This setting prevents unauthorized access and accidental
 data exposure. If you need external access, use IAM policies or signed
-URLs instead.</p></li>
-<li><p><strong>Versioning</strong>: Disable unless you need multiple
+URLs instead.</li>
+<li>
+<strong>Versioning</strong>: Disable unless you need multiple
 versions of objects (unnecessary for ML Marathon). Enable only if
 needed, as versioning increases storage costs. Useful when tracking
-changes to datasets over time but unnecessary for static datasets.<br></p></li>
-<li>
-<p><strong>Tags (NOT OPTIONAL)</strong>: Tags are key/value labels
-that let the bill be broken down by project, person, or purpose, which
-is how costs get traced back to you in a shared account. Tags only show
-up in cost reports if the tag <em>key</em> has been activated as a
-cost-allocation tag at the account level; on UW–Madison’s AWS accounts
-that is done centrally for a fixed list of approved keys (<a href="https://kb.wisc.edu/72454" class="external-link">KB 72454</a>), and <code>Name</code>,
-<code>Project</code> and <code>Purpose</code> are on that list. Any
-other spelling (<code>project</code>, <code>Team</code>,
-<code>Owner</code>) is silently ignored by the bill, so type the keys
-exactly as shown; capitalization matters. You will put the same three
-keys on every resource you create in this workshop, starting with this
-bucket:</p>
-<table class="table">
-<thead><tr>
-<th>Key</th>
-<th>Value</th>
-</tr></thead>
-<tbody>
-<tr>
-<td><code>Project</code></td>
-<td>your challenge name, e.g. <code>sinkorswim</code>
-</td>
-</tr>
-<tr>
-<td><code>Name</code></td>
-<td>your name, e.g. <code>John Doe</code>
-</td>
-</tr>
-<tr>
-<td><code>Purpose</code></td>
-<td><code>Workshop-storage</code></td>
-</tr>
-</tbody>
-</table>
-<p>Tag values are case-sensitive on the bill: <code>SinkOrSwim</code>
-and <code>sinkorswim</code> would be two separate rows in Cost Explorer.
-Use the same lowercase challenge name you put in the bucket
-name.</p>
+changes to datasets over time but unnecessary for static datasets.<br>
 </li>
+<li>
+<strong>Tags (NOT OPTIONAL)</strong>: Adding tags to your S3 buckets
+is a great way to track project-specific costs and usage over time,
+especially as data and resources scale up. To easily track costs
+associated with your bucket in our shared AWS account, add the following
+three keys (spelled exactly; they are the account’s approved
+cost-allocation keys, see <a href="https://kb.wisc.edu/72454" class="external-link">KB
+72454</a>). You will put the same three keys on every resource you
+create in this workshop, starting with this bucket:
+<ul>
+<li>
+<strong>Project</strong>: your challenge name,
+e.g. <code>sinkorswim</code>
+</li>
+<li>
+<strong>Name</strong>: yourname
+<ul>
+<li>
+<strong>Purpose</strong>: Bucket-titanic</li>
+</ul>
+</li>
+</ul>
+Tag values are case-sensitive on the bill: <code>SinkOrSwim</code> and
+<code>sinkorswim</code> would be two separate rows in Cost Explorer. Use
+the same lowercase challenge name you put in the bucket name.</li>
 </ul>
 <figure><img src="../fig/bucket_tags2.png" alt="Screenshot showing required tags for an S3 bucket" class="figure mx-auto d-block"><div class="figcaption">Example of Tags for an S3 Bucket</div>
 </figure><ul>
@@ -1223,10 +1206,10 @@ purposes.</li>
 (~$0.09/GB). Be sure to take note of this fee, as it can add up fast for
 large datasets.</li>
 <li>
-<strong>In-region transfer</strong> (e.g., S3 to a SageMaker
-notebook or job in the same region) is free, while cross-region data
-transfer is charged (~$0.02/GB). This is one reason your bucket and your
-SageMaker resources must be in the same region.</li>
+<strong>In-region transfer</strong> (e.g., S3 to EC2) is free, while
+cross-region data transfer is charged (~$0.02/GB). This is one reason
+your bucket and your SageMaker resources must be in the same
+region.</li>
 <li>
 <strong>Deleting</strong> objects is free.</li>
 </ul>
@@ -1253,29 +1236,27 @@ Information</a>.</em></strong></p>
 <div id="challenge-estimating-storage-costs" class="callout-inner">
 <h3 class="callout-title">Challenge: Estimating Storage Costs</h3>
 <div class="callout-content">
-<p><strong>1. Estimate the total cost of keeping 1 GB in S3 for one
+<p><strong>1. Estimate the total cost of storing 1 GB in S3 for one
 month assuming:</strong></p>
 <ul>
 <li>Storage duration: 1 month</li>
-<li>Storage region: us-east-1 (same region as your SageMaker notebook
-and jobs)</li>
+<li>Storage region: us-east-1</li>
 <li>Storage class: S3 Standard</li>
-<li>The data is read 100 times by SageMaker training and tuning jobs in
-the same region (100 <code>GET</code> requests)</li>
-<li>At the end of the project you download one copy to your laptop, then
-delete the data</li>
+<li>Data will be retrieved 100 times for model training and tuning by
+SageMaker jobs in the same region (<code>GET</code> requests)</li>
+<li>Data will be downloaded once to your laptop and then deleted after
+the project concludes</li>
 </ul>
 <p><strong>Hints</strong></p>
 <ul>
 <li>S3 storage cost: $0.023 per GB per month (us-east-1)</li>
-<li>Reads by SageMaker in the same region: no data-transfer charge
-(in-region transfer is free); only the per-request cost applies</li>
+<li>Data transfer cost (download to your laptop): $0.09 per GB
+(us-east-1 out to internet)</li>
+<li>In-region transfer (reads by SageMaker jobs): free</li>
 <li>
 <code>GET</code> requests cost: $0.0004 per 1,000 requests (each
-read counts as one <code>GET</code> request)</li>
-<li>Data transfer out to the internet (the download to your laptop):
-$0.09 per GB</li>
-<li>Deleting objects: free (no request or transfer charge)</li>
+model training will incur one <code>GET</code> request)</li>
+<li>Deleting objects: free</li>
 <li>Check the <a href="https://aws.amazon.com/s3/pricing/" class="external-link">AWS S3
 Pricing</a> page for more details.</li>
 </ul>
@@ -1291,26 +1272,24 @@ sizes: 10 GB, 100 GB, 1 TB (1024 GB)</strong></p>
 </button>
 <div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
-<p>Using the S3 Standard rate in us-east-1. The 100 SageMaker reads cost
-only the requests (100 × $0.0004 / 1,000 = $0.00004), because in-region
-transfer is free; the delete is free; the one download to a laptop is
-the only transfer charge.</p>
+<p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
 <li>
 <strong>1 GB</strong>:
 <ul>
 <li>
-<strong>Storage</strong>: 1 GB × $0.023 = $0.023</li>
+<strong>Storage</strong>: 1 GB * $0.023 = $0.023</li>
 <li>
-<strong>100 in-region reads (requests only)</strong>: $0.00004</li>
-<li>
-<strong>One download to a laptop</strong>: 1 GB × $0.09 =
-$0.09<br>
+<strong>Download</strong>: 1 GB * $0.09 = $0.09<br>
 </li>
 <li>
-<strong>Delete</strong>: $0</li>
+<strong>GET Requests</strong>: 100 requests * $0.0004 per 1,000 =
+$0.00004<br>
+</li>
 <li>
-<strong>Total Cost</strong>: <strong>≈ $0.11</strong>
+<strong>Deletion</strong>: $0</li>
+<li>
+<strong>Total Cost</strong>: <strong>$0.11304</strong>
 </li>
 </ul>
 </li>
@@ -1318,14 +1297,18 @@ $0.09<br>
 <strong>10 GB</strong>:
 <ul>
 <li>
-<strong>Storage</strong>: 10 GB × $0.023 = $0.23</li>
+<strong>Storage</strong>: 10 GB * $0.023 = $0.23</li>
 <li>
-<strong>100 in-region reads</strong>: $0.00004</li>
-<li>
-<strong>One download</strong>: 10 GB × $0.09 = $0.90<br>
+<strong>Download</strong>: 10 GB * $0.09 = $0.90<br>
 </li>
 <li>
-<strong>Total Cost</strong>: <strong>≈ $1.13</strong>
+<strong>GET Requests</strong>: 100 requests * $0.0004 per 1,000 =
+$0.00004<br>
+</li>
+<li>
+<strong>Deletion</strong>: $0</li>
+<li>
+<strong>Total Cost</strong>: <strong>$1.13004</strong>
 </li>
 </ul>
 </li>
@@ -1333,14 +1316,18 @@ $0.09<br>
 <strong>100 GB</strong>:
 <ul>
 <li>
-<strong>Storage</strong>: 100 GB × $0.023 = $2.30</li>
+<strong>Storage</strong>: 100 GB * $0.023 = $2.30</li>
 <li>
-<strong>100 in-region reads</strong>: $0.00004</li>
-<li>
-<strong>One download</strong>: 100 GB × $0.09 = $9.00<br>
+<strong>Download</strong>: 100 GB * $0.09 = $9.00<br>
 </li>
 <li>
-<strong>Total Cost</strong>: <strong>≈ $11.30</strong>
+<strong>GET Requests</strong>: 100 requests * $0.0004 per 1,000 =
+$0.00004<br>
+</li>
+<li>
+<strong>Deletion</strong>: $0</li>
+<li>
+<strong>Total Cost</strong>: <strong>$11.30004</strong>
 </li>
 </ul>
 </li>
@@ -1348,25 +1335,24 @@ $0.09<br>
 <strong>1 TB (1024 GB)</strong>:
 <ul>
 <li>
-<strong>Storage</strong>: 1024 GB × $0.023 = $23.55</li>
+<strong>Storage</strong>: 1024 GB * $0.023 = $23.55</li>
 <li>
-<strong>100 in-region reads</strong>: $0.00004</li>
-<li>
-<strong>One download</strong>: 1024 GB × $0.09 = $92.16<br>
+<strong>Download</strong>: 1024 GB * $0.09 = $92.16<br>
 </li>
 <li>
-<strong>Total Cost</strong>: <strong>≈ $115.71</strong>
+<strong>GET Requests</strong>: 100 requests * $0.0004 per 1,000 =
+$0.00004<br>
+</li>
+<li>
+<strong>Deletion</strong>: $0</li>
+<li>
+<strong>Total Cost</strong>: <strong>$115.71004</strong>
 </li>
 </ul>
 </li>
 </ol>
-<p>Two things to notice. The reads by SageMaker are essentially free no
-matter how many times a job loads the data, which is why the lesson
-keeps data in S3 and reads it from jobs in the same region. And the
-single download to a laptop costs four times the month of storage:
-egress is the line item to watch, so pull results out of AWS once, not
-repeatedly, and leave large datasets in the bucket (or delete them)
-rather than downloading them “just in case”.</p>
+<p>These costs assume no additional request charges beyond those for
+storage, the download, and <code>GET</code> requests for training.</p>
 </div>
 </div>
 </div>
@@ -1401,17 +1387,19 @@ with storage, requests, and data transfer.</p>
 <div class="callout-inner">
 <div class="callout-content">
 <ul>
-<li>Use S3 for scalable, cost-effective, and flexible storage.</li>
-<li>Instance storage is fairly uncommon for data, but may be suitable
-for small, temporary files; only <code>/home/ec2-user/SageMaker</code>
-survives a Stop, and nothing survives a Delete.</li>
-<li>Create the bucket in the same region as your SageMaker notebook, and
-tag it with the same three keys (<code>Name</code>,
+<li><p>Use S3 for scalable, cost-effective, and flexible
+storage.</p></li>
+<li><p>EC2 storage is fairly uncommon, but may be suitable for small,
+temporary datasets; only <code>/home/ec2-user/SageMaker</code> survives
+a Stop, and nothing survives a Delete.</p></li>
+<li><p>Create the bucket in the same region as your SageMaker notebook,
+and tag it with the same three keys (<code>Name</code>,
 <code>Project</code>, <code>Purpose</code>) you will put on every other
-resource.</li>
-<li>Track your S3 storage costs, data transfer, and requests to manage
-expenses.</li>
-<li>Regularly delete unused data or buckets to avoid ongoing costs.</li>
+resource.</p></li>
+<li><p>Track your S3 storage costs, data transfer, and requests to
+manage expenses.</p></li>
+<li><p>Regularly delete unused data or buckets to avoid ongoing
+costs.</p></li>
 </ul>
 </div>
 </div>
@@ -1453,73 +1441,73 @@ controller notebook approach?</li>
 <li>Describe how to use SageMaker notebooks for ML workflows.</li>
 <li>Set up a Jupyter notebook instance as a controller to manage compute
 tasks.</li>
-<li>Explain the controller pattern: a cheap notebook launches jobs that
-run on separate instances and end on their own.</li>
+<li>Use SageMaker SDK to launch training and tuning jobs on scalable
+instances.</li>
 </ul>
 </div>
 </div>
 </div>
 </div>
 </div>
-<section><h2 class="section-heading" id="what-a-sagemaker-notebook-instance-is">What a SageMaker notebook instance is<a class="anchor" aria-label="anchor" href="#what-a-sagemaker-notebook-instance-is"></a>
+<section><h2 class="section-heading" id="setting-up-our-notebook-environment">Setting up our notebook environment<a class="anchor" aria-label="anchor" href="#setting-up-our-notebook-environment"></a>
 </h2>
 <hr class="half-width">
+<p>Amazon SageMaker provides a managed environment to simplify the
+process of building, training, and deploying machine learning models. In
+this episode, we’ll set up a <strong>SageMaker notebook
+instance</strong>—a Jupyter notebook hosted on AWS for managing
+SageMaker workflows.</p>
+<div class="section level3">
+<h3 id="what-a-sagemaker-notebook-instance-is">What a SageMaker notebook instance is<a class="anchor" aria-label="anchor" href="#what-a-sagemaker-notebook-instance-is"></a>
+</h3>
 <p>A <strong>SageMaker notebook instance</strong> is a virtual machine
 that AWS runs for you with JupyterLab already installed, a set of Python
 kernels that come with the AWS SDKs (<code>boto3</code> and the
 SageMaker Python SDK), and an IAM role attached that decides what the
 code running on it may do in your account. You create it from the
-console, open JupyterLab in a browser tab, and from then on it behaves
-like the Jupyter you already know. It is billed per second while it is
-running and nothing while it is stopped, and the files you keep under
-<code>/home/ec2-user/SageMaker/</code> survive a stop.</p>
+console and open JupyterLab in a browser tab. It is billed per second
+while it is running and nothing while it is stopped, and the files you
+keep under <code>/home/ec2-user/SageMaker/</code> survive a stop.</p>
+</div>
 <div class="section level3">
 <h3 id="why-we-work-from-a-notebook-instance-in-this-lesson">Why we work from a notebook instance in this lesson<a class="anchor" aria-label="anchor" href="#why-we-work-from-a-notebook-instance-in-this-lesson"></a>
 </h3>
-<p>Nothing in the lesson <em>requires</em> it: the SageMaker SDK runs
-anywhere Python does. We use a notebook instance anyway, for reasons
-that matter in a classroom and in a research group alike:</p>
+<p>The SageMaker SDK runs anywhere Python does, so the lesson could be
+run from a laptop. We use a notebook instance for four reasons:</p>
 <ul>
 <li>
 <strong>Identity comes from the instance, not from a file on your
 machine.</strong> The IAM role attached to the notebook is what
 authorizes every call it makes. Nobody installs the AWS CLI, configures
 credentials, or has an access key that can end up in a notebook, a shell
-history or a GitHub commit. For a shared account with a hundred people
-in it, that is the single biggest security simplification
-available.</li>
+history or a GitHub commit.</li>
 <li>
 <strong>Everyone has the same environment.</strong> The kernels, the
 SDK version and the paths are identical for every learner, so a cell
-that works for the instructor works for you. Package and path problems
-are the main thing that eats workshop time; this removes most of
-them.</li>
+that works for the instructor works for you.</li>
 <li>
 <strong>It is inside AWS.</strong> Reading your S3 bucket from the
 instance is in-region, fast and free of transfer charges; the same reads
 from a laptop would be slower and billed as data leaving AWS.</li>
 <li>
-<strong>It is a resource like any other.</strong> It has to be
-sized, tagged, started and, above all, stopped. Creating it is your
-first practice at the discipline that the whole lesson is about.</li>
+<strong>It is a billed resource like any other.</strong> It has to
+be sized, tagged, started and stopped.</li>
 </ul>
 </div>
 <div class="section level3">
-<h3 id="the-controller-pattern">The controller pattern<a class="anchor" aria-label="anchor" href="#the-controller-pattern"></a>
+<h3 id="using-the-notebook-as-a-controller">Using the notebook as a controller<a class="anchor" aria-label="anchor" href="#using-the-notebook-as-a-controller"></a>
 </h3>
-<p>The instance you create here will be small
-(<code>ml.t3.medium</code>: 2 vCPUs, 4 GB of memory, $0.05 per hour) and
-that is deliberate. The notebook never does the heavy computation. Its
-job is to be a <strong>controller</strong>: it holds your code and your
-notes, and it uses the SageMaker SDK to launch separate, more powerful
-instances for training, hyperparameter tuning and batch processing.
-Those instances start, run your script, write their results to S3, and
-shut themselves down. You pay for a GPU for the minutes a job needs it,
-not for the hours you spend thinking in between, and a mistake in a
-notebook cell cannot leave an expensive machine running: the expensive
-machine is a job, and jobs end.</p>
-<p>Every later episode uses the same instance. In this one we create it,
-open it, and learn to stop it.</p>
+<p>In this setup, the notebook instance functions as a
+<em>controller</em> to manage more resource-intensive compute tasks. By
+selecting a minimal instance (e.g., <code>ml.t3.medium</code>: 2 vCPUs,
+4 GB of memory, $0.05 per hour), you can perform lightweight operations
+while leveraging the <strong>SageMaker Python SDK</strong> to launch
+scalable compute instances for model training, batch processing, and
+hyperparameter tuning. Those instances start, run your script, write
+their results to S3, and shut themselves down. This approach minimizes
+costs while accessing the full power of SageMaker for demanding
+tasks.</p>
+<p>Every later episode uses the same instance.</p>
 <p>We’ll follow these steps to create our first “SageMaker notebook
 instance”.</p>
 <div class="section level4">
@@ -1540,16 +1528,13 @@ AI</strong> to save SageMaker as a bookmark in your AWS toolbar</li>
 <li><p>In the SageMaker left-side menu, click on <strong>Notebook
 instances</strong>, then click <strong>Create notebook
 instance</strong>.</p></li>
-<li><p><strong>Notebook name</strong>: Same convention as your bucket,
-with a purpose on the end:
-<code>challenge-lastnamefirstname-purpose</code>, all lowercase,
-e.g. <code>sinkorswim-doejohn-trainclassifier</code>. SageMaker allows
-letters, digits and hyphens (no spaces or underscores, up to 63
-characters) and would accept capitals, but we keep everything lowercase
-so the bucket, the notebook and the tags all carry the same string and
-sort together in the console and on the bill. This name is also reused
-as the prefix of every training job you launch from the notebook, which
-is how you will find your jobs in a shared account.</p></li>
+<li><p><strong>Notebook name</strong>: To easily track this resource in
+our shared account, please use the following naming convention:
+<code>challenge-lastnamefirstname-purpose</code>, all lowercase (same
+convention as your bucket, with a purpose on the end). For example,
+<code>sinkorswim-doejohn-trainclassifier</code>. Can include hyphens,
+but not spaces. This name is also reused as the prefix of every training
+job you launch from the notebook.</p></li>
 <li>
 <p><strong>Instance type</strong>: SageMaker notebooks run on AWS
 EC2 instances. The instance type determines the compute resources
@@ -1604,9 +1589,9 @@ notebook).</p></li>
 <p><strong>Tags (NOT OPTIONAL)</strong>: Adding tags helps track and
 organize resources for billing and management. This is particularly
 useful when you need to break down expenses by project, task, or team.
-To help track costs on our shared account, add the same three keys you
-put on your bucket in the previous episode (type the keys exactly as
-shown; capitalization matters):</p>
+To help track costs on our shared account, add exactly these three tags,
+the same keys you put on your bucket in the previous episode (type the
+keys exactly as shown; capitalization matters):</p>
 <table class="table">
 <thead><tr>
 <th>Key</th>
@@ -1625,8 +1610,7 @@ shown; capitalization matters):</p>
 </tr>
 <tr>
 <td><code>Purpose</code></td>
-<td>what this resource is for,
-e.g. <code>Workshop-controller</code>
+<td>what this resource is for, e.g. <code>Train</code>
 </td>
 </tr>
 </tbody>
@@ -1764,42 +1748,15 @@ it.</li>
 <h3 id="before-you-leave-stop-the-instance">Before you leave: stop the instance<a class="anchor" aria-label="anchor" href="#before-you-leave-stop-the-instance"></a>
 </h3>
 <p>A notebook instance bills for every second it is
-<strong>InService</strong>, whether or not you are typing in it. When
-you step away for the day, go to <strong>Notebook instances</strong>,
-select yours and choose <strong>Stop</strong>. Your files under
+<strong>InService</strong>. When you step away for the day, go to
+<strong>Notebook instances</strong>, select yours and choose
+<strong>Stop</strong>. Your files under
 <code>/home/ec2-user/SageMaker</code> (including the repos you clone)
 survive a Stop and are there when you start it again; packages you
 <code>pip install</code> are not, so expect to reinstall them. When the
 workshop is over, <strong>Delete</strong> the instance: a stopped
 instance still bills for its storage volume ($0.14 per GB-month), and
 the cleanup episode walks through this.</p>
-<div id="everything-from-here-is-one-pattern" class="callout">
-<div class="callout-square">
-<i class="callout-icon" data-feather="bell"></i>
-</div>
-<span class="callout-header">Callout</span>
-<div id="everything-from-here-is-one-pattern" class="callout-inner">
-<h3 class="callout-title">Everything from here is one pattern</h3>
-<div class="callout-content">
-<p>The rest of this lesson is one pattern applied again and again. A
-cheap controller notebook (the <code>ml.t3.medium</code> you just
-created) launches work that runs <em>elsewhere</em>, on an instance that
-exists only for the duration of the job and shuts itself down when the
-job ends: a training job on the Titanic data, a hyperparameter tuning
-job that runs many of them in parallel, a Processing job that serves a
-language model over a corpus of papers, and a fine-tuning job on a
-rented GPU. The controller never has to be big, and nothing is left
-running by accident. Four habits travel with every launch, and you will
-see them in every episode: the three <strong>tags</strong> on the job so
-its cost is traceable; a <strong>runtime cap</strong>
-(<code>max_run</code>) so a bug cannot run all night; a cost
-<strong>estimate written down before</strong> the launch and
-<strong>compared to the bill after</strong>, so your sense of what
-things cost gets calibrated; and <strong>cleanup</strong>, the
-stop-or-delete step that ends what the job did not end on its own.</p>
-</div>
-</div>
-</div>
 <div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
 <i class="callout-icon" data-feather="key"></i>
@@ -1808,19 +1765,16 @@ stop-or-delete step that ends what the job did not end on its own.</p>
 <div class="callout-inner">
 <div class="callout-content">
 <ul>
-<li>Use a minimal SageMaker notebook instance as a controller to manage
-larger, resource-intensive tasks.</li>
-<li>The controller pattern: the notebook launches work (training,
-tuning, processing, fine-tuning) that runs on separate instances and
-ends on its own; the notebook itself never needs to be big.</li>
-<li>Tags can help track costs effectively, especially in multi-project
-or team settings; the same three keys (<code>Name</code>,
-<code>Project</code>, <code>Purpose</code>) go on every resource, and
-tags never propagate.</li>
-<li>Stop the notebook instance whenever you leave, and delete it when
-the workshop is over.</li>
-<li>Use the SageMaker SDK documentation to explore additional options
-for managing compute resources in AWS.</li>
+<li><p>Use a minimal SageMaker notebook instance as a controller to
+manage larger, resource-intensive tasks.</p></li>
+<li><p>Launch training and tuning jobs on scalable instances using the
+SageMaker SDK.</p></li>
+<li><p>Tags can help track costs effectively, especially in
+multi-project or team settings.</p></li>
+<li><p>Stop the notebook instance whenever you leave, and delete it when
+the workshop is over.</p></li>
+<li><p>Use the SageMaker SDK documentation to explore additional options
+for managing compute resources in AWS.</p></li>
 </ul>
 </div>
 </div>
@@ -2103,25 +2057,25 @@ this code to only fetch certain objects or folders.</p>
 </div>
 </div>
 <div class="section level3">
-<h3 id="using-the-lessons-helper-functions">Using the lesson’s helper functions<a class="anchor" aria-label="anchor" href="#using-the-lessons-helper-functions"></a>
+<h3 id="using-helper-functions-from-github">Using helper functions from GitHub<a class="anchor" aria-label="anchor" href="#using-helper-functions-from-github"></a>
 </h3>
 <p>We have added code to calculate bucket size to a helper function
 called <code>get_s3_bucket_size(bucket_name)</code> for your
-convenience, in <code>scripts/helpers.py</code> of the lesson
-repository, alongside the training and processing scripts that later
-episodes launch as jobs. Everything the workshop needs lives in that one
-repository, so we clone it once onto the notebook instance and use it
-from there.</p>
+convenience. There are also some other helper functions in
+<code>scripts/helpers.py</code> of the lesson repository to assist you
+with common AWS/SageMaker workflows. We’ll show you how to clone this
+code into your notebook environment.</p>
 <div class="section level4">
-<h4 id="clone-the-lesson-repository-once">Clone the lesson repository (once)<a class="anchor" aria-label="anchor" href="#clone-the-lesson-repository-once"></a>
+<h4 id="directory-setup">Directory setup<a class="anchor" aria-label="anchor" href="#directory-setup"></a>
 </h4>
-<p>Start in the root directory of this instance,
-<code>/home/ec2-user/SageMaker/</code>: it is the one directory that
-survives stopping the instance, so a clone placed there is still present
-next session. The <code>test -d ... ||</code> guard makes the cell a
-no-op if the folder already exists, which is why every later episode
-starts with the same cell: whichever episode you open first, the code is
-there.</p>
+<p>Let’s make sure we’re starting in the root directory of this
+instance, so that we all have our helpers.py file located in the same
+path
+(/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/helpers.py).
+This directory survives stopping the instance, so a clone placed there
+is still present next session. The <code>test -d ... ||</code> guard
+skips the clone if the folder already exists; every later episode starts
+with the same cell.</p>
 <div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -2133,9 +2087,10 @@ there.</p>
 </div>
 <p><code>sys.path.insert</code> tells Python where to find the lesson’s
 <code>scripts/</code> folder; after it, <code>import helpers</code>
-works from any directory. No GitHub account is involved: this is a
-read-only clone of a public repository.</p>
-<p>With the repo cloned, you can call the bucket-size function via…</p>
+works from any directory.</p>
+<p>Our helpers.py file can be found in
+<code>ML_with_AWS_SageMaker/scripts/helpers.py</code>. With this file
+downloaded, you can call this function via…</p>
 <div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -2218,26 +2173,23 @@ page</a>.</p>
 <hr class="half-width">
 <p>As your analysis generates new files or demands additional
 documentation, you can upload files to your bucket as demonstrated
-below. For this demo, we create a small <code>Notes.txt</code> file in
-the notebook’s working directory and upload it under a
-<code>docs/</code> prefix. (You could also create the file by hand with
-<strong>File</strong> -&gt; <strong>New</strong> -&gt; <strong>Text
-file</strong>; the code below does the same thing so the notebook runs
-end to end.)</p>
+below. For this demo, you can create a blank <code>Notes.txt</code> file
+to upload to your bucket. To do so, go to <strong>File</strong> -&gt;
+<strong>New</strong> -&gt; <strong>Text file</strong>, and save it out
+as <code>Notes.txt</code>. (The code below also writes the file, so the
+notebook runs end to end.)</p>
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a><span class="co"># Create a small text file to upload (in the current working directory, /home/ec2-user/SageMaker)</span></span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a>notes_file_path <span class="op">=</span> <span class="st">"Notes.txt"</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a><span class="co"># Define the S3 bucket name and the file paths</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a>notes_file_path <span class="op">=</span> <span class="st">"Notes.txt"</span> <span class="co"># assuming your file is in root directory of jupyter notebook (check file explorer tab)</span></span>
 <span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a><span class="cf">with</span> <span class="bu">open</span>(notes_file_path, <span class="st">"w"</span>) <span class="im">as</span> f:</span>
 <span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a>    f.write(<span class="st">"Workshop notes: Titanic data uploaded from the S3 episode; outputs go under per-episode prefixes.</span><span class="ch">\n</span><span class="st">"</span>)</span>
 <span id="cb11-5"><a href="#cb11-5" tabindex="-1" aria-label="code-block-11-5"></a></span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1" aria-label="code-block-11-6"></a><span class="co"># Upload it under a prefix called "docs/". A prefix is S3's version of a folder: there is no folder to</span></span>
-<span id="cb11-7"><a href="#cb11-7" tabindex="-1" aria-label="code-block-11-7"></a><span class="co"># create first; the key "docs/Notes.txt" is enough. Every later episode writes under its own prefix</span></span>
-<span id="cb11-8"><a href="#cb11-8" tabindex="-1" aria-label="code-block-11-8"></a><span class="co"># (xgboost/, pytorch/, wattbot/, badger-scribe/) in this same bucket.</span></span>
-<span id="cb11-9"><a href="#cb11-9" tabindex="-1" aria-label="code-block-11-9"></a>s3.upload_file(notes_file_path, bucket_name, <span class="st">"docs/Notes.txt"</span>)</span>
-<span id="cb11-10"><a href="#cb11-10" tabindex="-1" aria-label="code-block-11-10"></a></span>
-<span id="cb11-11"><a href="#cb11-11" tabindex="-1" aria-label="code-block-11-11"></a><span class="bu">print</span>(<span class="st">"File uploaded successfully."</span>)</span></code></pre>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1" aria-label="code-block-11-6"></a><span class="co"># Upload the training file to a new folder called "docs". You can also just place it in the bucket's root directory if you prefer (remove docs/ in code below).</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1" aria-label="code-block-11-7"></a>s3.upload_file(notes_file_path, bucket_name, <span class="st">"docs/Notes.txt"</span>)</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1" aria-label="code-block-11-8"></a></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1" aria-label="code-block-11-9"></a><span class="bu">print</span>(<span class="st">"Files uploaded successfully."</span>)</span></code></pre>
 </div>
 <p>After uploading, we can view the objects/files available on our
 bucket using…</p>
@@ -2309,11 +2261,10 @@ prefixes instead of a new bucket per episode?</li>
 <span id="cb14-8"><a href="#cb14-8" tabindex="-1" aria-label="code-block-14-8"></a><span class="bu">print</span>(size_before, size_after)</span></code></pre>
 </div>
 <p>The bucket grows by the size of the file (a few hundred bytes here),
-and at $0.023 per GB-month that is a rounding error: well under a
-thousandth of a cent per month. The point of the exercise is the habit,
-not the number. The same two lines, run before and after a training job,
-tell you what the job wrote and whether something is accumulating that
-you should clean up.</p>
+and at $0.023 per GB-month that is well under a thousandth of a cent per
+month. The same two lines, run before and after a training job, tell you
+what the job wrote and whether something is accumulating that you should
+clean up.</p>
 <ol start="2" style="list-style-type: decimal">
 <li>The training episode writes under <code>xgboost/</code>
 (<code>s3://sinkorswim-doejohn/xgboost/</code>), the same way this
@@ -2341,13 +2292,11 @@ longer cleanup list.</li>
 processing.</li>
 <li>Periodically check storage usage and costs to manage S3
 budgets.</li>
-<li>Upload analysis results to your bucket under a prefix per episode
-(<code>docs/</code>, <code>xgboost/</code>, …) and keep one bucket for
-the whole workshop.</li>
+<li>Use SageMaker to upload analysis results and maintain an organized
+workflow.</li>
 <li>Clone the lesson repository once, into
 <code>/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/</code>; every
-later episode starts with the same guarded clone-and-import cell, so the
-code is there whichever episode you open first.</li>
+later episode starts with the same guarded clone-and-import cell.</li>
 </ul>
 </div>
 </div>
@@ -2416,11 +2365,10 @@ nothing else in the lesson does.</p>
 <hr class="half-width">
 <p>So far every notebook you have run came from the lesson repository,
 which you cloned read-only in the Accessing S3 episode. You cannot push
-to that repository, and you would not want to: the lesson is not your
-project. The realistic situation is the one this episode sets up:
-<strong>your own work lives in your own repository</strong>. We will
-create an empty repository on GitHub, make a matching folder on the
-notebook instance, copy a notebook into it, and push.</p>
+to that repository. This episode sets up the usual situation instead:
+<strong>your own work in your own repository</strong>. We will create an
+empty repository on GitHub, make a matching folder on the notebook
+instance, copy a notebook into it, and push.</p>
 <ol style="list-style-type: decimal">
 <li>On GitHub, click <strong>New repository</strong> (the
 <strong>+</strong> in the top-right corner). Name it
@@ -2517,7 +2465,7 @@ session and is not written into the notebook file.</p>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a>token <span class="op">=</span> getpass.getpass(<span class="st">"GitHub Personal Access Token (PAT): "</span>)</span></code></pre>
 </div>
 <p><strong>Note</strong>: when you re-run the whole notebook later, this
-cell prompts again. That is the point: nothing is saved.</p>
+cell prompts again, because nothing is saved.</p>
 </div>
 </section><section><h2 class="section-heading" id="step-2-configure-git-settings">Step 2: Configure Git settings<a class="anchor" aria-label="anchor" href="#step-2-configure-git-settings"></a>
 </h2>
@@ -2878,7 +2826,7 @@ SageMaker-managed training?</li>
 <li>How do Estimator classes in SageMaker streamline the training
 process for various frameworks?</li>
 <li>How do you estimate what a training job will cost before launching
-it, and check what it actually cost afterwards?</li>
+it, and check what it cost afterwards?</li>
 </ul>
 </div>
 </div>
@@ -2917,11 +2865,11 @@ When asked for a kernel, pick
 kernel for the next two episodes.</p>
 </div>
 <div class="section level4">
-<h4 id="lesson-code">2. Lesson code<a class="anchor" aria-label="anchor" href="#lesson-code"></a>
+<h4 id="cd-to-instance-home-directory">2. CD to instance home directory<a class="anchor" aria-label="anchor" href="#cd-to-instance-home-directory"></a>
 </h4>
-<p>The same cell as in the Accessing S3 episode: start from the
-instance’s root directory, clone the lesson repository if it is not
-already there, and make its <code>scripts/</code> importable. The
+<p>So we all can reference the helper functions using the same path, CD
+to the instance’s root directory, clone the lesson repository if it is
+not already there, and make its <code>scripts/</code> importable. The
 training scripts for this episode (<code>train_xgboost.py</code>) and
 the next (<code>train_nn.py</code>) are in that folder.</p>
 <div class="codewrapper sourceCode" id="cb1">
@@ -2978,8 +2926,8 @@ applications.</p>
 </div>
 <p>Create a SageMaker session to manage interactions with Amazon
 SageMaker, such as training jobs, model deployments, and data
-input/output. The region comes from the notebook instance itself; never
-hard-code it, so the same notebook works in any account.</p>
+input/output. The region comes from the notebook instance itself, so the
+same notebook works in any account.</p>
 <div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -3007,11 +2955,12 @@ root folder first (<code>/home/ec2-user/SageMaker</code>).</p>
 <hr class="half-width">
 <p>In this next section, we will learn how to take a model training
 script that was written/designed to run locally, and deploy it to more
-powerful instances using SageMaker. This is helpful for machine learning
-jobs that require extra power or GPUs. However, before we try exploiting
-this extra power, it is essential that we test our code thoroughly! We
-don’t want to waste unnecessary compute cycles and resources on jobs
-that produce bugs rather than insights.</p>
+powerful instances (or many instances) using SageMaker. This is helpful
+for machine learning jobs that require extra power, GPUs, or benefit
+from parallelization. However, before we try exploiting this extra
+power, it is essential that we test our code thoroughly! We don’t want
+to waste unnecessary compute cycles and resources on jobs that produce
+bugs rather than insights.</p>
 <div class="section level3">
 <h3 id="general-guidelines-for-testing-ml-pipelines-before-scaling">General guidelines for testing ML pipelines before scaling<a class="anchor" aria-label="anchor" href="#general-guidelines-for-testing-ml-pipelines-before-scaling"></a>
 </h3>
@@ -3043,10 +2992,10 @@ hyperparameters or scaling.</li>
 <div id="what-tests-should-we-do-before-scaling" class="callout-inner">
 <h3 class="callout-title">What tests should we do before scaling?</h3>
 <div class="callout-content">
-<p>Before scaling to more powerful instances (e.g., training on larger
-datasets or tuning hyperparameters in parallel), it’s important to run a
-few quick sanity checks to catch potential issues early. <strong>In your
-group, discuss:</strong></p>
+<p>Before scaling to multiple or more powerful instances (e.g., training
+on larger/multiple datasets in parallel or tuning hyperparameters in
+parallel), it’s important to run a few quick sanity checks to catch
+potential issues early. <strong>In your group, discuss:</strong></p>
 <ul>
 <li>Which checks do you think are most critical before scaling up?<br>
 </li>
@@ -3057,7 +3006,7 @@ group, discuss:</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Which checks do you think are most critical before scaling up?</p>
 <ul>
@@ -3143,11 +3092,11 @@ for any ML/AI practitioner.</p>
 <div id="understanding-the-xgboost-training-script" class="callout-inner">
 <h3 class="callout-title">Understanding the XGBoost Training Script</h3>
 <div class="callout-content">
-<p>Take a moment to review
-<code>ML_with_AWS_SageMaker/scripts/train_xgboost.py</code>, part of the
-lesson repository we cloned at the start of this episode. This script
-handles preprocessing, training, and saving an XGBoost model, while also
-adapting to both local and SageMaker-managed environments.</p>
+<p>Take a moment to review the
+<code>ML_with_AWS_SageMaker/scripts/train_xgboost.py</code> script we
+just cloned into our notebook. This script handles preprocessing,
+training, and saving an XGBoost model, while also adapting to both local
+and SageMaker-managed environments.</p>
 <p>Try answering the following questions:</p>
 <ol style="list-style-type: decimal">
 <li><p><strong>Data Preprocessing</strong>: What transformations are
@@ -3175,7 +3124,7 @@ group.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li><p><strong>Data Preprocessing</strong>: The script fills missing
@@ -3349,7 +3298,8 @@ incorporating similar logging to track not only training time but also
 total runtime, which includes additional steps like data loading,
 evaluation, and saving results. Tracking both can help you pinpoint
 bottlenecks and optimize your workflow as projects grow in size and
-complexity.</p>
+complexity, especially when scaling with SageMaker’s distributed
+resources.</p>
 </div>
 <div class="section level3">
 <h3 id="sanity-check-quick-evaluation-on-test-set">Sanity check: Quick evaluation on test set<a class="anchor" aria-label="anchor" href="#sanity-check-quick-evaluation-on-test-set"></a>
@@ -3388,30 +3338,29 @@ notebook instance.</p>
 <span id="cb11-25"><a href="#cb11-25" tabindex="-1" aria-label="code-block-11-25"></a>accuracy <span class="op">=</span> accuracy_score(y_test, predictions)</span>
 <span id="cb11-26"><a href="#cb11-26" tabindex="-1" aria-label="code-block-11-26"></a><span class="bu">print</span>(<span class="ss">f"Test Set Accuracy: </span><span class="sc">{</span>accuracy<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<p>A reasonably high test set accuracy (around 0.8 for this dataset)
-suggests our code/model is working correctly.</p>
+<p>A reasonably high test set accuracy suggests our code/model is
+working correctly.</p>
 </div>
 </section><section><h2 class="section-heading" id="training-via-sagemaker-using-notebook-as-controller---custom-train-py-script">Training via SageMaker (using notebook as controller) - custom
 train.py script<a class="anchor" aria-label="anchor" href="#training-via-sagemaker-using-notebook-as-controller---custom-train-py-script"></a>
 </h2>
 <hr class="half-width">
 <p>Unlike “local” training (using this notebook), this next approach
-leverages SageMaker’s managed infrastructure: SageMaker starts a
-separate instance just for the job, runs your script on it, saves the
-output to S3, and shuts the instance down. By specifying instance
-parameters, such as <code>instance_count</code> and
-<code>instance_type</code>, you control the resources allocated for
-training.</p>
+leverages SageMaker’s managed infrastructure to handle resources,
+parallelism, and scalability. By specifying instance parameters, such as
+instance_count and instance_type, you can control the resources
+allocated for training.</p>
 <div class="section level3">
 <h3 id="which-instance-to-start-with">Which instance to start with?<a class="anchor" aria-label="anchor" href="#which-instance-to-start-with"></a>
 </h3>
-<p>In this example, we start with one <code>ml.m5.large</code> instance,
-which is suitable for small- to medium-sized datasets and simpler
-models. Using a single instance is often cost-effective and sufficient
-for initial testing, allowing for straightforward scaling up to more
-powerful instance types if training takes too long. See the lesson’s <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
-for ML page</a> for guidance on selecting an appropriate instance for
-your data/model.</p>
+<p>In this example, we start with one ml.m5.large instance, which is
+suitable for small- to medium-sized datasets and simpler models. Using a
+single instance is often cost-effective and sufficient for initial
+testing, allowing for straightforward scaling up to more powerful
+instance types or multiple instances if training takes too long. See
+here for further guidance on selecting an appropriate instance for your
+data/model: <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
+for ML page</a></p>
 </div>
 <div class="section level3">
 <h3 id="overview-of-estimator-classes-in-sagemaker">Overview of Estimator classes in SageMaker<a class="anchor" aria-label="anchor" href="#overview-of-estimator-classes-in-sagemaker"></a>
@@ -3567,15 +3516,15 @@ learning applications in TensorFlow.</li>
 </h4>
 <ul>
 <li>
-<strong>Purpose</strong>: Provides managed containers, with
-<code>transformers</code> and its usual companions pre-installed, for
-training and fine-tuning Hugging Face models (we use it to fine-tune a
-vision-language model in a later episode).</li>
+<strong>Purpose</strong>: Provides managed containers for training
+and fine-tuning models using the Hugging Face <code>transformers</code>
+library.<br>
+</li>
 <li>
 <strong>Configuration</strong>:
 <ul>
 <li>
-<code>entry_point</code>: Custom training script (e.g.,
+<code>entry_point</code>: Custom script for training (e.g.,
 <code>train.py</code>).<br>
 </li>
 <li>
@@ -3584,13 +3533,13 @@ vision-language model in a later episode).</li>
 </li>
 <li>
 <code>dependencies</code>: Optional <code>requirements.txt</code>
-for extra libraries (e.g., <code>peft</code> for LoRA).<br>
+for extra libraries.<br>
 </li>
 </ul>
 </li>
 <li>
-<strong>Ideal Use Cases</strong>: Fine-tuning pretrained Transformer
-models for NLP, vision, or multimodal tasks.</li>
+<strong>Ideal Use Cases</strong>: NLP, vision, or multimodal tasks
+using pretrained Transformer models.</li>
 </ul>
 <div id="configuring-custom-environments-with-requirements.txt" class="callout">
 <div class="callout-square">
@@ -3672,17 +3621,14 @@ and a human-readable name, even after the job has completed.</p>
 <div class="section level4">
 <h4 id="estimate-before-you-launch">Estimate before you launch<a class="anchor" aria-label="anchor" href="#estimate-before-you-launch"></a>
 </h4>
-<p>Make a habit of estimating the cost of every job <em>before</em> you
-run it: <strong>instance rate x expected minutes, plus about 3 minutes
-of startup</strong> (SageMaker has to provision the instance, pull the
-container, and download your data before your script starts, and you pay
-for the download part). An <code>ml.m5.large</code> costs about
+<p>Estimate the cost of every job <em>before</em> you run it: instance
+rate x expected minutes, plus about 3 minutes of startup (SageMaker has
+to provision the instance, pull the container, and download your data
+before your script starts). An <code>ml.m5.large</code> costs about
 $0.115/hour (us-east-1 on-demand; see the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
-for ML page</a>). Our local test finished in well under a minute, so the
+for ML page</a>). Our local test finished in under a minute, so the
 estimate is roughly 1 minute of training + 3 minutes of startup = 4
-minutes, or about $0.01. If the real bill is far from your estimate,
-something about the job is not what you thought, and that is worth
-knowing before you scale it up.</p>
+minutes, or about $0.01.</p>
 <div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -3754,26 +3700,24 @@ XGBoost model, such as <code>max_depth</code>, <code>eta</code>,
 <div class="section level4">
 <h4 id="traininginput">TrainingInput<a class="anchor" aria-label="anchor" href="#traininginput"></a>
 </h4>
-<p>Additionally, we define a <code>TrainingInput</code> object
-containing the training data’s S3 path, to pass to
+<p>Additionally, we define a TrainingInput object containing the
+training data’s S3 path, to pass to
 <code>.fit({'train': train_input})</code>. SageMaker uses
 <code>TrainingInput</code> to download your dataset from S3 to a
-temporary location on the training instance
-(<code>/opt/ml/input/data/train/</code>, which the script reads via the
-<code>SM_CHANNEL_TRAIN</code> environment variable).</p>
+temporary location on the training instance. This location is mounted
+and managed by SageMaker and can be accessed by the training job if/when
+needed.</p>
 </div>
 <div class="section level4">
 <h4 id="what-did-that-cost">What did that cost?<a class="anchor" aria-label="anchor" href="#what-did-that-cost"></a>
 </h4>
-<p>Now ask SageMaker what it actually charged for.
-<code>describe_training_job</code> returns two durations:
+<p><code>describe_training_job</code> returns two durations:
 <code>TrainingTimeInSeconds</code> (your script running) and
-<code>BillableTimeInSeconds</code> (the wall-clock time the instance was
-reserved for you, which also includes pulling the container and
-downloading data). SageMaker bills per second, so cost is simply
-billable seconds x instance count x hourly rate. We’ll wrap this in a
-small helper and call it after every job in this lesson, so you always
-see the bill next to the run.</p>
+<code>BillableTimeInSeconds</code> (the time the instance was reserved
+for you, which also includes pulling the container and downloading
+data). SageMaker bills per second, with no rounding, so cost is billable
+seconds x instance count x hourly rate. We’ll wrap this in a small
+helper and call it after every job in this lesson.</p>
 <div class="codewrapper sourceCode" id="cb15">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -3787,8 +3731,7 @@ see the bill next to the run.</p>
 </div>
 <p>Compare this with the estimate you made above. The gap between
 training time and billable time is the startup overhead of every job; it
-is the same whether you train for one minute or one hour, which is why
-many tiny jobs cost more than one longer job doing the same work.</p>
+is the same whether you train for one minute or one hour.</p>
 </div>
 <div class="section level4">
 <h4 id="model-results">Model results<a class="anchor" aria-label="anchor" href="#model-results"></a>
@@ -3799,8 +3742,8 @@ This folder (<code>s3://{bucket_name}/xgboost/</code>) will be
 automatically created if it doesn’t already exist, and will contain:</p>
 <ol style="list-style-type: decimal">
 <li>
-<strong>Model “artifacts”</strong>: The trained model file (a
-<code>model.tar.gz</code> file) that SageMaker saves in the
+<strong>Model “artifacts”</strong>: The trained model file (often a
+<code>.tar.gz</code> file) that SageMaker saves in the
 <code>output_path</code>.</li>
 <li>
 <strong>Logs and metrics</strong>: Any metrics and logs related to
@@ -3962,11 +3905,10 @@ Image.</p>
 <div class="section level4">
 <h4 id="preparing-data-for-the-built-in-algorithm">Preparing data for the built-in algorithm<a class="anchor" aria-label="anchor" href="#preparing-data-for-the-built-in-algorithm"></a>
 </h4>
-<p>“No custom preprocessing” cuts both ways: the built-in algorithm will
-not run our <code>preprocess_data()</code> for us, and it is strict
-about its input. It expects a CSV with <strong>no header row, every
-column numeric, and the label in the first column</strong>. The raw
-<code>titanic_train.csv</code> (header, <code>Name</code> and
+<p>The built-in algorithm will not run our
+<code>preprocess_data()</code> for us, and it expects a CSV with no
+header row, every column numeric, and the label in the first column. The
+raw <code>titanic_train.csv</code> (header, <code>Name</code> and
 <code>Sex</code> strings, label in the second column) fails at data
 load. So we run the same preprocessing we used in
 <code>train_xgboost.py</code> here in the notebook, write the result in
@@ -3991,14 +3933,15 @@ the expected layout, and upload it to its own prefix in our bucket.</p>
 </div>
 </div>
 <div class="section level4">
-<h4 id="setting-up-the-estimator-and-data-path">Setting up the estimator and data path<a class="anchor" aria-label="anchor" href="#setting-up-the-estimator-and-data-path"></a>
+<h4 id="setting-up-the-data-path">Setting up the data path<a class="anchor" aria-label="anchor" href="#setting-up-the-data-path"></a>
 </h4>
-<p>With the built-in container we use the general <code>Estimator</code>
-class and point it at the image URI. <code>hyperparameters</code> now
-holds only the model’s hyperparameters (there is no script to pass a
-filename to), and we add <code>objective</code>, because the built-in
-algorithm’s default objective is regression rather than binary
-classification.</p>
+<p>In this approach, using <code>TrainingInput</code> directly with
+SageMaker’s built-in XGBoost container contrasts with our previous
+method, where we specified a custom script with argument inputs
+(specified in hyperparameters) for data paths and settings. Here, we use
+hyperparameters only to specify the model’s hyperparameters. We also add
+<code>objective</code>, because the built-in algorithm’s default
+objective is regression rather than binary classification.</p>
 <div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -4039,7 +3982,7 @@ classification.</p>
 <span id="cb19-35"><a href="#cb19-35" tabindex="-1" aria-label="code-block-19-35"></a></span>
 <span id="cb19-36"><a href="#cb19-36" tabindex="-1" aria-label="code-block-19-36"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<p>And, as always, the bill:</p>
+<p>Then the cost report:</p>
 <div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -4073,16 +4016,12 @@ include jobs from other users in the account.</li>
 <li>
 <strong>Verify your training Job</strong>
 <ul>
-<li>Identify your job by its name. Because we set
-<code>base_job_name=notebook_instance_name</code>, the name starts with
-your notebook instance name followed by a timestamp,
-e.g. <code>sinkorswim-doejohn-trainclassifier-2026-10-16-14-05-33-123</code>
-(this is also what
-<code>xgboost_estimator.latest_training_job.name</code> printed above).
-Click on its name to access detailed information. Cross-check the job
-details, such as the <strong>Instance Type</strong> and <strong>Input
-data configuration</strong>, with the parameters you set in your
-script.</li>
+<li>Identify your job by looking for the specific name format (e.g.,
+<code>sinkorswim-doejohn-trainclassifier-YYYY-MM-DD-HH-MM-SS-XXX</code>)
+generated when you launched the job. Click on its name to access
+detailed information. Cross-check the job details, such as the
+<strong>Instance Type</strong> and <strong>Input data
+configuration</strong>, with the parameters you set in your script.</li>
 </ul>
 </li>
 <li>
@@ -4128,28 +4067,60 @@ processes.</p>
 </section><section><h2 class="section-heading" id="when-training-takes-too-long">When training takes too long<a class="anchor" aria-label="anchor" href="#when-training-takes-too-long"></a>
 </h2>
 <hr class="half-width">
-<p>When training time becomes excessive, two options can improve
+<p>When training time becomes excessive, two main options can improve
 efficiency in SageMaker:</p>
 <ul>
 <li>
-<strong>Option 1: Upgrade to a more powerful instance.</strong> This
-is the preferred approach and should always be explored first. A bigger
-CPU instance, or a GPU instance for neural networks, needs no code
-changes and avoids the coordination overhead of a multi-instance setup.
-Check the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
-for ML page</a> for guidance.</li>
-<li>
-<strong>Option 2: Use multiple instances (distributed
-training).</strong> This only helps when your script and data are
-actually set up to split the work, and it is only worth the effort in
-two situations: the dataset no longer fits in the memory of the largest
-single instance you can justify (tens of GB or more), or a
-single-instance run takes longer than about 10 hours. That is the one
-rule of thumb we use throughout this lesson, and it is why every
-estimator so far has <code>instance_count=1</code>.</li>
+<strong>Option 1: Upgrading to a more powerful
+instance</strong><br>
+</li>
+<li><strong>Option 2: Using multiple instances for distributed
+training</strong></li>
 </ul>
+<p>Generally, Option 1 is the preferred approach and should be explored
+first.</p>
+<div class="section level3">
+<h3 id="option-1-upgrade-to-a-more-powerful-instance-preferred-starting-point">Option 1: Upgrade to a more powerful instance (preferred starting
+point)<a class="anchor" aria-label="anchor" href="#option-1-upgrade-to-a-more-powerful-instance-preferred-starting-point"></a>
+</h3>
+<p>Upgrading to a more capable instance, particularly one with GPU
+capabilities, is often the simplest and most cost-effective way to speed
+up training. Check the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
+for ML page</a> for guidance.</p>
+<p>When to use a single instance upgrade:<br>
+- Dataset size – The dataset is small to moderate (e.g., &lt;10 GB),
+fitting comfortably within memory.<br>
+- Model complexity – XGBoost models are typically small enough to fit in
+memory.<br>
+- Training time – If training completes in a few hours but could be
+faster, upgrading may help.</p>
+<p>Upgrading a single instance is usually the most efficient option. It
+avoids the communication overhead of multi-instance setups and works
+well for small to medium datasets.</p>
+</div>
+<div class="section level3">
+<h3 id="option-2-use-multiple-instances-for-distributed-training">Option 2: Use multiple instances for distributed training<a class="anchor" aria-label="anchor" href="#option-2-use-multiple-instances-for-distributed-training"></a>
+</h3>
+<p>If upgrading a single instance doesn’t sufficiently reduce training
+time, distributed training across multiple instances may be a viable
+alternative. This only helps when your script and data are set up to
+split the work.</p>
+</div>
+<div class="section level3">
+<h3 id="when-to-consider-multiple-instances">When to consider multiple instances<a class="anchor" aria-label="anchor" href="#when-to-consider-multiple-instances"></a>
+</h3>
+<p>Using multiple instances makes sense when:<br>
+- Dataset size – The dataset is large and doesn’t fit comfortably in
+memory.<br>
+- Expected training time – A single instance takes too long (e.g.,
+&gt;10 hours).<br>
+- Need for faster training – Parallelization can speed up training but
+introduces communication overhead.</p>
+<p>If scaling to multiple instances, monitoring training time and
+efficiency is critical. In many cases, a single, more powerful instance
+may be more cost-effective than multiple smaller ones.</p>
 <p>In the next episode we train a PyTorch network, try Option 1 (a GPU
-instance), and then run a two-instance job to see for ourselves what
+instance), and then run a two-instance job to see what
 <code>instance_count=2</code> does and does not do.</p>
 <div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
@@ -4162,8 +4133,7 @@ instance), and then run a two-instance job to see for ourselves what
 <li>
 <strong>Environment initialization</strong>: Setting up a SageMaker
 session, defining roles, and specifying the S3 bucket are essential for
-managing data and running jobs in SageMaker. Read the region from the
-session rather than hard-coding it.</li>
+managing data and running jobs in SageMaker.</li>
 <li>
 <strong>Local vs. managed training</strong>: Always test your code
 locally (on a smaller scale) before scaling things up. This avoids
@@ -4173,16 +4143,16 @@ results.</li>
 <strong>Estimator classes</strong>: SageMaker provides
 framework-specific Estimator classes (e.g., XGBoost, PyTorch, SKLearn)
 to streamline training setups, each suited to different model types and
-workflows. Always set <code>max_run</code> and <code>tags</code>.</li>
+workflows.</li>
 <li>
 <strong>Custom scripts vs. built-in images</strong>: Custom training
 scripts offer flexibility with preprocessing and custom logic, while
-built-in images are optimized for rapid deployment but expect data in a
-fixed layout (headerless, numeric, label first for XGBoost).</li>
+built-in images are optimized for rapid deployment and simpler
+setups.</li>
 <li>
-<strong>Training data channels</strong>: <code>TrainingInput</code>
-tells SageMaker which S3 objects to download onto the training instance
-before your script starts.</li>
+<strong>Training data channels</strong>: Using
+<code>TrainingInput</code> ensures SageMaker manages data
+efficiently.</li>
 <li>
 <strong>Cost habit</strong>: Estimate cost before launching (rate x
 minutes + ~3 minutes startup), then read back
@@ -4200,6 +4170,7 @@ run takes more than ~10 hours.</li>
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
  -->
+</div>
 </section></section><section id="aio-Training-models-in-SageMaker-notebooks-part2"><p>Content from <a href="Training-models-in-SageMaker-notebooks-part2.html">Training Models in SageMaker: PyTorch Example</a></p>
 <hr>
 <p>Last updated on 2026-10-19 |
@@ -4219,8 +4190,8 @@ any links that you are not going to use.
 <ul>
 <li>When should you consider using a GPU instance for training neural
 networks in SageMaker, and what are the benefits and limitations?</li>
-<li>What does <code>instance_count=2</code> actually do to a training
-job, and what does real distributed training require?</li>
+<li>How does SageMaker handle data parallelism and model parallelism,
+and which is suitable for typical neural network training?</li>
 </ul>
 </div>
 </div>
@@ -4230,18 +4201,16 @@ job, and what does real distributed training require?</li>
 <div class="inner bordered">
 <h3 class="card-title">Objectives</h3>
 <ul>
-<li>Preprocess the Titanic dataset for efficient training using PyTorch,
-and keep the fitted scaler so the test set can be transformed the same
-way later.</li>
+<li>Preprocess the Titanic dataset for efficient training using
+PyTorch.</li>
 <li>Save and upload training and validation data in <code>.npz</code>
 format to S3.</li>
 <li>Understand the trade-offs between CPU and GPU training for smaller
 datasets.</li>
-<li>Train a PyTorch model via SageMaker and compare instance types on
-time and cost.</li>
-<li>Explain what <code>instance_count &gt; 1</code> does without a
-distribution strategy, and what data parallelism and model parallelism
-need in order to help.</li>
+<li>Deploy a PyTorch model to SageMaker and evaluate instance types for
+training performance.</li>
+<li>Differentiate between data parallelism and model parallelism, and
+determine when each is appropriate in SageMaker.</li>
 </ul>
 </div>
 </div>
@@ -4283,8 +4252,8 @@ usual:</p>
 </div>
 <p>Create a SageMaker session to manage interactions with Amazon
 SageMaker, such as training jobs, model deployments, and data
-input/output. As before, the region comes from the notebook instance;
-never hard-code it.</p>
+input/output. As before, the region comes from the notebook
+instance.</p>
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -4294,9 +4263,8 @@ never hard-code it.</p>
 <span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a><span class="bu">print</span>(<span class="ss">f"region = </span><span class="sc">{</span>region<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <p>We should also record our local instance information to report this
-information during testing. First, the usual cell: start from the
-instance root, clone the lesson repository if needed, and import the
-helpers.</p>
+information during testing. First, let’s make sure we’re starting in the
+same location to access helper functions</p>
 <div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -4315,8 +4283,8 @@ helpers.</p>
 <span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a>local_instance <span class="op">=</span> local_instance_info[<span class="st">'InstanceType'</span>]</span>
 <span id="cb4-5"><a href="#cb4-5" tabindex="-1" aria-label="code-block-4-5"></a>local_instance</span></code></pre>
 </div>
-<p>If you are starting from a fresh notebook instance, grab the Titanic
-CSVs from S3 again (harmless if they are already here).</p>
+<p>If you are starting from a fresh notebook instance, download the
+Titanic CSVs from S3 again.</p>
 <div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -4392,11 +4360,9 @@ training process.</p>
 <p>We reuse the <code>preprocess_data()</code> function from the
 lesson’s <code>scripts/train_nn.py</code> rather than re-typing the
 preprocessing here: the same function will later be applied to the test
-set, so train and test are guaranteed to be transformed identically. It
-returns the fitted <code>StandardScaler</code> for exactly that reason,
-and we save it with <code>joblib</code> so the next episode can load it.
-Fitting a new scaler on the test set would leak test-set statistics into
-the evaluation.</p>
+set, so train and test are transformed identically. It returns the
+fitted <code>StandardScaler</code>, and we save it with
+<code>joblib</code> so the next episode can load it.</p>
 <div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -4442,9 +4408,7 @@ many versions that aren’t being actively used.</p>
 <hr class="half-width">
 <p>You should always test code thoroughly before scaling up and using
 more resources. Here, we will test our script using a small number of
-epochs (100) just to verify our setup is correct. Note that this script
-trains on the full batch every epoch (one forward/backward pass over all
-713 rows), so an epoch takes milliseconds.</p>
+epochs (100) — just to verify our setup is correct.</p>
 <div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -4461,18 +4425,17 @@ trains on the full batch every epoch (one forward/backward pass over all
 </section><section><h2 class="section-heading" id="deploying-pytorch-neural-network-via-sagemaker">Deploying PyTorch neural network via SageMaker<a class="anchor" aria-label="anchor" href="#deploying-pytorch-neural-network-via-sagemaker"></a>
 </h2>
 <hr class="half-width">
-<p>Now that we have tested things locally, we can train with a larger
-number of epochs (1000) through the PyTorch estimator. Our notebook
-instance is an <code>ml.m5.large</code>, and we will use the same
-instance type for the training job so the comparison is apples to
-apples; the point of this first run is the managed workflow, not more
-compute.</p>
-<p><strong>Should we use a GPU?</strong> Since this dataset is fairly
+<p>Now that we have tested things locally, we can try to train with a
+larger number of epochs (1000). We can do this easily by invoking the
+PyTorch estimator. Our notebook is currently configured to use
+ml.m5.large. We will use the same instance type with the below code
+(using our notebook as a controller).</p>
+<p><strong>Should we use a GPU?</strong>: Since this dataset is fairly
 small, we don’t necessarily need a GPU for training. Considering costs,
-the <code>ml.m5.large</code> is about $0.115/hour, while the cheapest
-GPU instance (<code>ml.g4dn.xlarge</code>) is about $0.74/hour. However,
-for larger datasets (&gt; 1 GB) and models, we may want to consider a
-GPU if training time becomes cumbersome (see <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
+the m5.large is <code>$0.115/hour</code>, while the cheapest GPU
+instance (ml.g4dn.xlarge) is <code>$0.74/hour</code>. However, for
+larger datasets (&gt; 1 GB) and models, we may want to consider a GPU if
+training time becomes cumbersome (see <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
 for ML</a>). We’ll test that in the exercise below.</p>
 <div class="section level4">
 <h4 id="cost-tracking">Cost tracking<a class="anchor" aria-label="anchor" href="#cost-tracking"></a>
@@ -4562,21 +4525,45 @@ startup, i.e. about $0.01 on <code>ml.m5.large</code>.</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1" aria-label="code-block-12-1"></a>desc_cpu <span class="op">=</span> job_cost_report(pytorch_estimator.latest_training_job.name, prices[instance_type])</span></code></pre>
 </div>
-<p>Notice how little of the wall-clock time was your script: for a job
-this small, almost all of the billable minutes are startup.</p>
+<p>For a job this small, almost all of the billable minutes are
+startup.</p>
+</div>
+</section><section><h2 class="section-heading" id="deploying-pytorch-neural-network-via-sagemaker-with-a-gpu-instance">Deploying PyTorch neural network via SageMaker with a GPU
+instance<a class="anchor" aria-label="anchor" href="#deploying-pytorch-neural-network-via-sagemaker-with-a-gpu-instance"></a>
+</h2>
+<hr class="half-width">
+<p>In this section, we’ll implement the same procedure as above, but
+using a GPU-enabled instance for potentially faster training. While GPU
+instances are more expensive, they can be cost-effective for larger
+datasets or more complex models that require significant computational
+power.</p>
+<div class="section level4">
+<h4 id="selecting-a-gpu-instance">Selecting a GPU Instance<a class="anchor" aria-label="anchor" href="#selecting-a-gpu-instance"></a>
+</h4>
+<p>For a small dataset like ours, we don’t strictly need a GPU, but for
+larger datasets or more complex models, a GPU can reduce training time.
+Here, we’ll select an <code>ml.g4dn.xlarge</code> instance, which
+provides a single GPU and costs approximately <code>$0.74/hour</code>
+(check <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
+for ML page</a> for detailed pricing).</p>
 </div>
 <div class="section level4">
-<h4 id="how-train_nn-py-uses-a-gpu-when-one-is-present">How <code>train_nn.py</code> uses a GPU when one is present<a class="anchor" aria-label="anchor" href="#how-train_nn-py-uses-a-gpu-when-one-is-present"></a>
+<h4 id="code-modifications-for-gpu-use">Code modifications for GPU use<a class="anchor" aria-label="anchor" href="#code-modifications-for-gpu-use"></a>
 </h4>
-<p>Using a GPU requires only minor changes in a training script, and
-<code>train_nn.py</code> already has them: it checks for GPU
-availability and moves the model and tensors to the GPU device if one is
-found.</p>
+<p>Using a GPU requires minor changes in your training script
+(<code>train_nn.py</code>). Specifically, you’ll need to: 1. Check for
+GPU availability in PyTorch. 2. Move the model and tensors to the GPU
+device if available.</p>
+</div>
+<div class="section level4">
+<h4 id="enabling-pytorch-to-use-gpu-in-train_nn-py">Enabling PyTorch to use GPU in <code>train_nn.py</code>
+<a class="anchor" aria-label="anchor" href="#enabling-pytorch-to-use-gpu-in-train_nn-py"></a>
+</h4>
+<p>The following code snippet enables GPU support in
+<code>train_nn.py</code>:</p>
 <pre class="text"><code>device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = TitanicNet().to(device)
 X_train, y_train = X_train.to(device), y_train.to(device)</code></pre>
-<p>So the same script runs unchanged on a CPU or a GPU instance; all we
-change is <code>instance_type</code>.</p>
 <div id="cpu-or-gpu-predict-then-measure" class="callout challenge">
 <div class="callout-square">
 <i class="callout-icon" data-feather="zap"></i>
@@ -4642,7 +4629,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -4677,9 +4664,9 @@ factors:</p>
 <ol style="list-style-type: decimal">
 <li><p><strong>Small dataset/model size</strong>: When datasets and
 models are small, the overhead of transferring data between the CPU and
-GPU, as well as managing the GPU, can actually slow things down. For
-very small models and datasets, CPUs are often faster since there’s
-minimal data to process.</p></li>
+GPU, as well as managing the GPU, can slow things down. For very small
+models and datasets, CPUs are often faster since there’s minimal data to
+process.</p></li>
 <li><p><strong>GPU initialization overhead</strong>: Every time a
 training job starts on a GPU, there’s a small overhead for initializing
 CUDA libraries. For short jobs, this setup time can make the GPU appear
@@ -4687,11 +4674,14 @@ slower overall.</p></li>
 <li><p><strong>Batch size</strong>: GPUs perform best with larger batch
 sizes since they can process many data points in parallel. If the batch
 size is too small, the GPU is underutilized, leading to suboptimal
-performance.</p></li>
-<li><p><strong>Instance type</strong>: The <code>ml.g4dn</code> series
-is the entry-level GPU family; an <code>ml.g5.xlarge</code> (A10G GPU)
-is the next step up when a model is genuinely GPU-bound. Neither helps a
-job that spends its time starting up.</p></li>
+performance. You may want to try increasing the batch size to see if
+this reduces training time.</p></li>
+<li><p><strong>Instance type</strong>: Some GPU instances, like the
+<code>ml.g4dn</code> series, have less computational power than the
+larger <code>g5</code> series. They’re better suited for inference or
+lightweight tasks rather than intense training, so a more powerful
+instance (e.g., <code>ml.g5.xlarge</code>) could help for larger
+tasks.</p></li>
 </ol>
 <p>If training time continues to be critical, sticking with a CPU
 instance may be the best approach for smaller datasets. For larger, more
@@ -4701,16 +4691,15 @@ apparent.</p>
 </div>
 </div>
 </div>
-</section><section><h2 class="section-heading" id="when-training-takes-too-long-more-instances">When training takes too long: more instances?<a class="anchor" aria-label="anchor" href="#when-training-takes-too-long-more-instances"></a>
+</section><section><h2 class="section-heading" id="distributed-training-for-neural-networks-in-sagemaker">Distributed Training for Neural Networks in SageMaker<a class="anchor" aria-label="anchor" href="#distributed-training-for-neural-networks-in-sagemaker"></a>
 </h2>
 <hr class="half-width">
 <p>The previous episode gave the rule of thumb: upgrade the single
 instance first, and consider multiple instances only when the dataset no
 longer fits in one instance’s memory (tens of GB or more) or a
 single-instance run takes longer than about 10 hours. The GPU exercise
-was Option 1. Let’s now look honestly at Option 2, because the obvious
-thing to try, <code>instance_count=2</code>, does something different
-from what most people expect.</p>
+was Option 1. Let’s now look at Option 2, starting with what
+<code>instance_count=2</code> does.</p>
 <div class="section level3">
 <h3 id="what-instance_count2-does-on-its-own">What <code>instance_count=2</code> does on its own<a class="anchor" aria-label="anchor" href="#what-instance_count2-does-on-its-own"></a>
 </h3>
@@ -4730,10 +4719,9 @@ trains its own independent copy of the model on all of the data for all
 <code>BillableTimeInSeconds x InstanceCount</code>.</li>
 </ul>
 <p>So without a distribution strategy, two instances means the same job
-twice, in parallel, at double the cost. Let’s demonstrate that rather
-than take it on faith. Estimate first: about the same 4 minutes of
-wall-clock as the single-instance run, but billed for two instances, so
-about $0.02 on <code>ml.m5.large</code>.</p>
+twice, in parallel, at double the cost. Estimate first: about the same 4
+minutes of wall-clock as the single-instance run, but billed for two
+instances, so about $0.02 on <code>ml.m5.large</code>.</p>
 <div class="codewrapper sourceCode" id="cb15">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -4774,16 +4762,16 @@ jobs, your job, View logs): there are two log streams,
 1000 epochs. The wall-clock time is about the same as the
 single-instance run (slightly longer, if anything, because two instances
 have to be provisioned), and the billable minutes are double.</p>
-<div id="what-real-distributed-training-needs" class="callout">
+<div id="what-distributed-training-needs" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
 </div>
 <span class="callout-header">Callout</span>
-<div id="what-real-distributed-training-needs" class="callout-inner">
-<h3 class="callout-title">What real distributed training needs</h3>
+<div id="what-distributed-training-needs" class="callout-inner">
+<h3 class="callout-title">What distributed training needs</h3>
 <div class="callout-content">
-<p>To actually split the work across instances you need two things the
-demo above did not have:</p>
+<p>To split the work across instances you need two things the demo above
+did not have:</p>
 <ul>
 <li>
 <strong>Data parallelism</strong> (the common case; each instance
@@ -4827,28 +4815,32 @@ exceeds ~10 hours.</p>
 <li>
 <strong>Efficient data handling</strong>: The <code>.npz</code>
 format is optimized for efficient loading, reducing I/O overhead and
-enabling batch compatibility for PyTorch’s <code>DataLoader</code>. Save
-the fitted scaler alongside it so the test set can be transformed
-identically later.</li>
+enabling batch compatibility for PyTorch’s <code>DataLoader</code>.</li>
 <li>
 <strong>Startup dominates small jobs</strong>: Every SageMaker
 training job pays a few minutes of provisioning, container pull and data
 download; <code>job_cost_report()</code> shows how much of the bill that
 is.</li>
 <li>
-<strong>GPU training</strong>: Beneficial for larger models or
-datasets, but for a tiny network the GPU sits idle while you pay ~6x the
-CPU rate; choose the instance to match the per-step work.</li>
+<strong>GPU training</strong>: While beneficial for larger models or
+datasets, GPUs may introduce overhead for smaller tasks; selecting the
+right instance type is critical for cost-efficiency.</li>
+<li>
+<strong>Data parallelism vs. model parallelism</strong>: Data
+parallelism splits data across instances and synchronizes model weights,
+suitable for typical neural network tasks. Model parallelism, which
+divides model layers, is ideal for very large models that exceed memory
+capacity.</li>
 <li>
 <strong><code>instance_count</code> alone is not distributed
 training</strong>: Without <code>distribution=</code> on the estimator
 and distributed code in the script, <code>instance_count=2</code> runs
 the full script on the full data on each instance and bills twice.</li>
 <li>
-<strong>Data vs. model parallelism</strong>: Data parallelism (DDP,
-each instance on a data shard, gradients all-reduced) is the usual tool
-when it is needed; model parallelism is for models that do not fit on
-one device.</li>
+<strong>SageMaker configuration</strong>: By adjusting instance
+counts and types, SageMaker supports scalable training setups. Starting
+with CPU training and scaling as needed with GPUs or distributed setups
+allows for performance optimization.</li>
 <li>
 <strong>Testing locally first</strong>: Before deploying large-scale
 training in SageMaker, test locally with a smaller setup to ensure code
@@ -4924,7 +4916,7 @@ with a focus on both efficiency and cost-effectiveness.</p>
 <div class="section level3">
 <h3 id="key-steps">Key steps<a class="anchor" aria-label="anchor" href="#key-steps"></a>
 </h3>
-<p>The overall process involves these seven steps.</p>
+<p>The overall process involves these seven below steps.</p>
 <ol style="list-style-type: decimal">
 <li>Setup estimator</li>
 <li>Define parameter ranges</li>
@@ -4964,9 +4956,8 @@ neural networks.</p>
 <div class="section level4">
 <h4 id="directory-setup">0. Directory setup<a class="anchor" aria-label="anchor" href="#directory-setup"></a>
 </h4>
-<p>The usual first cell: start from the instance’s root directory, clone
-the lesson repository if it is not already there, and import the
-helpers.</p>
+<p>Just to make sure we are all on the same directory starting point,
+let’s cd to our instance’s root directory</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -5018,10 +5009,10 @@ launched in this episode</p>
 <span id="cb2-12"><a href="#cb2-12" tabindex="-1" aria-label="code-block-2-12"></a>local_instance <span class="op">=</span> response[<span class="st">'InstanceType'</span>]</span>
 <span id="cb2-13"><a href="#cb2-13" tabindex="-1" aria-label="code-block-2-13"></a><span class="bu">print</span>(<span class="ss">f"Instance Type: </span><span class="sc">{</span>local_instance<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<p><strong>Cost tracking</strong>: Just like in the previous episodes,
-we explicitly tag our work at launch time so that compute usage is
-traceable to a project, a purpose, and a human-readable name. Tuning is
-the one case where tags <em>do</em> propagate: tags on the
+<p><strong>Cost tracking</strong>: Just like in the previous episode, we
+explicitly tag each training job at launch time. This ensures that
+compute usage is traceable to a project, a purpose, and a human-readable
+name, even after the job has completed. Tags on the
 <code>HyperparameterTuner</code> are copied to every child training job
 it launches, so we only need to set them once, on the tuner (we also set
 them on the estimator so a plain <code>.fit()</code> on it is tagged
@@ -5161,8 +5152,8 @@ Testing a range of layer sizes or depths (e.g., <code>32, 64, 128</code>
 neurons per layer) can reveal whether additional complexity yields
 benefits. Notably, understanding <em>double descent</em> is essential
 here, as larger networks may initially seem to overfit before
-unexpectedly improving in the <em>second descent</em>, a phenomenon
-worth investigating in high-capacity networks.</p></li>
+unexpectedly improving in the <em>second descent</em>—a phenomenon worth
+investigating in high-capacity networks.</p></li>
 <li><p><strong>Regularization Parameters</strong>: Regularization
 techniques, such as dropout rates or weight decay, can help control
 overfitting by limiting model capacity. For example, dropout rates from
@@ -5188,7 +5179,7 @@ rates to observe.</p></li>
 <p>In summary, hyperparameter tuning is a balancing act between
 expanding model capacity and mitigating overfitting. Prioritize
 parameters that have shown past efficacy in similar problems, and limit
-the search to a manageable range; often 20-30 model configurations are
+the search to a manageable range—often 20–30 model configurations are
 sufficient to observe gains. This approach keeps resource consumption
 practical while achieving meaningful improvements in model
 performance.</p>
@@ -5306,9 +5297,9 @@ Once the job is launched, SageMaker handles the tuning process
 automatically, running the specified number of configurations and
 keeping track of the best model parameters based on validation
 accuracy.</p>
-<p>Estimate first, as always: one child job is the same ~1 minute of
-training plus ~3 minutes of startup we saw in the previous episode, so
-about $0.01.</p>
+<p>Estimate first: one child job is the same ~1 minute of training plus
+~3 minutes of startup we saw in the previous episode, so about
+$0.01.</p>
 <div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -5326,18 +5317,17 @@ about $0.01.</p>
 </h4>
 <p>While the above cell runs, we can check on the progress by visiting
 the SageMaker Console and finding the “Training” tab located on the left
-panel. Click “Hyperparameter tuning jobs” to view running jobs, and
-click into one to see its child training jobs.</p>
+panel. Click “Hyperparameter tuning jobs” to view running jobs.</p>
 </div>
 <div class="section level4">
 <h4 id="what-did-that-cost">What did that cost?<a class="anchor" aria-label="anchor" href="#what-did-that-cost"></a>
 </h4>
-<p>A tuning job is just a manager; the money is spent by the training
-jobs it launches, and that is where SageMaker records billable time. We
-bring back <code>job_cost_report()</code> from the previous episodes and
-run it over every child job of the tuner. The list of child jobs comes
-from <code>tuner.analytics().dataframe()</code> (one row per training
-job, with its hyperparameters and final objective value).</p>
+<p>The money is spent by the training jobs the tuner launches, and that
+is where SageMaker records billable time. We bring back
+<code>job_cost_report()</code> from the previous episodes and run it
+over every child job of the tuner. The list of child jobs comes from
+<code>tuner.analytics().dataframe()</code> (one row per training job,
+with its hyperparameters and final objective value).</p>
 <div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -5385,8 +5375,7 @@ without overloading resources or risking inefficient exploration, making
 <p>Estimate first: 10 child jobs at roughly 3-4 billable minutes each is
 30-40 billable minutes on <code>ml.m5.large</code>, so about $0.06 in
 total (the 10,000-epoch configurations run a little longer). Wall-clock
-is five rounds of two jobs, so expect 15-20 minutes; a good moment for a
-break.</p>
+is five rounds of two jobs, so expect 15-20 minutes.</p>
 <div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -5437,7 +5426,7 @@ each job completes, new jobs from the remaining pool are triggered until
 continue to launch the remaining jobs up to the maximum of 10, but no
 more than two at a time.</li>
 </ul>
-<p>And once it has finished, the bill for all 10 child jobs:</p>
+<p>Once it has finished, the cost report for all 10 child jobs:</p>
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -5447,15 +5436,14 @@ more than two at a time.</li>
 <div class="section level3">
 <h3 id="canshould-we-run-more-instances-in-parallel">Can/should we run more instances in parallel?<a class="anchor" aria-label="anchor" href="#canshould-we-run-more-instances-in-parallel"></a>
 </h3>
-<p>Setting <code>max_parallel_jobs</code> to 10 (equal to
-<code>max_jobs</code>) will launch all 10 jobs at once. This barely
-changes the total cost (you pay per training job, and each job’s
-billable time is the same whether or not another job is running), but it
-shortens wall-clock time to roughly one job’s duration and it changes
-the <em>quality</em> of the search, because SageMaker’s Bayesian
-strategy can only use results that have already finished. This
-adaptability is especially useful for neural networks, which often have
-a large hyperparameter space with complex interactions. Here’s how
+<p>Setting max_parallel_jobs to 10 (equal to max_jobs) will indeed
+launch all 10 jobs in parallel. This approach won’t affect the total
+cost (since cost is based on the number of total jobs, not how many run
+concurrently), but it can impact the final results and resource usage
+pattern due to SageMaker’s ability to dynamically select hyperparameter
+values to test to maximize efficiency and improve model performance.
+This adaptability is especially useful for neural networks, which often
+have a large hyperparameter space with complex interactions. Here’s how
 SageMaker’s approach impacts typical neural network training:</p>
 <div class="section level4">
 <h4 id="adaptive-search-strategies">1. Adaptive Search Strategies<a class="anchor" aria-label="anchor" href="#adaptive-search-strategies"></a>
@@ -5475,13 +5463,13 @@ the hyperparameter space and discarding poor ones.</li>
 </h4>
 <ul>
 <li>When using Bayesian optimization, a lower
-<code>max_parallel_jobs</code> (e.g., 2-4) can allow SageMaker to
+<code>max_parallel_jobs</code> (e.g., 2–4) can allow SageMaker to
 iteratively adjust and improve its choices. Each batch of jobs informs
 the subsequent batch, which may yield better results over time.</li>
 <li>Conversely, if all jobs are run in parallel (e.g.,
 <code>max_parallel_jobs=10</code>), SageMaker can’t learn and adapt
-within a single batch, making this setup more like a traditional random
-search. This approach is still valid, especially for small search
+within a single batch, making this setup more like a traditional grid or
+random search. This approach is still valid, especially for small search
 spaces, but it doesn’t leverage the full potential of adaptive
 tuning.</li>
 </ul>
@@ -5511,7 +5499,7 @@ jobs by fine-tuning hyperparameters over multiple iterations.</li>
 simultaneous testing.</li>
 <li>
 <strong>For adaptive, refined tuning</strong>: Use a smaller
-<code>max_parallel_jobs</code> (like 2-4) to let SageMaker leverage
+<code>max_parallel_jobs</code> (like 2–4) to let SageMaker leverage
 adaptive tuning for optimal configurations.</li>
 </ul>
 <p>This balance between exploration and exploitation is particularly
@@ -5522,10 +5510,11 @@ parameters interact in complex ways.</p>
 <div class="section level3">
 <h3 id="extracting-and-evaluating-the-best-model-after-tuning">Extracting and evaluating the best model after tuning<a class="anchor" aria-label="anchor" href="#extracting-and-evaluating-the-best-model-after-tuning"></a>
 </h3>
-<p>After SageMaker completes the hyperparameter tuning job, the results,
-including the trained models for each configuration, are stored in an S3
-bucket. Here’s a breakdown of the steps to locate and evaluate the best
-model on test data.</p>
+<p>Tuning should only take about 15-20 minutes to complete — not bad for
+10 models! After SageMaker completes the hyperparameter tuning job, the
+results, including the trained models for each configuration, are stored
+in an S3 bucket. Here’s a breakdown of the steps to locate and evaluate
+the best model on test data.</p>
 <ol style="list-style-type: decimal">
 <li>
 <strong>Understanding the folder structure</strong>:
@@ -5614,12 +5603,11 @@ evaluate it on our model.</p>
 <p><strong>Note</strong>: It’s always a good idea to keep preprocessing
 code as a function so you can apply the same exact procedure across
 datasets with ease. We’ll import our preprocessing function from
-<code>train_nn.py</code>, and pass it the <strong>scaler that was fit on
-the training data</strong> (saved as <code>scaler.joblib</code> in the
-previous episode). Calling <code>preprocess_data(test_df)</code> without
-the scaler would fit a new one on the test set, which leaks test-set
-statistics into the evaluation and transforms the features differently
-from what the model saw in training.</p>
+<code>train_nn.py</code>, and pass it the scaler that was fit on the
+training data (saved as <code>scaler.joblib</code> in the previous
+episode). Calling <code>preprocess_data(test_df)</code> without the
+scaler would fit a new one on the test set and transform the features
+differently from what the model saw in training.</p>
 <div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -5672,30 +5660,31 @@ from what the model saw in training.</p>
 <div class="section level3">
 <h3 id="conclusions">Conclusions<a class="anchor" aria-label="anchor" href="#conclusions"></a>
 </h3>
-<p>In about 20 minutes of wall-clock time and a few cents of compute, we
-searched 10 configurations and produced a model that scores about 0.8 on
-the test set, roughly on par with the XGBoost model from the first
-episode (the Titanic dataset does not have much more signal to extract).
-The point is the workflow: one tuner call, every child job tagged, and a
-bill you can read back.</p>
-<div class="section level4">
-<h4 id="reading-the-bill">Reading the bill<a class="anchor" aria-label="anchor" href="#reading-the-bill"></a>
-</h4>
-<p><code>job_cost_report()</code> printed two numbers per job.
-<strong>Training time</strong> (<code>TrainingTimeInSeconds</code>) is
-the time your script was running. <strong>Billable time</strong>
-(<code>BillableTimeInSeconds</code>) is the time the instance was
-reserved for you, which also includes the startup overhead of pulling
-the container and downloading the data. SageMaker bills per second, with
-no rounding to minutes or hours, and it bills training jobs and the
-child jobs of a tuning job in exactly the same way; the tuning job
-itself costs nothing. Total cost is therefore the sum over child jobs of
-billable seconds x instance count x hourly rate. For our tiny network
-the startup overhead is most of every job, which is why ten short jobs
-cost noticeably more than one job that trained ten times as long
-would.</p>
-<p>For convenience, the same calculation is available as a function in
-<code>helpers.py</code>:</p>
+<p>In about 20 minutes, we produced a model that is about 80% accurate
+on the test set. However, this performance does come at a cost (albeit
+manageable if you’ve stuck with our advice thus far). This next section
+will help you assess the total compute time that was used by your tuning
+job.</p>
+<p>In SageMaker, training time and billing time (extracted in our code
+above) are expected to differ for training jobs, including the child
+jobs of a tuning job; the tuning job itself costs nothing. Here’s a
+breakdown of what’s happening:</p>
+<ul>
+<li><p>Training Time (<code>TrainingTimeInSeconds</code>): This is the
+time that each training job’s script takes to run, from start to end.
+This metric represents the pure time spent on training without
+considering the compute resources.</p></li>
+<li><p>Billing Time (<code>BillableTimeInSeconds</code>): This includes
+the training time plus the startup overhead of pulling the container and
+downloading the data, and is adjusted for the resources used. Billing
+time considers:</p></li>
+</ul>
+<p>Instance Count: The number of instances used for training affects
+billing time. Per-Second Billing: SageMaker bills per second, with no
+rounding to minutes or hours, and multiplies the billable seconds by the
+instance count used. For short jobs, the startup overhead makes the
+difference between training and billing time more pronounced.</p>
+<p>For convenience, we have added this as a function in helpers.py</p>
 <div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -5763,8 +5752,7 @@ configurations are effectively a random sample of the space. On a
 2-parameter problem this small you will usually see a similar best
 objective either way; on a larger search space with more jobs, the
 sequential-ish run tends to find a better configuration for the same
-number of jobs. That is the trade: parallelism buys time, not a better
-model.</li>
+number of jobs.</li>
 </ul>
 </div>
 </div>
@@ -5881,7 +5869,6 @@ test data.</li>
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
  -->
-</div>
 </div>
 </section></section><section id="aio-RAG-overview"><p>Content from <a href="RAG-overview.html">Overview of RAG Workflows on AWS</a></p>
 <hr>
@@ -6028,8 +6015,8 @@ failure mode: if you stop calling it, you stop paying.</p>
 <h3 id="what-forgetting-actually-costs">What forgetting actually costs<a class="anchor" aria-label="anchor" href="#what-forgetting-actually-costs"></a>
 </h3>
 <p>To make this concrete, here is what a GPU notebook instance costs if
-it is left running after you close your laptop (us-east-1 on‑demand
-prices from the AWS price list, October 2026; see the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">instances
+it is left running after you close your laptop (on‑demand prices at time
+of writing; see the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">instances
 page</a>):</p>
 <table style="width:100%;" class="table">
 <colgroup>
@@ -6092,13 +6079,9 @@ page</a>):</p>
 </tbody>
 </table>
 <p>Compare that to running the <strong>entire WattBot pipeline</strong>
-from this lesson on Bedrock, with DeepSeek V3 as the generator and Titan
-Text Embeddings V2 ($0.02 per million tokens) for embeddings. For
-DeepSeek V3’s per-token prices, check the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>;
-at launch it was in the same price class as the cheapest frontier
-models, a fraction of a dollar per million input tokens and a few
-dollars per million output tokens, and at any price in that class the
-arithmetic comes out the same way:</p>
+from this lesson on Bedrock. Using DeepSeek V3 (check the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
+for current per‑token prices) and Titan Text Embeddings V2 ($0.02 per
+million tokens):</p>
 <table class="table">
 <colgroup>
 <col width="33%">
@@ -6440,10 +6423,8 @@ end on their own, so you can see what Bedrock abstracts away and what it
 costs to do yourself. The fine-tuning episode follows. An optional
 self-study episode after it runs the same self-hosted pipeline
 interactively on a GPU notebook instance, for prototyping alone at a
-keyboard; it is not taught in class. All three RAG episodes share one
-module of pipeline code (<code>scripts/wattbot_rag.py</code> in the
-lesson repository), so what changes between them is only the two model
-calls and where the compute runs.</p>
+keyboard. All three RAG episodes share one module of pipeline code
+(<code>scripts/wattbot_rag.py</code> in the lesson repository).</p>
 <p>When you build your own RAG system afterward, start from the Bedrock
 episode.</p>
 </div>
@@ -6547,12 +6528,11 @@ embeddings and answer generation</strong> — runs on Bedrock-hosted
 models that bill per token and leave nothing running between calls.
 We’ll use:</p>
 <ul>
-<li>
-<strong>Amazon Titan Text Embeddings V2</strong> to turn WattBot
-chunks into vectors, and</li>
-<li>
-<strong>DeepSeek V3</strong>, hosted on Bedrock, to generate answers
-and explanations.</li>
+<li>an <strong>Amazon Titan Text Embeddings V2</strong> model to turn
+WattBot chunks into vectors, and<br>
+</li>
+<li>a <strong>DeepSeek V3</strong> model hosted on Bedrock to generate
+answers and explanations.</li>
 </ul>
 <p>We also do the corpus preparation here: unpack the WattBot PDF
 corpus, split it into pages and overlapping chunks, and cache the chunks
@@ -6573,8 +6553,8 @@ Bedrock gives you a few nice properties:</p>
 <ul>
 <li>
 <strong>Managed, up-to-date models.</strong> You can use
-high-quality models from Amazon, Anthropic, DeepSeek, Meta and others
-without worrying about container images or CUDA versions.</li>
+high‑quality models from Anthropic, Amazon, DeepSeek, and others without
+worrying about container images or CUDA versions.</li>
 <li>
 <strong>Pay for what you use (in tokens).</strong> Instead of paying
 for a GPU instance that might sit idle, you pay per token (input +
@@ -6594,34 +6574,33 @@ episode.</p>
 <div class="section level3">
 <h3 id="models-used-in-this-episode">Models used in this episode<a class="anchor" aria-label="anchor" href="#models-used-in-this-episode"></a>
 </h3>
-<p>We’ll work with <strong>Amazon Bedrock-hosted foundation
+<p>We’ll work with <strong>Amazon Bedrock–hosted foundation
 models</strong> for both embedding and generation:</p>
 <ul>
 <li>
 <p><strong>Amazon Titan Text Embeddings V2</strong>
 (<code>amazon.titan-embed-text-v2:0</code>)</p>
 <ul>
-<li>General-purpose text-embedding model for semantic search, retrieval,
+<li>General‑purpose text‑embedding model for semantic search, retrieval,
 clustering, and classification.</li>
-<li>Supports configurable embedding dimensions (256, 512 or 1,024; we
-use the default 1,024) and returns normalized vectors, so cosine
-similarity is a dot product.</li>
+<li>Supports configurable embedding dimensions (256, 512, or 1,024) and
+has presets tuned for retrieval or binary indexing.</li>
 <li>AWS does not publish the exact number of parameters for Titan
 models; you can treat it as a modern transformer specialized for
-embeddings rather than free-form text generation.</li>
+embeddings rather than free‑form text generation.</li>
 </ul>
 </li>
 <li>
 <p><strong>DeepSeek V3</strong> (<code>deepseek.v3-v1:0</code> via
 Bedrock)</p>
 <ul>
-<li>An open-weight mixture-of-experts model (671B parameters in total,
-about 37B active per token) that Amazon serves on-demand, so you get a
-frontier-class generator at per-token prices with no GPU to manage.</li>
-<li>A good fit for RAG: it follows a JSON output contract reliably, has
-a long context window, and is priced in the same class as the cheapest
-frontier models (check the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
-for the current per-token rates).</li>
+<li>An open‑weight mixture‑of‑experts model (671B parameters in total,
+about 37B active per token) that Bedrock serves on‑demand, so there is
+no GPU to manage.</li>
+<li>Particularly useful when you want many calls (e.g., one per
+question) and care about low latency and lower per‑token pricing
+compared to flagship models (check the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
+for current rates).</li>
 <li>The same code works for any chat model in the catalog, because we
 call it through the provider-neutral <code>converse</code> API: switch
 <code>base_generation_model_id</code> to a Claude, Llama, or Mistral
@@ -6640,10 +6619,10 @@ scanned PDFs</strong>.</li>
 <li>To use them from Bedrock you send <strong>both text and image
 content</strong> in a single request:
 <ul>
-<li>Pre-process PDFs by rendering pages (or cropping individual
+<li>Pre‑process PDFs by rendering pages (or cropping individual
 tables/figures) to images using a tool like <code>pdf2image</code> or a
 headless browser.</li>
-<li>Base64-encode those images and include them as image parts alongside
+<li>Base64‑encode those images and include them as image parts alongside
 text in the model request.</li>
 <li>For multimodal embeddings, you call a Titan multimodal embedding
 model with an <code>inputImage</code> (and optionally
@@ -6651,9 +6630,9 @@ model with an <code>inputImage</code> (and optionally
 visual and textual information.</li>
 </ul>
 </li>
-<li>This notebook stays with <strong>text-only</strong> embeddings +
+<li>This notebook stays with <strong>text‑only</strong> embeddings +
 generation to keep the workflow simple, but the same RAG pattern extends
-naturally to multimodal models once you add an image-extraction step to
+naturally to multimodal models once you add an image‑extraction step to
 your preprocessing pipeline.</li>
 </ul>
 </li>
@@ -6744,7 +6723,7 @@ below and everything else works unchanged.</p>
 <span id="cb1-15"><a href="#cb1-15" tabindex="-1" aria-label="code-block-1-15"></a>session <span class="op">=</span> sagemaker.Session()</span>
 <span id="cb1-16"><a href="#cb1-16" tabindex="-1" aria-label="code-block-1-16"></a>region <span class="op">=</span> session.boto_region_name</span>
 <span id="cb1-17"><a href="#cb1-17" tabindex="-1" aria-label="code-block-1-17"></a></span>
-<span id="cb1-18"><a href="#cb1-18" tabindex="-1" aria-label="code-block-1-18"></a><span class="co"># Base model IDs. These are the models we actually want to call, but we will NOT pass</span></span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1" aria-label="code-block-1-18"></a><span class="co"># Base model IDs. These are the models we want to call, but we will NOT pass</span></span>
 <span id="cb1-19"><a href="#cb1-19" tabindex="-1" aria-label="code-block-1-19"></a><span class="co"># them to the runtime directly -- see "Cost tracking" below for why.</span></span>
 <span id="cb1-20"><a href="#cb1-20" tabindex="-1" aria-label="code-block-1-20"></a><span class="co"># Any chat model in the Bedrock catalog works here (e.g. a Claude or Llama model ID)</span></span>
 <span id="cb1-21"><a href="#cb1-21" tabindex="-1" aria-label="code-block-1-21"></a><span class="co"># because we call it through the provider-neutral `converse` API.</span></span>
@@ -6933,17 +6912,21 @@ overlapping segments for embedding.</p>
 <h3 id="why-we-page-chunk-first">Why we page-chunk first<a class="anchor" aria-label="anchor" href="#why-we-page-chunk-first"></a>
 </h3>
 <p>We split the PDF into <strong>pages before chunking</strong> because
-pages give us a stable, easy-to-interpret unit. This helps with:</p>
+pages give us a stable, easy-to-interpret unit.<br>
+This helps with:</p>
 <ul>
 <li>
 <strong>Keeping metadata</strong> (doc ID, URL, page labels) tied to
-the text.</li>
+the text.<br>
+</li>
 <li>
 <strong>Debugging retrieval</strong> — it’s much easier to
-understand what the model saw if we know which page(s) were used.</li>
+understand what the model saw if we know which page(s) were used.<br>
+</li>
 <li>
 <strong>Cleaning text</strong> before making smaller overlapping
-chunks.</li>
+chunks.<br>
+</li>
 <li>
 <strong>Flexibility later</strong> — once pages are structured, we
 can try different chunk sizes or strategies without re-extracting the
@@ -7157,11 +7140,11 @@ every run. We save the chunks locally as <code>data/chunks.jsonl</code>
 them through a profile<a class="anchor" aria-label="anchor" href="#step-7-cost-tracking-bedrock-calls-carry-no-tags-unless-you-route-them-through-a-profile"></a>
 </h2>
 <hr class="half-width">
-<p>In the SageMaker episodes, we tag every job at launch because tags
-never propagate from the notebook. Bedrock is stricter still: <strong>an
-on-demand <code>invoke_model</code> or <code>converse</code> call has no
-tags parameter at all.</strong> If you call
-<code>deepseek.v3-v1:0</code> or
+<p>In the SageMaker episodes that follow, we tag every job at launch
+because tags never propagate from the notebook. Bedrock is stricter
+still: <strong>an on-demand <code>invoke_model</code> or
+<code>converse</code> call has no tags parameter at all.</strong> If you
+call <code>deepseek.v3-v1:0</code> or
 <code>amazon.titan-embed-text-v2:0</code> by its model ID, the usage
 lands in the account’s Bedrock bill as anonymous per-token charges. The
 notebook’s tags, the bucket’s tags, and the tags you set on anything
@@ -7176,7 +7159,7 @@ carries the profile’s tags into Cost Explorer. Two details to get
 right:</p>
 <ul>
 <li>You need <strong>one profile per base model</strong> (the profile is
-model-specific), so we create one for the generation model and one for
+model‑specific), so we create one for the generation model and one for
 the embedding model.</li>
 <li>Bedrock’s tag format uses lowercase <code>key</code> /
 <code>value</code>, unlike SageMaker’s <code>Key</code> /
@@ -7185,7 +7168,7 @@ the embedding model.</li>
 Explorer filters line up across services.</li>
 </ul>
 <p>The helper below reuses a profile if one with the same name already
-exists, so re-running the notebook does not create duplicates.</p>
+exists, so re‑running the notebook does not create duplicates.</p>
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -7270,7 +7253,7 @@ inference profiles</strong>, or with
 <code>bedrock.list_inference_profiles(typeEquals="APPLICATION")</code>.</li>
 <li>Tags only become filters in Cost Explorer once the tag keys have
 been <strong>activated as cost allocation tags</strong> in the Billing
-console (an account-admin, once-per-key action; on a shared workshop
+console (an account‑admin, once‑per‑key action; on a shared workshop
 account the organizers do this). Until then the tags exist on the
 resource but do not show up on reports.</li>
 <li>The profile itself has no hourly or storage charge. You only pay per
@@ -7302,7 +7285,7 @@ month’s Bedrock spend by <code>Project</code>?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -7422,11 +7405,10 @@ bucket.</p>
 <hr class="half-width">
 <p>Retrieval is pure NumPy: embed the question with the same model, take
 the cosine similarity against every chunk, and keep the top <em>k</em>.
-<code>retrieve_top_k</code> from <code>wattbot_rag.py</code> does
-exactly that (open the file to see it: it is a
-normalize-and-matrix-multiply). No vector database is needed for a few
-thousand chunks; the optional GPU-notebook episode discusses when one
-becomes worth it.</p>
+<code>retrieve_top_k</code> from <code>wattbot_rag.py</code> does that
+(open the file to see it: it is a normalize-and-matrix-multiply). No
+vector database is needed for a few thousand chunks; the optional
+GPU-notebook episode discusses when one becomes worth it.</p>
 <div class="codewrapper sourceCode" id="cb15">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -7488,7 +7470,7 @@ can price the run at the end.</p>
 <code>generate(system_prompt, user_prompt, max_new_tokens) -&gt; str</code>,
 and <code>embed_query</code> has the other one,
 <code>embed_query(question) -&gt; vector</code>. Those two callables are
-the entire difference between this episode and the self-hosted ones.</p>
+the only difference between this episode and the self-hosted ones.</p>
 <div class="section level3">
 <h3 id="what-the-pipeline-asks-the-model">What the pipeline asks the model<a class="anchor" aria-label="anchor" href="#what-the-pipeline-asks-the-model"></a>
 </h3>
@@ -7506,20 +7488,19 @@ machine-readable:</p>
 </div>
 <p>A question is marked unanswerable (<code>is_blank</code> everywhere,
 as the competition requires) when the model says so <strong>or</strong>
-when the best retrieval score is below <code>retrieval_threshold</code>:
-weak retrieval means the model is about to answer from its own memory
-rather than the papers, which is exactly what RAG is meant to
-prevent.</p>
+when the best retrieval score is below
+<code>retrieval_threshold</code>.</p>
 </div>
 </section><section><h2 class="section-heading" id="step-11-run-the-wattbot-evaluation-with-bedrock">Step 11 – Run the WattBot evaluation with Bedrock<a class="anchor" aria-label="anchor" href="#step-11-run-the-wattbot-evaluation-with-bedrock"></a>
 </h2>
 <hr class="half-width">
-<p>Now we loop over all questions in <code>train_QA.csv</code>, run
-retrieval + Bedrock generation, and write
-<code>wattbot_solutions_bedrock.csv</code>, locally and to your bucket.
-The Processing Jobs episode runs the same <code>run_single_qa</code>
-with self-hosted models; only <code>embed_query</code> and
-<code>generate</code> change.</p>
+<p>Now we can loop over all questions in <code>train_QA.csv</code>, run
+retrieval + Bedrock generation, and write a
+<code>wattbot_solutions_bedrock.csv</code> file (locally and to your
+bucket).</p>
+<p>The Processing Jobs episode reuses this same loop with self-hosted
+models; the only difference there is that the embedding, answer and
+explanation phases call local models instead of Bedrock-hosted ones.</p>
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -7609,7 +7590,7 @@ whole WattBot pipeline on Bedrock”, and with one hour of the
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -7633,59 +7614,65 @@ whole WattBot pipeline on Bedrock”, and with one hour of the
 is on the order of 250K input and 20K output tokens: cents, not dollars,
 at any price in DeepSeek V3’s class, plus about two cents of embeddings.
 That matches the overview’s “well under $1” for the whole pipeline, and
-it is a small fraction of a single GPU-hour. The number to remember is
-not the exact total but its shape: the bill is proportional to the
-tokens you sent, and it was zero the moment the loop finished.</p>
+it is a small fraction of a single GPU-hour.</p>
 </div>
 </div>
 </div>
 </div>
-</section><section><h2 class="section-heading" id="wrap-up-bedrock-versus-gpu-based-runs">Wrap-up: Bedrock versus GPU-based runs<a class="anchor" aria-label="anchor" href="#wrap-up-bedrock-versus-gpu-based-runs"></a>
+</section><section><h2 class="section-heading" id="wrapup-bedrock-versus-gpubased-runs">Wrap‑up: Bedrock versus GPU‑based runs<a class="anchor" aria-label="anchor" href="#wrapup-bedrock-versus-gpubased-runs"></a>
 </h2>
 <hr class="half-width">
 <p>You now have a complete WattBot evaluation running on Bedrock, with
-per-token billing and nothing left running. The Processing Jobs episode
-reruns the same evaluation on a self-hosted model, and the optional
+per‑token billing and nothing left running. The Processing Jobs episode
+reruns the same evaluation on a self‑hosted model, and the optional
 GPU-notebook episode does it once more interactively, so by the end you
-can compare:</p>
+will have three versions to compare:</p>
 <ol style="list-style-type: decimal">
 <li>
 <strong>Bedrock</strong> (this episode) using hosted embedding and
-generation models with per-token billing.</li>
+generation models with per‑token billing.</li>
 <li>
-<strong>SageMaker Processing jobs</strong> running an open-weight
-model in batch, on a GPU that exists only while the job runs.</li>
+<strong>SageMaker Processing job</strong> running an open‑source
+model in batch with on-demand compute.</li>
 <li>
-<strong>A notebook GPU instance</strong> (optional) with the same
-model loaded interactively.</li>
+<strong>Notebook GPU instance</strong> (optional) using the same
+locally loaded open‑source model.</li>
 </ol>
 <p>When deciding between these options in practice:</p>
 <ul>
 <li>Use <strong>Bedrock or other hosted APIs</strong> when:
 <ul>
-<li>You want to try the latest frontier models quickly.</li>
+<li>You want to try the latest frontier models quickly.<br>
+</li>
 <li>You only need to run a modest number of questions, or you are still
-prototyping.</li>
-<li>You prefer a simple, token-based cost model and don’t want to manage
+prototyping.<br>
+</li>
+<li>You prefer a simple, token‑based cost model and don’t want to manage
 GPU capacity.</li>
 </ul>
 </li>
-<li>Use <strong>self-hosted models on GPU instances</strong> when:
+<li>Use <strong>self‑hosted models on GPU instances</strong> when:
 <ul>
 <li>You need a specific open-weight model that the catalog does not
-carry.</li>
+carry.<br>
+</li>
 <li>You expect to run large batches repeatedly (e.g., many thousands of
-questions).</li>
+questions).<br>
+</li>
 <li>You want tight control over which architectures/checkpoints you run
-or fine-tune.</li>
+or fine‑tune.<br>
+</li>
+<li>You already have institutional access to cost‑effective on‑prem or
+cloud GPUs.</li>
 </ul>
 </li>
 </ul>
 <p>The core <strong>RAG evaluation logic stays identical</strong> across
-all three, which is the main takeaway: once you have a clean retrieval +
-normalization pipeline (like WattBot’s, in <code>wattbot_rag.py</code>),
-swapping out the generator is a matter of providing a different
-<code>embed_query</code> and <code>generate</code>.</p>
+all three episodes, which is the main takeaway: once you have a clean
+retrieval + normalization pipeline (like WattBot’s, in
+<code>wattbot_rag.py</code>), swapping out the generator is mostly a
+matter of re‑implementing <code>embed_query</code> and
+<code>generate</code> for each compute option you care about.</p>
 </section><section><h2 class="section-heading" id="concluding-remarks-bedrock-models-are-one-piece-of-the-rag-puzzle">Concluding remarks: Bedrock models are one piece of the RAG
 puzzle<a class="anchor" aria-label="anchor" href="#concluding-remarks-bedrock-models-are-one-piece-of-the-rag-puzzle"></a>
 </h2>
@@ -7701,19 +7688,19 @@ questions — but it’s important to remember that they are still just
 retrieval.</strong> If your chunks are poorly aligned with the
 questions, a very strong LLM will still struggle.</li>
 <li>
-<strong>Most of the long-term accuracy gains in RAG systems come
+<strong>Most of the long‑term accuracy gains in RAG systems come
 from the plumbing around the LLMs</strong>, including:
 <ul>
 <li>smarter / semantic chunking strategies</li>
 <li>good metadata and filtering</li>
-<li>reranking or multi-stage retrieval</li>
-<li>domain-specific heuristics and post-processing</li>
+<li>reranking or multi‑stage retrieval</li>
+<li>domain‑specific heuristics and post‑processing</li>
 </ul>
 </li>
 <li>
 <strong>Cost and latency live in tension with quality.</strong>
 Larger models (or higher token budgets) often improve answers, but at
-the cost of more inference time and higher per-request spend. Bedrock
+the cost of more inference time and higher per‑request spend. Bedrock
 makes it easier to experiment with that tradeoff by switching models
 without rewriting your pipeline.</li>
 </ul>
@@ -7732,8 +7719,8 @@ you more headroom than swapping between already-good models.</p>
 <li>A complete RAG pipeline on AWS needs no GPU: a CPU notebook plus
 Bedrock-hosted embedding and generation models is enough.</li>
 <li>Corpus preparation (unpacking the staged PDFs, page extraction,
-chunking) is cheap CPU work; cache <code>chunks.jsonl</code> in your
-bucket so the Processing Jobs episode and later runs can reuse it.</li>
+chunking) is cheap CPU work; cache <code>chunks.jsonl</code> on S3 so
+later episodes and runs can reuse it.</li>
 <li>Bedrock calls carry no tags; route them through a tagged application
 inference profile or the spend is anonymous on the bill.</li>
 <li>
@@ -8493,7 +8480,7 @@ prefix is empty because the script never reached the point of writing
 seconds: 600 / 3600 × $2.61 ≈ $0.44 for nothing. A cap has to leave room
 for the setup that precedes the work, which is why ours is four times
 the 30-minute estimate rather than ten percent over it.</p>
-<p>Under the real caps, the worst case for a job that hangs (a stuck
+<p>Under the caps we set, the worst case for a job that hangs (a stuck
 download, a model that never finishes loading) is 2 h × $1.41 =
 <strong>$2.82</strong> for the embedding job and 2 h × $2.61 =
 <strong>$5.22</strong> for the RAG job. A <code>ml.g6e.xlarge</code>
@@ -8561,7 +8548,7 @@ thousands, and how do I estimate where my run falls <em>before</em> I
 launch it?</li>
 <li>How do I run a GPU fine-tune as a SageMaker training job so the
 meter stops the moment it finishes?</li>
-<li>How do I measure whether the fine-tune actually helped?</li>
+<li>How do I measure whether the fine-tune helped?</li>
 </ul>
 </div>
 </div>
@@ -8604,10 +8591,10 @@ last.</li>
 10x: model size, epochs, image resolution, instance type, and whether
 the instance is still running after you stopped paying attention.</li>
 </ul>
-<p>That combination is why fine-tuning is where research teams see the
-surprise bills. It is also, done carefully, the single biggest lever you
-have: the Badger Scribe organizers report that LoRA on ~100 pages takes
-a small open model from 0.23 to 0.06 CER on survey notebooks in about a
+<p>That combination is why fine-tuning is where research teams see
+surprise bills. Done carefully, it is also where the largest gains are:
+the Badger Scribe organizers report that LoRA on ~100 pages takes a
+small open model from 0.23 to 0.06 CER on survey notebooks in about a
 GPU-hour. This episode is about getting that kind of gain for a few
 dollars, and about knowing in advance when a run is going to cost a few
 thousand instead.</p>
@@ -8695,10 +8682,9 @@ like this. We use LoRA.</p>
 </section><section><h2 class="section-heading" id="step-0-estimate-the-cost-before-you-launch-anything">Step 0: Estimate the cost before you launch anything<a class="anchor" aria-label="anchor" href="#step-0-estimate-the-cost-before-you-launch-anything"></a>
 </h2>
 <hr class="half-width">
-<p>This is the habit that matters. Before launching a fine-tune, write
-down a number for what it should cost. If the real bill is 3x your
-number, something is wrong and you want to know on the first run, not
-the fiftieth.</p>
+<p>Before launching a fine-tune, write down what it should cost. If the
+bill is 3x your number, something is wrong, and you want to know on the
+first run, not the fiftieth.</p>
 <div class="section level3">
 <h3 id="what-fine-tuning-costs-from-one-dollar-to-ten-thousand">What fine-tuning costs, from one dollar to ten thousand<a class="anchor" aria-label="anchor" href="#what-fine-tuning-costs-from-one-dollar-to-ten-thousand"></a>
 </h3>
@@ -8769,15 +8755,14 @@ below)</td>
 </tr>
 </tbody>
 </table>
-<p>Two rows deserve a second look. The CHURRO row is the model you are
-about to fine-tune: Stanford spent on the order of 800 H100-hours making
-it, and you get the benefit for sixty cents because you are
-<em>adapting</em> it, not retraining it. Starting from a model that
-already knows most of the task is the single largest cost saving
-available, and it is a choice you make before any GPU is involved. The
-sweep row is the other honest one. Nobody’s first run is their last, so
-a “$140 fine-tune” is usually a $700 to $1,400 project, and that is the
-number that surprises research groups. (The 7B row is worked out in the
+<p>Two rows to note. The CHURRO row is the model you are about to
+fine-tune: Stanford spent on the order of 800 H100-hours making it, and
+you get the benefit for sixty cents because you are <em>adapting</em>
+it, not retraining it. Starting from a model that already knows most of
+the task is the largest cost saving available, and it is decided before
+any GPU is involved. The sweep row: a first run is rarely the last, so a
+“$140 fine-tune” is usually a $700 to $1,400 project. That is the number
+that surprises research groups. (The 7B row is worked out in the
 challenge below; the 70B rows are rule-of-thumb magnitudes; the CHURRO
 figures come from a published review of the paper.)</p>
 <p>The habits in this episode are cheap practice at sixty cents a run.
@@ -8863,12 +8848,12 @@ two moments 8</td>
 </tr>
 </tbody>
 </table>
-<p>The jump from the inference rows to the training rows is the point.
-Training cannot run on quantized weights the way inference can: gradient
-updates are tiny numbers that vanish in 8-bit or 4-bit precision, so
-every trainable parameter keeps a full-precision master copy plus two
-Adam moments, 16 bytes against 2. That is why a 7B model you can
-<em>run</em> on a 24 GB GPU needs 112 GB plus activations to <em>fully
+<p>Note the jump from the inference rows to the training rows. Training
+cannot run on quantized weights the way inference can: gradient updates
+are tiny numbers that vanish in 8-bit or 4-bit precision, so every
+trainable parameter keeps a full-precision master copy plus two Adam
+moments, 16 bytes against 2. That is why a 7B model you can <em>run</em>
+on a 24 GB GPU needs 112 GB plus activations to <em>fully
 fine-tune</em>, which means several GPUs with the model sharded across
 them. LoRA sidesteps it by freezing the model and training a few million
 adapter parameters, which is why this episode fits on one 24 GB
@@ -9505,9 +9490,9 @@ job</h3>
 <div class="callout-content">
 <p>The square “interrupt kernel” button stops the <em>notebook</em> from
 watching the job. The GPU instance keeps running and keeps billing until
-the script finishes or <code>max_run</code> expires. To actually stop a
-job, use the console (<strong>SageMaker AI → Training → Training jobs →
-select → Stop</strong>) or:</p>
+the script finishes or <code>max_run</code> expires. To stop a job, use
+the console (<strong>SageMaker AI → Training → Training jobs → select →
+Stop</strong>) or:</p>
 <div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -9539,7 +9524,7 @@ overnight.</p>
 split, before the 120-page slice.</li>
 <li>
 <code>trainable params: ...</code>: what fraction of the 3B
-parameters LoRA actually trains.</li>
+parameters LoRA trains.</li>
 <li>
 <code>[eval before] 15 holdout pages in ...s (... s/page) -&gt; macro CER ...</code>:
 the base model’s score, and the per-page time that the homework
@@ -9799,7 +9784,7 @@ more efficiently.</p>
 on <code>ml.g6e.xlarge</code>. Then do the same for the homework run (21
 min of training, 13 min of evaluation, 10 min of startup on the g5).
 Which phase does <em>not</em> get faster, and when does the faster
-instance actually save money?</p>
+instance save money?</p>
 </div>
 </div>
 </div>
@@ -9823,11 +9808,11 @@ The g6e only wins once training dominates startup: at four epochs, or at
 2 megapixels, or on a thousand pages, the g5 bill grows linearly while
 the g6e bill grows at a third of the slope, and then the faster card is
 cheaper per run.</p>
-<p>The lesson is that the hourly rate is the wrong thing to compare; the
-cost per run is what matters, and the fixed overhead is a larger share
-of it on faster hardware. The catch is quotas: the account needs a
-service quota for <code>ml.g6e.xlarge</code> training jobs, and those
-often default to zero.</p>
+<p>The hourly rate is the wrong thing to compare; the cost per run is
+what matters, and the fixed overhead is a larger share of it on faster
+hardware. The catch is quotas: the account needs a service quota for
+<code>ml.g6e.xlarge</code> training jobs, and those often default to
+zero.</p>
 </div>
 </div>
 </div>
@@ -10265,11 +10250,10 @@ October 2026). That is:</p>
 </tr>
 </tbody>
 </table>
-<p>Compare the Bedrock episode, where the whole WattBot evaluation cost
-well under a dollar. One forgotten weekend on this instance costs a
-thousand times more than the thing it was rented to do. And it is not
-hypothetical: a forgotten GPU notebook is the single most common way
-research groups burn through cloud credits.</p>
+<p>The same evaluation on Bedrock cost well under a dollar. One
+forgotten weekend on this instance costs a thousand times more than the
+work it was rented for. A forgotten GPU notebook is the most common way
+research groups overspend cloud credits.</p>
 <p>Two further charges people do not expect:</p>
 <ul>
 <li>
@@ -10295,10 +10279,10 @@ Then look at the status column until it says <code>Stopped</code>.</li>
 <strong>Set a reminder</strong> on your phone or calendar before you
 start the instance, for two hours from now.</li>
 <li>
-<strong>Prefer jobs for any real work</strong>: a Processing job
-(the Processing Jobs episode) or a training job ends on its own, and
-<code>max_runtime_in_seconds</code> (<code>max_run</code> on a training
-job) guarantees it.</li>
+<strong>Prefer jobs for anything beyond exploration</strong>: a
+Processing job (the Processing Jobs episode) or a training job ends on
+its own, and <code>max_runtime_in_seconds</code> (<code>max_run</code>
+on a training job) guarantees it.</li>
 </ol>
 </div>
 </div>
@@ -10308,8 +10292,8 @@ point for understanding the alternatives, because it is:</p>
 <ul>
 <li>Easy to understand on the AWS side (pick a GPU instance, pick a
 model, go)</li>
-<li>Ideal for learning what retrieval and generation actually do, step
-by step</li>
+<li>Ideal for learning what retrieval and generation do, step by
+step</li>
 <li>The fastest loop for experimenting with prompts and models that
 Bedrock does not carry</li>
 </ul>
@@ -11146,8 +11130,8 @@ strategies, and richer document preprocessing without changing the
 overall pipeline structure.</p>
 <p>The Processing Jobs episode does the same work, with the same
 <code>wattbot_rag.py</code>, as short-lived SageMaker jobs, so the GPU
-only bills while it is actually embedding or generating. Stop this
-instance now, and delete it if you are done with the episode.</p>
+only bills while it is embedding or generating. Stop this instance now,
+and delete it if you are done with the episode.</p>
 <div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
 <i class="callout-icon" data-feather="key"></i>
@@ -11221,7 +11205,7 @@ any links that you are not going to use.
 lesson’s notebooks did, and what should I not do with it?</li>
 <li>How do I see, and stop, everything that is costing money from a
 terminal?</li>
-<li>What was the SageMaker SDK actually sending when I called
+<li>What request does the SageMaker SDK send when I call
 <code>estimator.fit()</code>?</li>
 </ul>
 </div>
@@ -11250,12 +11234,11 @@ the account refuses them.</li>
 <h3 id="optional-self-study-episode">Optional, self-study episode<a class="anchor" aria-label="anchor" href="#optional-self-study-episode"></a>
 </h3>
 <p>Everything in this lesson went through the SageMaker Python SDK in a
-notebook. The same account can be driven from a terminal with the AWS
-CLI, and sooner or later you will want to: to check on a job from your
-phone’s SSH client, to stop something from a machine where you have no
-notebook open, to copy results out of S3 in bulk, or to script a launch.
-This episode shows the CLI equivalents of what you already did, in that
-order of usefulness: <strong>look, stop, copy, then launch</strong>.</p>
+notebook. The same account can be used from a terminal with the AWS CLI:
+to check on a job from another machine, to stop something when no
+notebook is open, to copy results out of S3 in bulk, or to script a
+launch. This episode shows the CLI equivalents of what you already did,
+in four groups: <strong>look, stop, copy, launch</strong>.</p>
 <div id="read-this-before-the-first-command" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -11265,19 +11248,19 @@ order of usefulness: <strong>look, stop, copy, then launch</strong>.</p>
 <h3 class="callout-title">Read this before the first command</h3>
 <div class="callout-content">
 <p>The CLI, the SDK and the console are the same API. Nothing here is
-more powerful than a notebook cell; the difference is that a terminal
-shows you <em>nothing</em> unless you ask. A notebook instance left
-running sits in a console tab you will see tomorrow; an endpoint created
-from a terminal on a Friday is invisible until the bill arrives. One
-past participant of this workshop spent a large share of a year’s
-credits that way. So three rules, in force for the shared account and
-worth keeping on your own:</p>
+more powerful than a notebook cell. The difference is that a terminal
+shows nothing unless you ask: a notebook instance left running is
+visible in the console the next day, while an endpoint created from a
+terminal on a Friday is not noticed until the bill arrives. A past
+participant of this workshop spent a large share of a year’s credits
+that way. Three rules apply on the shared account and are worth keeping
+on your own:</p>
 <ol style="list-style-type: decimal">
 <li>
 <strong>Authenticate with <code>aws sso login</code> only.</strong>
 Never <code>aws configure</code> with an access key ID and secret. Those
-are long-lived, they end up in shell histories and committed files, and
-they are the usual way a research group’s keys reach the internet.</li>
+are long-lived, and they end up in shell histories and committed
+files.</li>
 <li>
 <strong>Launch only jobs</strong> (training, processing, tuning),
 with the same three tags and the same <code>MaxRuntimeInSeconds</code>
@@ -11285,11 +11268,10 @@ the notebooks always set. Jobs end on their own. <strong>Endpoints, EC2
 instances and GPU notebook instances do not</strong>, and the lesson
 never creates them from the CLI, or at all.</li>
 <li>
-<strong>If the account refuses a command, that is the system
-working.</strong> The workshop permission set denies endpoint and EC2
-creation, instance types outside the lesson’s list, and any job launched
-without the tags. An <code>AccessDeniedException</code> on one of those
-is not a permissions bug to work around; it is the guard rail.</li>
+<strong>An <code>AccessDeniedException</code> on the commands below
+is intended.</strong> The workshop permission set denies endpoint and
+EC2 creation, instance types outside the lesson’s list, and any job
+launched without the tags. Do not look for a workaround.</li>
 </ol>
 </div>
 </div>
@@ -11369,8 +11351,8 @@ bill:</p>
 </section><section><h2 class="section-heading" id="stop-the-commands-worth-memorising">3. Stop: the commands worth memorising<a class="anchor" aria-label="anchor" href="#stop-the-commands-worth-memorising"></a>
 </h2>
 <hr class="half-width">
-<p>These are the reason to have the CLI installed at all. Each one makes
-money stop.</p>
+<p>These are the most useful CLI commands to know. Each one stops a
+charge.</p>
 <div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -11410,9 +11392,9 @@ region and let a job read it, which is the lesson’s pattern.</p>
 </h2>
 <hr class="half-width">
 <p>Every <code>estimator.fit()</code> in the training episodes assembled
-a JSON request and sent it to <code>CreateTrainingJob</code>. Seeing
-that request once makes the SDK’s arguments stop looking like magic.
-Fill in the five placeholders from your notebook: the image URI (run
+a JSON request and sent it to <code>CreateTrainingJob</code>. Here is
+that request. Fill in the five placeholders from your notebook: the
+image URI (run
 <code>print(xgboost_estimator.training_image_uri())</code> in the
 training episode’s notebook), your role ARN (<code>print(role)</code>),
 your bucket, your tag values, and a job name, which must be unique in
@@ -11451,14 +11433,14 @@ the account.</p>
 <span id="cb9-29"><a href="#cb9-29" tabindex="-1" aria-label="code-block-9-29"></a><span class="op">JSON</span></span>
 <span id="cb9-30"><a href="#cb9-30" tabindex="-1" aria-label="code-block-9-30"></a><span class="ex">aws</span> sagemaker create-training-job <span class="at">--cli-input-json</span> file://train-xgboost.json</span></code></pre>
 </div>
-<p>Three things to notice.
+<p>Three fields to notice.
 <code>StoppingCondition.MaxRuntimeInSeconds</code> is the
 <code>max_run</code> you set on every estimator; the SDK would have sent
 48 hours if you had not. <code>Tags</code> is the <code>tags=</code>
 argument, and without it the request is refused on the workshop account.
-And <code>ResourceConfig</code> is where the money is: the instance type
-you would think twice about in a notebook deserves the same second
-thought in a JSON file, where nothing prints a price.</p>
+<code>ResourceConfig</code> sets the instance type and count, which
+determine the cost; nothing in a JSON file prints a price, so check it
+as carefully as you would in a notebook.</p>
 <p>The CLI returns the moment the request is accepted; nothing waits. To
 follow the job the way <code>wait=True</code> did:</p>
 <div class="codewrapper sourceCode" id="cb10">
@@ -11482,8 +11464,8 @@ billable on <code>ml.m5.large</code>, about a cent.</p>
 <code>aws sagemaker create-endpoint</code> /
 <code>create-endpoint-config</code>: an endpoint is a server that runs
 until you delete it, with no runtime cap. The lesson serves models with
-processing jobs and Bedrock precisely so that nothing of this kind
-exists in the account.</li>
+processing jobs and Bedrock so that nothing of this kind exists in the
+account.</li>
 <li>
 <code>aws sagemaker create-notebook-instance</code> with a GPU type:
 a GPU notebook is $60 a day while you are asleep. The optional
@@ -11497,8 +11479,8 @@ in.</li>
 <p>On the workshop account all three are denied by the permission set,
 as is any instance type outside the lesson’s list and any job without
 the three tags; the instructor page <em>Account preparation
-checklist</em> has the policy. On your own account, the same denies are
-a fifteen-minute setup and the best money you will not spend.</p>
+checklist</em> has the policy. On your own account, the same denies take
+about fifteen minutes to set up.</p>
 </div>
 </div>
 </div>
@@ -11513,7 +11495,7 @@ a fifteen-minute setup and the best money you will not spend.</p>
 <p>You are leaving for the weekend and have a terminal, not a browser.
 Write the commands you would run, in order, to make sure the account is
 costing nothing until Monday, and the one command to run if each check
-finds something. Then run them for real against your own resources.</p>
+finds something. Then run them against your own resources.</p>
 </div>
 </div>
 </div>
@@ -11522,7 +11504,7 @@ finds something. Then run them for real against your own resources.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -11626,17 +11608,14 @@ jobs.</li>
 <section><h2 class="section-heading" id="shutting-down-notebook-instances">Shutting down notebook instances<a class="anchor" aria-label="anchor" href="#shutting-down-notebook-instances"></a>
 </h2>
 <hr class="half-width">
-<p>Notebook instances in SageMaker are billed per second while they are
-<strong>InService</strong>, so it’s essential to stop or delete them
-when they are no longer needed. Earlier in the <strong>Notebooks as
-controllers</strong> episode, we discussed using lower-cost instance
-types like <code>ml.t3.medium</code> ($0.05/hour) for controlling
-workflows. While this makes open notebooks less costly than larger
-instances, it’s still a good habit to stop or delete notebook instances
-to avoid unnecessary spending, especially if left idle for long periods.
-A GPU notebook instance (the optional RAG episode’s
-<code>ml.g6e.xlarge</code>, $2.61/hour) left running is about $60 a
-day.</p>
+<p>Notebook instances in SageMaker are billed per second, so it’s
+essential to stop or delete them when they are no longer needed. Earlier
+in the <strong>Notebooks as controllers</strong> episode, we discussed
+using lower-cost instance types like <code>ml.t3.medium</code>
+(approximately $0.05/hour) for controlling workflows. While this makes
+open notebooks less costly than larger instances, it’s still a good
+habit to stop or delete notebooks to avoid unnecessary spending,
+especially if left idle for long periods.</p>
 <ol style="list-style-type: decimal">
 <li><strong>Navigate to SageMaker in the AWS Console.</strong></li>
 <li>In the left-hand menu, click <strong>Notebook
@@ -11644,17 +11623,15 @@ instances</strong>.</li>
 <li>Locate your notebook instance and select it.</li>
 <li>Choose <strong>Stop</strong> to shut it down temporarily or
 <strong>Delete</strong> to permanently remove it. &gt;
-<strong>Tip:</strong> If you plan to reuse the notebook instance later,
-stopping it is sufficient. Deleting is recommended if you are finished
-with the workshop.</li>
+<strong>Tip:</strong> If you plan to reuse the notebook later, stopping
+it is sufficient. Deleting is recommended if you are finished with the
+workshop.</li>
 </ol>
-<p><strong>Delete, don’t just stop, instances with large
-volumes.</strong> A stopped instance stops the compute charge but keeps
-its storage volume, which bills at about $0.14 per GB-month. The default
-5 GB is cents; the 100 GB volume the optional GPU-notebook episode asks
-for is $14 a month for an instance nobody is using. If you enlarged the
-volume to hold model weights, delete the instance once the episode is
-done.</p>
+<p>A stopped instance stops the compute charge but keeps its storage
+volume, which bills at about $0.14 per GB-month. The default 5 GB is
+cents; the 100 GB volume the optional GPU-notebook episode asks for is
+$14 a month. If you enlarged the volume to hold model weights, delete
+the instance once the episode is done.</p>
 </section><section><h2 class="section-heading" id="cleaning-up-s3-storage">Cleaning up S3 storage<a class="anchor" aria-label="anchor" href="#cleaning-up-s3-storage"></a>
 </h2>
 <hr class="half-width">
@@ -11687,8 +11664,7 @@ buckets, ensuring that only unnecessary resources are deleted.</p>
 run, so make sure to terminate unused jobs. Every job in this lesson was
 launched with a runtime cap (<code>max_run</code> on training and tuning
 jobs, <code>max_runtime_in_seconds</code> on Processing jobs), so a
-forgotten job ends on its own; the cap is the safety net, not the
-plan.</p>
+forgotten job ends on its own.</p>
 <ol style="list-style-type: decimal">
 <li>In the SageMaker Console, go to <strong>Training jobs</strong>,
 <strong>Hyperparameter tuning jobs</strong>, or <strong>Processing
@@ -11745,9 +11721,7 @@ finished.</li>
 </ol></section><section><h2 class="section-heading" id="end-of-workshop-checklist">End-of-workshop checklist<a class="anchor" aria-label="anchor" href="#end-of-workshop-checklist"></a>
 </h2>
 <hr class="half-width">
-<p>Work through this list before you sign off for the last time. Each
-line is something you created during the lesson that either bills or
-clutters the account.</p>
+<p>Work through this list before you sign off for the last time.</p>
 <ul>
 <li>
 <strong>Notebook instances</strong>: Stop, then
@@ -11786,9 +11760,9 @@ browser.</p>
 <p>In the shared workshop account, the instructors sweep the account
 with <a href="https://github.com/ekristen/aws-nuke" class="external-link">aws-nuke</a> after
 the workshop. That sweep deletes notebook instances and the learner
-buckets only, so if you forget those, they will still go. It
-deliberately does <em>not</em> touch Bedrock application inference
-profiles or lifecycle configurations, so those are yours to remove.</p>
+buckets only, so if you forget those, they will still go. It does not
+touch Bedrock application inference profiles or lifecycle
+configurations, so those are yours to remove.</p>
 </section><section><h2 class="section-heading" id="best-practices-for-resource-management">Best practices for resource management<a class="anchor" aria-label="anchor" href="#best-practices-for-resource-management"></a>
 </h2>
 <hr class="half-width">
@@ -11927,22 +11901,21 @@ download them once, then delete the bucket.</p>
 <div class="callout-inner">
 <div class="callout-content">
 <ul>
-<li>Always stop notebook instances when not in use, and delete them (not
-just stop) once a project is over: a stopped instance still bills for
-its volume.</li>
-<li>Stop any training, tuning or Processing job you no longer need;
-runtime caps are the safety net.</li>
-<li>Lifecycle configurations and Bedrock application inference profiles
-are not swept by the instructors’ aws-nuke run; remove them
-yourself.</li>
-<li>Regularly clean up unused S3 buckets and objects to save on storage
-costs.</li>
-<li>Monitor your expenses through the AWS Billing Dashboard and set up
-alerts.</li>
-<li>Use tags (set up earlier in the workshop) to track and monitor costs
-by resource.</li>
-<li>Following best practices for AWS resource management can
-significantly reduce costs and improve efficiency.</li>
+<li><p>Always stop or delete notebook instances when not in use to avoid
+charges.</p></li>
+<li><p>Stop any training, tuning or Processing job you no longer
+need.</p></li>
+<li><p>Lifecycle configurations and Bedrock application inference
+profiles are not swept by the instructors’ aws-nuke run; remove them
+yourself.</p></li>
+<li><p>Regularly clean up unused S3 buckets and objects to save on
+storage costs.</p></li>
+<li><p>Monitor your expenses through the AWS Billing Dashboard and set
+up alerts.</p></li>
+<li><p>Use tags (set up earlier in the workshop) to track and monitor
+costs by resource.</p></li>
+<li><p>Following best practices for AWS resource management can
+significantly reduce costs and improve efficiency.</p></li>
 </ul>
 </div>
 </div>

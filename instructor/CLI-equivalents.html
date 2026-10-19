@@ -452,7 +452,7 @@
 lesson’s notebooks did, and what should I not do with it?</li>
 <li>How do I see, and stop, everything that is costing money from a
 terminal?</li>
-<li>What was the SageMaker SDK actually sending when I called
+<li>What request does the SageMaker SDK send when I call
 <code>estimator.fit()</code>?</li>
 </ul></div>
 </div>
@@ -477,12 +477,11 @@ the account refuses them.</li>
 <div class="section level3">
 <h3 id="optional-self-study-episode">Optional, self-study episode<a class="anchor" aria-label="anchor" href="#optional-self-study-episode"></a></h3>
 <p>Everything in this lesson went through the SageMaker Python SDK in a
-notebook. The same account can be driven from a terminal with the AWS
-CLI, and sooner or later you will want to: to check on a job from your
-phone’s SSH client, to stop something from a machine where you have no
-notebook open, to copy results out of S3 in bulk, or to script a launch.
-This episode shows the CLI equivalents of what you already did, in that
-order of usefulness: <strong>look, stop, copy, then launch</strong>.</p>
+notebook. The same account can be used from a terminal with the AWS CLI:
+to check on a job from another machine, to stop something when no
+notebook is open, to copy results out of S3 in bulk, or to script a
+launch. This episode shows the CLI equivalents of what you already did,
+in four groups: <strong>look, stop, copy, launch</strong>.</p>
 <div id="read-this-before-the-first-command" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -492,18 +491,18 @@ order of usefulness: <strong>look, stop, copy, then launch</strong>.</p>
 <h3 class="callout-title">Read this before the first command</h3>
 <div class="callout-content">
 <p>The CLI, the SDK and the console are the same API. Nothing here is
-more powerful than a notebook cell; the difference is that a terminal
-shows you <em>nothing</em> unless you ask. A notebook instance left
-running sits in a console tab you will see tomorrow; an endpoint created
-from a terminal on a Friday is invisible until the bill arrives. One
-past participant of this workshop spent a large share of a year’s
-credits that way. So three rules, in force for the shared account and
-worth keeping on your own:</p>
+more powerful than a notebook cell. The difference is that a terminal
+shows nothing unless you ask: a notebook instance left running is
+visible in the console the next day, while an endpoint created from a
+terminal on a Friday is not noticed until the bill arrives. A past
+participant of this workshop spent a large share of a year’s credits
+that way. Three rules apply on the shared account and are worth keeping
+on your own:</p>
 <ol style="list-style-type: decimal"><li>
 <strong>Authenticate with <code>aws sso login</code> only.</strong>
 Never <code>aws configure</code> with an access key ID and secret. Those
-are long-lived, they end up in shell histories and committed files, and
-they are the usual way a research group’s keys reach the internet.</li>
+are long-lived, and they end up in shell histories and committed
+files.</li>
 <li>
 <strong>Launch only jobs</strong> (training, processing, tuning),
 with the same three tags and the same <code>MaxRuntimeInSeconds</code>
@@ -511,11 +510,10 @@ the notebooks always set. Jobs end on their own. <strong>Endpoints, EC2
 instances and GPU notebook instances do not</strong>, and the lesson
 never creates them from the CLI, or at all.</li>
 <li>
-<strong>If the account refuses a command, that is the system
-working.</strong> The workshop permission set denies endpoint and EC2
-creation, instance types outside the lesson’s list, and any job launched
-without the tags. An <code>AccessDeniedException</code> on one of those
-is not a permissions bug to work around; it is the guard rail.</li>
+<strong>An <code>AccessDeniedException</code> on the commands below
+is intended.</strong> The workshop permission set denies endpoint and
+EC2 creation, instance types outside the lesson’s list, and any job
+launched without the tags. Do not look for a workaround.</li>
 </ol></div>
 </div>
 </div>
@@ -588,8 +586,8 @@ bill:</p>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a><span class="ex">aws</span> sagemaker list-tags <span class="at">--resource-arn</span> <span class="va">$ARN</span> <span class="at">--query</span> <span class="st">'Tags[].[Key,Value]'</span> <span class="at">--output</span> table</span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="stop-the-commands-worth-memorising">3. Stop: the commands worth memorising<a class="anchor" aria-label="anchor" href="#stop-the-commands-worth-memorising"></a></h2>
-<hr class="half-width"><p>These are the reason to have the CLI installed at all. Each one makes
-money stop.</p>
+<hr class="half-width"><p>These are the most useful CLI commands to know. Each one stops a
+charge.</p>
 <div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -625,9 +623,9 @@ anything larger than a few hundred megabytes, keep the data in the
 region and let a job read it, which is the lesson’s pattern.</p>
 </section><section><h2 class="section-heading" id="launch-one-training-job-as-json">5. Launch: one training job, as JSON<a class="anchor" aria-label="anchor" href="#launch-one-training-job-as-json"></a></h2>
 <hr class="half-width"><p>Every <code>estimator.fit()</code> in the training episodes assembled
-a JSON request and sent it to <code>CreateTrainingJob</code>. Seeing
-that request once makes the SDK’s arguments stop looking like magic.
-Fill in the five placeholders from your notebook: the image URI (run
+a JSON request and sent it to <code>CreateTrainingJob</code>. Here is
+that request. Fill in the five placeholders from your notebook: the
+image URI (run
 <code>print(xgboost_estimator.training_image_uri())</code> in the
 training episode’s notebook), your role ARN (<code>print(role)</code>),
 your bucket, your tag values, and a job name, which must be unique in
@@ -666,14 +664,14 @@ the account.</p>
 <span id="cb9-29"><a href="#cb9-29" tabindex="-1" aria-label="code-block-9-29"></a><span class="op">JSON</span></span>
 <span id="cb9-30"><a href="#cb9-30" tabindex="-1" aria-label="code-block-9-30"></a><span class="ex">aws</span> sagemaker create-training-job <span class="at">--cli-input-json</span> file://train-xgboost.json</span></code></pre>
 </div>
-<p>Three things to notice.
+<p>Three fields to notice.
 <code>StoppingCondition.MaxRuntimeInSeconds</code> is the
 <code>max_run</code> you set on every estimator; the SDK would have sent
 48 hours if you had not. <code>Tags</code> is the <code>tags=</code>
 argument, and without it the request is refused on the workshop account.
-And <code>ResourceConfig</code> is where the money is: the instance type
-you would think twice about in a notebook deserves the same second
-thought in a JSON file, where nothing prints a price.</p>
+<code>ResourceConfig</code> sets the instance type and count, which
+determine the cost; nothing in a JSON file prints a price, so check it
+as carefully as you would in a notebook.</p>
 <p>The CLI returns the moment the request is accepted; nothing waits. To
 follow the job the way <code>wait=True</code> did:</p>
 <div class="codewrapper sourceCode" id="cb10">
@@ -696,8 +694,8 @@ billable on <code>ml.m5.large</code>, about a cent.</p>
 <code>aws sagemaker create-endpoint</code> /
 <code>create-endpoint-config</code>: an endpoint is a server that runs
 until you delete it, with no runtime cap. The lesson serves models with
-processing jobs and Bedrock precisely so that nothing of this kind
-exists in the account.</li>
+processing jobs and Bedrock so that nothing of this kind exists in the
+account.</li>
 <li>
 <code>aws sagemaker create-notebook-instance</code> with a GPU type:
 a GPU notebook is $60 a day while you are asleep. The optional
@@ -710,8 +708,8 @@ in.</li>
 </ul><p>On the workshop account all three are denied by the permission set,
 as is any instance type outside the lesson’s list and any job without
 the three tags; the instructor page <em>Account preparation
-checklist</em> has the policy. On your own account, the same denies are
-a fifteen-minute setup and the best money you will not spend.</p>
+checklist</em> has the policy. On your own account, the same denies take
+about fifteen minutes to set up.</p>
 </div>
 </div>
 </div>
@@ -726,7 +724,7 @@ a fifteen-minute setup and the best money you will not spend.</p>
 <p>You are leaving for the weekend and have a terminal, not a browser.
 Write the commands you would run, in order, to make sure the account is
 costing nothing until Monday, and the one command to run if each check
-finds something. Then run them for real against your own resources.</p>
+finds something. Then run them against your own resources.</p>
 </div>
 </div>
 </div>
@@ -735,7 +733,7 @@ finds something. Then run them for real against your own resources.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>

@@ -482,7 +482,7 @@ parameter ranges and model count. Here’s an overview of the process,
 with a focus on both efficiency and cost-effectiveness.</p>
 <div class="section level3">
 <h3 id="key-steps">Key steps<a class="anchor" aria-label="anchor" href="#key-steps"></a></h3>
-<p>The overall process involves these seven steps.</p>
+<p>The overall process involves these seven below steps.</p>
 <ol style="list-style-type: decimal"><li>Setup estimator</li>
 <li>Define parameter ranges</li>
 <li>Set up HyperparameterTuner object</li>
@@ -516,9 +516,8 @@ neural networks.</p>
 </div>
 <div class="section level4">
 <h4 id="directory-setup">0. Directory setup<a class="anchor" aria-label="anchor" href="#directory-setup"></a></h4>
-<p>The usual first cell: start from the instance’s root directory, clone
-the lesson repository if it is not already there, and import the
-helpers.</p>
+<p>Just to make sure we are all on the same directory starting point,
+let’s cd to our instance’s root directory</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -569,10 +568,10 @@ launched in this episode</p>
 <span id="cb2-12"><a href="#cb2-12" tabindex="-1" aria-label="code-block-2-12"></a>local_instance <span class="op">=</span> response[<span class="st">'InstanceType'</span>]</span>
 <span id="cb2-13"><a href="#cb2-13" tabindex="-1" aria-label="code-block-2-13"></a><span class="bu">print</span>(<span class="ss">f"Instance Type: </span><span class="sc">{</span>local_instance<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<p><strong>Cost tracking</strong>: Just like in the previous episodes,
-we explicitly tag our work at launch time so that compute usage is
-traceable to a project, a purpose, and a human-readable name. Tuning is
-the one case where tags <em>do</em> propagate: tags on the
+<p><strong>Cost tracking</strong>: Just like in the previous episode, we
+explicitly tag each training job at launch time. This ensures that
+compute usage is traceable to a project, a purpose, and a human-readable
+name, even after the job has completed. Tags on the
 <code>HyperparameterTuner</code> are copied to every child training job
 it launches, so we only need to set them once, on the tuner (we also set
 them on the estimator so a plain <code>.fit()</code> on it is tagged
@@ -707,8 +706,8 @@ Testing a range of layer sizes or depths (e.g., <code>32, 64, 128</code>
 neurons per layer) can reveal whether additional complexity yields
 benefits. Notably, understanding <em>double descent</em> is essential
 here, as larger networks may initially seem to overfit before
-unexpectedly improving in the <em>second descent</em>, a phenomenon
-worth investigating in high-capacity networks.</p></li>
+unexpectedly improving in the <em>second descent</em>—a phenomenon worth
+investigating in high-capacity networks.</p></li>
 <li><p><strong>Regularization Parameters</strong>: Regularization
 techniques, such as dropout rates or weight decay, can help control
 overfitting by limiting model capacity. For example, dropout rates from
@@ -733,7 +732,7 @@ rates to observe.</p></li>
 </ul><p>In summary, hyperparameter tuning is a balancing act between
 expanding model capacity and mitigating overfitting. Prioritize
 parameters that have shown past efficacy in similar problems, and limit
-the search to a manageable range; often 20-30 model configurations are
+the search to a manageable range—often 20–30 model configurations are
 sufficient to observe gains. This approach keeps resource consumption
 practical while achieving meaningful improvements in model
 performance.</p>
@@ -846,9 +845,9 @@ Once the job is launched, SageMaker handles the tuning process
 automatically, running the specified number of configurations and
 keeping track of the best model parameters based on validation
 accuracy.</p>
-<p>Estimate first, as always: one child job is the same ~1 minute of
-training plus ~3 minutes of startup we saw in the previous episode, so
-about $0.01.</p>
+<p>Estimate first: one child job is the same ~1 minute of training plus
+~3 minutes of startup we saw in the previous episode, so about
+$0.01.</p>
 <div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -865,17 +864,16 @@ about $0.01.</p>
 <h4 id="monitor-tuning-job-from-sagemaker-console">6. Monitor tuning job from SageMaker console<a class="anchor" aria-label="anchor" href="#monitor-tuning-job-from-sagemaker-console"></a></h4>
 <p>While the above cell runs, we can check on the progress by visiting
 the SageMaker Console and finding the “Training” tab located on the left
-panel. Click “Hyperparameter tuning jobs” to view running jobs, and
-click into one to see its child training jobs.</p>
+panel. Click “Hyperparameter tuning jobs” to view running jobs.</p>
 </div>
 <div class="section level4">
 <h4 id="what-did-that-cost">What did that cost?<a class="anchor" aria-label="anchor" href="#what-did-that-cost"></a></h4>
-<p>A tuning job is just a manager; the money is spent by the training
-jobs it launches, and that is where SageMaker records billable time. We
-bring back <code>job_cost_report()</code> from the previous episodes and
-run it over every child job of the tuner. The list of child jobs comes
-from <code>tuner.analytics().dataframe()</code> (one row per training
-job, with its hyperparameters and final objective value).</p>
+<p>The money is spent by the training jobs the tuner launches, and that
+is where SageMaker records billable time. We bring back
+<code>job_cost_report()</code> from the previous episodes and run it
+over every child job of the tuner. The list of child jobs comes from
+<code>tuner.analytics().dataframe()</code> (one row per training job,
+with its hyperparameters and final objective value).</p>
 <div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -922,8 +920,7 @@ without overloading resources or risking inefficient exploration, making
 <p>Estimate first: 10 child jobs at roughly 3-4 billable minutes each is
 30-40 billable minutes on <code>ml.m5.large</code>, so about $0.06 in
 total (the 10,000-epoch configurations run a little longer). Wall-clock
-is five rounds of two jobs, so expect 15-20 minutes; a good moment for a
-break.</p>
+is five rounds of two jobs, so expect 15-20 minutes.</p>
 <div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -971,7 +968,7 @@ each job completes, new jobs from the remaining pool are triggered until
 <li>Job Completion: Once the first few jobs complete, SageMaker will
 continue to launch the remaining jobs up to the maximum of 10, but no
 more than two at a time.</li>
-</ul><p>And once it has finished, the bill for all 10 child jobs:</p>
+</ul><p>Once it has finished, the cost report for all 10 child jobs:</p>
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -980,15 +977,14 @@ more than two at a time.</li>
 </div>
 <div class="section level3">
 <h3 id="canshould-we-run-more-instances-in-parallel">Can/should we run more instances in parallel?<a class="anchor" aria-label="anchor" href="#canshould-we-run-more-instances-in-parallel"></a></h3>
-<p>Setting <code>max_parallel_jobs</code> to 10 (equal to
-<code>max_jobs</code>) will launch all 10 jobs at once. This barely
-changes the total cost (you pay per training job, and each job’s
-billable time is the same whether or not another job is running), but it
-shortens wall-clock time to roughly one job’s duration and it changes
-the <em>quality</em> of the search, because SageMaker’s Bayesian
-strategy can only use results that have already finished. This
-adaptability is especially useful for neural networks, which often have
-a large hyperparameter space with complex interactions. Here’s how
+<p>Setting max_parallel_jobs to 10 (equal to max_jobs) will indeed
+launch all 10 jobs in parallel. This approach won’t affect the total
+cost (since cost is based on the number of total jobs, not how many run
+concurrently), but it can impact the final results and resource usage
+pattern due to SageMaker’s ability to dynamically select hyperparameter
+values to test to maximize efficiency and improve model performance.
+This adaptability is especially useful for neural networks, which often
+have a large hyperparameter space with complex interactions. Here’s how
 SageMaker’s approach impacts typical neural network training:</p>
 <div class="section level4">
 <h4 id="adaptive-search-strategies">1. Adaptive Search Strategies<a class="anchor" aria-label="anchor" href="#adaptive-search-strategies"></a></h4>
@@ -1003,13 +999,13 @@ the hyperparameter space and discarding poor ones.</li>
 <div class="section level4">
 <h4 id="effect-of-max_parallel_jobs-on-adaptive-tuning">2. Effect of <code>max_parallel_jobs</code> on adaptive tuning<a class="anchor" aria-label="anchor" href="#effect-of-max_parallel_jobs-on-adaptive-tuning"></a></h4>
 <ul><li>When using Bayesian optimization, a lower
-<code>max_parallel_jobs</code> (e.g., 2-4) can allow SageMaker to
+<code>max_parallel_jobs</code> (e.g., 2–4) can allow SageMaker to
 iteratively adjust and improve its choices. Each batch of jobs informs
 the subsequent batch, which may yield better results over time.</li>
 <li>Conversely, if all jobs are run in parallel (e.g.,
 <code>max_parallel_jobs=10</code>), SageMaker can’t learn and adapt
-within a single batch, making this setup more like a traditional random
-search. This approach is still valid, especially for small search
+within a single batch, making this setup more like a traditional grid or
+random search. This approach is still valid, especially for small search
 spaces, but it doesn’t leverage the full potential of adaptive
 tuning.</li>
 </ul></div>
@@ -1033,7 +1029,7 @@ jobs by fine-tuning hyperparameters over multiple iterations.</li>
 simultaneous testing.</li>
 <li>
 <strong>For adaptive, refined tuning</strong>: Use a smaller
-<code>max_parallel_jobs</code> (like 2-4) to let SageMaker leverage
+<code>max_parallel_jobs</code> (like 2–4) to let SageMaker leverage
 adaptive tuning for optimal configurations.</li>
 </ul><p>This balance between exploration and exploitation is particularly
 impactful in neural network tuning, where training costs can be high and
@@ -1042,10 +1038,11 @@ parameters interact in complex ways.</p>
 </div>
 <div class="section level3">
 <h3 id="extracting-and-evaluating-the-best-model-after-tuning">Extracting and evaluating the best model after tuning<a class="anchor" aria-label="anchor" href="#extracting-and-evaluating-the-best-model-after-tuning"></a></h3>
-<p>After SageMaker completes the hyperparameter tuning job, the results,
-including the trained models for each configuration, are stored in an S3
-bucket. Here’s a breakdown of the steps to locate and evaluate the best
-model on test data.</p>
+<p>Tuning should only take about 15-20 minutes to complete — not bad for
+10 models! After SageMaker completes the hyperparameter tuning job, the
+results, including the trained models for each configuration, are stored
+in an S3 bucket. Here’s a breakdown of the steps to locate and evaluate
+the best model on test data.</p>
 <ol style="list-style-type: decimal"><li>
 <strong>Understanding the folder structure</strong>:
 <ul><li>SageMaker saves each tuning job’s results in the specified S3 bucket
@@ -1121,12 +1118,11 @@ evaluate it on our model.</p>
 <p><strong>Note</strong>: It’s always a good idea to keep preprocessing
 code as a function so you can apply the same exact procedure across
 datasets with ease. We’ll import our preprocessing function from
-<code>train_nn.py</code>, and pass it the <strong>scaler that was fit on
-the training data</strong> (saved as <code>scaler.joblib</code> in the
-previous episode). Calling <code>preprocess_data(test_df)</code> without
-the scaler would fit a new one on the test set, which leaks test-set
-statistics into the evaluation and transforms the features differently
-from what the model saw in training.</p>
+<code>train_nn.py</code>, and pass it the scaler that was fit on the
+training data (saved as <code>scaler.joblib</code> in the previous
+episode). Calling <code>preprocess_data(test_df)</code> without the
+scaler would fit a new one on the test set and transform the features
+differently from what the model saw in training.</p>
 <div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1177,29 +1173,29 @@ from what the model saw in training.</p>
 </div>
 <div class="section level3">
 <h3 id="conclusions">Conclusions<a class="anchor" aria-label="anchor" href="#conclusions"></a></h3>
-<p>In about 20 minutes of wall-clock time and a few cents of compute, we
-searched 10 configurations and produced a model that scores about 0.8 on
-the test set, roughly on par with the XGBoost model from the first
-episode (the Titanic dataset does not have much more signal to extract).
-The point is the workflow: one tuner call, every child job tagged, and a
-bill you can read back.</p>
-<div class="section level4">
-<h4 id="reading-the-bill">Reading the bill<a class="anchor" aria-label="anchor" href="#reading-the-bill"></a></h4>
-<p><code>job_cost_report()</code> printed two numbers per job.
-<strong>Training time</strong> (<code>TrainingTimeInSeconds</code>) is
-the time your script was running. <strong>Billable time</strong>
-(<code>BillableTimeInSeconds</code>) is the time the instance was
-reserved for you, which also includes the startup overhead of pulling
-the container and downloading the data. SageMaker bills per second, with
-no rounding to minutes or hours, and it bills training jobs and the
-child jobs of a tuning job in exactly the same way; the tuning job
-itself costs nothing. Total cost is therefore the sum over child jobs of
-billable seconds x instance count x hourly rate. For our tiny network
-the startup overhead is most of every job, which is why ten short jobs
-cost noticeably more than one job that trained ten times as long
-would.</p>
-<p>For convenience, the same calculation is available as a function in
-<code>helpers.py</code>:</p>
+<p>In about 20 minutes, we produced a model that is about 80% accurate
+on the test set. However, this performance does come at a cost (albeit
+manageable if you’ve stuck with our advice thus far). This next section
+will help you assess the total compute time that was used by your tuning
+job.</p>
+<p>In SageMaker, training time and billing time (extracted in our code
+above) are expected to differ for training jobs, including the child
+jobs of a tuning job; the tuning job itself costs nothing. Here’s a
+breakdown of what’s happening:</p>
+<ul><li><p>Training Time (<code>TrainingTimeInSeconds</code>): This is the
+time that each training job’s script takes to run, from start to end.
+This metric represents the pure time spent on training without
+considering the compute resources.</p></li>
+<li><p>Billing Time (<code>BillableTimeInSeconds</code>): This includes
+the training time plus the startup overhead of pulling the container and
+downloading the data, and is adjusted for the resources used. Billing
+time considers:</p></li>
+</ul><p>Instance Count: The number of instances used for training affects
+billing time. Per-Second Billing: SageMaker bills per second, with no
+rounding to minutes or hours, and multiplies the billable seconds by the
+instance count used. For short jobs, the startup overhead makes the
+difference between training and billing time more pronounced.</p>
+<p>For convenience, we have added this as a function in helpers.py</p>
 <div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1266,8 +1262,7 @@ configurations are effectively a random sample of the space. On a
 2-parameter problem this small you will usually see a similar best
 objective either way; on a larger search space with more jobs, the
 sequential-ish run tends to find a better configuration for the same
-number of jobs. That is the trade: parallelism buys time, not a better
-model.</li>
+number of jobs.</li>
 </ul></div>
 </div>
 </div>
@@ -1377,7 +1372,6 @@ test data.</li>
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
  -->
-</div>
 </div>
 </section></div> <!-- / div.lesson-content -->
     </main><!-- / main#main-content.main-content --><nav class="bottom-pagination mx-md-4" aria-label="Previous and Next Chapter Bottom"><div class="d-block d-sm-block d-md-none">
