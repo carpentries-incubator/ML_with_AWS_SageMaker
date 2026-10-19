@@ -404,32 +404,49 @@
     </nav><main id="main-content" class="main-content"><h1 class="schedule-heading">Summary and Schedule</h1>
       
 <section><h2 class="section-heading" id="workshop-overview">Workshop Overview<a class="anchor" aria-label="anchor" href="#workshop-overview"></a></h2>
-<hr class="half-width"><p>This workshop introduces you to foundational workflows in
-<strong>Amazon SageMaker</strong>, covering data setup, code repo setup,
-model training, and hyperparameter tuning within AWS’s managed
-environment. You’ll learn how to use SageMaker notebooks to control data
-pipelines, manage training and tuning jobs, and evaluate model
-performance effectively. We’ll also cover strategies to help you scale
-training and tuning efficiently, with guidance on choosing between CPUs
-and GPUs, as well as when to consider parallelized workflows (i.e.,
-using multiple instances).</p>
-<p><strong>Retreival Augmented Generation (Bonus Content)</strong>: This
-workshop was recently expanded to cover Retrieval Augmented Generation
-(RAG) using both SageMaker and <strong>Amazon Bedrock</strong>. We may
-break this part into its own RAG workhop in the future. For now, it is
-convenient to have everything in one place.</p>
-<p>To keep costs manageable, this workshop provides tips for tracking
-and monitoring AWS expenses, so your experiments remain affordable.
-While AWS isn’t entirely free, it can be very cost-effective for common
-machine learning (ML) workflows in used in research. For example,
-training roughly 100 small to medium-sized models (e.g., logistic
-regression, random forests, or lightweight deep learning models with a
-few million parameters) on a small dataset (under 10GB) can cost under
-$20, making it accessible for many research projects.</p>
+<hr class="half-width"><p>This workshop introduces foundational machine learning workflows on
+AWS, with <strong>Amazon SageMaker</strong> as the backbone and cost
+control as the thread that runs through every episode. It is organized
+in three parts:</p>
+<ol style="list-style-type: decimal"><li>
+<strong>SageMaker foundations and classic ML.</strong> S3 for data,
+a small notebook instance as a <em>controller</em>, training jobs
+(XGBoost and PyTorch) and hyperparameter tuning on the Titanic dataset,
+with guidance on CPU vs. GPU instances and when parallel instances pay
+off.</li>
+<li>
+<strong>Retrieval-Augmented Generation (RAG).</strong> The <a href="https://www.kaggle.com/competitions/WattBot2025" class="external-link">WattBot</a>
+energy-literature question-answering challenge built three ways: on
+<strong>Amazon Bedrock</strong> (pay per token, nothing left running),
+then as SageMaker <strong>Processing jobs</strong> serving an
+open-weight model that Bedrock does not offer, and, as optional
+self-study, interactively on a GPU notebook instance.</li>
+<li>
+<strong>Fine-tuning.</strong> A LoRA fine-tune of a 3B open-weight
+vision-language model as a SageMaker training job, on the <a href="https://www.kaggle.com/competitions/badger-scribe" class="external-link">Badger
+Scribe</a> handwriting-transcription challenge (German Kurrent letters
+from UW–Madison’s Max Kade Institute), with before/after scoring on
+held-out pages.</li>
+</ol><p>Cost control is taught as practice rather than as a warning:
+cost-allocation tags on every resource, a runtime cap on every job, a
+written cost estimate before each launch compared to the bill
+afterwards, back-of-the-envelope rules for what a fine-tune will need in
+memory and GPU-hours, and explicit cleanup. AWS is not free, but used
+this way it is affordable for research: training a hundred small models
+on a small dataset costs under $20, a full WattBot evaluation on Bedrock
+costs cents, and the in-class fine-tune costs about a dollar. The lesson
+is equally explicit about what goes wrong: a forgotten GPU notebook
+instance is about $60 a day, and a full fine-tune of a large model is
+where five-figure bills come from.</p>
 <div class="section level3">
 <h3 id="what-this-workshop-does-not-cover-yet">What This Workshop Does Not Cover (Yet)<a class="anchor" aria-label="anchor" href="#what-this-workshop-does-not-cover-yet"></a></h3>
 <p>Currently, this workshop does not include:</p>
 <ul><li>
+<strong>Inference endpoints</strong>: serving a model behind an
+always-on API for an application with steady traffic. The lesson
+explains when an endpoint is the right tool and what it costs, but does
+not deploy one.</li>
+<li>
 <strong>AWS Lambda</strong>: Lambda lets you run small pieces of
 code without setting up or managing a server. You write a function, tell
 AWS when to run it (for example, when a file is uploaded or a request
@@ -438,8 +455,8 @@ useful for simple tasks like cleaning data as it arrives, kicking off a
 training job, or running a quick analysis without having to keep a
 server running all the time.</li>
 <li>
-<strong>Additional AWS services</strong> beyond the core SageMaker
-ML workflows.</li>
+<strong>Additional AWS services</strong> beyond SageMaker, Bedrock
+and S3.</li>
 </ul><p>If there’s a specific ML or AI workflow or AWS service you’d like to
 see included in this curriculum, please let us know! We’re happy to
 develop additional content to meet the needs of researchers, students,
@@ -734,12 +751,30 @@ We will provide all attendees with a shared account. Otherwise, please
 follow these steps:</p>
 <ol style="list-style-type: decimal"><li>Go to the <a href="https://aws.amazon.com/free/" class="external-link">AWS Free Tier
 page</a> and click <strong>Create a Free Account</strong>.</li>
-<li>Complete the sign-up process. AWS offers a free tier with limited
-monthly usage. Some services, including SageMaker, may incur charges
-beyond free-tier limits, so be mindful of usage during the workshop. If
-you follow along with the materials, you can expect to incur around $10
-in compute fees (e.g., from training and tuning several different models
-with GPU enabled at times).</li>
+<li>Complete the sign-up process. AWS’s free tier covers very little of
+this workshop: SageMaker GPU instances, Bedrock calls and Processing
+jobs are all billed. Following the materials end to end costs about
+<strong>$30</strong> (the Titanic episodes a few dollars, the Bedrock
+episode cents, the Processing Jobs episode about $2, the fine-tuning
+episode about $3). The one way to spend much more is to leave a GPU
+notebook instance running: about $60 a day. Set a <a href="https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html" class="external-link">Budgets
+alert</a> at $50 before you start.</li>
+<li>
+<strong>Request GPU quotas at least two weeks before the
+workshop.</strong> New accounts have a quota of 0 for GPU instances, and
+increases take days. In the console, go to <strong>Service Quotas →
+Amazon SageMaker</strong> and request:
+<code>ml.g5.xlarge for training job usage</code> (1),
+<code>ml.g4dn.xlarge for training job usage</code> (1),
+<code>ml.g5.xlarge for processing job usage</code> (2), and
+<code>ml.g6e.xlarge for processing job usage</code> (1). A justification
+like “self-paced machine learning workshop” is enough.</li>
+<li>Enable the two Bedrock models the RAG episode uses, under
+<strong>Amazon Bedrock → Model access</strong>: DeepSeek V3 and Titan
+Text Embeddings V2.</li>
+<li>Stage the shared datasets yourself, since there is no instructor
+bucket: the commands are in the lesson’s instructor page <em>Shared data
+bucket: staging before each term</em>.</li>
 </ol><p>Once your AWS account is set up, log in to the <strong>AWS Management
 Console</strong> to get started with SageMaker.</p>
 </div>
@@ -749,7 +784,7 @@ Console</strong> to get started with SageMaker.</p>
 <p>For this workshop, you will need the Titanic dataset, which can be
 used to train a classifier predicting survival.</p>
 <ol style="list-style-type: decimal"><li><p>Please download the following zip file (Right-click -&gt; Save
-as): <a href="https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/data/data.zip" class="external-link">data.zip</a></p></li>
+as): <a href="https://raw.githubusercontent.com/carpentries-incubator/ML_with_AWS_SageMaker/main/data/data.zip" class="external-link">data.zip</a></p></li>
 <li><p>Extract the zip folder contents (Right-click -&gt; Extract all on
 Windows; Double-click on mac)</p></li>
 <li><p>Save the two data files (train and test) to a location where they
