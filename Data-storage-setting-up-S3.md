@@ -84,7 +84,7 @@ In order to upload our titanic dataset to an S3 bucket on AWS, we'll follow the 
 
 ##### 3. Create a new bucket
 - **AWS Region**: the region your instructor named (the same one your SageMaker notebook will use; in the workshop account it is US East (Ohio), `us-east-2`). SageMaker jobs can only read buckets in their own region, so a bucket created in another region shows up later as "access denied" or "no such bucket" errors from your jobs.
-- Click **Create Bucket** and enter a unique name, and note that bucket name must not contain uppercase characters. To easily find this bucket later in our shared AWS account, please use the following naming convention: `teamname-yourname` (e.g., sinkorswim-doejohn). **This is the only bucket you will create in the workshop.** Every later episode writes its outputs (trained models, embeddings, predictions) into this same bucket under its own prefix, such as `xgboost/`, `wattbot/` or `badger-scribe/`.
+- Click **Create Bucket** and enter a unique name. Use the naming convention `challenge-lastnamefirstname`, all lowercase, e.g. `sinkorswim-doejohn`: the challenge you are working on (`wattbot2026`, `badgerscribe`, `badgercode`, ...), a hyphen, then your last and first name run together. S3 requires bucket names to be lowercase letters, digits and hyphens only (3 to 63 characters, starting and ending with a letter or digit, no underscores, no spaces), and the same lowercase string is what we will use for your notebook instance and your `Project` tag, so one name works everywhere. **This is the only bucket you will create in the workshop.** Every later episode writes its outputs (trained models, embeddings, predictions) into this same bucket under its own prefix, such as `xgboost/`, `wattbot/` or `badger-scribe/`.
 - **Access Control (ACLs)**: Disable ACLs (recommended).  
 	- **What are ACLs?** Access Control Lists (ACLs) define fine-grained permissions at the object level, allowing you to grant specific users or AWS accounts access to individual files in your bucket.  
 	- **Why disable them?** AWS now recommends managing access through bucket policies and IAM roles, which offer better security and are easier to manage at scale. Unless you have a specific need for ACLs, disabling them is the best practice.
@@ -94,9 +94,11 @@ In order to upload our titanic dataset to an S3 bucket on AWS, we'll follow the 
 
 	| Key | Value |
 	|---|---|
-	| `Project` | your team name, e.g. `sinkorswim` |
+	| `Project` | your challenge name, e.g. `sinkorswim` |
 	| `Name` | your name, e.g. `John Doe` |
 	| `Purpose` | `Workshop-storage` |
+
+  Tag values are case-sensitive on the bill: `SinkOrSwim` and `sinkorswim` would be two separate rows in Cost Explorer. Use the same lowercase challenge name you put in the bucket name.
 
 ![Example of Tags for an S3 Bucket](fig/bucket_tags2.png){alt="Screenshot showing required tags for an S3 bucket"}
 

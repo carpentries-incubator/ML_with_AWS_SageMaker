@@ -93,7 +93,7 @@ See [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageM
 This episode reads from two buckets and you create neither of them here:
 
 - **The shared bucket** (your instructor gives you its name) holds the WattBot inputs under `wattbot/`: `metadata.csv` (the index of papers), `train_QA.csv` (labelled questions and answers), and `corpus.zip` (the PDFs). It is read-only and there is one copy for the whole class.
-- **Your bucket** from the S3 episode (`teamname-yourname`) is where this episode writes what it derives, under a `wattbot/` prefix: the chunked text (`wattbot/chunks.jsonl`), the embeddings (`wattbot/embeddings/`) and the predictions (`wattbot/solutions/`). Its tags cover its storage cost; your notebook instance carries the tags you gave it when you created it, and in this episode those two resources plus the per-token Bedrock calls (tagged through an inference profile, see "Cost tracking" below) are the only things being billed.
+- **Your bucket** from the S3 episode (`challenge-lastnamefirstname`) is where this episode writes what it derives, under a `wattbot/` prefix: the chunked text (`wattbot/chunks.jsonl`), the embeddings (`wattbot/embeddings/`) and the predictions (`wattbot/solutions/`). Its tags cover its storage cost; your notebook instance carries the tags you gave it when you created it, and in this episode those two resources plus the per-token Bedrock calls (tagged through an inference profile, see "Cost tracking" below) are the only things being billed.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
@@ -478,7 +478,7 @@ The helper below reuses a profile if one with the same name already exists, so r
 import re
 
 name = "John Doe"        # replace with your name
-project = "sinkorswim"   # replace with your team name
+project = "sinkorswim"   # replace with your challenge name
 purpose = "RAG-bedrock"
 
 # Bedrock tags are lowercase key/value (SageMaker jobs use Key/Value)

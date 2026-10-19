@@ -141,7 +141,7 @@ It is also the **most expensive option when traffic is low or bursty**, because 
 
 ## Tagging: Every Billable Resource Needs Its Own Tags
 
-Cost tracking in this workshop relies on three tags — `Name`, `Project`, `Purpose` — so that Cost Explorer can break the shared bill down by team. The part that trips people up is that **tags never propagate**. Tagging your notebook instance tags the notebook instance and nothing else. Every other resource you create is a separate line item that is anonymous unless you tag it yourself at creation time.
+Cost tracking in this workshop relies on three tags — `Name`, `Project`, `Purpose` — so that Cost Explorer can break the shared bill down by challenge. The part that trips people up is that **tags never propagate**. Tagging your notebook instance tags the notebook instance and nothing else. Every other resource you create is a separate line item that is anonymous unless you tag it yourself at creation time.
 
 | Resource | What it bills | How it gets tagged |
 |---|---|---|
