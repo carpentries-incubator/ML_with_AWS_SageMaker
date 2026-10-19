@@ -19,7 +19,7 @@ exercises: 75
 - Launch a LoRA fine-tune of a 3B vision-language model (CHURRO-3B) as a `HuggingFace` training job on a single 24 GB GPU, with tags, a unique job name and a `max_run` cap.
 - Read a job's billable time and compare it to the estimate.
 - Compare the base model and the fine-tuned model on held-out pages using the competition's own character error rate (CER).
-- Know how to scale the same job up to the full dataset and, optionally, to a Kaggle submission (homework).
+- Know how to scale the same job up to the full dataset (homework) and to multi-GPU instances for larger models.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -144,6 +144,20 @@ The model we fine-tune fits on one 24 GB GPU. Single-GPU and multi-GPU SageMaker
 | `ml.p5.48xlarge` | 8 × H100 | 640 GB | $63.30 |
 
 Multi-GPU instances are the right tool when the model, its optimizer state and a batch do not fit on one GPU: a full fine-tune of a 7B model, or anything at 70B. They are the wrong tool when the job *does* fit on one GPU, because the price goes up 5x to 45x and a job too small to split gets no faster. A 3B LoRA run fits with room to spare, so `ml.g5.xlarge` is the workhorse for this episode. A T4 is too small and too slow for a 3B vision model with page-sized images; `ml.g6.xlarge` is a fine substitute if g5 capacity is short; `ml.g6e.xlarge` is roughly 2–3x faster for less than 2x the price, so it becomes *cheaper per run* once training outweighs the fixed startup (Exercise 2).
+
+### Scaling the same job to more GPUs
+
+Nothing in this episode is specific to small runs. The training script uses Hugging Face `Trainer`, which handles multi-GPU data parallelism when SageMaker launches it under `torchrun`. To run the same script on a multi-GPU instance, change the estimator, not the script:
+
+```text
+instance_type="ml.p4d.24xlarge",                        # 8 x A100, or ml.g5.12xlarge for 4 x A10G
+distribution={"torch_distributed": {"enabled": True}},  # one process per GPU, each on a different slice of the data
+max_run=6 * 60 * 60,                                     # from the Step 0 estimate, with margin
+```
+
+Each GPU holds a full copy of the model, so the effective batch becomes `batch_size x grad_accum x number of GPUs`, and the learning rate usually needs a modest increase. Two lines in the script should be wrapped in `if trainer.is_world_process_zero():` so that evaluation and saving run once rather than on every process. When the model, its optimizer state and a batch do not fit on one GPU (a full fine-tune of 7B or more; see the bytes-per-parameter table), data parallelism is not enough: pass `fsdp="full_shard"` in `TrainingArguments` (or a DeepSpeed ZeRO config) so the model is sharded across the GPUs, and use `instance_count=2` or more for multi-node runs.
+
+The cost controls do not change with size: estimate GPU-hours from the Step 0 rules, set `max_run` to about twice that estimate, tag the job, and run a slice of the data on one GPU first so that a bug costs a dollar rather than a few hundred.
 
 ### The run
 
