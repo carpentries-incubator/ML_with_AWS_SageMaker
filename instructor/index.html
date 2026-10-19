@@ -107,7 +107,7 @@
           <button class="nav-link dropdown-toggle" id="navbarDropdown" data-bs-toggle="dropdown" aria-expanded="false">
             More <i data-feather="chevron-down"></i>
           </button>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdown"><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown"><li><a class="dropdown-item" href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li><li><a class="dropdown-item" href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li><li><a class="dropdown-item" href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
           </ul></li>
       </ul></div>
     <!--
@@ -324,7 +324,16 @@
 <div class="accordion accordion-flush" id="accordionFlush14">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading14">
-        <a href="Resource-management-cleanup.html">13. Resource Management and Monitoring</a>
+        <a href="04_Finetuning_BadgerScribe.html">13. Fine-tuning a Vision-Language Model with Training Jobs</a>
+    </div><!--/div.accordion-header-->
+
+  </div><!--/div.accordion-item-->
+</div><!--/div.accordion-flush-->
+
+<div class="accordion accordion-flush" id="accordionFlush15">
+  <div class="accordion-item">
+    <div class="accordion-header" id="flush-heading15">
+        <a href="Resource-management-cleanup.html">14. Resource Management and Monitoring</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -366,7 +375,7 @@
                 </h2>
                 <div id="flush-collapse-resources-toggle" class="accordion-collapse collapse" data-bs-parent="#accordion-resources-toggle">
                   <div class="accordion-body">
-                    <ul><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
+                    <ul><li><a href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li><li><a href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li><li><a href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
                     </ul></div>
                 </div>
               </div>
@@ -595,7 +604,22 @@ TODO
 <span class="visually-hidden">Duration: </span>06h 45m
 </td>
 <td>
-13. <a href="Resource-management-cleanup.html">Resource Management and
+13. <a href="04_Finetuning_BadgerScribe.html">Fine-tuning a
+Vision-Language Model with Training Jobs</a>
+</td>
+<td>
+When is fine-tuning worth it, and how is it different from RAG or
+prompting?<br>Why does fine-tuning cost anywhere from a dollar to tens
+of thousands, and how do I estimate where my run falls <em>before</em> I
+launch it?<br>How do I run a GPU fine-tune as a SageMaker training job
+so the meter stops the moment it finishes?<br>How do I measure whether
+the fine-tune actually helped?
+</td>
+</tr><tr><td>
+<span class="visually-hidden">Duration: </span>08h 30m
+</td>
+<td>
+14. <a href="Resource-management-cleanup.html">Resource Management and
 Monitoring</a>
 </td>
 <td>
@@ -605,7 +629,7 @@ resources after the workshop?<br>What best practices can help with
 efficient resource utilization?
 </td>
 </tr><tr><td>
-<span class="visually-hidden">Duration: </span>07h 15m
+<span class="visually-hidden">Duration: </span>09h 00m
 </td>
 <td>
 Finish
@@ -640,7 +664,7 @@ repository for use in AWS.</li>
 workshop glossary</li>
 <li>
 <strong>(Optional) AWS Skill Builder</strong> — For a broader
-overview of AWS, visit the <a href="AWS%20Skill%20Builder%20%E2%80%94%20Getting%20Started%20with%20the%20AWS%20Cloud%20Essentials">Getting
+overview of AWS, visit the <a href="https://skillbuilder.aws/search?searchText=Getting+Started+with+the+AWS+Cloud+Essentials" class="external-link">Getting
 Started with the AWS Cloud Essentials</a> course</li>
 </ol><p>Details on each step are outlined below.</p>
 <div class="section level3">
@@ -653,7 +677,7 @@ instructor will provide guidance on these steps.</p>
 </div>
 <div class="section level3">
 <h3 id="aws-account">2. AWS Account<a class="anchor" aria-label="anchor" href="#aws-account"></a></h3>
-<p>There are two ways to get access to AWs for this lesson. Please wait
+<p>There are two ways to get access to AWS for this lesson. Please wait
 for a pre-workshop email from the instructor to confirm which option to
 choose.</p>
 <div class="section level4">
@@ -669,12 +693,15 @@ the email.</li>
 <li>This setup ensures that all participants have the same environment
 and eliminates concerns about unexpected costs for attendees.</li>
 <li>These shared AWS credits should not be wasted, as we repurpose them
-for additional training events eac year.
+for additional training events each year.
 <ul><li>Attendees are expected to <strong>stick to the lesson
 materials</strong> to ensure expensive pipelines (e.g., training/tuning
 LLMs) do not lead to high costs and wasted credits.</li>
-<li>Do not use any tools we do not explictly cover without discussing
+<li>Do not use any tools we do not explicitly cover without discussing
 with the instructors first.</li>
+<li>Stop (and at the end of the workshop, delete) every notebook
+instance you create. A GPU notebook left running costs about $60 a
+day.</li>
 </ul></li>
 </ul></div>
 <div class="section level4">
@@ -709,6 +736,12 @@ can easily be accessed. E.g., …</p></li>
 <li><code>~/Downloads/data/titanic_test.csv</code></li>
 </ul><p>In the first episode, you will create an S3 bucket and upload this
 data to use with SageMaker.</p>
+<p>The later episodes use two more datasets, and you do
+<strong>not</strong> need to download them now: the WattBot documents
+(RAG episodes) come from a zip in the lesson repository, and the Badger
+Scribe handwriting data (fine-tuning episode) is published as a <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/releases" class="external-link">release
+on the lesson repository</a> that the instructors stage in a shared
+bucket. No Kaggle account is required for any part of the workshop.</p>
 </div>
 <div class="section level3">
 <h3 id="get-access-to-workshop-code-fork-github-repo">4. Get Access To Workshop Code (Fork GitHub Repo)<a class="anchor" aria-label="anchor" href="#get-access-to-workshop-code-fork-github-repo"></a></h3>
@@ -748,7 +781,7 @@ glossary.</p>
 Essentials<a class="anchor" aria-label="anchor" href="#optional-aws-skill-builder-getting-started-with-the-aws-cloud-essentials"></a></h3>
 <p>Attendees who want a stronger foundational understanding of AWS
 before diving into SageMaker and other ML services are encouraged to
-complete this self-paced course, <a href="AWS%20Skill%20Builder%20%E2%80%94%20Getting%20Started%20with%20the%20AWS%20Cloud%20Essentials">Getting
+complete this self-paced course, <a href="https://skillbuilder.aws/search?searchText=Getting+Started+with+the+AWS+Cloud+Essentials" class="external-link">Getting
 Started with the AWS Cloud Essentials</a>, as optional pre-work for this
 workshop. It’s designed for beginners and provides a broad overview of
 the AWS Cloud, including core services, global infrastructure, pricing
@@ -809,8 +842,8 @@ any links that you are not going to use.
   "url": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/index.html",
   "identifier": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/index.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-16",
-  "datePublished": "2026-10-16"
+  "dateModified": "2026-10-19",
+  "datePublished": "2026-10-19"
 }
 
   </script><script>

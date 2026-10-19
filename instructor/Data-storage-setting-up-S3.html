@@ -107,7 +107,7 @@
           <button class="nav-link dropdown-toggle" id="navbarDropdown" data-bs-toggle="dropdown" aria-expanded="false">
             More <i data-feather="chevron-down"></i>
           </button>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdown"><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown"><li><a class="dropdown-item" href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li><li><a class="dropdown-item" href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li><li><a class="dropdown-item" href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
           </ul></li>
       </ul></div>
     <!--
@@ -331,7 +331,16 @@
 <div class="accordion accordion-flush" id="accordionFlush14">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading14">
-        <a href="Resource-management-cleanup.html">13. Resource Management and Monitoring</a>
+        <a href="04_Finetuning_BadgerScribe.html">13. Fine-tuning a Vision-Language Model with Training Jobs</a>
+    </div><!--/div.accordion-header-->
+
+  </div><!--/div.accordion-item-->
+</div><!--/div.accordion-flush-->
+
+<div class="accordion accordion-flush" id="accordionFlush15">
+  <div class="accordion-item">
+    <div class="accordion-header" id="flush-heading15">
+        <a href="Resource-management-cleanup.html">14. Resource Management and Monitoring</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -373,7 +382,7 @@
                 </h2>
                 <div id="flush-collapse-resources-toggle" class="accordion-collapse collapse" data-bs-parent="#accordion-resources-toggle">
                   <div class="accordion-body">
-                    <ul><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
+                    <ul><li><a href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li><li><a href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li><li><a href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
                     </ul></div>
                 </div>
               </div>
@@ -409,7 +418,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Data Storage: Setting up S3</h1>
-        <p>Last updated on 2025-12-19 |
+        <p>Last updated on 2026-10-19 |
 
         <a href="https://github.com/UW-Madison-DataScience/ml-with-aws-sagemaker/edit/main/episodes/Data-storage-setting-up-S3.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -622,7 +631,10 @@ changes to datasets over time but unnecessary for static datasets.<br></li>
 <strong>Tags</strong>: Adding tags to your S3 buckets is a great way
 to track project-specific costs and usage over time, especially as data
 and resources scale up. To easily track costs associated with your
-bucket in our shared AWS account, add the following fields:
+bucket in our shared AWS account, add the same three keys you used on
+the notebook instance (spelled exactly; they are the account’s approved
+cost-allocation keys, see <a href="https://kb.wisc.edu/72454" class="external-link">KB
+72454</a>):
 <ul><li>
 <strong>Project</strong>: teamname (if participating in ML
 Marathon)</li>
@@ -683,6 +695,11 @@ actions, ensuring they can use the bucket for reading, writing,
 deleting, and listing parts during multipart uploads. Attendees should
 apply this policy to their buckets to enable SageMaker to operate on
 stored data.</p>
+<p>The bucket you create here is for data <em>you</em> bring. Some later
+episodes (for example, the fine-tuning episode) instead read a larger
+dataset from a shared, read-only bucket that the instructors stage ahead
+of time, so you never upload it yourself; you only point your jobs at
+its S3 path.</p>
 <div id="general-guidance-for-setting-up-permissions-outside-of-this-workshop" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -820,7 +837,7 @@ sizes: 10 GB, 100 GB, 1 TB (1024 GB)</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal"><li>
@@ -977,8 +994,8 @@ any links that you are not going to use.
   "url": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/Data-storage-setting-up-S3.html",
   "identifier": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/Data-storage-setting-up-S3.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2025-12-19",
-  "datePublished": "2026-10-16"
+  "dateModified": "2026-10-19",
+  "datePublished": "2026-10-19"
 }
 
   </script><script>

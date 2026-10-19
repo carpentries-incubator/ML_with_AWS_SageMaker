@@ -131,6 +131,9 @@
             More <i data-feather="chevron-down"></i>
           </button>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+<li><a class="dropdown-item" href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li>
+<li><a class="dropdown-item" href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li>
+<li><a class="dropdown-item" href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li>
 <hr>
 <li><a class="dropdown-item" href="reference.html">Glossary</a></li>
 <li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
@@ -390,7 +393,19 @@
 <div class="accordion accordion-flush" id="accordionFlush14">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading14">
-        <a href="Resource-management-cleanup.html">13. Resource Management and Monitoring</a>
+        <a href="04_Finetuning_BadgerScribe.html">13. Fine-tuning a Vision-Language Model with Training Jobs</a>
+    </div>
+<!--/div.accordion-header-->
+
+  </div>
+<!--/div.accordion-item-->
+</div>
+<!--/div.accordion-flush-->
+
+<div class="accordion accordion-flush" id="accordionFlush15">
+  <div class="accordion-item">
+    <div class="accordion-header" id="flush-heading15">
+        <a href="Resource-management-cleanup.html">14. Resource Management and Monitoring</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -442,6 +457,9 @@
                 <div id="flush-collapse-resources-toggle" class="accordion-collapse collapse" data-bs-parent="#accordion-resources-toggle">
                   <div class="accordion-body">
                     <ul>
+<li><a href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li>
+<li><a href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li>
+<li><a href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li>
 <hr>
 <li><a class="dropdown-item" href="reference.html">Glossary</a></li>
 <li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
@@ -632,7 +650,46 @@ any links that you are not going to use.
 <hr class="half-width"></section><section id="01_RAG_WattBot_Bedrock"><h2 class="section-heading"><a href="01_RAG_WattBot_Bedrock.html">RAG with Bedrock</a></h2>
 <hr class="half-width"></section><section id="02_RAG_WattBot_GPU-instance"><h2 class="section-heading"><a href="02_RAG_WattBot_GPU-instance.html">RAG with a Notebook GPU</a></h2>
 <hr class="half-width"></section><section id="03_RAG_WattBot_Processing_Jobs"><h2 class="section-heading"><a href="03_RAG_WattBot_Processing_Jobs.html">RAG with Processing JobsRAG with Processing Jobs<a class="anchor" aria-label="anchor" href="#rag-with-processing-jobs"></a></a></h2>
-<hr class="half-width"></section><section id="Resource-management-cleanup"><h2 class="section-heading"><a href="Resource-management-cleanup.html">Resource Management and Monitoring</a></h2>
+<hr class="half-width"></section><section id="04_Finetuning_BadgerScribe"><h2 class="section-heading"><a href="04_Finetuning_BadgerScribe.html">Fine-tuning a Vision-Language Model with Training Jobs</a></h2>
+<hr class="half-width">
+<h3 id="04_Finetuning_BadgerScribe-headingInstructor1">
+<a href="04_Finetuning_BadgerScribe.html#headingInstructor1">Before class (instructor checklist)</a><a class="anchor" aria-label="anchor" href="#04_Finetuning_BadgerScribe-headingInstructor1"></a>
+</h3>
+<p>Students never download the data themselves; four things have to be
+in place before the session. Each is written out in the instructor
+pages.</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>Stage the data in a shared read-only bucket</strong> from
+the lesson’s data release (<code>badger-scribe-data-v1</code>): about
+ten minutes from CloudShell, commands in <em>Badger Scribe data:
+publishing a release</em>. Attach the read-only bucket policy from
+<em>Fine-tuning episode: cost, capacity and setup</em> so the student
+execution role can <code>GetObject</code> and <code>ListBucket</code>.
+The bucket must survive the end-of-workshop cleanup, or be recreated
+from the release next term.</li>
+<li>
+<strong>Run the full fine-tune once</strong> (the estimator in the
+Homework section, all 251 training pages, <code>eval_pages</code> 40)
+and copy <code>train_summary.json</code>, <code>eval_before.csv</code>
+and <code>eval_after.csv</code> from its <code>model.tar.gz</code> to
+<code>badger-scribe/instructor/full-run/</code> in the shared bucket.
+Step 3 compares against these. Replace the time estimates in Step 0 with
+the job’s real <code>BillableTimeInSeconds</code>.</li>
+<li>
+<strong>Quotas</strong>:
+<code>ml.g5.xlarge for training job usage</code> at least the class size
+(request 60). Default is often 0 to 4 and increases take days; file
+three to four weeks ahead. Full list in <em>Account preparation
+checklist</em>.</li>
+<li>
+<strong>Tell students the bucket name</strong> at the start; it is
+the <code>shared_bucket</code> value in the first code cell.</li>
+</ol>
+<p>Fallback instance if g5 capacity is short: <code>ml.g6.xlarge</code>
+(L4, 24 GB, $1.13/h).</p>
+<hr>
+<br></section><section id="Resource-management-cleanup"><h2 class="section-heading"><a href="Resource-management-cleanup.html">Resource Management and Monitoring</a></h2>
 <hr class="half-width"></section></section>
 </div>
     </main>
@@ -683,8 +740,8 @@ any links that you are not going to use.
   "url": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/instructor-notes.html",
   "identifier": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/instructor-notes.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-16",
-  "datePublished": "2026-10-16"
+  "dateModified": "2026-10-19",
+  "datePublished": "2026-10-19"
 }
 
   </script><script>

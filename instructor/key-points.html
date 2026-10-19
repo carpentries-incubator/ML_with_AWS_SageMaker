@@ -131,6 +131,9 @@
             More <i data-feather="chevron-down"></i>
           </button>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+<li><a class="dropdown-item" href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li>
+<li><a class="dropdown-item" href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li>
+<li><a class="dropdown-item" href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li>
 <hr>
 <li><a class="dropdown-item" href="reference.html">Glossary</a></li>
 <li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
@@ -390,7 +393,19 @@
 <div class="accordion accordion-flush" id="accordionFlush14">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading14">
-        <a href="Resource-management-cleanup.html">13. Resource Management and Monitoring</a>
+        <a href="04_Finetuning_BadgerScribe.html">13. Fine-tuning a Vision-Language Model with Training Jobs</a>
+    </div>
+<!--/div.accordion-header-->
+
+  </div>
+<!--/div.accordion-item-->
+</div>
+<!--/div.accordion-flush-->
+
+<div class="accordion accordion-flush" id="accordionFlush15">
+  <div class="accordion-item">
+    <div class="accordion-header" id="flush-heading15">
+        <a href="Resource-management-cleanup.html">14. Resource Management and Monitoring</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -442,6 +457,9 @@
                 <div id="flush-collapse-resources-toggle" class="accordion-collapse collapse" data-bs-parent="#accordion-resources-toggle">
                   <div class="accordion-body">
                     <ul>
+<li><a href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li>
+<li><a href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li>
+<li><a href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li>
 <hr>
 <li><a class="dropdown-item" href="reference.html">Glossary</a></li>
 <li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
@@ -630,9 +648,21 @@ chunking, retrieval, and post-processing.</li>
 <hr class="half-width">
 <ul>
 <li>
-<strong>Notebook setup</strong>: Start by provisioning a GPU-backed
-notebook instance (e.g., <code>ml.g5.xlarge</code>) so that both the
-embedding model and Qwen2.5-7B can run comfortably.</li>
+<strong>Why self-host at all</strong>: Bedrock’s catalog is curated
+and lags releases; most open-weight models (including Qwen3.8-27B) are
+not on it. When the model you need is not offered, you rent a GPU and
+serve it yourself.</li>
+<li>
+<strong>Inference uses reduced-precision weights</strong>: no
+gradients means the weights are the memory cost. FP8 puts a 27B model on
+one 48 GB GPU (<code>ml.g6e.xlarge</code>); bf16 would need 54 GB and a
+multi-GPU instance.</li>
+<li>
+<strong>The meter never stops on its own</strong>:
+<code>ml.g6e.xlarge</code> is $2.61/h, $167 per forgotten weekend,
+$1,906 per forgotten month, plus $14/month for the storage volume even
+when stopped. Stop it when you stand up; delete it when the episode is
+over.</li>
 <li>
 <strong>Local-first RAG</strong>: For teaching (and small corpora),
 we avoid an external vector database and instead perform cosine
@@ -657,6 +687,28 @@ interface used here.</li>
 <hr class="half-width">
 <ul>
 <li>TODO</li>
+</ul></section><section id="04_Finetuning_BadgerScribe"><h2 class="section-heading"><a href="04_Finetuning_BadgerScribe.html">Fine-tuning a Vision-Language Model with Training Jobs</a></h2>
+<hr class="half-width">
+<ul>
+<li>Fine-tuning cost is GPU-hours × hourly rate, and GPU-hours scale
+with model size × tokens × epochs × attempts. The same recipe runs from
+under a dollar (3B, LoRA, a few hundred pages) to tens of thousands
+(70B, full fine-tune, days on multi-GPU nodes). Starting from a model
+that already knows most of the task is the biggest saving
+available.</li>
+<li>Training jobs, not GPU notebooks, are the safe way to run it: they
+end, <code>max_run</code> guarantees it, and a unique
+<code>job_name</code> prevents a second copy launching by accident.
+Interrupting a notebook cell does not stop a job.</li>
+<li>Estimate before launching (startup overhead + pages × epochs ×
+seconds per page, at the instance’s rate), then compare to
+<code>BillableTimeInSeconds</code>.</li>
+<li>Image resolution (<code>max_pixels</code>) and epochs change cost by
+multiples; the instance size changes it by 5–45x, which is right when
+the model does not fit on one GPU and waste when it does.</li>
+<li>Measure the gain on the same held-out pages before and after, with
+the task’s own metric, and remember that a page-level holdout is
+optimistic when the real test is split by document.</li>
 </ul></section><section id="Resource-management-cleanup"><h2 class="section-heading"><a href="Resource-management-cleanup.html">Resource Management and Monitoring</a></h2>
 <hr class="half-width">
 <ul>
@@ -720,8 +772,8 @@ significantly reduce costs and improve efficiency.</li>
   "url": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/key-points.html",
   "identifier": "https://UW-Madison-DataScience.github.io/ml-with-aws-sagemaker/instructor/key-points.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-16",
-  "datePublished": "2026-10-16"
+  "dateModified": "2026-10-19",
+  "datePublished": "2026-10-19"
 }
 
   </script><script>
