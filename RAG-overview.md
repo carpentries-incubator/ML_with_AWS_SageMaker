@@ -48,7 +48,7 @@ Neither of those requires you to own a GPU. They are exactly the kind of calls t
 
 ## Start Here: Bedrock Is the Default
 
-**For standard RAG inference, use Amazon Bedrock.** Bedrock exposes embedding and generation models (Amazon Titan, Anthropic Claude, Meta Llama, and others) as pay‑per‑token APIs. Your retrieval code — chunking, indexing, similarity search, reranking, evaluation — stays entirely under your control and can run on a cheap CPU notebook or your laptop. Only the two model calls above are sent to Bedrock.
+**For standard RAG inference, use Amazon Bedrock.** Bedrock exposes embedding and generation models (Amazon Titan, Anthropic Claude, DeepSeek, Meta Llama, and others) as pay‑per‑token APIs. Your retrieval code — chunking, indexing, similarity search, reranking, evaluation — stays entirely under your control and can run on a cheap CPU notebook or your laptop. Only the two model calls above are sent to Bedrock.
 
 The reason this is the default comes down to **how you are billed**:
 
@@ -64,25 +64,26 @@ A GPU instance is a rental that keeps the meter running until *you* turn it off.
 
 ### What forgetting actually costs
 
-To make this concrete, here is what a GPU notebook instance costs if it is left running after you close your laptop (on‑demand prices at time of writing; see the [instances page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html)):
+To make this concrete, here is what a GPU notebook instance costs if it is left running after you close your laptop (us-east-1 on‑demand prices from the AWS price list, October 2026; see the [instances page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html)):
 
 | Instance | GPU | $/hour | Forgotten overnight (12 h) | Forgotten over a weekend (64 h) | Forgotten for a month (730 h) |
 |---|---|---|---|---|---|
-| ml.g5.xlarge | 1 × A10G | $1.21 | ~$15 | ~$77 | ~$880 |
-| ml.g5.2xlarge | 1 × A10G | $1.69 | ~$20 | ~$108 | ~$1,230 |
-| ml.g6e.xlarge | 1 × L40S (48 GB) | $2.61 | ~$31 | ~$167 | ~$1,906 |
-| ml.p3.8xlarge | 4 × V100 | $15.20 | ~$182 | ~$973 | ~$11,100 |
+| ml.g4dn.xlarge | 1 × T4 (16 GB) | $0.74 | ~$9 | ~$47 | ~$540 |
+| ml.g5.xlarge | 1 × A10G (24 GB) | $1.41 | ~$17 | ~$90 | ~$1,030 |
+| ml.g5.2xlarge | 1 × A10G (24 GB) | $1.52 | ~$18 | ~$97 | ~$1,110 |
+| ml.g6e.xlarge | 1 × L40S (48 GB) | $2.61 | ~$31 | ~$167 | ~$1,905 |
+| ml.p4d.24xlarge | 8 × A100 (40 GB) | $25.25 | ~$303 | ~$1,616 | ~$18,430 |
 
-Compare that to running the **entire WattBot pipeline** from this lesson on Bedrock. Using Claude 3 Haiku ($0.25 per million input tokens, $1.25 per million output tokens) and Titan Text Embeddings V2 ($0.02 per million tokens):
+Compare that to running the **entire WattBot pipeline** from this lesson on Bedrock, with DeepSeek V3 as the generator and Titan Text Embeddings V2 ($0.02 per million tokens) for embeddings. For DeepSeek V3's per-token prices, check the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/); at launch it was in the same price class as the cheapest frontier models, a fraction of a dollar per million input tokens and a few dollars per million output tokens, and at any price in that class the arithmetic comes out the same way:
 
 | Step | Rough volume | Cost |
 |---|---|---|
 | Embed ~3,000 chunks (~1M tokens) | 1M input tokens | ~$0.02 |
-| Answer 100 questions (~3K‑token prompt + ~300‑token answer each) | 300K in / 30K out | ~$0.11 |
-| Explanation pass over 100 answers | 300K in / 30K out | ~$0.11 |
+| Answer 100 questions (~3K‑token prompt + ~300‑token answer each) with DeepSeek V3 | 300K in / 30K out | cents |
+| Explanation pass over 100 answers with DeepSeek V3 | 300K in / 30K out | cents |
 | **Total** | | **well under $1** |
 
-A single forgotten weekend on the *cheapest* GPU instance costs more than a hundred full runs of the pipeline on Bedrock. That asymmetry is why Bedrock is the default, not just an alternative.
+A single forgotten weekend on the *cheapest* GPU instance costs more than fifty full runs of the pipeline on Bedrock; a forgotten weekend on the `ml.g6e.xlarge` the later episodes use costs more than a hundred. That asymmetry is why Bedrock is the default, not just an alternative.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
@@ -126,7 +127,7 @@ But it is the **most expensive way to run RAG and the easiest one to get wrong**
 - Treat it as a learning exercise, not a deployment pattern.
 - Stop the instance the moment you are done, and **verify** the status in the console.
 - Set up an [AWS Budget](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html) alert and consider a [lifecycle configuration](https://docs.aws.amazon.com/sagemaker/latest/dg/notebook-lifecycle-config.html) that auto‑stops idle notebooks.
-- For larger models the hourly rate (e.g., $15/hour for a p3.8xlarge) becomes a limiting factor very quickly.
+- For larger models the hourly rate (e.g., $25/hour for a p4d.24xlarge) becomes a limiting factor very quickly.
 
 **Use it for:** walking through RAG internals step by step, debugging a model locally before packaging it as a job, or short experiments where you will be at the keyboard the whole time.
 
@@ -174,7 +175,7 @@ If you are unsure, pick Bedrock. The worst case is a slightly higher per‑token
 
 ### How the hands-on episodes are ordered
 
-The next two episodes walk through RAG on **Bedrock** first, then on **Processing Jobs**. The Bedrock episode is the one to start from: it builds the whole WattBot pipeline, including chunking the corpus, from a cheap CPU notebook with nothing left running afterward. The Processing Jobs episode reruns the same pipeline on a self-hosted open-weight model that Bedrock does not carry, as jobs that end on their own, so you can see what Bedrock abstracts away and what it costs to do yourself. An optional self-study episode at the end of the lesson runs the same self-hosted pipeline interactively on a GPU notebook instance, for prototyping alone at a keyboard.
+The next two episodes walk through RAG on **Bedrock** first, then on **Processing Jobs**. The Bedrock episode is the one to start from: it builds the whole WattBot pipeline, including chunking the corpus, from a cheap CPU notebook with nothing left running afterward. The Processing Jobs episode reruns the same pipeline on a self-hosted open-weight model that Bedrock does not carry, as jobs that end on their own, so you can see what Bedrock abstracts away and what it costs to do yourself. The fine-tuning episode follows. An optional self-study episode after it runs the same self-hosted pipeline interactively on a GPU notebook instance, for prototyping alone at a keyboard; it is not taught in class. All three RAG episodes share one module of pipeline code (`scripts/wattbot_rag.py` in the lesson repository), so what changes between them is only the two model calls and where the compute runs.
 
 When you build your own RAG system afterward, start from the Bedrock episode.
 
@@ -188,6 +189,6 @@ When you build your own RAG system afterward, start from the Bedrock episode.
 - Among the GPU options, Processing Jobs are the safest because the instance terminates itself; notebook GPUs and endpoints bill by the hour until you stop them.
 - A forgotten GPU instance costs tens of dollars overnight and hundreds to thousands over a month; a full WattBot run on Bedrock costs well under a dollar.
 - Tags never propagate: tag every job at launch, and route Bedrock calls through a tagged application inference profile, or the spend is untraceable.
-- The hands‑on episodes start with Bedrock, then show the same pipeline on Processing Jobs; the notebook-GPU version is optional self-study.
+- The hands‑on episodes start with Bedrock, then show the same pipeline on Processing Jobs; the notebook-GPU version, after the fine-tuning episode, is optional self-study.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::

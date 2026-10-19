@@ -1,7 +1,7 @@
 ---
 title: "Fine-tuning a Vision-Language Model with Training Jobs"
-teaching: 60
-exercises: 45
+teaching: 105
+exercises: 75
 ---
 
 :::::::::::::::::::::::::::::::::::::: questions
@@ -54,7 +54,7 @@ We will fine-tune [CHURRO-3B](https://github.com/stanford-oval/Churro), a 3-bill
 
 Ask what the model is missing. If it lacks **facts** (your documents, your data), retrieval gives it those at inference time and no training is needed. If it lacks a **skill or a style** (reading Kurrent, following your lab's labelling conventions, producing output in a strict format), you need to change the weights, and that is fine-tuning. Badger Scribe is squarely the second case: no amount of context will teach a model what a Kurrent "e" looks like.
 
-Full fine-tuning updates all 3 billion weights and needs several times the model's size in GPU memory for optimizer state. **LoRA** (low-rank adaptation) freezes the model and trains a few million extra parameters in small matrices bolted onto the attention and MLP layers. The adapter is tens of megabytes, trains on a single 24 GB GPU, and recovers most of the gain of a full fine-tune for a task like this. We use LoRA.
+Full fine-tuning updates all 3 billion weights and needs several times the model's size in GPU memory for optimizer state. **LoRA** (low-rank adaptation) freezes the model and trains a few million extra parameters in small matrices bolted onto the attention and MLP layers. The adapter is ~100 MB, trains on a single 24 GB GPU, and recovers most of the gain of a full fine-tune for a task like this. We use LoRA.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -69,16 +69,16 @@ The cost of a run is GPU-hours × the hourly rate, and GPU-hours scale with **mo
 | Run | Hardware | GPU-hours | Cost |
 |---|---|---|---|
 | **This episode:** 3B, LoRA, 120 Kurrent pages × 2 epochs | 1 × A10G (`ml.g5.xlarge`, $1.41/h), ~25 min | 0.4 | **~$0.60** |
-| Homework: 3B, LoRA, all 295 pages × 2 epochs | 1 × A10G, ~45 min | 0.75 | ~$1.05 |
-| 7B full fine-tune, ~50k documents, a few epochs | 8 × A100 (`ml.p4d.24xlarge`, $25.25/h), ~10 h | 80 | ~$250 |
+| Homework: 3B, LoRA, all 251 training pages × 2 epochs | 1 × A10G, ~45 min | 0.75 | ~$1.05 |
+| 7B full fine-tune, 50k documents × 3 epochs (the challenge below) | 8 × A100 (`ml.p4d.24xlarge`, $25.25/h), ~6 h | 45 | ~$140 |
 | 70B LoRA, one day | 8 × A100, 24 h | 192 | ~$600 |
 | CHURRO-3B itself: full fine-tune, 100k pages, 5 epochs | 32 × H100 for ~25 h (4 × `ml.p5.48xlarge`, $63.30/h) | 800 | ~$6,300 |
 | 70B full fine-tune, two days | 4 × `ml.p5.48xlarge`, 48 h | 1,536 | ~$12,000 |
 | Any row above × a 10-run hyperparameter sweep | | | × 10 |
 
-Two rows deserve a second look. The CHURRO row is the model you are about to fine-tune: Stanford spent on the order of 800 H100-hours making it, and you get the benefit for sixty cents because you are *adapting* it, not retraining it. Starting from a model that already knows most of the task is the single largest cost saving available, and it is a choice you make before any GPU is involved. The sweep row is the other honest one. Nobody's first run is their last, so a "$250 fine-tune" is usually a $1,000 to $2,500 project, and that is the number that surprises research groups. (The 7B and 70B rows are rule-of-thumb magnitudes; the CHURRO figures come from a published review of the paper.)
+Two rows deserve a second look. The CHURRO row is the model you are about to fine-tune: Stanford spent on the order of 800 H100-hours making it, and you get the benefit for sixty cents because you are *adapting* it, not retraining it. Starting from a model that already knows most of the task is the single largest cost saving available, and it is a choice you make before any GPU is involved. The sweep row is the other honest one. Nobody's first run is their last, so a "$140 fine-tune" is usually a $700 to $1,400 project, and that is the number that surprises research groups. (The 7B row is worked out in the challenge below; the 70B rows are rule-of-thumb magnitudes; the CHURRO figures come from a published review of the paper.)
 
-The habits in this episode are cheap practice at sixty cents a run. At $250 a run they are the difference between a project and a budget incident.
+The habits in this episode are cheap practice at sixty cents a run. At $140 a run they are the difference between a project and a budget incident.
 
 ### Back of the envelope: will it fit, and how long will it take?
 
@@ -91,21 +91,21 @@ Two rules of thumb answer most of the question before you touch a console. They 
 | Inference, 4-bit weights | 0.5 | weights only | 1.5 GB | 3.5 GB | 14 GB | 35 GB |
 | Inference, FP8 | 1 | weights only | 3 GB | 7 GB | 27 GB | 70 GB |
 | Inference, bf16 | 2 | weights only | 6 GB | 14 GB | 54 GB | 140 GB |
-| LoRA fine-tune | ~2.5 | frozen bf16 weights + a small adapter with its gradients and optimizer | 8 GB | 18 GB | 68 GB | 175 GB |
+| LoRA fine-tune | ~2.5 | frozen bf16 weights + a small adapter with its gradients and optimizer + activations | 8 GB | 18 GB | 68 GB | 175 GB |
 | Full fine-tune, mixed precision | 16 | bf16 weights 2 + bf16 gradients 2 + fp32 master weights 4 + Adam's two moments 8 | 48 GB | 112 GB | 430 GB | 1.1 TB |
 
 The jump from the inference rows to the training rows is the point. Training cannot run on quantized weights the way inference can: gradient updates are tiny numbers that vanish in 8-bit or 4-bit precision, so every trainable parameter keeps a full-precision master copy plus two Adam moments, 16 bytes against 2. That is why a 7B model you can *run* on a 24 GB GPU needs 112 GB plus activations to *fully fine-tune*, which means several GPUs with the model sharded across them. LoRA sidesteps it by freezing the model and training a few million adapter parameters, which is why this episode fits on one 24 GB card.
 
 **2. Time: how many GPU-hours?** Training compute is roughly proportional to parameters × tokens seen:
 
-```
+```text
 tokens      = examples × tokens per example × epochs
 FLOPs       ≈ 6 × parameters × tokens      (full fine-tune)
             ≈ 4 × parameters × tokens      (LoRA: no weight gradients for the frozen base)
 GPU-seconds = FLOPs / (GPU peak bf16 FLOPS × utilization)
 ```
 
-Utilization is the number people forget. A GPU running one page at a time with gradient checkpointing manages 20–30% of its peak; a well-tuned multi-GPU job reaches 40–50%. Use 25% unless you have measured otherwise. Then cost = GPU-hours × hourly rate + the fixed startup overhead per job (~10 minutes here).
+Utilization is the number people forget. A GPU running one page at a time with gradient checkpointing manages 20–30% of its peak; a well-tuned multi-GPU job reaches 40–50%. Use 25% unless you have measured otherwise, and add ~50% to the FLOPs when gradient checkpointing is on, because it recomputes the forward pass during the backward pass. Both corrections sit inside the factor of two the rule promises. Then cost = GPU-hours × hourly rate + the fixed startup overhead per job (~10 minutes here).
 
 Worked for the class run: 120 pages × ~1,600 tokens (1,300 visual + 300 text) × 2 epochs = 384k tokens. LoRA on a 3.75B model (3B language model plus the vision tower): 4 × 3.75e9 × 3.84e5 ≈ 5.8e15 FLOPs. An A10G peaks at about 70 TFLOPS in bf16; at 25% utilization that is 17 TFLOPS, so about 340 seconds, call it 6 minutes. The "~10 min" in the table below adds the image preprocessing on four vCPUs and the checkpointing overhead. Same arithmetic, same answer within the factor of two.
 
@@ -121,9 +121,9 @@ A lab wants to **fully fine-tune a 7B model** on 50,000 documents of ~2,000 toke
 
 It does not fit on the g5: full fine-tuning a 7B model needs ~112 GB plus activations, and the g5 has 24 GB. On the p4d the 8 × 40 GB = 320 GB holds it with the model sharded.
 
-Tokens: 50,000 × 2,000 × 3 = 3 × 10^8. FLOPs: 6 × 7 × 10^9 × 3 × 10^8 ≈ 1.3 × 10^19. Per GPU at 312 TFLOPS × 40% utilization ≈ 125 TFLOPS: 1.0 × 10^5 GPU-seconds ≈ 28 GPU-hours, which is 3.5 hours of wall-clock on 8 GPUs, about $90 for one run.
+Tokens: 50,000 × 2,000 × 3 = 3 × 10^8. FLOPs: 6 × 7 × 10^9 × 3 × 10^8 ≈ 1.26 × 10^19. Per GPU at 312 TFLOPS × 25% utilization = 78 TFLOPS: 1.26 × 10^19 / 7.8 × 10^13 ≈ 1.6 × 10^5 GPU-seconds ≈ 45 GPU-hours, which is about 6 hours of wall-clock on 8 GPUs, about $140 for one run (the "7B full fine-tune" row in the table above). A team that has measured 40% utilization on its own jobs would get 28 GPU-hours and ~$90; the rule is for before you have measured.
 
-A realistic project is not one run. The first run finds a data bug, the second a bad learning rate, then two or three are compared, then the one that worked is rerun on the final data: five to ten runs, so $450 to $900, before anyone touches a hyperparameter sweep. That is the number to put in the proposal, and it is why the three habits matter more as the model gets bigger.
+A realistic project is not one run. The first run finds a data bug, the second a bad learning rate, then two or three are compared, then the one that worked is rerun on the final data: five to ten runs, so $700 to $1,400, before anyone touches a hyperparameter sweep. That is the number to put in the proposal, and it is why the three habits matter more as the model gets bigger.
 
 :::::::::::::::::::::::::::::::::
 
@@ -143,7 +143,7 @@ The model we fine-tune fits on one 24 GB GPU. Single-GPU and multi-GPU SageMaker
 | `ml.p4d.24xlarge` | 8 × A100 | 320 GB | $25.25 |
 | `ml.p5.48xlarge` | 8 × H100 | 640 GB | $63.30 |
 
-Multi-GPU instances are the right tool when the model, its optimizer state and a batch do not fit on one GPU: a full fine-tune of a 7B model, or anything at 70B. They are the wrong tool when the job *does* fit on one GPU, because the price goes up 5x to 45x and a job too small to split gets no faster. A 3B LoRA run fits with room to spare, so `ml.g5.xlarge` is the workhorse for this episode. A T4 is too small and too slow for a 3B vision model with page-sized images; `ml.g6.xlarge` is a fine substitute if g5 capacity is short; `ml.g6e.xlarge` is roughly 2–3x faster for less than 2x the price, so it is often *cheaper per run* (Exercise 2).
+Multi-GPU instances are the right tool when the model, its optimizer state and a batch do not fit on one GPU: a full fine-tune of a 7B model, or anything at 70B. They are the wrong tool when the job *does* fit on one GPU, because the price goes up 5x to 45x and a job too small to split gets no faster. A 3B LoRA run fits with room to spare, so `ml.g5.xlarge` is the workhorse for this episode. A T4 is too small and too slow for a 3B vision model with page-sized images; `ml.g6.xlarge` is a fine substitute if g5 capacity is short; `ml.g6e.xlarge` is roughly 2–3x faster for less than 2x the price, so it becomes *cheaper per run* once training outweighs the fixed startup (Exercise 2).
 
 ### The run
 
@@ -151,7 +151,7 @@ A training job bills from the moment its instance is ready until the job ends, i
 
 | Phase | Time | Cost |
 |---|---|---|
-| Startup: container pull, 2 GB of images, 7 GB of model weights | ~10 min | $0.24 |
+| Startup: container pull, ~130 MB of images, 7.5 GB of model weights (from the shared bucket) | ~10 min | $0.24 |
 | Score 15 holdout pages with the base model, ~10 s each | ~3 min | $0.07 |
 | Training: 120 pages × 2 epochs, ~2.5 s per page with gradient checkpointing | ~10 min | $0.24 |
 | Score the same 15 pages with the fine-tuned model | ~3 min | $0.07 |
@@ -188,12 +188,13 @@ Compare the classic mistake: doing all of this interactively on a `ml.g5.xlarge`
 
 ### Before class (instructor checklist)
 
-Students never download the data themselves; four things have to be in place before the session. Each is written out in the instructor pages.
+Students never download the data themselves; five things have to be in place before the session. Each is written out in the instructor pages.
 
-1. **Stage the data in the shared read-only bucket** from the lesson's data release (`badger-scribe-data-v1`): about ten minutes from CloudShell, commands and the read-only bucket policy in *Shared data bucket: staging before each term* (the same bucket holds the WattBot data for the RAG episodes). The bucket must survive the end-of-workshop cleanup, or be recreated from the release next term.
-2. **Run the full fine-tune once** (the estimator in the Homework section, all 251 training pages, `eval_pages` 40) and copy `train_summary.json`, `eval_before.csv` and `eval_after.csv` from its `model.tar.gz` to `badger-scribe/instructor/full-run/` in the shared bucket. Step 3 compares against these. Replace the time estimates in Step 0 with the job's real `BillableTimeInSeconds`.
-3. **Quotas**: `ml.g5.xlarge for training job usage` at least the class size (request 100). Default is often 0 to 4 and increases take days; file three to four weeks ahead. Full list in *Account preparation checklist*.
-4. **Tell students the bucket name** at the start; it is the `shared_bucket` value in the first code cell.
+1. **Stage the data in the shared read-only bucket** from the lesson's data release (`badger-scribe-data-v1`, ~130 MB): a few minutes from CloudShell, a laptop or a notebook instance; commands and the read-only bucket policy in *Shared data bucket: staging before each term* (the same bucket holds the WattBot data for the RAG episodes). The bucket must survive the end-of-workshop cleanup, or be recreated from the release next term.
+2. **Stage the base model in the same bucket** (`badger-scribe/model/churro-3B/`, ~7.5 GB, once, from a laptop or notebook instance, not CloudShell). Every job reads the weights from S3 as a `model` channel instead of 100 students pulling 7.5 GB each from Hugging Face in the same minute.
+3. **Run the full fine-tune once** (the estimator in the Homework section, all 251 training pages, `eval_pages` 40) and copy `train_summary.json`, `eval_before.csv` and `eval_after.csv` from its `model.tar.gz` to `badger-scribe/instructor/full-run/` in the shared bucket. Step 3 compares against these. Replace the time estimates in Step 0 with the job's real `BillableTimeInSeconds`.
+4. **Quotas**: `ml.g5.xlarge for training job usage` at least the class size (request 100). Default is often 0 to 4 and increases take days; file three to four weeks ahead. Full list in *Account preparation checklist*.
+5. **Tell students the bucket name** at the start; it is the `shared_bucket` value in the first code cell.
 
 Fallback instance if g5 capacity is short: `ml.g6.xlarge` (L4, 24 GB, $1.13/h).
 
@@ -203,27 +204,39 @@ This episode runs from a **CPU** notebook instance (`ml.t3.medium` or `ml.m5.xla
 
 There is no data upload in this episode. The competition data is published as a [release on the lesson repository](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/releases) (three zip files: labels, train images, test images), and your instructor has staged it in a shared read-only bucket:
 
-- `s3://<shared-bucket>/badger-scribe/train.csv`, `test.csv`, `metadata.csv`, `metric.py`, `sample_submission.csv`
-- `s3://<shared-bucket>/badger-scribe/images/<page_id>.jpg`: train and test pages together, about 2 GB
+- `s3://<shared-bucket>/badger-scribe/train.csv`, `test.csv`, `metadata.csv`, `metric.py`, `sample_submission.csv`, `transcription_conventions.md`
+- `s3://<shared-bucket>/badger-scribe/images/<page_id>.jpg`: train and test pages together, about 130 MB
+- `s3://<shared-bucket>/badger-scribe/model/churro-3B/`: a copy of the CHURRO-3B weights (~7.5 GB), so that jobs read them from S3 instead of every student pulling them from Hugging Face at once
 - `s3://<shared-bucket>/badger-scribe/instructor/full-run/`: the output of a full fine-tune your instructor ran before class, for comparison in Step 3
 
-The training job reads the images straight from that bucket; the only files your notebook downloads are the small CSVs. Outputs go to your own bucket from the S3 episode, under `badger-scribe/`.
+The training job reads the images and the model straight from that bucket; the only files your notebook downloads are the small CSVs. Outputs go to your own bucket from the S3 episode, under `badger-scribe/`.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
 ### Working on your own account?
 
-Download the three assets of the data release and sync them into a bucket of yours under the same `badger-scribe/` prefix, then set `shared_bucket` below to that bucket. From a terminal with the AWS CLI (the notebook instance's terminal works):
+Download the three assets of the data release and sync them into a bucket of yours under the same `badger-scribe/` prefix, then set `shared_bucket` below to that bucket. From a terminal with the AWS CLI (the notebook instance's terminal works), one asset at a time so nothing larger than one zip sits on disk:
 
 ```bash
 %%bash
 V=1   # data release version; check the releases page for the latest
 R=https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/releases/download/badger-scribe-data-v$V
-mkdir -p badger-scribe && cd badger-scribe
 for a in labels images-train images-test; do
-  curl -L -o $a.zip $R/badger-scribe-v$V-$a.zip && unzip -q -o $a.zip && rm $a.zip
+  rm -rf /tmp/bs && mkdir -p /tmp/bs
+  curl -L -o /tmp/bs/$a.zip $R/badger-scribe-v$V-$a.zip
+  unzip -q -o /tmp/bs/$a.zip -d /tmp/bs/badger-scribe && rm /tmp/bs/$a.zip
+  aws s3 sync /tmp/bs/badger-scribe/ s3://<your-bucket>/badger-scribe/
+  rm -rf /tmp/bs
 done
-cd .. && aws s3 sync badger-scribe/ s3://<your-bucket>/badger-scribe/
+```
+
+The jobs below also expect a copy of the base model in the bucket (one 7.5 GB download instead of one per job):
+
+```bash
+%%bash
+pip install -q huggingface_hub
+huggingface-cli download stanford-oval/churro-3B --local-dir /tmp/churro-3B
+aws s3 sync /tmp/churro-3B/ s3://<your-bucket>/badger-scribe/model/churro-3B/ && rm -rf /tmp/churro-3B
 ```
 
 No Kaggle account is needed for any of this. The Step 3 comparison against an instructor full run will not apply; run the homework's full fine-tune yourself instead.
@@ -250,7 +263,8 @@ bucket_name = "sinkorswim-doejohn"     # <-- EDIT ME: your own bucket from the S
 username = "doejohn"                   # <-- EDIT ME: lowercase letters/digits only; used in job names
 
 data_prefix = "badger-scribe"
-train_s3_uri = f"s3://{shared_bucket}/{data_prefix}/"   # training channel: csvs + images/
+train_s3_uri = f"s3://{shared_bucket}/{data_prefix}/"                  # training channel: csvs + images/
+model_s3_uri = f"s3://{shared_bucket}/{data_prefix}/model/churro-3B/"  # model channel: staged CHURRO-3B weights
 
 local_data_dir = "./data"
 os.makedirs(local_data_dir, exist_ok=True)
@@ -313,7 +327,7 @@ print(os.listdir("code"))
 
 Open `code/finetune_churro_lora.py` and read it before launching it. The pieces worth understanding:
 
-```python
+```text
 # Only the language model's projection layers get LoRA weights.
 # The vision tower ("visual") stays frozen.
 lora = LoraConfig(
@@ -374,8 +388,8 @@ estimator = HuggingFace(
     output_path=model_output_path,
     sagemaker_session=session,
     hyperparameters={
-        "model_id": "stanford-oval/churro-3B",
-        "max_train_pages": 120,           # a slice in class; the homework uses all 250 training pages
+        # no model_id: the script reads the base weights from the "model" channel mounted at fit()
+        "max_train_pages": 120,           # a slice in class; the homework uses all 251 training pages
         "epochs": 2,
         "lr": 2e-4,
         "lora_r": 16,
@@ -399,10 +413,12 @@ Now launch. Two details in this one line matter:
 - `job_name` is set explicitly. SageMaker requires training job names to be unique in the account, so running this cell a second time fails immediately with `ResourceInUse` and nothing is launched. To run again on purpose, change `v1` to `v2`.
 - `wait=True` (the default) blocks the notebook until the job ends and streams its log here. For a 25-minute job that is the right choice: you cannot accidentally queue a second launch while you wait, and everything worth doing in the meantime happens in the console, not in this notebook.
 
+The second input channel, `model`, is the copy of CHURRO-3B your instructor staged in the shared bucket: SageMaker mounts it at `/opt/ml/input/data/model` and the script loads from there, so a hundred jobs starting in the same minute copy 7.5 GB from S3 instead of each pulling it from Hugging Face.
+
 ```python
 training_job_name = f"badger-{username}-mini-v1"
 
-estimator.fit({"train": train_s3_uri}, job_name=training_job_name, wait=True)
+estimator.fit({"train": train_s3_uri, "model": model_s3_uri}, job_name=training_job_name, wait=True)
 ```
 
 ::::::::::::::::::::::::::::::::::::: callout
@@ -452,9 +468,9 @@ adapter_s3_uri = desc["ModelArtifacts"]["S3ModelArtifacts"]
 print("adapter:", adapter_s3_uri)
 ```
 
-The gap between *training time* and *billable time* is the fixed overhead of every job: container pull, data download, model download. It is the same whether you train for one minute or one hour, which is why a small first run is cheap and why batching work into fewer, longer jobs is cheaper than many tiny ones.
+The gap between *training time* and *billable time* is the fixed overhead of every job: container pull, data download, the 7.5 GB model copy from S3. It is the same whether you train for one minute or one hour, which is why a small first run is cheap and why batching work into fewer, longer jobs is cheaper than many tiny ones.
 
-The whole output of the job is a `model.tar.gz` of a few tens of megabytes: the LoRA adapter, the processor configuration, the holdout list, the two evaluation files and a summary. The 3B base model is never copied anywhere.
+The whole output of the job is a `model.tar.gz` of about 100 MB: the LoRA adapter, the processor configuration, the holdout list, the two evaluation files and a summary. The 3B base model is never copied anywhere.
 
 ```python
 import tarfile
@@ -513,7 +529,7 @@ print("\nTUNED\n", after.set_index("page_id").loc[best, "text_pred"][:500])
 
 ## Step 3: What a full run buys
 
-Your instructor ran the same script before class on all 251 training pages (2 epochs, 40 evaluation pages). Its output is in the shared bucket. The holdout split is deterministic, so its evaluation pages include yours.
+Your instructor ran the same script before class on all 251 training pages (2 epochs, 40 evaluation pages) from the same data release. Its output is in the shared bucket. The holdout split and the evaluation sample are both seeded, and the sample is the first *n* of one fixed shuffle, so the instructor's 40 evaluation pages include your 15 by construction.
 
 ```python
 full_dir = os.path.join(local_data_dir, "instructor-full-run")
@@ -538,7 +554,7 @@ print(three.round(3).to_string(index=False))
 print("\nmean on", len(three), "shared pages:", three[["cer_base", "cer_tuned", "cer_full"]].mean().round(3).to_dict())
 ```
 
-Three numbers: the base model, 10 minutes of training on 120 pages, and 20 minutes on 251. The second gap is what more data and more time buy, and it cost about fifty cents. Whether that dollar is worth it depends on the gap; whether the next $250 is worth it is the same question at a different scale, and the only way to answer it is to measure, as you just did.
+Three numbers: the base model, 10 minutes of training on 120 pages, and 20 minutes on 251. The second gap is what more data and more time buy, and it cost about fifty cents. Whether that dollar is worth it depends on the gap; whether the next $140 is worth it is the same question at a different scale, and the only way to answer it is to measure, as you just did.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
@@ -584,11 +600,15 @@ Time per page roughly doubles: the sequence is twice as long and attention cost 
 
 `ml.g6e.xlarge` (one L40S, 48 GB) costs $2.61/h, 1.85x the price of `ml.g5.xlarge`, and runs this workload roughly 2.5–3x faster. It also has twice the GPU memory, so `batch_size` can be 2 or 4 instead of 1, which uses the GPU more efficiently.
 
-Using the Step 0 "The run" table, estimate the cost of the class job on `ml.g6e.xlarge`. Which phase does *not* get faster?
+Using the Step 0 "The run" table, estimate the cost of the class job on `ml.g6e.xlarge`. Then do the same for the homework run (21 min of training, 13 min of evaluation, 10 min of startup on the g5). Which phase does *not* get faster, and when does the faster instance actually save money?
 
 :::::::::::::::::::::::: solution
 
-Startup (~10 min, $0.44) does not speed up: the container pull and the downloads are the same. Training drops from ~10 to ~4 minutes and each evaluation from ~3 to ~1 minute, so the job is about 16 minutes and ~$0.70: a little *more* than the g5 run, because on a job this short the fixed overhead dominates. On the homework run (50 minutes of training) the same arithmetic gives ~30 minutes and ~$1.30, cheaper than g5. The lesson is that the hourly rate is the wrong thing to compare; the cost per run is what matters, and the fixed overhead is a larger share of it on faster hardware. The catch is quotas: the account needs a service quota for `ml.g6e.xlarge` training jobs, and those often default to zero.
+Startup (~10 min, $0.44 at $2.61/h) does not speed up: the container pull and the S3 downloads are the same on any instance. For the class job, training drops from ~10 to ~4 minutes and each evaluation from ~3 to ~1 minute, so the job is about 16 minutes and ~$0.70: a little *more* than the $0.60 g5 run, because on a job this short the fixed overhead dominates.
+
+The homework run on the g5 is 21 + 13 + 10 = 44 minutes, about $1.03. On the g6e at 2.5–3x: ~8 minutes of training, ~5 of evaluation, the same 10 of startup, about 23 minutes and ~$1.00. Break-even, at this size. The g6e only wins once training dominates startup: at four epochs, or at 2 megapixels, or on a thousand pages, the g5 bill grows linearly while the g6e bill grows at a third of the slope, and then the faster card is cheaper per run.
+
+The lesson is that the hourly rate is the wrong thing to compare; the cost per run is what matters, and the fixed overhead is a larger share of it on faster hardware. The catch is quotas: the account needs a service quota for `ml.g6e.xlarge` training jobs, and those often default to zero.
 
 :::::::::::::::::::::::::::::::::
 
@@ -634,7 +654,7 @@ full_estimator = HuggingFace(
     output_path=model_output_path,
     sagemaker_session=session,
     hyperparameters={
-        "model_id": "stanford-oval/churro-3B",
+        # no model_id: read from the "model" channel, as in class
         "epochs": 2,
         "lr": 2e-4,
         "lora_r": 16,
@@ -648,7 +668,7 @@ full_estimator = HuggingFace(
 )
 
 full_job_name = f"badger-{username}-full-v1"
-full_estimator.fit({"train": train_s3_uri}, job_name=full_job_name, wait=False)
+full_estimator.fit({"train": train_s3_uri, "model": model_s3_uri}, job_name=full_job_name, wait=False)
 print("launched:", full_job_name)
 ```
 
@@ -685,7 +705,7 @@ images_s3_uri = f"s3://{shared_bucket}/{data_prefix}/images/"
 infer_data_s3_uri = f"s3://{bucket_name}/{infer_prefix}/"
 ```
 
-Then one function that launches a transcription job. Three inputs are mounted into the container: the images (from the shared bucket), your CSVs, and, optionally, the adapter.
+Then one function that launches a transcription job. Four inputs are mounted into the container: the images and the staged base model (both from the shared bucket; a Processing job has no `model` channel, so the model directory is passed explicitly as `--model_id`), your CSVs, and, optionally, the adapter.
 
 ```python
 from sagemaker.huggingface import HuggingFaceProcessor
@@ -695,9 +715,10 @@ def run_transcription_job(label: str, adapter_uri: str = None):
     output_uri = f"s3://{bucket_name}/{data_prefix}/predictions/{label}/"
     inputs = [
         ProcessingInput(source=images_s3_uri, destination="/opt/ml/processing/input/images"),
+        ProcessingInput(source=model_s3_uri, destination="/opt/ml/processing/input/model"),
         ProcessingInput(source=infer_data_s3_uri, destination="/opt/ml/processing/input/data"),
     ]
-    arguments = ["--model_id", "stanford-oval/churro-3B", "--pages_csv", "pages.csv",
+    arguments = ["--model_id", "/opt/ml/processing/input/model", "--pages_csv", "pages.csv",
                  "--batch_size", "4", "--max_pixels", str(1280 * 28 * 28)]
     if adapter_uri:
         inputs.append(ProcessingInput(source=adapter_uri, destination="/opt/ml/processing/input/adapter"))

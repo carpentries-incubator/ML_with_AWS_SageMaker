@@ -41,13 +41,17 @@ blocklist:
   - "551379999285" # production, do not modify
 
 accounts:
-"183295408236": # aws-nuke-account
-  resource-types:
-    includes: #Specifies which types of resources you want to clean out
-     - S3Bucket
-     - SageMakerNotebookInstance
+  "183295408236": # the shared workshop account
+    resource-types:
+      includes: # only these types are deleted; the key must be "includes" (v3)
+        - S3Bucket
+        - SageMakerNotebookInstance
+    filters:
+      S3Bucket:
+        - property: Name
+          value: "ml-marathon-shared" # the instructor-staged data bucket survives
 
-**MAKE SURE TO USE SPACE INDENTING AND NOT TAB INDENTING AS IT IS SENSITIVE TO USE IN CLOUDSHELL AND MAY CAUSE THE SCRIPT TO FAIL**
+**MAKE SURE TO USE SPACE INDENTING AND NOT TAB INDENTING AS IT IS SENSITIVE TO USE IN CLOUDSHELL AND MAY CAUSE THE SCRIPT TO FAIL.** The committed copy at `instructors/nuke-config.yml` is the reference. Two things it deliberately does *not* delete: the shared data bucket (the `filters` block) and Bedrock application inference profiles, which learners remove themselves in the cleanup episode. Everything else the lesson creates (training, processing and tuning jobs) has already ended and holds no billable resource.
 
 5. Once you've gotten your config file set up, click on **"FILE" > "SAVE AS"**
 6. Label your doc as "nuke-config.yml" under "File Name:" \& Ensure "All files (\*)"

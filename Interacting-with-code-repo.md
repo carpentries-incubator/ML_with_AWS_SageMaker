@@ -1,5 +1,5 @@
 ---
-title: "Using a GitHub Personal Access Token (PAT) to Push/Pull from a SageMaker Notebook"
+title: "(Optional) Pushing to GitHub from a SageMaker Notebook with a Personal Access Token"
 teaching: 25
 exercises: 10
 ---
@@ -23,26 +23,29 @@ exercises: 10
 ## Open prefilled .ipynb notebook
 Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/Interacting-with-code-repo.ipynb`.
 
+This episode is **optional self-study**: it is not needed to run the rest of the lesson, but it is the workflow you will want once you start writing code of your own in SageMaker.
+
 ## Step 0: Initial setup
 In this episode, we'll demonstrate how to push code to GitHub from a SageMaker Jupyter Notebook.
 
-To begin, we will first create a GitHub repo that we have read/write access to. Feel free to supplement the instructions below with your own personal GitHub repo if you have one ou want to use with SageMaker already. Else, we can simply create a fork of AWS_helpers repo. You may have completed this step already if you completed all workshop setup steps.
+To push code, we need a GitHub repo we have write access to. Feel free to substitute your own GitHub repo if you have one you want to use with SageMaker already. Otherwise we use your **fork of AWS_helpers**, which you created during workshop setup and cloned in the previous episode (Accessing S3), into `/home/ec2-user/SageMaker/AWS_helpers/`. If you have not forked it yet:
 
 1. Navigate to [https://github.com/UW-Madison-DataScience/AWS_helpers](https://github.com/UW-Madison-DataScience/AWS_helpers)
 2. Click the fork button
 3. Select yourself as the owner of the fork, and "Copy the main branch only" selected. You will only need the main branch.
 
-
-Next, let's make sure we're starting at the same directory. Back in our SageMaker Jupyter Lab notebook, change directory to the root directory of this instance before going further.
+There is nothing to clone again. Back in our SageMaker Jupyter Lab notebook, change directory into the clone from the previous episode.
 
 ```python
-%cd /home/ec2-user/SageMaker/
+%cd /home/ec2-user/SageMaker/AWS_helpers
 ```
 
-Then, clone the fork. Replace "USERNAME" below with your GitHub username.
+Check that `origin` points at *your* fork, not the upstream `UW-Madison-DataScience` repo (you cannot push to upstream). If you cloned upstream by mistake in the previous episode, repoint the remote with the commented command, replacing `YOUR_GITHUB_USERNAME`.
 
 ```python
-!git clone https://github.com/USERNAME/AWS_helpers.git # replace username with your GitHub username
+!git remote -v
+# If origin shows UW-Madison-DataScience instead of your username, uncomment and run:
+# !git remote set-url origin https://github.com/YOUR_GITHUB_USERNAME/AWS_helpers.git
 ```
     
 ## Step 1: Using a GitHub personal access token (PAT) to push/pull from a SageMaker notebook
@@ -87,7 +90,7 @@ Setting this globally (`--global`) will ensure the configuration persists across
 
 ```python
 !git config --global user.name "Your name" # This is your GitHub username (or just your name), which will appear in the commit history as the author of the changes.
-!git config --global user.email your_email@wisc.edu # This should match the email associated with your GitHub account so that commits are properly linked to your profile.
+!git config --global user.email your_email@example.edu # This should match the email associated with your GitHub account so that commits are properly linked to your profile.
 ```
 
 ## Step 3: Convert json .ipynb files to .py
@@ -105,13 +108,17 @@ Here's how to convert `.ipynb` files to `.py` in SageMaker without needing to ex
 !pip install jupytext
 ```
 
-2. Then, run the following command in a notebook cell to convert both of our notebooks to `.py` files
+2. Copy the notebook from the previous episode into the fork directory (we are still in `/home/ec2-user/SageMaker/AWS_helpers`), then convert it there. The lesson notebooks live in the `ML_with_AWS_SageMaker` clone, so copying first keeps the lesson repo untouched and puts the `.py` file where git will see it.
+
 ```python
-# Adjust filename(s) if you used something different
-!jupytext --to py Interacting-with-S3.ipynb
+!cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/notebooks/Accessing-S3-via-SageMaker-notebooks.ipynb .
+!jupytext --to py Accessing-S3-via-SageMaker-notebooks.ipynb
 ```
-    [jupytext] Reading Interacting-with-S3.ipynb in format ipynb
-    [jupytext] Writing Interacting-with-S3.py
+
+```text
+[jupytext] Reading Accessing-S3-via-SageMaker-notebooks.ipynb in format ipynb
+[jupytext] Writing Accessing-S3-via-SageMaker-notebooks.py
+```
 
 3. If you have multiple notebooks to convert, you can automate the conversion process by running this code, which converts all `.ipynb` files in the current directory to `.py` files:
 
@@ -130,14 +137,16 @@ for notebook in notebooks:
 
 ```
 
-For convenience, we have placed this code inside a `convert_files()` function in `helpers.py`.
+For convenience, we have placed this code inside a `convert_files()` function in `helpers.py`. It converts every `.ipynb` in the *current directory*. Because we are inside the `AWS_helpers` folder rather than its parent, we add the parent to `sys.path` so the same `import` works as in the previous episode.
 
 ```python
+import sys
+sys.path.insert(0, "/home/ec2-user/SageMaker")
 import AWS_helpers.helpers as helpers
 helpers.convert_files(direction="notebook_to_python")
 ```
 
-**Once converted, move our new .py file to the AWS_helpers folder using the file explorer panel in Jupyter Lab.**
+The `.py` file is already inside the `AWS_helpers` folder, because we copied the notebook there before converting; nothing to move.
 
 ## Step 4. Add and commit .py files
 
@@ -153,8 +162,8 @@ helpers.convert_files(direction="notebook_to_python")
 2. Add and commit changes
 
 ```python
-!git add . # you may also add files one at a time, for further specificity over the associated commit message
-!git commit -m "Updates from Jupyter notebooks" # in general, your commit message should be more specific!
+!git add Accessing-S3-via-SageMaker-notebooks.py # add the .py only; the .ipynb copy gets ignored in Step 5 (git add . would track it first)
+!git commit -m "Add converted Accessing-S3 notebook script" # in general, your commit message should be specific like this
 
 ```
 
@@ -250,17 +259,18 @@ If you're collaborating and want simplicity, **merge (pull.rebase false)** is of
 If you get merge conflicts, be sure to resolve those before moving forward (e.g., use git checkout -> add -> commit). You can skip the below code if you don't have any conflicts. 
 
 ```python
-# Keep your local changes in one conflicting file
-# !git checkout --ours Interacting-with-git.py
+# Example only: each conflicting file is resolved one way or the other, never both.
+# Keep YOUR version of the converted notebook script
+# !git checkout --ours Accessing-S3-via-SageMaker-notebooks.py
 
-# Keep remote version for the other conflicting file
-# !git checkout --theirs Interacting-with-git.py
+# Keep the REMOTE version of a file a teammate edited
+# !git checkout --theirs helpers.py
 
 # # Stage the files to mark the conflicts as resolved
-# !git add Interacting-with-git.py
+# !git add Accessing-S3-via-SageMaker-notebooks.py helpers.py
 
 # # Commit the merge result
-# !git commit -m "Resolved merge conflicts by keeping local changes"
+# !git commit -m "Resolved merge conflicts: kept local notebook script, remote helpers.py"
 ```
 
 ### 2. Push changes using PAT creditials 
@@ -285,18 +295,43 @@ Let's assume you've taken a short break from your work, and others on your team 
 ```
 
 2. We can then use jupytext again to convert in the other direction (.py to .ipynb).
-This command will create `Interacting-with-S3.ipynb` in the current directory, converting the Python script to a Jupyter Notebook format. Jupytext handles the conversion gracefully without expecting the `.py` file to be in JSON format.
+This command will create `Accessing-S3-via-SageMaker-notebooks.ipynb` in the current directory, converting the Python script back to Jupyter Notebook format. Jupytext handles the conversion gracefully without expecting the `.py` file to be in JSON format. (The `.ipynb` is ignored by git thanks to Step 5, so the round trip leaves the repo clean.)
 
 ```python
-!jupytext --to notebook Interacting-with-S3.py --output Interacting-with-S3.ipynb
+!jupytext --to notebook Accessing-S3-via-SageMaker-notebooks.py --output Accessing-S3-via-SageMaker-notebooks.ipynb
 ```
 
 ### Applying to all .py files
-To convert all of your .py files to notebooks, you can use our helper function as follows
+To convert all of your .py files to notebooks, you can use our helper function. Note that it converts *every* `.py` in the current directory, including `helpers.py` itself, so in a repo that holds real modules prefer the single-file command above.
 
-```python
+```text
 helpers.convert_files(direction="python_to_notebook")
 ```
+
+::::::::::::::::::::::::::::::::::::: challenge
+
+### Challenge: ignore the big files too
+
+The training episodes will save NumPy arrays (`.npz`) next to your notebooks. Those are binary and can be large, which makes them a poor fit for git. Add `*.npz` to the fork's `.gitignore`, commit it, push to your fork with your PAT, and verify the change on GitHub.
+
+:::::::::::::::::::::::::::::::::::: solution
+
+Still inside `/home/ec2-user/SageMaker/AWS_helpers`:
+
+```python
+with open(".gitignore", "a") as gitignore:
+    gitignore.write("\n# Ignore NumPy archives saved by the training episodes\n*.npz\n")
+!cat .gitignore
+!git add .gitignore
+!git commit -m "Ignore .npz arrays"
+!git push https://{username}:{token}@github.com/{username}/AWS_helpers.git main
+```
+
+Then open `https://github.com/YOUR_GITHUB_USERNAME/AWS_helpers/blob/main/.gitignore` in a browser: the `*.npz` line should be there, and the commit list should show "Ignore .npz arrays" as the latest commit. If the push is rejected with "authentication failed", the PAT has expired or lacks the `public_repo` (or `repo`) scope; generate a new one and re-run the `getpass` cell.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::::::::::::::
 
 
 :::::::::::::::::::::::::::::::::::::: keypoints 
@@ -304,6 +339,7 @@ helpers.convert_files(direction="python_to_notebook")
 - Use a GitHub PAT for HTTPS-based authentication in temporary SageMaker notebook instances.
 - Securely enter sensitive information in notebooks using `getpass`.
 - Converting `.ipynb` files to `.py` files helps with cleaner version control and easier review of changes.
-- Adding `.ipynb` files to `.gitignore` keeps your repository organized and reduces storage.
+- Adding `.ipynb` files (and large binaries such as `.npz`) to `.gitignore` keeps your repository organized and reduces storage.
+- You clone your fork once, in the Accessing S3 episode; this episode works inside that same clone.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::

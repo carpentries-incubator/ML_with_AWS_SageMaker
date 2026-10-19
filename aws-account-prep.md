@@ -4,6 +4,10 @@ title: 'Account preparation checklist (quotas, Bedrock, tags)'
 
 Everything that has to be requested or configured on the class AWS account before the workshop, sized for a class of up to **100 students** (100 for one-per-student resources, 200 for anything a student can have two of at once). GPU quota increases often take days and sometimes a support exchange, so file them three to four weeks ahead. Instance usage per episode is taken from the code in the episodes; if you change an instance type in an episode, change the quota here.
 
+## Region
+
+The shared workshop account runs in **US East (Ohio), `us-east-2`**. Quotas are per region, so file them there; the nuke config targets it; learners are told the region in the sign-in email and the setup page's access check. The lesson's price tables quote `us-east-1` list prices (the AWS price list of 2026-10-16); Ohio prices are the same or within a few percent, which does not change any decision in the lesson. All notebook code reads the region from the session rather than hard-coding it, so the lesson also works unchanged in any other region a self-paced learner picks.
+
 ## SageMaker service quotas
 
 Console: **Service Quotas → AWS services → Amazon SageMaker**, in the region the class uses. Names below are the quota names as the console lists them.

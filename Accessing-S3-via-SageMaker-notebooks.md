@@ -49,8 +49,8 @@ Preview variable details.
 # Print relevant details 
 print(f"Execution Role: {role}")  # Displays the IAM role being used
 bucket_names = [bucket["Name"] for bucket in s3.list_buckets()["Buckets"]]
-print(f"Available S3 Buckets: {bucket_names}")  # Shows the default S3 bucket assigned to SageMaker
-print(f"AWS Region: {session.boto_region_name}")  # Prints the region where the SageMaker session is running
+print(f"Available S3 Buckets: {bucket_names}")  # Every bucket in the account this role can list, including other learners' buckets in a shared account
+print(f"AWS Region: {session.boto_region_name}")  # The region of the notebook instance; your bucket must be in this same region
 ```
 
 ## Reading data from S3
@@ -174,18 +174,19 @@ print(f"Total size of bucket '{bucket_name}': {total_size_mb:.2f} MB")
 We have added code to calculate bucket size to a helper function called `get_s3_bucket_size(bucket_name)` for your convenience. There are also some other helper functions in the AWS_helpers repo to assist you with common AWS/SageMaker workflows. We'll show you how to clone this code into your notebook environment.
 
 #### Directory setup
-Let's make sure we're starting in the root directory of this instance, so that we all have our AWS_helpers.py file located in the same path (/test_AWS/scripts/AWS_helpers.py)
+Let's make sure we're starting in the root directory of this instance (`/home/ec2-user/SageMaker/`, the one directory that survives a Stop), so that we all have the helpers file at the same path: `AWS_helpers/helpers.py`.
 
 ```python
 %cd /home/ec2-user/SageMaker/
 ```
 
-To clone the repo to our Jupyter notebook, use the following code.
+You forked this repo during setup (if not, do it now: open [UW-Madison-DataScience/AWS_helpers](https://github.com/UW-Madison-DataScience/AWS_helpers) and click **Fork**). Clone **your fork**, not the upstream repo, replacing `YOUR_GITHUB_USERNAME` with your GitHub username. This is the only time you clone it: the folder lands in `/home/ec2-user/SageMaker/AWS_helpers/`, survives stopping the instance, and the later GitHub episode pushes changes back to this same fork.
+
 ```python
-!git clone https://github.com/UW-Madison-DataScience/AWS_helpers.git # downloads AWS_helpers folder/repo (refresh file explorer to see)
+!git clone https://github.com/YOUR_GITHUB_USERNAME/AWS_helpers.git # downloads AWS_helpers folder/repo (refresh file explorer to see)
 ```
 
-Our AWS_helpers.py file can be found in `AWS_helpers/helpers.py`. With this file downloaded, you can call this function via...
+The helper functions live in `AWS_helpers/helpers.py`. With the repo cloned, you can call the bucket-size function via...
 
 ```python
 import AWS_helpers.helpers as helpers
@@ -244,17 +245,20 @@ print(f"Estimated annual cost ({storage_size_gb:.4f} GB): ${monthly_cost*12:.5f}
 For detailed and up-to-date information on AWS S3 pricing, please refer to the [AWS S3 Pricing page](https://aws.amazon.com/s3/pricing/).
 
 ## Writing output files to S3
-As your analysis generates new files or demands additional documentation, you can upload files to your bucket as demonstrated below. For this demo, you can create a blank `Notes.txt` file to upload to your bucket. To do so, go to **File** -> **New** -> **Text file**, and save it out as `Notes.txt`.
+As your analysis generates new files or demands additional documentation, you can upload files to your bucket as demonstrated below. For this demo, we create a small `Notes.txt` file in the notebook's working directory and upload it under a `docs/` prefix. (You could also create the file by hand with **File** -> **New** -> **Text file**; the code below does the same thing so the notebook runs end to end.)
 
 ```python
-# Define the S3 bucket name and the file paths
-notes_file_path = "Notes.txt" # assuming your file is in root directory of jupyter notebook (check file explorer tab)
+# Create a small text file to upload (in the current working directory, /home/ec2-user/SageMaker)
+notes_file_path = "Notes.txt"
+with open(notes_file_path, "w") as f:
+    f.write("Workshop notes: Titanic data uploaded from the S3 episode; outputs go under per-episode prefixes.\n")
 
-# Upload the training file to a new folder called "docs". You can also just place it in the bucket's root directory if you prefer (remove docs/ in code below).
+# Upload it under a prefix called "docs/". A prefix is S3's version of a folder: there is no folder to
+# create first; the key "docs/Notes.txt" is enough. Every later episode writes under its own prefix
+# (xgboost/, pytorch/, wattbot/, badger-scribe/) in this same bucket.
 s3.upload_file(notes_file_path, bucket_name, "docs/Notes.txt")
 
-print("Files uploaded successfully.")
-
+print("File uploaded successfully.")
 ```
 
 After uploading, we can view the objects/files available on our bucket using...
@@ -279,10 +283,41 @@ file_list = helpers.list_S3_objects(bucket_name)
 file_list
 ```
 
+::::::::::::::::::::::::::::::::::::: challenge
+
+### Challenge: before and after
+
+1. Using `helpers.get_s3_bucket_size(bucket_name)`, record the size of your bucket. Then create a second file (say `docs/Notes2.txt` with a few lines of text), upload it under the `docs/` prefix, and measure the bucket size again. By how much did it grow, and what does that cost per month at $0.023 per GB?
+2. The next episodes train an XGBoost model with a SageMaker training job that writes its outputs to your bucket. Looking at how this episode organized `Notes.txt`, which prefix do you expect those outputs to land under, and why does the lesson use one bucket with prefixes instead of a new bucket per episode?
+
+:::::::::::::::::::::::::::::::::::: solution
+
+1. One way to do it:
+
+```python
+size_before = helpers.get_s3_bucket_size(bucket_name)
+
+with open("Notes2.txt", "w") as f:
+    f.write("A second note, to see the bucket grow.\n" * 20)
+s3.upload_file("Notes2.txt", bucket_name, "docs/Notes2.txt")
+
+size_after = helpers.get_s3_bucket_size(bucket_name)
+print(size_before, size_after)
+```
+
+The bucket grows by the size of the file (a few hundred bytes here), and at $0.023 per GB-month that is a rounding error: well under a thousandth of a cent per month. The point of the exercise is the habit, not the number. The same two lines, run before and after a training job, tell you what the job wrote and whether something is accumulating that you should clean up.
+
+2. The training episode writes under `xgboost/` (`s3://sinkorswim-doejohn/xgboost/`), the same way this episode wrote under `docs/`; the PyTorch episode uses `pytorch/`, the RAG episodes `wattbot/`, and the fine-tuning episode `badger-scribe/`. One bucket with prefixes keeps a single bucket policy, a single set of tags, and a single thing to delete at the end of the workshop; one bucket per episode would mean repeating the policy and tag setup five times and a longer cleanup list.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
 :::::::::::::::::::::::::::::::::::::: keypoints 
 
 - Load data from S3 into memory for efficient storage and processing.
 - Periodically check storage usage and costs to manage S3 budgets.
-- Use SageMaker to upload analysis results and maintain an organized workflow.
+- Upload analysis results to your bucket under a prefix per episode (`docs/`, `xgboost/`, ...) and keep one bucket for the whole workshop.
+- Clone your fork of `AWS_helpers` once, into `/home/ec2-user/SageMaker/`, where it survives stopping the instance.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::

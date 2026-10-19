@@ -7,7 +7,7 @@ The fine-tuning episode's data (the German-letter part of the Badger Scribe comp
 | Asset | Contents | Size |
 |---|---|---|
 | `badger-scribe-v<N>-labels.zip` | `train.csv`, `test.csv`, `metadata.csv`, `metric.py`, `sample_submission.csv`, `transcription_conventions.md` | < 1 MB |
-| `badger-scribe-v<N>-images-train.zip` | `images/<page_id>.jpg` for every page in `train.csv` | see release |
+| `badger-scribe-v<N>-images-train.zip` | `images/<page_id>.jpg` for every page in `train.csv` | see release (~130 MB for both image zips together in v1) |
 | `badger-scribe-v<N>-images-test.zip` | `images/<page_id>.jpg` for every page in `test.csv` | see release |
 
 Unzipping all three into one directory recreates the original layout (`train.csv` next to `images/`), which is what the episode's training channel and the shared S3 bucket expect. GitHub allows 2 GiB per asset with free, unlimited download bandwidth; the images are split by train/test so each zip stays well under the limit even if the lesson later adds the other collections.
@@ -26,7 +26,7 @@ Do this whenever the competition data changes (new pages pass review, labels are
    ```
 
    The script checks that every page id in the CSVs has an image, writes the three zips to `release/`, prints their sizes, and prints the publish command.
-3. Write `release_notes_v1.md` (template below) and run the printed `gh release create ...` command, logged in to the GitHub CLI with write access to the repository that hosts the release (`carpentries-incubator/ML_with_AWS_SageMaker`; pass `--repo` to the build script to publish elsewhere, e.g. on a fork while developing). Uploading ~2 GB takes a few minutes.
+3. Write `release_notes_v1.md` (template below) and run the printed `gh release create ...` command, logged in to the GitHub CLI with write access to the repository that hosts the release (`carpentries-incubator/ML_with_AWS_SageMaker`; pass `--repo` to the build script to publish elsewhere, e.g. on a fork while developing). The three zips of the German-letter release total ~130 MB and upload in under a minute.
 4. Update the version number (`V=1`) in the episode's self-paced callout and in the staging step below. Earlier releases stay available, so a learner mid-way through an old version is not broken.
 
 The lesson's URLs point at the release on `carpentries-incubator/ML_with_AWS_SageMaker`. A copy of the same release also exists on the `qualiaMachine/ML_with_Amazon_SageMaker` fork, where it was first published; the zips are byte-identical, so either URL serves the same data.
@@ -61,4 +61,4 @@ Done once per term together with the WattBot data; the commands and the read-onl
 
 ## Self-paced learners
 
-The episode tells learners working on their own account to download the same three assets and `aws s3 sync` them into a bucket of their own with the same `badger-scribe/` prefix. No Kaggle account is involved; the Kaggle page only comes up in the homework, as the optional place to submit a predictions file.
+The episode tells learners working on their own account to download the same three assets one at a time and `aws s3 sync` them into a bucket of their own with the same `badger-scribe/` prefix, and to stage the CHURRO-3B weights under `badger-scribe/model/churro-3B/` the same way the instructor does. No Kaggle account is involved; the Kaggle page only comes up in the homework, as the optional place to submit a predictions file.

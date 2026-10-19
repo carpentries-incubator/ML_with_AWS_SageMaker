@@ -38,8 +38,8 @@ If you are attending this lesson as part of the Machine Learning Marathon or Res
 **If you are attending this lesson as part of the Machine Learning Marathon or Research Bazaar, you can skip this step**. We will provide all attendees with a shared account. Otherwise, please follow these steps:
 
 1. Go to the [AWS Free Tier page](https://aws.amazon.com/free/) and click **Create a Free Account**.
-2. Complete the sign-up process. AWS's free tier covers very little of this workshop: SageMaker GPU instances, Bedrock calls and Processing jobs are all billed. Following the materials end to end costs about **$30** (the Titanic episodes a few dollars, the Bedrock episode cents, the Processing Jobs episode about $2, the fine-tuning episode about $3). The one way to spend much more is to leave a GPU notebook instance running: about $60 a day. Set a [Budgets alert](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html) at $50 before you start.
-3. **Request GPU quotas at least two weeks before the workshop.** New accounts have a quota of 0 for GPU instances, and increases take days. In the console, go to **Service Quotas → Amazon SageMaker** and request: `ml.g5.xlarge for training job usage` (1), `ml.g4dn.xlarge for training job usage` (1), `ml.g5.xlarge for processing job usage` (2), and `ml.g6e.xlarge for processing job usage` (1). A justification like "self-paced machine learning workshop" is enough.
+2. Complete the sign-up process. AWS's free tier covers very little of this workshop: SageMaker GPU instances, Bedrock calls and Processing jobs are all billed. Following the materials end to end costs about **$30** (the Titanic episodes a few dollars, the Bedrock episode cents, the Processing Jobs episode about $2, the fine-tuning episode about $1.55 in class plus about $1.75 for the optional homework). The one way to spend much more is to leave a GPU notebook instance running: about $60 a day. Set a [Budgets alert](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html) at $50 before you start.
+3. **Request GPU quotas three to four weeks before the workshop.** New accounts have a quota of 0 for GPU instances, and increases can take weeks. In the console, go to **Service Quotas → Amazon SageMaker** and request: `ml.g5.xlarge for training job usage` (1), `ml.g4dn.xlarge for training job usage` (1), `ml.g5.xlarge for processing job usage` (2), `ml.g6e.xlarge for processing job usage` (1), and `ml.g6e.xlarge for notebook instance usage` (1, optional GPU-notebook episode only). A justification like "self-paced machine learning workshop" is enough.
 4. Enable the two Bedrock models the RAG episode uses, under **Amazon Bedrock → Model access**: DeepSeek V3 and Titan Text Embeddings V2.
 5. Stage the shared datasets yourself, since there is no instructor bucket: the commands are in the lesson's instructor page *Shared data bucket: staging before each term*.
 
@@ -58,7 +58,7 @@ For this workshop, you will need the Titanic dataset, which can be used to train
 - `~/Downloads/data/titanic_train.csv`
 - `~/Downloads/data/titanic_test.csv`
 
-In the first episode, you will create an S3 bucket and upload this data to use with SageMaker.
+In the S3 episode (*Data Storage: Setting up S3*), you will create an S3 bucket and upload this data to use with SageMaker.
 
 The later episodes use two more datasets, and you do **not** need to download them: the WattBot papers (RAG episodes) and the Badger Scribe handwriting data (fine-tuning episode, published as a [release on the lesson repository](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/releases)) are staged by the instructors in a shared, read-only bucket. You create one bucket of your own in the S3 episode and use it for the whole workshop. No Kaggle account is required for any part of the workshop.
 
@@ -70,9 +70,9 @@ To do this:
 
 1. Go to the [AWS_helpers GitHub repository](https://github.com/UW-Madison-DataScience/AWS_helpers).
 2. Click **Fork** (top right) to create your own copy of the repository under your GitHub account. You will only need the main branch. You can leave "Copy the main branch only" selected. 
-3. Once forked, you don't need to do anything else. We'll clone this fork once we start working in the AWS Jupyter environment using...
+3. Once forked, you don't need to do anything else. The fork is cloned **once**, in the *Accessing S3* episode, into `/home/ec2-user/SageMaker/AWS_helpers/` on your notebook instance, and the optional GitHub PAT episode pushes changes back to it from that same clone. The clone command you will run there is:
 
-```python
+```text
 !git clone https://github.com/YOUR_GITHUB_USERNAME/AWS_helpers.git
 ```
 

@@ -2,7 +2,7 @@
 title: 'Fine-tuning episode: cost, capacity and setup'
 ---
 
-Planning notes for running the *Fine-tuning a Vision-Language Model with Training Jobs* episode (Badger Scribe, CHURRO-3B LoRA) with a class of about 50 in a 3-hour slot. Prices are on-demand SageMaker rates for `us-east-1` from the AWS price list published 2026-10-16; re-check them before the term, since `ml.g5.xlarge` has already moved from $1.21 to $1.41 since the RAG episodes were written.
+Planning notes for running the *Fine-tuning a Vision-Language Model with Training Jobs* episode (Badger Scribe, CHURRO-3B LoRA) with a class of about 50 in a 3-hour slot (quotas below are sized for 100). Prices are on-demand SageMaker rates from the AWS price list published 2026-10-16 (`us-east-1` and the class account's `us-east-2` are the same for these instance types); re-check them before the term, since `ml.g5.xlarge` has already moved from $1.21 to $1.41 since the RAG episodes were written.
 
 ## The in-class design
 
@@ -24,7 +24,7 @@ Launches use `wait=True` and an explicit `job_name=f"badger-{username}-mini-v1"`
 | Homework: base and fine-tuned over holdout + test (~185 pages, two Processing jobs) | `ml.g5.xlarge` | ~15 min each | $0.70 |
 | **In class + homework** | | **~2.3 GPU-hours** | **~$3.30** |
 
-Assumptions behind the training lines: CHURRO-3B in bf16 with LoRA rank 16, gradient checkpointing, one page per step, `max_pixels` of 1280 × 28 × 28 (about one megapixel, ~1,300 visual tokens plus ~300 text tokens per page), about 2.5 s per page-pass and ~10 s per page for greedy generation on an A10G, plus ~10 minutes of fixed startup (container pull, 2 GB of images, 7 GB of weights). These are estimates, not measurements; a 2x miss either way would not be surprising until you have timed a run. Every job is capped (`max_run` of 45 min on the mini job, 90 min on the full run, 45 min on each Processing job), so the worst case from the scripted steps is about $6 per student.
+Assumptions behind the training lines: CHURRO-3B in bf16 with LoRA rank 16, gradient checkpointing, one page per step, `max_pixels` of 1280 × 28 × 28 (about one megapixel, ~1,300 visual tokens plus ~300 text tokens per page), about 2.5 s per page-pass and ~10 s per page for greedy generation on an A10G, plus ~10 minutes of fixed startup (container pull, ~130 MB of images, 7.5 GB of weights copied from the shared bucket as a `model` channel, which adds ~1–2 minutes of S3 download per job instead of a Hugging Face pull). These are estimates, not measurements; a 2x miss either way would not be surprising until you have timed a run. Every job is capped (`max_run` of 45 min on the mini job, 90 min on the full run, 45 min on each Processing job), so the worst case from the scripted steps is about $6 per student.
 
 ## What the class spends
 
@@ -63,9 +63,9 @@ If the mini jobs are still queueing at 0:45 (capacity), move Step 3 forward: the
 
 New accounts often have these at 0 to 4. Quota increases for GPU instances can take days and sometimes a back-and-forth with support, so file them **three to four weeks** before class.
 
-**Capacity.** Fifty `ml.g5.xlarge` launches within the same minute in one region can fail with `InsufficientCapacity` even when the quota allows it. Mitigations, in order: launch the mini jobs in waves (table by table), and have `ml.g6.xlarge` (L4, 24 GB, $1.13/h; roughly the same speed on this workload) ready as a documented fallback instance type.
+**Capacity.** Fifty `ml.g5.xlarge` launches within the same minute in one region can fail with `InsufficientCapacity` even when the quota allows it. Mitigations, in order: launch the mini jobs in waves (table by table), and have `ml.g6.xlarge` (L4, 24 GB, $1.13/h; somewhat slower on this workload, with half the memory bandwidth, but still well within `max_run`) ready as a documented fallback instance type.
 
-**Model download.** Each job pulls `stanford-oval/churro-3B` (~7.5 GB) from Hugging Face. Fifty parallel downloads are fine, but confirm the training instances have internet access (default outside a VPC) and that the model is not gated for the account. If Hugging Face is a problem, mirror the weights to the shared bucket and point `--model_id` at a local copy via an extra input channel. The CHURRO weights carry the Qwen research license (non-commercial), which is fine for a class.
+**Model download.** The base weights (`stanford-oval/churro-3B`, ~7.5 GB) are *not* pulled from Hugging Face by the jobs. They are staged once in the shared bucket under `badger-scribe/model/churro-3B/` (step on the *Shared data bucket* page) and every estimator passes that prefix as a `model` channel; the Processing jobs mount the same prefix and pass it as `--model_id`. SageMaker copies it from S3 in ~1–2 minutes per job, and a hundred jobs starting in the same minute hit S3, which is built for that, rather than one Hugging Face repository. The scripts fall back to the Hub only when no `model` channel is given (self-paced learners who skipped the staging step), in which case the instance needs internet access (default outside a VPC). The CHURRO weights carry the Qwen research license (non-commercial), which is fine for a class.
 
 **Warm pools.** `keep_alive_period_in_seconds` on the estimator keeps the instance for the next job, which would let a relaunch skip the startup overhead. It needs its own quota (`ml.g5.xlarge for training warm pool usage`) and it bills for the idle time at the full rate, so for a class it adds a way to leave meters running. Leave it off.
 
@@ -75,7 +75,7 @@ New accounts often have these at 0 to 4. Quota increases for GPU instances can t
 
 ### 1. Stage the data in the shared read-only bucket
 
-Students do not create a bucket or upload anything for this episode, and nobody needs a Kaggle account. The data lives as a release on the lesson repository and is staged once per term under `badger-scribe/` in the shared bucket, next to the WattBot data. The bucket policy, layout and exact commands are on the *Shared data bucket: staging before each term* page.
+Students do not create a bucket or upload anything for this episode, and nobody needs a Kaggle account. The data lives as a release on the lesson repository (`badger-scribe-data-v1`, ~130 MB) and is staged once per term under `badger-scribe/` in the shared bucket, next to the WattBot data. The CHURRO-3B weights (~7.5 GB) are staged once under `badger-scribe/model/churro-3B/` in the same bucket, from a laptop or a notebook instance rather than CloudShell. The bucket policy, layout and exact commands are on the *Shared data bucket: staging before each term* page.
 
 ### 2. Run the full fine-tune yourself and stage its output
 
@@ -85,9 +85,18 @@ Run the episode's homework estimator (all 251 training pages, 2 epochs, `eval_pa
 - `badger-scribe/instructor/full-run/eval_before.csv`
 - `badger-scribe/instructor/full-run/eval_after.csv`
 
-The holdout split is seeded, so your 40 evaluation pages include the students' 15 pages as long as everyone keeps `seed` and `holdout_frac` at their defaults. While you are at it, note the job's `BillableTimeInSeconds` and `seconds_per_page` and replace the time estimates in the episode's Step 0 tables with measured ones. The episode tells students to compare their bill to the estimate; the estimate should be a real number.
+The holdout split is seeded and the evaluation sample is the first *n* of one seeded shuffle of the sorted page ids, so your 40 evaluation pages include the students' 15 pages by construction, as long as everyone keeps `seed` and `holdout_frac` at their defaults and trains from the same data release. While you are at it, note the job's `BillableTimeInSeconds` and `seconds_per_page` and replace the time estimates in the episode's Step 0 tables with measured ones. The episode tells students to compare their bill to the estimate; the estimate should be a real number.
 
 ### 3. The rest
+
+- Before anything launches, check that the container the episode asks for exists in the class region (a wrong version combination fails at `fit()` with a confusing error):
+
+  ```python
+  import sagemaker
+  region = sagemaker.Session().boto_region_name   # us-east-2 for the class account
+  sagemaker.image_uris.retrieve("huggingface", region, version="4.56", base_framework_version="pytorch2.8",
+                                py_version="py312", image_scope="training", instance_type="ml.g5.xlarge")
+  ```
 
 - Run the mini job once too, so you have seen the log students will see and know where `max_run` lands.
 - Set a Budgets alert on the class account at the planned total, and a Cost Explorer filter on the `Project` tag students use in `make_job_tags`.
