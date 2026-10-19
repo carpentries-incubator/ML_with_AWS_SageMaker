@@ -153,7 +153,7 @@ This setup ensures that your SageMaker operations will have the access needed wi
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ##### 5. Upload files to the bucket
-- If you haven't downloaded these files yet (part of workshop setup), download the data for this workshop: [data.zip](https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/data/data.zip)
+- If you haven't downloaded these files yet (part of workshop setup), download the data for this workshop: [data.zip](https://raw.githubusercontent.com/carpentries-incubator/ML_with_AWS_SageMaker/main/data/data.zip)
 	- Extract the zip folder contents (Right-click -> Extract all on Windows; Double-click on mac)
 	- Save the two data files (train and test) to a location where they can easily be accessed. E.g., ... 
 		- `~/Downloads/data/titanic_train.csv`

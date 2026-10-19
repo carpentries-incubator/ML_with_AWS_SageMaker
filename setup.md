@@ -38,7 +38,10 @@ If you are attending this lesson as part of the Machine Learning Marathon or Res
 **If you are attending this lesson as part of the Machine Learning Marathon or Research Bazaar, you can skip this step**. We will provide all attendees with a shared account. Otherwise, please follow these steps:
 
 1. Go to the [AWS Free Tier page](https://aws.amazon.com/free/) and click **Create a Free Account**.
-2. Complete the sign-up process. AWS offers a free tier with limited monthly usage. Some services, including SageMaker, may incur charges beyond free-tier limits, so be mindful of usage during the workshop. If you follow along with the materials, you can expect to incur around $10 in compute fees (e.g., from training and tuning several different models with GPU enabled at times).
+2. Complete the sign-up process. AWS's free tier covers very little of this workshop: SageMaker GPU instances, Bedrock calls and Processing jobs are all billed. Following the materials end to end costs about **$30** (the Titanic episodes a few dollars, the Bedrock episode cents, the Processing Jobs episode about $2, the fine-tuning episode about $3). The one way to spend much more is to leave a GPU notebook instance running: about $60 a day. Set a [Budgets alert](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html) at $50 before you start.
+3. **Request GPU quotas at least two weeks before the workshop.** New accounts have a quota of 0 for GPU instances, and increases take days. In the console, go to **Service Quotas → Amazon SageMaker** and request: `ml.g5.xlarge for training job usage` (1), `ml.g4dn.xlarge for training job usage` (1), `ml.g5.xlarge for processing job usage` (2), and `ml.g6e.xlarge for processing job usage` (1). A justification like "self-paced machine learning workshop" is enough.
+4. Enable the two Bedrock models the RAG episode uses, under **Amazon Bedrock → Model access**: DeepSeek V3 and Titan Text Embeddings V2.
+5. Stage the shared datasets yourself, since there is no instructor bucket: the commands are in the lesson's instructor page *Shared data bucket: staging before each term*.
 
 Once your AWS account is set up, log in to the **AWS Management Console** to get started with SageMaker.
 
@@ -46,7 +49,7 @@ Once your AWS account is set up, log in to the **AWS Management Console** to get
 
 For this workshop, you will need the Titanic dataset, which can be used to train a classifier predicting survival. 
 
-1. Please download the following zip file (Right-click -> Save as): [data.zip](https://raw.githubusercontent.com/UW-Madison-DataScience/ml-with-aws-sagemaker/main/data/data.zip)
+1. Please download the following zip file (Right-click -> Save as): [data.zip](https://raw.githubusercontent.com/carpentries-incubator/ML_with_AWS_SageMaker/main/data/data.zip)
 
 2. Extract the zip folder contents (Right-click -> Extract all on Windows; Double-click on mac)
 
