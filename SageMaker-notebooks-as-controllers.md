@@ -19,11 +19,21 @@ exercises: 10
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-## Setting up our notebook environment
-Amazon SageMaker provides a managed environment to simplify the process of building, training, and deploying machine learning models. In this episode, we'll set up a **SageMaker notebook instance**—a Jupyter notebook hosted on AWS for managing SageMaker workflows. 
+## What a SageMaker notebook instance is
+A **SageMaker notebook instance** is a virtual machine that AWS runs for you with JupyterLab already installed, a set of Python kernels that come with the AWS SDKs (`boto3` and the SageMaker Python SDK), and an IAM role attached that decides what the code running on it may do in your account. You create it from the console, open JupyterLab in a browser tab, and from then on it behaves like the Jupyter you already know. It is billed per second while it is running and nothing while it is stopped, and the files you keep under `/home/ec2-user/SageMaker/` survive a stop.
 
-### Using the notebook as a controller
-In this setup, the notebook instance functions as a *controller* to manage more resource-intensive compute tasks. By selecting a minimal instance (e.g., `ml.t3.medium`), you can perform lightweight operations while leveraging the **SageMaker Python SDK** to launch scalable compute instances for model training, batch processing, and hyperparameter tuning. This approach minimizes costs while accessing the full power of SageMaker for demanding tasks.
+### Why we work from a notebook instance in this lesson
+Nothing in the lesson *requires* it: the SageMaker SDK runs anywhere Python does. We use a notebook instance anyway, for reasons that matter in a classroom and in a research group alike:
+
+- **Identity comes from the instance, not from a file on your machine.** The IAM role attached to the notebook is what authorizes every call it makes. Nobody installs the AWS CLI, configures credentials, or has an access key that can end up in a notebook, a shell history or a GitHub commit. For a shared account with a hundred people in it, that is the single biggest security simplification available.
+- **Everyone has the same environment.** The kernels, the SDK version and the paths are identical for every learner, so a cell that works for the instructor works for you. Package and path problems are the main thing that eats workshop time; this removes most of them.
+- **It is inside AWS.** Reading your S3 bucket from the instance is in-region, fast and free of transfer charges; the same reads from a laptop would be slower and billed as data leaving AWS.
+- **It is a resource like any other.** It has to be sized, tagged, started and, above all, stopped. Creating it is your first practice at the discipline that the whole lesson is about.
+
+### The controller pattern
+The instance you create here will be small (`ml.t3.medium`: 2 vCPUs, 4 GB of memory, $0.05 per hour) and that is deliberate. The notebook never does the heavy computation. Its job is to be a **controller**: it holds your code and your notes, and it uses the SageMaker SDK to launch separate, more powerful instances for training, hyperparameter tuning and batch processing. Those instances start, run your script, write their results to S3, and shut themselves down. You pay for a GPU for the minutes a job needs it, not for the hours you spend thinking in between, and a mistake in a notebook cell cannot leave an expensive machine running: the expensive machine is a job, and jobs end.
+
+Every later episode uses the same instance. In this one we create it, open it, and learn to stop it.
 
 We'll follow these steps to create our first "SageMaker notebook instance".
 

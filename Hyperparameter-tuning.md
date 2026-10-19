@@ -50,10 +50,14 @@ This setup provides:
 By managing these settings and configuring metrics properly, you can achieve a balanced and efficient approach to hyperparameter tuning for neural networks.
 
 #### 0. Directory setup
-Just to make we are all on the same directory starting point, let's cd to our instance's root directory
+The usual first cell: start from the instance's root directory, clone the lesson repository if it is not already there, and import the helpers.
 
 ```python
 %cd /home/ec2-user/SageMaker/
+!test -d ML_with_AWS_SageMaker || git clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git
+import sys
+sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
+import helpers
 ```
 
 #### 1. Setup estimator
@@ -122,7 +126,7 @@ max_run = 2*60*60 # 2 hours
 pytorch_estimator = PyTorch(
     base_job_name=notebook_instance_name, # adjust to your notebook name,
     max_run=max_run, # in seconds; always include (max 48 hours)
-    entry_point="AWS_helpers/train_nn.py",  # Your script for training
+    entry_point="ML_with_AWS_SageMaker/scripts/train_nn.py",  # Your script for training
     role=role,
     tags=job_tags,
     instance_count=instance_count,
@@ -397,7 +401,7 @@ In our previous episode, we converted our train dataset into train/validate subs
 import pandas as pd
 import numpy as np
 import joblib
-from AWS_helpers.train_nn import preprocess_data
+from train_nn import preprocess_data
 
 # Fetch the test CSV and the training-set scaler from S3 (both uploaded in earlier episodes)
 s3.download_file(bucket_name, "titanic_test.csv", "titanic_test.csv")
@@ -415,8 +419,8 @@ np.savez('test_data.npz', X_test=X_test, y_test=y_test)
 #### Evaluate the model on test data
 
 ```python
-from AWS_helpers.train_nn import TitanicNet
-from AWS_helpers.train_nn import calculate_accuracy
+from train_nn import TitanicNet
+from train_nn import calculate_accuracy
 import torch
 
 # Load the model (saved as 'nn_model.pth' by train_nn.py)
@@ -445,9 +449,6 @@ In about 20 minutes of wall-clock time and a few cents of compute, we searched 1
 For convenience, the same calculation is available as a function in `helpers.py`:
 
 ```python
-import AWS_helpers.helpers as helpers
-import importlib
-importlib.reload(helpers)
 helpers.calculate_tuning_job_time(tuner, region)
 ```
 

@@ -2,7 +2,7 @@
 title: 'Badger Scribe data: publishing a release'
 ---
 
-The fine-tuning episode's data (the German-letter part of the Badger Scribe competition data: 295 labelled train pages, 141 test pages, 436 JPEG scans plus a few CSVs) lives as a **GitHub Release** on the lesson repository, not in the git tree and not on Kaggle. Learners never need a Kaggle account. Each data version is one release with three zip assets:
+The fine-tuning episode's data (the German-letter part of the Badger Scribe competition data: 295 labelled train pages, 141 test pages, 436 JPEG scans plus a few CSVs) lives as a **GitHub Release** on the lesson repository, not in the git tree and not on Kaggle. Each data version is one release with three zip assets:
 
 | Asset | Contents | Size |
 |---|---|---|
@@ -61,4 +61,4 @@ Done once per term together with the WattBot data; the commands and the read-onl
 
 ## Self-paced learners
 
-The episode tells learners working on their own account to download the same three assets one at a time and `aws s3 sync` them into a bucket of their own with the same `badger-scribe/` prefix, and to stage the CHURRO-3B weights under `badger-scribe/model/churro-3B/` the same way the instructor does. No Kaggle account is involved; the Kaggle page only comes up in the homework, as the optional place to submit a predictions file.
+The episode tells learners working on their own account to download the same three assets one at a time and `aws s3 sync` them into a bucket of their own with the same `badger-scribe/` prefix, and to stage the CHURRO-3B weights under `badger-scribe/model/churro-3B/` the same way the instructor does. The Kaggle page only comes up in the homework, as the optional place to submit a predictions file.
