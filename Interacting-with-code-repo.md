@@ -1,114 +1,103 @@
 ---
-title: "(Optional) Pushing to GitHub from a SageMaker Notebook with a Personal Access Token"
+title: "(Optional) Pushing Your Notebooks to GitHub from SageMaker"
 teaching: 25
 exercises: 10
 ---
 
 :::::::::::::::::::::::::::::::::::::: questions 
 
-- How can I securely push/pull code to and from GitHub within a SageMaker notebook?
-- What steps are necessary to set up a GitHub PAT for authentication in SageMaker?
-- How can I convert notebooks to `.py` files and ignore `.ipynb` files in version control?
+- How can I put the code I write on a SageMaker notebook instance under version control on GitHub?
+- How do I authenticate to GitHub from a notebook instance without leaving a password or key behind?
+- How can I convert notebooks to `.py` files and keep `.ipynb` files out of version control?
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ::::::::::::::::::::::::::::::::::::: objectives
 
-- Configure Git in a SageMaker notebook to use a GitHub Personal Access Token (PAT) for HTTPS-based authentication.
-- Securely handle credentials in a notebook environment using `getpass`.
-- Convert `.ipynb` files to `.py` files for better version control practices in collaborative projects.
+- Create a GitHub repository for your own SageMaker work and connect a folder on the notebook instance to it.
+- Configure Git on a notebook instance to push over HTTPS with a GitHub Personal Access Token (PAT), entered with `getpass`.
+- Convert `.ipynb` files to `.py` files for cleaner version control.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## Open prefilled .ipynb notebook
 Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/Interacting-with-code-repo.ipynb`.
 
-This episode is **optional self-study**: it is not needed to run the rest of the lesson, but it is the workflow you will want once you start writing code of your own in SageMaker.
+This episode is **optional self-study**: it is not needed to run the rest of the lesson, but it is the workflow you will want once you start writing code of your own in SageMaker. It also doubles as a short git refresher. You need a GitHub account for it; nothing else in the lesson does.
 
-## Step 0: Initial setup
-In this episode, we'll demonstrate how to push code to GitHub from a SageMaker Jupyter Notebook.
+## Step 0: What we are versioning, and where
+So far every notebook you have run came from the lesson repository, which you cloned read-only in the Accessing S3 episode. You cannot push to that repository, and you would not want to: the lesson is not your project. The realistic situation is the one this episode sets up: **your own work lives in your own repository**. We will create an empty repository on GitHub, make a matching folder on the notebook instance, copy a notebook into it, and push.
 
-To push code, we need a GitHub repo we have write access to. Feel free to substitute your own GitHub repo if you have one you want to use with SageMaker already. Otherwise we use your **fork of AWS_helpers**, which you created during workshop setup and cloned in the previous episode (Accessing S3), into `/home/ec2-user/SageMaker/AWS_helpers/`. If you have not forked it yet:
-
-1. Navigate to [https://github.com/UW-Madison-DataScience/AWS_helpers](https://github.com/UW-Madison-DataScience/AWS_helpers)
-2. Click the fork button
-3. Select yourself as the owner of the fork, and "Copy the main branch only" selected. You will only need the main branch.
-
-There is nothing to clone again. Back in our SageMaker Jupyter Lab notebook, change directory into the clone from the previous episode.
+1. On GitHub, click **New repository** (the **+** in the top-right corner). Name it `sagemaker-work` (any name is fine; the cells below use this one). Leave it **Public** or make it **Private**, as you prefer. Tick **Add a README file** so the repository is not empty, which gives Step 6 a pull with something in it. Click **Create repository**.
+2. Back in JupyterLab, make the folder on the instance and turn it into a git repository. We put it under `/home/ec2-user/SageMaker/`, the one directory that survives stopping the instance.
 
 ```python
-%cd /home/ec2-user/SageMaker/AWS_helpers
+%cd /home/ec2-user/SageMaker/
+!mkdir -p sagemaker-work
+%cd sagemaker-work
+!git init -b main
 ```
 
-Check that `origin` points at *your* fork, not the upstream `UW-Madison-DataScience` repo (you cannot push to upstream). If you cloned upstream by mistake in the previous episode, repoint the remote with the commented command, replacing `YOUR_GITHUB_USERNAME`.
+Connect it to the repository you just created, replacing `YOUR_GITHUB_USERNAME`:
 
 ```python
+!git remote add origin https://github.com/YOUR_GITHUB_USERNAME/sagemaker-work.git
 !git remote -v
-# If origin shows UW-Madison-DataScience instead of your username, uncomment and run:
-# !git remote set-url origin https://github.com/YOUR_GITHUB_USERNAME/AWS_helpers.git
 ```
-    
-## Step 1: Using a GitHub personal access token (PAT) to push/pull from a SageMaker notebook
-When working in SageMaker notebooks, you may often need to push code updates to GitHub repositories. However, SageMaker notebooks are typically launched with temporary instances that don't persist configurations, including SSH keys, across sessions. This makes HTTPS-based authentication, secured with a GitHub Personal Access Token (PAT), a practical solution. PATs provide flexibility for authentication and enable seamless interaction with both public and private repositories directly from your notebook. 
 
-> **Important Note**: Personal access tokens are powerful credentials that grant specific permissions to your GitHub account. To ensure security, only select the minimum necessary permissions and handle the token carefully.
+## Step 1: A GitHub personal access token (PAT)
+A notebook instance is a machine that other people may be able to reach (an administrator, or whoever uses it after you) and that you may delete next month. Neither a saved password nor an SSH key belongs on it. GitHub's answer is a **Personal Access Token**: a credential you create with only the permissions you need and an expiry date, use over HTTPS, and revoke in one click. We will enter it with `getpass` each session so that it never appears in a cell or a saved notebook.
 
-#### Generate a personal access token (PAT) on GitHub
+> **Important Note**: A PAT is a password with a scope. Give it the minimum permissions, set an expiry, and never paste it into code.
+
+#### Generate the token on GitHub
 1. Go to **Settings** by clicking on your profile picture in the upper-right corner of GitHub.
 2. Click **Developer settings** at the very bottom of the left sidebar.
-3. Select **Personal access tokens**, then click **Tokens (classic)**.
+3. Select **Personal access tokens**, then **Tokens (classic)**.
 4. Click **Generate new token (classic)**.
-5. Give your token a descriptive name (e.g., "SageMaker Access Token") and set an expiration date if desired for added security.
+5. Give it a descriptive name (e.g., "SageMaker notebook instance") and an expiry (30 days is plenty for a workshop).
 6. **Select the minimum permissions needed**:
-   - **For public repositories**: Choose only **`public_repo`**.
-   - **For private repositories**: Choose **`repo`** (full control of private repositories).
-   - Optional permissions, if needed:
-     - **`repo:status`**: Access commit status (if checking status checks).
-     - **`workflow`**: Update GitHub Actions workflows (only if working with GitHub Actions).
-7. Click **Generate token** and **copy it immediately**—you won't be able to see it again once you leave the page.
+   - **For a public repository**: only **`public_repo`**.
+   - **For a private repository**: **`repo`**.
+7. Click **Generate token** and **copy it immediately**: you cannot see it again once you leave the page.
 
+> **Caution**: Treat your PAT like a password. Store it in a password manager, not in a file on the instance, and revoke it (same page, **Delete**) when the workshop is over; the cleanup episode's checklist reminds you.
 
-> **Caution**: Treat your PAT like a password. Avoid sharing it or exposing it in your code. Store it securely (e.g., via a password manager like LastPass) and consider rotating it regularly.
-
-#### Use `getpass` to prompt for username and PAT
-The `getpass` library allows you to input your GitHub username and PAT without exposing them in the notebook. This approach ensures you're not hardcoding sensitive information.
+#### Enter it with `getpass`
+`input()` and `getpass.getpass()` prompt you in the notebook; the token is held in a Python variable for this kernel session and is not written into the notebook file.
 
 ```python
 import getpass
 
-# Prompt for GitHub username and PAT securely
 username = input("GitHub Username: ")
 token = getpass.getpass("GitHub Personal Access Token (PAT): ")
 ```
 
-**Note**: After running, you may want to comment out the above code so that you don't have to enter in your login every time you run your whole notebook
+**Note**: when you re-run the whole notebook later, this cell prompts again. That is the point: nothing is saved.
 
 ## Step 2: Configure Git settings
-In your SageMaker or Jupyter notebook environment, run the following commands to set up your Git user information.
-
-Setting this globally (`--global`) will ensure the configuration persists across all repositories in the environment. If you're working in a temporary environment, you may need to re-run this configuration after a restart.
+Git records an author on every commit. Set yours once; `--global` stores it in your home directory on the instance, so it persists across restarts of this instance (not across instances).
 
 ```python
-!git config --global user.name "Your name" # This is your GitHub username (or just your name), which will appear in the commit history as the author of the changes.
-!git config --global user.email your_email@example.edu # This should match the email associated with your GitHub account so that commits are properly linked to your profile.
+!git config --global user.name "Your name"             # appears as the author in the commit history
+!git config --global user.email your_email@example.edu  # use the email on your GitHub account so commits link to your profile
 ```
 
-## Step 3: Convert json .ipynb files to .py
-We'd like to track our notebook files within our repo fork. However, to avoid tracking ipynb files directly, which are formatted as json, we may want to convert our notebook to .py first (plain text). Converting notebooks to `.py` files helps maintain code (and version-control) readability and minimizes potential issues with notebook-specific metadata in Git history. 
+## Step 3: Convert `.ipynb` to `.py`
+We want our notebook under version control, but a `.ipynb` file is JSON with outputs and metadata baked in, which makes diffs unreadable and repositories large. The usual practice is to version a plain `.py` copy of the code and ignore the notebooks.
 
-#### Benefits of converting to `.py` before Committing
-- **Cleaner version control**: `.py` files have cleaner diffs and are easier to review and merge in Git.
-- **Script compatibility**: Python files are more compatible with other environments and can run easily from the command line.
-- **Reduced repository size**: `.py` files are generally lighter than `.ipynb` files since they don't store outputs or metadata.
+#### Benefits of converting to `.py` before committing
+- **Cleaner version control**: readable diffs, reviewable pull requests, sane merges.
+- **Script compatibility**: a `.py` file runs from the command line and imports as a module.
+- **Smaller repository**: no outputs, no images, no cell metadata.
 
-Here's how to convert `.ipynb` files to `.py` in SageMaker without needing to export or download files.
+1. Install Jupytext, which converts in both directions.
 
-1. First, install Jupytext.
 ```python
 !pip install jupytext
 ```
 
-2. Copy the notebook from the previous episode into the fork directory (we are still in `/home/ec2-user/SageMaker/AWS_helpers`), then convert it there. The lesson notebooks live in the `ML_with_AWS_SageMaker` clone, so copying first keeps the lesson repo untouched and puts the `.py` file where git will see it.
+2. Copy the notebook from the Accessing S3 episode into our repository folder (we are still in `/home/ec2-user/SageMaker/sagemaker-work`) and convert it there. Copying keeps the lesson clone untouched and puts the `.py` file where git will see it.
 
 ```python
 !cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/notebooks/Accessing-S3-via-SageMaker-notebooks.ipynb .
@@ -120,214 +109,158 @@ Here's how to convert `.ipynb` files to `.py` in SageMaker without needing to ex
 [jupytext] Writing Accessing-S3-via-SageMaker-notebooks.py
 ```
 
-3. If you have multiple notebooks to convert, you can automate the conversion process by running this code, which converts all `.ipynb` files in the current directory to `.py` files:
+3. With several notebooks, convert them all in a loop:
 
 ```python
 import subprocess
 import os
 
-# List all .ipynb files in the directory
 notebooks = [f for f in os.listdir() if f.endswith('.ipynb')]
-
-# Convert each notebook to .py using jupytext
 for notebook in notebooks:
     output_file = notebook.replace('.ipynb', '.py')
     subprocess.run(["jupytext", "--to", "py", notebook, "--output", output_file])
     print(f"Converted {notebook} to {output_file}")
-
 ```
 
-For convenience, we have placed this code inside a `convert_files()` function in `helpers.py`. It converts every `.ipynb` in the *current directory*. Because we are inside the `AWS_helpers` folder rather than its parent, we add the parent to `sys.path` so the same `import` works as in the previous episode.
+The same loop is `helpers.convert_files()` in the lesson's `scripts/helpers.py`. It converts every `.ipynb` in the *current directory*, so run it from inside the folder you mean to convert:
 
 ```python
 import sys
-sys.path.insert(0, "/home/ec2-user/SageMaker")
-import AWS_helpers.helpers as helpers
+sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
+import helpers
 helpers.convert_files(direction="notebook_to_python")
 ```
 
-The `.py` file is already inside the `AWS_helpers` folder, because we copied the notebook there before converting; nothing to move.
+## Step 4: Add and commit the `.py` file
 
-## Step 4. Add and commit .py files
+1. Check the status of the repository. Make sure you are in the repository folder first.
 
-1. Check status of repo. Make sure you're in the repo folder before running the next step.
 ```python
-%cd /home/ec2-user/SageMaker/AWS_helpers
+%cd /home/ec2-user/SageMaker/sagemaker-work
+!git status
 ```
+
+2. Add and commit. We add the `.py` by name rather than `git add .`, so the `.ipynb` copy is never tracked (Step 5 ignores it for good).
+
+```python
+!git add Accessing-S3-via-SageMaker-notebooks.py
+!git commit -m "Add Accessing-S3 notebook as a script"   # a commit message says what changed, specifically
+```
+
+3. Check the status again.
 
 ```python
 !git status
 ```
 
-2. Add and commit changes
+## Step 5: Ignore notebooks and clutter with `.gitignore`
+A `.gitignore` file lists patterns git should never track. Ignoring `*.ipynb` across the repository means a stray `git add .` cannot commit a notebook by accident.
 
-```python
-!git add Accessing-S3-via-SageMaker-notebooks.py # add the .py only; the .ipynb copy gets ignored in Step 5 (git add . would track it first)
-!git commit -m "Add converted Accessing-S3 notebook script" # in general, your commit message should be specific like this
+1. Confirm you are in the repository folder.
 
-```
-
-3. Check status
-
-```python
-!git status
-```
-
-## Step 5. Adding .ipynb to gitigore
-
-Adding `.ipynb` files to `.gitignore` is a good practice if you plan to only commit `.py` scripts. This will prevent accidental commits of Jupyter Notebook files across all subfolders in the repository.
-
-Here's how to add `.ipynb` files to `.gitignore` to ignore them project-wide:
-
-1. **Check working directory**: First make sure we're in the repo folder
-    
 ```python
 !pwd
-#%cd AWS_helpers
 ```
 
-2. **Create the `.gitignore` file**: This file will be hidden in Jupyter (since it starts with "."), but you can verify it exists using `ls`.
-```python
-!touch .gitignore
-!ls -a
-```
-
-3. **Add `.ipynb` files to `.gitignore`**: You can add this line using a command within your notebook:
+2. Create the file (hidden in the file browser because it starts with a dot; `ls -a` shows it) and add the notebook pattern.
 
 ```python
 with open(".gitignore", "a") as gitignore:
-	gitignore.write("\n# Ignore all Jupyter Notebook files\n*.ipynb\n")
-```
-
-View file contents
-```python
+    gitignore.write("# Jupyter notebooks: we version the .py copies instead\n*.ipynb\n")
 !cat .gitignore
 ```
 
-4. **Ignore other common temp files**
-While we're at it, let's ignore other common files that can clutter repos, such as cache folders and temporary files.
+3. While we are here, ignore the usual clutter too: caches, temporary files, and the NumPy archives the training episodes write next to notebooks.
 
 ```python
 with open(".gitignore", "a") as gitignore:
-	gitignore.write("\n# Ignore cache and temp files\n__pycache__/\n*.tmp\n*.log\n")
-```
-
-View file contents
-
-```python
+    gitignore.write("\n# Cache and temp files\n__pycache__/\n*.tmp\n*.log\n")
 !cat .gitignore
 ```
-    
-5. **Add and commit the `.gitignore` file**:
 
-Add and commit the updated `.gitignore` file to ensure it's applied across the repository.
+4. Add and commit `.gitignore` so the rule travels with the repository.
 
 ```python
 !git add .gitignore
-!git commit -m "Add .ipynb files to .gitignore to ignore notebooks"
+!git commit -m "Ignore notebooks, caches and temp files"
 ```
 
-This setup will:
+## Step 6: Pull, then push
+Before pushing, pull: the remote already has the README that GitHub created, and in a shared repository it may have your collaborators' commits. Pulling first means your push is a simple addition rather than a rejected one.
 
-- Prevent all `.ipynb` files from being tracked by Git.
-- Keep your repository cleaner, containing only `.py` scripts for easier version control and reduced repository size. 
+#### Which pull strategy
+Git has to decide how to combine your local commits with remote ones. The three options:
 
-## Step 6. Merging local changes with remote/GitHub
-Our local changes have now been committed, and we can begin the process of mergining with the remote main branch. Before we try to push our changes, it's good practice to first to a pull. This is critical when working on a collaborate repo with multiple users, so that you don't miss any updates from other team members.
+* **Merge** (`pull.rebase false`): the remote changes come in as a merge commit. Simplest, shows where you integrated. The default and the right choice for most collaborative work.
+* **Rebase** (`pull.rebase true`): your commits are replayed on top of the remote ones, giving a linear history. Cleaner, but conflicts have to be resolved commit by commit.
+* **Fast-forward only** (`pull.ff only`): refuses to pull unless nothing diverged. Useful as a safety check, not as a daily setting.
 
-
-### 1. Pull the latest changes from the main branch
-There are a few different options for pulling the remote code into your local version. The best pull strategy depends on your workflow and the history structure you want to maintain. Here's a breakdown to help you decide:
-
-* Merge (pull.rebase false): Combines the remote changes into your local branch as a merge commit.
-   - **Use if**: You're okay with having merge commits in your history, which indicate where you pulled in remote changes. This is the default and is usually the easiest for team collaborations, especially if conflicts arise.
-
-* Rebase (pull.rebase true): Replays your local changes on top of the updated main branch, resulting in a linear history.
-    - **Use if**: You prefer a clean, linear history without merge commits. Rebase is useful if you like to keep your branch history as if all changes happened sequentially.
-
-* Fast-forward only (pull.ff only): Only pulls if the local branch can fast-forward to the remote without diverging (no new commits locally).
-    - **Use if**: You only want to pull updates if no additional commits have been made locally. This can be helpful to avoid unintended merges when your branch hasn't diverged.
-
-#### Recommended for Most Users
-If you're collaborating and want simplicity, **merge (pull.rebase false)** is often the most practical option. This will ensure you get remote changes with a merge commit that captures the history of integration points. For those who prefer a more streamlined history and are comfortable with Git, **rebase (pull.rebase true)** can be ideal but may require more careful conflict handling.
+We use merge. Because our folder and the GitHub repository started separately (one from `git init`, one from **Create repository**), git also needs `--allow-unrelated-histories` for this very first pull; never again after that.
 
 ```python
-!git config pull.rebase false # Combines the remote changes into your local branch as a merge commit.
-!git pull origin main
+!git config pull.rebase false
+!git pull origin main --allow-unrelated-histories --no-edit
 ```
 
-If you get merge conflicts, be sure to resolve those before moving forward (e.g., use git checkout -> add -> commit). You can skip the below code if you don't have any conflicts. 
+If git reports a merge conflict, each conflicting file has to be resolved one way or the other and then staged and committed. You will not get one here (the README and your script are different files), but this is what it looks like:
 
 ```python
-# Example only: each conflicting file is resolved one way or the other, never both.
-# Keep YOUR version of the converted notebook script
+# Example only.
+# Keep YOUR version of a file:
 # !git checkout --ours Accessing-S3-via-SageMaker-notebooks.py
-
-# Keep the REMOTE version of a file a teammate edited
-# !git checkout --theirs helpers.py
-
-# # Stage the files to mark the conflicts as resolved
-# !git add Accessing-S3-via-SageMaker-notebooks.py helpers.py
-
-# # Commit the merge result
-# !git commit -m "Resolved merge conflicts: kept local notebook script, remote helpers.py"
+# Keep the REMOTE version of a file:
+# !git checkout --theirs README.md
+# Then stage and commit the resolution:
+# !git add Accessing-S3-via-SageMaker-notebooks.py README.md
+# !git commit -m "Resolve merge conflicts"
 ```
 
-### 2. Push changes using PAT creditials 
+#### Push with the PAT
+The token goes into the URL for this one command, built from the variables `getpass` filled. It is not stored by git and does not appear in the notebook.
 
 ```python
-# Push with embedded credentials from getpass (avoids interactive prompt)
-github_url = f'github.com/{username}/AWS_helpers.git' # The full address for your fork can be found under Code -> Clone -> HTTPS (remote the https:// before the rest of the address)
+github_url = f"github.com/{username}/sagemaker-work.git"
 !git push https://{username}:{token}@{github_url} main
 ```
-   
-After pushing, you can navigate back to your fork on GitHub to verify everything worked (e.g., https://github.com/username/AWS_helpers/tree/main)
 
-## Step 7: Pulling .py files and converting back to notebook format
+Open `https://github.com/YOUR_GITHUB_USERNAME/sagemaker-work` in a browser: the README, the `.py` file and `.gitignore` should all be there, with your two commits in the history.
 
-Let's assume you've taken a short break from your work, and others on your team have made updates to your .py files on the remote main branch. If you'd like to work with notebook files again, you can again use jupytext to convert your `.py` files back to `.ipynb`. 
-
-1. First, pull any updates from the remote main branch.
+## Step 7: Pulling `.py` files and converting back to notebooks
+Suppose a collaborator edits the `.py` file on GitHub, or you edit it from another machine. Pull as usual:
 
 ```python
-!git config pull.rebase false # Combines the remote changes into your local branch as a merge commit.
+!git config pull.rebase false
 !git pull origin main
 ```
 
-2. We can then use jupytext again to convert in the other direction (.py to .ipynb).
-This command will create `Accessing-S3-via-SageMaker-notebooks.ipynb` in the current directory, converting the Python script back to Jupyter Notebook format. Jupytext handles the conversion gracefully without expecting the `.py` file to be in JSON format. (The `.ipynb` is ignored by git thanks to Step 5, so the round trip leaves the repo clean.)
+Then convert the script back to a notebook with Jupytext. The `.ipynb` it writes is ignored by git (Step 5), so the round trip leaves the repository clean.
 
 ```python
 !jupytext --to notebook Accessing-S3-via-SageMaker-notebooks.py --output Accessing-S3-via-SageMaker-notebooks.ipynb
 ```
 
-### Applying to all .py files
-To convert all of your .py files to notebooks, you can use our helper function. Note that it converts *every* `.py` in the current directory, including `helpers.py` itself, so in a repo that holds real modules prefer the single-file command above.
-
-```text
-helpers.convert_files(direction="python_to_notebook")
-```
+To convert every `.py` in the folder back to notebooks, `helpers.convert_files(direction="python_to_notebook")` does the loop; remember it converts *every* `.py` in the current directory, so keep real modules out of that folder.
 
 ::::::::::::::::::::::::::::::::::::: challenge
 
 ### Challenge: ignore the big files too
 
-The training episodes will save NumPy arrays (`.npz`) next to your notebooks. Those are binary and can be large, which makes them a poor fit for git. Add `*.npz` to the fork's `.gitignore`, commit it, push to your fork with your PAT, and verify the change on GitHub.
+The training episodes save NumPy arrays (`.npz`) next to your notebooks. Those are binary and can be large, which makes them a poor fit for git. Add `*.npz` to your repository's `.gitignore`, commit it, push with your PAT, and verify the change on GitHub.
 
 :::::::::::::::::::::::::::::::::::: solution
 
-Still inside `/home/ec2-user/SageMaker/AWS_helpers`:
+Still inside `/home/ec2-user/SageMaker/sagemaker-work`:
 
 ```python
 with open(".gitignore", "a") as gitignore:
-    gitignore.write("\n# Ignore NumPy archives saved by the training episodes\n*.npz\n")
+    gitignore.write("\n# NumPy archives saved by the training episodes\n*.npz\n")
 !cat .gitignore
 !git add .gitignore
 !git commit -m "Ignore .npz arrays"
-!git push https://{username}:{token}@github.com/{username}/AWS_helpers.git main
+!git push https://{username}:{token}@github.com/{username}/sagemaker-work.git main
 ```
 
-Then open `https://github.com/YOUR_GITHUB_USERNAME/AWS_helpers/blob/main/.gitignore` in a browser: the `*.npz` line should be there, and the commit list should show "Ignore .npz arrays" as the latest commit. If the push is rejected with "authentication failed", the PAT has expired or lacks the `public_repo` (or `repo`) scope; generate a new one and re-run the `getpass` cell.
+Then open `https://github.com/YOUR_GITHUB_USERNAME/sagemaker-work/blob/main/.gitignore` in a browser: the `*.npz` line should be there, and the commit list should show "Ignore .npz arrays" as the latest commit. If the push is rejected with "authentication failed", the PAT has expired or lacks the `public_repo` (or `repo`) scope; generate a new one and re-run the `getpass` cell.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -336,10 +269,9 @@ Then open `https://github.com/YOUR_GITHUB_USERNAME/AWS_helpers/blob/main/.gitign
 
 :::::::::::::::::::::::::::::::::::::: keypoints 
 
-- Use a GitHub PAT for HTTPS-based authentication in temporary SageMaker notebook instances.
-- Securely enter sensitive information in notebooks using `getpass`.
-- Converting `.ipynb` files to `.py` files helps with cleaner version control and easier review of changes.
-- Adding `.ipynb` files (and large binaries such as `.npz`) to `.gitignore` keeps your repository organized and reduces storage.
-- You clone your fork once, in the Accessing S3 episode; this episode works inside that same clone.
+- Your own work belongs in your own repository: create one on GitHub, `git init` a folder under `/home/ec2-user/SageMaker/`, and connect the two with `git remote add`.
+- Authenticate over HTTPS with a scoped, expiring Personal Access Token entered through `getpass`; nothing is saved on the instance, and the token is revoked when you are done.
+- Version `.py` copies of notebooks (Jupytext converts both ways) and ignore `*.ipynb`, caches and data archives in `.gitignore`.
+- Pull before you push; the first pull into a freshly initialised folder needs `--allow-unrelated-histories`.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::

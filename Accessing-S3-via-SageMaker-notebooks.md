@@ -170,26 +170,25 @@ print(f"Total size of bucket '{bucket_name}': {total_size_mb:.2f} MB")
 #print(f"Total size of bucket '{bucket_name}': {total_size_gb:.2f} GB")
 ```
 
-### Using helper functions from GitHub
-We have added code to calculate bucket size to a helper function called `get_s3_bucket_size(bucket_name)` for your convenience. There are also some other helper functions in the AWS_helpers repo to assist you with common AWS/SageMaker workflows. We'll show you how to clone this code into your notebook environment.
+### Using the lesson's helper functions
+We have added code to calculate bucket size to a helper function called `get_s3_bucket_size(bucket_name)` for your convenience, in `scripts/helpers.py` of the lesson repository, alongside the training and processing scripts that later episodes launch as jobs. Everything the workshop needs lives in that one repository, so we clone it once onto the notebook instance and use it from there.
 
-#### Directory setup
-Let's make sure we're starting in the root directory of this instance (`/home/ec2-user/SageMaker/`, the one directory that survives a Stop), so that we all have the helpers file at the same path: `AWS_helpers/helpers.py`.
+#### Clone the lesson repository (once)
+Start in the root directory of this instance, `/home/ec2-user/SageMaker/`: it is the one directory that survives stopping the instance, so a clone placed there is still present next session. The `test -d ... ||` guard makes the cell a no-op if the folder already exists, which is why every later episode starts with the same cell: whichever episode you open first, the code is there.
 
 ```python
 %cd /home/ec2-user/SageMaker/
+!test -d ML_with_AWS_SageMaker || git clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git
+import sys
+sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
+import helpers
 ```
 
-You forked this repo during setup (if not, do it now: open [UW-Madison-DataScience/AWS_helpers](https://github.com/UW-Madison-DataScience/AWS_helpers) and click **Fork**). Clone **your fork**, not the upstream repo, replacing `YOUR_GITHUB_USERNAME` with your GitHub username. This is the only time you clone it: the folder lands in `/home/ec2-user/SageMaker/AWS_helpers/`, survives stopping the instance, and the later GitHub episode pushes changes back to this same fork.
+`sys.path.insert` tells Python where to find the lesson's `scripts/` folder; after it, `import helpers` works from any directory. No GitHub account is involved: this is a read-only clone of a public repository.
+
+With the repo cloned, you can call the bucket-size function via...
 
 ```python
-!git clone https://github.com/YOUR_GITHUB_USERNAME/AWS_helpers.git # downloads AWS_helpers folder/repo (refresh file explorer to see)
-```
-
-The helper functions live in `AWS_helpers/helpers.py`. With the repo cloned, you can call the bucket-size function via...
-
-```python
-import AWS_helpers.helpers as helpers
 helpers.get_s3_bucket_size(bucket_name)
 ```
 
@@ -318,6 +317,6 @@ The bucket grows by the size of the file (a few hundred bytes here), and at $0.0
 - Load data from S3 into memory for efficient storage and processing.
 - Periodically check storage usage and costs to manage S3 budgets.
 - Upload analysis results to your bucket under a prefix per episode (`docs/`, `xgboost/`, ...) and keep one bucket for the whole workshop.
-- Clone your fork of `AWS_helpers` once, into `/home/ec2-user/SageMaker/`, where it survives stopping the instance.
+- Clone the lesson repository once, into `/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/`; every later episode starts with the same guarded clone-and-import cell, so the code is there whichever episode you open first.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::

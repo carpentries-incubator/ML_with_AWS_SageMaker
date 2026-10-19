@@ -33,6 +33,95 @@ Also check `ml.g5.xlarge for training warm pool usage` is left at its default of
 
 Learners sign in through IAM Identity Center with their university login. Before the workshop, add every registered user to the group that carries the workshop permission set, then email them the Identity Center console link for that account and permission set (the `.../start/#/console?account_id=...&role_name=...` deep link), together with the account name and region to expect. The link is deliberately not printed in the public lesson: it is not a credential, but a public start URL plus role name is the raw material for a convincing phishing page, and the lesson is reused outside UW. Ask learners to run the "verify your access" steps in the setup page; a missing assignment is the most common day-one problem and it cannot be fixed from the classroom in a hurry.
 
+## Permission set guard rails
+
+Learners reach the account through the console, the SageMaker SDK in notebooks, and, whether or not you teach it, the AWS CLI: the Identity Center portal offers "Command line or programmatic access" next to every account. All three are the same API, so the only control that holds across them is the permission set. The lesson tells learners that the account refuses endpoints, EC2, out-of-list instance types and untagged jobs; this section is what makes that true. Attach it as an inline policy on the workshop permission set alongside the SageMaker allow policy, replacing the instance-type list with the one your quota table allows.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "NothingThatRunsUntilDeleted",
+      "Effect": "Deny",
+      "Action": [
+        "sagemaker:CreateEndpoint",
+        "sagemaker:CreateEndpointConfig",
+        "sagemaker:CreateInferenceComponent",
+        "ec2:RunInstances"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "OnlyLessonInstanceTypes",
+      "Effect": "Deny",
+      "Action": [
+        "sagemaker:CreateTrainingJob",
+        "sagemaker:CreateProcessingJob",
+        "sagemaker:CreateHyperParameterTuningJob",
+        "sagemaker:CreateTransformJob",
+        "sagemaker:CreateNotebookInstance",
+        "sagemaker:UpdateNotebookInstance"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "ForAnyValue:StringNotEquals": {
+          "sagemaker:InstanceTypes": [
+            "ml.t3.medium",
+            "ml.m5.large", "ml.m5.xlarge",
+            "ml.g4dn.xlarge", "ml.g5.xlarge", "ml.g6.xlarge", "ml.g6e.xlarge", "ml.g6e.2xlarge"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "ProjectTagRequired",
+      "Effect": "Deny",
+      "Action": [
+        "sagemaker:CreateTrainingJob",
+        "sagemaker:CreateProcessingJob",
+        "sagemaker:CreateHyperParameterTuningJob",
+        "sagemaker:CreateNotebookInstance"
+      ],
+      "Resource": "*",
+      "Condition": { "Null": { "aws:RequestTag/Project": "true" } }
+    },
+    {
+      "Sid": "NameTagRequired",
+      "Effect": "Deny",
+      "Action": [
+        "sagemaker:CreateTrainingJob",
+        "sagemaker:CreateProcessingJob",
+        "sagemaker:CreateHyperParameterTuningJob",
+        "sagemaker:CreateNotebookInstance"
+      ],
+      "Resource": "*",
+      "Condition": { "Null": { "aws:RequestTag/Name": "true" } }
+    },
+    {
+      "Sid": "PurposeTagRequired",
+      "Effect": "Deny",
+      "Action": [
+        "sagemaker:CreateTrainingJob",
+        "sagemaker:CreateProcessingJob",
+        "sagemaker:CreateHyperParameterTuningJob",
+        "sagemaker:CreateNotebookInstance"
+      ],
+      "Resource": "*",
+      "Condition": { "Null": { "aws:RequestTag/Purpose": "true" } }
+    }
+  ]
+}
+```
+
+What each statement does, and what it costs you:
+
+- **NothingThatRunsUntilDeleted** blocks the three resource kinds with no runtime cap. Nothing in the lesson creates any of them, so no episode changes. This is the statement that would have stopped the participant who spent a year's credits from a terminal.
+- **OnlyLessonInstanceTypes** refuses any job or notebook whose instance type is not on the list. The list must match the quota table above exactly, including the capacity fallbacks; a type you forget here fails for every learner at once, from the console too. Keep `ml.g6e.xlarge` on the list only if you want the optional GPU-notebook episode to be possible.
+- **The three tag statements** refuse a job or notebook created without each of the cost-allocation keys. Every estimator, processor and tuner in the lesson passes all three, and the console's notebook-instance form has the tags field the S3 and controllers episodes fill in, so nothing in the lesson is affected; a learner who deletes the `tags=` line gets an `AccessDeniedException` instead of an unattributed bill. Tuning-job child jobs are created by the SageMaker service with the tuner's tags propagated, so they pass.
+
+Three cautions. Test the policy with one real job of each kind (training, processing, tuning, notebook creation from the console) a week before class, from a learner-level sign-in, not an administrator one. Second, the role the notebook instance assumes (`ml-sagemaker-use`) is a separate identity from the permission set; what the SDK does from inside a notebook is governed by that role's policy, so attach the same denies there, or the guard rail only covers the laptop. Third, set the permission set's session duration to the length of a class day (8 hours) so a CLI login does not expire mid-episode; it is on the permission set's **General settings**.
+
 ## Bedrock
 
 Console: **Service Quotas → Amazon Bedrock**, and **Bedrock → Model access**.

@@ -75,7 +75,7 @@ New accounts often have these at 0 to 4. Quota increases for GPU instances can t
 
 ### 1. Stage the data in the shared read-only bucket
 
-Students do not create a bucket or upload anything for this episode, and nobody needs a Kaggle account. The data lives as a release on the lesson repository (`badger-scribe-data-v1`, ~130 MB) and is staged once per term under `badger-scribe/` in the shared bucket, next to the WattBot data. The CHURRO-3B weights (~7.5 GB) are staged once under `badger-scribe/model/churro-3B/` in the same bucket, from a laptop or a notebook instance rather than CloudShell. The bucket policy, layout and exact commands are on the *Shared data bucket: staging before each term* page.
+Students do not create a bucket or upload anything for this episode. The data lives as a release on the lesson repository (`badger-scribe-data-v1`, ~130 MB) and is staged once per term under `badger-scribe/` in the shared bucket, next to the WattBot data. The CHURRO-3B weights (~7.5 GB) are staged once under `badger-scribe/model/churro-3B/` in the same bucket, from a laptop or a notebook instance rather than CloudShell. The bucket policy, layout and exact commands are on the *Shared data bucket: staging before each term* page.
 
 ### 2. Run the full fine-tune yourself and stage its output
 

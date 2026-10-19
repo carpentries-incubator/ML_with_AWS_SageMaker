@@ -27,11 +27,15 @@ exercises: 15
 #### 1. Open prefilled .ipynb notebook
 Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/Training-models-in-SageMaker-notebooks.ipynb`. When asked for a kernel, pick **`conda_pytorch_p310`**; we will use the same kernel for the next two episodes.
 
-#### 2. CD to instance home directory
-So we all can reference the helper functions using the same path, CD to...
+#### 2. Lesson code
+The same cell as in the Accessing S3 episode: start from the instance's root directory, clone the lesson repository if it is not already there, and make its `scripts/` importable. The training scripts for this episode (`train_xgboost.py`) and the next (`train_nn.py`) are in that folder.
 
 ```python
 %cd /home/ec2-user/SageMaker/
+!test -d ML_with_AWS_SageMaker || git clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git
+import sys
+sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
+import helpers
 ```
 
 #### 3. Initialize SageMaker environment
@@ -75,11 +79,6 @@ If you didn't complete the earlier episodes, you'll need to clone our code repo 
 
 ```python
 %cd /home/ec2-user/SageMaker/
-```
-
-```python
-# uncomment below line only if you still need to download the code repo (replace username with your GitHub username)
-#!git clone https://github.com/username/AWS_helpers.git 
 ```
 
 ## Testing train.py on this notebook's instance
@@ -137,7 +136,7 @@ The sanity checks above focus on validating the code, but a model is only as goo
 
 ### Understanding the XGBoost Training Script
 
-Take a moment to review the `AWS_helpers/train_xgboost.py` script we cloned into our notebook in an earlier episode. This script handles preprocessing, training, and saving an XGBoost model, while also adapting to both local and SageMaker-managed environments.
+Take a moment to review `ML_with_AWS_SageMaker/scripts/train_xgboost.py`, part of the lesson repository we cloned at the start of this episode. This script handles preprocessing, training, and saving an XGBoost model, while also adapting to both local and SageMaker-managed environments.
 
 Try answering the following questions:
 
@@ -223,10 +222,9 @@ print(f"Instance Type: {local_instance}")
 ```
 
 #### Helper:  `get_notebook_instance_info()` 
-You can also use the `get_notebook_instance_info()` function found in `AWS_helpers/helpers.py` to retrieve this info for your own project.
+You can also use the `get_notebook_instance_info()` function found in the lesson's `scripts/helpers.py` to retrieve this info for your own project.
 
 ```python
-import AWS_helpers.helpers as helpers
 helpers.get_notebook_instance_info(notebook_instance_name, region)
 ```
 
@@ -252,7 +250,7 @@ num_round = 100 # Sets the number of boosting rounds (trees) to 100. More rounds
 train_file = 'titanic_train.csv' #  Points to the location of the training data
 
 # Use f-strings to format the command with your variables
-%run AWS_helpers/train_xgboost.py --max_depth {max_depth} --eta {eta} --subsample {subsample} --colsample_bytree {colsample_bytree} --num_round {num_round} --train {train_file}
+%run ML_with_AWS_SageMaker/scripts/train_xgboost.py --max_depth {max_depth} --eta {eta} --subsample {subsample} --colsample_bytree {colsample_bytree} --num_round {num_round} --train {train_file}
 
 # Measure and print the time taken
 print(f"Total local runtime: {t.time() - start_time:.2f} seconds, instance_type = {local_instance}")
@@ -271,7 +269,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import accuracy_score
 import joblib
-from AWS_helpers.train_xgboost import preprocess_data
+from train_xgboost import preprocess_data
 
 # Load the test data
 test_data = pd.read_csv('./titanic_test.csv')
@@ -429,7 +427,7 @@ xgboost_estimator = XGBoost(
     base_job_name=notebook_instance_name,
     max_run=max_run, # in seconds; always include (max 48 hours)
     entry_point='train_xgboost.py',      # Custom script path
-    source_dir='AWS_helpers',               # Directory where your script is located
+    source_dir='ML_with_AWS_SageMaker/scripts',  # Directory where your script is located (uploaded to the job with it)
     role=role,
     tags=job_tags,
     instance_count=instance_count,
@@ -525,7 +523,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import accuracy_score
 import joblib
-from AWS_helpers.train_xgboost import preprocess_data
+from train_xgboost import preprocess_data
 
 # Load the test data
 test_data = pd.read_csv('./titanic_test.csv')
@@ -574,7 +572,7 @@ Both methods offer powerful and flexible approaches to model training on SageMak
 "No custom preprocessing" cuts both ways: the built-in algorithm will not run our `preprocess_data()` for us, and it is strict about its input. It expects a CSV with **no header row, every column numeric, and the label in the first column**. The raw `titanic_train.csv` (header, `Name` and `Sex` strings, label in the second column) fails at data load. So we run the same preprocessing we used in `train_xgboost.py` here in the notebook, write the result in the expected layout, and upload it to its own prefix in our bucket.
 
 ```python
-from AWS_helpers.train_xgboost import preprocess_data
+from train_xgboost import preprocess_data
 
 # Same preprocessing the custom script applies: fill missing values, encode Sex/Embarked, drop text columns
 X, y = preprocess_data(pd.read_csv(train_filename))

@@ -57,14 +57,17 @@ sagemaker_client = session.sagemaker_client
 print(f"region = {region}")
 ```
 
-We should also record our local instance information to report this information during testing. First, let's make sure we're starting in the same location to access helper functions
+We should also record our local instance information to report this information during testing. First, the usual cell: start from the instance root, clone the lesson repository if needed, and import the helpers.
 
 ```python
 %cd /home/ec2-user/SageMaker/
+!test -d ML_with_AWS_SageMaker || git clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git
+import sys
+sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
+import helpers
 ```
 
 ```python
-import AWS_helpers.helpers as helpers
 notebook_instance_name = 'sinkorswim-DoeJohn-TrainClassifier' # replace with your notebook instance name
 
 local_instance_info = helpers.get_notebook_instance_info(notebook_instance_name, region)
@@ -106,13 +109,13 @@ When deploying a PyTorch model on SageMaker, it's helpful to prepare the input d
 In summary, saving the data in `.npz` files ensures a smooth workflow from data loading to model training in PyTorch, leveraging SageMaker's infrastructure for a more efficient, structured training process.
 :::::::::::::::::::::::::::::::::::::::
 
-We reuse the `preprocess_data()` function from `AWS_helpers/train_nn.py` rather than re-typing the preprocessing here: the same function will later be applied to the test set, so train and test are guaranteed to be transformed identically. It returns the fitted `StandardScaler` for exactly that reason, and we save it with `joblib` so the next episode can load it. Fitting a new scaler on the test set would leak test-set statistics into the evaluation.
+We reuse the `preprocess_data()` function from the lesson's `scripts/train_nn.py` rather than re-typing the preprocessing here: the same function will later be applied to the test set, so train and test are guaranteed to be transformed identically. It returns the fitted `StandardScaler` for exactly that reason, and we save it with `joblib` so the next episode can load it. Fitting a new scaler on the test set would leak test-set statistics into the evaluation.
 
 ```python
 import numpy as np
 import joblib
 from sklearn.model_selection import train_test_split
-from AWS_helpers.train_nn import preprocess_data
+from train_nn import preprocess_data
 
 # Load and preprocess the Titanic dataset: encode Sex/Embarked, fill missing Age/Fare, standardize features
 df = pd.read_csv(train_filename)
@@ -153,7 +156,7 @@ epochs = 100          # small smoke test
 learning_rate = 0.001
 
 start_time = t.time()
-%run AWS_helpers/train_nn.py --train train_data.npz --val val_data.npz --epochs {epochs} --learning_rate {learning_rate}
+%run ML_with_AWS_SageMaker/scripts/train_nn.py --train train_data.npz --val val_data.npz --epochs {epochs} --learning_rate {learning_rate}
 print(f"Local training time: {t.time() - start_time:.2f} seconds, instance_type = {local_instance}")
 ```
 
@@ -206,7 +209,7 @@ max_run = 2*60*60 # 2 hours
 pytorch_estimator = PyTorch(
     base_job_name=notebook_instance_name,
     max_run=max_run, # in seconds; always include (max 48 hours)
-    entry_point="AWS_helpers/train_nn.py",
+    entry_point="ML_with_AWS_SageMaker/scripts/train_nn.py",
     role=role,
     tags=job_tags,
     instance_type=instance_type, # with this small dataset, we don't necessarily need a GPU for fast training. 
@@ -270,7 +273,7 @@ instance_count = 1
 pytorch_estimator_gpu = PyTorch(
     base_job_name=notebook_instance_name,
     max_run=max_run, # in seconds; always include (max 48 hours)
-    entry_point="AWS_helpers/train_nn.py",
+    entry_point="ML_with_AWS_SageMaker/scripts/train_nn.py",
     role=role,
     tags=job_tags,
     instance_type=instance_type,
@@ -347,7 +350,7 @@ instance_type = "ml.m5.large"
 pytorch_estimator_2x = PyTorch(
     base_job_name=notebook_instance_name,
     max_run=max_run, # in seconds; always include (max 48 hours)
-    entry_point="AWS_helpers/train_nn.py",
+    entry_point="ML_with_AWS_SageMaker/scripts/train_nn.py",
     role=role,
     tags=job_tags,
     instance_type=instance_type,

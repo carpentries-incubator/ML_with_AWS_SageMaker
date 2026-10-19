@@ -5,17 +5,16 @@ title: Setup
 ## Setup (Complete Before The Workshop)
 Before attending this workshop, you'll need to complete a few setup steps to ensure you can follow along smoothly. The main requirements are:
 
-1. **GitHub Account** – Create an account and be ready to fork a repository.
+1. **GitHub Account (optional)** – Only needed for the optional episode on pushing your own code to GitHub.
 2. **AWS Access** – Use a **shared AWS account** (if attending Machine Learning Marathon or Research Bazaar) or sign up for an AWS Free Tier account.
-3. **Titanic Dataset** – Download the required CSV files in advance.
-4. **Workshop Repository** – Fork the provided GitHub repository for use in AWS.
-5. **Visit Glossary** — Find and briefly review the workshop glossary
-6. **(Optional) AWS Skill Builder** — For a broader overview of AWS, visit the [Getting Started with the AWS Cloud Essentials](https://skillbuilder.aws/search?searchText=Getting+Started+with+the+AWS+Cloud+Essentials) course
+3. **Data** – Download one small zip (Titanic CSVs); the two larger datasets are staged for you.
+4. **Visit Glossary** — Find and briefly review the workshop glossary
+5. **(Optional) AWS Skill Builder** — For a broader overview of AWS, visit the [Getting Started with the AWS Cloud Essentials](https://skillbuilder.aws/search?searchText=Getting+Started+with+the+AWS+Cloud+Essentials) course
 
 Details on each step are outlined below.
 
-### 1. GitHub Account
-You will need a GitHub account to access the code provided during this lesson. If you don't already have a GitHub account, please [sign up for GitHub](https://github.com/) to create a free account. Don't worry if you're a little rusty on using GitHub/git; we will only use a couple of git commands during the lesson, and the instructor will provide guidance on these steps.
+### 1. GitHub Account (optional)
+All of the workshop's code lives in the lesson repository itself, which you clone (read-only, no account needed) onto your notebook instance in the *Accessing S3* episode with one command that every later episode repeats. A GitHub account is only needed for the optional self-study episode on pushing your own notebooks to GitHub from SageMaker. If you plan to do that episode and don't have an account, [sign up for GitHub](https://github.com/) (free); the episode walks through the rest.
 
 ### 2. AWS Account 
 There are two ways to get access to AWS for this lesson. Please wait for a pre-workshop email from the instructor to confirm which option to choose.
@@ -47,38 +46,30 @@ Once your AWS account is set up, log in to the **AWS Management Console** to get
 
 ### 3. Download the Data
 
-For this workshop, you will need the Titanic dataset, which can be used to train a classifier predicting survival. 
+The workshop uses three datasets. You download only the first; the other two are already in AWS when you arrive.
 
-1. Please download the following zip file (Right-click -> Save as): [data.zip](https://raw.githubusercontent.com/carpentries-incubator/ML_with_AWS_SageMaker/main/data/data.zip)
+| Dataset | Used in | Size | What you do |
+|---|---|---|---|
+| **Titanic** passenger CSVs (predict survival) | S3, training and tuning episodes | 90 KB | Download now, upload to your own bucket in the S3 episode |
+| **WattBot** energy-literature Q&A (paper index, labelled questions, PDF corpus) | RAG episodes | ~200 MB with PDFs | Nothing. Read from the shared bucket |
+| **Badger Scribe** German Kurrent letters with transcriptions (a [release on the lesson repository](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/releases)) | Fine-tuning episode | ~130 MB | Nothing. Read from the shared bucket |
 
-2. Extract the zip folder contents (Right-click -> Extract all on Windows; Double-click on mac)
+1. Download this zip (Right-click -> Save as): [data.zip](https://raw.githubusercontent.com/carpentries-incubator/ML_with_AWS_SageMaker/main/data/data.zip)
 
-3. Save the two data files (train and test) to a location where they can easily be accessed. E.g., ... 
+2. Extract it (Right-click -> Extract all on Windows; double-click on Mac). It contains a `titanic/` folder and a `wattbot/` folder.
 
-- `~/Downloads/data/titanic_train.csv`
-- `~/Downloads/data/titanic_test.csv`
+3. Keep the two Titanic files somewhere you can find them during the S3 episode, e.g.
 
-In the S3 episode (*Data Storage: Setting up S3*), you will create an S3 bucket and upload this data to use with SageMaker.
+- `~/Downloads/data/titanic/titanic_train.csv`
+- `~/Downloads/data/titanic/titanic_test.csv`
 
-The later episodes use two more datasets, and you do **not** need to download them: the WattBot papers (RAG episodes) and the Badger Scribe handwriting data (fine-tuning episode, published as a [release on the lesson repository](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/releases)) are staged by the instructors in a shared, read-only bucket. You create one bucket of your own in the S3 episode and use it for the whole workshop. No Kaggle account is required for any part of the workshop.
+The `wattbot/` folder holds the two WattBot CSVs (`metadata.csv`, `train_QA.csv`) for anyone staging their own bucket; in the workshop you will not use them from your laptop, because the shared bucket already has them alongside the PDF corpus, which is not in the zip.
 
-### 4. Get Access To Workshop Code (Fork GitHub Repo)
+In the S3 episode (*Data Storage: Setting up S3*), you will create one S3 bucket of your own, upload the Titanic data to it, and use that bucket for your outputs for the whole workshop. The WattBot and Badger Scribe data live in a shared, read-only bucket that the instructors stage before class; the instructor tells you its name at the start of the RAG and fine-tuning episodes.
 
-You will need a copy of our AWS_helpers repo on GitHub to explore how to manage your repo in AWS. This setup will allow you to follow along with the workshop and test out the Interacting with Repositories episode.
-
-To do this:
-
-1. Go to the [AWS_helpers GitHub repository](https://github.com/UW-Madison-DataScience/AWS_helpers).
-2. Click **Fork** (top right) to create your own copy of the repository under your GitHub account. You will only need the main branch. You can leave "Copy the main branch only" selected. 
-3. Once forked, you don't need to do anything else. The fork is cloned **once**, in the *Accessing S3* episode, into `/home/ec2-user/SageMaker/AWS_helpers/` on your notebook instance, and the optional GitHub PAT episode pushes changes back to it from that same clone. The clone command you will run there is:
-
-```text
-!git clone https://github.com/YOUR_GITHUB_USERNAME/AWS_helpers.git
-```
-
-### 5. Review the Workshop Glossary Page  
+### 4. Review the Workshop Glossary Page  
 When learning cloud tools for the first time, understanding new terminology is half the battle. We encourage learners to *briefly review* the [Glossary page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/reference.html#glossary) (also accessible from the top menu of each lesson page) before the workshop.  *You don't need to memorize the terms*—just a quick read-through will help familiarize you with key concepts. Once we start running our own AWS SageMaker experiments, these terms will start to make more sense in context. If you feel lost at any point during the workshop, please ask the instructor for assistance or refer back to the glossary.
 
-### 6. (Optional) AWS Skill Builder — Getting Started with the AWS Cloud Essentials
+### 5. (Optional) AWS Skill Builder — Getting Started with the AWS Cloud Essentials
 Attendees who want a stronger foundational understanding of AWS before diving into SageMaker and other ML services are encouraged to complete this self-paced course, [Getting Started with the AWS Cloud Essentials](https://skillbuilder.aws/search?searchText=Getting+Started+with+the+AWS+Cloud+Essentials), as optional pre-work for this workshop. It's designed for beginners and provides a broad overview of the AWS Cloud, including core services, global infrastructure, pricing basics, and security concepts. 
 
