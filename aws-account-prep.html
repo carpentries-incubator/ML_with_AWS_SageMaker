@@ -295,7 +295,7 @@
 <div class="accordion accordion-flush" id="accordionFlush12">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading12">
-        <a href="02_RAG_WattBot_GPU-instance.html">11. RAG with a Notebook GPU</a>
+        <a href="03_RAG_WattBot_Processing_Jobs.html">11. RAG with Processing Jobs</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -304,7 +304,7 @@
 <div class="accordion accordion-flush" id="accordionFlush13">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading13">
-        <a href="03_RAG_WattBot_Processing_Jobs.html">12. RAG with Processing Jobs</a>
+        <a href="04_Finetuning_BadgerScribe.html">12. Fine-tuning a Vision-Language Model with Training Jobs</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -313,7 +313,7 @@
 <div class="accordion accordion-flush" id="accordionFlush14">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading14">
-        <a href="04_Finetuning_BadgerScribe.html">13. Fine-tuning a Vision-Language Model with Training Jobs</a>
+        <a href="02_RAG_WattBot_GPU-instance.html">13. (Optional) RAG with a Notebook GPU</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -426,13 +426,12 @@ quota names as the console lists them.</p>
 <td>100</td>
 <td>controller notebook, every episode</td>
 </tr><tr><td><code>ml.g6e.xlarge for notebook instance usage</code></td>
-<td>100</td>
-<td>GPU RAG episode (Qwen3.8-27B via vLLM). <strong>Default is usually
-0</strong>
-</td>
+<td>0 (optional)</td>
+<td>only the optional self-study GPU-notebook episode; not needed for
+class</td>
 </tr><tr><td><code>Total number of notebook instances</code></td>
-<td>200</td>
-<td>two per student (controller + GPU)</td>
+<td>100</td>
+<td>one controller per student</td>
 </tr><tr><td><code>ml.m5.large for training job usage</code></td>
 <td>200</td>
 <td>XGBoost episode; PyTorch part 2; tuning (2 parallel jobs each)</td>
@@ -457,8 +456,10 @@ quota names as the console lists them.</p>
 <td>Processing Jobs episode and fine-tuning homework (two jobs per
 student, possibly at once)</td>
 </tr><tr><td><code>ml.g6e.xlarge for processing job usage</code></td>
-<td>200</td>
-<td>only if the Processing Jobs episode is moved to the 27B model</td>
+<td>100</td>
+<td>Processing Jobs episode: the RAG job serves Qwen3.8-27B.
+<strong>Default is usually 0</strong>
+</td>
 </tr><tr><td><code>Number of instances across all processing jobs</code></td>
 <td>250 (already applied)</td>
 <td>account-level ceiling</td>
@@ -513,7 +514,7 @@ fine-tune outputs. Staging commands and the bucket policy: <em>Shared
 data bucket: staging before each term</em>. Learners create one bucket
 each in the S3 episode and write all outputs there.</li>
 </ul></section><section><h2 class="section-heading" id="capacity-fallbacks-to-have-on-a-slide">Capacity fallbacks to have on a slide<a class="anchor" aria-label="anchor" href="#capacity-fallbacks-to-have-on-a-slide"></a></h2>
-<hr class="half-width"><ul><li>GPU notebook episode: if <code>ml.g6e.xlarge</code> capacity is
+<hr class="half-width"><ul><li>Processing Jobs episode: if <code>ml.g6e.xlarge</code> capacity is
 short, <code>ml.g6e.2xlarge</code> ($2.80/h, same GPU) is the only
 same-memory alternative; a 24 GB instance cannot hold the 27B
 model.</li>

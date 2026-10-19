@@ -123,7 +123,7 @@
     <a id="search-button-nav" class="btn btn-primary" href="aio.html" role="button" aria-label="Search the All In One page">Search the All In One page</a>
   </div><!--/div.container-fluid -->
 </nav><aside class="col-md-12 lesson-progress"><div class="progress incubator">
-    <div class="progress-bar incubator" role="progressbar" style="width: 66%" aria-valuenow="66" aria-valuemin="0" aria-valuemax="100" aria-label="Lesson Progress">66%</div>
+    <div class="progress-bar incubator" role="progressbar" style="width: 57%" aria-valuenow="57" aria-valuemin="0" aria-valuemax="100" aria-label="Lesson Progress">57%</div>
   </div>
 </aside><div class="container">
       <div class="row">
@@ -295,23 +295,23 @@
   </div><!--/div.accordion-item-->
 </div><!--/div.accordion-flush-->
 
-<div class="accordion accordion-flush" id="accordionFlush12">
-  <div class="accordion-item">
-    <div class="accordion-header" id="flush-heading12">
-        <a href="02_RAG_WattBot_GPU-instance.html">11. RAG with a Notebook GPU</a>
-    </div><!--/div.accordion-header-->
-
-  </div><!--/div.accordion-item-->
-</div><!--/div.accordion-flush-->
-
 <div class="accordion accordion-flush" id="accordionFlushcurrent">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-headingcurrent">
         <span class="visually-hidden">Current Chapter</span>
         <span class="current-chapter">
-        12. RAG with Processing Jobs
+        11. RAG with Processing Jobs
         </span>
       
+    </div><!--/div.accordion-header-->
+
+  </div><!--/div.accordion-item-->
+</div><!--/div.accordion-flush-->
+
+<div class="accordion accordion-flush" id="accordionFlush13">
+  <div class="accordion-item">
+    <div class="accordion-header" id="flush-heading13">
+        <a href="04_Finetuning_BadgerScribe.html">12. Fine-tuning a Vision-Language Model with Training Jobs</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -320,7 +320,7 @@
 <div class="accordion accordion-flush" id="accordionFlush14">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading14">
-        <a href="04_Finetuning_BadgerScribe.html">13. Fine-tuning a Vision-Language Model with Training Jobs</a>
+        <a href="02_RAG_WattBot_GPU-instance.html">13. (Optional) RAG with a Notebook GPU</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -391,14 +391,14 @@
         <!-- START: inst/pkgdown/templates/content-instructor.html -->
   <div class="col-xl-8 col-lg-12 primary-content">
     <nav class="lesson-content mx-md-4" aria-label="Previous and Next Chapter Top"><!-- content for small screens --><div class="d-block d-sm-block d-md-none">
-        <a class="chapter-link" href="02_RAG_WattBot_GPU-instance.html" rel="prev"><i aria-hidden="true" class="small-arrow" data-feather="arrow-left"></i>Previous</a>
+        <a class="chapter-link" href="01_RAG_WattBot_Bedrock.html" rel="prev"><i aria-hidden="true" class="small-arrow" data-feather="arrow-left"></i>Previous</a>
         <a class="chapter-link float-end" href="04_Finetuning_BadgerScribe.html" rel="next">Next<i aria-hidden="true" class="small-arrow" data-feather="arrow-right"></i></a>
       </div>
       <!-- content for large screens -->
       <div class="d-none d-sm-none d-md-block">
-        <a class="chapter-link" href="02_RAG_WattBot_GPU-instance.html" rel="prev">
+        <a class="chapter-link" href="01_RAG_WattBot_Bedrock.html" rel="prev">
           <i aria-hidden="true" class="small-arrow" data-feather="arrow-left"></i>
-          Previous: RAG with a Notebook GPU...
+          Previous: RAG with Bedrock...
         </a>
         <a class="chapter-link float-end" href="04_Finetuning_BadgerScribe.html" rel="next">
           Next: Fine-tuning a Vision-Language Model with...
@@ -426,7 +426,13 @@
 <div class="card-body">
 <div class="inner">
 <h3 class="card-title">Questions</h3>
-<ul><li>TODO</li>
+<ul><li>When does a RAG pipeline need a self-hosted, open-weight model
+instead of Bedrock, and what is the safest way to rent the GPU for
+it?</li>
+<li>How do we run the embedding and generation steps of the WattBot
+pipeline as SageMaker Processing jobs that end on their own?</li>
+<li>How do we pass data in and out of a job through S3, and tag the job
+so its cost is traceable?</li>
 </ul></div>
 </div>
 </div>
@@ -434,7 +440,18 @@
 <div class="card-body">
 <div class="inner bordered">
 <h3 class="card-title">Objectives</h3>
-<ul><li>TODO</li>
+<ul><li>Explain why Bedrock’s catalog is not enough when you need a specific
+open-weight model, and why a Processing job is the default way to
+self-host one for batch work.</li>
+<li>Launch a GPU Processing job that embeds the cached WattBot chunks
+with a self-hosted embedding model and writes the vectors to S3.</li>
+<li>Launch a second Processing job that serves Qwen3.8-27B (an
+open-weight model Bedrock does not carry) with vLLM and runs the full
+RAG loop over the training questions.</li>
+<li>Read a job’s inputs, outputs, arguments and runtime cap, and relate
+its duration to what it cost.</li>
+<li>Score the batch predictions with the WattBot metric and compare
+against the Bedrock run.</li>
 </ul></div>
 </div>
 </div>
@@ -442,29 +459,107 @@
 </div>
 <div class="section level1">
 <h1 id="rag-with-processing-jobs">RAG with Processing Jobs<a class="anchor" aria-label="anchor" href="#rag-with-processing-jobs"></a></h1>
-<p>In the previous episode, we ran the entire WattBot RAG pipeline on a
-single GPU-backed SageMaker notebook. That was simple to teach, but the
-GPU sat idle while we downloaded PDFs, chunked text, and evaluated
-results.</p>
-<p>In this episode, we will keep the same WattBot corpus and RAG logic,
-but restructure how we use AWS:</p>
-<ul><li>The notebook itself can run on a small CPU-only instance.</li>
-<li>We reuse the chunks already cached on S3 in the Bedrock
-episode.</li>
-<li>We run two short-lived SageMaker Processing jobs on a GPU:
-<ol style="list-style-type: decimal"><li>One job computes embeddings for all chunks.</li>
-<li>A second job runs the full RAG loop (retrieval + Qwen) over all
-training questions.</li>
-</ol></li>
-</ul><p>With this approach, we can more effectively use GPU resources only
-when needed, and we can scale out to larger corpora, models, and
-hardware more easily. The downside here is that you have to wait for
-processing jobs to spin up and run in batch mode on your queries. For
-many research applications of RAG, this is fine. However, if you want a
-near-real time chatbot you can have back and forth discussion with, this
-approach will not work. For that, use <em>Bedrock</em> (as in the first
-RAG episode) or your own <em>model inference endpoints</em>, which
-answer individual queries in seconds.</p>
+<div class="section level2">
+<h2 id="when-bedrock-does-not-have-your-model">When Bedrock does not have your model<a class="anchor" aria-label="anchor" href="#when-bedrock-does-not-have-your-model"></a></h2>
+<p>The Bedrock episode is the default for RAG: per-token billing,
+nothing left running, two API calls. Bedrock’s catalog is curated,
+though. It carries Amazon’s models, Anthropic, Meta, Mistral, DeepSeek,
+and a few others, and within a family only some sizes, usually a
+generation behind: for Qwen, the serverless lineup is still the Qwen3
+series. Hugging Face hosts well over a million open-weight checkpoints.
+The one you want (the newest release, a specific size, a fine-tune for
+scientific text, a model a paper just published) is usually not on
+Bedrock, and often never will be.</p>
+<p>When that happens you host the model yourself on a GPU you rent, and
+the question becomes <em>how</em>. There are three ways to rent a GPU on
+SageMaker:</p>
+<table class="table"><colgroup><col width="25%"><col width="25%"><col width="25%"><col width="25%"></colgroup><thead><tr><th></th>
+<th>Bills</th>
+<th>Stops when</th>
+<th>Best for</th>
+</tr></thead><tbody><tr><td>GPU notebook instance</td>
+<td>by the hour from start to stop</td>
+<td>
+<strong>you</strong> stop it</td>
+<td>interactive debugging, prototyping at the keyboard</td>
+</tr><tr><td>Processing or training job</td>
+<td>by the second while the job runs</td>
+<td>the script ends, or <code>max_runtime_in_seconds</code>
+</td>
+<td>batch work: embed a corpus, answer a list of questions, train</td>
+</tr><tr><td>Inference endpoint</td>
+<td>by the hour while deployed</td>
+<td>you delete it</td>
+<td>serving a model to an application with steady traffic</td>
+</tr></tbody></table><p>For research RAG, almost all the work is batch: embed everything
+once, answer a list of questions, score them. That is a job, and a job
+is the one option that cannot be forgotten. This episode runs the
+WattBot pipeline that way. The notebook itself is a small CPU instance
+and never touches the model; it stages data, launches two GPU jobs, and
+reads the results back.</p>
+<p>The generator is <strong>Qwen3.8-27B</strong>, a 27-billion-parameter
+open-weight model (Apache 2.0, released August 2026) that is not on
+Bedrock. Its weights are served in FP8 through vLLM: inference needs no
+gradients, so the weights are the memory cost, and 27B parameters at one
+byte each is about 27 GB, which fits one 48 GB GPU
+(<code>ml.g6e.xlarge</code>) with room for the KV cache. In bf16 the
+same model is 54 GB and would need a multi-GPU instance for no gain in
+output quality. (The fine-tuning episode has the full memory arithmetic;
+the short version is that inference runs on reduced-precision weights
+and training cannot.)</p>
+<div id="what-this-episode-costs" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<span class="callout-header">Callout</span>
+<div id="what-this-episode-costs" class="callout-inner">
+<h3 class="callout-title">What this episode costs</h3>
+<div class="callout-content">
+<table class="table"><colgroup><col width="20%"><col width="20%"><col width="20%"><col width="20%"><col width="20%"></colgroup><thead><tr><th>Job</th>
+<th>Instance</th>
+<th>$/h</th>
+<th>Expected duration</th>
+<th>Cost</th>
+</tr></thead><tbody><tr><td>Embed ~3,000 chunks</td>
+<td>
+<code>ml.g5.xlarge</code> (A10G, 24 GB)</td>
+<td>$1.41</td>
+<td>~8 min incl. startup</td>
+<td>~$0.20</td>
+</tr><tr><td>RAG over the training questions with Qwen3.8-27B</td>
+<td>
+<code>ml.g6e.xlarge</code> (L40S, 48 GB)</td>
+<td>$2.61</td>
+<td>~30 min: 5 startup, ~5 installing vLLM, ~5 downloading 27 GB of
+weights, the rest generating</td>
+<td>~$1.30</td>
+</tr><tr><td>Controller notebook</td>
+<td><code>ml.t3.medium</code></td>
+<td>$0.05</td>
+<td>2 h</td>
+<td>$0.10</td>
+</tr></tbody></table><p>About $1.60 for the episode, and the GPUs are off the moment each
+script ends. Both jobs carry <code>max_runtime_in_seconds</code>, so a
+hung job costs at most the cap. Compare the same pipeline on a GPU
+notebook instance (the optional episode after this one): the hardware is
+the same, but the meter runs until someone stops it, and a forgotten
+<code>ml.g6e.xlarge</code> is $63 a day.</p>
+<p>The trade-off is latency. A job takes minutes to start, so this
+pattern is for batch questions, not a chatbot. For interactive use,
+Bedrock answers in seconds; for interactive use of a model Bedrock does
+not have, an inference endpoint does, at an hourly rate you have to
+remember to turn off.</p>
+</div>
+</div>
+</div>
+<p>In this episode we will:</p>
+<ul><li>Reuse the chunks cached in your bucket by the Bedrock episode and
+the inputs in the shared bucket.</li>
+<li>Run two short-lived GPU Processing jobs: one computes embeddings for
+all chunks; the second serves Qwen3.8-27B with vLLM and runs the full
+RAG loop (retrieval + generation) over all training questions.</li>
+<li>Score the result and compare it with the Bedrock run.</li>
+</ul></div>
 <div class="section level2">
 <h2 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a></h2>
 <p>We’ll first need to clone in some .py files that contain helper
@@ -617,8 +712,8 @@ below.</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a>requirements <span class="op">=</span> [</span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a>    <span class="st">"sentence-transformers"</span>,</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1" aria-label="code-block-9-3"></a>    <span class="co"># add more packages here if needed</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a>    <span class="st">"sentence-transformers"</span>,   <span class="co"># embedding job</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1" aria-label="code-block-9-3"></a>    <span class="st">"vllm&gt;=0.17"</span>,              <span class="co"># RAG job: serves Qwen3.8-27B (FP8); needs 0.17+ for this model</span></span>
 <span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a>]</span>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a></span>
 <span id="cb9-6"><a href="#cb9-6" tabindex="-1" aria-label="code-block-9-6"></a>req_path <span class="op">=</span> <span class="st">"code/requirements.txt"</span></span>
@@ -787,57 +882,61 @@ submission format.</p>
 <span id="cb14-4"><a href="#cb14-4" tabindex="-1" aria-label="code-block-14-4"></a>rag_output_prefix <span class="op">=</span> <span class="st">"wattbot/solutions"</span></span>
 <span id="cb14-5"><a href="#cb14-5" tabindex="-1" aria-label="code-block-14-5"></a>rag_output_path <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>rag_output_prefix<span class="sc">}</span><span class="ss">/"</span></span>
 <span id="cb14-6"><a href="#cb14-6" tabindex="-1" aria-label="code-block-14-6"></a></span>
-<span id="cb14-7"><a href="#cb14-7" tabindex="-1" aria-label="code-block-14-7"></a>rag_processor <span class="op">=</span> HuggingFaceProcessor(</span>
-<span id="cb14-8"><a href="#cb14-8" tabindex="-1" aria-label="code-block-14-8"></a>    base_job_name<span class="op">=</span><span class="st">"WattBot-rag-batch"</span>,</span>
-<span id="cb14-9"><a href="#cb14-9" tabindex="-1" aria-label="code-block-14-9"></a>    role<span class="op">=</span>role,</span>
-<span id="cb14-10"><a href="#cb14-10" tabindex="-1" aria-label="code-block-14-10"></a>    tags<span class="op">=</span>make_job_tags(<span class="st">"RAG-batch"</span>),   <span class="co"># separate job, separate tags</span></span>
-<span id="cb14-11"><a href="#cb14-11" tabindex="-1" aria-label="code-block-14-11"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>,</span>
-<span id="cb14-12"><a href="#cb14-12" tabindex="-1" aria-label="code-block-14-12"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb14-13"><a href="#cb14-13" tabindex="-1" aria-label="code-block-14-13"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,</span>
-<span id="cb14-14"><a href="#cb14-14" tabindex="-1" aria-label="code-block-14-14"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
-<span id="cb14-15"><a href="#cb14-15" tabindex="-1" aria-label="code-block-14-15"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
-<span id="cb14-16"><a href="#cb14-16" tabindex="-1" aria-label="code-block-14-16"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb14-17"><a href="#cb14-17" tabindex="-1" aria-label="code-block-14-17"></a>    max_runtime_in_seconds<span class="op">=</span><span class="dv">4</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span>,</span>
-<span id="cb14-18"><a href="#cb14-18" tabindex="-1" aria-label="code-block-14-18"></a>)</span>
-<span id="cb14-19"><a href="#cb14-19" tabindex="-1" aria-label="code-block-14-19"></a></span>
-<span id="cb14-20"><a href="#cb14-20" tabindex="-1" aria-label="code-block-14-20"></a>rag_processor.run(</span>
-<span id="cb14-21"><a href="#cb14-21" tabindex="-1" aria-label="code-block-14-21"></a>    code<span class="op">=</span>rag_script,</span>
-<span id="cb14-22"><a href="#cb14-22" tabindex="-1" aria-label="code-block-14-22"></a>    source_dir<span class="op">=</span><span class="st">"code/"</span>,</span>
-<span id="cb14-23"><a href="#cb14-23" tabindex="-1" aria-label="code-block-14-23"></a>    inputs<span class="op">=</span>[</span>
-<span id="cb14-24"><a href="#cb14-24" tabindex="-1" aria-label="code-block-14-24"></a>        ProcessingInput(</span>
-<span id="cb14-25"><a href="#cb14-25" tabindex="-1" aria-label="code-block-14-25"></a>            source<span class="op">=</span>chunks_s3_uri,</span>
-<span id="cb14-26"><a href="#cb14-26" tabindex="-1" aria-label="code-block-14-26"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/chunks"</span>,</span>
-<span id="cb14-27"><a href="#cb14-27" tabindex="-1" aria-label="code-block-14-27"></a>        ),</span>
-<span id="cb14-28"><a href="#cb14-28" tabindex="-1" aria-label="code-block-14-28"></a>        ProcessingInput(</span>
-<span id="cb14-29"><a href="#cb14-29" tabindex="-1" aria-label="code-block-14-29"></a>            source<span class="op">=</span>emb_output_s3,</span>
-<span id="cb14-30"><a href="#cb14-30" tabindex="-1" aria-label="code-block-14-30"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/embeddings"</span>,</span>
-<span id="cb14-31"><a href="#cb14-31" tabindex="-1" aria-label="code-block-14-31"></a>        ),</span>
-<span id="cb14-32"><a href="#cb14-32" tabindex="-1" aria-label="code-block-14-32"></a>        ProcessingInput(</span>
-<span id="cb14-33"><a href="#cb14-33" tabindex="-1" aria-label="code-block-14-33"></a>            source<span class="op">=</span>train_qa_s3,</span>
-<span id="cb14-34"><a href="#cb14-34" tabindex="-1" aria-label="code-block-14-34"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/train"</span>,</span>
-<span id="cb14-35"><a href="#cb14-35" tabindex="-1" aria-label="code-block-14-35"></a>        ),</span>
-<span id="cb14-36"><a href="#cb14-36" tabindex="-1" aria-label="code-block-14-36"></a>        ProcessingInput(</span>
-<span id="cb14-37"><a href="#cb14-37" tabindex="-1" aria-label="code-block-14-37"></a>            source<span class="op">=</span>metadata_s3,</span>
-<span id="cb14-38"><a href="#cb14-38" tabindex="-1" aria-label="code-block-14-38"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/metadata"</span>,</span>
-<span id="cb14-39"><a href="#cb14-39" tabindex="-1" aria-label="code-block-14-39"></a>        ),</span>
-<span id="cb14-40"><a href="#cb14-40" tabindex="-1" aria-label="code-block-14-40"></a>    ],</span>
-<span id="cb14-41"><a href="#cb14-41" tabindex="-1" aria-label="code-block-14-41"></a>    outputs<span class="op">=</span>[</span>
-<span id="cb14-42"><a href="#cb14-42" tabindex="-1" aria-label="code-block-14-42"></a>        ProcessingOutput(</span>
-<span id="cb14-43"><a href="#cb14-43" tabindex="-1" aria-label="code-block-14-43"></a>            output_name<span class="op">=</span><span class="st">"solutions"</span>,</span>
-<span id="cb14-44"><a href="#cb14-44" tabindex="-1" aria-label="code-block-14-44"></a>            source<span class="op">=</span><span class="st">"/opt/ml/processing/output"</span>,</span>
-<span id="cb14-45"><a href="#cb14-45" tabindex="-1" aria-label="code-block-14-45"></a>            destination<span class="op">=</span>rag_output_path,</span>
-<span id="cb14-46"><a href="#cb14-46" tabindex="-1" aria-label="code-block-14-46"></a>        )</span>
-<span id="cb14-47"><a href="#cb14-47" tabindex="-1" aria-label="code-block-14-47"></a>    ],</span>
-<span id="cb14-48"><a href="#cb14-48" tabindex="-1" aria-label="code-block-14-48"></a>    arguments<span class="op">=</span>[</span>
-<span id="cb14-49"><a href="#cb14-49" tabindex="-1" aria-label="code-block-14-49"></a>        <span class="st">"--input_dir"</span>, <span class="st">"/opt/ml/processing/input"</span>,</span>
-<span id="cb14-50"><a href="#cb14-50" tabindex="-1" aria-label="code-block-14-50"></a>        <span class="st">"--output_dir"</span>, <span class="st">"/opt/ml/processing/output"</span>,</span>
-<span id="cb14-51"><a href="#cb14-51" tabindex="-1" aria-label="code-block-14-51"></a>        <span class="st">"--embedding_model_id"</span>, embedding_model_id,</span>
-<span id="cb14-52"><a href="#cb14-52" tabindex="-1" aria-label="code-block-14-52"></a>        <span class="st">"--top_k"</span>, <span class="st">"8"</span>,</span>
-<span id="cb14-53"><a href="#cb14-53" tabindex="-1" aria-label="code-block-14-53"></a>    ],</span>
-<span id="cb14-54"><a href="#cb14-54" tabindex="-1" aria-label="code-block-14-54"></a>)</span>
-<span id="cb14-55"><a href="#cb14-55" tabindex="-1" aria-label="code-block-14-55"></a></span>
-<span id="cb14-56"><a href="#cb14-56" tabindex="-1" aria-label="code-block-14-56"></a></span>
-<span id="cb14-57"><a href="#cb14-57" tabindex="-1" aria-label="code-block-14-57"></a><span class="bu">print</span>(<span class="st">"RAG batch job complete."</span>)</span></code></pre>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1" aria-label="code-block-14-7"></a>generation_model_id <span class="op">=</span> <span class="st">"Qwen/Qwen3.8-27B-FP8"</span>   <span class="co"># open-weight, not on Bedrock; ~27 GB in FP8</span></span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1" aria-label="code-block-14-8"></a></span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1" aria-label="code-block-14-9"></a>rag_processor <span class="op">=</span> HuggingFaceProcessor(</span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1" aria-label="code-block-14-10"></a>    base_job_name<span class="op">=</span><span class="st">"WattBot-rag-batch"</span>,</span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1" aria-label="code-block-14-11"></a>    role<span class="op">=</span>role,</span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1" aria-label="code-block-14-12"></a>    tags<span class="op">=</span>make_job_tags(<span class="st">"RAG-batch"</span>),   <span class="co"># separate job, separate tags</span></span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1" aria-label="code-block-14-13"></a>    instance_type<span class="op">=</span><span class="st">"ml.g6e.xlarge"</span>,     <span class="co"># 1 x L40S, 48 GB: holds the FP8 27B model plus KV cache</span></span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1" aria-label="code-block-14-14"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1" aria-label="code-block-14-15"></a>    volume_size_in_gb<span class="op">=</span><span class="dv">60</span>,              <span class="co"># vLLM install + 27 GB of weights</span></span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1" aria-label="code-block-14-16"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,</span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1" aria-label="code-block-14-17"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1" aria-label="code-block-14-18"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
+<span id="cb14-19"><a href="#cb14-19" tabindex="-1" aria-label="code-block-14-19"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb14-20"><a href="#cb14-20" tabindex="-1" aria-label="code-block-14-20"></a>    max_runtime_in_seconds<span class="op">=</span><span class="dv">2</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span>,   <span class="co"># cap: the estimate is 30 minutes</span></span>
+<span id="cb14-21"><a href="#cb14-21" tabindex="-1" aria-label="code-block-14-21"></a>)</span>
+<span id="cb14-22"><a href="#cb14-22" tabindex="-1" aria-label="code-block-14-22"></a></span>
+<span id="cb14-23"><a href="#cb14-23" tabindex="-1" aria-label="code-block-14-23"></a>rag_processor.run(</span>
+<span id="cb14-24"><a href="#cb14-24" tabindex="-1" aria-label="code-block-14-24"></a>    code<span class="op">=</span>rag_script,</span>
+<span id="cb14-25"><a href="#cb14-25" tabindex="-1" aria-label="code-block-14-25"></a>    source_dir<span class="op">=</span><span class="st">"code/"</span>,</span>
+<span id="cb14-26"><a href="#cb14-26" tabindex="-1" aria-label="code-block-14-26"></a>    inputs<span class="op">=</span>[</span>
+<span id="cb14-27"><a href="#cb14-27" tabindex="-1" aria-label="code-block-14-27"></a>        ProcessingInput(</span>
+<span id="cb14-28"><a href="#cb14-28" tabindex="-1" aria-label="code-block-14-28"></a>            source<span class="op">=</span>chunks_s3_uri,</span>
+<span id="cb14-29"><a href="#cb14-29" tabindex="-1" aria-label="code-block-14-29"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/chunks"</span>,</span>
+<span id="cb14-30"><a href="#cb14-30" tabindex="-1" aria-label="code-block-14-30"></a>        ),</span>
+<span id="cb14-31"><a href="#cb14-31" tabindex="-1" aria-label="code-block-14-31"></a>        ProcessingInput(</span>
+<span id="cb14-32"><a href="#cb14-32" tabindex="-1" aria-label="code-block-14-32"></a>            source<span class="op">=</span>emb_output_s3,</span>
+<span id="cb14-33"><a href="#cb14-33" tabindex="-1" aria-label="code-block-14-33"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/embeddings"</span>,</span>
+<span id="cb14-34"><a href="#cb14-34" tabindex="-1" aria-label="code-block-14-34"></a>        ),</span>
+<span id="cb14-35"><a href="#cb14-35" tabindex="-1" aria-label="code-block-14-35"></a>        ProcessingInput(</span>
+<span id="cb14-36"><a href="#cb14-36" tabindex="-1" aria-label="code-block-14-36"></a>            source<span class="op">=</span>train_qa_s3,</span>
+<span id="cb14-37"><a href="#cb14-37" tabindex="-1" aria-label="code-block-14-37"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/train"</span>,</span>
+<span id="cb14-38"><a href="#cb14-38" tabindex="-1" aria-label="code-block-14-38"></a>        ),</span>
+<span id="cb14-39"><a href="#cb14-39" tabindex="-1" aria-label="code-block-14-39"></a>        ProcessingInput(</span>
+<span id="cb14-40"><a href="#cb14-40" tabindex="-1" aria-label="code-block-14-40"></a>            source<span class="op">=</span>metadata_s3,</span>
+<span id="cb14-41"><a href="#cb14-41" tabindex="-1" aria-label="code-block-14-41"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/metadata"</span>,</span>
+<span id="cb14-42"><a href="#cb14-42" tabindex="-1" aria-label="code-block-14-42"></a>        ),</span>
+<span id="cb14-43"><a href="#cb14-43" tabindex="-1" aria-label="code-block-14-43"></a>    ],</span>
+<span id="cb14-44"><a href="#cb14-44" tabindex="-1" aria-label="code-block-14-44"></a>    outputs<span class="op">=</span>[</span>
+<span id="cb14-45"><a href="#cb14-45" tabindex="-1" aria-label="code-block-14-45"></a>        ProcessingOutput(</span>
+<span id="cb14-46"><a href="#cb14-46" tabindex="-1" aria-label="code-block-14-46"></a>            output_name<span class="op">=</span><span class="st">"solutions"</span>,</span>
+<span id="cb14-47"><a href="#cb14-47" tabindex="-1" aria-label="code-block-14-47"></a>            source<span class="op">=</span><span class="st">"/opt/ml/processing/output"</span>,</span>
+<span id="cb14-48"><a href="#cb14-48" tabindex="-1" aria-label="code-block-14-48"></a>            destination<span class="op">=</span>rag_output_path,</span>
+<span id="cb14-49"><a href="#cb14-49" tabindex="-1" aria-label="code-block-14-49"></a>        )</span>
+<span id="cb14-50"><a href="#cb14-50" tabindex="-1" aria-label="code-block-14-50"></a>    ],</span>
+<span id="cb14-51"><a href="#cb14-51" tabindex="-1" aria-label="code-block-14-51"></a>    arguments<span class="op">=</span>[</span>
+<span id="cb14-52"><a href="#cb14-52" tabindex="-1" aria-label="code-block-14-52"></a>        <span class="st">"--input_dir"</span>, <span class="st">"/opt/ml/processing/input"</span>,</span>
+<span id="cb14-53"><a href="#cb14-53" tabindex="-1" aria-label="code-block-14-53"></a>        <span class="st">"--output_dir"</span>, <span class="st">"/opt/ml/processing/output"</span>,</span>
+<span id="cb14-54"><a href="#cb14-54" tabindex="-1" aria-label="code-block-14-54"></a>        <span class="st">"--embedding_model_id"</span>, embedding_model_id,</span>
+<span id="cb14-55"><a href="#cb14-55" tabindex="-1" aria-label="code-block-14-55"></a>        <span class="st">"--qwen_model_id"</span>, generation_model_id,</span>
+<span id="cb14-56"><a href="#cb14-56" tabindex="-1" aria-label="code-block-14-56"></a>        <span class="st">"--top_k"</span>, <span class="st">"8"</span>,</span>
+<span id="cb14-57"><a href="#cb14-57" tabindex="-1" aria-label="code-block-14-57"></a>    ],</span>
+<span id="cb14-58"><a href="#cb14-58" tabindex="-1" aria-label="code-block-14-58"></a>)</span>
+<span id="cb14-59"><a href="#cb14-59" tabindex="-1" aria-label="code-block-14-59"></a></span>
+<span id="cb14-60"><a href="#cb14-60" tabindex="-1" aria-label="code-block-14-60"></a></span>
+<span id="cb14-61"><a href="#cb14-61" tabindex="-1" aria-label="code-block-14-61"></a><span class="bu">print</span>(<span class="st">"RAG batch job complete."</span>)</span></code></pre>
 </div>
 </div>
 <div class="section level2">
@@ -1082,7 +1181,19 @@ inspect a few rows, and (optionally) compute the WattBot score against
 <span class="callout-header">Key Points</span>
 <div class="callout-inner">
 <div class="callout-content">
-<ul><li>TODO</li>
+<ul><li>Bedrock’s catalog is curated and lags releases; when you need a
+specific open-weight model you rent a GPU and serve it yourself.</li>
+<li>Of the ways to rent a GPU, a Processing job is the one that cannot
+be forgotten: it bills while the script runs and ends on its own, with
+<code>max_runtime_in_seconds</code> as the backstop. Use it for batch
+work; use Bedrock or an endpoint when you need answers in seconds.</li>
+<li>Inference runs on reduced-precision weights: Qwen3.8-27B in FP8 is
+~27 GB and fits one 48 GB GPU; bf16 would need two.</li>
+<li>A job’s inputs and outputs are S3 prefixes mounted into the
+container; the notebook only stages files and reads results, so it stays
+a cheap CPU instance.</li>
+<li>Tags do not propagate from the notebook: every job gets its own
+<code>tags=</code>.</li>
 </ul></div>
 </div>
 </div>
@@ -1097,14 +1208,14 @@ any links that you are not going to use.
 
       </div> <!-- / div.lesson-content -->
     </main><!-- / main#main-content.main-content --><nav class="bottom-pagination mx-md-4" aria-label="Previous and Next Chapter Bottom"><div class="d-block d-sm-block d-md-none">
-        <a class="chapter-link" href="02_RAG_WattBot_GPU-instance.html"><i aria-hidden="true" class="small-arrow" data-feather="arrow-left"></i>Previous</a>
+        <a class="chapter-link" href="01_RAG_WattBot_Bedrock.html"><i aria-hidden="true" class="small-arrow" data-feather="arrow-left"></i>Previous</a>
         <a class="chapter-link float-end" href="04_Finetuning_BadgerScribe.html">Next<i aria-hidden="true" class="small-arrow" data-feather="arrow-right"></i></a>
       </div>
       <!-- content for large screens -->
       <div class="d-none d-sm-none d-md-block">
-        <a class="chapter-link" href="02_RAG_WattBot_GPU-instance.html" rel="prev">
+        <a class="chapter-link" href="01_RAG_WattBot_Bedrock.html" rel="prev">
           <i aria-hidden="true" class="small-arrow" data-feather="arrow-left"></i>
-          Previous: RAG with a Notebook GPU...
+          Previous: RAG with Bedrock...
         </a>
         <a class="chapter-link float-end" href="04_Finetuning_BadgerScribe.html" rel="next">
           Next: Fine-tuning a Vision-Language Model with...
