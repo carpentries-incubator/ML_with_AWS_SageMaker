@@ -10,7 +10,7 @@ Before attending this workshop, you'll need to complete a few setup steps to ens
 3. **Titanic Dataset** – Download the required CSV files in advance.
 4. **Workshop Repository** – Fork the provided GitHub repository for use in AWS.
 5. **Visit Glossary** — Find and briefly review the workshop glossary
-6. **(Optional) AWS Skill Builder** — For a broader overview of AWS, visit the [Getting Started with the AWS Cloud Essentials](AWS Skill Builder — Getting Started with the AWS Cloud Essentials) course
+6. **(Optional) AWS Skill Builder** — For a broader overview of AWS, visit the [Getting Started with the AWS Cloud Essentials](https://skillbuilder.aws/search?searchText=Getting+Started+with+the+AWS+Cloud+Essentials) course
 
 Details on each step are outlined below.
 
@@ -18,7 +18,7 @@ Details on each step are outlined below.
 You will need a GitHub account to access the code provided during this lesson. If you don't already have a GitHub account, please [sign up for GitHub](https://github.com/) to create a free account. Don't worry if you're a little rusty on using GitHub/git; we will only use a couple of git commands during the lesson, and the instructor will provide guidance on these steps.
 
 ### 2. AWS Account 
-There are two ways to get access to AWs for this lesson. Please wait for a pre-workshop email from the instructor to confirm which option to choose.
+There are two ways to get access to AWS for this lesson. Please wait for a pre-workshop email from the instructor to confirm which option to choose.
 
 #### Option 1) Shared Account
 If you are attending this lesson as part of the Machine Learning Marathon or Research Bazaar, the instructors will provide a shared AWS account for all attendees. You do not need to set up your own AWS account. What to expect:
@@ -26,9 +26,10 @@ If you are attending this lesson as part of the Machine Learning Marathon or Res
 * Before the workshop, you will receive an email invitation from the instructor with access details for the shared AWS account.
 * During the lesson, you will log in using the credentials provided in the email.
 * This setup ensures that all participants have the same environment and eliminates concerns about unexpected costs for attendees.
-* These shared AWS credits should not be wasted, as we repurpose them for additional training events eac year.
+* These shared AWS credits should not be wasted, as we repurpose them for additional training events each year.
   * Attendees are expected to **stick to the lesson materials** to ensure expensive pipelines (e.g., training/tuning LLMs) do not lead to high costs and wasted credits.
-  * Do not use any tools we do not explictly cover without discussing with the instructors first.
+  * Do not use any tools we do not explicitly cover without discussing with the instructors first.
+  * Stop (and at the end of the workshop, delete) every notebook instance you create. A GPU notebook left running costs about $60 a day.
 
 #### Option 2) AWS Free Tier — Skip If Using Shared Account
 **If you are attending this lesson as part of the Machine Learning Marathon or Research Bazaar, you can skip this step**. We will provide all attendees with a shared account. Otherwise, please follow these steps:
@@ -53,6 +54,8 @@ For this workshop, you will need the Titanic dataset, which can be used to train
 
 In the first episode, you will create an S3 bucket and upload this data to use with SageMaker.
 
+The later episodes use two more datasets, and you do **not** need to download them now: the WattBot documents (RAG episodes) come from a zip in the lesson repository, and the Badger Scribe handwriting data (fine-tuning episode) is published as a [release on the lesson repository](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/releases) that the instructors stage in a shared bucket. No Kaggle account is required for any part of the workshop.
+
 ### 4. Get Access To Workshop Code (Fork GitHub Repo)
 
 You will need a copy of our AWS_helpers repo on GitHub to explore how to manage your repo in AWS. This setup will allow you to follow along with the workshop and test out the Interacting with Repositories episode.
@@ -71,5 +74,5 @@ To do this:
 When learning cloud tools for the first time, understanding new terminology is half the battle. We encourage learners to *briefly review* the [Glossary page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/reference.html#glossary) (also accessible from the top menu of each lesson page) before the workshop.  *You don't need to memorize the terms*—just a quick read-through will help familiarize you with key concepts. Once we start running our own AWS SageMaker experiments, these terms will start to make more sense in context. If you feel lost at any point during the workshop, please ask the instructor for assistance or refer back to the glossary.
 
 ### 6. (Optional) AWS Skill Builder — Getting Started with the AWS Cloud Essentials
-Attendees who want a stronger foundational understanding of AWS before diving into SageMaker and other ML services are encouraged to complete this self-paced course, [Getting Started with the AWS Cloud Essentials](AWS Skill Builder — Getting Started with the AWS Cloud Essentials), as optional pre-work for this workshop. It's designed for beginners and provides a broad overview of the AWS Cloud, including core services, global infrastructure, pricing basics, and security concepts. 
+Attendees who want a stronger foundational understanding of AWS before diving into SageMaker and other ML services are encouraged to complete this self-paced course, [Getting Started with the AWS Cloud Essentials](https://skillbuilder.aws/search?searchText=Getting+Started+with+the+AWS+Cloud+Essentials), as optional pre-work for this workshop. It's designed for beginners and provides a broad overview of the AWS Cloud, including core services, global infrastructure, pricing basics, and security concepts. 
 

@@ -70,6 +70,7 @@ To make this concrete, here is what a GPU notebook instance costs if it is left 
 |---|---|---|---|---|---|
 | ml.g5.xlarge | 1 × A10G | $1.21 | ~$15 | ~$77 | ~$880 |
 | ml.g5.2xlarge | 1 × A10G | $1.69 | ~$20 | ~$108 | ~$1,230 |
+| ml.g6e.xlarge | 1 × L40S (48 GB) | $2.61 | ~$31 | ~$167 | ~$1,906 |
 | ml.p3.8xlarge | 4 × V100 | $15.20 | ~$182 | ~$973 | ~$11,100 |
 
 Compare that to running the **entire WattBot pipeline** from this lesson on Bedrock. Using Claude 3 Haiku ($0.25 per million input tokens, $1.25 per million output tokens) and Titan Text Embeddings V2 ($0.02 per million tokens):
@@ -154,7 +155,7 @@ Three things follow from this:
 
 1. **Each job gets its own tags.** A SageMaker job launched from a tagged notebook does not inherit the notebook's tags. Pass `tags=job_tags` on every estimator, tuner, and processor, exactly as the training, tuning, and Processing‑job episodes do. Vary `Purpose` per job so the bill tells you what the money went to.
 2. **Bedrock is tagged through a profile, not a call.** `invoke_model` and `converse` have no tags parameter. An application inference profile is a free, model‑specific wrapper that carries tags; usage routed through it is attributed to those tags. One profile per base model (so one for the embedding model and one for the generation model). Note that Bedrock's tag format is lowercase `key`/`value`, while SageMaker's is `Key`/`Value`; the tag *names* stay the same.
-3. **Tags only show up on the bill once the keys are activated.** An account administrator has to activate `Name`, `Project`, and `Purpose` as cost allocation tags in the Billing console, once per account. Until then the tags exist on the resources but are not available as filters in Cost Explorer. On a shared workshop account the organizers handle this; on your own account, do it before you start.
+3. **Tags only show up on the bill once the keys are activated.** An account administrator has to activate `Name`, `Project`, and `Purpose` as cost allocation tags in the Billing console, once per account. Until then the tags exist on the resources but are not available as filters in Cost Explorer. On UW–Madison accounts the keys are activated centrally from a fixed approved list ([KB 72454](https://kb.wisc.edu/72454)), which is why the three keys must be spelled exactly; on your own account, activate them before you start.
 
 ## When Do You Use Which Approach?
 

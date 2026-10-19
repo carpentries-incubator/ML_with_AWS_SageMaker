@@ -178,6 +178,21 @@ Now that we have tested things locally, we can try to train with a larger number
 **Should we use a GPU?**: Since this dataset is farily small, we don't necessarily need a GPU for training. Considering costs, the m5.xlarge is `$0.17/hour`, while the cheapest GPU instance is `$0.75/hour`. However, for larger datasets (> 1 GB) and models, we may want to consider a GPU if training time becomes cumbersome (see [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html). If that doesn't work, we can try distributed computing (setting instance > 1). More on this in the next section.
 
 
+#### Cost tracking
+As in the XGBoost episode, every training job needs its own tags: a job does not inherit the notebook instance's tags, and an untagged job is anonymous on the bill. Define them once here and pass `tags=job_tags` to every estimator below.
+
+```python
+name = "John Doe" # replace with your name
+project = "sinkorswim" # replace with your team name
+purpose = "train_PyTorch"
+
+job_tags = [
+    {"Key": "Name", "Value": name},
+    {"Key": "Project", "Value": project},
+    {"Key": "Purpose", "Value": purpose},
+]
+```
+
 ```python
 from sagemaker.pytorch import PyTorch
 from sagemaker.inputs import TrainingInput
@@ -195,6 +210,7 @@ pytorch_estimator = PyTorch(
     max_run=max_run, # in seconds; always include (max 48 hours)
     entry_point="AWS_helpers/train_nn.py",
     role=role,
+    tags=job_tags,
     instance_type=instance_type, # with this small dataset, we don't recessarily need a GPU for fast training. 
     instance_count=instance_count,  # Distributed training with two instances
     framework_version="1.9",
@@ -262,6 +278,7 @@ pytorch_estimator_gpu = PyTorch(
     max_run=max_run, # in seconds; always include (max 48 hours)
     entry_point="AWS_helpers/train_nn.py",
     role=role,
+    tags=job_tags,
     instance_type=instance_type,
     instance_count=instance_count,
     framework_version="1.9",
@@ -321,6 +338,7 @@ pytorch_estimator = PyTorch(
     max_run=max_run, # in seconds; always include (max 48 hours)
     entry_point="AWS_helpers/train_nn.py",
     role=role,
+    tags=job_tags,
     instance_type=instance_type, # with this small dataset, we don't recessarily need a GPU for fast training. 
     instance_count=instance_count,  # Distributed training with two instances
     framework_version="1.9",
