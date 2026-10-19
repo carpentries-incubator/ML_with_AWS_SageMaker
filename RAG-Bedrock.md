@@ -24,8 +24,8 @@ exercises: 20
 
 This is the first hands-on RAG episode, and it starts where the overview told you to start: **Amazon Bedrock**. We build a complete RAG pipeline for the [WattBot 2025](https://www.kaggle.com/competitions/WattBot2025/overview) challenge from a small, CPU-only SageMaker notebook. Nothing in this episode needs a GPU: the core model work — **both text embeddings and answer generation** — runs on Bedrock-hosted models that bill per token and leave nothing running between calls. We'll use:
 
-- **Amazon Titan Text Embeddings V2** to turn WattBot chunks into vectors, and
-- **DeepSeek V3**, hosted on Bedrock, to generate answers and explanations.
+- an **Amazon Titan Text Embeddings V2** model to turn WattBot chunks into vectors, and  
+- a **DeepSeek V3** model hosted on Bedrock to generate answers and explanations.
 
 We also do the corpus preparation here: unpack the WattBot PDF corpus, split it into pages and overlapping
 chunks, and cache the chunks on S3. The Processing Jobs episode (and the optional GPU-notebook episode) reuse those chunks and run the same
@@ -35,17 +35,17 @@ complexity directly.
 ## Why Bedrock for WattBot?
 
 When you self-host models (as the Processing Jobs episode does next), you are responsible for picking a model,
-managing versions, and making sure your instance has enough VRAM. That's fine for experiments,
+managing versions, and making sure your instance has enough VRAM. That’s fine for experiments,
 but it can get painful once multiple teams or challenges want to reuse the same pipeline.
 
 Running your **embedding + generation** steps on Amazon Bedrock gives you a few nice properties:
 
-- **Managed, up-to-date models.** You can use high-quality models from Amazon, Anthropic, DeepSeek, Meta and
+- **Managed, up-to-date models.** You can use high‑quality models from Anthropic, Amazon, DeepSeek, and
   others without worrying about container images or CUDA versions.
 - **Pay for what you use (in tokens).** Instead of paying for a GPU instance that might sit
   idle, you pay per token (input + output) when you call the model. For some workloads this
   is cheaper; for large offline batches with smaller models, a dedicated GPU can still win.
-- **Easier sharing and governance.** It's easier to standardize on a small set of Bedrock
+- **Easier sharing and governance.** It’s easier to standardize on a small set of Bedrock
   models across courses, hackathons, or labs than to manage many separate GPU instances.
 
 In this notebook, both the **embedding** and **answer/explanation** steps run on
@@ -55,28 +55,28 @@ against the self-hosted run in the Processing Jobs episode.
 
 ### Models used in this episode
 
-We'll work with **Amazon Bedrock-hosted foundation models** for both embedding and generation:
+We’ll work with **Amazon Bedrock–hosted foundation models** for both embedding and generation:
 
 - **Amazon Titan Text Embeddings V2** (`amazon.titan-embed-text-v2:0`)
 
-  - General-purpose text-embedding model for semantic search, retrieval, clustering, and classification.
-  - Supports configurable embedding dimensions (256, 512 or 1,024; we use the default 1,024) and returns normalized vectors, so cosine similarity is a dot product.
-  - AWS does not publish the exact number of parameters for Titan models; you can treat it as a modern transformer specialized for embeddings rather than free-form text generation.
+  - General‑purpose text‑embedding model for semantic search, retrieval, clustering, and classification.
+  - Supports configurable embedding dimensions (256, 512, or 1,024) and has presets tuned for retrieval or binary indexing.
+  - AWS does not publish the exact number of parameters for Titan models; you can treat it as a modern transformer specialized for embeddings rather than free‑form text generation. 
 
 - **DeepSeek V3** (`deepseek.v3-v1:0` via Bedrock)
 
-  - An open-weight mixture-of-experts model (671B parameters in total, about 37B active per token) that Amazon serves on-demand, so you get a frontier-class generator at per-token prices with no GPU to manage.
-  - A good fit for RAG: it follows a JSON output contract reliably, has a long context window, and is priced in the same class as the cheapest frontier models (check the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/) for the current per-token rates).
+  - An open‑weight mixture‑of‑experts model (671B parameters in total, about 37B active per token) that Bedrock serves on‑demand, so there is no GPU to manage.
+  - Particularly useful when you want many calls (e.g., one per question) and care about low latency and lower per‑token pricing compared to flagship models (check the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/) for current rates).
   - The same code works for any chat model in the catalog, because we call it through the provider-neutral `converse` API: switch `base_generation_model_id` to a Claude, Llama, or Mistral model ID and nothing else changes.
 
 - **(Optional) Multimodal models for tables and figures**
 
   - Bedrock also exposes **multimodal models** that can reason over images, charts, and document layouts (for example, Claude models with vision, or Amazon Titan Multimodal Embeddings). These are a good fit if much of your evidence lives in **figures, tables, or scanned PDFs**.
   - To use them from Bedrock you send **both text and image content** in a single request:
-      - Pre-process PDFs by rendering pages (or cropping individual tables/figures) to images using a tool like `pdf2image` or a headless browser.
-      - Base64-encode those images and include them as image parts alongside text in the model request.
+      - Pre‑process PDFs by rendering pages (or cropping individual tables/figures) to images using a tool like `pdf2image` or a headless browser.
+      - Base64‑encode those images and include them as image parts alongside text in the model request.
       - For multimodal embeddings, you call a Titan multimodal embedding model with an `inputImage` (and optionally `inputText`) payload to obtain a single vector that mixes visual and textual information.
-  - This notebook stays with **text-only** embeddings + generation to keep the workflow simple, but the same RAG pattern extends naturally to multimodal models once you add an image-extraction step to your preprocessing pipeline.
+  - This notebook stays with **text‑only** embeddings + generation to keep the workflow simple, but the same RAG pattern extends naturally to multimodal models once you add an image‑extraction step to your preprocessing pipeline.
 
 For a full catalog of available models (including Claude variants, Amazon models, and partner models), open the **Model catalog** in the Amazon Bedrock console. Each entry provides a model card with capabilities, typical use cases, and pricing details so learners can explore alternatives for their own RAG systems.
 
@@ -123,7 +123,7 @@ import sagemaker
 session = sagemaker.Session()
 region = session.boto_region_name
 
-# Base model IDs. These are the models we actually want to call, but we will NOT pass
+# Base model IDs. These are the models we want to call, but we will NOT pass
 # them to the runtime directly -- see "Cost tracking" below for why.
 # Any chat model in the Bedrock catalog works here (e.g. a Claude or Llama model ID)
 # because we call it through the provider-neutral `converse` API.
@@ -252,7 +252,7 @@ print(f"{len(pdf_files)} PDFs in {PDF_DIR}; metadata lists {len(metadata_df)} pa
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-## Step 5 – Turn PDFs into page-level "documents"
+## Step 5 – Turn PDFs into page-level “documents”
 
 Next, we convert each PDF into a list of **page-level records**. Each record stores:
 
@@ -267,12 +267,12 @@ Later, we will **chunk these pages** into smaller overlapping segments for embed
 
 ### Why we page-chunk first
 
-We split the PDF into **pages before chunking** because pages give us a stable, easy-to-interpret unit.
+We split the PDF into **pages before chunking** because pages give us a stable, easy-to-interpret unit.  
 This helps with:
 
-- **Keeping metadata** (doc ID, URL, page labels) tied to the text.
-- **Debugging retrieval** — it's much easier to understand what the model saw if we know which page(s) were used.
-- **Cleaning text** before making smaller overlapping chunks.
+- **Keeping metadata** (doc ID, URL, page labels) tied to the text.  
+- **Debugging retrieval** — it’s much easier to understand what the model saw if we know which page(s) were used.  
+- **Cleaning text** before making smaller overlapping chunks.  
 - **Flexibility later** — once pages are structured, we can try different chunk sizes or strategies without re-extracting the PDF.
 
 In short: **pages first → then chunks** keeps the workflow cleaner and easier to reason about.
@@ -465,14 +465,14 @@ print("Upload complete.")
 
 ## Step 7 – Cost tracking: Bedrock calls carry no tags unless you route them through a profile
 
-In the SageMaker episodes, we tag every job at launch because tags never propagate from the notebook. Bedrock is stricter still: **an on-demand `invoke_model` or `converse` call has no tags parameter at all.** If you call `deepseek.v3-v1:0` or `amazon.titan-embed-text-v2:0` by its model ID, the usage lands in the account's Bedrock bill as anonymous per-token charges. The notebook's tags, the bucket's tags, and the tags you set on anything else are irrelevant to it. On a shared account that means nobody can tell which team spent what.
+In the SageMaker episodes that follow, we tag every job at launch because tags never propagate from the notebook. Bedrock is stricter still: **an on-demand `invoke_model` or `converse` call has no tags parameter at all.** If you call `deepseek.v3-v1:0` or `amazon.titan-embed-text-v2:0` by its model ID, the usage lands in the account's Bedrock bill as anonymous per-token charges. The notebook's tags, the bucket's tags, and the tags you set on anything else are irrelevant to it. On a shared account that means nobody can tell which team spent what.
 
 The mechanism Bedrock provides for this is an **application inference profile**: a small, free resource that points at a base model and carries cost allocation tags. You create the profile once, then pass the **profile ARN** instead of the model ID as `modelId` in every call. Usage billed through the profile carries the profile's tags into Cost Explorer. Two details to get right:
 
-- You need **one profile per base model** (the profile is model-specific), so we create one for the generation model and one for the embedding model.
+- You need **one profile per base model** (the profile is model‑specific), so we create one for the generation model and one for the embedding model.
 - Bedrock's tag format uses lowercase `key` / `value`, unlike SageMaker's `Key` / `Value`. The tag *names* (`Name`, `Project`, `Purpose`) stay the same so the Cost Explorer filters line up across services.
 
-The helper below reuses a profile if one with the same name already exists, so re-running the notebook does not create duplicates.
+The helper below reuses a profile if one with the same name already exists, so re‑running the notebook does not create duplicates.
 
 ```python
 import re
@@ -536,7 +536,7 @@ embedding_model_id_bedrock = get_or_create_inference_profile(base_embedding_mode
 
 - The notebook's execution role needs `bedrock:CreateInferenceProfile`, `bedrock:GetInferenceProfile`, `bedrock:ListInferenceProfiles`, `bedrock:GetFoundationModel`, and `bedrock:TagResource` in addition to `bedrock:InvokeModel`. The `InvokeModel` permission must cover **both** the profile ARN and the underlying model ARN, or calls through the profile are denied. If `create_inference_profile` raises `AccessDeniedException`, ask the account administrator for these permissions rather than falling back to the raw model ID.
 - You can confirm the routing in the Bedrock console under **Inference and Assessment → Cross-region inference → Application inference profiles**, or with `bedrock.list_inference_profiles(typeEquals="APPLICATION")`.
-- Tags only become filters in Cost Explorer once the tag keys have been **activated as cost allocation tags** in the Billing console (an account-admin, once-per-key action; on a shared workshop account the organizers do this). Until then the tags exist on the resource but do not show up on reports.
+- Tags only become filters in Cost Explorer once the tag keys have been **activated as cost allocation tags** in the Billing console (an account‑admin, once‑per‑key action; on a shared workshop account the organizers do this). Until then the tags exist on the resource but do not show up on reports.
 - The profile itself has no hourly or storage charge. You only pay per token, exactly as before.
 
 :::::::::::::::::::::::::::::::::::::::::::::::::
@@ -644,7 +644,7 @@ print("Embeddings shape:", chunk_embeddings.shape)
 
 ## Step 9 – Retrieve: cosine similarity over the embedding matrix
 
-Retrieval is pure NumPy: embed the question with the same model, take the cosine similarity against every chunk, and keep the top *k*. `retrieve_top_k` from `wattbot_rag.py` does exactly that (open the file to see it: it is a normalize-and-matrix-multiply). No vector database is needed for a few thousand chunks; the optional GPU-notebook episode discusses when one becomes worth it.
+Retrieval is pure NumPy: embed the question with the same model, take the cosine similarity against every chunk, and keep the top *k*. `retrieve_top_k` from `wattbot_rag.py` does that (open the file to see it: it is a normalize-and-matrix-multiply). No vector database is needed for a few thousand chunks; the optional GPU-notebook episode discusses when one becomes worth it.
 
 ```python
 first_row = train_df.iloc[0]
@@ -691,7 +691,7 @@ print(call_bedrock_chat("You are a concise assistant.", "What is 2 + 2? Answer i
 print("usage of that call:", bedrock_usage[-1])
 ```
 
-That function has the signature the shared pipeline expects, `generate(system_prompt, user_prompt, max_new_tokens) -> str`, and `embed_query` has the other one, `embed_query(question) -> vector`. Those two callables are the entire difference between this episode and the self-hosted ones.
+That function has the signature the shared pipeline expects, `generate(system_prompt, user_prompt, max_new_tokens) -> str`, and `embed_query` has the other one, `embed_query(question) -> vector`. Those two callables are the only difference between this episode and the self-hosted ones.
 
 ### What the pipeline asks the model
 
@@ -701,11 +701,15 @@ That function has the signature the shared pipeline expects, `generate(system_pr
 print(ANSWER_SYSTEM_PROMPT)
 ```
 
-A question is marked unanswerable (`is_blank` everywhere, as the competition requires) when the model says so **or** when the best retrieval score is below `retrieval_threshold`: weak retrieval means the model is about to answer from its own memory rather than the papers, which is exactly what RAG is meant to prevent.
+A question is marked unanswerable (`is_blank` everywhere, as the competition requires) when the model says so **or** when the best retrieval score is below `retrieval_threshold`.
 
 ## Step 11 – Run the WattBot evaluation with Bedrock
 
-Now we loop over all questions in `train_QA.csv`, run retrieval + Bedrock generation, and write `wattbot_solutions_bedrock.csv`, locally and to your bucket. The Processing Jobs episode runs the same `run_single_qa` with self-hosted models; only `embed_query` and `generate` change.
+Now we can loop over all questions in `train_QA.csv`, run retrieval + Bedrock
+generation, and write a `wattbot_solutions_bedrock.csv` file (locally and to your bucket).
+
+The Processing Jobs episode reuses this same loop with self-hosted models; the only difference there is that the embedding, answer
+and explanation phases call local models instead of Bedrock-hosted ones.
 
 ```python
 results = []
@@ -783,35 +787,37 @@ print(f"~{embed_tokens:,.0f} embedding tokens -> ${embed_cost:.3f}")
 print(f"Total ~${gen_cost + embed_cost:.2f}; one hour of ml.g6e.xlarge is $2.61")
 ```
 
-With ~40 questions, two calls each and ~3,000-token prompts, the run is on the order of 250K input and 20K output tokens: cents, not dollars, at any price in DeepSeek V3's class, plus about two cents of embeddings. That matches the overview's "well under $1" for the whole pipeline, and it is a small fraction of a single GPU-hour. The number to remember is not the exact total but its shape: the bill is proportional to the tokens you sent, and it was zero the moment the loop finished.
+With ~40 questions, two calls each and ~3,000-token prompts, the run is on the order of 250K input and 20K output tokens: cents, not dollars, at any price in DeepSeek V3's class, plus about two cents of embeddings. That matches the overview's "well under $1" for the whole pipeline, and it is a small fraction of a single GPU-hour.
 
 :::::::::::::::::::::::::::::::::
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-## Wrap-up: Bedrock versus GPU-based runs
+## Wrap‑up: Bedrock versus GPU‑based runs
 
-You now have a complete WattBot evaluation running on Bedrock, with per-token billing and nothing left running. The Processing Jobs episode reruns the same evaluation on a self-hosted model, and the optional GPU-notebook episode does it once more interactively, so by the end you can compare:
+You now have a complete WattBot evaluation running on Bedrock, with per‑token billing and nothing left running. The Processing Jobs episode reruns the same evaluation on a self‑hosted model, and the optional GPU-notebook episode does it once more interactively, so by the end you will have three versions to compare:
 
-1. **Bedrock** (this episode) using hosted embedding and generation models with per-token billing.
-2. **SageMaker Processing jobs** running an open-weight model in batch, on a GPU that exists only while the job runs.
-3. **A notebook GPU instance** (optional) with the same model loaded interactively.
+1. **Bedrock** (this episode) using hosted embedding and generation models with per‑token billing.
+2. **SageMaker Processing job** running an open‑source model in batch with on-demand compute.
+3. **Notebook GPU instance** (optional) using the same locally loaded open‑source model.
 
 When deciding between these options in practice:
 
 - Use **Bedrock or other hosted APIs** when:
-  - You want to try the latest frontier models quickly.
-  - You only need to run a modest number of questions, or you are still prototyping.
-  - You prefer a simple, token-based cost model and don't want to manage GPU capacity.
+  - You want to try the latest frontier models quickly.  
+  - You only need to run a modest number of questions, or you are still prototyping.  
+  - You prefer a simple, token‑based cost model and don’t want to manage GPU capacity.
 
-- Use **self-hosted models on GPU instances** when:
-  - You need a specific open-weight model that the catalog does not carry.
-  - You expect to run large batches repeatedly (e.g., many thousands of questions).
-  - You want tight control over which architectures/checkpoints you run or fine-tune.
+- Use **self‑hosted models on GPU instances** when:
+  - You need a specific open-weight model that the catalog does not carry.  
+  - You expect to run large batches repeatedly (e.g., many thousands of questions).  
+  - You want tight control over which architectures/checkpoints you run or fine‑tune.  
+  - You already have institutional access to cost‑effective on‑prem or cloud GPUs.
 
-The core **RAG evaluation logic stays identical** across all three, which is the main takeaway:
-once you have a clean retrieval + normalization pipeline (like WattBot's, in `wattbot_rag.py`), swapping out the generator
-is a matter of providing a different `embed_query` and `generate`.
+The core **RAG evaluation logic stays identical** across all three episodes, which is the main takeaway:
+once you have a clean retrieval + normalization pipeline (like WattBot’s, in `wattbot_rag.py`), swapping out the generator
+is mostly a matter of re‑implementing `embed_query` and `generate`
+for each compute option you care about.
 
 
 ## Concluding remarks: Bedrock models are one piece of the RAG puzzle
@@ -823,15 +829,15 @@ messy real-world questions — but it's important to remember that they are stil
 
 - **Bigger or newer models do not magically fix weak retrieval.** If your chunks
   are poorly aligned with the questions, a very strong LLM will still struggle.
-- **Most of the long-term accuracy gains in RAG systems come from the plumbing
+- **Most of the long‑term accuracy gains in RAG systems come from the plumbing
   around the LLMs**, including:
   - smarter / semantic chunking strategies
   - good metadata and filtering
-  - reranking or multi-stage retrieval
-  - domain-specific heuristics and post-processing
+  - reranking or multi‑stage retrieval
+  - domain‑specific heuristics and post‑processing
 - **Cost and latency live in tension with quality.** Larger models (or higher
   token budgets) often improve answers, but at the cost of more inference time
-  and higher per-request spend. Bedrock makes it easier to experiment with that
+  and higher per‑request spend. Bedrock makes it easier to experiment with that
   tradeoff by switching models without rewriting your pipeline.
 
 As you adapt this notebook to your own projects, treat the LLM choice as **one
@@ -843,7 +849,7 @@ between already-good models.
 ::::::::::::::::::::::::::::::::::::: keypoints
 
 - A complete RAG pipeline on AWS needs no GPU: a CPU notebook plus Bedrock-hosted embedding and generation models is enough.
-- Corpus preparation (unpacking the staged PDFs, page extraction, chunking) is cheap CPU work; cache `chunks.jsonl` in your bucket so the Processing Jobs episode and later runs can reuse it.
+- Corpus preparation (unpacking the staged PDFs, page extraction, chunking) is cheap CPU work; cache `chunks.jsonl` on S3 so later episodes and runs can reuse it.
 - Bedrock calls carry no tags; route them through a tagged application inference profile or the spend is anonymous on the bill.
 - `converse` is the provider-neutral way to call a chat model on Bedrock; its `usage` block is what you are billed on. DeepSeek V3 is the generator here, and any catalog model is a one-line swap.
 - Bedrock bills per token and leaves nothing running between calls, which is why it is the default route for RAG inference.

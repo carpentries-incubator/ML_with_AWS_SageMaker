@@ -8,7 +8,7 @@ exercises: 10
 
 - What does the AWS command-line interface (CLI) let me do that the lesson's notebooks did, and what should I not do with it?
 - How do I see, and stop, everything that is costing money from a terminal?
-- What was the SageMaker SDK actually sending when I called `estimator.fit()`?
+- What request does the SageMaker SDK send when I call `estimator.fit()`?
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -23,17 +23,17 @@ exercises: 10
 
 ### Optional, self-study episode
 
-Everything in this lesson went through the SageMaker Python SDK in a notebook. The same account can be driven from a terminal with the AWS CLI, and sooner or later you will want to: to check on a job from your phone's SSH client, to stop something from a machine where you have no notebook open, to copy results out of S3 in bulk, or to script a launch. This episode shows the CLI equivalents of what you already did, in that order of usefulness: **look, stop, copy, then launch**.
+Everything in this lesson went through the SageMaker Python SDK in a notebook. The same account can be used from a terminal with the AWS CLI: to check on a job from another machine, to stop something when no notebook is open, to copy results out of S3 in bulk, or to script a launch. This episode shows the CLI equivalents of what you already did, in four groups: **look, stop, copy, launch**.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
 ### Read this before the first command
 
-The CLI, the SDK and the console are the same API. Nothing here is more powerful than a notebook cell; the difference is that a terminal shows you *nothing* unless you ask. A notebook instance left running sits in a console tab you will see tomorrow; an endpoint created from a terminal on a Friday is invisible until the bill arrives. One past participant of this workshop spent a large share of a year's credits that way. So three rules, in force for the shared account and worth keeping on your own:
+The CLI, the SDK and the console are the same API. Nothing here is more powerful than a notebook cell. The difference is that a terminal shows nothing unless you ask: a notebook instance left running is visible in the console the next day, while an endpoint created from a terminal on a Friday is not noticed until the bill arrives. A past participant of this workshop spent a large share of a year's credits that way. Three rules apply on the shared account and are worth keeping on your own:
 
-1. **Authenticate with `aws sso login` only.** Never `aws configure` with an access key ID and secret. Those are long-lived, they end up in shell histories and committed files, and they are the usual way a research group's keys reach the internet.
+1. **Authenticate with `aws sso login` only.** Never `aws configure` with an access key ID and secret. Those are long-lived, and they end up in shell histories and committed files.
 2. **Launch only jobs** (training, processing, tuning), with the same three tags and the same `MaxRuntimeInSeconds` the notebooks always set. Jobs end on their own. **Endpoints, EC2 instances and GPU notebook instances do not**, and the lesson never creates them from the CLI, or at all.
-3. **If the account refuses a command, that is the system working.** The workshop permission set denies endpoint and EC2 creation, instance types outside the lesson's list, and any job launched without the tags. An `AccessDeniedException` on one of those is not a permissions bug to work around; it is the guard rail.
+3. **An `AccessDeniedException` on the commands below is intended.** The workshop permission set denies endpoint and EC2 creation, instance types outside the lesson's list, and any job launched without the tags. Do not look for a workaround.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -87,7 +87,7 @@ aws sagemaker list-tags --resource-arn $ARN --query 'Tags[].[Key,Value]' --outpu
 
 ## 3. Stop: the commands worth memorising
 
-These are the reason to have the CLI installed at all. Each one makes money stop.
+These are the most useful CLI commands to know. Each one stops a charge.
 
 ```bash
 aws sagemaker stop-training-job   --training-job-name   <name>
@@ -117,7 +117,7 @@ Downloads to a laptop are a transfer out of AWS ($0.09 per GB). For anything lar
 
 ## 5. Launch: one training job, as JSON
 
-Every `estimator.fit()` in the training episodes assembled a JSON request and sent it to `CreateTrainingJob`. Seeing that request once makes the SDK's arguments stop looking like magic. Fill in the five placeholders from your notebook: the image URI (run `print(xgboost_estimator.training_image_uri())` in the training episode's notebook), your role ARN (`print(role)`), your bucket, your tag values, and a job name, which must be unique in the account.
+Every `estimator.fit()` in the training episodes assembled a JSON request and sent it to `CreateTrainingJob`. Here is that request. Fill in the five placeholders from your notebook: the image URI (run `print(xgboost_estimator.training_image_uri())` in the training episode's notebook), your role ARN (`print(role)`), your bucket, your tag values, and a job name, which must be unique in the account.
 
 ```bash
 cat > train-xgboost.json <<'JSON'
@@ -152,7 +152,7 @@ JSON
 aws sagemaker create-training-job --cli-input-json file://train-xgboost.json
 ```
 
-Three things to notice. `StoppingCondition.MaxRuntimeInSeconds` is the `max_run` you set on every estimator; the SDK would have sent 48 hours if you had not. `Tags` is the `tags=` argument, and without it the request is refused on the workshop account. And `ResourceConfig` is where the money is: the instance type you would think twice about in a notebook deserves the same second thought in a JSON file, where nothing prints a price.
+Three fields to notice. `StoppingCondition.MaxRuntimeInSeconds` is the `max_run` you set on every estimator; the SDK would have sent 48 hours if you had not. `Tags` is the `tags=` argument, and without it the request is refused on the workshop account. `ResourceConfig` sets the instance type and count, which determine the cost; nothing in a JSON file prints a price, so check it as carefully as you would in a notebook.
 
 The CLI returns the moment the request is accepted; nothing waits. To follow the job the way `wait=True` did:
 
@@ -167,11 +167,11 @@ Estimate first, compare after, as always: this is the same ~4 minutes billable o
 
 ### What the lesson never does from the CLI
 
-- `aws sagemaker create-endpoint` / `create-endpoint-config`: an endpoint is a server that runs until you delete it, with no runtime cap. The lesson serves models with processing jobs and Bedrock precisely so that nothing of this kind exists in the account.
+- `aws sagemaker create-endpoint` / `create-endpoint-config`: an endpoint is a server that runs until you delete it, with no runtime cap. The lesson serves models with processing jobs and Bedrock so that nothing of this kind exists in the account.
 - `aws sagemaker create-notebook-instance` with a GPU type: a GPU notebook is $60 a day while you are asleep. The optional GPU-notebook episode creates one through the console, where it stays visible, and deletes it the same hour.
 - `aws ec2 run-instances`: bare virtual machines have no tags required, no runtime cap and no SageMaker job list to appear in.
 
-On the workshop account all three are denied by the permission set, as is any instance type outside the lesson's list and any job without the three tags; the instructor page *Account preparation checklist* has the policy. On your own account, the same denies are a fifteen-minute setup and the best money you will not spend.
+On the workshop account all three are denied by the permission set, as is any instance type outside the lesson's list and any job without the three tags; the instructor page *Account preparation checklist* has the policy. On your own account, the same denies take about fifteen minutes to set up.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -179,7 +179,7 @@ On the workshop account all three are denied by the permission set, as is any in
 
 ### Challenge: the Friday-evening check
 
-You are leaving for the weekend and have a terminal, not a browser. Write the commands you would run, in order, to make sure the account is costing nothing until Monday, and the one command to run if each check finds something. Then run them for real against your own resources.
+You are leaving for the weekend and have a terminal, not a browser. Write the commands you would run, in order, to make sure the account is costing nothing until Monday, and the one command to run if each check finds something. Then run them against your own resources.
 
 :::::::::::::::::::::::::::::::::::: solution
 

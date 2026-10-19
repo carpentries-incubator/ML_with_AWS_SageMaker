@@ -444,7 +444,7 @@ Both processors set `max_runtime_in_seconds=2 * 60 * 60`. Predict what would hap
 
 With a 600-second cap the RAG job is killed by SageMaker ten minutes after `ProcessingStartTime`, while it is still installing vLLM or downloading the weights. The status becomes `Stopped` (the failure reason reads `MaxRuntimeExceeded`), the output prefix is empty because the script never reached the point of writing `wattbot_solutions.csv`, and the bill is the full 600 seconds: 600 / 3600 × $2.61 ≈ $0.44 for nothing. A cap has to leave room for the setup that precedes the work, which is why ours is four times the 30-minute estimate rather than ten percent over it.
 
-Under the real caps, the worst case for a job that hangs (a stuck download, a model that never finishes loading) is 2 h × $1.41 = **$2.82** for the embedding job and 2 h × $2.61 = **$5.22** for the RAG job. A `ml.g6e.xlarge` notebook instance forgotten over a weekend is 64 h × $2.61 = **$167**, and nothing caps it. That is the difference between a job and an instance: the job's worst case is a number you chose before you launched it.
+Under the caps we set, the worst case for a job that hangs (a stuck download, a model that never finishes loading) is 2 h × $1.41 = **$2.82** for the embedding job and 2 h × $2.61 = **$5.22** for the RAG job. A `ml.g6e.xlarge` notebook instance forgotten over a weekend is 64 h × $2.61 = **$167**, and nothing caps it. That is the difference between a job and an instance: the job's worst case is a number you chose before you launched it.
 
 :::::::::::::::::::::::::::::::::
 

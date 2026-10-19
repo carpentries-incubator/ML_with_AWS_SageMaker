@@ -27,15 +27,15 @@ exercises: 10
 
 ## Shutting down notebook instances
 
-Notebook instances in SageMaker are billed per second while they are **InService**, so it’s essential to stop or delete them when they are no longer needed. Earlier in the **Notebooks as controllers** episode, we discussed using lower-cost instance types like `ml.t3.medium` ($0.05/hour) for controlling workflows. While this makes open notebooks less costly than larger instances, it’s still a good habit to stop or delete notebook instances to avoid unnecessary spending, especially if left idle for long periods. A GPU notebook instance (the optional RAG episode's `ml.g6e.xlarge`, $2.61/hour) left running is about $60 a day.
+Notebook instances in SageMaker are billed per second, so it’s essential to stop or delete them when they are no longer needed. Earlier in the **Notebooks as controllers** episode, we discussed using lower-cost instance types like `ml.t3.medium` (approximately $0.05/hour) for controlling workflows. While this makes open notebooks less costly than larger instances, it’s still a good habit to stop or delete notebooks to avoid unnecessary spending, especially if left idle for long periods.
 
 1. **Navigate to SageMaker in the AWS Console.**
 2. In the left-hand menu, click **Notebook instances**.
 3. Locate your notebook instance and select it.
 4. Choose **Stop** to shut it down temporarily or **Delete** to permanently remove it.
-   > **Tip:** If you plan to reuse the notebook instance later, stopping it is sufficient. Deleting is recommended if you are finished with the workshop.
+   > **Tip:** If you plan to reuse the notebook later, stopping it is sufficient. Deleting is recommended if you are finished with the workshop.
 
-**Delete, don't just stop, instances with large volumes.** A stopped instance stops the compute charge but keeps its storage volume, which bills at about $0.14 per GB-month. The default 5 GB is cents; the 100 GB volume the optional GPU-notebook episode asks for is $14 a month for an instance nobody is using. If you enlarged the volume to hold model weights, delete the instance once the episode is done.
+A stopped instance stops the compute charge but keeps its storage volume, which bills at about $0.14 per GB-month. The default 5 GB is cents; the 100 GB volume the optional GPU-notebook episode asks for is $14 a month. If you enlarged the volume to hold model weights, delete the instance once the episode is done.
 
 ## Cleaning up S3 storage
 
@@ -53,7 +53,7 @@ While S3 storage is relatively inexpensive, cleaning up unused buckets and files
 
 ## Monitoring and stopping active jobs
 
-SageMaker charges for training, tuning and Processing jobs while they run, so make sure to terminate unused jobs. Every job in this lesson was launched with a runtime cap (`max_run` on training and tuning jobs, `max_runtime_in_seconds` on Processing jobs), so a forgotten job ends on its own; the cap is the safety net, not the plan.
+SageMaker charges for training, tuning and Processing jobs while they run, so make sure to terminate unused jobs. Every job in this lesson was launched with a runtime cap (`max_run` on training and tuning jobs, `max_runtime_in_seconds` on Processing jobs), so a forgotten job ends on its own.
 
 1. In the SageMaker Console, go to **Training jobs**, **Hyperparameter tuning jobs**, or **Processing jobs**.
 2. Identify any active jobs that you no longer need.
@@ -76,7 +76,7 @@ Managing your AWS expenses is vital to staying within budget. Follow these steps
 
 ## End-of-workshop checklist
 
-Work through this list before you sign off for the last time. Each line is something you created during the lesson that either bills or clutters the account.
+Work through this list before you sign off for the last time.
 
 - **Notebook instances**: Stop, then **Delete** (SageMaker → Notebook instances). Includes the optional GPU notebook instance if you created one.
 - **Lifecycle configurations**: if you created one (for example, a script that auto-stops an idle notebook instance), delete it (SageMaker → Notebook instances → Lifecycle configurations). It costs nothing but is yours to remove.
@@ -87,7 +87,7 @@ Work through this list before you sign off for the last time. Each line is somet
 
 Every stop and delete in this list has a one-line CLI equivalent; the optional episode *The Same Jobs from the Terminal* collects them, for the day you need to stop something from a machine with no browser.
 
-In the shared workshop account, the instructors sweep the account with [aws-nuke](https://github.com/ekristen/aws-nuke) after the workshop. That sweep deletes notebook instances and the learner buckets only, so if you forget those, they will still go. It deliberately does *not* touch Bedrock application inference profiles or lifecycle configurations, so those are yours to remove.
+In the shared workshop account, the instructors sweep the account with [aws-nuke](https://github.com/ekristen/aws-nuke) after the workshop. That sweep deletes notebook instances and the learner buckets only, so if you forget those, they will still go. It does not touch Bedrock application inference profiles or lifecycle configurations, so those are yours to remove.
 
 ## Best practices for resource management
 
@@ -133,8 +133,9 @@ Stopping the controller and walking away leaves the bucket billing for storage, 
 ::::::::::::::::::::::::::::::::::::: keypoints
 
 
-- Always stop notebook instances when not in use, and delete them (not just stop) once a project is over: a stopped instance still bills for its volume.
-- Stop any training, tuning or Processing job you no longer need; runtime caps are the safety net.
+- Always stop or delete notebook instances when not in use to avoid charges.
+- Stop any training, tuning or Processing job you no longer need.
+
 - Lifecycle configurations and Bedrock application inference profiles are not swept by the instructors' aws-nuke run; remove them yourself.
 - Regularly clean up unused S3 buckets and objects to save on storage costs.
 - Monitor your expenses through the AWS Billing Dashboard and set up alerts.

@@ -33,7 +33,7 @@ When working with SageMaker and other AWS services, you have options for data st
 An Amazon EC2 (Elastic Compute Cloud) instance is a virtual server environment where you can run applications, process data, and store data temporarily. EC2 instances come in various types and sizes to meet different computing and memory needs, making them versatile for tasks ranging from light web servers to intensive machine learning workloads. For example, when you launch a new Jupyter notebook from Sagemaker, this notebook is run on an an EC2 instance configured to run Jupyter notebooks, enabling direct data processing. 
 
 ### When to store data directly on EC2
-Using an EC2 instance for data storage can be useful for temporary or small datasets, especially during processing within a Jupyter notebook. But this storage is tied to the instance. On a SageMaker notebook instance, files under `/home/ec2-user/SageMaker` survive a **Stop** (they live on an attached volume that persists while the instance exists) and are lost when the instance is **Deleted**; `pip install`s and files anywhere else on the instance are lost on every Stop. So EC2 storage is fine for one-off experiments or intermediate steps, not for anything you need to keep.
+Using an EC2 instance for data storage can be useful for temporary or small datasets, especially during processing within a Jupyter notebook. However, this storage is not persistent; if the instance is deleted, the data is erased. (On a SageMaker notebook instance, files under `/home/ec2-user/SageMaker` survive a **Stop** and are lost when the instance is **Deleted**; `pip install`s and files anywhere else on the instance are lost on every Stop.) Therefore, EC2 is ideal for one-off experiments or intermediate steps in data processing.
 
 ::::::::::::::::::::::::::::::::::::: callout 
 
@@ -41,7 +41,7 @@ Using an EC2 instance for data storage can be useful for temporary or small data
 
 - **Scalability**: EC2 storage is limited to the instance’s disk capacity, so it may not be ideal for very large datasets.
 - **Cost**: EC2 storage can be more costly for long-term use compared to S3.
-- **Data Persistence**: Only `/home/ec2-user/SageMaker` survives a Stop, and nothing survives a Delete. Anything you want to keep belongs in S3 (or in a git repository).
+- **Data Persistence**: EC2 data may be lost if the instance is stopped or terminated, unless using Elastic Block Store (EBS) for persistent storage. On a SageMaker notebook instance, only `/home/ec2-user/SageMaker` survives a Stop, and nothing survives a Delete.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -84,19 +84,16 @@ In order to upload our titanic dataset to an S3 bucket on AWS, we'll follow the 
 
 ##### 3. Create a new bucket
 - **AWS Region**: the region your instructor named (the same one your SageMaker notebook will use; in the workshop account it is US East (Ohio), `us-east-2`). SageMaker jobs can only read buckets in their own region, so a bucket created in another region shows up later as "access denied" or "no such bucket" errors from your jobs.
-- Click **Create Bucket** and enter a unique name. Use the naming convention `challenge-lastnamefirstname`, all lowercase, e.g. `sinkorswim-doejohn`: the challenge you are working on (`wattbot2026`, `badgerscribe`, `badgercode`, ...), a hyphen, then your last and first name run together. S3 requires bucket names to be lowercase letters, digits and hyphens only (3 to 63 characters, starting and ending with a letter or digit, no underscores, no spaces), and the same lowercase string is what we will use for your notebook instance and your `Project` tag, so one name works everywhere. **This is the only bucket you will create in the workshop.** Every later episode writes its outputs (trained models, embeddings, predictions) into this same bucket under its own prefix, such as `xgboost/`, `wattbot/` or `badger-scribe/`.
+- Click **Create Bucket** and enter a unique name, and note that bucket name must not contain uppercase characters. To easily find this bucket later in our shared AWS account, please use the following naming convention: `challenge-lastnamefirstname`, all lowercase, e.g. `sinkorswim-doejohn`: the challenge you are working on (`wattbot2026`, `badgerscribe`, `badgercode`, ...), a hyphen, then your last and first name run together. The same lowercase string is what we will use for your notebook instance and your `Project` tag. **This is the only bucket you will create in the workshop.** Every later episode writes its outputs (trained models, embeddings, predictions) into this same bucket under its own prefix, such as `xgboost/`, `wattbot/` or `badger-scribe/`.
 - **Access Control (ACLs)**: Disable ACLs (recommended).  
 	- **What are ACLs?** Access Control Lists (ACLs) define fine-grained permissions at the object level, allowing you to grant specific users or AWS accounts access to individual files in your bucket.  
 	- **Why disable them?** AWS now recommends managing access through bucket policies and IAM roles, which offer better security and are easier to manage at scale. Unless you have a specific need for ACLs, disabling them is the best practice.
 - **Public Access**: Turn on "Block all public access" (recommended). This setting prevents unauthorized access and accidental data exposure. If you need external access, use IAM policies or signed URLs instead.
 - **Versioning**: Disable unless you need multiple versions of objects (unnecessary for ML Marathon). Enable only if needed, as versioning increases storage costs. Useful when tracking changes to datasets over time but unnecessary for static datasets.  
-- **Tags (NOT OPTIONAL)**: Tags are key/value labels that let the bill be broken down by project, person, or purpose, which is how costs get traced back to you in a shared account. Tags only show up in cost reports if the tag *key* has been activated as a cost-allocation tag at the account level; on UW–Madison's AWS accounts that is done centrally for a fixed list of approved keys ([KB 72454](https://kb.wisc.edu/72454)), and `Name`, `Project` and `Purpose` are on that list. Any other spelling (`project`, `Team`, `Owner`) is silently ignored by the bill, so type the keys exactly as shown; capitalization matters. You will put the same three keys on every resource you create in this workshop, starting with this bucket:
-
-	| Key | Value |
-	|---|---|
-	| `Project` | your challenge name, e.g. `sinkorswim` |
-	| `Name` | your name, e.g. `John Doe` |
-	| `Purpose` | `Workshop-storage` |
+- **Tags (NOT OPTIONAL)**: Adding tags to your S3 buckets is a great way to track project-specific costs and usage over time, especially as data and resources scale up. To easily track costs associated with your bucket in our shared AWS account, add the following three keys (spelled exactly; they are the account's approved cost-allocation keys, see [KB 72454](https://kb.wisc.edu/72454)). You will put the same three keys on every resource you create in this workshop, starting with this bucket:
+	- **Project**: your challenge name, e.g. `sinkorswim`
+	- **Name**: yourname
+  	- **Purpose**: Bucket-titanic
 
   Tag values are case-sensitive on the bill: `SinkOrSwim` and `sinkorswim` would be two separate rows in Cost Explorer. Use the same lowercase challenge name you put in the bucket name.
 
@@ -181,7 +178,7 @@ S3 bucket storage incurs costs based on data storage, data transfer, and request
 ### Data transfer costs
 - **Uploading** data to S3 is free.
 - **Downloading** data (out of S3) incurs charges (~$0.09/GB). Be sure to take note of this fee, as it can add up fast for large datasets.
-- **In-region transfer** (e.g., S3 to a SageMaker notebook or job in the same region) is free, while cross-region data transfer is charged (~$0.02/GB). This is one reason your bucket and your SageMaker resources must be in the same region.
+- **In-region transfer** (e.g., S3 to EC2) is free, while cross-region data transfer is charged (~$0.02/GB). This is one reason your bucket and your SageMaker resources must be in the same region.
 - **Deleting** objects is free.
 
 ### Request costs
@@ -193,21 +190,21 @@ S3 bucket storage incurs costs based on data storage, data transfer, and request
 
 ### Challenge: Estimating Storage Costs
 
-**1. Estimate the total cost of keeping 1 GB in S3 for one month assuming:**
+**1. Estimate the total cost of storing 1 GB in S3 for one month assuming:**
 
 - Storage duration: 1 month
-- Storage region: us-east-1 (same region as your SageMaker notebook and jobs)
+- Storage region: us-east-1
 - Storage class: S3 Standard
-- The data is read 100 times by SageMaker training and tuning jobs in the same region (100 `GET` requests)
-- At the end of the project you download one copy to your laptop, then delete the data
+- Data will be retrieved 100 times for model training and tuning by SageMaker jobs in the same region (`GET` requests)
+- Data will be downloaded once to your laptop and then deleted after the project concludes
 
 **Hints**
 
 - S3 storage cost: $0.023 per GB per month (us-east-1)
-- Reads by SageMaker in the same region: no data-transfer charge (in-region transfer is free); only the per-request cost applies
-- `GET` requests cost: $0.0004 per 1,000 requests (each read counts as one `GET` request)
-- Data transfer out to the internet (the download to your laptop): $0.09 per GB
-- Deleting objects: free (no request or transfer charge)
+- Data transfer cost (download to your laptop): $0.09 per GB (us-east-1 out to internet)
+- In-region transfer (reads by SageMaker jobs): free
+- `GET` requests cost: $0.0004 per 1,000 requests (each model training will incur one `GET` request)
+- Deleting objects: free
 - Check the [AWS S3 Pricing](https://aws.amazon.com/s3/pricing/) page for more details.
  
 **2. Repeat the above calculation using the following dataset sizes: 10 GB, 100 GB, 1 TB (1024 GB)**
@@ -216,34 +213,38 @@ S3 bucket storage incurs costs based on data storage, data transfer, and request
 
 ### Solution
 
-Using the S3 Standard rate in us-east-1. The 100 SageMaker reads cost only the requests (100 × $0.0004 / 1,000 = $0.00004), because in-region transfer is free; the delete is free; the one download to a laptop is the only transfer charge.
+Using the S3 Standard rate in us-east-1:
 
 1. **1 GB**:  
-   - **Storage**: 1 GB × $0.023 = $0.023
-   - **100 in-region reads (requests only)**: $0.00004
-   - **One download to a laptop**: 1 GB × $0.09 = $0.09  
-   - **Delete**: $0
-   - **Total Cost**: **≈ $0.11**
+   - **Storage**: 1 GB * $0.023 = $0.023
+   - **Download**: 1 GB * $0.09 = $0.09  
+   - **GET Requests**: 100 requests * $0.0004 per 1,000 = $0.00004  
+   - **Deletion**: $0
+   - **Total Cost**: **$0.11304**
 
 2. **10 GB**:  
-   - **Storage**: 10 GB × $0.023 = $0.23
-   - **100 in-region reads**: $0.00004
-   - **One download**: 10 GB × $0.09 = $0.90  
-   - **Total Cost**: **≈ $1.13**
+   - **Storage**: 10 GB * $0.023 = $0.23
+   - **Download**: 10 GB * $0.09 = $0.90  
+   - **GET Requests**: 100 requests * $0.0004 per 1,000 = $0.00004  
+   - **Deletion**: $0
+   - **Total Cost**: **$1.13004**
 
 3. **100 GB**:  
-   - **Storage**: 100 GB × $0.023 = $2.30
-   - **100 in-region reads**: $0.00004
-   - **One download**: 100 GB × $0.09 = $9.00  
-   - **Total Cost**: **≈ $11.30**
+   - **Storage**: 100 GB * $0.023 = $2.30
+   - **Download**: 100 GB * $0.09 = $9.00  
+   - **GET Requests**: 100 requests * $0.0004 per 1,000 = $0.00004  
+   - **Deletion**: $0
+   - **Total Cost**: **$11.30004**
 
 4. **1 TB (1024 GB)**:  
-   - **Storage**: 1024 GB × $0.023 = $23.55
-   - **100 in-region reads**: $0.00004
-   - **One download**: 1024 GB × $0.09 = $92.16  
-   - **Total Cost**: **≈ $115.71**
+   - **Storage**: 1024 GB * $0.023 = $23.55
+   - **Download**: 1024 GB * $0.09 = $92.16  
+   - **GET Requests**: 100 requests * $0.0004 per 1,000 = $0.00004  
+   - **Deletion**: $0
+   - **Total Cost**: **$115.71004**
 
-Two things to notice. The reads by SageMaker are essentially free no matter how many times a job loads the data, which is why the lesson keeps data in S3 and reads it from jobs in the same region. And the single download to a laptop costs four times the month of storage: egress is the line item to watch, so pull results out of AWS once, not repeatedly, and leave large datasets in the bucket (or delete them) rather than downloading them "just in case".
+These costs assume no additional request charges beyond those for storage, the download, and `GET` requests for training.
+
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -268,7 +269,8 @@ After you are done using your data, it's important to practice good resource ste
 ::::::::::::::::::::::::::::::::::::: keypoints 
 
 - Use S3 for scalable, cost-effective, and flexible storage.
-- Instance storage is fairly uncommon for data, but may be suitable for small, temporary files; only `/home/ec2-user/SageMaker` survives a Stop, and nothing survives a Delete.
+- EC2 storage is fairly uncommon, but may be suitable for small, temporary datasets; only `/home/ec2-user/SageMaker` survives a Stop, and nothing survives a Delete.
+
 - Create the bucket in the same region as your SageMaker notebook, and tag it with the same three keys (`Name`, `Project`, `Purpose`) you will put on every other resource.
 - Track your S3 storage costs, data transfer, and requests to manage expenses.
 - Regularly delete unused data or buckets to avoid ongoing costs.

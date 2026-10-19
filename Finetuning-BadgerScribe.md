@@ -9,7 +9,7 @@ exercises: 75
 - When is fine-tuning worth it, and how is it different from RAG or prompting?
 - Why does fine-tuning cost anywhere from a dollar to tens of thousands, and how do I estimate where my run falls *before* I launch it?
 - How do I run a GPU fine-tune as a SageMaker training job so the meter stops the moment it finishes?
-- How do I measure whether the fine-tune actually helped?
+- How do I measure whether the fine-tune helped?
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -31,7 +31,7 @@ Everything so far in the RAG episodes left the model's weights alone. Fine-tunin
 - It is iterative. Nobody gets the learning rate, the image resolution or the data split right the first time, so the first run is never the last.
 - The cost of a run depends on things that are easy to get wrong by 10x: model size, epochs, image resolution, instance type, and whether the instance is still running after you stopped paying attention.
 
-That combination is why fine-tuning is where research teams see the surprise bills. It is also, done carefully, the single biggest lever you have: the Badger Scribe organizers report that LoRA on ~100 pages takes a small open model from 0.23 to 0.06 CER on survey notebooks in about a GPU-hour. This episode is about getting that kind of gain for a few dollars, and about knowing in advance when a run is going to cost a few thousand instead.
+That combination is why fine-tuning is where research teams see surprise bills. Done carefully, it is also where the largest gains are: the Badger Scribe organizers report that LoRA on ~100 pages takes a small open model from 0.23 to 0.06 CER on survey notebooks in about a GPU-hour. This episode is about getting that kind of gain for a few dollars, and about knowing in advance when a run is going to cost a few thousand instead.
 
 ### The task: Badger Scribe
 
@@ -60,7 +60,7 @@ Full fine-tuning updates all 3 billion weights and needs several times the model
 
 ## Step 0: Estimate the cost before you launch anything
 
-This is the habit that matters. Before launching a fine-tune, write down a number for what it should cost. If the real bill is 3x your number, something is wrong and you want to know on the first run, not the fiftieth.
+Before launching a fine-tune, write down what it should cost. If the bill is 3x your number, something is wrong, and you want to know on the first run, not the fiftieth.
 
 ### What fine-tuning costs, from one dollar to ten thousand
 
@@ -76,7 +76,7 @@ The cost of a run is GPU-hours × the hourly rate, and GPU-hours scale with **mo
 | 70B full fine-tune, two days | 4 × `ml.p5.48xlarge`, 48 h | 1,536 | ~$12,000 |
 | Any row above × a 10-run hyperparameter sweep | | | × 10 |
 
-Two rows deserve a second look. The CHURRO row is the model you are about to fine-tune: Stanford spent on the order of 800 H100-hours making it, and you get the benefit for sixty cents because you are *adapting* it, not retraining it. Starting from a model that already knows most of the task is the single largest cost saving available, and it is a choice you make before any GPU is involved. The sweep row is the other honest one. Nobody's first run is their last, so a "$140 fine-tune" is usually a $700 to $1,400 project, and that is the number that surprises research groups. (The 7B row is worked out in the challenge below; the 70B rows are rule-of-thumb magnitudes; the CHURRO figures come from a published review of the paper.)
+Two rows to note. The CHURRO row is the model you are about to fine-tune: Stanford spent on the order of 800 H100-hours making it, and you get the benefit for sixty cents because you are *adapting* it, not retraining it. Starting from a model that already knows most of the task is the largest cost saving available, and it is decided before any GPU is involved. The sweep row: a first run is rarely the last, so a "$140 fine-tune" is usually a $700 to $1,400 project. That is the number that surprises research groups. (The 7B row is worked out in the challenge below; the 70B rows are rule-of-thumb magnitudes; the CHURRO figures come from a published review of the paper.)
 
 The habits in this episode are cheap practice at sixty cents a run. At $140 a run they are the difference between a project and a budget incident.
 
@@ -94,7 +94,7 @@ Two rules of thumb answer most of the question before you touch a console. They 
 | LoRA fine-tune | ~2.5 | frozen bf16 weights + a small adapter with its gradients and optimizer + activations | 8 GB | 18 GB | 68 GB | 175 GB |
 | Full fine-tune, mixed precision | 16 | bf16 weights 2 + bf16 gradients 2 + fp32 master weights 4 + Adam's two moments 8 | 48 GB | 112 GB | 430 GB | 1.1 TB |
 
-The jump from the inference rows to the training rows is the point. Training cannot run on quantized weights the way inference can: gradient updates are tiny numbers that vanish in 8-bit or 4-bit precision, so every trainable parameter keeps a full-precision master copy plus two Adam moments, 16 bytes against 2. That is why a 7B model you can *run* on a 24 GB GPU needs 112 GB plus activations to *fully fine-tune*, which means several GPUs with the model sharded across them. LoRA sidesteps it by freezing the model and training a few million adapter parameters, which is why this episode fits on one 24 GB card.
+Note the jump from the inference rows to the training rows. Training cannot run on quantized weights the way inference can: gradient updates are tiny numbers that vanish in 8-bit or 4-bit precision, so every trainable parameter keeps a full-precision master copy plus two Adam moments, 16 bytes against 2. That is why a 7B model you can *run* on a 24 GB GPU needs 112 GB plus activations to *fully fine-tune*, which means several GPUs with the model sharded across them. LoRA sidesteps it by freezing the model and training a few million adapter parameters, which is why this episode fits on one 24 GB card.
 
 **2. Time: how many GPU-hours?** Training compute is roughly proportional to parameters × tokens seen:
 
@@ -425,7 +425,7 @@ estimator.fit({"train": train_s3_uri, "model": model_s3_uri}, job_name=training_
 
 ### Interrupting the cell does not stop the job
 
-The square "interrupt kernel" button stops the *notebook* from watching the job. The GPU instance keeps running and keeps billing until the script finishes or `max_run` expires. To actually stop a job, use the console (**SageMaker AI → Training → Training jobs → select → Stop**) or:
+The square "interrupt kernel" button stops the *notebook* from watching the job. The GPU instance keeps running and keeps billing until the script finishes or `max_run` expires. To stop a job, use the console (**SageMaker AI → Training → Training jobs → select → Stop**) or:
 
 ```python
 # session.sagemaker_client.stop_training_job(TrainingJobName=training_job_name)
@@ -442,7 +442,7 @@ Open a second browser tab on the SageMaker console: **SageMaker AI → Training 
 Things to find in the log while you wait:
 
 - `pages: 295 total -> 251 train / 44 holdout`: the split, before the 120-page slice.
-- `trainable params: ...`: what fraction of the 3B parameters LoRA actually trains.
+- `trainable params: ...`: what fraction of the 3B parameters LoRA trains.
 - `[eval before] 15 holdout pages in ...s (... s/page) -> macro CER ...`: the base model's score, and the per-page time that the homework inference jobs will cost.
 - The Trainer's loss lines every 5 steps.
 
@@ -600,7 +600,7 @@ Time per page roughly doubles: the sequence is twice as long and attention cost 
 
 `ml.g6e.xlarge` (one L40S, 48 GB) costs $2.61/h, 1.85x the price of `ml.g5.xlarge`, and runs this workload roughly 2.5–3x faster. It also has twice the GPU memory, so `batch_size` can be 2 or 4 instead of 1, which uses the GPU more efficiently.
 
-Using the Step 0 "The run" table, estimate the cost of the class job on `ml.g6e.xlarge`. Then do the same for the homework run (21 min of training, 13 min of evaluation, 10 min of startup on the g5). Which phase does *not* get faster, and when does the faster instance actually save money?
+Using the Step 0 "The run" table, estimate the cost of the class job on `ml.g6e.xlarge`. Then do the same for the homework run (21 min of training, 13 min of evaluation, 10 min of startup on the g5). Which phase does *not* get faster, and when does the faster instance save money?
 
 :::::::::::::::::::::::: solution
 
@@ -608,7 +608,7 @@ Startup (~10 min, $0.44 at $2.61/h) does not speed up: the container pull and th
 
 The homework run on the g5 is 21 + 13 + 10 = 44 minutes, about $1.03. On the g6e at 2.5–3x: ~8 minutes of training, ~5 of evaluation, the same 10 of startup, about 23 minutes and ~$1.00. Break-even, at this size. The g6e only wins once training dominates startup: at four epochs, or at 2 megapixels, or on a thousand pages, the g5 bill grows linearly while the g6e bill grows at a third of the slope, and then the faster card is cheaper per run.
 
-The lesson is that the hourly rate is the wrong thing to compare; the cost per run is what matters, and the fixed overhead is a larger share of it on faster hardware. The catch is quotas: the account needs a service quota for `ml.g6e.xlarge` training jobs, and those often default to zero.
+The hourly rate is the wrong thing to compare; the cost per run is what matters, and the fixed overhead is a larger share of it on faster hardware. The catch is quotas: the account needs a service quota for `ml.g6e.xlarge` training jobs, and those often default to zero.
 
 :::::::::::::::::::::::::::::::::
 
