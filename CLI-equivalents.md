@@ -143,7 +143,7 @@ cat > train-xgboost.json <<'JSON'
   "ResourceConfig": { "InstanceType": "ml.m5.large", "InstanceCount": 1, "VolumeSizeInGB": 10 },
   "StoppingCondition": { "MaxRuntimeInSeconds": 1200 },
   "Tags": [
-    { "Key": "Project", "Value": "<team name>" },
+    { "Key": "Project", "Value": "<challenge name>" },
     { "Key": "Name",    "Value": "<your name>" },
     { "Key": "Purpose", "Value": "train_XGBoost_cli" }
   ]

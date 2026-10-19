@@ -353,7 +353,7 @@ As in every episode: tags do not propagate from the notebook to the jobs it laun
 
 ```python
 name = "John Doe"        # replace with your name
-project = "sinkorswim"   # replace with your team name
+project = "sinkorswim"   # replace with your challenge name
 
 def make_job_tags(purpose: str):
     return [
