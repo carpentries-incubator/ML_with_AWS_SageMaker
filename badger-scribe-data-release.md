@@ -55,22 +55,9 @@ documentation are MIT licensed, © 2026 ML+X, University of Wisconsin–Madison.
 Not for redistribution or commercial use; do not crawl the UWDC catalogs.
 ```
 
-## Staging the release in the shared bucket (before each term)
+## Staging the release in the shared bucket
 
-Students read the data from a shared read-only bucket; nothing is downloaded from GitHub during class. From any machine with the AWS CLI (CloudShell works):
-
-```bash
-V=1
-R=https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/releases/download/badger-scribe-data-v$V
-mkdir -p badger-scribe && cd badger-scribe
-for a in labels images-train images-test; do
-  curl -L -o $a.zip $R/badger-scribe-v$V-$a.zip && unzip -q -o $a.zip && rm $a.zip
-done
-cd ..
-aws s3 sync badger-scribe/ s3://<shared-bucket>/badger-scribe/
-```
-
-Then attach the read-only bucket policy from the fine-tuning cost page, and add your full fine-tune outputs under `badger-scribe/instructor/full-run/`.
+Done once per term together with the WattBot data; the commands and the read-only bucket policy are on the *Shared data bucket: staging before each term* page.
 
 ## Self-paced learners
 

@@ -66,7 +66,8 @@ session = sagemaker.Session()
 region = session.boto_region_name
 role = get_execution_role()
 
-bucket_name = "chris-rag-2"          # reuse your bucket from the Bedrock episode
+shared_bucket = "ml-marathon-shared"   # <-- EDIT ME: read-only inputs, from your instructor
+bucket_name = "sinkorswim-doejohn"     # <-- EDIT ME: your own bucket (chunks in, outputs out)
 # bucket_region = "us-east-1"
 s3_client = boto3.client("s3", region_name=region)
 
@@ -84,7 +85,7 @@ print("Bucket:", bucket_name)
 
 ## Step 1 – Load WattBot metadata and training questions
 
-We reuse the same `metadata.csv` and `train_QA.csv` files from the earlier RAG episodes. If they are not already on the notebook file system, we download them from S3.
+We reuse the same `metadata.csv`, `train_QA.csv` and `corpus.zip` from the earlier RAG episodes, read from the shared bucket. If they are not already on the notebook file system, we download them.
 
 
 
@@ -106,11 +107,11 @@ train_qa_path = os.path.join(local_data_dir, "train_QA.csv")
 corpus_path = os.path.join(corpus_dir, "corpus.zip")
 
 if not os.path.exists(metadata_path):
-    s3_client.download_file(bucket_name, "metadata.csv", metadata_path)
+    s3_client.download_file(shared_bucket, "wattbot/metadata.csv", metadata_path)
 if not os.path.exists(train_qa_path):
-    s3_client.download_file(bucket_name, "train_QA.csv", train_qa_path)
+    s3_client.download_file(shared_bucket, "wattbot/train_QA.csv", train_qa_path)
 if not os.path.exists(corpus_path):
-    s3_client.download_file(bucket_name, "corpus.zip", corpus_path)
+    s3_client.download_file(shared_bucket, "wattbot/corpus.zip", corpus_path)
 
 metadata_df = smart_read_csv(metadata_path)
 train_df = smart_read_csv(train_qa_path)
@@ -140,10 +141,10 @@ corpus_dir
 For our processing job, we'll reuse the same chunks generated in the Bedrock episode. The code below just verifies you have this file available in S3 (for calling from the processing job).
 
 ```python
-# load chunks from s3
-chunks_s3_key = 'chunks.jsonl'
+# load chunks from YOUR bucket (written by the Bedrock episode)
+chunks_s3_key = 'wattbot/chunks.jsonl'
 chunks_s3_uri = f"s3://{bucket_name}/{chunks_s3_key}"
-local_chunks_path = os.path.join(local_data_dir, chunks_s3_key)
+local_chunks_path = os.path.join(local_data_dir, "chunks.jsonl")
 if not os.path.exists(local_chunks_path):
     s3_client.download_file(bucket_name, chunks_s3_key, local_chunks_path)
 with open(local_chunks_path, "r", encoding="utf-8") as f:
@@ -207,7 +208,7 @@ def make_job_tags(purpose: str):
 embedding_model_id = "thenlper/gte-large"
 script_path = "embedding_inference.py"
 
-emb_output_prefix = "embeddings"
+emb_output_prefix = "wattbot/embeddings"
 emb_output_path = f"s3://{bucket_name}/{emb_output_prefix}/"
 
 embedding_processor = HuggingFaceProcessor(
@@ -300,12 +301,12 @@ The job writes out `wattbot_solutions.csv` in the WattBot submission format.
 
 ```python
 
-# Upload CSVs so the job can read them
-train_qa_key = "train_QA.csv"
-metadata_key = "metadata.csv"
+# Inputs: the CSVs from the shared bucket, the embeddings from yours
+train_qa_key = "wattbot/train_QA.csv"
+metadata_key = "wattbot/metadata.csv"
 
-train_qa_s3 = f"s3://{bucket_name}/{train_qa_key}"
-metadata_s3 = f"s3://{bucket_name}/{metadata_key}"
+train_qa_s3 = f"s3://{shared_bucket}/{train_qa_key}"
+metadata_s3 = f"s3://{shared_bucket}/{metadata_key}"
 emb_output_s3 = f"s3://{bucket_name}/{emb_output_prefix}/embeddings.npy"
 
 print("train_QA:", train_qa_s3)
@@ -319,7 +320,7 @@ print("embeddings:", emb_output_s3)
 
 rag_script = "wattbot_rag_batch.py"
 
-rag_output_prefix = "solutions"
+rag_output_prefix = "wattbot/solutions"
 rag_output_path = f"s3://{bucket_name}/{rag_output_prefix}/"
 
 rag_processor = HuggingFaceProcessor(

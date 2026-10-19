@@ -15,7 +15,7 @@ exercises: 15
 ::::::::::::::::::::::::::::::::::::: objectives
 
 - Verify that our SageMaker notebook instance has a working GPU and compatible Python environment.
-- Reuse the WattBot metadata, questions, and `chunks.jsonl` that the Bedrock episode stored in S3.
+- Reuse the WattBot metadata and questions from the shared bucket, and the `chunks.jsonl` the Bedrock episode cached in your own bucket.
 - Implement a simple, explicit “from scratch” embedding pipeline with a self-hosted sentence-transformer, without relying on FAISS or production vector DBs.
 - Build a small retrieval helper that finds the most relevant chunks for a question using cosine similarity in embedding space.
 - Serve a 27B open-weight generator (Qwen3.8-27B in FP8, via vLLM) on the notebook's GPU and wire it to the retriever to produce WattBot-format answers (including `answer`, `ref_id`, `ref_url`, and `supporting_materials`).
@@ -77,7 +77,7 @@ In this episode we rerun the [WattBot 2025](https://www.kaggle.com/competitions/
 In this episode we will:
 
 1. **Reuse the WattBot data you prepared in the Bedrock episode.**
-   - Pull `train_QA.csv`, `metadata.csv`, and the cached `chunks.jsonl` from your S3 bucket.
+   - Pull `train_QA.csv` and `metadata.csv` from the shared bucket and the cached `chunks.jsonl` from your own.
 2. **Implement the model steps explicitly in code.**
    - Embed chunks with a sentence-transformer (`thenlper/gte-large`) running on the notebook's GPU.
    - Implement cosine-similarity search over the embedding matrix.
@@ -99,7 +99,7 @@ For this episode you need a notebook instance with a GPU that can hold the FP8 2
 
 See [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for further guidance. This instance bills by the hour from the moment it starts, whether or not it is doing anything: **stop it when you leave**, and **delete it** when the episode is over.
 
-We reuse the S3 bucket from the Bedrock episode, which should already contain `metadata.csv`, `train_QA.csv`, `corpus.zip`, and `chunks.jsonl`. If you skipped that episode, go back and run its setup and chunking steps first. Your notebook instance carries the tags you gave it when you created it and the bucket carries its own tags, so in this episode those two resources are the only things being billed.
+We reuse the same two buckets as the Bedrock episode: the shared bucket for `metadata.csv` and `train_QA.csv`, and your own bucket for the `wattbot/chunks.jsonl` you cached there. If you skipped that episode, go back and run its chunking step first. Your notebook instance carries the tags you gave it when you created it and your bucket carries its own tags, so in this episode those two resources are the only things being billed.
 
 
 ###  Verify GPU and basic environment
@@ -157,8 +157,8 @@ def download_s3_object(bucket: str, key: str, local_path: str) -> None:
 
 
 ```python
-# TODO: update this to your bucket name
-bucket_name = "chris-rag"  # <-- EDIT ME
+shared_bucket = "ml-marathon-shared"   # <-- EDIT ME: read-only inputs, from your instructor
+bucket_name = "sinkorswim-doejohn"     # <-- EDIT ME: your own bucket (chunks live here)
 
 # Local working directory in the notebook instance
 local_data_dir = "./data"
@@ -169,15 +169,15 @@ print("Local data dir:", local_data_dir)
 
 
 ```python
-# Download metadata.csv and train_QA.csv
-metadata_key = "metadata.csv"
-train_qa_key = "train_QA.csv"
+# Download metadata.csv and train_QA.csv from the shared bucket
+metadata_key = "wattbot/metadata.csv"
+train_qa_key = "wattbot/train_QA.csv"
 
-metadata_path = os.path.join(local_data_dir, metadata_key)
-train_qa_path = os.path.join(local_data_dir, train_qa_key)
+metadata_path = os.path.join(local_data_dir, "metadata.csv")
+train_qa_path = os.path.join(local_data_dir, "train_QA.csv")
 
-download_s3_object(bucket_name, metadata_key, metadata_path)
-download_s3_object(bucket_name, train_qa_key, train_qa_path)
+download_s3_object(shared_bucket, metadata_key, metadata_path)
+download_s3_object(shared_bucket, train_qa_key, train_qa_path)
 
 
 
@@ -245,8 +245,8 @@ In the Bedrock episode we turned every PDF into page-level records, split those 
 
 
 ```python
-chunks_s3_key = "chunks.jsonl"
-chunks_jsonl_path = os.path.join(local_data_dir, chunks_s3_key)
+chunks_s3_key = "wattbot/chunks.jsonl"          # in YOUR bucket, written by the Bedrock episode
+chunks_jsonl_path = os.path.join(local_data_dir, "chunks.jsonl")
 
 def load_chunked_docs_jsonl(path):
     with open(path, "r", encoding="utf-8") as f:

@@ -28,7 +28,7 @@ Assumptions behind the training lines: CHURRO-3B in bf16 with LoRA rank 16, grad
 
 ## What the class spends
 
-| Scenario | Per student | 50 students |
+| Scenario | Per student | 50 students (double for 100) |
 |---|---|---|
 | In class, one clean pass each (mini job + Exercise 1) | $1.55 | $80 |
 | In class, realistic (one extra relaunch each) | ~$2.20 | ~$110 |
@@ -56,10 +56,10 @@ If the mini jobs are still queueing at 0:45 (capacity), move Step 3 forward: the
 
 **Service quotas.** This is the item most likely to sink the session. In Service Quotas → Amazon SageMaker, per region:
 
-- `ml.g5.xlarge for training job usage`: at least the number of students launching at once. Request **60**.
-- `ml.g5.xlarge for processing job usage`: only needed for the homework. Request **20**; the two jobs per student will not all run at once.
+- `ml.g5.xlarge for training job usage`: at least the number of students launching at once. Request **100**.
+- `ml.g5.xlarge for processing job usage`: only needed for the homework, where each student launches two jobs at once. Request **200**.
 - `Maximum number of instances across all training jobs`: check it is not lower than the above.
-- If you want `ml.g6e.xlarge` for Exercise 2, request 10–20 of those too.
+- If you want `ml.g6e.xlarge` for Exercise 2, request 100 of those too.
 
 New accounts often have these at 0 to 4. Quota increases for GPU instances can take days and sometimes a back-and-forth with support, so file them **three to four weeks** before class.
 
@@ -73,40 +73,9 @@ New accounts often have these at 0 to 4. Quota increases for GPU instances can t
 
 ## Before class
 
-### 1. Stage the data in a shared read-only bucket
+### 1. Stage the data in the shared read-only bucket
 
-Students do not create a bucket or upload anything for this episode, and nobody needs a Kaggle account. The data lives as a release on the lesson repository (see the *Badger Scribe data: publishing a release* page for how to publish a new version and the exact staging commands). Stage it once per term so the bucket has this layout:
-
-- `badger-scribe/train.csv`, `test.csv`, `metadata.csv`, `metric.py`, `sample_submission.csv`
-- `badger-scribe/images/<page_id>.jpg`
-
-Then attach a bucket policy that lets the students' execution role read it. This mirrors the policy from the S3 episode, read-only (edit the bucket name and the account/role ARNs to match yours):
-
-```json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": {
-                "AWS": [
-                    "arn:aws:iam::183295408236:role/ml-sagemaker-use"
-                ]
-            },
-            "Action": [
-                "s3:GetObject",
-                "s3:ListBucket"
-            ],
-            "Resource": [
-                "arn:aws:s3:::ml-marathon-shared",
-                "arn:aws:s3:::ml-marathon-shared/*"
-            ]
-        }
-    ]
-}
-```
-
-`s3:ListBucket` is required: the training job's `train` channel lists the prefix before downloading it. S3-to-SageMaker transfer within a region is free, and 50 jobs each copying 2 GB is not a concern.
+Students do not create a bucket or upload anything for this episode, and nobody needs a Kaggle account. The data lives as a release on the lesson repository and is staged once per term under `badger-scribe/` in the shared bucket, next to the WattBot data. The bucket policy, layout and exact commands are on the *Shared data bucket: staging before each term* page.
 
 ### 2. Run the full fine-tune yourself and stage its output
 

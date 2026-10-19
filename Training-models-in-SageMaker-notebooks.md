@@ -54,7 +54,7 @@ print(f'role = {role}')
 s3 = boto3.client('s3')
 
 # Define the S3 bucket that we will load from
-bucket_name = 'sinkorswim-doejohn-titanic'  # replace with your S3 bucket name
+bucket_name = 'sinkorswim-doejohn'  # replace with your S3 bucket name
 
 # Define train/test filenames
 train_filename = 'titanic_train.csv'

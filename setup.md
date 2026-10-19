@@ -23,8 +23,11 @@ There are two ways to get access to AWS for this lesson. Please wait for a pre-w
 #### Option 1) Shared Account
 If you are attending this lesson as part of the Machine Learning Marathon or Research Bazaar, the instructors will provide a shared AWS account for all attendees. You do not need to set up your own AWS account. What to expect:
 
-* Before the workshop, you will receive an email invitation from the instructor with access details for the shared AWS account.
-* During the lesson, you will log in using the credentials provided in the email.
+* Before the workshop, the instructor adds you to the shared account and emails you a **sign-in link**. It opens the AWS console directly in the workshop account and role after you sign in with your university login (UW–Madison NetID for the ML Marathon). Bookmark it; it is the link you will use every session. The link is sent by email rather than posted here on purpose: treat it like any other sign-in page and only use the one your instructor sent.
+* **Verify your access before the workshop** (two minutes, and it is much easier to fix beforehand than on the day):
+  1. Open the link and sign in. If you see a "no access" or "not assigned" message, email the instructor with your username; you have not been added yet.
+  2. Check the top-right of the console: the account name and the region should be the ones your instructor named in the email. If the region shows anything else, switch it; everything in the workshop lives in one region.
+  3. Type **SageMaker** in the search bar and open **Amazon SageMaker AI**. If the page loads without an error banner, you are set.
 * This setup ensures that all participants have the same environment and eliminates concerns about unexpected costs for attendees.
 * These shared AWS credits should not be wasted, as we repurpose them for additional training events each year.
   * Attendees are expected to **stick to the lesson materials** to ensure expensive pipelines (e.g., training/tuning LLMs) do not lead to high costs and wasted credits.
@@ -54,7 +57,7 @@ For this workshop, you will need the Titanic dataset, which can be used to train
 
 In the first episode, you will create an S3 bucket and upload this data to use with SageMaker.
 
-The later episodes use two more datasets, and you do **not** need to download them now: the WattBot documents (RAG episodes) come from a zip in the lesson repository, and the Badger Scribe handwriting data (fine-tuning episode) is published as a [release on the lesson repository](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/releases) that the instructors stage in a shared bucket. No Kaggle account is required for any part of the workshop.
+The later episodes use two more datasets, and you do **not** need to download them: the WattBot papers (RAG episodes) and the Badger Scribe handwriting data (fine-tuning episode, published as a [release on the lesson repository](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/releases)) are staged by the instructors in a shared, read-only bucket. You create one bucket of your own in the S3 episode and use it for the whole workshop. No Kaggle account is required for any part of the workshop.
 
 ### 4. Get Access To Workshop Code (Fork GitHub Repo)
 

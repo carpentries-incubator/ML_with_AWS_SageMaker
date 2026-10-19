@@ -14,7 +14,7 @@ exercises: 20
 
 ::::::::::::::::::::::::::::::::::::: objectives
 
-- Set up an S3 bucket with the WattBot metadata, questions, and PDF corpus, and tag it for cost tracking.
+- Read the WattBot metadata, questions and PDF corpus from the shared bucket, and cache what you derive from them (`chunks.jsonl`) in your own bucket for the later episodes.
 - Convert PDFs into page-level records and overlapping text chunks, and cache them as `chunks.jsonl` on S3 for reuse in later episodes.
 - Create tagged application inference profiles so that every Bedrock call is attributed to your project.
 - Embed chunks with Amazon Titan Text Embeddings and retrieve relevant context with cosine similarity.
@@ -27,7 +27,7 @@ This is the first hands-on RAG episode, and it starts where the overview told yo
 - an **Amazon Titan Text Embeddings V2** model to turn WattBot chunks into vectors, and  
 - an **Anthropic Claude** model hosted on Bedrock to generate answers and explanations.
 
-We also do the corpus preparation here: download the WattBot PDFs, split them into pages and overlapping
+We also do the corpus preparation here: unpack the WattBot PDF corpus, split it into pages and overlapping
 chunks, and cache the chunks on S3. The two episodes that follow reuse those chunks and run the same
 retrieval, evaluation, and scoring logic on self-hosted models, so you can compare cost, latency, and
 complexity directly.
@@ -88,77 +88,14 @@ For this episode you need a SageMaker notebook instance, but **not a GPU one**. 
 See [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for further guidance on instance types.
 
 
-### Step 1 – Download `data.zip` locally
+### Two buckets, no uploads
 
-We’ll use the **WattBot 2025** dataset. Download the workshop data archive to your laptop or desktop:
+This episode reads from two buckets and you create neither of them here:
 
-- Open this link in your browser: https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/data/data.zip
-- Save `data.zip` somewhere you can find it easily and unzip the folder contents
+- **The shared bucket** (your instructor gives you its name) holds the WattBot inputs under `wattbot/`: `metadata.csv` (the index of papers), `train_QA.csv` (labelled questions and answers), and `corpus.zip` (the PDFs). It is read-only and there is one copy for the whole class.
+- **Your bucket** from the S3 episode (`teamname-yourname`) is where this episode writes what it derives, under a `wattbot/` prefix: the chunked text (`chunks.jsonl`), and in later episodes embeddings and predictions. Its tags cover its storage cost; your notebook instance carries the tags you gave it when you created it, and in this episode those two resources plus the per-token Bedrock calls (tagged through an inference profile, see "Cost tracking" below) are the only things being billed.
 
-This archive should include a `data/wattbot/` folder containing:
-
-- `metadata.csv` – index of all WattBot papers.
-- `train_QA.csv` – labeled questions + ground truth answers.
-
-### Step 2 – Create a WattBot S3 bucket
-
-In the AWS console:
-
-1. Go to **S3**.
-2. Create a new bucket named something like:  
-   `teamname-yourname-wattbot`
-3. Keep **Block all public access** enabled.
-4. Add tags so we can track costs:  
-   - `Project = your-team-name`  
-   - `Name = your-name`  
-   - `Purpose = RAG-demo`
-
-   These tags cover the bucket's storage costs only. Your notebook instance carries the tags you gave it when you created it, and in this episode those two resources are the only things being billed. Bedrock calls are tagged separately, through an inference profile (see "Cost tracking" below), and the SageMaker jobs in later episodes each need their own tags as well.
-5. Once the bucket is created, you'll be brought to a page that shows all of your current buckets (and those on our shared account). We'll have to edit our bucket's policy to allow ourselves proper access to any files stored there (e.g., read from bucket, write to bucket). To set these permissions...
-
-a. Click on the name of your bucket to bring up additional options and settings.
-   b. Click the Permissions tab
-   c. Scroll down to Bucket policy and click Edit. Paste the following policy, editing the bucket name "sinkorswim-doejohn-wattbot" to reflect your bucket's nameAs we did in the "setting up S3 episode, edit your bucket's policy to include the following:
-
-```json
-{
-	"Version": "2012-10-17",
-	"Statement": [
-		{
-			"Effect": "Allow",
-			"Principal": {
-			    "AWS": [
-			        "arn:aws:iam::183295408236:role/ml-sagemaker-use",
-			        "arn:aws:iam::183295408236:role/ml-sagemaker-bedrock-use"
-		        ]
-			},
-			"Action": [
-				"s3:GetObject",
-				"s3:PutObject",
-				"s3:DeleteObject",
-				"s3:ListMultipartUploadParts"
-			],
-			"Resource": [
-				"arn:aws:s3:::sinkorswim-chrisendemann-titanic",
-				"arn:aws:s3:::sinkorswim-chrisendemann-titanic/*"
-			]
-		}
-	]
-}
-```
-
-### Step 3 – Upload the WattBot files to S3
-
-1. In your new bucket, click **Upload**.
-2. Drag the `data/wattbot/` folder contents from `data.zip` into the upload dialog.
-3. Upload it so that your bucket contains paths like:
-
-   - `metadata.csv`
-   - `train_QA.csv`
-
-We’ll pull these files from S3 into the notebook in the next steps.
-
-
+If you are working through the lesson on your own, stage the shared files yourself: `metadata.csv` and `train_QA.csv` are in `data/data.zip` in the lesson repository, `corpus.zip` is built by `scripts/build_wattbot_corpus.py`, and `instructors/shared-data-bucket.md` has the commands.
 
 ```python
 import os
@@ -185,11 +122,15 @@ region = session.boto_region_name
 base_generation_model_id = "deepseek.v3-v1:0"
 base_embedding_model_id = "amazon.titan-embed-text-v2:0"
 
-# S3 bucket you created above, and the keys we will read and write there.
-bucket_name = "chris-rag"  # <-- change to your bucket
-chunks_key = "chunks.jsonl"
-train_key = "train_QA.csv"
-metadata_key = "metadata.csv"
+# Buckets: the shared one is read-only (inputs); yours receives everything derived.
+shared_bucket = "ml-marathon-shared"   # <-- EDIT ME: the name your instructor gives you
+bucket_name = "sinkorswim-doejohn"     # <-- EDIT ME: your own bucket from the S3 episode
+
+# Keys in the shared bucket (inputs) and in your bucket (derived artifacts)
+metadata_key = "wattbot/metadata.csv"
+train_key = "wattbot/train_QA.csv"
+corpus_key = "wattbot/corpus.zip"
+chunks_key = "wattbot/chunks.jsonl"    # written to YOUR bucket at the end of chunking
 
 # Local working directory in the notebook instance
 local_data_dir = "./data"
@@ -204,7 +145,7 @@ bedrock = boto3.client("bedrock", region_name=region)                  # manage 
 
 ## Step 4 – Load the metadata and training questions
 
-Pull the two CSV files you uploaded to S3 into the notebook and inspect them.
+Pull the two CSV files from the shared bucket into the notebook and inspect them.
 
 
 ```python
@@ -213,11 +154,11 @@ import zipfile
 from typing import Tuple
 
 
-def download_from_s3(key: str, local_name: str) -> str:
-    """Download a file from S3 to local_data_dir and return the local path."""
+def download_from_s3(key: str, local_name: str, bucket: str = shared_bucket) -> str:
+    """Download a file from S3 (the shared bucket by default) to local_data_dir."""
     local_path = os.path.join(local_data_dir, local_name)
-    print(f"Downloading s3://{bucket_name}/{key} -> {local_path}")
-    s3.download_file(bucket_name, key, local_path)
+    print(f"Downloading s3://{bucket}/{key} -> {local_path}")
+    s3.download_file(bucket, key, local_path)
     return local_path
 
 
@@ -254,154 +195,29 @@ print("Number of metadata rows:", len(metadata_df))
 train_df.head(15)
 ```
 
-## Step 5 – Download all PDFs from `metadata.csv`
+## Step 5 – Get the PDF corpus
 
-Next we will...
-
-1. Read the `url` column from `metadata.csv`.
-2. Download each PDF via HTTP and save it locally as `<id>.pdf` under `pdfs/`.
-3. Report any failures (e.g., missing or malformed URLs) at the end.
-4. Upload zipped version of corpus to S3
-
-
-
+The corpus is the set of PDFs listed in `metadata.csv`, one per paper, named `<id>.pdf`. Downloading them from the publishers' sites is slow and unreliable when fifty notebooks do it at once, so the instructors did it once with `scripts/build_wattbot_corpus.py` and staged the result as `corpus.zip` in the shared bucket. We download that one file and unpack it.
 
 ```python
 PDF_DIR = os.path.join(local_data_dir, "pdfs")
 os.makedirs(PDF_DIR, exist_ok=True)
 
-def download_all_pdfs_from_urls(
-    metadata: pd.DataFrame,
-    local_pdf_dir: str,
-    url_col: str = "url",
-    id_col: str = "id",
-    timeout: int = 20,
-) -> None:
-    """Download all PDFs referenced in `metadata` using their URLs.
+corpus_path = download_from_s3(corpus_key, "corpus.zip")
+with zipfile.ZipFile(corpus_path, "r") as zf:
+    zf.extractall(PDF_DIR)
 
-    - Saves each file as `<id>.pdf` in `local_pdf_dir`.
-    - Strips whitespace from the URL (to avoid trailing spaces becoming `%20`).
-    - Skips rows with missing or non-HTTP URLs.
-    - Prints a short summary of any failures.
-    """
-    os.makedirs(local_pdf_dir, exist_ok=True)
-    errors: List[Tuple[str, str]] = []
-
-    print(f"Saving PDFs to: {local_pdf_dir}\n")
-
-    for _, row in metadata.iterrows():
-        doc_id = str(row[id_col]).strip()
-
-        raw_url = row.get(url_col, None)
-        if not isinstance(raw_url, str):
-            errors.append((doc_id, "URL is not a string"))
-            continue
-
-        pdf_url = raw_url.strip()  # important: strip trailing whitespace
-        if not pdf_url.startswith("http"):
-            errors.append((doc_id, f"Invalid URL: {pdf_url!r}"))
-            continue
-
-        local_path = os.path.join(local_pdf_dir, f"{doc_id}.pdf")
-
-        try:
-            print(f"Downloading {doc_id} from {pdf_url} ...")
-            resp = requests.get(pdf_url, timeout=timeout, allow_redirects=True)
-            resp.raise_for_status()
-
-            content_type = resp.headers.get("Content-Type", "")
-
-            if "pdf" not in content_type.lower() and not pdf_url.lower().endswith(".pdf"):
-                print(f"  Warning: Content-Type for {doc_id} does not look like PDF ({content_type})")
-
-            with open(local_path, "wb") as f:
-                f.write(resp.content)
-
-        except Exception as e:
-            print(f"  -> FAILED for {doc_id}: {e}")
-            errors.append((doc_id, str(e)))
-
-    if errors:
-        print("\nSome PDFs could not be downloaded:")
-        for doc_id, err in errors:
-            print(f"  {doc_id}: {err}")
-    else:
-        print("\nAll PDFs downloaded successfully!")
-
-
-download_all_pdfs_from_urls(
-    metadata_df,
-    PDF_DIR,
-    url_col="url",
-    id_col="id",
-    timeout=20,
-)
-
-len(os.listdir(PDF_DIR))
+pdf_files = sorted(f for f in os.listdir(PDF_DIR) if f.lower().endswith(".pdf"))
+print(f"{len(pdf_files)} PDFs in {PDF_DIR}; metadata lists {len(metadata_df)} papers")
 ```
 
-### Zip all PDFs and upload to S3
+::::::::::::::::::::::::::::::::::::: callout
 
-Once we have all PDFs locally, it can be convenient and efficient to:
+### Where the corpus came from
 
-1. Zip them into a single file (e.g., `wattbot_pdfs.zip`).  
-2. Upload that ZIP archive to an S3 bucket, such as `s3://<your-wattbot-bucket>/data/wattbot/wattbot_pdfs.zip`.
+`metadata.csv` has a `url` column pointing at each paper. `scripts/build_wattbot_corpus.py` in the lesson repository walks that column, downloads every PDF, and zips them; it reports any URL that failed so the instructor can decide what to do about it. If you are working on your own, run it once and upload the zip to your bucket under `wattbot/corpus.zip`. That is the whole difference between "the data" and "a copy of the data": the corpus is built once and read many times.
 
-We’ll include a short code example here, but feel free to skip this during the workshop if time is tight.
-
-
-
-```python
-import os
-import zipfile
-import boto3
-
-def zip_and_upload_pdfs(
-    local_pdf_dir: str,
-    bucket: str,
-    zip_name: str = "corpus.zip"
-) -> str:
-    """
-    Zips all PDFs in local_pdf_dir and uploads the ZIP file to:
-        s3://<bucket>/<prefix>/<zip_name>
-
-    Returns the full S3 URI of the uploaded zip file.
-    """
-
-    # Ensure directory exists
-    if not os.path.exists(local_pdf_dir):
-        raise ValueError(f"Directory not found: {local_pdf_dir}")
-
-    # Path for the ZIP file
-    zip_path = os.path.join(local_pdf_dir, zip_name)
-
-    # Create ZIP archive
-    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-        for fname in os.listdir(local_pdf_dir):
-            if fname.lower().endswith(".pdf"):
-                fpath = os.path.join(local_pdf_dir, fname)
-                zipf.write(fpath, arcname=fname)
-                print(f"Added to ZIP: {fname}")
-
-    print(f"\nZIP created: {zip_path}")
-
-    # Upload to S3
-    s3_client = boto3.client("s3")
-    s3_key = f"{zip_name}"
-
-    print(f"Uploading to s3://{bucket}/{s3_key} ...")
-    s3_client.upload_file(zip_path, bucket, s3_key)
-    print("Upload complete.")
-
-    return f"s3://{bucket}/{s3_key}"
-
-
-zip_s3_uri = zip_and_upload_pdfs(
-    local_pdf_dir=PDF_DIR,
-    bucket=bucket_name
-)
-
-```
+::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## Step 6 – Turn PDFs into page-level “documents”
 
@@ -616,9 +432,9 @@ chunked_docs[0] if chunked_docs else None
 ```
 
 ```python
-# Upload to S3 so the next two episodes (and future runs) can reuse the chunks
-# without repeating the PDF download and chunking steps.
-print(f"Uploading chunked docs to s3 ...")
+# Upload to YOUR bucket so the next two episodes (and future runs) can reuse the
+# chunks without repeating the unpacking and chunking steps.
+print(f"Uploading chunked docs to s3://{bucket_name}/{chunks_key} ...")
 s3.upload_file(chunks_jsonl_path, bucket_name, chunks_key)
 print("Upload complete.")
 ```

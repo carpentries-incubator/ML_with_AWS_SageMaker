@@ -141,9 +141,9 @@ Compare the classic mistake: doing all of this interactively on a `ml.g5.xlarge`
 
 Students never download the data themselves; four things have to be in place before the session. Each is written out in the instructor pages.
 
-1. **Stage the data in a shared read-only bucket** from the lesson's data release (`badger-scribe-data-v1`): about ten minutes from CloudShell, commands in *Badger Scribe data: publishing a release*. Attach the read-only bucket policy from *Fine-tuning episode: cost, capacity and setup* so the student execution role can `GetObject` and `ListBucket`. The bucket must survive the end-of-workshop cleanup, or be recreated from the release next term.
+1. **Stage the data in the shared read-only bucket** from the lesson's data release (`badger-scribe-data-v1`): about ten minutes from CloudShell, commands and the read-only bucket policy in *Shared data bucket: staging before each term* (the same bucket holds the WattBot data for the RAG episodes). The bucket must survive the end-of-workshop cleanup, or be recreated from the release next term.
 2. **Run the full fine-tune once** (the estimator in the Homework section, all 251 training pages, `eval_pages` 40) and copy `train_summary.json`, `eval_before.csv` and `eval_after.csv` from its `model.tar.gz` to `badger-scribe/instructor/full-run/` in the shared bucket. Step 3 compares against these. Replace the time estimates in Step 0 with the job's real `BillableTimeInSeconds`.
-3. **Quotas**: `ml.g5.xlarge for training job usage` at least the class size (request 60). Default is often 0 to 4 and increases take days; file three to four weeks ahead. Full list in *Account preparation checklist*.
+3. **Quotas**: `ml.g5.xlarge for training job usage` at least the class size (request 100). Default is often 0 to 4 and increases take days; file three to four weeks ahead. Full list in *Account preparation checklist*.
 4. **Tell students the bucket name** at the start; it is the `shared_bucket` value in the first code cell.
 
 Fallback instance if g5 capacity is short: `ml.g6.xlarge` (L4, 24 GB, $1.13/h).
@@ -158,7 +158,7 @@ There is no data upload in this episode. The competition data is published as a 
 - `s3://<shared-bucket>/badger-scribe/images/<page_id>.jpg`: train and test pages together, about 2 GB
 - `s3://<shared-bucket>/badger-scribe/instructor/full-run/`: the output of a full fine-tune your instructor ran before class, for comparison in Step 3
 
-The training job reads the images straight from that bucket; the only files your notebook downloads are the small CSVs. Outputs go to the bucket you created in the Bedrock episode.
+The training job reads the images straight from that bucket; the only files your notebook downloads are the small CSVs. Outputs go to your own bucket from the S3 episode, under `badger-scribe/`.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
@@ -197,7 +197,7 @@ role = get_execution_role()
 s3_client = boto3.client("s3", region_name=region)
 
 shared_bucket = "ml-marathon-shared"   # <-- EDIT ME: read-only bucket with the competition data
-bucket_name = "chris-rag-2"            # <-- EDIT ME: your own bucket for outputs
+bucket_name = "sinkorswim-doejohn"     # <-- EDIT ME: your own bucket from the S3 episode
 username = "doejohn"                   # <-- EDIT ME: lowercase letters/digits only; used in job names
 
 data_prefix = "badger-scribe"

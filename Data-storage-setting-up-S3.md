@@ -83,7 +83,7 @@ In order to upload our titanic dataset to an S3 bucket on AWS, we'll follow the 
 - Select **S3 - Scalable Storage in the Cloud**
 
 ##### 3. Create a new bucket
-- Click **Create Bucket** and enter a unique name, and note that bucket name must not contain uppercase characters. To easily find this bucket later in our shared AWS account, please use the following naming convention: `teamname-yourname-dataname` (e.g., sinkorswim-doejohn-titanic).
+- Click **Create Bucket** and enter a unique name, and note that bucket name must not contain uppercase characters. To easily find this bucket later in our shared AWS account, please use the following naming convention: `teamname-yourname` (e.g., sinkorswim-doejohn). **This is the only bucket you will create in the workshop.** Every later episode writes its outputs (trained models, embeddings, predictions) into this same bucket under its own prefix, such as `xgboost/`, `wattbot/` or `badger-scribe/`.
 - **Access Control (ACLs)**: Disable ACLs (recommended).  
 	- **What are ACLs?** Access Control Lists (ACLs) define fine-grained permissions at the object level, allowing you to grant specific users or AWS accounts access to individual files in your bucket.  
 	- **Why disable them?** AWS now recommends managing access through bucket policies and IAM roles, which offer better security and are easier to manage at scale. Unless you have a specific need for ACLs, disabling them is the best practice.
@@ -104,7 +104,7 @@ Once the bucket is created, you'll be brought to a page that shows all of your c
 
 1. Click on the name of your bucket to bring up additional options and settings.
 2. Click the Permissions tab
-3. Scroll down to Bucket policy and click Edit. Paste the following policy, **editing the bucket name "sinkorswim-doejohn-titanic"** to reflect your bucket's name
+3. Scroll down to Bucket policy and click Edit. Paste the following policy, **editing the bucket name "sinkorswim-doejohn"** to reflect your bucket's name and replacing `<account-id>` with the 12-digit AWS account ID shown at the top right of the console (your instructor will also give it to you)
 
 ```json
 {
@@ -114,8 +114,8 @@ Once the bucket is created, you'll be brought to a page that shows all of your c
 			"Effect": "Allow",
 			"Principal": {
 			    "AWS": [
-			        "arn:aws:iam::183295408236:role/ml-sagemaker-use",
-			        "arn:aws:iam::183295408236:role/ml-sagemaker-bedrock-use"
+			        "arn:aws:iam::<account-id>:role/ml-sagemaker-use",
+			        "arn:aws:iam::<account-id>:role/ml-sagemaker-bedrock-use"
 		        ]
 			},
 			"Action": [
@@ -125,8 +125,8 @@ Once the bucket is created, you'll be brought to a page that shows all of your c
 				"s3:ListMultipartUploadParts"
 			],
 			"Resource": [
-				"arn:aws:s3:::sinkorswim-chrisendemann-titanic",
-				"arn:aws:s3:::sinkorswim-chrisendemann-titanic/*"
+				"arn:aws:s3:::sinkorswim-doejohn",
+				"arn:aws:s3:::sinkorswim-doejohn/*"
 			]
 		}
 	]
@@ -135,7 +135,7 @@ Once the bucket is created, you'll be brought to a page that shows all of your c
 
 For workshop attendees, this policy grants the `ml-sagemaker-use` IAM role access to specific S3 bucket actions, ensuring they can use the bucket for reading, writing, deleting, and listing parts during multipart uploads. Attendees should apply this policy to their buckets to enable SageMaker to operate on stored data.
 
-The bucket you create here is for data *you* bring. Some later episodes (for example, the fine-tuning episode) instead read a larger dataset from a shared, read-only bucket that the instructors stage ahead of time, so you never upload it yourself; you only point your jobs at its S3 path.
+Two buckets appear in this workshop, and this is the only one you create. Your bucket holds the data *you* bring (the Titanic files, uploaded below) and everything the later episodes produce. The larger datasets for the RAG and fine-tuning episodes (a corpus of PDFs, hundreds of scanned letters) live in a **shared, read-only bucket** that the instructors stage before class: one copy for everyone, instead of fifty copies of the same files. You read from it and never upload to it; your instructor will give you its name.
 
 ::::::::::::::::::::::::::::::::::::: callout 
 
@@ -162,7 +162,7 @@ This setup ensures that your SageMaker operations will have the access needed wi
 - **Add Files** (`titanic_train.csv`, `titanic_test.csv`) and click **Upload** to complete.
 
 ##### 6. Take note of S3 URI for your data
-- After uploading a file to S3, click on the file to locate its **Object URI** (e.g., s3://doejohn-titanic-s3/titanic_train.csv). The Uniform Resource Identifier (URI) is a unique address that specifies the location of the file within S3. This URI is essential for referencing data in AWS services like SageMaker, where it will be used to load data for processing and model training.
+- After uploading a file to S3, click on the file to locate its **Object URI** (e.g., s3://sinkorswim-doejohn/titanic_train.csv). The Uniform Resource Identifier (URI) is a unique address that specifies the location of the file within S3. This URI is essential for referencing data in AWS services like SageMaker, where it will be used to load data for processing and model training.
 
 ## S3 bucket costs
 
