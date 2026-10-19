@@ -7,17 +7,17 @@ exercises: 15
 :::::::::::::::::::::::::::::::::::::: questions 
 
 - When should you consider using a GPU instance for training neural networks in SageMaker, and what are the benefits and limitations?
-- What does `instance_count=2` actually do to a training job, and what does real distributed training require?
+- How does SageMaker handle data parallelism and model parallelism, and which is suitable for typical neural network training?
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ::::::::::::::::::::::::::::::::::::: objectives
 
-- Preprocess the Titanic dataset for efficient training using PyTorch, and keep the fitted scaler so the test set can be transformed the same way later.
+- Preprocess the Titanic dataset for efficient training using PyTorch.
 - Save and upload training and validation data in `.npz` format to S3.
 - Understand the trade-offs between CPU and GPU training for smaller datasets.
-- Train a PyTorch model via SageMaker and compare instance types on time and cost.
-- Explain what `instance_count > 1` does without a distribution strategy, and what data parallelism and model parallelism need in order to help.
+- Deploy a PyTorch model to SageMaker and evaluate instance types for training performance.
+- Differentiate between data parallelism and model parallelism, and determine when each is appropriate in SageMaker.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -48,7 +48,7 @@ train_filename = 'titanic_train.csv'
 test_filename = 'titanic_test.csv'
 ```
 
-Create a SageMaker session to manage interactions with Amazon SageMaker, such as training jobs, model deployments, and data input/output. As before, the region comes from the notebook instance; never hard-code it.
+Create a SageMaker session to manage interactions with Amazon SageMaker, such as training jobs, model deployments, and data input/output. As before, the region comes from the notebook instance.
 
 ```python
 region = boto3.Session().region_name  # inherited from the notebook instance; do not hard-code a region
@@ -57,7 +57,7 @@ sagemaker_client = session.sagemaker_client
 print(f"region = {region}")
 ```
 
-We should also record our local instance information to report this information during testing. First, the usual cell: start from the instance root, clone the lesson repository if needed, and import the helpers.
+We should also record our local instance information to report this information during testing. First, let's make sure we're starting in the same location to access helper functions
 
 ```python
 %cd /home/ec2-user/SageMaker/
@@ -75,7 +75,7 @@ local_instance = local_instance_info['InstanceType']
 local_instance
 ```
 
-If you are starting from a fresh notebook instance, grab the Titanic CSVs from S3 again (harmless if they are already here).
+If you are starting from a fresh notebook instance, download the Titanic CSVs from S3 again.
 
 ```python
 s3.download_file(bucket_name, train_filename, train_filename)
@@ -109,7 +109,7 @@ When deploying a PyTorch model on SageMaker, it's helpful to prepare the input d
 In summary, saving the data in `.npz` files ensures a smooth workflow from data loading to model training in PyTorch, leveraging SageMaker's infrastructure for a more efficient, structured training process.
 :::::::::::::::::::::::::::::::::::::::
 
-We reuse the `preprocess_data()` function from the lesson's `scripts/train_nn.py` rather than re-typing the preprocessing here: the same function will later be applied to the test set, so train and test are guaranteed to be transformed identically. It returns the fitted `StandardScaler` for exactly that reason, and we save it with `joblib` so the next episode can load it. Fitting a new scaler on the test set would leak test-set statistics into the evaluation.
+We reuse the `preprocess_data()` function from the lesson's `scripts/train_nn.py` rather than re-typing the preprocessing here: the same function will later be applied to the test set, so train and test are transformed identically. It returns the fitted `StandardScaler`, and we save it with `joblib` so the next episode can load it.
 
 ```python
 import numpy as np
@@ -146,7 +146,7 @@ print("Files successfully uploaded to S3.")
 ```
 
 ## Testing on notebook instance
-You should always test code thoroughly before scaling up and using more resources. Here, we will test our script using a small number of epochs (100) just to verify our setup is correct. Note that this script trains on the full batch every epoch (one forward/backward pass over all 713 rows), so an epoch takes milliseconds.
+You should always test code thoroughly before scaling up and using more resources. Here, we will test our script using a small number of epochs (100) — just to verify our setup is correct.
 
 ```python
 import torch
@@ -161,9 +161,9 @@ print(f"Local training time: {t.time() - start_time:.2f} seconds, instance_type 
 ```
 
 ## Deploying PyTorch neural network via SageMaker
-Now that we have tested things locally, we can train with a larger number of epochs (1000) through the PyTorch estimator. Our notebook instance is an `ml.m5.large`, and we will use the same instance type for the training job so the comparison is apples to apples; the point of this first run is the managed workflow, not more compute.
+Now that we have tested things locally, we can try to train with a larger number of epochs (1000). We can do this easily by invoking the PyTorch estimator. Our notebook is currently configured to use ml.m5.large. We will use the same instance type with the below code (using our notebook as a controller). 
 
-**Should we use a GPU?** Since this dataset is fairly small, we don't necessarily need a GPU for training. Considering costs, the `ml.m5.large` is about $0.115/hour, while the cheapest GPU instance (`ml.g4dn.xlarge`) is about $0.74/hour. However, for larger datasets (> 1 GB) and models, we may want to consider a GPU if training time becomes cumbersome (see [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html)). We'll test that in the exercise below.
+**Should we use a GPU?**: Since this dataset is fairly small, we don't necessarily need a GPU for training. Considering costs, the m5.large is `$0.115/hour`, while the cheapest GPU instance (ml.g4dn.xlarge) is `$0.74/hour`. However, for larger datasets (> 1 GB) and models, we may want to consider a GPU if training time becomes cumbersome (see [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html)). We'll test that in the exercise below.
 
 #### Cost tracking
 As in the XGBoost episode, every training job needs its own tags: a job does not inherit the notebook instance's tags, and an untagged job is anonymous on the bill. Define them once here and pass `tags=job_tags` to every estimator below.
@@ -242,18 +242,29 @@ print(f"Runtime for training on SageMaker: {end - start:.2f} seconds, instance_t
 desc_cpu = job_cost_report(pytorch_estimator.latest_training_job.name, prices[instance_type])
 ```
 
-Notice how little of the wall-clock time was your script: for a job this small, almost all of the billable minutes are startup.
+For a job this small, almost all of the billable minutes are startup.
 
-#### How `train_nn.py` uses a GPU when one is present
-Using a GPU requires only minor changes in a training script, and `train_nn.py` already has them: it checks for GPU availability and moves the model and tensors to the GPU device if one is found.
+## Deploying PyTorch neural network via SageMaker with a GPU instance
+
+In this section, we'll implement the same procedure as above, but using a GPU-enabled instance for potentially faster training. While GPU instances are more expensive, they can be cost-effective for larger datasets or more complex models that require significant computational power.
+
+#### Selecting a GPU Instance
+For a small dataset like ours, we don't strictly need a GPU, but for larger datasets or more complex models, a GPU can reduce training time. Here, we'll select an `ml.g4dn.xlarge` instance, which provides a single GPU and costs approximately `$0.74/hour` (check [Instances for ML page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for detailed pricing).
+
+#### Code modifications for GPU use
+Using a GPU requires minor changes in your training script (`train_nn.py`). Specifically, you'll need to:
+1. Check for GPU availability in PyTorch.
+2. Move the model and tensors to the GPU device if available.
+
+#### Enabling PyTorch to use GPU in `train_nn.py`  
+
+The following code snippet enables GPU support in `train_nn.py`:
 
 ```text
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = TitanicNet().to(device)
 X_train, y_train = X_train.to(device), y_train.to(device)
 ```
-
-So the same script runs unchanged on a CPU or a GPU instance; all we change is `instance_type`.
 
 ::::::::::::::::::::::::::::::::::::::: challenge
 
@@ -318,20 +329,20 @@ A GPU pays off when the per-step work is large enough to keep it busy: bigger mo
 #### GPUs can be slow for small datasets/models
 This performance discrepancy might be due to the following factors:
 
-1. **Small dataset/model size**: When datasets and models are small, the overhead of transferring data between the CPU and GPU, as well as managing the GPU, can actually slow things down. For very small models and datasets, CPUs are often faster since there's minimal data to process.
+1. **Small dataset/model size**: When datasets and models are small, the overhead of transferring data between the CPU and GPU, as well as managing the GPU, can slow things down. For very small models and datasets, CPUs are often faster since there's minimal data to process.
 
 2. **GPU initialization overhead**: Every time a training job starts on a GPU, there's a small overhead for initializing CUDA libraries. For short jobs, this setup time can make the GPU appear slower overall.
 
-3. **Batch size**: GPUs perform best with larger batch sizes since they can process many data points in parallel. If the batch size is too small, the GPU is underutilized, leading to suboptimal performance.
+3. **Batch size**: GPUs perform best with larger batch sizes since they can process many data points in parallel. If the batch size is too small, the GPU is underutilized, leading to suboptimal performance. You may want to try increasing the batch size to see if this reduces training time.
 
-4. **Instance type**: The `ml.g4dn` series is the entry-level GPU family; an `ml.g5.xlarge` (A10G GPU) is the next step up when a model is genuinely GPU-bound. Neither helps a job that spends its time starting up.
+4. **Instance type**: Some GPU instances, like the `ml.g4dn` series, have less computational power than the larger `g5` series. They're better suited for inference or lightweight tasks rather than intense training, so a more powerful instance (e.g., `ml.g5.xlarge`) could help for larger tasks.
 
 If training time continues to be critical, sticking with a CPU instance may be the best approach for smaller datasets. For larger, more complex models and datasets, the GPU's advantages should become more apparent.
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-## When training takes too long: more instances?
+## Distributed Training for Neural Networks in SageMaker
 
-The previous episode gave the rule of thumb: upgrade the single instance first, and consider multiple instances only when the dataset no longer fits in one instance's memory (tens of GB or more) or a single-instance run takes longer than about 10 hours. The GPU exercise was Option 1. Let's now look honestly at Option 2, because the obvious thing to try, `instance_count=2`, does something different from what most people expect.
+The previous episode gave the rule of thumb: upgrade the single instance first, and consider multiple instances only when the dataset no longer fits in one instance's memory (tens of GB or more) or a single-instance run takes longer than about 10 hours. The GPU exercise was Option 1. Let's now look at Option 2, starting with what `instance_count=2` does.
 
 ### What `instance_count=2` does on its own
 
@@ -341,7 +352,7 @@ Setting `instance_count=2` on an estimator makes SageMaker start two instances a
 - `train_nn.py` has no distributed code, so each instance trains its own independent copy of the model on all of the data for all 1000 epochs, and each saves a model.
 - SageMaker bills `BillableTimeInSeconds x InstanceCount`.
 
-So without a distribution strategy, two instances means the same job twice, in parallel, at double the cost. Let's demonstrate that rather than take it on faith. Estimate first: about the same 4 minutes of wall-clock as the single-instance run, but billed for two instances, so about $0.02 on `ml.m5.large`.
+So without a distribution strategy, two instances means the same job twice, in parallel, at double the cost. Estimate first: about the same 4 minutes of wall-clock as the single-instance run, but billed for two instances, so about $0.02 on `ml.m5.large`.
 
 ```python
 instance_count = 2   # demonstration: NOT expected to be faster, and expected to cost double
@@ -379,9 +390,9 @@ print(f"Single-instance job billed {desc_cpu['BillableTimeInSeconds']/60:.1f} mi
 Look at the CloudWatch log for this job (SageMaker console, Training jobs, your job, View logs): there are two log streams, `algo-1` and `algo-2`, and each one prints all 1000 epochs. The wall-clock time is about the same as the single-instance run (slightly longer, if anything, because two instances have to be provisioned), and the billable minutes are double.
 
 ::::::::::::::::::::::::::::::::::::::: callout
-#### What real distributed training needs
+#### What distributed training needs
 
-To actually split the work across instances you need two things the demo above did not have:
+To split the work across instances you need two things the demo above did not have:
 
 - **Data parallelism** (the common case; each instance holds a full copy of the model and trains on a different slice of the data, exchanging gradients after every step). For PyTorch, pass `distribution={"torch_distributed": {"enabled": True}}` to the estimator *and* write the script for it: initialise a process group, wrap the model in `DistributedDataParallel`, and give each rank a different shard of the data (e.g. a `DistributedSampler`). SageMaker's own data-parallel library (`smdistributed.dataparallel`) is the same idea with a faster all-reduce on supported GPU instances.
 - **Model parallelism** (for models too large for one device's memory; the layers themselves are spread across devices). This is for large language models and the like, needs `smdistributed.modelparallel` or an equivalent library, and is well beyond what a tabular network needs.
@@ -393,11 +404,12 @@ Either way, the rule of thumb stands: a bigger single instance first, and multip
 
 ::::::::::::::::::::::::::::::::::::: keypoints
 
-- **Efficient data handling**: The `.npz` format is optimized for efficient loading, reducing I/O overhead and enabling batch compatibility for PyTorch's `DataLoader`. Save the fitted scaler alongside it so the test set can be transformed identically later.
+- **Efficient data handling**: The `.npz` format is optimized for efficient loading, reducing I/O overhead and enabling batch compatibility for PyTorch's `DataLoader`.
 - **Startup dominates small jobs**: Every SageMaker training job pays a few minutes of provisioning, container pull and data download; `job_cost_report()` shows how much of the bill that is.
-- **GPU training**: Beneficial for larger models or datasets, but for a tiny network the GPU sits idle while you pay ~6x the CPU rate; choose the instance to match the per-step work.
+- **GPU training**: While beneficial for larger models or datasets, GPUs may introduce overhead for smaller tasks; selecting the right instance type is critical for cost-efficiency.
+- **Data parallelism vs. model parallelism**: Data parallelism splits data across instances and synchronizes model weights, suitable for typical neural network tasks. Model parallelism, which divides model layers, is ideal for very large models that exceed memory capacity.
 - **`instance_count` alone is not distributed training**: Without `distribution=` on the estimator and distributed code in the script, `instance_count=2` runs the full script on the full data on each instance and bills twice.
-- **Data vs. model parallelism**: Data parallelism (DDP, each instance on a data shard, gradients all-reduced) is the usual tool when it is needed; model parallelism is for models that do not fit on one device.
+- **SageMaker configuration**: By adjusting instance counts and types, SageMaker supports scalable training setups. Starting with CPU training and scaling as needed with GPUs or distributed setups allows for performance optimization.
 - **Testing locally first**: Before deploying large-scale training in SageMaker, test locally with a smaller setup to ensure code correctness and efficient resource usage.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::

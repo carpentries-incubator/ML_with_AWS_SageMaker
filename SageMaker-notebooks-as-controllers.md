@@ -15,25 +15,28 @@ exercises: 10
 
 - Describe how to use SageMaker notebooks for ML workflows.
 - Set up a Jupyter notebook instance as a controller to manage compute tasks.
-- Explain the controller pattern: a cheap notebook launches jobs that run on separate instances and end on their own.
+- Use SageMaker SDK to launch training and tuning jobs on scalable instances.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-## What a SageMaker notebook instance is
-A **SageMaker notebook instance** is a virtual machine that AWS runs for you with JupyterLab already installed, a set of Python kernels that come with the AWS SDKs (`boto3` and the SageMaker Python SDK), and an IAM role attached that decides what the code running on it may do in your account. You create it from the console, open JupyterLab in a browser tab, and from then on it behaves like the Jupyter you already know. It is billed per second while it is running and nothing while it is stopped, and the files you keep under `/home/ec2-user/SageMaker/` survive a stop.
+## Setting up our notebook environment
+Amazon SageMaker provides a managed environment to simplify the process of building, training, and deploying machine learning models. In this episode, we'll set up a **SageMaker notebook instance**—a Jupyter notebook hosted on AWS for managing SageMaker workflows. 
+
+### What a SageMaker notebook instance is
+A **SageMaker notebook instance** is a virtual machine that AWS runs for you with JupyterLab already installed, a set of Python kernels that come with the AWS SDKs (`boto3` and the SageMaker Python SDK), and an IAM role attached that decides what the code running on it may do in your account. You create it from the console and open JupyterLab in a browser tab. It is billed per second while it is running and nothing while it is stopped, and the files you keep under `/home/ec2-user/SageMaker/` survive a stop.
 
 ### Why we work from a notebook instance in this lesson
-Nothing in the lesson *requires* it: the SageMaker SDK runs anywhere Python does. We use a notebook instance anyway, for reasons that matter in a classroom and in a research group alike:
+The SageMaker SDK runs anywhere Python does, so the lesson could be run from a laptop. We use a notebook instance for four reasons:
 
-- **Identity comes from the instance, not from a file on your machine.** The IAM role attached to the notebook is what authorizes every call it makes. Nobody installs the AWS CLI, configures credentials, or has an access key that can end up in a notebook, a shell history or a GitHub commit. For a shared account with a hundred people in it, that is the single biggest security simplification available.
-- **Everyone has the same environment.** The kernels, the SDK version and the paths are identical for every learner, so a cell that works for the instructor works for you. Package and path problems are the main thing that eats workshop time; this removes most of them.
+- **Identity comes from the instance, not from a file on your machine.** The IAM role attached to the notebook is what authorizes every call it makes. Nobody installs the AWS CLI, configures credentials, or has an access key that can end up in a notebook, a shell history or a GitHub commit.
+- **Everyone has the same environment.** The kernels, the SDK version and the paths are identical for every learner, so a cell that works for the instructor works for you.
 - **It is inside AWS.** Reading your S3 bucket from the instance is in-region, fast and free of transfer charges; the same reads from a laptop would be slower and billed as data leaving AWS.
-- **It is a resource like any other.** It has to be sized, tagged, started and, above all, stopped. Creating it is your first practice at the discipline that the whole lesson is about.
+- **It is a billed resource like any other.** It has to be sized, tagged, started and stopped.
 
-### The controller pattern
-The instance you create here will be small (`ml.t3.medium`: 2 vCPUs, 4 GB of memory, $0.05 per hour) and that is deliberate. The notebook never does the heavy computation. Its job is to be a **controller**: it holds your code and your notes, and it uses the SageMaker SDK to launch separate, more powerful instances for training, hyperparameter tuning and batch processing. Those instances start, run your script, write their results to S3, and shut themselves down. You pay for a GPU for the minutes a job needs it, not for the hours you spend thinking in between, and a mistake in a notebook cell cannot leave an expensive machine running: the expensive machine is a job, and jobs end.
+### Using the notebook as a controller
+In this setup, the notebook instance functions as a *controller* to manage more resource-intensive compute tasks. By selecting a minimal instance (e.g., `ml.t3.medium`: 2 vCPUs, 4 GB of memory, $0.05 per hour), you can perform lightweight operations while leveraging the **SageMaker Python SDK** to launch scalable compute instances for model training, batch processing, and hyperparameter tuning. Those instances start, run your script, write their results to S3, and shut themselves down. This approach minimizes costs while accessing the full power of SageMaker for demanding tasks.
 
-Every later episode uses the same instance. In this one we create it, open it, and learn to stop it.
+Every later episode uses the same instance.
 
 We'll follow these steps to create our first "SageMaker notebook instance".
 
@@ -44,7 +47,7 @@ We'll follow these steps to create our first "SageMaker notebook instance".
 
 #### 2. Create a new notebook instance
 - In the SageMaker left-side menu, click on **Notebook instances**, then click **Create notebook instance**.
-- **Notebook name**: Same convention as your bucket, with a purpose on the end: `challenge-lastnamefirstname-purpose`, all lowercase, e.g. `sinkorswim-doejohn-trainclassifier`. SageMaker allows letters, digits and hyphens (no spaces or underscores, up to 63 characters) and would accept capitals, but we keep everything lowercase so the bucket, the notebook and the tags all carry the same string and sort together in the console and on the bill. This name is also reused as the prefix of every training job you launch from the notebook, which is how you will find your jobs in a shared account.
+- **Notebook name**: To easily track this resource in our shared account, please use the following naming convention: `challenge-lastnamefirstname-purpose`, all lowercase (same convention as your bucket, with a purpose on the end). For example, `sinkorswim-doejohn-trainclassifier`. Can include hyphens, but not spaces. This name is also reused as the prefix of every training job you launch from the notebook.
 - **Instance type**: SageMaker notebooks run on AWS EC2 instances. The instance type determines the compute resources allocated to the notebook. Since our notebook will act as a **low-resource "controller"**, we'll select a small instance such as `ml.t3.medium` (2 vCPU, 4 GB RAM, $0.05/hour)  
   - This keeps costs low while allowing us to launch separate training/tuning jobs on more powerful instances when needed.  
   - For guidance on common instances for ML procedures, refer to our supplemental [Instances for ML webpage](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html).  
@@ -55,13 +58,13 @@ We'll follow these steps to create our first "SageMaker notebook instance".
    - **Encryption key (skip)**: While we won't use this feature for the workshop, it is possible to specify a KMS key for encrypting data at rest if needed. 
 - **Network (skip)**: Networking settings are optional. Configure them if you're working within a specific VPC or need network customization.
 - **Git repositories configuration (skip)**: You don't need to complete this configuration. Instead, we'll run a clone command from our notebook later to get our repo setup. This approach is a common strategy (allowing some flexiblity in which repo you use for the notebook).
-- **Tags (NOT OPTIONAL)**: Adding tags helps track and organize resources for billing and management. This is particularly useful when you need to break down expenses by project, task, or team. To help track costs on our shared account, add the same three keys you put on your bucket in the previous episode (type the keys exactly as shown; capitalization matters):
+- **Tags (NOT OPTIONAL)**: Adding tags helps track and organize resources for billing and management. This is particularly useful when you need to break down expenses by project, task, or team. To help track costs on our shared account, add exactly these three tags, the same keys you put on your bucket in the previous episode (type the keys exactly as shown; capitalization matters):
 
   | Key | Value |
   |---|---|
   | `Project` | your challenge name, e.g. `sinkorswim` |
   | `Name` | your name, e.g. `John Doe` |
-  | `Purpose` | what this resource is for, e.g. `Workshop-controller` |
+  | `Purpose` | what this resource is for, e.g. `Train` |
 
 ![Tag Setup Example](fig/notebook_tags.PNG){alt="Screenshot showing required tags for a SageMaker notebook instance"}
 
@@ -116,21 +119,14 @@ Open the supplemental [Instances for ML](https://carpentries-incubator.github.io
 
 ### Before you leave: stop the instance
 
-A notebook instance bills for every second it is **InService**, whether or not you are typing in it. When you step away for the day, go to **Notebook instances**, select yours and choose **Stop**. Your files under `/home/ec2-user/SageMaker` (including the repos you clone) survive a Stop and are there when you start it again; packages you `pip install` are not, so expect to reinstall them. When the workshop is over, **Delete** the instance: a stopped instance still bills for its storage volume ($0.14 per GB-month), and the cleanup episode walks through this.
-
-::::::::::::::::::::::::::::::::::::: callout
-
-### Everything from here is one pattern
-
-The rest of this lesson is one pattern applied again and again. A cheap controller notebook (the `ml.t3.medium` you just created) launches work that runs *elsewhere*, on an instance that exists only for the duration of the job and shuts itself down when the job ends: a training job on the Titanic data, a hyperparameter tuning job that runs many of them in parallel, a Processing job that serves a language model over a corpus of papers, and a fine-tuning job on a rented GPU. The controller never has to be big, and nothing is left running by accident. Four habits travel with every launch, and you will see them in every episode: the three **tags** on the job so its cost is traceable; a **runtime cap** (`max_run`) so a bug cannot run all night; a cost **estimate written down before** the launch and **compared to the bill after**, so your sense of what things cost gets calibrated; and **cleanup**, the stop-or-delete step that ends what the job did not end on its own.
-
-::::::::::::::::::::::::::::::::::::::::::::::::
+A notebook instance bills for every second it is **InService**. When you step away for the day, go to **Notebook instances**, select yours and choose **Stop**. Your files under `/home/ec2-user/SageMaker` (including the repos you clone) survive a Stop and are there when you start it again; packages you `pip install` are not, so expect to reinstall them. When the workshop is over, **Delete** the instance: a stopped instance still bills for its storage volume ($0.14 per GB-month), and the cleanup episode walks through this.
 
 ::::::::::::::::::::::::::::::::::::: keypoints 
 
 - Use a minimal SageMaker notebook instance as a controller to manage larger, resource-intensive tasks.
-- The controller pattern: the notebook launches work (training, tuning, processing, fine-tuning) that runs on separate instances and ends on its own; the notebook itself never needs to be big.
-- Tags can help track costs effectively, especially in multi-project or team settings; the same three keys (`Name`, `Project`, `Purpose`) go on every resource, and tags never propagate.
+- Launch training and tuning jobs on scalable instances using the SageMaker SDK.
+- Tags can help track costs effectively, especially in multi-project or team settings.
+
 - Stop the notebook instance whenever you leave, and delete it when the workshop is over.
 - Use the SageMaker SDK documentation to explore additional options for managing compute resources in AWS.
 

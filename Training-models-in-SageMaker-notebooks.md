@@ -8,7 +8,7 @@ exercises: 15
 
 - What are the differences between local training and SageMaker-managed training?
 - How do Estimator classes in SageMaker streamline the training process for various frameworks?
-- How do you estimate what a training job will cost before launching it, and check what it actually cost afterwards?
+- How do you estimate what a training job will cost before launching it, and check what it cost afterwards?
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -27,8 +27,8 @@ exercises: 15
 #### 1. Open prefilled .ipynb notebook
 Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/Training-models-in-SageMaker-notebooks.ipynb`. When asked for a kernel, pick **`conda_pytorch_p310`**; we will use the same kernel for the next two episodes.
 
-#### 2. Lesson code
-The same cell as in the Accessing S3 episode: start from the instance's root directory, clone the lesson repository if it is not already there, and make its `scripts/` importable. The training scripts for this episode (`train_xgboost.py`) and the next (`train_nn.py`) are in that folder.
+#### 2. CD to instance home directory
+So we all can reference the helper functions using the same path, CD to the instance's root directory, clone the lesson repository if it is not already there, and make its `scripts/` importable. The training scripts for this episode (`train_xgboost.py`) and the next (`train_nn.py`) are in that folder.
 
 ```python
 %cd /home/ec2-user/SageMaker/
@@ -65,7 +65,7 @@ train_filename = 'titanic_train.csv'
 test_filename = 'titanic_test.csv'
 ```
 
-Create a SageMaker session to manage interactions with Amazon SageMaker, such as training jobs, model deployments, and data input/output. The region comes from the notebook instance itself; never hard-code it, so the same notebook works in any account.
+Create a SageMaker session to manage interactions with Amazon SageMaker, such as training jobs, model deployments, and data input/output. The region comes from the notebook instance itself, so the same notebook works in any account.
 
 ```python
 region = boto3.Session().region_name  # inherited from the notebook instance; do not hard-code a region
@@ -82,7 +82,7 @@ If you didn't complete the earlier episodes, you'll need to clone our code repo 
 ```
 
 ## Testing train.py on this notebook's instance
-In this next section, we will learn how to take a model training script that was written/designed to run locally, and deploy it to more powerful instances using SageMaker. This is helpful for machine learning jobs that require extra power or GPUs. However, before we try exploiting this extra power, it is essential that we test our code thoroughly! We don't want to waste unnecessary compute cycles and resources on jobs that produce bugs rather than insights. 
+In this next section, we will learn how to take a model training script that was written/designed to run locally, and deploy it to more powerful instances (or many instances) using SageMaker. This is helpful for machine learning jobs that require extra power, GPUs, or benefit from parallelization. However, before we try exploiting this extra power, it is essential that we test our code thoroughly! We don't want to waste unnecessary compute cycles and resources on jobs that produce bugs rather than insights. 
 
 ### General guidelines for testing ML pipelines before scaling
 - **Run tests locally first** (if feasible) to avoid unnecessary AWS charges. Here, we assume that local tests are not feasible due to limited local resources. Instead, we use our SageMaker instance to test our script on a minimally sized EC2 instance.
@@ -95,7 +95,7 @@ In this next section, we will learn how to take a model training script that was
 
 ### What tests should we do before scaling?  
 
-Before scaling to more powerful instances (e.g., training on larger datasets or tuning hyperparameters in parallel), it's important to run a few quick sanity checks to catch potential issues early. **In your group, discuss:**  
+Before scaling to multiple or more powerful instances (e.g., training on larger/multiple datasets in parallel or tuning hyperparameters in parallel), it's important to run a few quick sanity checks to catch potential issues early. **In your group, discuss:**  
 
 - Which checks do you think are most critical before scaling up?  
 - What potential issues might we miss if we skip this step?  
@@ -136,7 +136,7 @@ The sanity checks above focus on validating the code, but a model is only as goo
 
 ### Understanding the XGBoost Training Script
 
-Take a moment to review `ML_with_AWS_SageMaker/scripts/train_xgboost.py`, part of the lesson repository we cloned at the start of this episode. This script handles preprocessing, training, and saving an XGBoost model, while also adapting to both local and SageMaker-managed environments.
+Take a moment to review the `ML_with_AWS_SageMaker/scripts/train_xgboost.py` script we just cloned into our notebook. This script handles preprocessing, training, and saving an XGBoost model, while also adapting to both local and SageMaker-managed environments.
 
 Try answering the following questions:
 
@@ -258,7 +258,7 @@ print(f"Total local runtime: {t.time() - start_time:.2f} seconds, instance_type 
 
 Training on this relatively small dataset should take less than a minute, but as we scale up with larger datasets and more complex models in SageMaker, tracking both training time and total runtime becomes essential for efficient debugging and resource management.
 
-**Note**: Our code above includes print statements to monitor dataset size, training time, and total runtime, which provides insights into resource usage for model development. We recommend incorporating similar logging to track not only training time but also total runtime, which includes additional steps like data loading, evaluation, and saving results. Tracking both can help you pinpoint bottlenecks and optimize your workflow as projects grow in size and complexity.
+**Note**: Our code above includes print statements to monitor dataset size, training time, and total runtime, which provides insights into resource usage for model development. We recommend incorporating similar logging to track not only training time but also total runtime, which includes additional steps like data loading, evaluation, and saving results. Tracking both can help you pinpoint bottlenecks and optimize your workflow as projects grow in size and complexity, especially when scaling with SageMaker's distributed resources.
 
 ### Sanity check: Quick evaluation on test set
 This next section isn't SageMaker specific, but it does serve as a good sanity check to ensure our model is training properly. Here's how you would apply the outputted model to your test set using your local notebook instance.
@@ -292,13 +292,13 @@ accuracy = accuracy_score(y_test, predictions)
 print(f"Test Set Accuracy: {accuracy:.4f}")
 ```
 
-A reasonably high test set accuracy (around 0.8 for this dataset) suggests our code/model is working correctly.
+A reasonably high test set accuracy suggests our code/model is working correctly.
 
 ## Training via SageMaker (using notebook as controller) - custom train.py script
-Unlike "local" training (using this notebook), this next approach leverages SageMaker's managed infrastructure: SageMaker starts a separate instance just for the job, runs your script on it, saves the output to S3, and shuts the instance down. By specifying instance parameters, such as `instance_count` and `instance_type`, you control the resources allocated for training.
+Unlike "local" training (using this notebook), this next approach leverages SageMaker's managed infrastructure to handle resources, parallelism, and scalability. By specifying instance parameters, such as instance_count and instance_type, you can control the resources allocated for training.
 
 ### Which instance to start with?
-In this example, we start with one `ml.m5.large` instance, which is suitable for small- to medium-sized datasets and simpler models. Using a single instance is often cost-effective and sufficient for initial testing, allowing for straightforward scaling up to more powerful instance types if training takes too long. See the lesson's [Instances for ML page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for guidance on selecting an appropriate instance for your data/model.
+In this example, we start with one ml.m5.large instance, which is suitable for small- to medium-sized datasets and simpler models. Using a single instance is often cost-effective and sufficient for initial testing, allowing for straightforward scaling up to more powerful instance types or multiple instances if training takes too long. See here for further guidance on selecting an appropriate instance for your data/model: [Instances for ML page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html)
 
 ### Overview of Estimator classes in SageMaker
 To launch this training "job", we'll use the XGBoost Estimator. In SageMaker, Estimator classes streamline the configuration and training of models on managed instances. Each Estimator can work with custom scripts and be enhanced with additional dependencies by specifying a `requirements.txt` file, which is automatically installed at the start of training. Here's a breakdown of some commonly used Estimator classes in SageMaker:
@@ -343,12 +343,12 @@ To launch this training "job", we'll use the XGBoost Estimator. In SageMaker, Es
    - **Ideal Use Cases**: NLP, computer vision, and transfer learning applications in TensorFlow.
 
 #### 6. **`HuggingFace` Estimator**
-   - **Purpose**: Provides managed containers, with `transformers` and its usual companions pre-installed, for training and fine-tuning Hugging Face models (we use it to fine-tune a vision-language model in a later episode).
+   - **Purpose**: Provides managed containers for training and fine-tuning models using the Hugging Face `transformers` library.  
    - **Configuration**:
-      - `entry_point`: Custom training script (e.g., `train.py`).  
+      - `entry_point`: Custom script for training (e.g., `train.py`).  
       - `transformers_version`, `pytorch_version`, `py_version`: Define framework versions.  
-      - `dependencies`: Optional `requirements.txt` for extra libraries (e.g., `peft` for LoRA).  
-   - **Ideal Use Cases**: Fine-tuning pretrained Transformer models for NLP, vision, or multimodal tasks.
+      - `dependencies`: Optional `requirements.txt` for extra libraries.  
+   - **Ideal Use Cases**: NLP, vision, or multimodal tasks using pretrained Transformer models.  
 
 ::::::::::::::::::::::::::::::::::::: callout 
 #### Configuring custom environments with `requirements.txt`
@@ -401,7 +401,7 @@ job_tags = [
 ```
 
 #### Estimate before you launch
-Make a habit of estimating the cost of every job *before* you run it: **instance rate x expected minutes, plus about 3 minutes of startup** (SageMaker has to provision the instance, pull the container, and download your data before your script starts, and you pay for the download part). An `ml.m5.large` costs about $0.115/hour (us-east-1 on-demand; see the [Instances for ML page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html)). Our local test finished in well under a minute, so the estimate is roughly 1 minute of training + 3 minutes of startup = 4 minutes, or about $0.01. If the real bill is far from your estimate, something about the job is not what you thought, and that is worth knowing before you scale it up.
+Estimate the cost of every job *before* you run it: instance rate x expected minutes, plus about 3 minutes of startup (SageMaker has to provision the instance, pull the container, and download your data before your script starts). An `ml.m5.large` costs about $0.115/hour (us-east-1 on-demand; see the [Instances for ML page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html)). Our local test finished in under a minute, so the estimate is roughly 1 minute of training + 3 minutes of startup = 4 minutes, or about $0.01.
 
 ```python
 from sagemaker.inputs import TrainingInput
@@ -462,10 +462,10 @@ When running longer training jobs, you can check on their status periodically fr
 The `hyperparameters` section in this code defines the input arguments of `train_xgboost.py`. The first is the name of the training input file, and the others are hyperparameters for the XGBoost model, such as `max_depth`, `eta`, `subsample`, `colsample_bytree`, and `num_round`.
 
 #### TrainingInput
-Additionally, we define a `TrainingInput` object containing the training data's S3 path, to pass to `.fit({'train': train_input})`. SageMaker uses `TrainingInput` to download your dataset from S3 to a temporary location on the training instance (`/opt/ml/input/data/train/`, which the script reads via the `SM_CHANNEL_TRAIN` environment variable).
+Additionally, we define a TrainingInput object containing the training data's S3 path, to pass to `.fit({'train': train_input})`. SageMaker uses `TrainingInput` to download your dataset from S3 to a temporary location on the training instance. This location is mounted and managed by SageMaker and can be accessed by the training job if/when needed.
 
 #### What did that cost?
-Now ask SageMaker what it actually charged for. `describe_training_job` returns two durations: `TrainingTimeInSeconds` (your script running) and `BillableTimeInSeconds` (the wall-clock time the instance was reserved for you, which also includes pulling the container and downloading data). SageMaker bills per second, so cost is simply billable seconds x instance count x hourly rate. We'll wrap this in a small helper and call it after every job in this lesson, so you always see the bill next to the run.
+`describe_training_job` returns two durations: `TrainingTimeInSeconds` (your script running) and `BillableTimeInSeconds` (the time the instance was reserved for you, which also includes pulling the container and downloading data). SageMaker bills per second, with no rounding, so cost is billable seconds x instance count x hourly rate. We'll wrap this in a small helper and call it after every job in this lesson.
 
 ```python
 def job_cost_report(job_name: str, price_per_hour: float):
@@ -477,12 +477,12 @@ def job_cost_report(job_name: str, price_per_hour: float):
 desc = job_cost_report(xgboost_estimator.latest_training_job.name, price_per_hour)
 ```
 
-Compare this with the estimate you made above. The gap between training time and billable time is the startup overhead of every job; it is the same whether you train for one minute or one hour, which is why many tiny jobs cost more than one longer job doing the same work.
+Compare this with the estimate you made above. The gap between training time and billable time is the startup overhead of every job; it is the same whether you train for one minute or one hour.
 
 #### Model results
 With this code, the training results and model artifacts are saved in a subfolder called `xgboost` in your specified S3 bucket. This folder (`s3://{bucket_name}/xgboost/`) will be automatically created if it doesn't already exist, and will contain:
 
-1. **Model "artifacts"**: The trained model file (a `model.tar.gz` file) that SageMaker saves in the `output_path`.
+1. **Model "artifacts"**: The trained model file (often a `.tar.gz` file) that SageMaker saves in the `output_path`.
 2. **Logs and metrics**: Any metrics and logs related to the training job, stored in the same `xgboost` folder.
  
 This setup allows for convenient access to both the trained model and related output for later evaluation or deployment.
@@ -569,7 +569,7 @@ With the SageMaker-provided XGBoost container, you can bypass custom script conf
 Both methods offer powerful and flexible approaches to model training on SageMaker, allowing you to select the approach best suited to your needs. Below is an example of training using the built-in XGBoost Image.
 
 #### Preparing data for the built-in algorithm
-"No custom preprocessing" cuts both ways: the built-in algorithm will not run our `preprocess_data()` for us, and it is strict about its input. It expects a CSV with **no header row, every column numeric, and the label in the first column**. The raw `titanic_train.csv` (header, `Name` and `Sex` strings, label in the second column) fails at data load. So we run the same preprocessing we used in `train_xgboost.py` here in the notebook, write the result in the expected layout, and upload it to its own prefix in our bucket.
+The built-in algorithm will not run our `preprocess_data()` for us, and it expects a CSV with no header row, every column numeric, and the label in the first column. The raw `titanic_train.csv` (header, `Name` and `Sex` strings, label in the second column) fails at data load. So we run the same preprocessing we used in `train_xgboost.py` here in the notebook, write the result in the expected layout, and upload it to its own prefix in our bucket.
 
 ```python
 from train_xgboost import preprocess_data
@@ -588,8 +588,8 @@ builtin_s3_path = f"s3://{bucket_name}/{builtin_s3_key}"
 print("Uploaded:", builtin_s3_path)
 ```
 
-#### Setting up the estimator and data path
-With the built-in container we use the general `Estimator` class and point it at the image URI. `hyperparameters` now holds only the model's hyperparameters (there is no script to pass a filename to), and we add `objective`, because the built-in algorithm's default objective is regression rather than binary classification.
+#### Setting up the data path
+In this approach, using `TrainingInput` directly with SageMaker's built-in XGBoost container contrasts with our previous method, where we specified a custom script with argument inputs (specified in hyperparameters) for data paths and settings. Here, we use hyperparameters only to specify the model's hyperparameters. We also add `objective`, because the built-in algorithm's default objective is regression rather than binary classification.
 
 ```python
 from sagemaker.estimator import Estimator # when using images, we use the general Estimator class
@@ -630,7 +630,7 @@ end = t.time()
 print(f"Runtime for training on SageMaker: {end - start:.2f} seconds, instance_type: {instance_type}, instance_count: {instance_count}")
 ```
 
-And, as always, the bill:
+Then the cost report:
 
 ```python
 desc = job_cost_report(xgboost_estimator_builtin.latest_training_job.name, price_per_hour)
@@ -647,7 +647,7 @@ To view and monitor your SageMaker training job, follow these steps in the AWS M
    - In the left-hand navigation menu, select **Training jobs**. You'll see a list of recent training jobs, which may include jobs from other users in the account.
 
 3. **Verify your training Job**  
-   - Identify your job by its name. Because we set `base_job_name=notebook_instance_name`, the name starts with your notebook instance name followed by a timestamp, e.g. `sinkorswim-doejohn-trainclassifier-2026-10-16-14-05-33-123` (this is also what `xgboost_estimator.latest_training_job.name` printed above). Click on its name to access detailed information. Cross-check the job details, such as the **Instance Type** and **Input data configuration**, with the parameters you set in your script. 
+   - Identify your job by looking for the specific name format (e.g., `sinkorswim-doejohn-trainclassifier-YYYY-MM-DD-HH-MM-SS-XXX`) generated when you launched the job.  Click on its name to access detailed information. Cross-check the job details, such as the **Instance Type** and **Input data configuration**, with the parameters you set in your script. 
 
 4. **Monitor the job status**  
    - Once you've verified the correct job, click on its name to access detailed information:
@@ -664,20 +664,46 @@ Following these steps helps ensure you only interact with and modify jobs you ow
 
 ## When training takes too long
 
-When training time becomes excessive, two options can improve efficiency in SageMaker:
+When training time becomes excessive, two main options can improve efficiency in SageMaker:
 
-- **Option 1: Upgrade to a more powerful instance.** This is the preferred approach and should always be explored first. A bigger CPU instance, or a GPU instance for neural networks, needs no code changes and avoids the coordination overhead of a multi-instance setup. Check the [Instances for ML page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for guidance.
-- **Option 2: Use multiple instances (distributed training).** This only helps when your script and data are actually set up to split the work, and it is only worth the effort in two situations: the dataset no longer fits in the memory of the largest single instance you can justify (tens of GB or more), or a single-instance run takes longer than about 10 hours. That is the one rule of thumb we use throughout this lesson, and it is why every estimator so far has `instance_count=1`.
+- **Option 1: Upgrading to a more powerful instance**  
+- **Option 2: Using multiple instances for distributed training**  
 
-In the next episode we train a PyTorch network, try Option 1 (a GPU instance), and then run a two-instance job to see for ourselves what `instance_count=2` does and does not do.
+Generally, Option 1 is the preferred approach and should be explored first.
+
+### Option 1: Upgrade to a more powerful instance (preferred starting point)
+
+Upgrading to a more capable instance, particularly one with GPU capabilities, is often the simplest and most cost-effective way to speed up training. Check the [Instances for ML page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for guidance.
+
+When to use a single instance upgrade:  
+- Dataset size – The dataset is small to moderate (e.g., <10 GB), fitting comfortably within memory.  
+- Model complexity – XGBoost models are typically small enough to fit in memory.  
+- Training time – If training completes in a few hours but could be faster, upgrading may help.  
+
+Upgrading a single instance is usually the most efficient option. It avoids the communication overhead of multi-instance setups and works well for small to medium datasets.
+
+### Option 2: Use multiple instances for distributed training
+
+If upgrading a single instance doesn't sufficiently reduce training time, distributed training across multiple instances may be a viable alternative. This only helps when your script and data are set up to split the work.
+
+### When to consider multiple instances
+
+Using multiple instances makes sense when:  
+- Dataset size – The dataset is large and doesn't fit comfortably in memory.  
+- Expected training time – A single instance takes too long (e.g., >10 hours).  
+- Need for faster training – Parallelization can speed up training but introduces communication overhead.  
+
+If scaling to multiple instances, monitoring training time and efficiency is critical. In many cases, a single, more powerful instance may be more cost-effective than multiple smaller ones.  
+
+In the next episode we train a PyTorch network, try Option 1 (a GPU instance), and then run a two-instance job to see what `instance_count=2` does and does not do.
 
 ::::::::::::::::::::::::::::::::::::: keypoints
 
-- **Environment initialization**: Setting up a SageMaker session, defining roles, and specifying the S3 bucket are essential for managing data and running jobs in SageMaker. Read the region from the session rather than hard-coding it.
+- **Environment initialization**: Setting up a SageMaker session, defining roles, and specifying the S3 bucket are essential for managing data and running jobs in SageMaker.
 - **Local vs. managed training**: Always test your code locally (on a smaller scale) before scaling things up. This avoids wasting resources on buggy code that doesn't produce reliable results.
-- **Estimator classes**: SageMaker provides framework-specific Estimator classes (e.g., XGBoost, PyTorch, SKLearn) to streamline training setups, each suited to different model types and workflows. Always set `max_run` and `tags`.
-- **Custom scripts vs. built-in images**: Custom training scripts offer flexibility with preprocessing and custom logic, while built-in images are optimized for rapid deployment but expect data in a fixed layout (headerless, numeric, label first for XGBoost).
-- **Training data channels**: `TrainingInput` tells SageMaker which S3 objects to download onto the training instance before your script starts.
+- **Estimator classes**: SageMaker provides framework-specific Estimator classes (e.g., XGBoost, PyTorch, SKLearn) to streamline training setups, each suited to different model types and workflows.
+- **Custom scripts vs. built-in images**: Custom training scripts offer flexibility with preprocessing and custom logic, while built-in images are optimized for rapid deployment and simpler setups.
+- **Training data channels**: Using `TrainingInput` ensures SageMaker manages data efficiently.
 - **Cost habit**: Estimate cost before launching (rate x minutes + ~3 minutes startup), then read back `BillableTimeInSeconds` with `job_cost_report()` after every job and compare.
 - **Scaling**: Upgrade the single instance first; consider multiple instances only when data no longer fits in memory or a run takes more than ~10 hours.
 

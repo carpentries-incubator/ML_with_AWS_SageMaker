@@ -4,13 +4,17 @@ site: sandpaper::sandpaper_site
 
 ## Workshop Overview
 
-This workshop introduces foundational machine learning workflows on AWS, with **Amazon SageMaker** as the backbone and cost control as the thread that runs through every episode. It is organized in three parts:
+This workshop introduces machine learning workflows on AWS using **Amazon SageMaker**. It has three parts:
 
-1. **SageMaker foundations and classic ML.** S3 for data, a small notebook instance as a *controller*, training jobs (XGBoost and PyTorch) and hyperparameter tuning on the Titanic dataset, with guidance on CPU vs. GPU instances and when parallel instances pay off. The episode on pushing to GitHub with a personal access token is optional self-study.
-2. **Retrieval-Augmented Generation (RAG).** The [WattBot](https://www.kaggle.com/competitions/WattBot2025) energy-literature question-answering challenge built three ways: on **Amazon Bedrock** (pay per token, nothing left running), then as SageMaker **Processing jobs** serving an open-weight model that Bedrock does not offer, and, as optional self-study, interactively on a GPU notebook instance. The optional episodes (GitHub PAT, GPU notebook, and a final one on the CLI equivalents of the lesson's jobs) are not needed to follow the rest of the lesson.
-3. **Fine-tuning.** A LoRA fine-tune of a 3B open-weight vision-language model as a SageMaker training job, on the [Badger Scribe](https://www.kaggle.com/competitions/badger-scribe) handwriting-transcription challenge (German Kurrent letters from UW–Madison's Max Kade Institute), with before/after scoring on held-out pages.
+1. **SageMaker foundations and classic ML.** Storing data in S3, using a small notebook instance as a *controller*, running training jobs (XGBoost and PyTorch), and hyperparameter tuning, with guidance on choosing CPU vs. GPU instances and when parallel instances help.
+2. **Retrieval-Augmented Generation (RAG).** Building a RAG pipeline over a corpus of research papers two ways: with **Amazon Bedrock** (pay per token, nothing left running) and with SageMaker **Processing jobs** serving an open-weight model that Bedrock does not offer.
+3. **Fine-tuning.** Fine-tuning a 3B open-weight vision-language model with LoRA as a SageMaker training job, for handwriting transcription, with before/after evaluation on held-out pages.
 
-Cost control is taught as practice rather than as a warning: cost-allocation tags on every resource, a runtime cap on every job, a written cost estimate before each launch compared to the bill afterwards, back-of-the-envelope rules for what a fine-tune will need in memory and GPU-hours, and explicit cleanup. AWS is not free, but used this way it is affordable for research: training a hundred small models on a small dataset costs under $20, a full WattBot evaluation on Bedrock costs cents, and the fine-tuning episode costs about $1.55 in class (plus about $1.75 for the optional homework). The lesson is equally explicit about what goes wrong: a forgotten GPU notebook instance is about $60 a day, and a full fine-tune of a large model is where five-figure bills come from. The workshop runs everything from a SageMaker notebook instance so that no credential ever has to be installed on a laptop; the learner page *Running this lesson from your own machine* lists the handful of cells that change afterwards.
+Three optional self-study episodes can be skipped without affecting the rest: pushing code to GitHub from a notebook instance, running the RAG pipeline on a GPU notebook instance, and CLI equivalents of the lesson's commands.
+
+### Cost controls
+
+Every episode applies the same controls: cost-allocation tags on every resource, a runtime cap on every job, a cost estimate before each launch compared to the bill after, and cleanup at the end. The final episode covers monitoring and cleanup. Run as written, the full workshop costs a few dollars per learner.
 
 ### What This Workshop Does Not Cover (Yet)
 

@@ -54,7 +54,7 @@ A GPU notebook instance is a rental with the meter running. It bills by the hour
 | A week | ~$438 |
 | A month | **~$1,906** |
 
-Compare the Bedrock episode, where the whole WattBot evaluation cost well under a dollar. One forgotten weekend on this instance costs a thousand times more than the thing it was rented to do. And it is not hypothetical: a forgotten GPU notebook is the single most common way research groups burn through cloud credits.
+The same evaluation on Bedrock cost well under a dollar. One forgotten weekend on this instance costs a thousand times more than the work it was rented for. A forgotten GPU notebook is the most common way research groups overspend cloud credits.
 
 Two further charges people do not expect:
 
@@ -65,14 +65,14 @@ The habits that keep this safe:
 
 1. **Stop the instance when you stand up**, every time, from the console (**Notebook instances → select → Stop**). Then look at the status column until it says `Stopped`.
 2. **Set a reminder** on your phone or calendar before you start the instance, for two hours from now.
-3. **Prefer jobs for any real work**: a Processing job (the Processing Jobs episode) or a training job ends on its own, and `max_runtime_in_seconds` (`max_run` on a training job) guarantees it.
+3. **Prefer jobs for anything beyond exploration**: a Processing job (the Processing Jobs episode) or a training job ends on its own, and `max_runtime_in_seconds` (`max_run` on a training job) guarantees it.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 Self-hosting on a notebook GPU is nonetheless the right starting point for understanding the alternatives, because it is:
 
 - Easy to understand on the AWS side (pick a GPU instance, pick a model, go)
-- Ideal for learning what retrieval and generation actually do, step by step
+- Ideal for learning what retrieval and generation do, step by step
 - The fastest loop for experimenting with prompts and models that Bedrock does not carry
 
 The Processing Jobs episode runs this same pipeline as short-lived jobs, so the GPU only bills while it is embedding or generating; that is the pattern to use for real work. Later patterns (inference endpoints, batch transform) build on the same idea.
@@ -632,7 +632,7 @@ This is just a first pass at a RAG pipeline: it works, but there’s a lot of he
 
 As you iterate, the goal is to treat this notebook as a baseline RAG “workbench”: you can swap in better models, smarter retrieval strategies, and richer document preprocessing without changing the overall pipeline structure.
 
-The Processing Jobs episode does the same work, with the same `wattbot_rag.py`, as short-lived SageMaker jobs, so the GPU only bills while it is actually embedding or generating. Stop this instance now, and delete it if you are done with the episode.
+The Processing Jobs episode does the same work, with the same `wattbot_rag.py`, as short-lived SageMaker jobs, so the GPU only bills while it is embedding or generating. Stop this instance now, and delete it if you are done with the episode.
 
 
 

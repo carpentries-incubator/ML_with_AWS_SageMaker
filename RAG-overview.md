@@ -64,7 +64,7 @@ A GPU instance is a rental that keeps the meter running until *you* turn it off.
 
 ### What forgetting actually costs
 
-To make this concrete, here is what a GPU notebook instance costs if it is left running after you close your laptop (us-east-1 on‑demand prices from the AWS price list, October 2026; see the [instances page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html)):
+To make this concrete, here is what a GPU notebook instance costs if it is left running after you close your laptop (on‑demand prices at time of writing; see the [instances page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html)):
 
 | Instance | GPU | $/hour | Forgotten overnight (12 h) | Forgotten over a weekend (64 h) | Forgotten for a month (730 h) |
 |---|---|---|---|---|---|
@@ -74,7 +74,7 @@ To make this concrete, here is what a GPU notebook instance costs if it is left 
 | ml.g6e.xlarge | 1 × L40S (48 GB) | $2.61 | ~$31 | ~$167 | ~$1,905 |
 | ml.p4d.24xlarge | 8 × A100 (40 GB) | $25.25 | ~$303 | ~$1,616 | ~$18,430 |
 
-Compare that to running the **entire WattBot pipeline** from this lesson on Bedrock, with DeepSeek V3 as the generator and Titan Text Embeddings V2 ($0.02 per million tokens) for embeddings. For DeepSeek V3's per-token prices, check the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/); at launch it was in the same price class as the cheapest frontier models, a fraction of a dollar per million input tokens and a few dollars per million output tokens, and at any price in that class the arithmetic comes out the same way:
+Compare that to running the **entire WattBot pipeline** from this lesson on Bedrock. Using DeepSeek V3 (check the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/) for current per‑token prices) and Titan Text Embeddings V2 ($0.02 per million tokens):
 
 | Step | Rough volume | Cost |
 |---|---|---|
@@ -175,7 +175,7 @@ If you are unsure, pick Bedrock. The worst case is a slightly higher per‑token
 
 ### How the hands-on episodes are ordered
 
-The next two episodes walk through RAG on **Bedrock** first, then on **Processing Jobs**. The Bedrock episode is the one to start from: it builds the whole WattBot pipeline, including chunking the corpus, from a cheap CPU notebook with nothing left running afterward. The Processing Jobs episode reruns the same pipeline on a self-hosted open-weight model that Bedrock does not carry, as jobs that end on their own, so you can see what Bedrock abstracts away and what it costs to do yourself. The fine-tuning episode follows. An optional self-study episode after it runs the same self-hosted pipeline interactively on a GPU notebook instance, for prototyping alone at a keyboard; it is not taught in class. All three RAG episodes share one module of pipeline code (`scripts/wattbot_rag.py` in the lesson repository), so what changes between them is only the two model calls and where the compute runs.
+The next two episodes walk through RAG on **Bedrock** first, then on **Processing Jobs**. The Bedrock episode is the one to start from: it builds the whole WattBot pipeline, including chunking the corpus, from a cheap CPU notebook with nothing left running afterward. The Processing Jobs episode reruns the same pipeline on a self-hosted open-weight model that Bedrock does not carry, as jobs that end on their own, so you can see what Bedrock abstracts away and what it costs to do yourself. The fine-tuning episode follows. An optional self-study episode after it runs the same self-hosted pipeline interactively on a GPU notebook instance, for prototyping alone at a keyboard. All three RAG episodes share one module of pipeline code (`scripts/wattbot_rag.py` in the lesson repository).
 
 When you build your own RAG system afterward, start from the Bedrock episode.
 

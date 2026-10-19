@@ -170,11 +170,11 @@ print(f"Total size of bucket '{bucket_name}': {total_size_mb:.2f} MB")
 #print(f"Total size of bucket '{bucket_name}': {total_size_gb:.2f} GB")
 ```
 
-### Using the lesson's helper functions
-We have added code to calculate bucket size to a helper function called `get_s3_bucket_size(bucket_name)` for your convenience, in `scripts/helpers.py` of the lesson repository, alongside the training and processing scripts that later episodes launch as jobs. Everything the workshop needs lives in that one repository, so we clone it once onto the notebook instance and use it from there.
+### Using helper functions from GitHub
+We have added code to calculate bucket size to a helper function called `get_s3_bucket_size(bucket_name)` for your convenience. There are also some other helper functions in `scripts/helpers.py` of the lesson repository to assist you with common AWS/SageMaker workflows. We'll show you how to clone this code into your notebook environment.
 
-#### Clone the lesson repository (once)
-Start in the root directory of this instance, `/home/ec2-user/SageMaker/`: it is the one directory that survives stopping the instance, so a clone placed there is still present next session. The `test -d ... ||` guard makes the cell a no-op if the folder already exists, which is why every later episode starts with the same cell: whichever episode you open first, the code is there.
+#### Directory setup
+Let's make sure we're starting in the root directory of this instance, so that we all have our helpers.py file located in the same path (/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/helpers.py). This directory survives stopping the instance, so a clone placed there is still present next session. The `test -d ... ||` guard skips the clone if the folder already exists; every later episode starts with the same cell.
 
 ```python
 %cd /home/ec2-user/SageMaker/
@@ -184,9 +184,9 @@ sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
 import helpers
 ```
 
-`sys.path.insert` tells Python where to find the lesson's `scripts/` folder; after it, `import helpers` works from any directory. No GitHub account is involved: this is a read-only clone of a public repository.
+`sys.path.insert` tells Python where to find the lesson's `scripts/` folder; after it, `import helpers` works from any directory.
 
-With the repo cloned, you can call the bucket-size function via...
+Our helpers.py file can be found in `ML_with_AWS_SageMaker/scripts/helpers.py`. With this file downloaded, you can call this function via...
 
 ```python
 helpers.get_s3_bucket_size(bucket_name)
@@ -244,20 +244,19 @@ print(f"Estimated annual cost ({storage_size_gb:.4f} GB): ${monthly_cost*12:.5f}
 For detailed and up-to-date information on AWS S3 pricing, please refer to the [AWS S3 Pricing page](https://aws.amazon.com/s3/pricing/).
 
 ## Writing output files to S3
-As your analysis generates new files or demands additional documentation, you can upload files to your bucket as demonstrated below. For this demo, we create a small `Notes.txt` file in the notebook's working directory and upload it under a `docs/` prefix. (You could also create the file by hand with **File** -> **New** -> **Text file**; the code below does the same thing so the notebook runs end to end.)
+As your analysis generates new files or demands additional documentation, you can upload files to your bucket as demonstrated below. For this demo, you can create a blank `Notes.txt` file to upload to your bucket. To do so, go to **File** -> **New** -> **Text file**, and save it out as `Notes.txt`. (The code below also writes the file, so the notebook runs end to end.)
 
 ```python
-# Create a small text file to upload (in the current working directory, /home/ec2-user/SageMaker)
-notes_file_path = "Notes.txt"
+# Define the S3 bucket name and the file paths
+notes_file_path = "Notes.txt" # assuming your file is in root directory of jupyter notebook (check file explorer tab)
 with open(notes_file_path, "w") as f:
     f.write("Workshop notes: Titanic data uploaded from the S3 episode; outputs go under per-episode prefixes.\n")
 
-# Upload it under a prefix called "docs/". A prefix is S3's version of a folder: there is no folder to
-# create first; the key "docs/Notes.txt" is enough. Every later episode writes under its own prefix
-# (xgboost/, pytorch/, wattbot/, badger-scribe/) in this same bucket.
+# Upload the training file to a new folder called "docs". You can also just place it in the bucket's root directory if you prefer (remove docs/ in code below).
 s3.upload_file(notes_file_path, bucket_name, "docs/Notes.txt")
 
-print("File uploaded successfully.")
+print("Files uploaded successfully.")
+
 ```
 
 After uploading, we can view the objects/files available on our bucket using...
@@ -304,7 +303,7 @@ size_after = helpers.get_s3_bucket_size(bucket_name)
 print(size_before, size_after)
 ```
 
-The bucket grows by the size of the file (a few hundred bytes here), and at $0.023 per GB-month that is a rounding error: well under a thousandth of a cent per month. The point of the exercise is the habit, not the number. The same two lines, run before and after a training job, tell you what the job wrote and whether something is accumulating that you should clean up.
+The bucket grows by the size of the file (a few hundred bytes here), and at $0.023 per GB-month that is well under a thousandth of a cent per month. The same two lines, run before and after a training job, tell you what the job wrote and whether something is accumulating that you should clean up.
 
 2. The training episode writes under `xgboost/` (`s3://sinkorswim-doejohn/xgboost/`), the same way this episode wrote under `docs/`; the PyTorch episode uses `pytorch/`, the RAG episodes `wattbot/`, and the fine-tuning episode `badger-scribe/`. One bucket with prefixes keeps a single bucket policy, a single set of tags, and a single thing to delete at the end of the workshop; one bucket per episode would mean repeating the policy and tag setup five times and a longer cleanup list.
 
@@ -316,7 +315,8 @@ The bucket grows by the size of the file (a few hundred bytes here), and at $0.0
 
 - Load data from S3 into memory for efficient storage and processing.
 - Periodically check storage usage and costs to manage S3 budgets.
-- Upload analysis results to your bucket under a prefix per episode (`docs/`, `xgboost/`, ...) and keep one bucket for the whole workshop.
-- Clone the lesson repository once, into `/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/`; every later episode starts with the same guarded clone-and-import cell, so the code is there whichever episode you open first.
+- Use SageMaker to upload analysis results and maintain an organized workflow.
+- Clone the lesson repository once, into `/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/`; every later episode starts with the same guarded clone-and-import cell.
+
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
