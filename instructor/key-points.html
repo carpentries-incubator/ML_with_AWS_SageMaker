@@ -138,6 +138,7 @@
 <hr>
 <li><a class="dropdown-item" href="reference.html">Glossary</a></li>
 <li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
+<li><a class="dropdown-item" href="running-from-your-laptop.html">Running this lesson from your own machine</a></li>
           </ul>
 </li>
       </ul>
@@ -298,7 +299,7 @@
 <div class="accordion accordion-flush" id="accordionFlush6">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading6">
-        <a href="Interacting-with-code-repo.html">5. (Optional) Pushing to GitHub from a SageMaker Notebook with a Personal Access Token</a>
+        <a href="Interacting-with-code-repo.html">5. (Optional) Pushing Your Notebooks to GitHub from SageMaker</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -406,7 +407,19 @@
 <div class="accordion accordion-flush" id="accordionFlush15">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading15">
-        <a href="Resource-management-cleanup.html">14. Resource Management and Monitoring</a>
+        <a href="CLI-equivalents.html">14. (Optional) The Same Jobs from the Terminal</a>
+    </div>
+<!--/div.accordion-header-->
+
+  </div>
+<!--/div.accordion-item-->
+</div>
+<!--/div.accordion-flush-->
+
+<div class="accordion accordion-flush" id="accordionFlush16">
+  <div class="accordion-item">
+    <div class="accordion-header" id="flush-heading16">
+        <a href="Resource-management-cleanup.html">15. Resource Management and Monitoring</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -465,6 +478,7 @@
 <hr>
 <li><a class="dropdown-item" href="reference.html">Glossary</a></li>
 <li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
+<li><a class="dropdown-item" href="running-from-your-laptop.html">Running this lesson from your own machine</a></li>
                     </ul>
 </div>
                 </div>
@@ -552,23 +566,25 @@ budgets.</li>
 <li>Upload analysis results to your bucket under a prefix per episode
 (<code>docs/</code>, <code>xgboost/</code>, …) and keep one bucket for
 the whole workshop.</li>
-<li>Clone your fork of <code>AWS_helpers</code> once, into
-<code>/home/ec2-user/SageMaker/</code>, where it survives stopping the
-instance.</li>
-</ul></section><section id="Interacting-with-code-repo"><h2 class="section-heading"><a href="Interacting-with-code-repo.html">(Optional) Pushing to GitHub from a SageMaker Notebook with a Personal Access Token</a></h2>
+<li>Clone the lesson repository once, into
+<code>/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/</code>; every
+later episode starts with the same guarded clone-and-import cell, so the
+code is there whichever episode you open first.</li>
+</ul></section><section id="Interacting-with-code-repo"><h2 class="section-heading"><a href="Interacting-with-code-repo.html">(Optional) Pushing Your Notebooks to GitHub from SageMaker</a></h2>
 <hr class="half-width">
 <ul>
-<li>Use a GitHub PAT for HTTPS-based authentication in temporary
-SageMaker notebook instances.</li>
-<li>Securely enter sensitive information in notebooks using
-<code>getpass</code>.</li>
-<li>Converting <code>.ipynb</code> files to <code>.py</code> files helps
-with cleaner version control and easier review of changes.</li>
-<li>Adding <code>.ipynb</code> files (and large binaries such as
-<code>.npz</code>) to <code>.gitignore</code> keeps your repository
-organized and reduces storage.</li>
-<li>You clone your fork once, in the Accessing S3 episode; this episode
-works inside that same clone.</li>
+<li>Your own work belongs in your own repository: create one on GitHub,
+<code>git init</code> a folder under
+<code>/home/ec2-user/SageMaker/</code>, and connect the two with
+<code>git remote add</code>.</li>
+<li>Authenticate over HTTPS with a scoped, expiring Personal Access
+Token entered through <code>getpass</code>; nothing is saved on the
+instance, and the token is revoked when you are done.</li>
+<li>Version <code>.py</code> copies of notebooks (Jupytext converts both
+ways) and ignore <code>*.ipynb</code>, caches and data archives in
+<code>.gitignore</code>.</li>
+<li>Pull before you push; the first pull into a freshly initialised
+folder needs <code>--allow-unrelated-histories</code>.</li>
 </ul></section><section id="Training-models-in-SageMaker-notebooks"><h2 class="section-heading"><a href="Training-models-in-SageMaker-notebooks.html">Training Models in SageMaker: Intro</a></h2>
 <hr class="half-width">
 <ul>
@@ -792,6 +808,25 @@ questions and for missing fields.</li>
 <strong>Scalability path</strong>: The same logic can later be
 swapped to FAISS/Chroma and larger models, while preserving the
 interface used here.</li>
+</ul></section><section id="CLI-equivalents"><h2 class="section-heading"><a href="CLI-equivalents.html">(Optional) The Same Jobs from the Terminal</a></h2>
+<hr class="half-width">
+<ul>
+<li>The CLI, the SDK and the console are one API; the CLI shows you
+nothing you do not ask for, so its first use is to look and to stop, not
+to launch.</li>
+<li>Authenticate with <code>aws sso login</code> and short-lived
+credentials; never store an access key.</li>
+<li>
+<code>list-*</code>, <code>describe-*</code> and <code>stop-*</code>
+for training, processing and tuning jobs and notebook instances cover
+almost every reason to open a terminal.</li>
+<li>A <code>create-training-job</code> JSON is what
+<code>estimator.fit()</code> sent: the same tags, the same
+<code>MaxRuntimeInSeconds</code>, the same instance choice, with no
+price printed next to it.</li>
+<li>Endpoints, EC2 instances and GPU notebooks are not jobs and do not
+end; the workshop account denies creating them, and your own account
+should too.</li>
 </ul></section><section id="Resource-management-cleanup"><h2 class="section-heading"><a href="Resource-management-cleanup.html">Resource Management and Monitoring</a></h2>
 <hr class="half-width">
 <ul>

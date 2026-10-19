@@ -107,7 +107,7 @@
           <button class="nav-link dropdown-toggle" id="navbarDropdown" data-bs-toggle="dropdown" aria-expanded="false">
             More <i data-feather="chevron-down"></i>
           </button>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdown"><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown"><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li><li><a class="dropdown-item" href="running-from-your-laptop.html">Running this lesson from your own machine</a></li>
           </ul></li>
       </ul></div>
     <!--
@@ -236,7 +236,7 @@
 
     <div id="flush-collapsecurrent" class="accordion-collapse collapse show" data-bs-parent="#accordionFlushcurrent">
       <div class="accordion-body">
-        <ul><li><a href="#setting-up-our-notebook-environment">Setting up our notebook environment</a></li>
+        <ul><li><a href="#what-a-sagemaker-notebook-instance-is">What a SageMaker notebook instance is</a></li>
         </ul></div><!--/div.accordion-body-->
     </div><!--/div.accordion-collapse-->
 
@@ -255,7 +255,7 @@
 <div class="accordion accordion-flush" id="accordionFlush6">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading6">
-        <a href="Interacting-with-code-repo.html">5. (Optional) Pushing to GitHub from a SageMaker Notebook with a Personal Access Token</a>
+        <a href="Interacting-with-code-repo.html">5. (Optional) Pushing Your Notebooks to GitHub from SageMaker</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -336,7 +336,16 @@
 <div class="accordion accordion-flush" id="accordionFlush15">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading15">
-        <a href="Resource-management-cleanup.html">14. Resource Management and Monitoring</a>
+        <a href="CLI-equivalents.html">14. (Optional) The Same Jobs from the Terminal</a>
+    </div><!--/div.accordion-header-->
+
+  </div><!--/div.accordion-item-->
+</div><!--/div.accordion-flush-->
+
+<div class="accordion accordion-flush" id="accordionFlush16">
+  <div class="accordion-item">
+    <div class="accordion-header" id="flush-heading16">
+        <a href="Resource-management-cleanup.html">15. Resource Management and Monitoring</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -378,7 +387,7 @@
                 </h2>
                 <div id="flush-collapse-resources-toggle" class="accordion-collapse collapse" data-bs-parent="#accordion-resources-toggle">
                   <div class="accordion-body">
-                    <ul><li><a href="reference.html">Glossary</a></li><li><a href="instances-for-ML.html">Instances for ML</a></li>
+                    <ul><li><a href="reference.html">Glossary</a></li><li><a href="instances-for-ML.html">Instances for ML</a></li><li><a href="running-from-your-laptop.html">Running this lesson from your own machine</a></li>
                     </ul></div>
                 </div>
               </div>
@@ -454,22 +463,59 @@ run on separate instances and end on their own.</li>
 </div>
 </div>
 </div>
-<section><h2 class="section-heading" id="setting-up-our-notebook-environment">Setting up our notebook environment<a class="anchor" aria-label="anchor" href="#setting-up-our-notebook-environment"></a></h2>
-<hr class="half-width"><p>Amazon SageMaker provides a managed environment to simplify the
-process of building, training, and deploying machine learning models. In
-this episode, we’ll set up a <strong>SageMaker notebook
-instance</strong>—a Jupyter notebook hosted on AWS for managing
-SageMaker workflows.</p>
+<section><h2 class="section-heading" id="what-a-sagemaker-notebook-instance-is">What a SageMaker notebook instance is<a class="anchor" aria-label="anchor" href="#what-a-sagemaker-notebook-instance-is"></a></h2>
+<hr class="half-width"><p>A <strong>SageMaker notebook instance</strong> is a virtual machine
+that AWS runs for you with JupyterLab already installed, a set of Python
+kernels that come with the AWS SDKs (<code>boto3</code> and the
+SageMaker Python SDK), and an IAM role attached that decides what the
+code running on it may do in your account. You create it from the
+console, open JupyterLab in a browser tab, and from then on it behaves
+like the Jupyter you already know. It is billed per second while it is
+running and nothing while it is stopped, and the files you keep under
+<code>/home/ec2-user/SageMaker/</code> survive a stop.</p>
 <div class="section level3">
-<h3 id="using-the-notebook-as-a-controller">Using the notebook as a controller<a class="anchor" aria-label="anchor" href="#using-the-notebook-as-a-controller"></a></h3>
-<p>In this setup, the notebook instance functions as a
-<em>controller</em> to manage more resource-intensive compute tasks. By
-selecting a minimal instance (e.g., <code>ml.t3.medium</code>), you can
-perform lightweight operations while leveraging the <strong>SageMaker
-Python SDK</strong> to launch scalable compute instances for model
-training, batch processing, and hyperparameter tuning. This approach
-minimizes costs while accessing the full power of SageMaker for
-demanding tasks.</p>
+<h3 id="why-we-work-from-a-notebook-instance-in-this-lesson">Why we work from a notebook instance in this lesson<a class="anchor" aria-label="anchor" href="#why-we-work-from-a-notebook-instance-in-this-lesson"></a></h3>
+<p>Nothing in the lesson <em>requires</em> it: the SageMaker SDK runs
+anywhere Python does. We use a notebook instance anyway, for reasons
+that matter in a classroom and in a research group alike:</p>
+<ul><li>
+<strong>Identity comes from the instance, not from a file on your
+machine.</strong> The IAM role attached to the notebook is what
+authorizes every call it makes. Nobody installs the AWS CLI, configures
+credentials, or has an access key that can end up in a notebook, a shell
+history or a GitHub commit. For a shared account with a hundred people
+in it, that is the single biggest security simplification
+available.</li>
+<li>
+<strong>Everyone has the same environment.</strong> The kernels, the
+SDK version and the paths are identical for every learner, so a cell
+that works for the instructor works for you. Package and path problems
+are the main thing that eats workshop time; this removes most of
+them.</li>
+<li>
+<strong>It is inside AWS.</strong> Reading your S3 bucket from the
+instance is in-region, fast and free of transfer charges; the same reads
+from a laptop would be slower and billed as data leaving AWS.</li>
+<li>
+<strong>It is a resource like any other.</strong> It has to be
+sized, tagged, started and, above all, stopped. Creating it is your
+first practice at the discipline that the whole lesson is about.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="the-controller-pattern">The controller pattern<a class="anchor" aria-label="anchor" href="#the-controller-pattern"></a></h3>
+<p>The instance you create here will be small
+(<code>ml.t3.medium</code>: 2 vCPUs, 4 GB of memory, $0.05 per hour) and
+that is deliberate. The notebook never does the heavy computation. Its
+job is to be a <strong>controller</strong>: it holds your code and your
+notes, and it uses the SageMaker SDK to launch separate, more powerful
+instances for training, hyperparameter tuning and batch processing.
+Those instances start, run your script, write their results to S3, and
+shut themselves down. You pay for a GPU for the minutes a job needs it,
+not for the hours you spend thinking in between, and a mistake in a
+notebook cell cannot leave an expensive machine running: the expensive
+machine is a job, and jobs end.</p>
+<p>Every later episode uses the same instance. In this one we create it,
+open it, and learn to stop it.</p>
 <p>We’ll follow these steps to create our first “SageMaker notebook
 instance”.</p>
 <div class="section level4">

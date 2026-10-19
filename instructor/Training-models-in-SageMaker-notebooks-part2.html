@@ -107,7 +107,7 @@
           <button class="nav-link dropdown-toggle" id="navbarDropdown" data-bs-toggle="dropdown" aria-expanded="false">
             More <i data-feather="chevron-down"></i>
           </button>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdown"><li><a class="dropdown-item" href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li><li><a class="dropdown-item" href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li><li><a class="dropdown-item" href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li><li><a class="dropdown-item" href="shared-data-bucket.html">Shared data bucket: staging before each term</a></li><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown"><li><a class="dropdown-item" href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li><li><a class="dropdown-item" href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li><li><a class="dropdown-item" href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li><li><a class="dropdown-item" href="shared-data-bucket.html">Shared data bucket: staging before each term</a></li><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li><li><a class="dropdown-item" href="running-from-your-laptop.html">Running this lesson from your own machine</a></li>
           </ul></li>
       </ul></div>
     <!--
@@ -123,7 +123,7 @@
     <a id="search-button-nav" class="btn btn-primary" href="../instructor/aio.html" role="button" aria-label="Search the All In One page">Search the All In One page</a>
   </div><!--/div.container-fluid -->
 </nav><aside class="col-md-12 lesson-progress"><div class="progress incubator">
-    <div class="progress-bar incubator" role="progressbar" style="width: 29%" aria-valuenow="29" aria-valuemin="0" aria-valuemax="100" aria-label="Lesson Progress">29%</div>
+    <div class="progress-bar incubator" role="progressbar" style="width: 27%" aria-valuenow="27" aria-valuemin="0" aria-valuemax="100" aria-label="Lesson Progress">27%</div>
   </div>
 </aside><div class="container">
       <div class="row">
@@ -244,7 +244,7 @@
 <div class="accordion accordion-flush" id="accordionFlush6">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading6">
-        <a href="Interacting-with-code-repo.html">5. (Optional) Pushing to GitHub from a SageMaker Notebook with a Personal Access Token</a>
+        <a href="Interacting-with-code-repo.html">5. (Optional) Pushing Your Notebooks to GitHub from SageMaker</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -341,7 +341,16 @@
 <div class="accordion accordion-flush" id="accordionFlush15">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading15">
-        <a href="Resource-management-cleanup.html">14. Resource Management and Monitoring</a>
+        <a href="CLI-equivalents.html">14. (Optional) The Same Jobs from the Terminal</a>
+    </div><!--/div.accordion-header-->
+
+  </div><!--/div.accordion-item-->
+</div><!--/div.accordion-flush-->
+
+<div class="accordion accordion-flush" id="accordionFlush16">
+  <div class="accordion-item">
+    <div class="accordion-header" id="flush-heading16">
+        <a href="Resource-management-cleanup.html">15. Resource Management and Monitoring</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -383,7 +392,7 @@
                 </h2>
                 <div id="flush-collapse-resources-toggle" class="accordion-collapse collapse" data-bs-parent="#accordion-resources-toggle">
                   <div class="accordion-body">
-                    <ul><li><a href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li><li><a href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li><li><a href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li><li><a href="shared-data-bucket.html">Shared data bucket: staging before each term</a></li><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
+                    <ul><li><a href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li><li><a href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li><li><a href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li><li><a href="shared-data-bucket.html">Shared data bucket: staging before each term</a></li><hr><li><a class="dropdown-item" href="reference.html">Glossary</a></li><li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li><li><a class="dropdown-item" href="running-from-your-laptop.html">Running this lesson from your own machine</a></li>
                     </ul></div>
                 </div>
               </div>
@@ -510,22 +519,26 @@ never hard-code it.</p>
 <span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a><span class="bu">print</span>(<span class="ss">f"region = </span><span class="sc">{</span>region<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <p>We should also record our local instance information to report this
-information during testing. First, let’s make sure we’re starting in the
-same location to access helper functions</p>
+information during testing. First, the usual cell: start from the
+instance root, clone the lesson repository if needed, and import the
+helpers.</p>
 <div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a><span class="op">!</span>test <span class="op">-</span>d ML_with_AWS_SageMaker <span class="op">||</span> git clone https:<span class="op">//</span>github.com<span class="op">/</span>carpentries<span class="op">-</span>incubator<span class="op">/</span>ML_with_AWS_SageMaker.git</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1" aria-label="code-block-3-3"></a><span class="im">import</span> sys</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1" aria-label="code-block-3-5"></a><span class="im">import</span> helpers</span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb4">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="im">import</span> AWS_helpers.helpers <span class="im">as</span> helpers</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a>notebook_instance_name <span class="op">=</span> <span class="st">'sinkorswim-DoeJohn-TrainClassifier'</span> <span class="co"># replace with your notebook instance name</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a></span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a>local_instance_info <span class="op">=</span> helpers.get_notebook_instance_info(notebook_instance_name, region)</span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1" aria-label="code-block-4-5"></a>local_instance <span class="op">=</span> local_instance_info[<span class="st">'InstanceType'</span>]</span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1" aria-label="code-block-4-6"></a>local_instance</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a>notebook_instance_name <span class="op">=</span> <span class="st">'sinkorswim-DoeJohn-TrainClassifier'</span> <span class="co"># replace with your notebook instance name</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a>local_instance_info <span class="op">=</span> helpers.get_notebook_instance_info(notebook_instance_name, region)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a>local_instance <span class="op">=</span> local_instance_info[<span class="st">'InstanceType'</span>]</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1" aria-label="code-block-4-5"></a>local_instance</span></code></pre>
 </div>
 <p>If you are starting from a fresh notebook instance, grab the Titanic
 CSVs from S3 again (harmless if they are already here).</p>
@@ -596,8 +609,8 @@ training process.</p>
 </div>
 </div>
 </div>
-<p>We reuse the <code>preprocess_data()</code> function from
-<code>AWS_helpers/train_nn.py</code> rather than re-typing the
+<p>We reuse the <code>preprocess_data()</code> function from the
+lesson’s <code>scripts/train_nn.py</code> rather than re-typing the
 preprocessing here: the same function will later be applied to the test
 set, so train and test are guaranteed to be transformed identically. It
 returns the fitted <code>StandardScaler</code> for exactly that reason,
@@ -610,7 +623,7 @@ the evaluation.</p>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a><span class="im">import</span> joblib</span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> train_test_split</span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a><span class="im">from</span> AWS_helpers.train_nn <span class="im">import</span> preprocess_data</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a><span class="im">from</span> train_nn <span class="im">import</span> preprocess_data</span>
 <span id="cb6-5"><a href="#cb6-5" tabindex="-1" aria-label="code-block-6-5"></a></span>
 <span id="cb6-6"><a href="#cb6-6" tabindex="-1" aria-label="code-block-6-6"></a><span class="co"># Load and preprocess the Titanic dataset: encode Sex/Embarked, fill missing Age/Fare, standardize features</span></span>
 <span id="cb6-7"><a href="#cb6-7" tabindex="-1" aria-label="code-block-6-7"></a>df <span class="op">=</span> pd.read_csv(train_filename)</span>
@@ -660,7 +673,7 @@ trains on the full batch every epoch (one forward/backward pass over all
 <span id="cb8-5"><a href="#cb8-5" tabindex="-1" aria-label="code-block-8-5"></a>learning_rate <span class="op">=</span> <span class="fl">0.001</span></span>
 <span id="cb8-6"><a href="#cb8-6" tabindex="-1" aria-label="code-block-8-6"></a></span>
 <span id="cb8-7"><a href="#cb8-7" tabindex="-1" aria-label="code-block-8-7"></a>start_time <span class="op">=</span> t.time()</span>
-<span id="cb8-8"><a href="#cb8-8" tabindex="-1" aria-label="code-block-8-8"></a><span class="op">%</span>run AWS_helpers<span class="op">/</span>train_nn.py <span class="op">--</span>train train_data.npz <span class="op">--</span>val val_data.npz <span class="op">--</span>epochs {epochs} <span class="op">--</span>learning_rate {learning_rate}</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1" aria-label="code-block-8-8"></a><span class="op">%</span>run ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>train_nn.py <span class="op">--</span>train train_data.npz <span class="op">--</span>val val_data.npz <span class="op">--</span>epochs {epochs} <span class="op">--</span>learning_rate {learning_rate}</span>
 <span id="cb8-9"><a href="#cb8-9" tabindex="-1" aria-label="code-block-8-9"></a><span class="bu">print</span>(<span class="ss">f"Local training time: </span><span class="sc">{</span>t<span class="sc">.</span>time() <span class="op">-</span> start_time<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type = </span><span class="sc">{</span>local_instance<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="deploying-pytorch-neural-network-via-sagemaker">Deploying PyTorch neural network via SageMaker<a class="anchor" aria-label="anchor" href="#deploying-pytorch-neural-network-via-sagemaker"></a></h2>
@@ -731,7 +744,7 @@ startup, i.e. about $0.01 on <code>ml.m5.large</code>.</p>
 <span id="cb11-13"><a href="#cb11-13" tabindex="-1" aria-label="code-block-11-13"></a>pytorch_estimator <span class="op">=</span> PyTorch(</span>
 <span id="cb11-14"><a href="#cb11-14" tabindex="-1" aria-label="code-block-11-14"></a>    base_job_name<span class="op">=</span>notebook_instance_name,</span>
 <span id="cb11-15"><a href="#cb11-15" tabindex="-1" aria-label="code-block-11-15"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
-<span id="cb11-16"><a href="#cb11-16" tabindex="-1" aria-label="code-block-11-16"></a>    entry_point<span class="op">=</span><span class="st">"AWS_helpers/train_nn.py"</span>,</span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1" aria-label="code-block-11-16"></a>    entry_point<span class="op">=</span><span class="st">"ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,</span>
 <span id="cb11-17"><a href="#cb11-17" tabindex="-1" aria-label="code-block-11-17"></a>    role<span class="op">=</span>role,</span>
 <span id="cb11-18"><a href="#cb11-18" tabindex="-1" aria-label="code-block-11-18"></a>    tags<span class="op">=</span>job_tags,</span>
 <span id="cb11-19"><a href="#cb11-19" tabindex="-1" aria-label="code-block-11-19"></a>    instance_type<span class="op">=</span>instance_type, <span class="co"># with this small dataset, we don't necessarily need a GPU for fast training. </span></span>
@@ -805,7 +818,7 @@ Explain the result.</p>
 <span id="cb14-4"><a href="#cb14-4" tabindex="-1" aria-label="code-block-14-4"></a>pytorch_estimator_gpu <span class="op">=</span> PyTorch(</span>
 <span id="cb14-5"><a href="#cb14-5" tabindex="-1" aria-label="code-block-14-5"></a>    base_job_name<span class="op">=</span>notebook_instance_name,</span>
 <span id="cb14-6"><a href="#cb14-6" tabindex="-1" aria-label="code-block-14-6"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
-<span id="cb14-7"><a href="#cb14-7" tabindex="-1" aria-label="code-block-14-7"></a>    entry_point<span class="op">=</span><span class="st">"AWS_helpers/train_nn.py"</span>,</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1" aria-label="code-block-14-7"></a>    entry_point<span class="op">=</span><span class="st">"ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,</span>
 <span id="cb14-8"><a href="#cb14-8" tabindex="-1" aria-label="code-block-14-8"></a>    role<span class="op">=</span>role,</span>
 <span id="cb14-9"><a href="#cb14-9" tabindex="-1" aria-label="code-block-14-9"></a>    tags<span class="op">=</span>job_tags,</span>
 <span id="cb14-10"><a href="#cb14-10" tabindex="-1" aria-label="code-block-14-10"></a>    instance_type<span class="op">=</span>instance_type,</span>
@@ -935,7 +948,7 @@ about $0.02 on <code>ml.m5.large</code>.</p>
 <span id="cb15-4"><a href="#cb15-4" tabindex="-1" aria-label="code-block-15-4"></a>pytorch_estimator_2x <span class="op">=</span> PyTorch(</span>
 <span id="cb15-5"><a href="#cb15-5" tabindex="-1" aria-label="code-block-15-5"></a>    base_job_name<span class="op">=</span>notebook_instance_name,</span>
 <span id="cb15-6"><a href="#cb15-6" tabindex="-1" aria-label="code-block-15-6"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
-<span id="cb15-7"><a href="#cb15-7" tabindex="-1" aria-label="code-block-15-7"></a>    entry_point<span class="op">=</span><span class="st">"AWS_helpers/train_nn.py"</span>,</span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1" aria-label="code-block-15-7"></a>    entry_point<span class="op">=</span><span class="st">"ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,</span>
 <span id="cb15-8"><a href="#cb15-8" tabindex="-1" aria-label="code-block-15-8"></a>    role<span class="op">=</span>role,</span>
 <span id="cb15-9"><a href="#cb15-9" tabindex="-1" aria-label="code-block-15-9"></a>    tags<span class="op">=</span>job_tags,</span>
 <span id="cb15-10"><a href="#cb15-10" tabindex="-1" aria-label="code-block-15-10"></a>    instance_type<span class="op">=</span>instance_type,</span>
