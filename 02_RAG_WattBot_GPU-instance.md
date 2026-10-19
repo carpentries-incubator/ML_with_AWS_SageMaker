@@ -1,5 +1,5 @@
 ---
-title: "RAG with a Notebook GPU"
+title: "(Optional) RAG with a Notebook GPU"
 teaching: 30
 exercises: 15
 ---
@@ -26,15 +26,23 @@ exercises: 15
 
 
 
+::::::::::::::::::::::::::::::::::::: callout
+
+### Optional, self-study episode
+
+This episode is not taught in the workshop. It runs the same self-hosted pipeline as the Processing Jobs episode, but interactively on a GPU notebook instance, which is the right tool for prototyping alone at a keyboard and the wrong one for a room of a hundred people with meters running. Work through it on your own when you want to see model loading, GPU memory and generation as plain Python you can poke at. Read the cost callout first.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
 ## When Bedrock does not have your model
 
-In the previous episode we built the full WattBot pipeline on **Amazon Bedrock**, the recommended default for RAG inference because it bills per token and leaves nothing running between calls. Bedrock's catalog is curated, though. It has Amazon's own models, Anthropic, Meta, Mistral, DeepSeek, and a handful of others, and even within a family it carries a few sizes and lags the releases: for Qwen, the serverless lineup is still the Qwen3 generation (Qwen3-32B, Qwen3-235B and the Qwen3-Coder models). Hugging Face hosts well over a million open-weight checkpoints. The one you want (the newest release, a specific size, a specific fine-tune, a model tuned on scientific text) is usually not on Bedrock, and often never will be.
+In the Bedrock episode we built the full WattBot pipeline on **Amazon Bedrock**, the recommended default for RAG inference because it bills per token and leaves nothing running between calls. Bedrock's catalog is curated, though. It has Amazon's own models, Anthropic, Meta, Mistral, DeepSeek, and a handful of others, and even within a family it carries a few sizes and lags the releases: for Qwen, the serverless lineup is still the Qwen3 generation (Qwen3-32B, Qwen3-235B and the Qwen3-Coder models). Hugging Face hosts well over a million open-weight checkpoints. The one you want (the newest release, a specific size, a specific fine-tune, a model tuned on scientific text) is usually not on Bedrock, and often never will be.
 
 When that happens you host the model yourself on a GPU you rent. This episode does that in its simplest form: a single GPU notebook instance, with **Qwen3.8-27B** as the generator. It is a 27-billion-parameter open-weight (Apache 2.0) model released in August 2026 that is not offered on Bedrock, large enough to follow the WattBot answer format reliably, and small enough to fit on one 48 GB GPU once its weights are stored in 8-bit floating point. Everything Bedrock abstracts away (loading an embedding model, loading a generator, fitting both in GPU memory) becomes visible as plain Python. Treat it as a learning exercise and a prototyping workbench, not a deployment pattern.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
-### This is the riskiest way to spend cloud money in the whole lesson
+### This instance bills $2.61 an hour until you stop it, and nothing stops it for you
 
 A GPU notebook instance is a rental with the meter running. It bills by the hour from the moment it starts until the moment *you* stop it, whether it is generating answers, sitting at an idle prompt, or showing a closed browser tab on a laptop that went home for the weekend. Nothing in this episode turns it off for you. The instance we use, `ml.g6e.xlarge` (one L40S GPU, 48 GB), costs **$2.61 per hour** on-demand in `us-east-1` (AWS price list, October 2026). That is:
 
@@ -57,7 +65,7 @@ The habits that keep this safe:
 
 1. **Stop the instance when you stand up**, every time, from the console (**Notebook instances → select → Stop**). Then look at the status column until it says `Stopped`.
 2. **Set a reminder** on your phone or calendar before you start the instance, for two hours from now.
-3. **Prefer the later episodes' patterns** for any real work: a Processing job (next episode) or a training job ends on its own, and `max_run` guarantees it.
+3. **Prefer jobs for any real work**: a Processing job (the previous episode) or a training job ends on its own, and `max_run` guarantees it.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -67,7 +75,7 @@ Self-hosting on a notebook GPU is nonetheless the right starting point for under
 - Ideal for learning what retrieval and generation actually do, step by step
 - The fastest loop for experimenting with prompts and models that Bedrock does not carry
 
-In the next episode we keep the same pipeline and move the GPU work into short-lived Processing jobs, so the GPU only bills while it is embedding or generating. Later patterns (inference endpoints, batch transform) build on the same idea.
+The Processing Jobs episode runs this same pipeline as short-lived jobs, so the GPU only bills while it is embedding or generating; that is the pattern to use for real work. Later patterns (inference endpoints, batch transform) build on the same idea.
 
 
 ## Overview: WattBot RAG on a single notebook GPU
@@ -1341,7 +1349,7 @@ This is just a first pass at a RAG pipeline: it works, but there’s a lot of he
 
 As you iterate, the goal is to treat this notebook as a baseline RAG “workbench”: you can swap in better models, smarter retrieval strategies, and richer document preprocessing without changing the overall pipeline structure.
 
-In the next episode, we move the GPU work out of the notebook and into short-lived SageMaker Processing jobs, so the GPU only bills while it is actually embedding or generating.
+The Processing Jobs episode does the same work as short-lived SageMaker jobs, so the GPU only bills while it is actually embedding or generating. Stop this instance now, and delete it if you are done with the episode.
 
 
 

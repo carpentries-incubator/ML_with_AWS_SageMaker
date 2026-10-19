@@ -80,6 +80,55 @@ Two rows deserve a second look. The CHURRO row is the model you are about to fin
 
 The habits in this episode are cheap practice at sixty cents a run. At $250 a run they are the difference between a project and a budget incident.
 
+### Back of the envelope: will it fit, and how long will it take?
+
+Two rules of thumb answer most of the question before you touch a console. They are good to within a factor of two, which is what you need to tell a $5 run from a $500 one.
+
+**1. Memory: will it fit on the GPU?** Count bytes per parameter for what you are doing, multiply by the parameter count, then add a few GB for activations (more for long sequences and big batches).
+
+| What you are doing | Bytes per parameter | Why | 3B | 7B | 27B | 70B |
+|---|---|---|---|---|---|---|
+| Inference, 4-bit weights | 0.5 | weights only | 1.5 GB | 3.5 GB | 14 GB | 35 GB |
+| Inference, FP8 | 1 | weights only | 3 GB | 7 GB | 27 GB | 70 GB |
+| Inference, bf16 | 2 | weights only | 6 GB | 14 GB | 54 GB | 140 GB |
+| LoRA fine-tune | ~2.5 | frozen bf16 weights + a small adapter with its gradients and optimizer | 8 GB | 18 GB | 68 GB | 175 GB |
+| Full fine-tune, mixed precision | 16 | bf16 weights 2 + bf16 gradients 2 + fp32 master weights 4 + Adam's two moments 8 | 48 GB | 112 GB | 430 GB | 1.1 TB |
+
+The jump from the inference rows to the training rows is the point. Training cannot run on quantized weights the way inference can: gradient updates are tiny numbers that vanish in 8-bit or 4-bit precision, so every trainable parameter keeps a full-precision master copy plus two Adam moments, 16 bytes against 2. That is why a 7B model you can *run* on a 24 GB GPU needs 112 GB plus activations to *fully fine-tune*, which means several GPUs with the model sharded across them. LoRA sidesteps it by freezing the model and training a few million adapter parameters, which is why this episode fits on one 24 GB card.
+
+**2. Time: how many GPU-hours?** Training compute is roughly proportional to parameters × tokens seen:
+
+```
+tokens      = examples × tokens per example × epochs
+FLOPs       ≈ 6 × parameters × tokens      (full fine-tune)
+            ≈ 4 × parameters × tokens      (LoRA: no weight gradients for the frozen base)
+GPU-seconds = FLOPs / (GPU peak bf16 FLOPS × utilization)
+```
+
+Utilization is the number people forget. A GPU running one page at a time with gradient checkpointing manages 20–30% of its peak; a well-tuned multi-GPU job reaches 40–50%. Use 25% unless you have measured otherwise. Then cost = GPU-hours × hourly rate + the fixed startup overhead per job (~10 minutes here).
+
+Worked for the class run: 120 pages × ~1,600 tokens (1,300 visual + 300 text) × 2 epochs = 384k tokens. LoRA on a 3.75B model (3B language model plus the vision tower): 4 × 3.75e9 × 3.84e5 ≈ 5.8e15 FLOPs. An A10G peaks at about 70 TFLOPS in bf16; at 25% utilization that is 17 TFLOPS, so about 340 seconds, call it 6 minutes. The "~10 min" in the table below adds the image preprocessing on four vCPUs and the checkpointing overhead. Same arithmetic, same answer within the factor of two.
+
+**More GPUs do not make it cheaper.** GPU-hours are the cost; spreading them across eight GPUs changes the wall-clock time, not the bill, and only helps if the job is large enough to keep all eight busy. You add GPUs when the memory row above says one GPU cannot hold the job, not to save money.
+
+::::::::::::::::::::::::::::::::::::: challenge
+
+### Estimate a run you have not launched
+
+A lab wants to **fully fine-tune a 7B model** on 50,000 documents of ~2,000 tokens for 3 epochs. They are choosing between `ml.p4d.24xlarge` (8 × A100 40 GB, $25.25/h, ~312 TFLOPS bf16 per GPU) and renting a single `ml.g5.xlarge`. Using the two rules: does it fit on the g5? How many GPU-hours on the p4d, and what does one run cost? What does a realistic project cost?
+
+:::::::::::::::::::::::: solution
+
+It does not fit on the g5: full fine-tuning a 7B model needs ~112 GB plus activations, and the g5 has 24 GB. On the p4d the 8 × 40 GB = 320 GB holds it with the model sharded.
+
+Tokens: 50,000 × 2,000 × 3 = 3 × 10^8. FLOPs: 6 × 7 × 10^9 × 3 × 10^8 ≈ 1.3 × 10^19. Per GPU at 312 TFLOPS × 40% utilization ≈ 125 TFLOPS: 1.0 × 10^5 GPU-seconds ≈ 28 GPU-hours, which is 3.5 hours of wall-clock on 8 GPUs, about $90 for one run.
+
+A realistic project is not one run. The first run finds a data bug, the second a bad learning rate, then two or three are compared, then the one that worked is rerun on the final data: five to ten runs, so $450 to $900, before anyone touches a hyperparameter sweep. That is the number to put in the proposal, and it is why the three habits matter more as the model gets bigger.
+
+:::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
 ### The instance
 
 The model we fine-tune fits on one 24 GB GPU. Single-GPU and multi-GPU SageMaker training instances, same price list:

@@ -6,30 +6,62 @@ exercises: 20
 
 :::::::::::::::::::::::::::::::::::::: questions
 
-- TODO
+- When does a RAG pipeline need a self-hosted, open-weight model instead of Bedrock, and what is the safest way to rent the GPU for it?
+- How do we run the embedding and generation steps of the WattBot pipeline as SageMaker Processing jobs that end on their own?
+- How do we pass data in and out of a job through S3, and tag the job so its cost is traceable?
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ::::::::::::::::::::::::::::::::::::: objectives
 
-- TODO
+- Explain why Bedrock's catalog is not enough when you need a specific open-weight model, and why a Processing job is the default way to self-host one for batch work.
+- Launch a GPU Processing job that embeds the cached WattBot chunks with a self-hosted embedding model and writes the vectors to S3.
+- Launch a second Processing job that serves Qwen3.8-27B (an open-weight model Bedrock does not carry) with vLLM and runs the full RAG loop over the training questions.
+- Read a job's inputs, outputs, arguments and runtime cap, and relate its duration to what it cost.
+- Score the batch predictions with the WattBot metric and compare against the Bedrock run.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 
 # RAG with Processing Jobs
 
-In the previous episode, we ran the entire WattBot RAG pipeline on a single GPU-backed SageMaker notebook. That was simple to teach, but the GPU sat idle while we downloaded PDFs, chunked text, and evaluated results.
+## When Bedrock does not have your model
 
-In this episode, we will keep the same WattBot corpus and RAG logic, but restructure how we use AWS:
+The Bedrock episode is the default for RAG: per-token billing, nothing left running, two API calls. Bedrock's catalog is curated, though. It carries Amazon's models, Anthropic, Meta, Mistral, DeepSeek, and a few others, and within a family only some sizes, usually a generation behind: for Qwen, the serverless lineup is still the Qwen3 series. Hugging Face hosts well over a million open-weight checkpoints. The one you want (the newest release, a specific size, a fine-tune for scientific text, a model a paper just published) is usually not on Bedrock, and often never will be.
 
-- The notebook itself can run on a small CPU-only instance.
-- We reuse the chunks already cached on S3 in the Bedrock episode.
-- We run two short-lived SageMaker Processing jobs on a GPU:
-  1. One job computes embeddings for all chunks.
-  2. A second job runs the full RAG loop (retrieval + Qwen) over all training questions.
+When that happens you host the model yourself on a GPU you rent, and the question becomes *how*. There are three ways to rent a GPU on SageMaker:
 
-With this approach, we can more effectively use GPU resources only when needed, and we can scale out to larger corpora, models, and hardware more easily. The downside here is that you have to wait for processing jobs to spin up and run in batch mode on your queries. For many research applications of RAG, this is fine. However, if you want a near-real time chatbot you can have back and forth discussion with, this approach will not work. For that, use *Bedrock* (as in the first RAG episode) or your own *model inference endpoints*, which answer individual queries in seconds.
+| | Bills | Stops when | Best for |
+|---|---|---|---|
+| GPU notebook instance | by the hour from start to stop | **you** stop it | interactive debugging, prototyping at the keyboard |
+| Processing or training job | by the second while the job runs | the script ends, or `max_runtime_in_seconds` | batch work: embed a corpus, answer a list of questions, train |
+| Inference endpoint | by the hour while deployed | you delete it | serving a model to an application with steady traffic |
+
+For research RAG, almost all the work is batch: embed everything once, answer a list of questions, score them. That is a job, and a job is the one option that cannot be forgotten. This episode runs the WattBot pipeline that way. The notebook itself is a small CPU instance and never touches the model; it stages data, launches two GPU jobs, and reads the results back.
+
+The generator is **Qwen3.8-27B**, a 27-billion-parameter open-weight model (Apache 2.0, released August 2026) that is not on Bedrock. Its weights are served in FP8 through vLLM: inference needs no gradients, so the weights are the memory cost, and 27B parameters at one byte each is about 27 GB, which fits one 48 GB GPU (`ml.g6e.xlarge`) with room for the KV cache. In bf16 the same model is 54 GB and would need a multi-GPU instance for no gain in output quality. (The fine-tuning episode has the full memory arithmetic; the short version is that inference runs on reduced-precision weights and training cannot.)
+
+::::::::::::::::::::::::::::::::::::: callout
+
+### What this episode costs
+
+| Job | Instance | $/h | Expected duration | Cost |
+|---|---|---|---|---|
+| Embed ~3,000 chunks | `ml.g5.xlarge` (A10G, 24 GB) | $1.41 | ~8 min incl. startup | ~$0.20 |
+| RAG over the training questions with Qwen3.8-27B | `ml.g6e.xlarge` (L40S, 48 GB) | $2.61 | ~30 min: 5 startup, ~5 installing vLLM, ~5 downloading 27 GB of weights, the rest generating | ~$1.30 |
+| Controller notebook | `ml.t3.medium` | $0.05 | 2 h | $0.10 |
+
+About $1.60 for the episode, and the GPUs are off the moment each script ends. Both jobs carry `max_runtime_in_seconds`, so a hung job costs at most the cap. Compare the same pipeline on a GPU notebook instance (the optional episode after this one): the hardware is the same, but the meter runs until someone stops it, and a forgotten `ml.g6e.xlarge` is $63 a day.
+
+The trade-off is latency. A job takes minutes to start, so this pattern is for batch questions, not a chatbot. For interactive use, Bedrock answers in seconds; for interactive use of a model Bedrock does not have, an inference endpoint does, at an hourly rate you have to remember to turn off.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+In this episode we will:
+
+- Reuse the chunks cached in your bucket by the Bedrock episode and the inputs in the shared bucket.
+- Run two short-lived GPU Processing jobs: one computes embeddings for all chunks; the second serves Qwen3.8-27B with vLLM and runs the full RAG loop (retrieval + generation) over all training questions.
+- Score the result and compare it with the Bedrock run.
 
 
 ## Setup
@@ -172,8 +204,8 @@ we have to create a requirements.txt file that will add additional libraries to 
 
 ```python
 requirements = [
-    "sentence-transformers",
-    # add more packages here if needed
+    "sentence-transformers",   # embedding job
+    "vllm>=0.17",              # RAG job: serves Qwen3.8-27B (FP8); needs 0.17+ for this model
 ]
 
 req_path = "code/requirements.txt"
@@ -323,17 +355,20 @@ rag_script = "wattbot_rag_batch.py"
 rag_output_prefix = "wattbot/solutions"
 rag_output_path = f"s3://{bucket_name}/{rag_output_prefix}/"
 
+generation_model_id = "Qwen/Qwen3.8-27B-FP8"   # open-weight, not on Bedrock; ~27 GB in FP8
+
 rag_processor = HuggingFaceProcessor(
     base_job_name="WattBot-rag-batch",
     role=role,
     tags=make_job_tags("RAG-batch"),   # separate job, separate tags
-    instance_type="ml.g5.xlarge",
+    instance_type="ml.g6e.xlarge",     # 1 x L40S, 48 GB: holds the FP8 27B model plus KV cache
     instance_count=1,
+    volume_size_in_gb=60,              # vLLM install + 27 GB of weights
     transformers_version="4.56",
     pytorch_version="2.8",
     py_version="py312",
     sagemaker_session=session,
-    max_runtime_in_seconds=4 * 60 * 60,
+    max_runtime_in_seconds=2 * 60 * 60,   # cap: the estimate is 30 minutes
 )
 
 rag_processor.run(
@@ -368,6 +403,7 @@ rag_processor.run(
         "--input_dir", "/opt/ml/processing/input",
         "--output_dir", "/opt/ml/processing/output",
         "--embedding_model_id", embedding_model_id,
+        "--qwen_model_id", generation_model_id,
         "--top_k", "8",
     ],
 )
@@ -618,6 +654,10 @@ results_df = compute_wattbot_score(
 
 ::::::::::::::::::::::::::::::::::::: keypoints
 
-- TODO
+- Bedrock's catalog is curated and lags releases; when you need a specific open-weight model you rent a GPU and serve it yourself.
+- Of the ways to rent a GPU, a Processing job is the one that cannot be forgotten: it bills while the script runs and ends on its own, with `max_runtime_in_seconds` as the backstop. Use it for batch work; use Bedrock or an endpoint when you need answers in seconds.
+- Inference runs on reduced-precision weights: Qwen3.8-27B in FP8 is ~27 GB and fits one 48 GB GPU; bf16 would need two.
+- A job's inputs and outputs are S3 prefixes mounted into the container; the notebook only stages files and reads results, so it stays a cheap CPU instance.
+- Tags do not propagate from the notebook: every job gets its own `tags=`.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::

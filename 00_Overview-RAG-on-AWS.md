@@ -174,7 +174,7 @@ If you are unsure, pick Bedrock. The worst case is a slightly higher per‑token
 
 ### How the hands-on episodes are ordered
 
-The next three episodes walk through RAG on **Bedrock** first, then a **notebook GPU**, then **Processing Jobs**. The Bedrock episode is the one to start from: it builds the whole WattBot pipeline, including downloading and chunking the corpus, from a cheap CPU notebook with nothing left running afterward. The two GPU episodes then rerun the same pipeline on self‑hosted models so you can see what Bedrock abstracts away, and what it costs to do yourself. By the end you will have seen the same WattBot pipeline run all three ways and can compare cost, latency, and complexity directly.
+The next two episodes walk through RAG on **Bedrock** first, then on **Processing Jobs**. The Bedrock episode is the one to start from: it builds the whole WattBot pipeline, including chunking the corpus, from a cheap CPU notebook with nothing left running afterward. The Processing Jobs episode reruns the same pipeline on a self-hosted open-weight model that Bedrock does not carry, as jobs that end on their own, so you can see what Bedrock abstracts away and what it costs to do yourself. An optional self-study episode at the end of the lesson runs the same self-hosted pipeline interactively on a GPU notebook instance, for prototyping alone at a keyboard.
 
 When you build your own RAG system afterward, start from the Bedrock episode.
 
@@ -188,6 +188,6 @@ When you build your own RAG system afterward, start from the Bedrock episode.
 - Among the GPU options, Processing Jobs are the safest because the instance terminates itself; notebook GPUs and endpoints bill by the hour until you stop them.
 - A forgotten GPU instance costs tens of dollars overnight and hundreds to thousands over a month; a full WattBot run on Bedrock costs well under a dollar.
 - Tags never propagate: tag every job at launch, and route Bedrock calls through a tagged application inference profile, or the spend is untraceable.
-- The hands‑on episodes start with Bedrock, then show the same pipeline on a notebook GPU and on Processing Jobs.
+- The hands‑on episodes start with Bedrock, then show the same pipeline on Processing Jobs; the notebook-GPU version is optional self-study.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::

@@ -11,8 +11,8 @@ Console: **Service Quotas → AWS services → Amazon SageMaker**, in the region
 | Quota | Request | Used by |
 |---|---|---|
 | `ml.t3.medium for notebook instance usage` | 100 | controller notebook, every episode |
-| `ml.g6e.xlarge for notebook instance usage` | 100 | GPU RAG episode (Qwen3.8-27B via vLLM). **Default is usually 0** |
-| `Total number of notebook instances` | 200 | two per student (controller + GPU) |
+| `ml.g6e.xlarge for notebook instance usage` | 0 (optional) | only the optional self-study GPU-notebook episode; not needed for class |
+| `Total number of notebook instances` | 100 | one controller per student |
 | `ml.m5.large for training job usage` | 200 | XGBoost episode; PyTorch part 2; tuning (2 parallel jobs each) |
 | `ml.m5.xlarge for training job usage` | 200 | PyTorch part 2 runs `instance_count=2` |
 | `ml.g4dn.xlarge for training job usage` | 100 | PyTorch part 2 GPU comparison |
@@ -20,7 +20,7 @@ Console: **Service Quotas → AWS services → Amazon SageMaker**, in the region
 | `ml.g6e.xlarge for training job usage` | 100 | optional: fine-tuning Exercise 2 |
 | `Number of instances across all training jobs` | 250 (already applied) | account-level ceiling; 250 covers 100 students |
 | `ml.g5.xlarge for processing job usage` | 200 | Processing Jobs episode and fine-tuning homework (two jobs per student, possibly at once) |
-| `ml.g6e.xlarge for processing job usage` | 200 | only if the Processing Jobs episode is moved to the 27B model |
+| `ml.g6e.xlarge for processing job usage` | 100 | Processing Jobs episode: the RAG job serves Qwen3.8-27B. **Default is usually 0** |
 | `Number of instances across all processing jobs` | 250 (already applied) | account-level ceiling |
 
 Also check `ml.g5.xlarge for training warm pool usage` is left at its default of 0; the episodes do not use warm pools and a nonzero quota lets a student leave an idle GPU billing.
@@ -48,5 +48,5 @@ Console: **Service Quotas → Amazon Bedrock**, and **Bedrock → Model access**
 
 ## Capacity fallbacks to have on a slide
 
-- GPU notebook episode: if `ml.g6e.xlarge` capacity is short, `ml.g6e.2xlarge` ($2.80/h, same GPU) is the only same-memory alternative; a 24 GB instance cannot hold the 27B model.
+- Processing Jobs episode: if `ml.g6e.xlarge` capacity is short, `ml.g6e.2xlarge` ($2.80/h, same GPU) is the only same-memory alternative; a 24 GB instance cannot hold the 27B model.
 - Fine-tuning episode: `ml.g6.xlarge` ($1.13/h, L4, 24 GB) runs the mini job at about the same speed as `ml.g5.xlarge`.
