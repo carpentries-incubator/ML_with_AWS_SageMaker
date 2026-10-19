@@ -618,15 +618,20 @@ it is US East (Ohio), <code>us-east-2</code>). SageMaker jobs can only
 read buckets in their own region, so a bucket created in another region
 shows up later as “access denied” or “no such bucket” errors from your
 jobs.</p></li>
-<li><p>Click <strong>Create Bucket</strong> and enter a unique name, and
-note that bucket name must not contain uppercase characters. To easily
-find this bucket later in our shared AWS account, please use the
-following naming convention: <code>teamname-yourname</code> (e.g.,
-sinkorswim-doejohn). <strong>This is the only bucket you will create in
-the workshop.</strong> Every later episode writes its outputs (trained
-models, embeddings, predictions) into this same bucket under its own
-prefix, such as <code>xgboost/</code>, <code>wattbot/</code> or
-<code>badger-scribe/</code>.</p></li>
+<li><p>Click <strong>Create Bucket</strong> and enter a unique name. Use
+the naming convention <code>challenge-lastnamefirstname</code>, all
+lowercase, e.g. <code>sinkorswim-doejohn</code>: the challenge you are
+working on (<code>wattbot2026</code>, <code>badgerscribe</code>,
+<code>badgercode</code>, …), a hyphen, then your last and first name run
+together. S3 requires bucket names to be lowercase letters, digits and
+hyphens only (3 to 63 characters, starting and ending with a letter or
+digit, no underscores, no spaces), and the same lowercase string is what
+we will use for your notebook instance and your <code>Project</code>
+tag, so one name works everywhere. <strong>This is the only bucket you
+will create in the workshop.</strong> Every later episode writes its
+outputs (trained models, embeddings, predictions) into this same bucket
+under its own prefix, such as <code>xgboost/</code>,
+<code>wattbot/</code> or <code>badger-scribe/</code>.</p></li>
 <li>
 <p><strong>Access Control (ACLs)</strong>: Disable ACLs
 (recommended).</p>
@@ -665,14 +670,18 @@ bucket:</p>
 <table class="table"><thead><tr><th>Key</th>
 <th>Value</th>
 </tr></thead><tbody><tr><td><code>Project</code></td>
-<td>your team name, e.g. <code>sinkorswim</code>
+<td>your challenge name, e.g. <code>sinkorswim</code>
 </td>
 </tr><tr><td><code>Name</code></td>
 <td>your name, e.g. <code>John Doe</code>
 </td>
 </tr><tr><td><code>Purpose</code></td>
 <td><code>Workshop-storage</code></td>
-</tr></tbody></table></li>
+</tr></tbody></table><p>Tag values are case-sensitive on the bill: <code>SinkOrSwim</code>
+and <code>sinkorswim</code> would be two separate rows in Cost Explorer.
+Use the same lowercase challenge name you put in the bucket
+name.</p>
+</li>
 </ul><figure><img src="fig/bucket_tags2.png" alt="Screenshot showing required tags for an S3 bucket" class="figure mx-auto d-block"><div class="figcaption">Example of Tags for an S3 Bucket</div>
 </figure><ul><li>Click <strong>Create Bucket</strong> at the bottom once everything
 above has been configured</li>

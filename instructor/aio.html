@@ -970,15 +970,20 @@ it is US East (Ohio), <code>us-east-2</code>). SageMaker jobs can only
 read buckets in their own region, so a bucket created in another region
 shows up later as “access denied” or “no such bucket” errors from your
 jobs.</p></li>
-<li><p>Click <strong>Create Bucket</strong> and enter a unique name, and
-note that bucket name must not contain uppercase characters. To easily
-find this bucket later in our shared AWS account, please use the
-following naming convention: <code>teamname-yourname</code> (e.g.,
-sinkorswim-doejohn). <strong>This is the only bucket you will create in
-the workshop.</strong> Every later episode writes its outputs (trained
-models, embeddings, predictions) into this same bucket under its own
-prefix, such as <code>xgboost/</code>, <code>wattbot/</code> or
-<code>badger-scribe/</code>.</p></li>
+<li><p>Click <strong>Create Bucket</strong> and enter a unique name. Use
+the naming convention <code>challenge-lastnamefirstname</code>, all
+lowercase, e.g. <code>sinkorswim-doejohn</code>: the challenge you are
+working on (<code>wattbot2026</code>, <code>badgerscribe</code>,
+<code>badgercode</code>, …), a hyphen, then your last and first name run
+together. S3 requires bucket names to be lowercase letters, digits and
+hyphens only (3 to 63 characters, starting and ending with a letter or
+digit, no underscores, no spaces), and the same lowercase string is what
+we will use for your notebook instance and your <code>Project</code>
+tag, so one name works everywhere. <strong>This is the only bucket you
+will create in the workshop.</strong> Every later episode writes its
+outputs (trained models, embeddings, predictions) into this same bucket
+under its own prefix, such as <code>xgboost/</code>,
+<code>wattbot/</code> or <code>badger-scribe/</code>.</p></li>
 <li>
 <p><strong>Access Control (ACLs)</strong>: Disable ACLs
 (recommended).</p>
@@ -1025,7 +1030,7 @@ bucket:</p>
 <tbody>
 <tr>
 <td><code>Project</code></td>
-<td>your team name, e.g. <code>sinkorswim</code>
+<td>your challenge name, e.g. <code>sinkorswim</code>
 </td>
 </tr>
 <tr>
@@ -1039,6 +1044,10 @@ bucket:</p>
 </tr>
 </tbody>
 </table>
+<p>Tag values are case-sensitive on the bill: <code>SinkOrSwim</code>
+and <code>sinkorswim</code> would be two separate rows in Cost Explorer.
+Use the same lowercase challenge name you put in the bucket
+name.</p>
 </li>
 </ul>
 <figure><img src="../fig/bucket_tags2.png" alt="Screenshot showing required tags for an S3 bucket" class="figure mx-auto d-block"><div class="figcaption">Example of Tags for an S3 Bucket</div>
@@ -1531,11 +1540,16 @@ AI</strong> to save SageMaker as a bookmark in your AWS toolbar</li>
 <li><p>In the SageMaker left-side menu, click on <strong>Notebook
 instances</strong>, then click <strong>Create notebook
 instance</strong>.</p></li>
-<li><p><strong>Notebook name</strong>: To easily track this resource in
-our shared account, please use the following naming convention:
-“TeamName-LastnameFirstname-NotebookPurpose”. For example,
-“sinkorswim-DoeJohn-TrainClassifier”. Can include hyphens, but not
-spaces.</p></li>
+<li><p><strong>Notebook name</strong>: Same convention as your bucket,
+with a purpose on the end:
+<code>challenge-lastnamefirstname-purpose</code>, all lowercase,
+e.g. <code>sinkorswim-doejohn-trainclassifier</code>. SageMaker allows
+letters, digits and hyphens (no spaces or underscores, up to 63
+characters) and would accept capitals, but we keep everything lowercase
+so the bucket, the notebook and the tags all carry the same string and
+sort together in the console and on the bill. This name is also reused
+as the prefix of every training job you launch from the notebook, which
+is how you will find your jobs in a shared account.</p></li>
 <li>
 <p><strong>Instance type</strong>: SageMaker notebooks run on AWS
 EC2 instances. The instance type determines the compute resources
@@ -1601,7 +1615,7 @@ shown; capitalization matters):</p>
 <tbody>
 <tr>
 <td><code>Project</code></td>
-<td>your team name, e.g. <code>sinkorswim</code>
+<td>your challenge name, e.g. <code>sinkorswim</code>
 </td>
 </tr>
 <tr>
@@ -1950,10 +1964,10 @@ if you only need to load data once or infrequently.</li>
 <h4 id="example-reading-data-from-s3-into-memory">Example: Reading data from S3 into memory<a class="anchor" aria-label="anchor" href="#example-reading-data-from-s3-into-memory"></a>
 </h4>
 <p>Our data is stored in the S3 bucket you created in the previous
-episode, named ‘teamname-yourname’ (e.g., sinkorswim-doejohn). We can
-use the following code to read data directly from S3 into memory in the
-Jupyter notebook environment, without actually downloading a copy of
-train.csv as a local file.</p>
+episode, named ‘challenge-lastnamefirstname’ (e.g., sinkorswim-doejohn).
+We can use the following code to read data directly from S3 into memory
+in the Jupyter notebook environment, without actually downloading a copy
+of train.csv as a local file.</p>
 <div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -3266,7 +3280,7 @@ cases. We can extract the instance name for this notebook using…</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a><span class="co"># Replace with your notebook instance name.</span></span>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1" aria-label="code-block-7-2"></a><span class="co"># This does NOT refer to specific ipynb files, but to the SageMaker notebook instance.</span></span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1" aria-label="code-block-7-3"></a>notebook_instance_name <span class="op">=</span> <span class="st">'sinkorswim-DoeJohn-TrainClassifier'</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1" aria-label="code-block-7-3"></a>notebook_instance_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn-trainclassifier'</span></span>
 <span id="cb7-4"><a href="#cb7-4" tabindex="-1" aria-label="code-block-7-4"></a></span>
 <span id="cb7-5"><a href="#cb7-5" tabindex="-1" aria-label="code-block-7-5"></a><span class="co"># Describe the notebook instance (sagemaker_client was created from our session above)</span></span>
 <span id="cb7-6"><a href="#cb7-6" tabindex="-1" aria-label="code-block-7-6"></a>response <span class="op">=</span> sagemaker_client.describe_notebook_instance(NotebookInstanceName<span class="op">=</span>notebook_instance_name)</span>
@@ -3645,7 +3659,7 @@ and a human-readable name, even after the job has completed.</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1" aria-label="code-block-13-1"></a>name <span class="op">=</span> <span class="st">"John Doe"</span> <span class="co"># replace with your name</span></span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1" aria-label="code-block-13-2"></a>project <span class="op">=</span> <span class="st">"sinkorswim"</span> <span class="co"># replace with your team name</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1" aria-label="code-block-13-2"></a>project <span class="op">=</span> <span class="st">"sinkorswim"</span> <span class="co"># replace with your challenge name</span></span>
 <span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a>purpose <span class="op">=</span> <span class="st">"train_XGBoost"</span></span>
 <span id="cb13-4"><a href="#cb13-4" tabindex="-1" aria-label="code-block-13-4"></a></span>
 <span id="cb13-5"><a href="#cb13-5" tabindex="-1" aria-label="code-block-13-5"></a>job_tags <span class="op">=</span> [</span>
@@ -4062,7 +4076,7 @@ include jobs from other users in the account.</li>
 <li>Identify your job by its name. Because we set
 <code>base_job_name=notebook_instance_name</code>, the name starts with
 your notebook instance name followed by a timestamp,
-e.g. <code>sinkorswim-DoeJohn-TrainClassifier-2026-10-16-14-05-33-123</code>
+e.g. <code>sinkorswim-doejohn-trainclassifier-2026-10-16-14-05-33-123</code>
 (this is also what
 <code>xgboost_estimator.latest_training_job.name</code> printed above).
 Click on its name to access detailed information. Cross-check the job
@@ -4295,7 +4309,7 @@ helpers.</p>
 <div class="codewrapper sourceCode" id="cb4">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a>notebook_instance_name <span class="op">=</span> <span class="st">'sinkorswim-DoeJohn-TrainClassifier'</span> <span class="co"># replace with your notebook instance name</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a>notebook_instance_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn-trainclassifier'</span> <span class="co"># replace with your notebook instance name</span></span>
 <span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a></span>
 <span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a>local_instance_info <span class="op">=</span> helpers.get_notebook_instance_info(notebook_instance_name, region)</span>
 <span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a>local_instance <span class="op">=</span> local_instance_info[<span class="st">'InstanceType'</span>]</span>
@@ -4471,7 +4485,7 @@ is anonymous on the bill. Define them once here and pass
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a>name <span class="op">=</span> <span class="st">"John Doe"</span> <span class="co"># replace with your name</span></span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a>project <span class="op">=</span> <span class="st">"sinkorswim"</span> <span class="co"># replace with your team name</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a>project <span class="op">=</span> <span class="st">"sinkorswim"</span> <span class="co"># replace with your challenge name</span></span>
 <span id="cb9-3"><a href="#cb9-3" tabindex="-1" aria-label="code-block-9-3"></a>purpose <span class="op">=</span> <span class="st">"train_PyTorch"</span></span>
 <span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a></span>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a>job_tags <span class="op">=</span> [</span>
@@ -4628,7 +4642,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -4992,7 +5006,7 @@ launched in this episode</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1" aria-label="code-block-2-1"></a><span class="im">import</span> boto3</span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1" aria-label="code-block-2-2"></a></span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a>notebook_instance_name <span class="op">=</span> <span class="st">'sinkorswim-DoeJohn-TrainClassifier'</span> <span class="co"># adjust to your notebook name. we'll use this variable to name the training jobs launched by the tuner.</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a>notebook_instance_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn-trainclassifier'</span> <span class="co"># adjust to your notebook name. we'll use this variable to name the training jobs launched by the tuner.</span></span>
 <span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a></span>
 <span id="cb2-5"><a href="#cb2-5" tabindex="-1" aria-label="code-block-2-5"></a><span class="co"># the following code just verifies you have the right name for your notebook instance</span></span>
 <span id="cb2-6"><a href="#cb2-6" tabindex="-1" aria-label="code-block-2-6"></a>region <span class="op">=</span> boto3.Session().region_name  <span class="co"># inherited from the notebook instance; do not hard-code a region</span></span>
@@ -5016,7 +5030,7 @@ too).</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a>name <span class="op">=</span> <span class="st">"John Doe"</span> <span class="co"># replace with your name</span></span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a>project <span class="op">=</span> <span class="st">"sinkorswim"</span> <span class="co"># replace with your team name</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a>project <span class="op">=</span> <span class="st">"sinkorswim"</span> <span class="co"># replace with your challenge name</span></span>
 <span id="cb3-3"><a href="#cb3-3" tabindex="-1" aria-label="code-block-3-3"></a>purpose <span class="op">=</span> <span class="st">"tune_PyTorch"</span></span>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a></span>
 <span id="cb3-5"><a href="#cb3-5" tabindex="-1" aria-label="code-block-3-5"></a>job_tags <span class="op">=</span> [</span>
@@ -5730,7 +5744,7 @@ and the runtime print.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ul>
 <li>
@@ -5776,7 +5790,7 @@ in the notebook?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>The tuner can only vary what the script reads. Right now
 <code>train_nn.py</code> has no <code>--batch_size</code> argument and
@@ -6270,7 +6284,7 @@ in this lesson.</p>
 <hr class="half-width">
 <p>Cost tracking in this workshop relies on three tags —
 <code>Name</code>, <code>Project</code>, <code>Purpose</code> — so that
-Cost Explorer can break the shared bill down by team. The part that
+Cost Explorer can break the shared bill down by challenge. The part that
 trips people up is that <strong>tags never propagate</strong>. Tagging
 your notebook instance tags the notebook instance and nothing else.
 Every other resource you create is a separate line item that is
@@ -6676,8 +6690,8 @@ name) holds the WattBot inputs under <code>wattbot/</code>:
 copy for the whole class.</li>
 <li>
 <strong>Your bucket</strong> from the S3 episode
-(<code>teamname-yourname</code>) is where this episode writes what it
-derives, under a <code>wattbot/</code> prefix: the chunked text
+(<code>challenge-lastnamefirstname</code>) is where this episode writes
+what it derives, under a <code>wattbot/</code> prefix: the chunked text
 (<code>wattbot/chunks.jsonl</code>), the embeddings
 (<code>wattbot/embeddings/</code>) and the predictions
 (<code>wattbot/solutions/</code>). Its tags cover its storage cost; your
@@ -7178,7 +7192,7 @@ exists, so re-running the notebook does not create duplicates.</p>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a><span class="im">import</span> re</span>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a></span>
 <span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a>name <span class="op">=</span> <span class="st">"John Doe"</span>        <span class="co"># replace with your name</span></span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a>project <span class="op">=</span> <span class="st">"sinkorswim"</span>   <span class="co"># replace with your team name</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a>project <span class="op">=</span> <span class="st">"sinkorswim"</span>   <span class="co"># replace with your challenge name</span></span>
 <span id="cb11-5"><a href="#cb11-5" tabindex="-1" aria-label="code-block-11-5"></a>purpose <span class="op">=</span> <span class="st">"RAG-bedrock"</span></span>
 <span id="cb11-6"><a href="#cb11-6" tabindex="-1" aria-label="code-block-11-6"></a></span>
 <span id="cb11-7"><a href="#cb11-7" tabindex="-1" aria-label="code-block-11-7"></a><span class="co"># Bedrock tags are lowercase key/value (SageMaker jobs use Key/Value)</span></span>
@@ -8132,7 +8146,7 @@ job from the batch RAG job on the bill.</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a>name <span class="op">=</span> <span class="st">"John Doe"</span>        <span class="co"># replace with your name</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a>project <span class="op">=</span> <span class="st">"sinkorswim"</span>   <span class="co"># replace with your team name</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a>project <span class="op">=</span> <span class="st">"sinkorswim"</span>   <span class="co"># replace with your challenge name</span></span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a></span>
 <span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a><span class="kw">def</span> make_job_tags(purpose: <span class="bu">str</span>):</span>
 <span id="cb6-5"><a href="#cb6-5" tabindex="-1" aria-label="code-block-6-5"></a>    <span class="cf">return</span> [</span>
@@ -8908,7 +8922,7 @@ does one run cost? What does a realistic project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5: full fine-tuning a 7B model needs ~112 GB
 plus activations, and the g5 has 24 GB. On the p4d the 8 × 40 GB = 320
@@ -9142,7 +9156,7 @@ description and compare.</li>
 <button class="accordion-button instructor-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInstructor1" aria-expanded="false" aria-controls="collapseInstructor1">
   <h3 class="accordion-header" id="headingInstructor1">  <div class="note-square"><i aria-hidden="true" class="callout-icon" data-feather="edit-2"></i></div> Before class (instructor checklist) </h3>
 </button>
-<div id="collapseInstructor1" class="accordion-collapse collapse" data-bs-parent="#accordionInstructor1" aria-labelledby="headingInstructor1">
+<div id="collapseInstructor1" class="accordion-collapse collapse" aria-labelledby="headingInstructor1" data-bs-parent="#accordionInstructor1">
 <div class="accordion-body">
 <p>Students never download the data themselves; five things have to be
 in place before the session. Each is written out in the instructor
@@ -9393,7 +9407,7 @@ jobs it launches. Pass them to every estimator.</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1" aria-label="code-block-12-1"></a>name <span class="op">=</span> <span class="st">"John Doe"</span>        <span class="co"># replace with your name</span></span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1" aria-label="code-block-12-2"></a>project <span class="op">=</span> <span class="st">"sinkorswim"</span>   <span class="co"># replace with your team name</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1" aria-label="code-block-12-2"></a>project <span class="op">=</span> <span class="st">"sinkorswim"</span>   <span class="co"># replace with your challenge name</span></span>
 <span id="cb12-3"><a href="#cb12-3" tabindex="-1" aria-label="code-block-12-3"></a></span>
 <span id="cb12-4"><a href="#cb12-4" tabindex="-1" aria-label="code-block-12-4"></a><span class="kw">def</span> make_job_tags(purpose: <span class="bu">str</span>):</span>
 <span id="cb12-5"><a href="#cb12-5" tabindex="-1" aria-label="code-block-12-5"></a>    <span class="cf">return</span> [</span>
@@ -9637,7 +9651,7 @@ real bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Expect startup to be close to 10 minutes and the two evaluations to
@@ -9754,7 +9768,7 @@ help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -9794,7 +9808,7 @@ instance actually save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
 <div class="accordion-body">
 <p>Startup (~10 min, $0.44 at $2.61/h) does not speed up: the container
 pull and the S3 downloads are the same on any instance. For the class
@@ -9842,7 +9856,7 @@ estimator and relaunch under a new job name.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
 <div class="accordion-body">
 <p>Checkpointing. If the instance is reclaimed, the job restarts and, as
 written, starts training from scratch. For a 25-minute job that costs 25
@@ -11429,7 +11443,7 @@ the account.</p>
 <span id="cb9-21"><a href="#cb9-21" tabindex="-1" aria-label="code-block-9-21"></a><span class="st">  "ResourceConfig": { "InstanceType": "ml.m5.large", "InstanceCount": 1, "VolumeSizeInGB": 10 },</span></span>
 <span id="cb9-22"><a href="#cb9-22" tabindex="-1" aria-label="code-block-9-22"></a><span class="st">  "StoppingCondition": { "MaxRuntimeInSeconds": 1200 },</span></span>
 <span id="cb9-23"><a href="#cb9-23" tabindex="-1" aria-label="code-block-9-23"></a><span class="st">  "Tags": [</span></span>
-<span id="cb9-24"><a href="#cb9-24" tabindex="-1" aria-label="code-block-9-24"></a><span class="st">    { "Key": "Project", "Value": "&lt;team name&gt;" },</span></span>
+<span id="cb9-24"><a href="#cb9-24" tabindex="-1" aria-label="code-block-9-24"></a><span class="st">    { "Key": "Project", "Value": "&lt;challenge name&gt;" },</span></span>
 <span id="cb9-25"><a href="#cb9-25" tabindex="-1" aria-label="code-block-9-25"></a><span class="st">    { "Key": "Name",    "Value": "&lt;your name&gt;" },</span></span>
 <span id="cb9-26"><a href="#cb9-26" tabindex="-1" aria-label="code-block-9-26"></a><span class="st">    { "Key": "Purpose", "Value": "train_XGBoost_cli" }</span></span>
 <span id="cb9-27"><a href="#cb9-27" tabindex="-1" aria-label="code-block-9-27"></a><span class="st">  ]</span></span>
@@ -11746,9 +11760,9 @@ example, a script that auto-stops an idle notebook instance), delete it
 nothing but is yours to remove.</li>
 <li>
 <strong>S3 bucket</strong>: empty and delete your
-<code>teamname-yourname</code> bucket (S3 → select bucket → Empty, then
-Delete). Download anything you want to keep first, once: egress is
-$0.09/GB. Leave the shared data bucket alone; it is the
+<code>challenge-lastnamefirstname</code> bucket (S3 → select bucket →
+Empty, then Delete). Download anything you want to keep first, once:
+egress is $0.09/GB. Leave the shared data bucket alone; it is the
 instructors’.</li>
 <li>
 <strong>Training, tuning and Processing jobs</strong>: confirm none
@@ -11843,8 +11857,8 @@ optional ones:</p>
 </tr></thead>
 <tbody>
 <tr>
-<td>S3 bucket <code>teamname-yourname</code> and everything under its
-prefixes (<code>docs/</code>, <code>xgboost/</code>,
+<td>S3 bucket <code>challenge-lastnamefirstname</code> and everything
+under its prefixes (<code>docs/</code>, <code>xgboost/</code>,
 <code>pytorch/</code>, <code>wattbot/</code>,
 <code>badger-scribe/</code>)</td>
 <td>S3 episode</td>
