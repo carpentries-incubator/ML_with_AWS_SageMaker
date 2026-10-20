@@ -801,35 +801,30 @@ GPUs with the model sharded across them, at <code>$25</code> to
 <code>$63</code> an hour.</strong> LoRA sidesteps it by freezing the
 model and training a few million adapter parameters, which is why this
 episode fits on one 24 GB card.</p>
-<p><strong>2. Time: how many GPU-hours?</strong> Training compute is
-roughly proportional to parameters × tokens seen:</p>
-<pre class="text"><code>tokens      = examples × tokens per example × epochs
-FLOPs       ≈ 6 × parameters × tokens      (full fine-tune)
-            ≈ 4 × parameters × tokens      (LoRA: no weight gradients for the frozen base)
-GPU-seconds = FLOPs / (GPU peak bf16 FLOPS × utilization)</code></pre>
-<p>Utilization is the number people forget. A GPU running one page at a
-time with gradient checkpointing manages 20–30% of its peak; a
-well-tuned multi-GPU job reaches 40–50%. Use 25% unless you have
-measured otherwise, and add ~50% to the FLOPs when gradient
-checkpointing is on, because it recomputes the forward pass during the
-backward pass. Both corrections sit inside the factor of two the rule
-promises. Then cost = GPU-hours × hourly rate + the fixed startup
-overhead per job (~10 minutes here).</p>
-<p>Worked for the class run: 120 pages × ~1,600 tokens (1,300 visual +
-300 text) × 3 epochs = 576k tokens. LoRA on a 3.75B model (3B language
-model plus the vision tower): 4 × 3.75e9 × 5.76e5 ≈ 8.6e15 FLOPs. An
-A10G peaks at about 70 TFLOPS in bf16; at 25% utilization that is 17
-TFLOPS, so about 500 seconds, call it 9 minutes. The “~15 min” in the
-table below adds the image preprocessing on four vCPUs and the
-checkpointing overhead. Same arithmetic, same answer within the factor
-of two.</p>
-<p>The same two rules are in
-<code>helpers.estimate_finetune_cost</code>, so that you can run them on
-a job you have not launched: your own model size, example count, tokens
-per example and epochs. It picks the cheapest instance that fits unless
-you name one, prints the memory check, GPU-hours, wall-clock, cost per
-run and for the whole project, and the <code>max_run</code> to set. Here
-it is on the class run:</p>
+<p><strong>2. Time: how many GPU-hours?</strong> Training a token costs
+three matrix products per layer, each one multiply and one add per
+weight. Full fine-tuning does all three; LoRA skips the weight update
+for the frozen base.</p>
+<figure><img src="fig/flops-per-token.svg" alt="A layer W with an input arrow, an output arrow, an error arrow going back and an update arrow into W, each labelled 2 FLOPs; a box totals 6 for full fine-tuning and 4 for LoRA" class="figure mx-auto d-block"><div class="figcaption">Three matrix products per token: forward (2
+FLOPs per weight), error passed back to the inputs (2), and the weight
+update (2); full fine-tuning does all three for 6, LoRA skips the update
+for 4</div>
+</figure><pre class="text"><code>tokens      = examples × tokens per example × passes over the data
+FLOPs       = 6 × parameters × tokens      (4 × for LoRA)
+GPU-seconds = FLOPs ÷ (GPU peak FLOPS × 0.25)      a real job reaches about a quarter of the data-sheet peak</code></pre>
+<p>Peak FLOPS is on the GPU’s data sheet: about 70 trillion per second
+for an A10G, 312 for an A100, 989 for an H100. Cost is GPU-hours × the
+hourly rate, plus about 10 minutes of startup per job.</p>
+<p>The class run: 120 pages × 1,600 tokens × 3 passes = 576k tokens.
+LoRA on 3.75B parameters: 4 × 3.75e9 × 5.76e5 ≈ 8.6e15 FLOPs. A quarter
+of an A10G’s 70 TFLOPS is 17 TFLOPS, so about 500 seconds, call it 9
+minutes; the table below says 15 to cover image preprocessing and
+checkpointing.</p>
+<p><code>helpers.estimate_finetune_cost</code> does the same arithmetic
+for any model size, example count, tokens per example and passes. It
+picks the cheapest instance that fits, or the one you name, and prints
+memory, GPU-hours, cost per run and per project, and the
+<code>max_run</code> to set:</p>
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -881,8 +876,10 @@ the job, not to save money.</p>
 documents of ~2,000 tokens for 3 epochs. They are choosing between
 <code>ml.p4d.24xlarge</code> (8 × A100 40 GB, <code>$25.25</code>/h,
 ~312 TFLOPS bf16 per GPU) and renting a single
-<code>ml.g5.xlarge</code>. Using the two rules: does it fit on the g5?
-How many GPU-hours on the p4d, and what does one run cost? What does a
+<code>ml.g5.xlarge</code>; the supplemental <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
+for ML</a> page has both, with what each box holds and how its price
+covers all its GPUs. Using the two rules: does it fit on the g5? How
+many GPU-hours on the p4d, and what does one run cost? What does a
 realistic project cost?</p>
 </div>
 </div>
@@ -892,19 +889,17 @@ realistic project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5: full fine-tuning a 7B model needs ~112 GB
 plus activations, and the g5 has 24 GB. On the p4d the 8 × 40 GB = 320
 GB holds it with the model sharded.</p>
 <p>Tokens: 50,000 × 2,000 × 3 = 3 × 10^8. FLOPs: 6 × 7 × 10^9 × 3 × 10^8
-≈ 1.26 × 10^19. Per GPU at 312 TFLOPS × 25% utilization = 78 TFLOPS:
-1.26 × 10^19 / 7.8 × 10^13 ≈ 1.6 × 10^5 GPU-seconds ≈ 45 GPU-hours,
-which is about 6 hours of wall-clock on 8 GPUs, about <code>$140</code>
-for one run (the “7B full fine-tune” row in the table above). A team
-that has measured 40% utilization on its own jobs would get 28 GPU-hours
-and ~<code>$90</code>; the rule is for before you have measured. The
-helper gives the same answer:</p>
+≈ 1.26 × 10^19. A quarter of an A100’s 312 TFLOPS is 78 TFLOPS: 1.26 ×
+10^19 / 7.8 × 10^13 ≈ 1.6 × 10^5 GPU-seconds ≈ 45 GPU-hours, which is
+about 6 hours of wall-clock on 8 GPUs, about <code>$140</code> for one
+run (the “7B full fine-tune” row in the table above). The helper gives
+the same answer:</p>
 <div class="codewrapper sourceCode" id="cb4">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -926,7 +921,9 @@ is why the four habits matter more as the model gets bigger.</p>
 <div class="section level3">
 <h3 id="the-instance">The instance<a class="anchor" aria-label="anchor" href="#the-instance"></a></h3>
 <p>The model we fine-tune fits on one 24 GB GPU. Single-GPU and
-multi-GPU SageMaker training instances, same price list:</p>
+multi-GPU SageMaker training instances, same price list (the full table,
+with CPU instances and the GPU-by-GPU notes, is on the supplemental <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
+for ML</a> page):</p>
 <table class="table"><thead><tr><th>Instance</th>
 <th>GPU</th>
 <th>GPU memory</th>
@@ -1694,7 +1691,7 @@ real bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>Expect startup to be close to 10 minutes, the two evaluations 2–4
 minutes each and the three curve points about a minute each. Training is
@@ -1806,7 +1803,7 @@ help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -1846,7 +1843,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
 <div class="accordion-body">
 <p>Startup (~10 min, <code>$0.44</code> at <code>$2.61</code>/h) does
 not speed up: the container pull and the S3 downloads are the same on
@@ -1895,7 +1892,7 @@ estimator and relaunch under a new job name.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
 <div class="accordion-body">
 <p>Nothing more for this run: the script already checkpoints to
 <code>/opt/ml/checkpoints</code> at the end of every epoch, SageMaker
