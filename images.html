@@ -549,23 +549,31 @@ syncs gradients each step.</div>
 <hr class="half-width"></section><section id="09_Finetuning-BadgerScribe"><h2 class="section-heading"><a href="09_Finetuning-BadgerScribe.html">Fine-tuning a Vision-Language Model with Training Jobs</a></h2>
 <hr class="half-width">
 <h3 id="09_Finetuning-BadgerScribe-figure-1">Figure 1</h3>
+<p aria-hidden="true">Image 1 of 1: ‘Dot plot of benchmark scores for three task-specific models against a much larger general model on the same benchmark; the specialist is ahead in each row by 6.5, 2.2 and 1.2 points’</p>
+<figure><img src="fig/specialists-vs-large-models.png" alt="Dot plot of benchmark scores for three task-specific models against a much larger general model on the same benchmark; the specialist is ahead in each row by 6.5, 2.2 and 1.2 points" class="figure mx-auto d-block"><div class="figcaption">Three research tasks where a small specialist
+model scores above a much larger general one: CHURRO (3B) over Gemini
+2.5 Pro on historical handwriting, Goedel-Prover-V2 (8B) over
+DeepSeek-Prover-V2 on formal proofs, MedGemma (27B) over GPT-4o on
+medical questions</div>
+</figure><hr>
+<h3 id="09_Finetuning-BadgerScribe-figure-2">Figure 2</h3>
 <p aria-hidden="true">Image 1 of 1: ‘Left: a d by d weight matrix, all trained, 16 bytes per weight. Right: the same matrix frozen in bf16 plus two thin trained matrices B (d by r) and A (r by d); output is W x plus B A x.’</p>
 <figure><img src="fig/lora.svg" alt="Left: a d by d weight matrix, all trained, 16 bytes per weight. Right: the same matrix frozen in bf16 plus two thin trained matrices B (d by r) and A (r by d); output is W x plus B A x." class="figure mx-auto d-block"><div class="figcaption">Full fine-tuning updates every entry of a d × d
 weight matrix; LoRA freezes it and trains two thin matrices of rank r
 whose product is added to its output</div>
 </figure><hr>
-<h3 id="09_Finetuning-BadgerScribe-figure-2">Figure 2</h3>
+<h3 id="09_Finetuning-BadgerScribe-figure-3">Figure 3</h3>
 <p aria-hidden="true">Image 1 of 1: ‘Horizontal bar chart on a logarithmic dollar axis: this episode 0.60, homework 1.05, 7B full fine-tune 140, 70B LoRA 600, CHURRO-3B 6,300, 70B full fine-tune 12,000, with the ten-run sweep shown as a lighter extension of each bar’</p>
 <figure><img src="fig/finetune-cost-ladder.svg" alt="Horizontal bar chart on a logarithmic dollar axis: this episode 0.60, homework 1.05, 7B full fine-tune 140, 70B LoRA 600, CHURRO-3B 6,300, 70B full fine-tune 12,000, with the ten-run sweep shown as a lighter extension of each bar" class="figure mx-auto d-block"><div class="figcaption">Cost per run on a log scale, from sixty cents
 for this episode’s LoRA run to twelve thousand dollars for a 70B full
 fine-tune; a ten-run sweep shifts every bar up by one decade</div>
 </figure><hr>
-<h3 id="09_Finetuning-BadgerScribe-figure-3">Figure 3</h3>
+<h3 id="09_Finetuning-BadgerScribe-figure-4">Figure 4</h3>
 <p aria-hidden="true">Image 1 of 1: ‘Stacked bar chart of bytes per parameter for inference versus LoRA versus full fine-tuning’</p>
 <figure><img src="fig/memory-per-parameter.svg" alt="Stacked bar chart of bytes per parameter for inference versus LoRA versus full fine-tuning" class="figure mx-auto d-block"><div class="figcaption">Bars of GPU memory per parameter: 1 byte for FP8
 inference, 2 for bf16 inference, about 2.5 for a LoRA fine-tune, 16 for
-a full mixed-precision fine-tune made of weights, gradients, fp32 master
-weights and Adam moments</div>
+a full fine-tune made of the weight, its gradient, a 32-bit copy of the
+weight and the two averages Adam keeps</div>
 </figure><hr></section><section id="10_RAG-overview"><h2 class="section-heading"><a href="10_RAG-overview.html">Overview of RAG Workflows on AWS</a></h2>
 <hr class="half-width">
 <h3 id="10_RAG-overview-figure-1">Figure 1</h3>
@@ -577,7 +585,13 @@ plus chunks. The embedder and generator are the only parts that change
 between episodes.</div>
 </figure><hr></section><section id="11_RAG-Bedrock"><h2 class="section-heading"><a href="11_RAG-Bedrock.html">RAG with Bedrock</a></h2>
 <hr class="half-width"></section><section id="12_RAG-Processing-jobs"><h2 class="section-heading"><a href="12_RAG-Processing-jobs.html">RAG with Processing Jobs</a></h2>
-<hr class="half-width"></section><section id="13_RAG-GPU-notebook"><h2 class="section-heading"><a href="13_RAG-GPU-notebook.html">(Optional) RAG with a Notebook GPU</a></h2>
+<hr class="half-width">
+<h3 id="12_RAG-Processing-jobs-figure-1">Figure 1</h3>
+<p aria-hidden="true">Image 1 of 1: ‘Paired horizontal bars comparing a 27B open-weight model on one GPU with a frontier commercial model; within a few points on agent tasks and science questions, ahead on chart reasoning’</p>
+<figure><img src="fig/qwen27b-vs-opus.png" alt="Paired horizontal bars comparing a 27B open-weight model on one GPU with a frontier commercial model; within a few points on agent tasks and science questions, ahead on chart reasoning" class="figure mx-auto d-block"><div class="figcaption">Qwen3.8-27B against Claude Opus 4.8 on three
+benchmarks: 73.0 vs 74.6 on Terminal-Bench 2.1, 89.2 vs 93.6 on GPQA
+Diamond, 83.7 vs 80.5 on CharXiv reasoning</div>
+</figure><hr></section><section id="13_RAG-GPU-notebook"><h2 class="section-heading"><a href="13_RAG-GPU-notebook.html">(Optional) RAG with a Notebook GPU</a></h2>
 <hr class="half-width"></section><section id="14_CLI-equivalents"><h2 class="section-heading"><a href="14_CLI-equivalents.html">(Optional) The Same Jobs from the Terminal</a></h2>
 <hr class="half-width"></section><section id="15_Resource-management-cleanup"><h2 class="section-heading"><a href="15_Resource-management-cleanup.html">Resource Management and Monitoring</a></h2>
 <hr class="half-width"></section>

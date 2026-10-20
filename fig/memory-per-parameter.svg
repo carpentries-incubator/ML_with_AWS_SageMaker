@@ -32,21 +32,21 @@
   <rect x="530" y="368" width="150" height="36" fill="#fdd0a2" stroke="#444"/>
   <text x="605" y="391" text-anchor="middle" font-size="14">bf16 gradients: 2</text>
   <rect x="530" y="296" width="150" height="72" fill="#fdae6b" stroke="#444"/>
-  <text x="605" y="327" text-anchor="middle" font-size="14">fp32 master</text>
-  <text x="605" y="345" text-anchor="middle" font-size="14">weights: 4</text>
+  <text x="605" y="327" text-anchor="middle" font-size="14">32-bit copy of</text>
+  <text x="605" y="345" text-anchor="middle" font-size="14">the weight: 4</text>
   <rect x="530" y="152" width="150" height="144" fill="#e6550d" stroke="#444"/>
-  <text x="605" y="216" text-anchor="middle" font-size="14" fill="#fff">Adam moments: 8</text>
-  <text x="605" y="234" text-anchor="middle" font-size="14" fill="#fff">(two fp32 copies)</text>
+  <text x="605" y="216" text-anchor="middle" font-size="14" fill="#fff">Adam's two running</text>
+  <text x="605" y="234" text-anchor="middle" font-size="14" fill="#fff">averages: 8</text>
   <text x="605" y="468" text-anchor="middle">Full fine-tune</text>
   <text x="605" y="490" text-anchor="middle" font-weight="bold">16 bytes</text>
 
   <!-- side notes -->
   <g font-size="15" fill="#222">
-    <text x="730" y="170" font-weight="bold">Why training costs 16 and not 2</text>
-    <text x="730" y="194">Gradient updates are tiny numbers that</text>
-    <text x="730" y="214">FP8 and 4-bit cannot represent, so every</text>
-    <text x="730" y="234">trained weight keeps an fp32 copy plus</text>
-    <text x="730" y="254">two fp32 optimizer averages.</text>
+    <text x="730" y="170" font-weight="bold">Why training costs 16 bytes, not 2</text>
+    <text x="730" y="194">Each step's update is too small for</text>
+    <text x="730" y="214">8-bit or 4-bit numbers to hold, so every</text>
+    <text x="730" y="234">trained weight keeps a 32-bit copy plus</text>
+    <text x="730" y="254">the two averages Adam uses to size its step.</text>
 
     <text x="730" y="296" font-weight="bold">Rule of thumb</text>
     <text x="730" y="320">bytes per parameter × parameter count,</text>
