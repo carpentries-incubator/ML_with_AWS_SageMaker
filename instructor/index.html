@@ -288,7 +288,7 @@
 <div class="accordion accordion-flush" id="accordionFlush10">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading10">
-        <a href="RAG-overview.html">9. Overview of RAG Workflows on AWS</a>
+        <a href="Finetuning-BadgerScribe.html">9. Fine-tuning a Vision-Language Model with Training Jobs</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -297,7 +297,7 @@
 <div class="accordion accordion-flush" id="accordionFlush11">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading11">
-        <a href="RAG-Bedrock.html">10. RAG with Bedrock</a>
+        <a href="RAG-overview.html">10. Overview of RAG Workflows on AWS</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -306,7 +306,7 @@
 <div class="accordion accordion-flush" id="accordionFlush12">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading12">
-        <a href="RAG-Processing-jobs.html">11. RAG with Processing Jobs</a>
+        <a href="RAG-Bedrock.html">11. RAG with Bedrock</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -315,7 +315,7 @@
 <div class="accordion accordion-flush" id="accordionFlush13">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading13">
-        <a href="Finetuning-BadgerScribe.html">12. Fine-tuning a Vision-Language Model with Training Jobs</a>
+        <a href="RAG-Processing-jobs.html">12. RAG with Processing Jobs</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -414,24 +414,21 @@
       
 <section><h2 class="section-heading" id="workshop-overview">Workshop Overview<a class="anchor" aria-label="anchor" href="#workshop-overview"></a></h2>
 <hr class="half-width"><p>This workshop introduces machine learning workflows on AWS using
-<strong>Amazon SageMaker</strong>. It has three parts:</p>
+<strong>Amazon SageMaker</strong>. It has two parts:</p>
 <ol style="list-style-type: decimal"><li>
-<strong>SageMaker foundations and classic ML.</strong> Storing data
-in S3, using a small notebook instance as a <em>controller</em>, running
-training jobs (XGBoost and PyTorch), and hyperparameter tuning, with
-guidance on choosing CPU vs. GPU instances and when parallel instances
-help.</li>
+<strong>SageMaker: training, tuning and fine-tuning.</strong>
+Storing data in S3, using a small notebook instance as a
+<em>controller</em>, running training jobs (XGBoost and PyTorch) and
+hyperparameter tuning, with guidance on choosing CPU vs. GPU instances
+and when parallel instances help; then fine-tuning a 3B open-weight
+vision-language model with LoRA as a training job, for handwriting
+transcription, with before/after evaluation on held-out pages.</li>
 <li>
 <strong>Retrieval-Augmented Generation (RAG).</strong> Building a
 RAG pipeline over a corpus of research papers two ways: with Amazon
 Bedrock (pay per token, nothing left running) and with SageMaker
 Processing jobs serving an open-weight model that Bedrock does not
 offer.</li>
-<li>
-<strong>Fine-tuning.</strong> Fine-tuning a 3B open-weight
-vision-language model with LoRA as a SageMaker training job, for
-handwriting transcription, with before/after evaluation on held-out
-pages.</li>
 </ol><div class="section level3">
 <h3 id="who-this-workshop-is-for">Who this workshop is for<a class="anchor" aria-label="anchor" href="#who-this-workshop-is-for"></a></h3>
 <p>Researchers and students who use ML or AI in their work and want to
@@ -577,46 +574,7 @@ without increasing costs?
 <span class="visually-hidden">Duration: </span>05h 00m
 </td>
 <td>
- 9. <a href="RAG-overview.html">Overview of RAG Workflows on AWS</a>
-</td>
-<td>
-What is Retrieval‑Augmented Generation (RAG)?<br>What are the main
-architectural options for running RAG on AWS?<br>Why is Bedrock the
-recommended default, and when should you reach for SageMaker
-instead?<br>How do the billing models differ, and what does it cost if
-you forget to shut something down?
-</td>
-</tr><tr><td>
-<span class="visually-hidden">Duration: </span>05h 15m
-</td>
-<td>
-10. <a href="RAG-Bedrock.html">RAG with Bedrock</a>
-</td>
-<td>
-How do we build a complete RAG pipeline on AWS without provisioning a
-GPU?<br>How do we turn a collection of PDFs into retrievable, citable
-chunks stored in S3?<br>How do we call Bedrock-hosted embedding and
-generation models so that the spend is tagged to our project?
-</td>
-</tr><tr><td>
-<span class="visually-hidden">Duration: </span>06h 05m
-</td>
-<td>
-11. <a href="RAG-Processing-jobs.html">RAG with Processing Jobs</a>
-</td>
-<td>
-When does a RAG pipeline need a self-hosted, open-weight model instead
-of Bedrock, and what is the safest way to rent the GPU for it?<br>How
-do we run the embedding and generation steps of the WattBot pipeline as
-SageMaker Processing jobs that end on their own?<br>How do we pass data
-in and out of a job through S3, and tag the job so its cost is
-traceable?
-</td>
-</tr><tr><td>
-<span class="visually-hidden">Duration: </span>06h 55m
-</td>
-<td>
-12. <a href="Finetuning-BadgerScribe.html">Fine-tuning a Vision-Language
+ 9. <a href="Finetuning-BadgerScribe.html">Fine-tuning a Vision-Language
 Model with Training Jobs</a>
 </td>
 <td>
@@ -626,6 +584,45 @@ of thousands, and how do I estimate where my run falls <em>before</em> I
 launch it?<br>How do I run a GPU fine-tune as a SageMaker training job
 so the meter stops the moment it finishes?<br>How do I measure whether
 the fine-tune helped?
+</td>
+</tr><tr><td>
+<span class="visually-hidden">Duration: </span>08h 00m
+</td>
+<td>
+10. <a href="RAG-overview.html">Overview of RAG Workflows on AWS</a>
+</td>
+<td>
+What is Retrieval‑Augmented Generation (RAG)?<br>What are the main
+architectural options for running RAG on AWS?<br>Why is Bedrock the
+recommended default, and when should you reach for SageMaker
+instead?<br>How do the billing models differ, and what does it cost if
+you forget to shut something down?
+</td>
+</tr><tr><td>
+<span class="visually-hidden">Duration: </span>08h 15m
+</td>
+<td>
+11. <a href="RAG-Bedrock.html">RAG with Bedrock</a>
+</td>
+<td>
+How do we build a complete RAG pipeline on AWS without provisioning a
+GPU?<br>How do we turn a collection of PDFs into retrievable, citable
+chunks stored in S3?<br>How do we call Bedrock-hosted embedding and
+generation models so that the spend is tagged to our project?
+</td>
+</tr><tr><td>
+<span class="visually-hidden">Duration: </span>09h 05m
+</td>
+<td>
+12. <a href="RAG-Processing-jobs.html">RAG with Processing Jobs</a>
+</td>
+<td>
+When does a RAG pipeline need a self-hosted, open-weight model instead
+of Bedrock, and what is the safest way to rent the GPU for it?<br>How
+do we run the embedding and generation steps of the WattBot pipeline as
+SageMaker Processing jobs that end on their own?<br>How do we pass data
+in and out of a job through S3, and tag the job so its cost is
+traceable?
 </td>
 </tr><tr><td>
 <span class="visually-hidden">Duration: </span>09h 55m

@@ -342,7 +342,7 @@
 <div class="accordion accordion-flush" id="accordionFlush10">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading10">
-        <a href="RAG-overview.html">9. Overview of RAG Workflows on AWS</a>
+        <a href="Finetuning-BadgerScribe.html">9. Fine-tuning a Vision-Language Model with Training Jobs</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -354,7 +354,7 @@
 <div class="accordion accordion-flush" id="accordionFlush11">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading11">
-        <a href="RAG-Bedrock.html">10. RAG with Bedrock</a>
+        <a href="RAG-overview.html">10. Overview of RAG Workflows on AWS</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -366,7 +366,7 @@
 <div class="accordion accordion-flush" id="accordionFlush12">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading12">
-        <a href="RAG-Processing-jobs.html">11. RAG with Processing Jobs</a>
+        <a href="RAG-Bedrock.html">11. RAG with Bedrock</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -378,7 +378,7 @@
 <div class="accordion accordion-flush" id="accordionFlush13">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading13">
-        <a href="Finetuning-BadgerScribe.html">12. Fine-tuning a Vision-Language Model with Training Jobs</a>
+        <a href="RAG-Processing-jobs.html">12. RAG with Processing Jobs</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -669,6 +669,28 @@ startup overhead, and it dominates short jobs.</li>
 Load the saved scaler and pass it to
 <code>preprocess_data(test_df, scaler=scaler)</code>; never refit on
 test data.</li>
+</ul></section><section id="Finetuning-BadgerScribe"><h2 class="section-heading"><a href="Finetuning-BadgerScribe.html">Fine-tuning a Vision-Language Model with Training Jobs</a></h2>
+<hr class="half-width">
+<ul>
+<li>Fine-tuning cost is GPU-hours × hourly rate, and GPU-hours scale
+with model size × tokens × epochs × attempts. The same recipe runs from
+under a dollar (3B, LoRA, a few hundred pages) to tens of thousands
+(70B, full fine-tune, days on multi-GPU nodes). Starting from a model
+that already knows most of the task is the biggest saving
+available.</li>
+<li>Training jobs, not GPU notebooks, are the safe way to run it: they
+end, <code>max_run</code> guarantees it, and a unique
+<code>job_name</code> prevents a second copy launching by accident.
+Interrupting a notebook cell does not stop a job.</li>
+<li>Estimate before launching (startup overhead + pages × epochs ×
+seconds per page, at the instance’s rate), then compare to
+<code>BillableTimeInSeconds</code>.</li>
+<li>Image resolution (<code>max_pixels</code>) and epochs change cost by
+multiples; the instance size changes it by 5–45x, which is right when
+the model does not fit on one GPU and waste when it does.</li>
+<li>Measure the gain on the same held-out pages before and after, with
+the task’s own metric, and remember that a page-level holdout is
+optimistic when the real test is split by document.</li>
 </ul></section><section id="RAG-overview"><h2 class="section-heading"><a href="RAG-overview.html">Overview of RAG Workflows on AWS</a></h2>
 <hr class="half-width">
 <ul>
@@ -692,8 +714,8 @@ well under a dollar.</li>
 calls through a tagged application inference profile, or the spend is
 untraceable.</li>
 <li>The hands‑on episodes start with Bedrock, then show the same
-pipeline on Processing Jobs; the notebook-GPU version, after the
-fine-tuning episode, is optional self-study.</li>
+pipeline on Processing Jobs; the notebook-GPU version is optional
+self-study.</li>
 </ul></section><section id="RAG-Bedrock"><h2 class="section-heading"><a href="RAG-Bedrock.html">RAG with Bedrock</a></h2>
 <hr class="half-width">
 <ul>
@@ -732,28 +754,6 @@ unchanged from the Bedrock episode; only the two model callables
 differ.</li>
 <li>Tags do not propagate from the notebook: every job gets its own
 <code>tags=</code>.</li>
-</ul></section><section id="Finetuning-BadgerScribe"><h2 class="section-heading"><a href="Finetuning-BadgerScribe.html">Fine-tuning a Vision-Language Model with Training Jobs</a></h2>
-<hr class="half-width">
-<ul>
-<li>Fine-tuning cost is GPU-hours × hourly rate, and GPU-hours scale
-with model size × tokens × epochs × attempts. The same recipe runs from
-under a dollar (3B, LoRA, a few hundred pages) to tens of thousands
-(70B, full fine-tune, days on multi-GPU nodes). Starting from a model
-that already knows most of the task is the biggest saving
-available.</li>
-<li>Training jobs, not GPU notebooks, are the safe way to run it: they
-end, <code>max_run</code> guarantees it, and a unique
-<code>job_name</code> prevents a second copy launching by accident.
-Interrupting a notebook cell does not stop a job.</li>
-<li>Estimate before launching (startup overhead + pages × epochs ×
-seconds per page, at the instance’s rate), then compare to
-<code>BillableTimeInSeconds</code>.</li>
-<li>Image resolution (<code>max_pixels</code>) and epochs change cost by
-multiples; the instance size changes it by 5–45x, which is right when
-the model does not fit on one GPU and waste when it does.</li>
-<li>Measure the gain on the same held-out pages before and after, with
-the task’s own metric, and remember that a page-level holdout is
-optimistic when the real test is split by document.</li>
 </ul></section><section id="RAG-GPU-notebook"><h2 class="section-heading"><a href="RAG-GPU-notebook.html">(Optional) RAG with a Notebook GPU</a></h2>
 <hr class="half-width">
 <ul>
