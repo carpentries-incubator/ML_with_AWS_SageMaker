@@ -540,8 +540,7 @@ has a cluster or a workstation?</li>
 <li>Compare cloud compute with campus HPC and lab hardware on hardware
 generation, cost and control.</li>
 <li>Introduce SageMaker and the controller-plus-jobs pattern.</li>
-<li>Preview the three parts of the lesson and the cost practices used in
-all of them.</li>
+<li>Preview the three parts of the lesson.</li>
 </ul>
 </div>
 </div>
@@ -551,96 +550,55 @@ all of them.</li>
 <p>Amazon SageMaker is AWS’s managed platform for training, tuning and
 running machine learning models. You bring your own scripts and data;
 AWS provides the machines, the containers with common ML frameworks
-installed, and the bookkeeping. This episode is about when that is worth
-it for a researcher who already has a campus cluster or a lab
-workstation.</p>
+installed, and the bookkeeping. This episode compares it with the
+compute researchers usually already have.</p>
 <div class="section level3">
 <h3 id="cloud-vs--the-cluster-down-the-hall">Cloud vs. the cluster down the hall<a class="anchor" aria-label="anchor" href="#cloud-vs--the-cluster-down-the-hall"></a>
 </h3>
-<p>Most researchers already have somewhere to run ML: a campus HPC
-cluster, a departmental GPU server, or a workstation under the desk. The
-cloud is a different trade. Three things matter most:</p>
+<p>Most researchers already have somewhere to run ML, such as a campus
+HPC cluster, a departmental GPU server, or a lab workstation. How the
+cloud compares:</p>
 <ul>
 <li>
-<strong>Hardware generation.</strong> A cluster or lab server is
-bought once and used for five or more years, so its GPUs are whatever
-generation was current at purchase. Cloud providers carry each new
-generation (H100, H200 and newer) from the month it ships, in single-GPU
-instances up to 8-GPU nodes. If a model or a method needs the current
-generation’s memory or speed, the cloud is often the only place to get
-it without waiting for a procurement cycle.</li>
+<strong>Buy once and maintain, or rent the latest.</strong> A
+cluster or lab server is bought once, maintained by someone, and used
+for five or more years with whatever GPUs were current at purchase.
+Cloud providers offer each new generation soon after release (Blackwell
+B200 and GB200 today, Vera Rubin announced for cloud deployment in
+2026), billed per second and only while a job runs. The largest systems
+(72-GPU GB200 racks) are liquid-cooled; most campus data centers are
+air-cooled and cannot host them without a facility upgrade. Owned
+hardware costs the same busy or idle, so for GPUs that stay busy owning
+is cheaper, and for bursty research work renting is.</li>
 <li>
-<strong>Efficiency of spend.</strong> Cloud instances bill per
-second and only while they run. A job that needs an H100 for forty
-minutes costs forty minutes of an H100; the rest of the day costs
-nothing. Owned hardware costs the same whether it is busy or idle. For
-bursty work, renting is cheaper; for GPUs that stay busy, owning
-is.</li>
+<strong>Energy efficiency.</strong> Power usage effectiveness (PUE)
+is total facility power divided by IT power, so 1.0 is perfect. AWS
+reports a global average of 1.14 for 2025; the Uptime Institute’s 2025
+industry survey average is 1.54, and Amazon cites 1.63 for on-premises
+enterprise data centers. There is no comparable survey of university
+data centers, the cloud figures are self-reported, and PUE says nothing
+about whether the GPUs inside are busy. The direction is still clear: a
+hyperscale facility wastes less power on cooling and distribution than a
+typical campus machine room.</li>
 <li>
-<strong>Control and data.</strong> On-prem gives you full control:
-your own software stack, no quotas, no egress charges, and data that
-never leaves campus, which matters for restricted datasets. In the cloud
-you work within quotas and an account’s permissions, and anything you
-move in or out crosses the network. An idle rented GPU costs the same as
-a busy one, so every job in this lesson has a runtime cap.</li>
+<strong>Control and data.</strong> On-prem gives full control over
+the software stack, no quotas, no egress charges, and data that never
+leaves campus. In the cloud you work within quotas and account
+permissions, and data moved in or out crosses the network. An idle
+rented GPU costs the same as a busy one, so every job in this lesson has
+a runtime cap.</li>
 </ul>
-<table class="table">
-<colgroup>
-<col width="25%">
-<col width="25%">
-<col width="25%">
-<col width="25%">
-</colgroup>
-<thead><tr>
-<th></th>
-<th>Campus cluster</th>
-<th>Lab workstation</th>
-<th>Cloud (SageMaker)</th>
-</tr></thead>
-<tbody>
-<tr>
-<td>GPU generation</td>
-<td>Fixed at purchase</td>
-<td>Fixed at purchase</td>
-<td>Current, by the hour</td>
-</tr>
-<tr>
-<td>Wait to start</td>
-<td>Queue</td>
-<td>None</td>
-<td>Minutes (within quota)</td>
-</tr>
-<tr>
-<td>Cost to you</td>
-<td>Allocation or free at use</td>
-<td>Already paid</td>
-<td>Per second while running</td>
-</tr>
-<tr>
-<td>Idle cost</td>
-<td>None to you</td>
-<td>Power</td>
-<td>Full price until stopped</td>
-</tr>
-<tr>
-<td>Control</td>
-<td>Shared, admin-managed</td>
-<td>Full</td>
-<td>Within account permissions</td>
-</tr>
-<tr>
-<td>Data</td>
-<td>Stays on campus</td>
-<td>Stays local</td>
-<td>Transfer in and out</td>
-</tr>
-</tbody>
-</table>
 </div>
 <div class="section level3">
 <h3 id="why-use-sagemaker-for-machine-learning">Why use SageMaker for machine learning?<a class="anchor" aria-label="anchor" href="#why-use-sagemaker-for-machine-learning"></a>
 </h3>
-<p>Within AWS, SageMaker is the service built for ML workloads:</p>
+<p>Renting a bare GPU instance from AWS (EC2) gets you the hardware
+above, but you still install the frameworks, move the data, and remember
+to shut the machine down. SageMaker wraps the same instances in a job
+model built for ML: you submit a script and an instance type, AWS
+provisions the machine with the framework container installed, runs the
+script, saves the outputs to S3, and terminates the instance. What that
+gives you:</p>
 <ul>
 <li><p><strong>High-performance compute only when needed</strong>:
 SageMaker lets you develop interactively in lightweight, inexpensive
@@ -707,23 +665,24 @@ under $20, making it accessible for many research projects.</p></li>
 </ul>
 </div>
 <div class="section level3">
-<h3 id="what-this-lesson-covers">What this lesson covers<a class="anchor" aria-label="anchor" href="#what-this-lesson-covers"></a>
+<h3 id="lesson-outline">Lesson outline<a class="anchor" aria-label="anchor" href="#lesson-outline"></a>
 </h3>
-<p>The lesson has three parts. <strong>Part one</strong> covers the
-foundations: an S3 bucket for your data, a small notebook instance that
-acts as a <em>controller</em>, then SageMaker training jobs (XGBoost and
-PyTorch) and hyperparameter tuning, with guidance on CPU vs. GPU
-instances and when parallel instances help. <strong>Part two</strong>
-builds a retrieval-augmented generation (RAG) pipeline over a corpus of
-research papers two ways: on Amazon Bedrock (pay per token, nothing left
-running) and as SageMaker Processing jobs serving an open-weight model
-that Bedrock does not offer. <strong>Part three</strong> fine-tunes a 3B
-open-weight vision-language model with LoRA as a training job, for
-handwriting transcription, and scores it before and after. Every episode
-applies the same cost controls: tags on every resource, a runtime cap on
-every job, a cost estimate before each launch compared to the bill
-after, and cleanup at the end.</p>
-<p>Most research groups use both. This lesson covers the cloud half.</p>
+<p>The rest of the lesson is hands-on, in three parts:</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>SageMaker foundations and classic ML.</strong> Set up an S3
+bucket and a small notebook instance, then launch training jobs (XGBoost
+and PyTorch) and a hyperparameter tuning job from it.</li>
+<li>
+<strong>Retrieval-augmented generation (RAG).</strong> Build a RAG
+pipeline over research papers on Amazon Bedrock, then run the same
+pipeline as SageMaker Processing jobs with an open-weight model.</li>
+<li>
+<strong>Fine-tuning.</strong> Fine-tune a vision-language model for
+handwriting transcription as a SageMaker training job.</li>
+</ol>
+<p>Every job is tagged, capped, estimated before launch and checked
+against the bill after.</p>
 <div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
 <i class="callout-icon" data-feather="key"></i>
@@ -1278,7 +1237,7 @@ sizes: 10 GB, 100 GB, 1 TB (1024 GB)</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -3014,7 +2973,7 @@ potential issues early. <strong>In your group, discuss:</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Which checks do you think are most critical before scaling up?</p>
 <ul>
@@ -3132,7 +3091,7 @@ group.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li><p><strong>Data Preprocessing</strong>: The script fills missing
@@ -7293,7 +7252,7 @@ month’s Bedrock spend by <code>Project</code>?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -7598,7 +7557,7 @@ whole WattBot pipeline on Bedrock”, and with one hour of the
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -8915,7 +8874,7 @@ does one run cost? What does a realistic project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5: full fine-tuning a 7B model needs ~112 GB
 plus activations, and the g5 has 24 GB. On the p4d the 8 × 40 GB = 320
@@ -9176,7 +9135,7 @@ description and compare.</li>
 <button class="accordion-button instructor-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInstructor1" aria-expanded="false" aria-controls="collapseInstructor1">
   <h3 class="accordion-header" id="headingInstructor1">  <div class="note-square"><i aria-hidden="true" class="callout-icon" data-feather="edit-2"></i></div> Before class (instructor checklist) </h3>
 </button>
-<div id="collapseInstructor1" class="accordion-collapse collapse" aria-labelledby="headingInstructor1" data-bs-parent="#accordionInstructor1">
+<div id="collapseInstructor1" class="accordion-collapse collapse" data-bs-parent="#accordionInstructor1" aria-labelledby="headingInstructor1">
 <div class="accordion-body">
 <p>Students never download the data themselves; five things have to be
 in place before the session. Each is written out in the instructor
@@ -9671,7 +9630,7 @@ real bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Expect startup to be close to 10 minutes and the two evaluations to
@@ -9788,7 +9747,7 @@ help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -9828,7 +9787,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
 <div class="accordion-body">
 <p>Startup (~10 min, $0.44 at $2.61/h) does not speed up: the container
 pull and the S3 downloads are the same on any instance. For the class
@@ -9876,7 +9835,7 @@ estimator and relaunch under a new job name.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
 <div class="accordion-body">
 <p>Checkpointing. If the instance is reclaimed, the job restarts and, as
 written, starts training from scratch. For a 25-minute job that costs 25
@@ -11539,7 +11498,7 @@ finds something. Then run them against your own resources.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -11847,7 +11806,7 @@ stopped your notebook instance and walked away?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>A complete list for someone who did every episode, including the
 optional ones:</p>
