@@ -15,7 +15,8 @@ exercises: 5
 
 - Explain data storage options in AWS for machine learning projects.
 - Describe the advantages of S3 for large datasets and multi-user workflows.
-- Outline steps to set up an S3 bucket and manage data within SageMaker.
+- Create an S3 bucket in the class region with a bucket policy and cost-allocation tags, and upload the Titanic data to it.
+- Estimate S3 storage, transfer and request costs for a small dataset.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 

@@ -13,9 +13,8 @@ exercises: 10
 
 ::::::::::::::::::::::::::::::::::::: objectives
 
-- Describe how to use SageMaker notebooks for ML workflows.
-- Set up a Jupyter notebook instance as a controller to manage compute tasks.
-- Use SageMaker SDK to launch training and tuning jobs on scalable instances.
+- Explain why the lesson works from a SageMaker notebook instance, and what the controller pattern is.
+- Create a tagged notebook instance on a small instance type, open the lesson notebooks in it, and stop it when done.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 

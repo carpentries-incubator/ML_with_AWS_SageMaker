@@ -17,7 +17,7 @@ exercises: 10
 ::::::::::::::::::::::::::::::::::::: objectives
 
 - Understand how to shut down SageMaker notebook instances to minimize costs.
-- Learn to clean up S3 storage and terminate unused training jobs.
+- Clean up S3 storage and stop running jobs.
 - Explore basic resource management strategies and tools for AWS.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::

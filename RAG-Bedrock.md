@@ -15,7 +15,7 @@ exercises: 20
 ::::::::::::::::::::::::::::::::::::: objectives
 
 - Read the WattBot metadata, questions and PDF corpus from the shared bucket, and cache what you derive from them (`chunks.jsonl`) in your own bucket for the later episodes.
-- Convert PDFs into page-level records and overlapping text chunks, and cache them as `chunks.jsonl` on S3 for reuse in later episodes.
+- Convert PDFs into page-level records and overlapping text chunks.
 - Create tagged application inference profiles so that every Bedrock call is attributed to your project.
 - Embed chunks with Amazon Titan Text Embeddings and retrieve relevant context with cosine similarity.
 - Generate WattBot-format answers and explanations with a Bedrock-hosted model (DeepSeek V3) and score them against `train_QA.csv`.

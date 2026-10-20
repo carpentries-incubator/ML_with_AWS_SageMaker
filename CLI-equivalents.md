@@ -16,6 +16,7 @@ exercises: 10
 
 - Authenticate the CLI with short-lived Identity Center credentials, never with access keys.
 - List, inspect, and stop training jobs, processing jobs, tuning jobs and notebook instances from the terminal.
+- Copy data to and from S3 in bulk with `aws s3 sync`.
 - Launch one training job from its JSON description and recognise it as the request the SDK built in the training episodes.
 - State which resources the lesson never creates from the CLI, and why the account refuses them.
 

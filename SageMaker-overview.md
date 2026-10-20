@@ -1,5 +1,5 @@
 ---
-title: "Overview of Amazon SageMaker"
+title: "Overview: ML on AWS"
 teaching: 15
 exercises: 0
 ---
@@ -7,20 +7,20 @@ exercises: 0
 :::::::::::::::::::::::::::::::::::::::::::::: questions
 
 - When is cloud compute the right tool for a researcher who already has a cluster or a workstation?
-- What does SageMaker add on top of renting a machine?
+- What do SageMaker and Bedrock add on top of renting a machine?
   
 ::::::::::::::::::::::::::::::::::::::::::::::
 
 ::::::::::::::::::::::::::::::::::::: objectives
 
 - Compare cloud compute with campus HPC and lab hardware on hardware generation, cost and control.
-- Introduce SageMaker and the controller-plus-jobs pattern.
+- Introduce SageMaker and Bedrock.
 - Preview the three parts of the lesson.
   
 ::::::::::::::::::::::::::::::::::::::::::::::
 
 
-This episode compares cloud compute with the compute researchers usually already have, then introduces SageMaker, the AWS service this lesson is built on.
+This episode compares cloud compute with the compute researchers usually already have, then introduces the two AWS services the lesson uses, SageMaker and Bedrock.
 
 ### Cloud vs. the cluster down the hall
 
@@ -30,18 +30,19 @@ Most researchers already have somewhere to run ML, such as a campus HPC cluster,
 - **Energy efficiency tracks facility scale.** Power usage effectiveness (PUE) is total facility power divided by IT power; 1.0 is perfect. Hyperscale and flagship HPC facilities are in the same range: AWS reports a global average of [1.14 for 2025](https://aws.amazon.com/sustainability/), and a [2025 survey of US research HPC](https://arxiv.org/html/2506.19019v1) puts TACC at about 1.15 and MGHPCC near 1.14. Smaller facilities do worse: the [Uptime Institute's 2025 survey](https://datacenter.uptimeinstitute.com/rs/711-RIA-145/images/2025.Annual.Survey.Report.pdf?version=0) puts enterprise and colocation data centers at 1.58-1.80, and a departmental server room is typically in that range or above. So the cloud is a large efficiency gain over a lab server, and roughly a wash against a campus HPC center. (Figures are self-reported, and PUE measures the building, not whether the GPUs in it are busy.)
 - **Control and data.** On-prem gives full control over the software stack, no quotas, no egress charges, and data that never leaves campus. In the cloud you work within quotas and account permissions, and data moved in or out crosses the network. An idle rented GPU costs the same as a busy one, so every job in this lesson has a runtime cap.
 
-### What SageMaker is
+### SageMaker and Bedrock
 
-Amazon SageMaker is AWS's managed service for machine learning. It runs on the same instances as plain EC2, but adds a job model built for ML: you submit a script and an instance type, AWS provisions the machine with a framework container (PyTorch, scikit-learn, Hugging Face, ...) installed, runs the script, saves the outputs to S3, and terminates the instance. Renting a bare EC2 GPU gets you the hardware; with SageMaker you do not install the frameworks, move the data by hand, or remember to shut the machine down.
+**Amazon SageMaker** is AWS's managed service for machine learning. It runs on the same instances as plain EC2, but adds a job model built for ML: you submit a script and an instance type, AWS provisions the machine with a framework container (PyTorch, scikit-learn, Hugging Face, ...) installed, runs the script, saves the outputs to S3, and terminates the instance. Renting a bare EC2 GPU gets you the hardware; with SageMaker you do not install the frameworks, move the data by hand, or remember to shut the machine down.
+
+**Amazon Bedrock** is the other AWS service this lesson uses. Where SageMaker runs your script on a machine you rent by the second, Bedrock serves models that AWS hosts (DeepSeek, Claude, Amazon's own, and others) through an API billed per token. There is no instance to choose, start or stop; when you stop calling it, you stop paying. The RAG part of the lesson uses Bedrock first for that reason, and turns to SageMaker only for a model Bedrock does not offer.
 
 ### Why use SageMaker for machine learning?
 
-
 - **High-performance compute only when needed**: SageMaker lets you develop interactively in lightweight, inexpensive notebook environments (or your own laptop) and then launch training, tuning, or inference jobs on more powerful [instance types](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/reference.html#cloud-compute-essentials) only when necessary. You pay for expensive compute only while a job runs.
   
-- **Support for custom scripts**: Most training and inference scripts can be run using pre-configured *estimators* or *containers* that come with popular ML frameworks such as scikit-learn, PyTorch, TensorFlow, and Hugging Face already installed. In many cases, you can simply include a `requirements.txt` file to add any additional dependencies you need. When you need more control, SageMaker also supports fully custom Docker containers, so you can bring your own code, dependencies, and environments for training, tuning, and inference for training, tuning, and inference.
+- **Support for custom scripts**: Most training and inference scripts can be run using pre-configured *estimators* or *containers* that come with popular ML frameworks such as scikit-learn, PyTorch, TensorFlow, and Hugging Face already installed. In many cases, you can simply include a `requirements.txt` file to add any additional dependencies you need. When you need more control, SageMaker also supports fully custom Docker containers, so you can bring your own code, dependencies, and environments for training, tuning, and inference.
 
-- **Flexible compute options**: SageMaker lets you easily select instance types tailored to your project needs. For exploratory analysis, use a lightweight CPU (e.g., ml.m5.large). For compute-intensive tasks, such as training deep learning models, you can switch to GPU instances for faster processing. We'll cover instances more in-depth throughout the lesson (and how to select them), but here's a preview of the the different types:
+- **Flexible compute options**: SageMaker lets you easily select instance types tailored to your project needs. For exploratory analysis, use a lightweight CPU (e.g., ml.m5.large). For compute-intensive tasks, such as training deep learning models, you can switch to GPU instances for faster processing. We'll cover instances more in-depth throughout the lesson (and how to select them), but here's a preview of the different types:
 
     - **CPU instances (e.g., ml.m5.large — $0.115/hour)**: Suitable for general ML workloads, feature engineering, and inference tasks. 
     - **Memory-optimized instances (e.g., ml.r5.2xlarge — approx. $0.65/hour)**: Best for handling large datasets in memory.
@@ -68,8 +69,7 @@ Every job is tagged, capped, estimated before launch and checked against the bil
 
 - The cloud offers the current GPU generation on demand and bills per second while a job runs; on-prem hardware offers full control and a fixed cost but a fixed generation and a queue.
 - Renting is cheaper for bursty research work; owning is cheaper for GPUs that stay busy.
-- An idle rented GPU costs the same as a busy one, so every job in this lesson is launched with a runtime cap and a stopping rule.
-- A cheap controller notebook launches jobs that run on separate instances and end on their own; each job carries tags and a cost estimate.
-- SageMaker runs custom scripts in preconfigured framework containers, and parallelizes training and hyperparameter tuning with little extra code.
+- An idle rented GPU costs the same as a busy one, so every job in this lesson is launched with a runtime cap.
+- SageMaker runs your script in a preconfigured framework container on an instance that exists only for the job; Bedrock serves AWS-hosted models per token with nothing to start or stop.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::

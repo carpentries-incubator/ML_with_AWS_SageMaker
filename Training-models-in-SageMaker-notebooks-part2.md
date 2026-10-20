@@ -16,7 +16,7 @@ exercises: 15
 - Preprocess the Titanic dataset for efficient training using PyTorch.
 - Save and upload training and validation data in `.npz` format to S3.
 - Understand the trade-offs between CPU and GPU training for smaller datasets.
-- Deploy a PyTorch model to SageMaker and evaluate instance types for training performance.
+- Train a PyTorch model as a SageMaker training job and compare CPU and GPU instance types on time and cost.
 - Differentiate between data parallelism and model parallelism, and determine when each is appropriate in SageMaker.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::

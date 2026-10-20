@@ -74,13 +74,6 @@ sagemaker_client = session.sagemaker_client  # low-level client we'll use to des
 print(f"region = {region}")
 ```
 
-#### 4. Get code from git repo (skip if completed already from earlier episodes)
-If you didn't complete the earlier episodes, you'll need to clone our code repo before moving forward. Check to make sure we're in our EC2 root folder first (`/home/ec2-user/SageMaker`).
-
-```python
-%cd /home/ec2-user/SageMaker/
-```
-
 ## Testing train.py on this notebook's instance
 In this next section, we will learn how to take a model training script that was written/designed to run locally, and deploy it to more powerful instances (or many instances) using SageMaker. This is helpful for machine learning jobs that require extra power, GPUs, or benefit from parallelization. However, before we try exploiting this extra power, it is essential that we test our code thoroughly! We don't want to waste unnecessary compute cycles and resources on jobs that produce bugs rather than insights. 
 
