@@ -123,7 +123,7 @@
     <a id="search-button-nav" class="btn btn-primary" href="../instructor/aio.html" role="button" aria-label="Search the All In One page">Search the All In One page</a>
   </div><!--/div.container-fluid -->
 </nav><aside class="col-md-12 lesson-progress"><div class="progress incubator">
-    <div class="progress-bar incubator" role="progressbar" style="width: 43%" aria-valuenow="43" aria-valuemin="0" aria-valuemax="100" aria-label="Lesson Progress">43%</div>
+    <div class="progress-bar incubator" role="progressbar" style="width: 42%" aria-valuenow="42" aria-valuemin="0" aria-valuemax="100" aria-label="Lesson Progress">42%</div>
   </div>
 </aside><div class="container">
       <div class="row">
@@ -745,7 +745,7 @@ does one run cost? What does a realistic project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5: full fine-tuning a 7B model needs ~112 GB
 plus activations, and the g5 has 24 GB. On the p4d the 8 × 40 GB = 320
@@ -937,7 +937,7 @@ description and compare.</li>
 <button class="accordion-button instructor-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInstructor1" aria-expanded="false" aria-controls="collapseInstructor1">
   <h3 class="accordion-header" id="headingInstructor1">  <div class="note-square"><i aria-hidden="true" class="callout-icon" data-feather="edit-2"></i></div> Before class (instructor checklist) </h3>
 </button>
-<div id="collapseInstructor1" class="accordion-collapse collapse" aria-labelledby="headingInstructor1" data-bs-parent="#accordionInstructor1">
+<div id="collapseInstructor1" class="accordion-collapse collapse" data-bs-parent="#accordionInstructor1" aria-labelledby="headingInstructor1">
 <div class="accordion-body">
 <p>Students never download the data themselves; five things have to be
 in place before the session. Each is written out in the instructor
@@ -1060,28 +1060,27 @@ run the homework’s full fine-tune yourself instead.</p>
 <span id="cb5-4"><a href="#cb5-4" tabindex="-1" aria-label="code-block-5-4"></a></span>
 <span id="cb5-5"><a href="#cb5-5" tabindex="-1" aria-label="code-block-5-5"></a><span class="im">import</span> boto3</span>
 <span id="cb5-6"><a href="#cb5-6" tabindex="-1" aria-label="code-block-5-6"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1" aria-label="code-block-5-7"></a>os.environ[<span class="st">"SAGEMAKER_SUPPRESS_V2_WARNING"</span>] <span class="op">=</span> <span class="st">"1"</span>   <span class="co"># the kernel ships SDK v2; the Accessing S3 episode explains</span></span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1" aria-label="code-block-5-8"></a><span class="im">import</span> sagemaker</span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1" aria-label="code-block-5-9"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
-<span id="cb5-10"><a href="#cb5-10" tabindex="-1" aria-label="code-block-5-10"></a></span>
-<span id="cb5-11"><a href="#cb5-11" tabindex="-1" aria-label="code-block-5-11"></a>session <span class="op">=</span> sagemaker.Session()</span>
-<span id="cb5-12"><a href="#cb5-12" tabindex="-1" aria-label="code-block-5-12"></a>region <span class="op">=</span> session.boto_region_name</span>
-<span id="cb5-13"><a href="#cb5-13" tabindex="-1" aria-label="code-block-5-13"></a>role <span class="op">=</span> get_execution_role()</span>
-<span id="cb5-14"><a href="#cb5-14" tabindex="-1" aria-label="code-block-5-14"></a>s3_client <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
-<span id="cb5-15"><a href="#cb5-15" tabindex="-1" aria-label="code-block-5-15"></a></span>
-<span id="cb5-16"><a href="#cb5-16" tabindex="-1" aria-label="code-block-5-16"></a>shared_bucket <span class="op">=</span> <span class="st">"ml-marathon-shared"</span>   <span class="co"># &lt;-- EDIT ME: read-only bucket with the competition data</span></span>
-<span id="cb5-17"><a href="#cb5-17" tabindex="-1" aria-label="code-block-5-17"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>     <span class="co"># &lt;-- EDIT ME: your own bucket from the S3 episode</span></span>
-<span id="cb5-18"><a href="#cb5-18" tabindex="-1" aria-label="code-block-5-18"></a>username <span class="op">=</span> <span class="st">"doejohn"</span>                   <span class="co"># &lt;-- EDIT ME: lowercase letters/digits only; used in job names</span></span>
-<span id="cb5-19"><a href="#cb5-19" tabindex="-1" aria-label="code-block-5-19"></a></span>
-<span id="cb5-20"><a href="#cb5-20" tabindex="-1" aria-label="code-block-5-20"></a>data_prefix <span class="op">=</span> <span class="st">"badger-scribe"</span></span>
-<span id="cb5-21"><a href="#cb5-21" tabindex="-1" aria-label="code-block-5-21"></a>train_s3_uri <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>shared_bucket<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>data_prefix<span class="sc">}</span><span class="ss">/"</span>                  <span class="co"># training channel: csvs + images/</span></span>
-<span id="cb5-22"><a href="#cb5-22" tabindex="-1" aria-label="code-block-5-22"></a>model_s3_uri <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>shared_bucket<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>data_prefix<span class="sc">}</span><span class="ss">/model/churro-3B/"</span>  <span class="co"># model channel: staged CHURRO-3B weights</span></span>
-<span id="cb5-23"><a href="#cb5-23" tabindex="-1" aria-label="code-block-5-23"></a></span>
-<span id="cb5-24"><a href="#cb5-24" tabindex="-1" aria-label="code-block-5-24"></a>local_data_dir <span class="op">=</span> <span class="st">"./data"</span></span>
-<span id="cb5-25"><a href="#cb5-25" tabindex="-1" aria-label="code-block-5-25"></a>os.makedirs(local_data_dir, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb5-26"><a href="#cb5-26" tabindex="-1" aria-label="code-block-5-26"></a></span>
-<span id="cb5-27"><a href="#cb5-27" tabindex="-1" aria-label="code-block-5-27"></a><span class="bu">print</span>(<span class="st">"Region:"</span>, region)</span>
-<span id="cb5-28"><a href="#cb5-28" tabindex="-1" aria-label="code-block-5-28"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)</span></code></pre>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1" aria-label="code-block-5-7"></a><span class="im">import</span> sagemaker</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1" aria-label="code-block-5-8"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1" aria-label="code-block-5-9"></a></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1" aria-label="code-block-5-10"></a>session <span class="op">=</span> sagemaker.Session()</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1" aria-label="code-block-5-11"></a>region <span class="op">=</span> session.boto_region_name</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1" aria-label="code-block-5-12"></a>role <span class="op">=</span> get_execution_role()</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1" aria-label="code-block-5-13"></a>s3_client <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1" aria-label="code-block-5-14"></a></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1" aria-label="code-block-5-15"></a>shared_bucket <span class="op">=</span> <span class="st">"ml-marathon-shared"</span>   <span class="co"># &lt;-- EDIT ME: read-only bucket with the data and model weights; jobs read from it</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1" aria-label="code-block-5-16"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>     <span class="co"># &lt;-- EDIT ME: your own bucket from the S3 episode; everything the jobs write goes here</span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1" aria-label="code-block-5-17"></a>username <span class="op">=</span> <span class="st">"doejohn"</span>                   <span class="co"># &lt;-- EDIT ME: lowercase letters/digits only; used in job names</span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1" aria-label="code-block-5-18"></a></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1" aria-label="code-block-5-19"></a>data_prefix <span class="op">=</span> <span class="st">"badger-scribe"</span></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1" aria-label="code-block-5-20"></a>train_s3_uri <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>shared_bucket<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>data_prefix<span class="sc">}</span><span class="ss">/"</span>                  <span class="co"># training channel: csvs + images/</span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1" aria-label="code-block-5-21"></a>model_s3_uri <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>shared_bucket<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>data_prefix<span class="sc">}</span><span class="ss">/model/churro-3B/"</span>  <span class="co"># model channel: staged CHURRO-3B weights</span></span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1" aria-label="code-block-5-22"></a></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1" aria-label="code-block-5-23"></a>local_data_dir <span class="op">=</span> <span class="st">"./data"</span></span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1" aria-label="code-block-5-24"></a>os.makedirs(local_data_dir, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1" aria-label="code-block-5-25"></a></span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1" aria-label="code-block-5-26"></a><span class="bu">print</span>(<span class="st">"Region:"</span>, region)</span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1" aria-label="code-block-5-27"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)</span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -1089,7 +1088,7 @@ run the homework’s full fine-tune yourself instead.</p>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="cf">for</span> fname <span class="kw">in</span> [<span class="st">"train.csv"</span>, <span class="st">"test.csv"</span>, <span class="st">"metadata.csv"</span>, <span class="st">"metric.py"</span>]:</span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a>    s3_client.download_file(shared_bucket, <span class="ss">f"</span><span class="sc">{</span>data_prefix<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>fname<span class="sc">}</span><span class="ss">"</span>, os.path.join(local_data_dir, fname))</span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a>train_df <span class="op">=</span> pd.read_csv(os.path.join(local_data_dir, <span class="st">"train.csv"</span>), keep_default_na<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a>train_df <span class="op">=</span> pd.read_csv(os.path.join(local_data_dir, <span class="st">"train.csv"</span>), keep_default_na<span class="op">=</span><span class="va">False</span>)  <span class="co"># keep empty text as "" rather than NaN</span></span>
 <span id="cb6-5"><a href="#cb6-5" tabindex="-1" aria-label="code-block-6-5"></a>test_df <span class="op">=</span> pd.read_csv(os.path.join(local_data_dir, <span class="st">"test.csv"</span>), keep_default_na<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb6-6"><a href="#cb6-6" tabindex="-1" aria-label="code-block-6-6"></a></span>
 <span id="cb6-7"><a href="#cb6-7" tabindex="-1" aria-label="code-block-6-7"></a><span class="bu">print</span>(<span class="st">"train pages:"</span>, <span class="bu">len</span>(train_df), <span class="st">" test pages:"</span>, <span class="bu">len</span>(test_df))</span>
@@ -1129,7 +1128,7 @@ with the job. Copy the scripts from the lesson repository into a
 <span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a><span class="cf">for</span> f <span class="kw">in</span> [<span class="st">"badger_common.py"</span>, <span class="st">"finetune_churro_lora.py"</span>, <span class="st">"churro_transcribe_batch.py"</span>]:</span>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a>    shutil.copy(<span class="ss">f"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/</span><span class="sc">{</span>f<span class="sc">}</span><span class="ss">"</span>, <span class="ss">f"code/</span><span class="sc">{</span>f<span class="sc">}</span><span class="ss">"</span>)</span>
 <span id="cb9-6"><a href="#cb9-6" tabindex="-1" aria-label="code-block-9-6"></a></span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1" aria-label="code-block-9-7"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">"code/requirements.txt"</span>, <span class="st">"w"</span>) <span class="im">as</span> f:</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1" aria-label="code-block-9-7"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">"code/requirements.txt"</span>, <span class="st">"w"</span>) <span class="im">as</span> f:  <span class="co"># pip-installed inside the container before the script starts</span></span>
 <span id="cb9-8"><a href="#cb9-8" tabindex="-1" aria-label="code-block-9-8"></a>    f.write(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span>.join([<span class="st">"peft&gt;=0.14"</span>, <span class="st">"accelerate"</span>, <span class="st">"pillow"</span>, <span class="st">"pandas"</span>]))</span>
 <span id="cb9-9"><a href="#cb9-9" tabindex="-1" aria-label="code-block-9-9"></a></span>
 <span id="cb9-10"><a href="#cb9-10" tabindex="-1" aria-label="code-block-9-10"></a><span class="bu">print</span>(os.listdir(<span class="st">"code"</span>))</span></code></pre>
@@ -1196,36 +1195,37 @@ below are what the Step 0 estimate was built from.</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1" aria-label="code-block-13-1"></a><span class="im">from</span> sagemaker.huggingface <span class="im">import</span> HuggingFace</span>
 <span id="cb13-2"><a href="#cb13-2" tabindex="-1" aria-label="code-block-13-2"></a></span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a>instance_type <span class="op">=</span> <span class="st">"ml.g5.xlarge"</span></span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1" aria-label="code-block-13-4"></a>model_output_path <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>data_prefix<span class="sc">}</span><span class="ss">/models/"</span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a>instance_type <span class="op">=</span> <span class="st">"ml.g5.xlarge"</span>   <span class="co"># one A10G GPU, 24 GB; the GPU lives in the job, not in this notebook</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1" aria-label="code-block-13-4"></a>model_output_path <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>data_prefix<span class="sc">}</span><span class="ss">/models/"</span>   <span class="co"># the job's model.tar.gz lands under here, in your own bucket</span></span>
 <span id="cb13-5"><a href="#cb13-5" tabindex="-1" aria-label="code-block-13-5"></a></span>
 <span id="cb13-6"><a href="#cb13-6" tabindex="-1" aria-label="code-block-13-6"></a>estimator <span class="op">=</span> HuggingFace(</span>
 <span id="cb13-7"><a href="#cb13-7" tabindex="-1" aria-label="code-block-13-7"></a>    entry_point<span class="op">=</span><span class="st">"finetune_churro_lora.py"</span>,</span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1" aria-label="code-block-13-8"></a>    source_dir<span class="op">=</span><span class="st">"code/"</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1" aria-label="code-block-13-8"></a>    source_dir<span class="op">=</span><span class="st">"code/"</span>,                   <span class="co"># the whole directory ships with the job: script, badger_common.py, requirements.txt</span></span>
 <span id="cb13-9"><a href="#cb13-9" tabindex="-1" aria-label="code-block-13-9"></a>    role<span class="op">=</span>role,</span>
 <span id="cb13-10"><a href="#cb13-10" tabindex="-1" aria-label="code-block-13-10"></a>    tags<span class="op">=</span>make_job_tags(<span class="st">"Training"</span>),</span>
 <span id="cb13-11"><a href="#cb13-11" tabindex="-1" aria-label="code-block-13-11"></a>    instance_type<span class="op">=</span>instance_type,</span>
 <span id="cb13-12"><a href="#cb13-12" tabindex="-1" aria-label="code-block-13-12"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
 <span id="cb13-13"><a href="#cb13-13" tabindex="-1" aria-label="code-block-13-13"></a>    volume_size<span class="op">=</span><span class="dv">50</span>,                       <span class="co"># GB of disk for the container, weights and images</span></span>
 <span id="cb13-14"><a href="#cb13-14" tabindex="-1" aria-label="code-block-13-14"></a>    max_run<span class="op">=</span><span class="dv">45</span> <span class="op">*</span> <span class="dv">60</span>,                      <span class="co"># 45 minutes: about twice the estimate, never "whatever it takes"</span></span>
-<span id="cb13-15"><a href="#cb13-15" tabindex="-1" aria-label="code-block-13-15"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,</span>
-<span id="cb13-16"><a href="#cb13-16" tabindex="-1" aria-label="code-block-13-16"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
-<span id="cb13-17"><a href="#cb13-17" tabindex="-1" aria-label="code-block-13-17"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
-<span id="cb13-18"><a href="#cb13-18" tabindex="-1" aria-label="code-block-13-18"></a>    output_path<span class="op">=</span>model_output_path,</span>
-<span id="cb13-19"><a href="#cb13-19" tabindex="-1" aria-label="code-block-13-19"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb13-20"><a href="#cb13-20" tabindex="-1" aria-label="code-block-13-20"></a>    hyperparameters<span class="op">=</span>{</span>
-<span id="cb13-21"><a href="#cb13-21" tabindex="-1" aria-label="code-block-13-21"></a>        <span class="co"># no model_id: the script reads the base weights from the "model" channel mounted at fit()</span></span>
-<span id="cb13-22"><a href="#cb13-22" tabindex="-1" aria-label="code-block-13-22"></a>        <span class="st">"max_train_pages"</span>: <span class="dv">120</span>,           <span class="co"># a slice in class; the homework uses all 251 training pages</span></span>
-<span id="cb13-23"><a href="#cb13-23" tabindex="-1" aria-label="code-block-13-23"></a>        <span class="st">"epochs"</span>: <span class="dv">2</span>,</span>
-<span id="cb13-24"><a href="#cb13-24" tabindex="-1" aria-label="code-block-13-24"></a>        <span class="st">"lr"</span>: <span class="fl">2e-4</span>,</span>
-<span id="cb13-25"><a href="#cb13-25" tabindex="-1" aria-label="code-block-13-25"></a>        <span class="st">"lora_r"</span>: <span class="dv">16</span>,</span>
-<span id="cb13-26"><a href="#cb13-26" tabindex="-1" aria-label="code-block-13-26"></a>        <span class="st">"batch_size"</span>: <span class="dv">1</span>,</span>
-<span id="cb13-27"><a href="#cb13-27" tabindex="-1" aria-label="code-block-13-27"></a>        <span class="st">"grad_accum"</span>: <span class="dv">4</span>,                  <span class="co"># effective batch of 4 pages -&gt; ~60 optimizer steps</span></span>
-<span id="cb13-28"><a href="#cb13-28" tabindex="-1" aria-label="code-block-13-28"></a>        <span class="st">"max_pixels"</span>: <span class="dv">1280</span> <span class="op">*</span> <span class="dv">28</span> <span class="op">*</span> <span class="dv">28</span>,     <span class="co"># ~1 megapixel per page</span></span>
-<span id="cb13-29"><a href="#cb13-29" tabindex="-1" aria-label="code-block-13-29"></a>        <span class="st">"eval_pages"</span>: <span class="dv">15</span>,</span>
-<span id="cb13-30"><a href="#cb13-30" tabindex="-1" aria-label="code-block-13-30"></a>        <span class="st">"eval_before"</span>: <span class="dv">1</span>,</span>
-<span id="cb13-31"><a href="#cb13-31" tabindex="-1" aria-label="code-block-13-31"></a>    },</span>
-<span id="cb13-32"><a href="#cb13-32" tabindex="-1" aria-label="code-block-13-32"></a>)</span></code></pre>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1" aria-label="code-block-13-15"></a>    <span class="co"># the three versions select the prebuilt Hugging Face training image (transformers + PyTorch + Python)</span></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1" aria-label="code-block-13-16"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,</span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1" aria-label="code-block-13-17"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1" aria-label="code-block-13-18"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1" aria-label="code-block-13-19"></a>    output_path<span class="op">=</span>model_output_path,</span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1" aria-label="code-block-13-20"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1" aria-label="code-block-13-21"></a>    hyperparameters<span class="op">=</span>{                     <span class="co"># passed to the script as command-line flags: --epochs 2 --lr 0.0002 ...</span></span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1" aria-label="code-block-13-22"></a>        <span class="co"># no model_id: the script reads the base weights from the "model" channel mounted at fit()</span></span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1" aria-label="code-block-13-23"></a>        <span class="st">"max_train_pages"</span>: <span class="dv">120</span>,           <span class="co"># a slice in class; the homework uses all 251 training pages</span></span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1" aria-label="code-block-13-24"></a>        <span class="st">"epochs"</span>: <span class="dv">2</span>,                      <span class="co"># passes over the pages; training time scales linearly with it</span></span>
+<span id="cb13-25"><a href="#cb13-25" tabindex="-1" aria-label="code-block-13-25"></a>        <span class="st">"lr"</span>: <span class="fl">2e-4</span>,                       <span class="co"># LoRA takes a higher learning rate than a full fine-tune (~1e-5)</span></span>
+<span id="cb13-26"><a href="#cb13-26" tabindex="-1" aria-label="code-block-13-26"></a>        <span class="st">"lora_r"</span>: <span class="dv">16</span>,                     <span class="co"># adapter rank: how many trainable parameters LoRA adds per layer</span></span>
+<span id="cb13-27"><a href="#cb13-27" tabindex="-1" aria-label="code-block-13-27"></a>        <span class="st">"batch_size"</span>: <span class="dv">1</span>,                  <span class="co"># one page per step fits the 24 GB card</span></span>
+<span id="cb13-28"><a href="#cb13-28" tabindex="-1" aria-label="code-block-13-28"></a>        <span class="st">"grad_accum"</span>: <span class="dv">4</span>,                  <span class="co"># effective batch of 4 pages -&gt; ~60 optimizer steps</span></span>
+<span id="cb13-29"><a href="#cb13-29" tabindex="-1" aria-label="code-block-13-29"></a>        <span class="st">"max_pixels"</span>: <span class="dv">1280</span> <span class="op">*</span> <span class="dv">28</span> <span class="op">*</span> <span class="dv">28</span>,     <span class="co"># ~1 megapixel per page; the cost knob: tokens per page scale with it</span></span>
+<span id="cb13-30"><a href="#cb13-30" tabindex="-1" aria-label="code-block-13-30"></a>        <span class="st">"eval_pages"</span>: <span class="dv">15</span>,                 <span class="co"># holdout pages scored before (eval_before=1) and after training</span></span>
+<span id="cb13-31"><a href="#cb13-31" tabindex="-1" aria-label="code-block-13-31"></a>        <span class="st">"eval_before"</span>: <span class="dv">1</span>,</span>
+<span id="cb13-32"><a href="#cb13-32" tabindex="-1" aria-label="code-block-13-32"></a>    },</span>
+<span id="cb13-33"><a href="#cb13-33" tabindex="-1" aria-label="code-block-13-33"></a>)</span></code></pre>
 </div>
 <p>Before launching, check that you do not already have a job running.
 An empty list means go.</p>
@@ -1255,9 +1255,12 @@ instead of each pulling it from Hugging Face.</p>
 <div class="codewrapper sourceCode" id="cb15">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a>training_job_name <span class="op">=</span> <span class="ss">f"badger-</span><span class="sc">{</span>username<span class="sc">}</span><span class="ss">-mini-v1"</span></span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a></span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1" aria-label="code-block-15-3"></a>estimator.fit({<span class="st">"train"</span>: train_s3_uri, <span class="st">"model"</span>: model_s3_uri}, job_name<span class="op">=</span>training_job_name, wait<span class="op">=</span><span class="va">True</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a><span class="co"># job_name must be unique in the account: rerunning this cell fails with ResourceInUse instead of launching a second job</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a>training_job_name <span class="op">=</span> <span class="ss">f"badger-</span><span class="sc">{</span>username<span class="sc">}</span><span class="ss">-mini-v1"</span></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1" aria-label="code-block-15-3"></a></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1" aria-label="code-block-15-4"></a><span class="co"># two channels: "train" is mounted at /opt/ml/input/data/train, "model" at /opt/ml/input/data/model inside the container</span></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1" aria-label="code-block-15-5"></a><span class="co"># wait=True blocks this cell and streams the log here; the job keeps running (and billing) even if you interrupt the cell</span></span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1" aria-label="code-block-15-6"></a>estimator.fit({<span class="st">"train"</span>: train_s3_uri, <span class="st">"model"</span>: model_s3_uri}, job_name<span class="op">=</span>training_job_name, wait<span class="op">=</span><span class="va">True</span>)</span></code></pre>
 </div>
 <div id="interrupting-the-cell-does-not-stop-the-job" class="callout">
 <div class="callout-square">
@@ -1317,8 +1320,8 @@ number to compare against the estimate every time.</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1" aria-label="code-block-17-1"></a><span class="kw">def</span> job_cost_report(job_name: <span class="bu">str</span>, price_per_hour: <span class="bu">float</span>):</span>
 <span id="cb17-2"><a href="#cb17-2" tabindex="-1" aria-label="code-block-17-2"></a>    desc <span class="op">=</span> session.sagemaker_client.describe_training_job(TrainingJobName<span class="op">=</span>job_name)</span>
-<span id="cb17-3"><a href="#cb17-3" tabindex="-1" aria-label="code-block-17-3"></a>    billable <span class="op">=</span> desc[<span class="st">"BillableTimeInSeconds"</span>]</span>
-<span id="cb17-4"><a href="#cb17-4" tabindex="-1" aria-label="code-block-17-4"></a>    training <span class="op">=</span> desc.get(<span class="st">"TrainingTimeInSeconds"</span>, <span class="dv">0</span>)</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1" aria-label="code-block-17-3"></a>    billable <span class="op">=</span> desc[<span class="st">"BillableTimeInSeconds"</span>]           <span class="co"># the bill: container pull, 7.5 GB model copy, then the script</span></span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1" aria-label="code-block-17-4"></a>    training <span class="op">=</span> desc.get(<span class="st">"TrainingTimeInSeconds"</span>, <span class="dv">0</span>)    <span class="co"># the script alone; the gap is the fixed startup overhead</span></span>
 <span id="cb17-5"><a href="#cb17-5" tabindex="-1" aria-label="code-block-17-5"></a>    <span class="bu">print</span>(<span class="ss">f"job:            </span><span class="sc">{</span>job_name<span class="sc">}</span><span class="ss">"</span>)</span>
 <span id="cb17-6"><a href="#cb17-6" tabindex="-1" aria-label="code-block-17-6"></a>    <span class="bu">print</span>(<span class="ss">f"status:         </span><span class="sc">{</span>desc[<span class="st">'TrainingJobStatus'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
 <span id="cb17-7"><a href="#cb17-7" tabindex="-1" aria-label="code-block-17-7"></a>    <span class="bu">print</span>(<span class="ss">f"training time:  </span><span class="sc">{</span>training <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min  (script running)"</span>)</span>
@@ -1326,9 +1329,9 @@ number to compare against the estimate every time.</p>
 <span id="cb17-9"><a href="#cb17-9" tabindex="-1" aria-label="code-block-17-9"></a>    <span class="bu">print</span>(<span class="ss">f"cost:           $</span><span class="sc">{</span>billable <span class="op">/</span> <span class="dv">3600</span> <span class="op">*</span> price_per_hour<span class="sc">:.2f}</span><span class="ss"> at $</span><span class="sc">{</span>price_per_hour<span class="sc">}</span><span class="ss">/h"</span>)</span>
 <span id="cb17-10"><a href="#cb17-10" tabindex="-1" aria-label="code-block-17-10"></a>    <span class="cf">return</span> desc</span>
 <span id="cb17-11"><a href="#cb17-11" tabindex="-1" aria-label="code-block-17-11"></a></span>
-<span id="cb17-12"><a href="#cb17-12" tabindex="-1" aria-label="code-block-17-12"></a>g5_price <span class="op">=</span> <span class="fl">1.41</span></span>
+<span id="cb17-12"><a href="#cb17-12" tabindex="-1" aria-label="code-block-17-12"></a>g5_price <span class="op">=</span> <span class="fl">1.41</span>   <span class="co"># ml.g5.xlarge, us-east-1 on-demand, $/hour</span></span>
 <span id="cb17-13"><a href="#cb17-13" tabindex="-1" aria-label="code-block-17-13"></a>desc <span class="op">=</span> job_cost_report(training_job_name, g5_price)</span>
-<span id="cb17-14"><a href="#cb17-14" tabindex="-1" aria-label="code-block-17-14"></a>adapter_s3_uri <span class="op">=</span> desc[<span class="st">"ModelArtifacts"</span>][<span class="st">"S3ModelArtifacts"</span>]</span>
+<span id="cb17-14"><a href="#cb17-14" tabindex="-1" aria-label="code-block-17-14"></a>adapter_s3_uri <span class="op">=</span> desc[<span class="st">"ModelArtifacts"</span>][<span class="st">"S3ModelArtifacts"</span>]   <span class="co"># the model.tar.gz this job uploaded to output_path</span></span>
 <span id="cb17-15"><a href="#cb17-15" tabindex="-1" aria-label="code-block-17-15"></a><span class="bu">print</span>(<span class="st">"adapter:"</span>, adapter_s3_uri)</span></code></pre>
 </div>
 <p>The gap between <em>training time</em> and <em>billable time</em> is
@@ -1347,13 +1350,13 @@ copied anywhere.</p>
 <span id="cb18-2"><a href="#cb18-2" tabindex="-1" aria-label="code-block-18-2"></a></span>
 <span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a>run_dir <span class="op">=</span> os.path.join(local_data_dir, training_job_name)</span>
 <span id="cb18-4"><a href="#cb18-4" tabindex="-1" aria-label="code-block-18-4"></a>os.makedirs(run_dir, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb18-5"><a href="#cb18-5" tabindex="-1" aria-label="code-block-18-5"></a>bucket, key <span class="op">=</span> adapter_s3_uri.replace(<span class="st">"s3://"</span>, <span class="st">""</span>).split(<span class="st">"/"</span>, <span class="dv">1</span>)</span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1" aria-label="code-block-18-5"></a>bucket, key <span class="op">=</span> adapter_s3_uri.replace(<span class="st">"s3://"</span>, <span class="st">""</span>).split(<span class="st">"/"</span>, <span class="dv">1</span>)   <span class="co"># s3://bucket/key -&gt; bucket, key</span></span>
 <span id="cb18-6"><a href="#cb18-6" tabindex="-1" aria-label="code-block-18-6"></a>s3_client.download_file(bucket, key, os.path.join(run_dir, <span class="st">"model.tar.gz"</span>))</span>
-<span id="cb18-7"><a href="#cb18-7" tabindex="-1" aria-label="code-block-18-7"></a><span class="cf">with</span> tarfile.<span class="bu">open</span>(os.path.join(run_dir, <span class="st">"model.tar.gz"</span>)) <span class="im">as</span> tar:</span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1" aria-label="code-block-18-7"></a><span class="cf">with</span> tarfile.<span class="bu">open</span>(os.path.join(run_dir, <span class="st">"model.tar.gz"</span>)) <span class="im">as</span> tar:   <span class="co"># everything the script saved to /opt/ml/model</span></span>
 <span id="cb18-8"><a href="#cb18-8" tabindex="-1" aria-label="code-block-18-8"></a>    tar.extractall(run_dir)</span>
-<span id="cb18-9"><a href="#cb18-9" tabindex="-1" aria-label="code-block-18-9"></a><span class="bu">print</span>(<span class="bu">sorted</span>(os.listdir(run_dir)))</span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1" aria-label="code-block-18-9"></a><span class="bu">print</span>(<span class="bu">sorted</span>(os.listdir(run_dir)))   <span class="co"># adapter files, holdout_page_ids.csv, eval_before.csv, eval_after.csv, train_summary.json</span></span>
 <span id="cb18-10"><a href="#cb18-10" tabindex="-1" aria-label="code-block-18-10"></a></span>
-<span id="cb18-11"><a href="#cb18-11" tabindex="-1" aria-label="code-block-18-11"></a>summary <span class="op">=</span> json.load(<span class="bu">open</span>(os.path.join(run_dir, <span class="st">"train_summary.json"</span>)))</span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1" aria-label="code-block-18-11"></a>summary <span class="op">=</span> json.load(<span class="bu">open</span>(os.path.join(run_dir, <span class="st">"train_summary.json"</span>)))   <span class="co"># train_pages, train_minutes, seconds_per_page, CER before/after</span></span>
 <span id="cb18-12"><a href="#cb18-12" tabindex="-1" aria-label="code-block-18-12"></a><span class="bu">print</span>(json.dumps(summary, indent<span class="op">=</span><span class="dv">2</span>))</span></code></pre>
 </div>
 <div class="section level3">
@@ -1366,10 +1369,11 @@ fine-tune and nothing else.</p>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1" aria-label="code-block-19-1"></a>before <span class="op">=</span> pd.read_csv(os.path.join(run_dir, <span class="st">"eval_before.csv"</span>), keep_default_na<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb19-2"><a href="#cb19-2" tabindex="-1" aria-label="code-block-19-2"></a>after <span class="op">=</span> pd.read_csv(os.path.join(run_dir, <span class="st">"eval_after.csv"</span>), keep_default_na<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb19-3"><a href="#cb19-3" tabindex="-1" aria-label="code-block-19-3"></a></span>
-<span id="cb19-4"><a href="#cb19-4" tabindex="-1" aria-label="code-block-19-4"></a>comparison <span class="op">=</span> before[[<span class="st">"page_id"</span>, <span class="st">"cer"</span>]].merge(after[[<span class="st">"page_id"</span>, <span class="st">"cer"</span>]], on<span class="op">=</span><span class="st">"page_id"</span>, suffixes<span class="op">=</span>(<span class="st">"_base"</span>, <span class="st">"_tuned"</span>))</span>
-<span id="cb19-5"><a href="#cb19-5" tabindex="-1" aria-label="code-block-19-5"></a>comparison[<span class="st">"gain"</span>] <span class="op">=</span> comparison.cer_base <span class="op">-</span> comparison.cer_tuned</span>
-<span id="cb19-6"><a href="#cb19-6" tabindex="-1" aria-label="code-block-19-6"></a><span class="bu">print</span>(comparison.sort_values(<span class="st">"gain"</span>, ascending<span class="op">=</span><span class="va">False</span>).<span class="bu">round</span>(<span class="dv">3</span>).to_string(index<span class="op">=</span><span class="va">False</span>))</span>
-<span id="cb19-7"><a href="#cb19-7" tabindex="-1" aria-label="code-block-19-7"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">mean CER  base: </span><span class="sc">{</span>comparison<span class="sc">.</span>cer_base<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss">   tuned: </span><span class="sc">{</span>comparison<span class="sc">.</span>cer_tuned<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1" aria-label="code-block-19-4"></a><span class="co"># cer = character error rate per page: edits / characters in the reference, lower is better</span></span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1" aria-label="code-block-19-5"></a>comparison <span class="op">=</span> before[[<span class="st">"page_id"</span>, <span class="st">"cer"</span>]].merge(after[[<span class="st">"page_id"</span>, <span class="st">"cer"</span>]], on<span class="op">=</span><span class="st">"page_id"</span>, suffixes<span class="op">=</span>(<span class="st">"_base"</span>, <span class="st">"_tuned"</span>))</span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1" aria-label="code-block-19-6"></a>comparison[<span class="st">"gain"</span>] <span class="op">=</span> comparison.cer_base <span class="op">-</span> comparison.cer_tuned   <span class="co"># positive = the fine-tune helped on that page</span></span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1" aria-label="code-block-19-7"></a><span class="bu">print</span>(comparison.sort_values(<span class="st">"gain"</span>, ascending<span class="op">=</span><span class="va">False</span>).<span class="bu">round</span>(<span class="dv">3</span>).to_string(index<span class="op">=</span><span class="va">False</span>))</span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1" aria-label="code-block-19-8"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">mean CER  base: </span><span class="sc">{</span>comparison<span class="sc">.</span>cer_base<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss">   tuned: </span><span class="sc">{</span>comparison<span class="sc">.</span>cer_tuned<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <p>Look at the page that improved most. The fine-tuned model should have
 picked up the conventions (umlauts and <code>ß</code> as written, no
@@ -1408,7 +1412,7 @@ real bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>Expect startup to be close to 10 minutes and the two evaluations to
 be 2–4 minutes each. Training is the line most likely to differ: if you
@@ -1486,12 +1490,13 @@ means giving up a quarter of the data.</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" tabindex="-1" aria-label="code-block-23-1"></a>total <span class="op">=</span> <span class="fl">0.0</span></span>
-<span id="cb23-2"><a href="#cb23-2" tabindex="-1" aria-label="code-block-23-2"></a><span class="cf">for</span> job <span class="kw">in</span> session.sagemaker_client.list_training_jobs(NameContains<span class="op">=</span><span class="ss">f"badger-</span><span class="sc">{</span>username<span class="sc">}</span><span class="ss">"</span>, MaxResults<span class="op">=</span><span class="dv">50</span>)[<span class="st">"TrainingJobSummaries"</span>]:</span>
-<span id="cb23-3"><a href="#cb23-3" tabindex="-1" aria-label="code-block-23-3"></a>    d <span class="op">=</span> session.sagemaker_client.describe_training_job(TrainingJobName<span class="op">=</span>job[<span class="st">"TrainingJobName"</span>])</span>
-<span id="cb23-4"><a href="#cb23-4" tabindex="-1" aria-label="code-block-23-4"></a>    cost <span class="op">=</span> d.get(<span class="st">"BillableTimeInSeconds"</span>, <span class="dv">0</span>) <span class="op">/</span> <span class="dv">3600</span> <span class="op">*</span> g5_price</span>
-<span id="cb23-5"><a href="#cb23-5" tabindex="-1" aria-label="code-block-23-5"></a>    total <span class="op">+=</span> cost</span>
-<span id="cb23-6"><a href="#cb23-6" tabindex="-1" aria-label="code-block-23-6"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>job[<span class="st">'TrainingJobName'</span>]<span class="sc">:&lt;40}</span><span class="ss"> </span><span class="sc">{</span>d[<span class="st">'TrainingJobStatus'</span>]<span class="sc">:&lt;10}</span><span class="ss"> </span><span class="sc">{</span>d<span class="sc">.</span>get(<span class="st">'BillableTimeInSeconds'</span>, <span class="dv">0</span>) <span class="op">/</span> <span class="dv">60</span><span class="sc">:5.1f}</span><span class="ss"> min  $</span><span class="sc">{</span>cost<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
-<span id="cb23-7"><a href="#cb23-7" tabindex="-1" aria-label="code-block-23-7"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">GPU spend so far: $</span><span class="sc">{</span>total<span class="sc">:.2f}</span><span class="ss">  (plus the CPU notebook at $0.05/h)"</span>)</span></code></pre>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1" aria-label="code-block-23-2"></a><span class="co"># every job this episode launched shares the badger-&lt;username&gt; prefix, so one listing finds them all</span></span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1" aria-label="code-block-23-3"></a><span class="cf">for</span> job <span class="kw">in</span> session.sagemaker_client.list_training_jobs(NameContains<span class="op">=</span><span class="ss">f"badger-</span><span class="sc">{</span>username<span class="sc">}</span><span class="ss">"</span>, MaxResults<span class="op">=</span><span class="dv">50</span>)[<span class="st">"TrainingJobSummaries"</span>]:</span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1" aria-label="code-block-23-4"></a>    d <span class="op">=</span> session.sagemaker_client.describe_training_job(TrainingJobName<span class="op">=</span>job[<span class="st">"TrainingJobName"</span>])</span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1" aria-label="code-block-23-5"></a>    cost <span class="op">=</span> d.get(<span class="st">"BillableTimeInSeconds"</span>, <span class="dv">0</span>) <span class="op">/</span> <span class="dv">3600</span> <span class="op">*</span> g5_price</span>
+<span id="cb23-6"><a href="#cb23-6" tabindex="-1" aria-label="code-block-23-6"></a>    total <span class="op">+=</span> cost</span>
+<span id="cb23-7"><a href="#cb23-7" tabindex="-1" aria-label="code-block-23-7"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>job[<span class="st">'TrainingJobName'</span>]<span class="sc">:&lt;40}</span><span class="ss"> </span><span class="sc">{</span>d[<span class="st">'TrainingJobStatus'</span>]<span class="sc">:&lt;10}</span><span class="ss"> </span><span class="sc">{</span>d<span class="sc">.</span>get(<span class="st">'BillableTimeInSeconds'</span>, <span class="dv">0</span>) <span class="op">/</span> <span class="dv">60</span><span class="sc">:5.1f}</span><span class="ss"> min  $</span><span class="sc">{</span>cost<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
+<span id="cb23-8"><a href="#cb23-8" tabindex="-1" aria-label="code-block-23-8"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">GPU spend so far: $</span><span class="sc">{</span>total<span class="sc">:.2f}</span><span class="ss">  (plus the CPU notebook at $0.05/h)"</span>)</span></code></pre>
 </div>
 <p>Then compare that number to the estimate in Step 0. If you are within
 50%, your estimating is good enough to be trusted with a bigger run. If
@@ -1519,7 +1524,7 @@ help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -1559,7 +1564,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
 <div class="accordion-body">
 <p>Startup (~10 min, $0.44 at $2.61/h) does not speed up: the container
 pull and the S3 downloads are the same on any instance. For the class
@@ -1607,7 +1612,7 @@ estimator and relaunch under a new job name.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
 <div class="accordion-body">
 <p>Checkpointing. If the instance is reclaimed, the job restarts and, as
 written, starts training from scratch. For a 25-minute job that costs 25
@@ -1646,28 +1651,30 @@ explicit job name still protects you from a double launch.</p>
 <span id="cb24-7"><a href="#cb24-7" tabindex="-1" aria-label="code-block-24-7"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
 <span id="cb24-8"><a href="#cb24-8" tabindex="-1" aria-label="code-block-24-8"></a>    volume_size<span class="op">=</span><span class="dv">50</span>,</span>
 <span id="cb24-9"><a href="#cb24-9" tabindex="-1" aria-label="code-block-24-9"></a>    max_run<span class="op">=</span><span class="dv">90</span> <span class="op">*</span> <span class="dv">60</span>,                      <span class="co"># 90 minutes: twice the estimate</span></span>
-<span id="cb24-10"><a href="#cb24-10" tabindex="-1" aria-label="code-block-24-10"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,</span>
-<span id="cb24-11"><a href="#cb24-11" tabindex="-1" aria-label="code-block-24-11"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
-<span id="cb24-12"><a href="#cb24-12" tabindex="-1" aria-label="code-block-24-12"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
-<span id="cb24-13"><a href="#cb24-13" tabindex="-1" aria-label="code-block-24-13"></a>    output_path<span class="op">=</span>model_output_path,</span>
-<span id="cb24-14"><a href="#cb24-14" tabindex="-1" aria-label="code-block-24-14"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb24-15"><a href="#cb24-15" tabindex="-1" aria-label="code-block-24-15"></a>    hyperparameters<span class="op">=</span>{</span>
-<span id="cb24-16"><a href="#cb24-16" tabindex="-1" aria-label="code-block-24-16"></a>        <span class="co"># no model_id: read from the "model" channel, as in class</span></span>
-<span id="cb24-17"><a href="#cb24-17" tabindex="-1" aria-label="code-block-24-17"></a>        <span class="st">"epochs"</span>: <span class="dv">2</span>,</span>
-<span id="cb24-18"><a href="#cb24-18" tabindex="-1" aria-label="code-block-24-18"></a>        <span class="st">"lr"</span>: <span class="fl">2e-4</span>,</span>
-<span id="cb24-19"><a href="#cb24-19" tabindex="-1" aria-label="code-block-24-19"></a>        <span class="st">"lora_r"</span>: <span class="dv">16</span>,</span>
-<span id="cb24-20"><a href="#cb24-20" tabindex="-1" aria-label="code-block-24-20"></a>        <span class="st">"batch_size"</span>: <span class="dv">1</span>,</span>
-<span id="cb24-21"><a href="#cb24-21" tabindex="-1" aria-label="code-block-24-21"></a>        <span class="st">"grad_accum"</span>: <span class="dv">8</span>,</span>
-<span id="cb24-22"><a href="#cb24-22" tabindex="-1" aria-label="code-block-24-22"></a>        <span class="st">"max_pixels"</span>: <span class="dv">1280</span> <span class="op">*</span> <span class="dv">28</span> <span class="op">*</span> <span class="dv">28</span>,</span>
-<span id="cb24-23"><a href="#cb24-23" tabindex="-1" aria-label="code-block-24-23"></a>        <span class="st">"holdout_frac"</span>: <span class="fl">0.15</span>,</span>
-<span id="cb24-24"><a href="#cb24-24" tabindex="-1" aria-label="code-block-24-24"></a>        <span class="st">"eval_pages"</span>: <span class="dv">40</span>,</span>
-<span id="cb24-25"><a href="#cb24-25" tabindex="-1" aria-label="code-block-24-25"></a>        <span class="st">"eval_before"</span>: <span class="dv">1</span>,</span>
-<span id="cb24-26"><a href="#cb24-26" tabindex="-1" aria-label="code-block-24-26"></a>    },</span>
-<span id="cb24-27"><a href="#cb24-27" tabindex="-1" aria-label="code-block-24-27"></a>)</span>
-<span id="cb24-28"><a href="#cb24-28" tabindex="-1" aria-label="code-block-24-28"></a></span>
-<span id="cb24-29"><a href="#cb24-29" tabindex="-1" aria-label="code-block-24-29"></a>full_job_name <span class="op">=</span> <span class="ss">f"badger-</span><span class="sc">{</span>username<span class="sc">}</span><span class="ss">-full-v1"</span></span>
-<span id="cb24-30"><a href="#cb24-30" tabindex="-1" aria-label="code-block-24-30"></a>full_estimator.fit({<span class="st">"train"</span>: train_s3_uri, <span class="st">"model"</span>: model_s3_uri}, job_name<span class="op">=</span>full_job_name, wait<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb24-31"><a href="#cb24-31" tabindex="-1" aria-label="code-block-24-31"></a><span class="bu">print</span>(<span class="st">"launched:"</span>, full_job_name)</span></code></pre>
+<span id="cb24-10"><a href="#cb24-10" tabindex="-1" aria-label="code-block-24-10"></a>    <span class="co"># Exercise 3: adding use_spot_instances=True, max_wait=3 * 60 * 60 runs this on spot capacity; max_wait (run + waiting) must be &gt;= max_run</span></span>
+<span id="cb24-11"><a href="#cb24-11" tabindex="-1" aria-label="code-block-24-11"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,</span>
+<span id="cb24-12"><a href="#cb24-12" tabindex="-1" aria-label="code-block-24-12"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
+<span id="cb24-13"><a href="#cb24-13" tabindex="-1" aria-label="code-block-24-13"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
+<span id="cb24-14"><a href="#cb24-14" tabindex="-1" aria-label="code-block-24-14"></a>    output_path<span class="op">=</span>model_output_path,</span>
+<span id="cb24-15"><a href="#cb24-15" tabindex="-1" aria-label="code-block-24-15"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb24-16"><a href="#cb24-16" tabindex="-1" aria-label="code-block-24-16"></a>    hyperparameters<span class="op">=</span>{</span>
+<span id="cb24-17"><a href="#cb24-17" tabindex="-1" aria-label="code-block-24-17"></a>        <span class="co"># no model_id: read from the "model" channel, as in class</span></span>
+<span id="cb24-18"><a href="#cb24-18" tabindex="-1" aria-label="code-block-24-18"></a>        <span class="st">"epochs"</span>: <span class="dv">2</span>,</span>
+<span id="cb24-19"><a href="#cb24-19" tabindex="-1" aria-label="code-block-24-19"></a>        <span class="st">"lr"</span>: <span class="fl">2e-4</span>,</span>
+<span id="cb24-20"><a href="#cb24-20" tabindex="-1" aria-label="code-block-24-20"></a>        <span class="st">"lora_r"</span>: <span class="dv">16</span>,</span>
+<span id="cb24-21"><a href="#cb24-21" tabindex="-1" aria-label="code-block-24-21"></a>        <span class="st">"batch_size"</span>: <span class="dv">1</span>,</span>
+<span id="cb24-22"><a href="#cb24-22" tabindex="-1" aria-label="code-block-24-22"></a>        <span class="st">"grad_accum"</span>: <span class="dv">8</span>,</span>
+<span id="cb24-23"><a href="#cb24-23" tabindex="-1" aria-label="code-block-24-23"></a>        <span class="st">"max_pixels"</span>: <span class="dv">1280</span> <span class="op">*</span> <span class="dv">28</span> <span class="op">*</span> <span class="dv">28</span>,</span>
+<span id="cb24-24"><a href="#cb24-24" tabindex="-1" aria-label="code-block-24-24"></a>        <span class="st">"holdout_frac"</span>: <span class="fl">0.15</span>,             <span class="co"># share of pages per category held out of training</span></span>
+<span id="cb24-25"><a href="#cb24-25" tabindex="-1" aria-label="code-block-24-25"></a>        <span class="st">"eval_pages"</span>: <span class="dv">40</span>,</span>
+<span id="cb24-26"><a href="#cb24-26" tabindex="-1" aria-label="code-block-24-26"></a>        <span class="st">"eval_before"</span>: <span class="dv">1</span>,</span>
+<span id="cb24-27"><a href="#cb24-27" tabindex="-1" aria-label="code-block-24-27"></a>    },</span>
+<span id="cb24-28"><a href="#cb24-28" tabindex="-1" aria-label="code-block-24-28"></a>)</span>
+<span id="cb24-29"><a href="#cb24-29" tabindex="-1" aria-label="code-block-24-29"></a></span>
+<span id="cb24-30"><a href="#cb24-30" tabindex="-1" aria-label="code-block-24-30"></a>full_job_name <span class="op">=</span> <span class="ss">f"badger-</span><span class="sc">{</span>username<span class="sc">}</span><span class="ss">-full-v1"</span></span>
+<span id="cb24-31"><a href="#cb24-31" tabindex="-1" aria-label="code-block-24-31"></a><span class="co"># wait=False: returns at once; poll the job with describe_training_job in the next cell</span></span>
+<span id="cb24-32"><a href="#cb24-32" tabindex="-1" aria-label="code-block-24-32"></a>full_estimator.fit({<span class="st">"train"</span>: train_s3_uri, <span class="st">"model"</span>: model_s3_uri}, job_name<span class="op">=</span>full_job_name, wait<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb24-33"><a href="#cb24-33" tabindex="-1" aria-label="code-block-24-33"></a><span class="bu">print</span>(<span class="st">"launched:"</span>, full_job_name)</span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb25">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -1724,42 +1731,44 @@ channel, so the model directory is passed explicitly as
 <span id="cb27-3"><a href="#cb27-3" tabindex="-1" aria-label="code-block-27-3"></a></span>
 <span id="cb27-4"><a href="#cb27-4" tabindex="-1" aria-label="code-block-27-4"></a><span class="kw">def</span> run_transcription_job(label: <span class="bu">str</span>, adapter_uri: <span class="bu">str</span> <span class="op">=</span> <span class="va">None</span>):</span>
 <span id="cb27-5"><a href="#cb27-5" tabindex="-1" aria-label="code-block-27-5"></a>    output_uri <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>data_prefix<span class="sc">}</span><span class="ss">/predictions/</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">/"</span></span>
-<span id="cb27-6"><a href="#cb27-6" tabindex="-1" aria-label="code-block-27-6"></a>    inputs <span class="op">=</span> [</span>
+<span id="cb27-6"><a href="#cb27-6" tabindex="-1" aria-label="code-block-27-6"></a>    inputs <span class="op">=</span> [  <span class="co"># each ProcessingInput copies an S3 prefix to a container path before the script starts</span></span>
 <span id="cb27-7"><a href="#cb27-7" tabindex="-1" aria-label="code-block-27-7"></a>        ProcessingInput(source<span class="op">=</span>images_s3_uri, destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/images"</span>),</span>
 <span id="cb27-8"><a href="#cb27-8" tabindex="-1" aria-label="code-block-27-8"></a>        ProcessingInput(source<span class="op">=</span>model_s3_uri, destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/model"</span>),</span>
 <span id="cb27-9"><a href="#cb27-9" tabindex="-1" aria-label="code-block-27-9"></a>        ProcessingInput(source<span class="op">=</span>infer_data_s3_uri, destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/data"</span>),</span>
 <span id="cb27-10"><a href="#cb27-10" tabindex="-1" aria-label="code-block-27-10"></a>    ]</span>
-<span id="cb27-11"><a href="#cb27-11" tabindex="-1" aria-label="code-block-27-11"></a>    arguments <span class="op">=</span> [<span class="st">"--model_id"</span>, <span class="st">"/opt/ml/processing/input/model"</span>, <span class="st">"--pages_csv"</span>, <span class="st">"pages.csv"</span>,</span>
-<span id="cb27-12"><a href="#cb27-12" tabindex="-1" aria-label="code-block-27-12"></a>                 <span class="st">"--batch_size"</span>, <span class="st">"4"</span>, <span class="st">"--max_pixels"</span>, <span class="bu">str</span>(<span class="dv">1280</span> <span class="op">*</span> <span class="dv">28</span> <span class="op">*</span> <span class="dv">28</span>)]</span>
-<span id="cb27-13"><a href="#cb27-13" tabindex="-1" aria-label="code-block-27-13"></a>    <span class="cf">if</span> adapter_uri:</span>
-<span id="cb27-14"><a href="#cb27-14" tabindex="-1" aria-label="code-block-27-14"></a>        inputs.append(ProcessingInput(source<span class="op">=</span>adapter_uri, destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/adapter"</span>))</span>
-<span id="cb27-15"><a href="#cb27-15" tabindex="-1" aria-label="code-block-27-15"></a>        arguments <span class="op">+=</span> [<span class="st">"--adapter_tar"</span>, <span class="st">"/opt/ml/processing/input/adapter/model.tar.gz"</span>]</span>
-<span id="cb27-16"><a href="#cb27-16" tabindex="-1" aria-label="code-block-27-16"></a></span>
-<span id="cb27-17"><a href="#cb27-17" tabindex="-1" aria-label="code-block-27-17"></a>    processor <span class="op">=</span> HuggingFaceProcessor(</span>
-<span id="cb27-18"><a href="#cb27-18" tabindex="-1" aria-label="code-block-27-18"></a>        role<span class="op">=</span>role,</span>
-<span id="cb27-19"><a href="#cb27-19" tabindex="-1" aria-label="code-block-27-19"></a>        tags<span class="op">=</span>make_job_tags(<span class="st">"Inference"</span>),</span>
-<span id="cb27-20"><a href="#cb27-20" tabindex="-1" aria-label="code-block-27-20"></a>        instance_type<span class="op">=</span>instance_type,</span>
-<span id="cb27-21"><a href="#cb27-21" tabindex="-1" aria-label="code-block-27-21"></a>        instance_count<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb27-22"><a href="#cb27-22" tabindex="-1" aria-label="code-block-27-22"></a>        volume_size_in_gb<span class="op">=</span><span class="dv">50</span>,</span>
-<span id="cb27-23"><a href="#cb27-23" tabindex="-1" aria-label="code-block-27-23"></a>        transformers_version<span class="op">=</span><span class="st">"4.56"</span>,</span>
-<span id="cb27-24"><a href="#cb27-24" tabindex="-1" aria-label="code-block-27-24"></a>        pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
-<span id="cb27-25"><a href="#cb27-25" tabindex="-1" aria-label="code-block-27-25"></a>        py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
-<span id="cb27-26"><a href="#cb27-26" tabindex="-1" aria-label="code-block-27-26"></a>        sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb27-27"><a href="#cb27-27" tabindex="-1" aria-label="code-block-27-27"></a>        max_runtime_in_seconds<span class="op">=</span><span class="dv">45</span> <span class="op">*</span> <span class="dv">60</span>,   <span class="co"># 45 minute cap; the estimate is 15 minutes</span></span>
-<span id="cb27-28"><a href="#cb27-28" tabindex="-1" aria-label="code-block-27-28"></a>    )</span>
-<span id="cb27-29"><a href="#cb27-29" tabindex="-1" aria-label="code-block-27-29"></a>    processor.run(</span>
-<span id="cb27-30"><a href="#cb27-30" tabindex="-1" aria-label="code-block-27-30"></a>        code<span class="op">=</span><span class="st">"churro_transcribe_batch.py"</span>,</span>
-<span id="cb27-31"><a href="#cb27-31" tabindex="-1" aria-label="code-block-27-31"></a>        source_dir<span class="op">=</span><span class="st">"code/"</span>,</span>
-<span id="cb27-32"><a href="#cb27-32" tabindex="-1" aria-label="code-block-27-32"></a>        inputs<span class="op">=</span>inputs,</span>
-<span id="cb27-33"><a href="#cb27-33" tabindex="-1" aria-label="code-block-27-33"></a>        outputs<span class="op">=</span>[ProcessingOutput(output_name<span class="op">=</span><span class="st">"predictions"</span>, source<span class="op">=</span><span class="st">"/opt/ml/processing/output"</span>, destination<span class="op">=</span>output_uri)],</span>
-<span id="cb27-34"><a href="#cb27-34" tabindex="-1" aria-label="code-block-27-34"></a>        arguments<span class="op">=</span>arguments,</span>
-<span id="cb27-35"><a href="#cb27-35" tabindex="-1" aria-label="code-block-27-35"></a>        job_name<span class="op">=</span><span class="ss">f"badger-</span><span class="sc">{</span>username<span class="sc">}</span><span class="ss">-transcribe-</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">-v1"</span>,   <span class="co"># unique, like the training jobs</span></span>
-<span id="cb27-36"><a href="#cb27-36" tabindex="-1" aria-label="code-block-27-36"></a>        wait<span class="op">=</span><span class="va">False</span>, logs<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb27-37"><a href="#cb27-37" tabindex="-1" aria-label="code-block-27-37"></a>    )</span>
-<span id="cb27-38"><a href="#cb27-38" tabindex="-1" aria-label="code-block-27-38"></a>    <span class="cf">return</span> output_uri</span>
-<span id="cb27-39"><a href="#cb27-39" tabindex="-1" aria-label="code-block-27-39"></a></span>
-<span id="cb27-40"><a href="#cb27-40" tabindex="-1" aria-label="code-block-27-40"></a>base_output_uri <span class="op">=</span> run_transcription_job(<span class="st">"base"</span>)</span>
-<span id="cb27-41"><a href="#cb27-41" tabindex="-1" aria-label="code-block-27-41"></a>tuned_output_uri <span class="op">=</span> run_transcription_job(<span class="st">"tuned"</span>, adapter_uri<span class="op">=</span>full_adapter_s3_uri)</span></code></pre>
+<span id="cb27-11"><a href="#cb27-11" tabindex="-1" aria-label="code-block-27-11"></a>    <span class="co"># arguments = command-line flags for the script (a processor has no hyperparameters=)</span></span>
+<span id="cb27-12"><a href="#cb27-12" tabindex="-1" aria-label="code-block-27-12"></a>    arguments <span class="op">=</span> [<span class="st">"--model_id"</span>, <span class="st">"/opt/ml/processing/input/model"</span>, <span class="st">"--pages_csv"</span>, <span class="st">"pages.csv"</span>,</span>
+<span id="cb27-13"><a href="#cb27-13" tabindex="-1" aria-label="code-block-27-13"></a>                 <span class="st">"--batch_size"</span>, <span class="st">"4"</span>, <span class="st">"--max_pixels"</span>, <span class="bu">str</span>(<span class="dv">1280</span> <span class="op">*</span> <span class="dv">28</span> <span class="op">*</span> <span class="dv">28</span>)]</span>
+<span id="cb27-14"><a href="#cb27-14" tabindex="-1" aria-label="code-block-27-14"></a>    <span class="cf">if</span> adapter_uri:</span>
+<span id="cb27-15"><a href="#cb27-15" tabindex="-1" aria-label="code-block-27-15"></a>        inputs.append(ProcessingInput(source<span class="op">=</span>adapter_uri, destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/adapter"</span>))</span>
+<span id="cb27-16"><a href="#cb27-16" tabindex="-1" aria-label="code-block-27-16"></a>        arguments <span class="op">+=</span> [<span class="st">"--adapter_tar"</span>, <span class="st">"/opt/ml/processing/input/adapter/model.tar.gz"</span>]</span>
+<span id="cb27-17"><a href="#cb27-17" tabindex="-1" aria-label="code-block-27-17"></a></span>
+<span id="cb27-18"><a href="#cb27-18" tabindex="-1" aria-label="code-block-27-18"></a>    processor <span class="op">=</span> HuggingFaceProcessor(</span>
+<span id="cb27-19"><a href="#cb27-19" tabindex="-1" aria-label="code-block-27-19"></a>        role<span class="op">=</span>role,</span>
+<span id="cb27-20"><a href="#cb27-20" tabindex="-1" aria-label="code-block-27-20"></a>        tags<span class="op">=</span>make_job_tags(<span class="st">"Inference"</span>),</span>
+<span id="cb27-21"><a href="#cb27-21" tabindex="-1" aria-label="code-block-27-21"></a>        instance_type<span class="op">=</span>instance_type,</span>
+<span id="cb27-22"><a href="#cb27-22" tabindex="-1" aria-label="code-block-27-22"></a>        instance_count<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb27-23"><a href="#cb27-23" tabindex="-1" aria-label="code-block-27-23"></a>        volume_size_in_gb<span class="op">=</span><span class="dv">50</span>,             <span class="co"># same role as volume_size on the estimator</span></span>
+<span id="cb27-24"><a href="#cb27-24" tabindex="-1" aria-label="code-block-27-24"></a>        transformers_version<span class="op">=</span><span class="st">"4.56"</span>,      <span class="co"># same image family as the training job</span></span>
+<span id="cb27-25"><a href="#cb27-25" tabindex="-1" aria-label="code-block-27-25"></a>        pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
+<span id="cb27-26"><a href="#cb27-26" tabindex="-1" aria-label="code-block-27-26"></a>        py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
+<span id="cb27-27"><a href="#cb27-27" tabindex="-1" aria-label="code-block-27-27"></a>        sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb27-28"><a href="#cb27-28" tabindex="-1" aria-label="code-block-27-28"></a>        max_runtime_in_seconds<span class="op">=</span><span class="dv">45</span> <span class="op">*</span> <span class="dv">60</span>,   <span class="co"># the processor's name for max_run: 45 minute cap; the estimate is 15 minutes</span></span>
+<span id="cb27-29"><a href="#cb27-29" tabindex="-1" aria-label="code-block-27-29"></a>    )</span>
+<span id="cb27-30"><a href="#cb27-30" tabindex="-1" aria-label="code-block-27-30"></a>    processor.run(</span>
+<span id="cb27-31"><a href="#cb27-31" tabindex="-1" aria-label="code-block-27-31"></a>        code<span class="op">=</span><span class="st">"churro_transcribe_batch.py"</span>,</span>
+<span id="cb27-32"><a href="#cb27-32" tabindex="-1" aria-label="code-block-27-32"></a>        source_dir<span class="op">=</span><span class="st">"code/"</span>,</span>
+<span id="cb27-33"><a href="#cb27-33" tabindex="-1" aria-label="code-block-27-33"></a>        inputs<span class="op">=</span>inputs,</span>
+<span id="cb27-34"><a href="#cb27-34" tabindex="-1" aria-label="code-block-27-34"></a>        <span class="co"># ProcessingOutput: whatever the script writes under source is copied to destination when the job ends</span></span>
+<span id="cb27-35"><a href="#cb27-35" tabindex="-1" aria-label="code-block-27-35"></a>        outputs<span class="op">=</span>[ProcessingOutput(output_name<span class="op">=</span><span class="st">"predictions"</span>, source<span class="op">=</span><span class="st">"/opt/ml/processing/output"</span>, destination<span class="op">=</span>output_uri)],</span>
+<span id="cb27-36"><a href="#cb27-36" tabindex="-1" aria-label="code-block-27-36"></a>        arguments<span class="op">=</span>arguments,</span>
+<span id="cb27-37"><a href="#cb27-37" tabindex="-1" aria-label="code-block-27-37"></a>        job_name<span class="op">=</span><span class="ss">f"badger-</span><span class="sc">{</span>username<span class="sc">}</span><span class="ss">-transcribe-</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">-v1"</span>,   <span class="co"># unique, like the training jobs</span></span>
+<span id="cb27-38"><a href="#cb27-38" tabindex="-1" aria-label="code-block-27-38"></a>        wait<span class="op">=</span><span class="va">False</span>, logs<span class="op">=</span><span class="va">False</span>,           <span class="co"># launch and return, so the two jobs run at the same time</span></span>
+<span id="cb27-39"><a href="#cb27-39" tabindex="-1" aria-label="code-block-27-39"></a>    )</span>
+<span id="cb27-40"><a href="#cb27-40" tabindex="-1" aria-label="code-block-27-40"></a>    <span class="cf">return</span> output_uri</span>
+<span id="cb27-41"><a href="#cb27-41" tabindex="-1" aria-label="code-block-27-41"></a></span>
+<span id="cb27-42"><a href="#cb27-42" tabindex="-1" aria-label="code-block-27-42"></a>base_output_uri <span class="op">=</span> run_transcription_job(<span class="st">"base"</span>)</span>
+<span id="cb27-43"><a href="#cb27-43" tabindex="-1" aria-label="code-block-27-43"></a>tuned_output_uri <span class="op">=</span> run_transcription_job(<span class="st">"tuned"</span>, adapter_uri<span class="op">=</span>full_adapter_s3_uri)</span></code></pre>
 </div>
 <p>Both jobs run in parallel on their own GPU, which doubles the
 instantaneous spend but halves the wall-clock time; the total cost is

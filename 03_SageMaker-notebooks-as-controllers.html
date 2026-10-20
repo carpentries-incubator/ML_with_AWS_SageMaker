@@ -650,45 +650,6 @@ and it is where everything in this lesson goes.</p>
 <p>Then open
 <code>ML_with_AWS_SageMaker/notebooks/04_Accessing-S3-via-SageMaker-notebooks.ipynb</code>
 from the file browser to begin the first notebook.</p>
-<div id="challenge-pick-an-instance" class="callout challenge">
-<div class="callout-square">
-<i class="callout-icon" data-feather="zap"></i>
-</div>
-<span class="callout-header">Challenge</span>
-<div id="challenge-pick-an-instance" class="callout-inner">
-<h3 class="callout-title">Challenge: pick an instance</h3>
-<div class="callout-content">
-<p>Open the supplemental <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
-for ML</a> page and answer:</p>
-<p>A colleague has a <strong>20 GB tabular dataset</strong> (a CSV of
-sensor readings) and wants to train gradient-boosted trees on it. Which
-instance would you pick for the <em>training job</em>, and why? What
-would you pick for the <em>controller notebook</em> that launches
-it?</p>
-</div>
-</div>
-</div>
-<div id="accordionSolution1" class="accordion challenge-accordion accordion-flush">
-<div class="accordion-item">
-<button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
-  <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
-</button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
-<div class="accordion-body">
-<p>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
-GB of data wants about 32 GB of memory: <code>ml.m5.2xlarge</code> (8
-vCPU, 32 GiB, about $0.46/h) is the natural fit for a tree-ensemble
-training job, or <code>ml.m5.4xlarge</code> (64 GiB) if feature
-engineering will add many columns. No GPU: gradient-boosted trees on
-tabular data are CPU work, so a <code>g4dn</code> or <code>g5</code>
-would cost more and run no faster. The controller stays
-<code>ml.t3.medium</code> ($0.05/h): it only submits the job and reads
-the results back from S3, so it never needs to hold the dataset in
-memory.</p>
-</div>
-</div>
-</div>
-</div>
 </div>
 <div class="section level3">
 <h3 id="at-the-end-of-class-stop-the-instance">At the end of class: stop the instance<a class="anchor" aria-label="anchor" href="#at-the-end-of-class-stop-the-instance"></a></h3>

@@ -676,14 +676,15 @@ those two resources are the only things being billed.</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="op">!</span>nvidia<span class="op">-</span>smi <span class="op">||</span> echo <span class="st">"No GPU detected – please switch to a GPU-backed instance (ml.g6e.xlarge) before running this notebook."</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="co"># nvidia-smi lists the GPU, its memory and the driver; it fails when the instance has no GPU</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="op">!</span>nvidia<span class="op">-</span>smi <span class="op">||</span> echo <span class="st">"No GPU detected – please switch to a GPU-backed instance (ml.g6e.xlarge) before running this notebook."</span></span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1" aria-label="code-block-2-1"></a><span class="co"># also verify you have selected a PyTorch (conda_pytorch_*) kernel</span></span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1" aria-label="code-block-2-2"></a><span class="im">import</span> torch</span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a><span class="bu">print</span>(<span class="st">"torch cuda available:"</span>, torch.cuda.is_available())</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a><span class="bu">print</span>(<span class="st">"torch cuda available:"</span>, torch.cuda.is_available())   <span class="co"># False means PyTorch cannot use the GPU even if nvidia-smi sees it</span></span>
 <span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a><span class="bu">print</span>(<span class="st">"num gpus:"</span>, torch.cuda.device_count())</span></code></pre>
 </div>
 </div>
@@ -718,7 +719,8 @@ Restart</strong>) before continuing.</p>
 <div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a><span class="op">%</span>pip install <span class="op">-</span>q <span class="st">"vllm&gt;=0.17"</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a><span class="co"># Several GB; it may replace torch, so restart the kernel (Kernel -&gt; Restart) if the log says it did</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a><span class="op">%</span>pip install <span class="op">-</span>q <span class="st">"vllm&gt;=0.17"</span></span></code></pre>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="import-data-from-bucket-into-notebook">Import data from bucket into notebook<a class="anchor" aria-label="anchor" href="#import-data-from-bucket-into-notebook"></a></h2>
@@ -733,19 +735,18 @@ Restart</strong>) before continuing.</p>
 <span id="cb4-6"><a href="#cb4-6" tabindex="-1" aria-label="code-block-4-6"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb4-7"><a href="#cb4-7" tabindex="-1" aria-label="code-block-4-7"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb4-8"><a href="#cb4-8" tabindex="-1" aria-label="code-block-4-8"></a></span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1" aria-label="code-block-4-9"></a>os.environ[<span class="st">"SAGEMAKER_SUPPRESS_V2_WARNING"</span>] <span class="op">=</span> <span class="st">"1"</span>   <span class="co"># the kernel ships SDK v2; the Accessing S3 episode explains</span></span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1" aria-label="code-block-4-10"></a><span class="im">import</span> sagemaker</span>
-<span id="cb4-11"><a href="#cb4-11" tabindex="-1" aria-label="code-block-4-11"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1" aria-label="code-block-4-9"></a><span class="im">import</span> sagemaker</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1" aria-label="code-block-4-10"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1" aria-label="code-block-4-11"></a></span>
 <span id="cb4-12"><a href="#cb4-12" tabindex="-1" aria-label="code-block-4-12"></a></span>
-<span id="cb4-13"><a href="#cb4-13" tabindex="-1" aria-label="code-block-4-13"></a></span>
-<span id="cb4-14"><a href="#cb4-14" tabindex="-1" aria-label="code-block-4-14"></a><span class="co"># Initialize SageMaker + AWS basics</span></span>
-<span id="cb4-15"><a href="#cb4-15" tabindex="-1" aria-label="code-block-4-15"></a>session <span class="op">=</span> sagemaker.Session()</span>
-<span id="cb4-16"><a href="#cb4-16" tabindex="-1" aria-label="code-block-4-16"></a>region <span class="op">=</span> session.boto_region_name</span>
-<span id="cb4-17"><a href="#cb4-17" tabindex="-1" aria-label="code-block-4-17"></a>role <span class="op">=</span> get_execution_role()</span>
-<span id="cb4-18"><a href="#cb4-18" tabindex="-1" aria-label="code-block-4-18"></a>s3_client <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
-<span id="cb4-19"><a href="#cb4-19" tabindex="-1" aria-label="code-block-4-19"></a></span>
-<span id="cb4-20"><a href="#cb4-20" tabindex="-1" aria-label="code-block-4-20"></a><span class="bu">print</span>(<span class="st">"Region:"</span>, region)</span>
-<span id="cb4-21"><a href="#cb4-21" tabindex="-1" aria-label="code-block-4-21"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)</span></code></pre>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1" aria-label="code-block-4-13"></a><span class="co"># Initialize SageMaker + AWS basics</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1" aria-label="code-block-4-14"></a>session <span class="op">=</span> sagemaker.Session()</span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1" aria-label="code-block-4-15"></a>region <span class="op">=</span> session.boto_region_name</span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1" aria-label="code-block-4-16"></a>role <span class="op">=</span> get_execution_role()</span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1" aria-label="code-block-4-17"></a>s3_client <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1" aria-label="code-block-4-18"></a></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1" aria-label="code-block-4-19"></a><span class="bu">print</span>(<span class="st">"Region:"</span>, region)</span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1" aria-label="code-block-4-20"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)</span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -813,7 +814,7 @@ adds is the two model callables, <code>embed_query</code> and
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a><span class="im">import</span> torch</span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a><span class="im">from</span> sentence_transformers <span class="im">import</span> SentenceTransformer</span></code></pre>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a><span class="im">from</span> sentence_transformers <span class="im">import</span> SentenceTransformer   <span class="co"># embedding-model wrapper: encode(list of strings) -&gt; matrix</span></span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -925,7 +926,7 @@ required.</p>
 <span id="cb13-9"><a href="#cb13-9" tabindex="-1" aria-label="code-block-13-9"></a><span class="co"># Single shared embedder object that we can pass around.</span></span>
 <span id="cb13-10"><a href="#cb13-10" tabindex="-1" aria-label="code-block-13-10"></a>embedder <span class="op">=</span> SentenceTransformer(</span>
 <span id="cb13-11"><a href="#cb13-11" tabindex="-1" aria-label="code-block-13-11"></a>    embedding_model_id,</span>
-<span id="cb13-12"><a href="#cb13-12" tabindex="-1" aria-label="code-block-13-12"></a>    device<span class="op">=</span><span class="st">"cuda"</span> <span class="cf">if</span> use_cuda_for_embeddings <span class="cf">else</span> <span class="st">"cpu"</span></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1" aria-label="code-block-13-12"></a>    device<span class="op">=</span><span class="st">"cuda"</span> <span class="cf">if</span> use_cuda_for_embeddings <span class="cf">else</span> <span class="st">"cpu"</span>   <span class="co"># on the GPU; CPU works too, but much more slowly</span></span>
 <span id="cb13-13"><a href="#cb13-13" tabindex="-1" aria-label="code-block-13-13"></a>)</span>
 <span id="cb13-14"><a href="#cb13-14" tabindex="-1" aria-label="code-block-13-14"></a></span></code></pre>
 </div>
@@ -938,12 +939,12 @@ required.</p>
 <span id="cb14-4"><a href="#cb14-4" tabindex="-1" aria-label="code-block-14-4"></a>    all_embeddings <span class="op">=</span> []</span>
 <span id="cb14-5"><a href="#cb14-5" tabindex="-1" aria-label="code-block-14-5"></a>    start <span class="op">=</span> time.time()</span>
 <span id="cb14-6"><a href="#cb14-6" tabindex="-1" aria-label="code-block-14-6"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">0</span>, <span class="bu">len</span>(texts), batch_size):</span>
-<span id="cb14-7"><a href="#cb14-7" tabindex="-1" aria-label="code-block-14-7"></a>        batch <span class="op">=</span> texts[i : i <span class="op">+</span> batch_size]</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1" aria-label="code-block-14-7"></a>        batch <span class="op">=</span> texts[i : i <span class="op">+</span> batch_size]   <span class="co"># batches keep the GPU busy without running out of memory</span></span>
 <span id="cb14-8"><a href="#cb14-8" tabindex="-1" aria-label="code-block-14-8"></a>        emb <span class="op">=</span> embedder.encode(</span>
 <span id="cb14-9"><a href="#cb14-9" tabindex="-1" aria-label="code-block-14-9"></a>            batch,</span>
 <span id="cb14-10"><a href="#cb14-10" tabindex="-1" aria-label="code-block-14-10"></a>            convert_to_numpy<span class="op">=</span><span class="va">True</span>,</span>
 <span id="cb14-11"><a href="#cb14-11" tabindex="-1" aria-label="code-block-14-11"></a>            show_progress_bar<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb14-12"><a href="#cb14-12" tabindex="-1" aria-label="code-block-14-12"></a>            normalize_embeddings<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1" aria-label="code-block-14-12"></a>            normalize_embeddings<span class="op">=</span><span class="va">True</span>,   <span class="co"># unit-length vectors, so a dot product is the cosine similarity</span></span>
 <span id="cb14-13"><a href="#cb14-13" tabindex="-1" aria-label="code-block-14-13"></a>        )</span>
 <span id="cb14-14"><a href="#cb14-14" tabindex="-1" aria-label="code-block-14-14"></a>        all_embeddings.append(emb)</span>
 <span id="cb14-15"><a href="#cb14-15" tabindex="-1" aria-label="code-block-14-15"></a>    embeddings <span class="op">=</span> np.vstack(all_embeddings) <span class="cf">if</span> all_embeddings <span class="cf">else</span> np.zeros((<span class="dv">0</span>, <span class="dv">768</span>))</span>
@@ -1025,7 +1026,7 @@ callable the rest of the pipeline expects.</p>
 <div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a>embed_query <span class="op">=</span> embed_query_with(embedder)</span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a>embed_query <span class="op">=</span> embed_query_with(embedder)   <span class="co"># embed_query(question) -&gt; vector, with the same model that embedded the chunks</span></span>
 <span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a></span>
 <span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a><span class="co"># Quick sanity check for `retrieve_top_k` on the first training question</span></span>
 <span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a>first_row <span class="op">=</span> train_df.iloc[<span class="dv">0</span>]</span>
@@ -1090,10 +1091,10 @@ generate a short explanation (&lt;= 100 characters).</li>
 <span id="cb17-4"><a href="#cb17-4" tabindex="-1" aria-label="code-block-17-4"></a></span>
 <span id="cb17-5"><a href="#cb17-5" tabindex="-1" aria-label="code-block-17-5"></a><span class="im">from</span> vllm <span class="im">import</span> LLM, SamplingParams</span>
 <span id="cb17-6"><a href="#cb17-6" tabindex="-1" aria-label="code-block-17-6"></a></span>
-<span id="cb17-7"><a href="#cb17-7" tabindex="-1" aria-label="code-block-17-7"></a>qwen_model_id <span class="op">=</span> <span class="st">"Qwen/Qwen3.8-27B-FP8"</span></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1" aria-label="code-block-17-7"></a>qwen_model_id <span class="op">=</span> <span class="st">"Qwen/Qwen3.8-27B-FP8"</span>   <span class="co"># pre-quantized FP8 checkpoint; vLLM reads that from its config, so no quantization= argument is needed</span></span>
 <span id="cb17-8"><a href="#cb17-8" tabindex="-1" aria-label="code-block-17-8"></a></span>
 <span id="cb17-9"><a href="#cb17-9" tabindex="-1" aria-label="code-block-17-9"></a>llm <span class="op">=</span> LLM(</span>
-<span id="cb17-10"><a href="#cb17-10" tabindex="-1" aria-label="code-block-17-10"></a>    model<span class="op">=</span>qwen_model_id,</span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1" aria-label="code-block-17-10"></a>    model<span class="op">=</span>qwen_model_id,                         <span class="co"># Hugging Face id; the weights download to HF_HOME on first use</span></span>
 <span id="cb17-11"><a href="#cb17-11" tabindex="-1" aria-label="code-block-17-11"></a>    max_model_len<span class="op">=</span><span class="dv">8192</span>,                          <span class="co"># longest prompt + answer we need; the model allows 262K, we do not</span></span>
 <span id="cb17-12"><a href="#cb17-12" tabindex="-1" aria-label="code-block-17-12"></a>    gpu_memory_utilization<span class="op">=</span><span class="fl">0.85</span>,                 <span class="co"># leave ~7 GB for the embedding model and PyTorch overhead</span></span>
 <span id="cb17-13"><a href="#cb17-13" tabindex="-1" aria-label="code-block-17-13"></a>    limit_mm_per_prompt<span class="op">=</span>{<span class="st">"image"</span>: <span class="dv">0</span>, <span class="st">"video"</span>: <span class="dv">0</span>},  <span class="co"># text only: skip reserving memory for the vision encoder</span></span>
@@ -1117,14 +1118,14 @@ and billed, until you stop the instance.</p>
 <span id="cb19-4"><a href="#cb19-4" tabindex="-1" aria-label="code-block-19-4"></a>        {<span class="st">"role"</span>: <span class="st">"system"</span>, <span class="st">"content"</span>: system_prompt},</span>
 <span id="cb19-5"><a href="#cb19-5" tabindex="-1" aria-label="code-block-19-5"></a>        {<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: user_prompt},</span>
 <span id="cb19-6"><a href="#cb19-6" tabindex="-1" aria-label="code-block-19-6"></a>    ]</span>
-<span id="cb19-7"><a href="#cb19-7" tabindex="-1" aria-label="code-block-19-7"></a>    params <span class="op">=</span> SamplingParams(temperature<span class="op">=</span><span class="fl">0.0</span>, max_tokens<span class="op">=</span>max_new_tokens)</span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1" aria-label="code-block-19-7"></a>    params <span class="op">=</span> SamplingParams(temperature<span class="op">=</span><span class="fl">0.0</span>, max_tokens<span class="op">=</span>max_new_tokens)   <span class="co"># repeatable output, capped length</span></span>
 <span id="cb19-8"><a href="#cb19-8" tabindex="-1" aria-label="code-block-19-8"></a>    outputs <span class="op">=</span> llm.chat(</span>
 <span id="cb19-9"><a href="#cb19-9" tabindex="-1" aria-label="code-block-19-9"></a>        messages,</span>
 <span id="cb19-10"><a href="#cb19-10" tabindex="-1" aria-label="code-block-19-10"></a>        sampling_params<span class="op">=</span>params,</span>
 <span id="cb19-11"><a href="#cb19-11" tabindex="-1" aria-label="code-block-19-11"></a>        chat_template_kwargs<span class="op">=</span>{<span class="st">"enable_thinking"</span>: <span class="va">False</span>},   <span class="co"># answer directly; no reasoning trace</span></span>
 <span id="cb19-12"><a href="#cb19-12" tabindex="-1" aria-label="code-block-19-12"></a>        use_tqdm<span class="op">=</span><span class="va">False</span>,</span>
 <span id="cb19-13"><a href="#cb19-13" tabindex="-1" aria-label="code-block-19-13"></a>    )</span>
-<span id="cb19-14"><a href="#cb19-14" tabindex="-1" aria-label="code-block-19-14"></a>    <span class="cf">return</span> outputs[<span class="dv">0</span>].outputs[<span class="dv">0</span>].text.strip()</span>
+<span id="cb19-14"><a href="#cb19-14" tabindex="-1" aria-label="code-block-19-14"></a>    <span class="cf">return</span> outputs[<span class="dv">0</span>].outputs[<span class="dv">0</span>].text.strip()   <span class="co"># one prompt in, one completion out</span></span>
 <span id="cb19-15"><a href="#cb19-15" tabindex="-1" aria-label="code-block-19-15"></a></span>
 <span id="cb19-16"><a href="#cb19-16" tabindex="-1" aria-label="code-block-19-16"></a><span class="bu">print</span>(<span class="st">"Generator model and helper loaded."</span>)</span></code></pre>
 </div>
@@ -1212,14 +1213,14 @@ makes the explanation call.</li>
 <span id="cb22-11"><a href="#cb22-11" tabindex="-1" aria-label="code-block-22-11"></a></span>
 <span id="cb22-12"><a href="#cb22-12" tabindex="-1" aria-label="code-block-22-12"></a>    res <span class="op">=</span> run_single_qa(</span>
 <span id="cb22-13"><a href="#cb22-13" tabindex="-1" aria-label="code-block-22-13"></a>        row<span class="op">=</span>row,</span>
-<span id="cb22-14"><a href="#cb22-14" tabindex="-1" aria-label="code-block-22-14"></a>        embed_query<span class="op">=</span>embed_query,</span>
-<span id="cb22-15"><a href="#cb22-15" tabindex="-1" aria-label="code-block-22-15"></a>        generate<span class="op">=</span>call_qwen_chat,</span>
+<span id="cb22-14"><a href="#cb22-14" tabindex="-1" aria-label="code-block-22-14"></a>        embed_query<span class="op">=</span>embed_query,             <span class="co"># the sentence-transformer on this GPU</span></span>
+<span id="cb22-15"><a href="#cb22-15" tabindex="-1" aria-label="code-block-22-15"></a>        generate<span class="op">=</span>call_qwen_chat,             <span class="co"># the vLLM engine on this GPU; the Bedrock episode passed its converse wrapper here</span></span>
 <span id="cb22-16"><a href="#cb22-16" tabindex="-1" aria-label="code-block-22-16"></a>        chunk_embeddings<span class="op">=</span>chunk_embeddings,</span>
 <span id="cb22-17"><a href="#cb22-17" tabindex="-1" aria-label="code-block-22-17"></a>        chunked_docs<span class="op">=</span>chunked_docs,</span>
 <span id="cb22-18"><a href="#cb22-18" tabindex="-1" aria-label="code-block-22-18"></a>        docid_to_url<span class="op">=</span>docid_to_url,</span>
 <span id="cb22-19"><a href="#cb22-19" tabindex="-1" aria-label="code-block-22-19"></a>        top_k<span class="op">=</span><span class="dv">8</span>,</span>
 <span id="cb22-20"><a href="#cb22-20" tabindex="-1" aria-label="code-block-22-20"></a>        retrieval_threshold<span class="op">=</span><span class="fl">0.25</span>,</span>
-<span id="cb22-21"><a href="#cb22-21" tabindex="-1" aria-label="code-block-22-21"></a>        with_evidence_type<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb22-21"><a href="#cb22-21" tabindex="-1" aria-label="code-block-22-21"></a>        with_evidence_type<span class="op">=</span><span class="va">True</span>,             <span class="co"># ask the explanation call to tag [text], [table], [figure]</span></span>
 <span id="cb22-22"><a href="#cb22-22" tabindex="-1" aria-label="code-block-22-22"></a>        verbose<span class="op">=</span><span class="va">True</span>,</span>
 <span id="cb22-23"><a href="#cb22-23" tabindex="-1" aria-label="code-block-22-23"></a>    )</span>
 <span id="cb22-24"><a href="#cb22-24" tabindex="-1" aria-label="code-block-22-24"></a>    <span class="bu">print</span>(<span class="ss">f"ANSWER: </span><span class="sc">{</span>res[<span class="st">'answer'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
@@ -1281,7 +1282,7 @@ the pipeline writes) or as the Python-list strings in
 <span id="cb23-3"><a href="#cb23-3" tabindex="-1" aria-label="code-block-23-3"></a>    preds_path<span class="op">=</span>solutions_path,</span>
 <span id="cb23-4"><a href="#cb23-4" tabindex="-1" aria-label="code-block-23-4"></a>    gt_is_na_col<span class="op">=</span><span class="st">"is_blank"</span>,</span>
 <span id="cb23-5"><a href="#cb23-5" tabindex="-1" aria-label="code-block-23-5"></a>    pred_is_na_col<span class="op">=</span><span class="st">"is_blank"</span>,</span>
-<span id="cb23-6"><a href="#cb23-6" tabindex="-1" aria-label="code-block-23-6"></a>    n_examples<span class="op">=</span><span class="dv">10</span>,</span>
+<span id="cb23-6"><a href="#cb23-6" tabindex="-1" aria-label="code-block-23-6"></a>    n_examples<span class="op">=</span><span class="dv">10</span>,   <span class="co"># print the 10 worst-scoring rows</span></span>
 <span id="cb23-7"><a href="#cb23-7" tabindex="-1" aria-label="code-block-23-7"></a>)</span></code></pre>
 </div>
 <p>Change <code>retrieval_threshold</code> or <code>top_k</code> in the
