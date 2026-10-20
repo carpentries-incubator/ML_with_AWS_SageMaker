@@ -404,7 +404,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Instances for ML</h1>
-        <p>Last updated on 2026-10-19 |
+        <p>Last updated on 2026-10-20 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/learners/instances-for-ML.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -453,9 +453,10 @@ A10G at a lower price, somewhat slower for training, good for inference
 and embeddings.</li>
 <li>
 <strong>L40S</strong> (48 GB, <code>g6e</code>): twice the memory of
-an A10G; what the optional GPU-notebook episode uses to serve a 7B model
-in fp16 interactively. The <code>ml.g6e.xlarge</code> is the GPU
-notebook instance that costs about $60 a day if left running.</li>
+an A10G; what the Processing Jobs episode and the optional GPU-notebook
+episode use to serve a 27B model in FP8 (27 GB of weights). The
+<code>ml.g6e.xlarge</code> is the GPU notebook instance that costs about
+$60 a day if left running.</li>
 <li>
 <strong>A100 / H100</strong> (<code>p4d</code> / <code>p5</code>):
 multi-GPU, 8 per instance, for training or fine-tuning models of tens of
@@ -534,7 +535,8 @@ launching instances to avoid unexpected costs.</li>
 <td>32</td>
 <td>1 × L40S (48 GB)</td>
 <td>$2.61</td>
-<td>7B model served in fp16; the optional GPU-notebook episode</td>
+<td>27B model served in FP8 (Processing Jobs episode, optional GPU
+notebook)</td>
 </tr><tr><td align="right">10 GB</td>
 <td>Up to 500 M params</td>
 <td>ml.c5.2xlarge</td>
@@ -582,7 +584,8 @@ launching instances to avoid unexpected costs.</li>
 <td>64</td>
 <td>1 × L40S</td>
 <td>$2.80</td>
-<td>7–13B models in fp16; RAG serving over larger corpora</td>
+<td>27B in FP8 with more RAM and disk; RAG serving over larger
+corpora</td>
 </tr><tr><td align="right">50 GB</td>
 <td>Up to 1 B params</td>
 <td>ml.c5.4xlarge</td>
@@ -614,7 +617,7 @@ launching instances to avoid unexpected costs.</li>
 <td>128</td>
 <td>1 × L40S</td>
 <td>$3.76</td>
-<td>13B models in fp16 with headroom</td>
+<td>27B in FP8 with headroom, or 13B in bf16</td>
 </tr><tr><td align="right">100 GB</td>
 <td>Up to 40–50 B params</td>
 <td>ml.g5.12xlarge (A10G)</td>
@@ -660,8 +663,10 @@ come from</td>
 1.5× your dataset, then move down to the first GPU row only if the task
 is deep learning. For the workshop, the controller is always
 <code>ml.t3.medium</code>, the Titanic training jobs use
-<code>ml.m5.large</code> or <code>ml.g4dn.xlarge</code>, and the
-fine-tuning job uses <code>ml.g5.xlarge</code>.</p>
+<code>ml.m5.large</code> or <code>ml.g4dn.xlarge</code>, the fine-tuning
+job uses <code>ml.g5.xlarge</code>, and the RAG Processing jobs use
+<code>ml.g5.xlarge</code> (embedding) and <code>ml.g6e.xlarge</code>
+(the 27B generator).</p>
 <!--
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
@@ -725,7 +730,7 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/instances-for-ML.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/instances-for-ML.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-19",
+  "dateModified": "2026-10-20",
   "datePublished": "2026-10-20"
 }
 

@@ -725,7 +725,41 @@ was is already in the job’s name.</p>
 </tr><tr><td><code>Inference</code></td>
 <td>Bedrock calls, RAG jobs, batch transcription</td>
 </tr></tbody></table><figure><img src="../fig/bucket_tags2.png" alt="Screenshot showing required tags for an S3 bucket" class="figure mx-auto d-block"><div class="figcaption">Example of Tags for an S3 Bucket</div>
-</figure><p><strong>Default encryption</strong>: leave SSE-S3 (the default).
+</figure><div id="why-these-three-keys-and-why-they-must-be-spelled-exactly" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<span class="callout-header">Callout</span>
+<div id="why-these-three-keys-and-why-they-must-be-spelled-exactly" class="callout-inner">
+<h3 class="callout-title">Why these three keys, and why they must be
+spelled exactly</h3>
+<div class="callout-content">
+<p>Tags only show up in cost reports if the tag <em>key</em> has been
+activated as a cost allocation tag at the account level. On UW–Madison’s
+AWS accounts that activation is done centrally by the Public Cloud team
+for a fixed list of approved keys, documented at <a href="https://kb.wisc.edu/72454" class="external-link">AWS - Tagging with an AWS Account (KB
+72454)</a>. <code>Name</code>, <code>Project</code>, and
+<code>Purpose</code> are on that list; <code>ModelSize</code>,
+<code>Team</code>, <code>project</code> (lowercase) or any other
+spelling are not, and spend tagged with them is invisible in Cost
+Explorer. The KB page says it plainly: cut and paste, because any
+deviation stops the tag from reporting.</p>
+<p>Two more things to know now, because they come up in every later
+episode:</p>
+<ul><li>
+<strong>Tags never propagate.</strong> Tagging this bucket tags the
+bucket only. The notebook instance, every training job, processing job
+and Bedrock inference profile you create later needs its own copy of the
+same three tags.</li>
+<li>
+<strong>Outside UW</strong>, you activate the keys yourself, once,
+under <strong>Billing and Cost Management → Cost allocation
+tags</strong>. Until you do, the tags exist on the resources but not on
+the bill.</li>
+</ul></div>
+</div>
+</div>
+<p><strong>Default encryption</strong>: leave SSE-S3 (the default).
 Objects are encrypted at rest with keys S3 manages; KMS keys only matter
 when you need to control the keys yourself.</p>
 <p><strong>Advanced settings</strong>: leave closed.</p>

@@ -463,11 +463,8 @@ lesson notebooks in it, and stop it when done.</li>
 </div>
 </div>
 <section><h2 class="section-heading" id="setting-up-our-notebook-environment">Setting up our notebook environment<a class="anchor" aria-label="anchor" href="#setting-up-our-notebook-environment"></a></h2>
-<hr class="half-width"><p>Amazon SageMaker provides a managed environment to simplify the
-process of building, training, and deploying machine learning models. In
-this episode, we’ll set up a <strong>SageMaker notebook
-instance</strong>—a Jupyter notebook hosted on AWS for managing
-SageMaker workflows.</p>
+<hr class="half-width"><p>In this episode we set up the <strong>SageMaker notebook
+instance</strong> that every later episode runs from.</p>
 <div class="section level3">
 <h3 id="what-a-sagemaker-notebook-instance-is">What a SageMaker notebook instance is<a class="anchor" aria-label="anchor" href="#what-a-sagemaker-notebook-instance-is"></a></h3>
 <p>A <strong>SageMaker notebook instance</strong> is a virtual machine
@@ -475,22 +472,21 @@ that AWS runs for you with JupyterLab already installed, a set of Python
 kernels that come with the AWS SDKs (<code>boto3</code> and the
 SageMaker Python SDK), and an IAM role attached that decides what the
 code running on it may do in your account. You create it from the
-console and open JupyterLab in a browser tab. It is billed per second
-while it is running and nothing while it is stopped, and the files you
-keep under <code>/home/ec2-user/SageMaker/</code> survive a stop.</p>
+console and open JupyterLab in a browser tab. Compute is billed per
+second while it is running and not while it is stopped. The instance’s
+disk is separate: the files you keep under
+<code>/home/ec2-user/SageMaker/</code> survive a stop, and that storage
+volume keeps billing at about $0.14 per GB-month (about $0.70 a month
+for the default 5 GB) until the instance is deleted.</p>
 </div>
 <div class="section level3">
 <h3 id="using-the-notebook-as-a-controller">Using the notebook as a controller<a class="anchor" aria-label="anchor" href="#using-the-notebook-as-a-controller"></a></h3>
-<p>In this setup, the notebook instance functions as a
-<em>controller</em> to manage more resource-intensive compute tasks. By
-selecting a minimal instance (e.g., <code>ml.t3.medium</code>: 2 vCPUs,
-4 GB of memory, $0.05 per hour), you can perform lightweight operations
-while leveraging the <strong>SageMaker Python SDK</strong> to launch
-scalable compute instances for model training, batch processing, and
-hyperparameter tuning. Those instances start, run your script, write
-their results to S3, and shut themselves down. This approach minimizes
-costs while accessing the full power of SageMaker for demanding
-tasks.</p>
+<p>The notebook instance is a <em>controller</em>: a small, cheap
+machine where you write code and use the <strong>SageMaker Python
+SDK</strong> to launch larger instances for model training, batch
+processing, and hyperparameter tuning. Those instances start, run your
+script, write their results to S3, and shut themselves down, so you pay
+for powerful hardware only for the minutes a job needs it.</p>
 <figure><img src="fig/aws-ml-ecosystem.svg" alt="Diagram from the overview episode: S3 buckets at the top, the notebook instance on the left launching SageMaker training, tuning and processing jobs, and Bedrock on the right" class="figure mx-auto d-block"><div class="figcaption">The notebook instance launches SageMaker jobs
 that read from and write to S3 and end on their own, and calls Bedrock
 as an API</div>
@@ -503,11 +499,13 @@ and every later episode uses this same instance.</p>
 <p>The SageMaker SDK runs anywhere Python does, so the lesson could be
 run from a laptop. We use a notebook instance for three reasons:</p>
 <ul><li>
-<strong>Identity comes from the instance, not from a file on your
-machine.</strong> The IAM role attached to the notebook is what
-authorizes every call it makes. Nobody installs the AWS CLI, configures
-credentials, or has an access key that can end up in a notebook, a shell
-history or a GitHub commit.</li>
+<strong>No credential setup.</strong> The IAM role attached to the
+instance authorizes every call made from it, so there is nothing to
+install or log in to. Working from a laptop is not hard,
+<code>aws configure sso</code> and <code>aws sso login</code> take a few
+minutes, but in a room of a hundred people that is a hundred setups,
+plus SSO sessions expiring mid-episode and the occasional person pasting
+an access key instead. The role sidesteps all of it.</li>
 <li>
 <strong>Everyone has the same environment.</strong> The kernels, the
 SDK version and the paths are identical for every learner, so a cell
@@ -545,19 +543,11 @@ fine here and in tags, only bucket names must be lowercase. This name is
 also reused as the prefix of every training job you launch from the
 notebook, which is how you will find your jobs in a shared
 account.</p></li>
-<li>
-<p><strong>Instance type</strong>: a SageMaker notebook instance is
-an EC2 virtual machine (the previous episode introduced these) with
-JupyterLab preinstalled, and the instance type sets its CPU, memory and
-price. Since our notebook will act as a <strong>low-resource
-“controller”</strong>, we’ll select a small instance such as
-<code>ml.t3.medium</code> (2 vCPU, 4 GB RAM, $0.05/hour)</p>
-<ul><li>This keeps costs low while allowing us to launch separate
-training/tuning jobs on more powerful instances when needed.<br></li>
-<li>For guidance on common instances for ML procedures, refer to our
-supplemental <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
-for ML webpage</a>.<br></li>
-</ul></li>
+<li><p><strong>Instance type</strong>: sets the CPU, memory and price of
+the virtual machine. Our notebook is a controller, so pick a small one:
+<code>ml.t3.medium</code> (2 vCPU, 4 GB RAM, $0.05/hour). The jobs we
+launch from it will run on more powerful instances; the supplemental <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
+for ML</a> page compares them.</p></li>
 <li><p><strong>Platform identifier</strong>: This is an internal AWS
 setting related to the environment version and underlying platform. You
 can leave this as the default.</p></li>
@@ -589,12 +579,11 @@ from our notebook later to get our repo setup. This approach is a common
 strategy (allowing some flexiblity in which repo you use for the
 notebook).</p></li>
 <li>
-<p><strong>Tags (NOT OPTIONAL)</strong>: Adding tags helps track and
-organize resources for billing and management. This is particularly
-useful when you need to break down expenses by project, task, or team.
-To help track costs on our shared account, add exactly these three tags,
-the same keys you put on your bucket in the previous episode (type the
-keys exactly as shown; capitalization matters):</p>
+<p><strong>Tags (NOT OPTIONAL)</strong>: the same three keys you put
+on your bucket, with the same values except <code>Purpose</code>. Tags
+never propagate from one resource to another, so the instance needs its
+own copy; the previous episode’s callout on why these keys and no others
+applies here too.</p>
 <table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>Key</th>
 <th>Value</th>
 </tr></thead><tbody><tr><td><code>Project</code></td>
@@ -608,49 +597,9 @@ keys exactly as shown; capitalization matters):</p>
 </tr><tr><td><code>Purpose</code></td>
 <td>what this resource is for, <code>Notebook</code>
 </td>
-</tr></tbody></table></li>
-</ul><figure><img src="fig/notebook_tags.PNG" alt="Screenshot showing required tags for a SageMaker notebook instance" class="figure mx-auto d-block"><div class="figcaption">Tag Setup Example</div>
-</figure><p>(The screenshot shows a fourth key, <code>ModelSize</code>. Leave it
-out: it is not an approved key, so it would never appear on the
-bill.)</p>
-<div id="why-these-three-keys-and-why-they-must-be-spelled-exactly" class="callout">
-<div class="callout-square">
-<i class="callout-icon" data-feather="bell"></i>
-</div>
-<span class="callout-header">Callout</span>
-<div id="why-these-three-keys-and-why-they-must-be-spelled-exactly" class="callout-inner">
-<h3 class="callout-title">Why these three keys, and why they must be
-spelled exactly</h3>
-<div class="callout-content">
-<p>Tags only show up in cost reports if the tag <em>key</em> has been
-activated as a cost allocation tag at the account level. On UW–Madison’s
-AWS accounts that activation is done centrally by the Public Cloud team
-for a fixed list of approved keys, documented at <a href="https://kb.wisc.edu/72454" class="external-link">AWS - Tagging with an AWS Account (KB
-72454)</a>. <code>Name</code>, <code>Project</code>, and
-<code>Purpose</code> are on that list; <code>ModelSize</code>,
-<code>Team</code>, <code>project</code> (lowercase) or any other
-spelling are not, and spend tagged with them is invisible in Cost
-Explorer. The KB page says it plainly: cut and paste, because any
-deviation stops the tag from reporting.</p>
-<p>Two more things to know now, because they come up in every later
-episode:</p>
-<ul><li>
-<strong>Tags never propagate.</strong> Tagging this notebook
-instance tags the notebook instance only. Every S3 bucket, training job,
-processing job and Bedrock inference profile you create later needs its
-own copy of the same three tags.</li>
-<li>
-<strong>Outside UW</strong>, you activate the keys yourself, once,
-under <strong>Billing and Cost Management → Cost allocation
-tags</strong>. Until you do, the tags exist on the resources but not on
-the bill.</li>
-</ul></div>
-</div>
-</div>
-<ul><li>Click <strong>Create notebook instance</strong>. It may take a few
-minutes for the instance to start. Once its status is
-<strong>InService</strong>, you can open the notebook instance and start
-coding.</li>
+</tr></tbody></table><figure><img src="fig/notebook_tags.PNG" alt="Screenshot showing the three required tags on a SageMaker notebook instance" class="figure mx-auto d-block"><div class="figcaption">Tag Setup Example</div>
+</figure></li>
+<li><p>Click <strong>Create notebook instance</strong>.</p></li>
 </ul></div>
 </div>
 <div class="section level3">
@@ -658,16 +607,23 @@ coding.</li>
 <p>The new instance appears in the list with status
 <code>Pending</code>; after a few minutes it changes to
 <code>InService</code>. Once it does, click <strong>Open
-JupyterLab</strong> next to it. From there, we can create as many
-Jupyter notebooks as we would like within the instance environment.</p>
-<p>We will then select the standard python3 environment (conda_python3)
-to start our first .ipynb notebook (Jupyter notebook). We can use the
-standard conda_python3 environment since we aren’t doing any
-training/tuning just yet.</p>
+JupyterLab</strong> next to it. In JupyterLab, create a new notebook
+with the <code>conda_python3</code> kernel (we aren’t training anything
+yet, so the plain Python environment is enough).</p>
+<p>The instance’s home directory holds AWS’s own setup: the
+<code>anaconda3</code> folder with the conda environments behind the
+kernel list, AWS’s <code>sample-notebooks</code>, and a pile of license
+files. One folder is different: <code>/home/ec2-user/SageMaker</code> is
+a separate disk, the storage volume you saw as a setting when creating
+the instance. Everything else in the home directory lives on the system
+disk and is reset when the instance stops; <code>SageMaker/</code> is
+the only place that survives a stop. JupyterLab’s file browser opens
+there for that reason, and it is where everything in this lesson
+goes.</p>
 <p>In that notebook, run the following cell to clone the lesson
-repository into the instance’s persistent directory. The
-<code>test -d ... ||</code> guard makes it a no-op if the folder already
-exists, and every later episode starts with the same cell:</p>
+repository into that persistent folder. The <code>test -d ... ||</code>
+guard makes it a no-op if the folder already exists, and every later
+episode starts with the same cell:</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -677,25 +633,22 @@ exists, and every later episode starts with the same cell:</p>
 <p>Then open
 <code>ML_with_AWS_SageMaker/notebooks/04_Accessing-S3-via-SageMaker-notebooks.ipynb</code>
 from the file browser to begin the first notebook.</p>
-<div id="challenge-pick-an-instance-and-decide-what-to-tag" class="callout challenge">
+<div id="challenge-pick-an-instance" class="callout challenge">
 <div class="callout-square">
 <i class="callout-icon" data-feather="zap"></i>
 </div>
 <span class="callout-header">Challenge</span>
-<div id="challenge-pick-an-instance-and-decide-what-to-tag" class="callout-inner">
-<h3 class="callout-title">Challenge: pick an instance, and decide what
-to tag</h3>
+<div id="challenge-pick-an-instance" class="callout-inner">
+<h3 class="callout-title">Challenge: pick an instance</h3>
 <div class="callout-content">
 <p>Open the supplemental <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
 for ML</a> page and answer:</p>
-<ol style="list-style-type: decimal"><li>A colleague has a <strong>20 GB tabular dataset</strong> (a CSV of
+<p>A colleague has a <strong>20 GB tabular dataset</strong> (a CSV of
 sensor readings) and wants to train gradient-boosted trees on it. Which
 instance would you pick for the <em>training job</em>, and why? What
 would you pick for the <em>controller notebook</em> that launches
-it?</li>
-<li>List every resource this colleague will create during that project,
-and say which of them need the three tags.</li>
-</ol></div>
+it?</p>
+</div>
 </div>
 </div>
 <div id="accordionSolution1" class="accordion challenge-accordion accordion-flush">
@@ -703,42 +656,34 @@ and say which of them need the three tags.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
-<ol style="list-style-type: decimal"><li>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
+<p>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
 GB of data wants about 32 GB of memory: <code>ml.m5.2xlarge</code> (8
 vCPU, 32 GiB, about $0.46/h) is the natural fit for a tree-ensemble
-training job, with <code>ml.m5.4xlarge</code> (64 GiB) as the safe
-choice if the feature engineering doubles the frame. No GPU:
-gradient-boosted trees on tabular data are CPU work, so a
-<code>g4dn</code> or <code>g5</code> would cost more and run no faster.
-The controller stays <code>ml.t3.medium</code> ($0.05/h): it only
-submits the job and reads the results back from S3, so it never needs to
-hold the dataset in memory.</li>
-<li>At least four: the S3 bucket, the notebook instance, each training
-job, and (if they tune) each hyperparameter tuning job. Every one of
-them needs its own copy of <code>Name</code>, <code>Project</code> and
-<code>Purpose</code>, because tags never propagate from one resource to
-another. The training-job instance itself is not a separate resource to
-tag: it is created and destroyed by the job, and the job’s tags cover
-it.</li>
-</ol></div>
+training job, or <code>ml.m5.4xlarge</code> (64 GiB) if feature
+engineering will add many columns. No GPU: gradient-boosted trees on
+tabular data are CPU work, so a <code>g4dn</code> or <code>g5</code>
+would cost more and run no faster. The controller stays
+<code>ml.t3.medium</code> ($0.05/h): it only submits the job and reads
+the results back from S3, so it never needs to hold the dataset in
+memory.</p>
+</div>
 </div>
 </div>
 </div>
 </div>
 <div class="section level3">
-<h3 id="before-you-leave-stop-the-instance">Before you leave: stop the instance<a class="anchor" aria-label="anchor" href="#before-you-leave-stop-the-instance"></a></h3>
+<h3 id="at-the-end-of-class-stop-the-instance">At the end of class: stop the instance<a class="anchor" aria-label="anchor" href="#at-the-end-of-class-stop-the-instance"></a></h3>
 <p>A notebook instance bills for every second it is
-<strong>InService</strong>. When you step away for the day, go to
-<strong>Notebook instances</strong>, select yours and choose
-<strong>Stop</strong>. Your files under
-<code>/home/ec2-user/SageMaker</code> (including the repos you clone)
-survive a Stop and are there when you start it again; packages you
-<code>pip install</code> are not, so expect to reinstall them. When the
-workshop is over, <strong>Delete</strong> the instance: a stopped
-instance still bills for its storage volume ($0.14 per GB-month), and
-the cleanup episode walks through this.</p>
+<strong>InService</strong>. At the end of class, go to <strong>Notebook
+instances</strong>, select yours and choose <strong>Stop</strong>. Your
+files under <code>/home/ec2-user/SageMaker</code> (including the repos
+you clone) survive a Stop and are there when you start it again;
+packages you <code>pip install</code> are not, so expect to reinstall
+them. When the workshop is over, <strong>Delete</strong> the instance: a
+stopped instance still bills for its storage volume ($0.14 per
+GB-month), and the cleanup episode walks through this.</p>
 <div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
 <i class="callout-icon" data-feather="key"></i>
@@ -751,12 +696,10 @@ larger, resource-intensive tasks.</li>
 <li>The notebook does not do the heavy computation; later episodes use
 it to launch training, tuning and processing jobs on separate
 instances.</li>
-<li>Tags can help track costs effectively, especially in multi-project
-or team settings.</li>
-<li>Stop the notebook instance whenever you leave, and delete it when
+<li>Every resource gets the same three tags; they never propagate, so
+each new resource needs its own.</li>
+<li>Stop the notebook instance at the end of class, and delete it when
 the workshop is over.</li>
-<li>Use the SageMaker SDK documentation to explore additional options
-for managing compute resources in AWS.</li>
 </ul></div>
 </div>
 </div>
