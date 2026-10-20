@@ -515,7 +515,12 @@ hyperparameter tuning. Those instances start, run your script, write
 their results to S3, and shut themselves down. This approach minimizes
 costs while accessing the full power of SageMaker for demanding
 tasks.</p>
-<p>Every later episode uses the same instance.</p>
+<figure><img src="../fig/aws-ml-ecosystem.svg" alt="Diagram from the overview episode: S3 buckets at the top, the notebook instance on the left launching SageMaker training, tuning and processing jobs, and Bedrock on the right" class="figure mx-auto d-block"><div class="figcaption">The notebook instance launches SageMaker jobs
+that read from and write to S3 and end on their own, and calls Bedrock
+as an API</div>
+</figure><p>The notebook is the box on the left of the diagram from the overview
+episode. Everything else in the picture is launched or called from it,
+and every later episode uses this same instance.</p>
 <p>We’ll follow these steps to create our first “SageMaker notebook
 instance”.</p>
 <div class="section level4">
@@ -589,10 +594,12 @@ useful when you need to break down expenses by project, task, or team.
 To help track costs on our shared account, add exactly these three tags,
 the same keys you put on your bucket in the previous episode (type the
 keys exactly as shown; capitalization matters):</p>
-<table class="table"><thead><tr><th>Key</th>
+<table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>Key</th>
 <th>Value</th>
 </tr></thead><tbody><tr><td><code>Project</code></td>
-<td>your challenge name, e.g. <code>SinkOrSwim</code>
+<td>your challenge name (<code>SinkOrSwim</code>,
+<code>WattBot2026</code>, <code>BadgerScribe</code>,
+<code>BadgerCode</code>, …), e.g. <code>SinkOrSwim</code>
 </td>
 </tr><tr><td><code>Name</code></td>
 <td>your name, e.g. <code>DoeJohn</code>
@@ -655,18 +662,19 @@ instance environment.</p>
 to start our first .ipynb notebook (Jupyter notebook). We can use the
 standard conda_python3 environment since we aren’t doing any
 training/tuning just yet.</p>
-<div class="section level5">
-<h5 id="load-pre-filled-jupyter-notebooks-1">Load pre-filled Jupyter notebooks<a class="anchor" aria-label="anchor" href="#load-pre-filled-jupyter-notebooks-1"></a></h5>
-<p>Within the Jupyter notebook, run the following command to clone the
-lesson repo into our Jupyter environment:</p>
+<p>In that notebook, run the following cell to clone the lesson
+repository into the instance’s persistent directory. The
+<code>test -d ... ||</code> guard makes it a no-op if the folder already
+exists, and every later episode starts with the same cell:</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="ex">!git</span> clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git</span></code></pre>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="ex">%cd</span> /home/ec2-user/SageMaker/</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="ex">!test</span> <span class="at">-d</span> ML_with_AWS_SageMaker <span class="kw">||</span> <span class="fu">git</span> clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git</span></code></pre>
 </div>
-<p>Then, navigate to
-<code>/ML_with_AWS_SageMaker/notebooks/Accessing-S3-via-SageMaker-notebooks.ipynb</code>
-to begin the first notebook.</p>
+<p>Then open
+<code>ML_with_AWS_SageMaker/notebooks/Accessing-S3-via-SageMaker-notebooks.ipynb</code>
+from the file browser to begin the first notebook.</p>
 <div id="challenge-pick-an-instance-and-decide-what-to-tag" class="callout challenge">
 <div class="callout-square">
 <i class="callout-icon" data-feather="zap"></i>
@@ -693,7 +701,7 @@ and say which of them need the three tags.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
 GB of data wants about 32 GB of memory: <code>ml.m5.2xlarge</code> (8
@@ -713,7 +721,6 @@ another. The training-job instance itself is not a separate resource to
 tag: it is created and destroyed by the job, and the job’s tags cover
 it.</li>
 </ol></div>
-</div>
 </div>
 </div>
 </div>
@@ -739,8 +746,9 @@ the cleanup episode walks through this.</p>
 <div class="callout-content">
 <ul><li><p>Use a minimal SageMaker notebook instance as a controller to
 manage larger, resource-intensive tasks.</p></li>
-<li><p>Launch training and tuning jobs on scalable instances using the
-SageMaker SDK.</p></li>
+<li><p>The notebook does not do the heavy computation; later episodes
+use it to launch training, tuning and processing jobs on separate
+instances.</p></li>
 <li><p>Tags can help track costs effectively, especially in
 multi-project or team settings.</p></li>
 <li><p>Stop the notebook instance whenever you leave, and delete it when

@@ -687,7 +687,9 @@ fill in. Add the following three keys, spelled exactly (they are the
 account’s approved cost-allocation keys, see <a href="https://kb.wisc.edu/72454" class="external-link">KB 72454</a>). You will put the same
 three keys on every resource you create in this lesson.</p>
 <ul><li>
-<strong>Project</strong>: your challenge name,
+<strong>Project</strong>: your challenge name
+(<code>SinkOrSwim</code>, <code>WattBot2026</code>,
+<code>BadgerScribe</code>, <code>BadgerCode</code>, …),
 e.g. <code>SinkOrSwim</code>
 </li>
 <li>
@@ -727,19 +729,20 @@ when you need to control the keys yourself.</p>
 </div>
 <div class="section level5">
 <h5 id="edit-bucket-policy">4. Edit bucket policy<a class="anchor" aria-label="anchor" href="#edit-bucket-policy"></a></h5>
-<p>Once the bucket is created, you’ll be brought to a page that shows
-all of your current buckets (and those on our shared account). We’ll
-have to edit our bucket’s policy to allow ourselves proper access to any
-files stored there (e.g., read from bucket, write to bucket). To set
-these permissions…</p>
-<ol style="list-style-type: decimal"><li>Click on the name of your bucket to bring up additional options and
-settings.</li>
-<li>Click the Permissions tab</li>
-<li>Scroll down to Bucket policy and click Edit. Paste the following
-policy, <strong>editing the bucket name “sinkorswim-doejohn”</strong> to
-reflect your bucket’s name and replacing <code>&lt;account-id&gt;</code>
-with the 12-digit AWS account ID shown at the top right of the console
-(your instructor will also give it to you)</li>
+<p>Once the bucket is created, the console opens the new bucket’s page
+(a green “Successfully created bucket” banner at the top, an empty
+<strong>Objects</strong> list below). If you land on the bucket list
+instead, click your bucket’s name. We’ll have to edit our bucket’s
+policy to allow ourselves proper access to any files stored there (e.g.,
+read from bucket, write to bucket). To set these permissions:</p>
+<ol style="list-style-type: decimal"><li>Click the <strong>Permissions</strong> tab (next to Objects,
+Metadata, Properties).</li>
+<li>Scroll down to <strong>Bucket policy</strong> and click
+<strong>Edit</strong>. Paste the following policy, <strong>editing the
+bucket name “sinkorswim-doejohn”</strong> to reflect your bucket’s name
+and replacing <code>&lt;account-id&gt;</code> with the 12-digit AWS
+account ID shown at the top right of the console (your instructor will
+also give it to you)</li>
 </ol><div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">JSON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -758,65 +761,85 @@ with the 12-digit AWS account ID shown at the top right of the console
 <span id="cb1-13"><a href="#cb1-13" tabindex="-1" aria-label="code-block-1-13"></a>				<span class="st">"s3:GetObject"</span><span class="ot">,</span></span>
 <span id="cb1-14"><a href="#cb1-14" tabindex="-1" aria-label="code-block-1-14"></a>				<span class="st">"s3:PutObject"</span><span class="ot">,</span></span>
 <span id="cb1-15"><a href="#cb1-15" tabindex="-1" aria-label="code-block-1-15"></a>				<span class="st">"s3:DeleteObject"</span><span class="ot">,</span></span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1" aria-label="code-block-1-16"></a>				<span class="st">"s3:ListMultipartUploadParts"</span></span>
-<span id="cb1-17"><a href="#cb1-17" tabindex="-1" aria-label="code-block-1-17"></a>			<span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1-18"><a href="#cb1-18" tabindex="-1" aria-label="code-block-1-18"></a>			<span class="dt">"Resource"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-19"><a href="#cb1-19" tabindex="-1" aria-label="code-block-1-19"></a>				<span class="st">"arn:aws:s3:::sinkorswim-doejohn"</span><span class="ot">,</span></span>
-<span id="cb1-20"><a href="#cb1-20" tabindex="-1" aria-label="code-block-1-20"></a>				<span class="st">"arn:aws:s3:::sinkorswim-doejohn/*"</span></span>
-<span id="cb1-21"><a href="#cb1-21" tabindex="-1" aria-label="code-block-1-21"></a>			<span class="ot">]</span></span>
-<span id="cb1-22"><a href="#cb1-22" tabindex="-1" aria-label="code-block-1-22"></a>		<span class="fu">}</span></span>
-<span id="cb1-23"><a href="#cb1-23" tabindex="-1" aria-label="code-block-1-23"></a>	<span class="ot">]</span></span>
-<span id="cb1-24"><a href="#cb1-24" tabindex="-1" aria-label="code-block-1-24"></a><span class="fu">}</span></span></code></pre>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1" aria-label="code-block-1-16"></a>				<span class="st">"s3:ListBucket"</span><span class="ot">,</span></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1" aria-label="code-block-1-17"></a>				<span class="st">"s3:ListMultipartUploadParts"</span></span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1" aria-label="code-block-1-18"></a>			<span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1" aria-label="code-block-1-19"></a>			<span class="dt">"Resource"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1" aria-label="code-block-1-20"></a>				<span class="st">"arn:aws:s3:::sinkorswim-doejohn"</span><span class="ot">,</span></span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1" aria-label="code-block-1-21"></a>				<span class="st">"arn:aws:s3:::sinkorswim-doejohn/*"</span></span>
+<span id="cb1-22"><a href="#cb1-22" tabindex="-1" aria-label="code-block-1-22"></a>			<span class="ot">]</span></span>
+<span id="cb1-23"><a href="#cb1-23" tabindex="-1" aria-label="code-block-1-23"></a>		<span class="fu">}</span></span>
+<span id="cb1-24"><a href="#cb1-24" tabindex="-1" aria-label="code-block-1-24"></a>	<span class="ot">]</span></span>
+<span id="cb1-25"><a href="#cb1-25" tabindex="-1" aria-label="code-block-1-25"></a><span class="fu">}</span></span></code></pre>
 </div>
-<p>For workshop attendees, this policy grants the
-<code>ml-sagemaker-use</code> IAM role access to specific S3 bucket
-actions, ensuring they can use the bucket for reading, writing,
-deleting, and listing parts during multipart uploads. Attendees should
-apply this policy to their buckets to enable SageMaker to operate on
-stored data.</p>
-<p>Two buckets appear in this workshop, and this is the only one you
-create. Your bucket holds the data <em>you</em> bring (the Titanic
-files, uploaded below) and everything the later episodes produce. The
-larger datasets for the RAG and fine-tuning episodes (a corpus of PDFs,
-hundreds of scanned letters) live in a <strong>shared, read-only
-bucket</strong> that the instructors stage before class: one copy for
-everyone, instead of fifty copies of the same files. You read from it
-and never upload to it; your instructor will give you its name.</p>
-<div id="general-guidance-for-setting-up-permissions-outside-of-this-workshop" class="callout">
+<p>What the policy says, line by line:</p>
+<ul><li>
+<strong>Principal</strong> is <em>who</em> gets access. SageMaker
+never acts as you; it acts as an IAM <strong>role</strong> attached to
+your notebook instance and to every job you launch (the <em>execution
+role</em>). In the workshop account there are two:
+<code>ml-sagemaker-use</code>, which the notebook and jobs use, and
+<code>ml-sagemaker-bedrock-use</code>, used in the Bedrock episode. The
+<code>&lt;account-id&gt;</code> is the 12-digit number shown next to the
+account name at the top right of the console.</li>
+<li>
+<strong>Action</strong> is <em>what</em> they may do: read objects,
+write objects, delete objects, list the bucket’s contents, and list the
+parts of a large upload in progress.</li>
+<li>
+<strong>Resource</strong> is <em>where</em>: the bucket itself (for
+listing) and everything in it (<code>/*</code>, for the object
+actions).</li>
+</ul><p>Without this, the notebook can see the bucket but a job’s
+<code>TrainingInput</code> fails with “access denied” when it tries to
+list and download its data.</p>
+<div id="doing-this-on-your-own-account" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
 </div>
 <span class="callout-header">Callout</span>
-<div id="general-guidance-for-setting-up-permissions-outside-of-this-workshop" class="callout-inner">
-<h3 class="callout-title">General guidance for setting up permissions
-outside of this workshop</h3>
+<div id="doing-this-on-your-own-account" class="callout-inner">
+<h3 class="callout-title">Doing this on your own account</h3>
 <div class="callout-content">
-<p>When setting up a bucket outside of this workshop, it’s essential to
-create a similar IAM role (such as <code>ml-sagemaker-use</code>) with
-policies that provide controlled access to S3 resources, ensuring only
-the necessary actions are permitted for security and
-cost-efficiency.</p>
-<ol style="list-style-type: lower-alpha"><li><p><strong>Create an IAM role</strong>: Set up an IAM role for
-SageMaker to assume, with necessary S3 access permissions, such as
-<code>s3:GetObject</code>, <code>s3:PutObject</code>,
-<code>s3:DeleteObject</code>, and
-<code>s3:ListMultipartUploadParts</code>, as shown in the policy
-above.</p></li>
-<li><p><strong>Attach permissions to S3 buckets</strong>: Attach bucket
-policies that specify this role as the principal, as in our bucket
-policy above</p></li>
-<li><p><strong>More information</strong>: For a detailed guide on
-setting up roles and policies for SageMaker, refer to the <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html" class="external-link">AWS
-SageMaker documentation on IAM roles and policies</a>. This resource
-explains role creation, permission setups, and policy best practices
-tailored for SageMaker’s operations with S3 and other AWS
-services.</p></li>
-</ol><p>This setup ensures that your SageMaker operations will have the
-access needed without exposing the bucket to unnecessary permissions or
-external accounts.</p>
+<p>Everything above transfers; only the role name changes.</p>
+<ol style="list-style-type: decimal"><li>
+<strong>Find your execution role.</strong> When you create a
+notebook instance (next episode) you either pick an existing role or let
+the console create one, named like
+<code>AmazonSageMaker-ExecutionRole-20261020T120000</code>. Its ARN is
+shown on the instance’s page under <strong>Permissions and
+encryption</strong>, and looks like
+<code>arn:aws:iam::&lt;account-id&gt;:role/service-role/AmazonSageMaker-ExecutionRole-...</code>.</li>
+<li>
+<strong>Put that ARN in the policy</strong> as the only entry under
+<code>Principal</code>, and your bucket name under
+<code>Resource</code>.</li>
+<li>
+<strong>Or skip the bucket policy</strong> by putting
+<code>sagemaker</code> in the bucket name: the console-created role
+carries the <code>AmazonSageMakerFullAccess</code> policy, which already
+grants read and write on any bucket whose name contains
+<code>sagemaker</code>. A bucket named <code>sinkorswim-doejohn</code>
+is not covered, which is why the bucket policy is needed at all.</li>
+</ol><p>Either way, access comes from one of two places: the role’s own IAM
+policy (what the role may do anywhere) or the bucket’s policy (what this
+bucket allows). In the same account, allowing in either one is enough.
+The <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html" class="external-link">SageMaker
+execution role documentation</a> covers the role side. UW-Madison
+researchers can bring questions about roles, policies and accounts to
+the Public Cloud team’s weekly <a href="https://kb.wisc.edu/page.php?id=101516" class="external-link">office hours</a>
+(Thursdays at 2 pm on Zoom) or email <a href="mailto:cloud-services@cio.wisc.edu" class="email">cloud-services@cio.wisc.edu</a>.</p>
 </div>
 </div>
 </div>
+<p>Two buckets appear in this workshop, and this is the only one you
+create. Your bucket holds the data <em>you</em> bring (the Titanic
+files, uploaded below) and everything the later episodes produce. The
+larger datasets for the fine-tuning and RAG episodes (hundreds of
+scanned letters, a corpus of PDFs) live in a <strong>shared, read-only
+bucket</strong> that the instructors stage before class: one copy for
+everyone, instead of a hundred copies of the same files. You read from
+it and never upload to it; your instructor will give you its name.</p>
 </div>
 <div class="section level5">
 <h5 id="upload-files-to-the-bucket">5. Upload files to the bucket<a class="anchor" aria-label="anchor" href="#upload-files-to-the-bucket"></a></h5>
@@ -835,7 +858,10 @@ can easily be accessed. E.g., …
 <li>
 <strong>Add Files</strong> (<code>titanic_train.csv</code>,
 <code>titanic_test.csv</code>) and click <strong>Upload</strong> to
-complete.</li>
+complete. These two files are what the next episodes read: the
+<em>Accessing S3</em> episode loads them into a notebook straight from
+this bucket, and the training and tuning episodes point their jobs at
+the same two objects.</li>
 </ul></div>
 <div class="section level5">
 <h5 id="take-note-of-s3-uri-for-your-data">6. Take note of S3 URI for your data<a class="anchor" aria-label="anchor" href="#take-note-of-s3-uri-for-your-data"></a></h5>
@@ -879,13 +905,33 @@ region.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="request-costs">Request costs<a class="anchor" aria-label="anchor" href="#request-costs"></a></h3>
-<ul><li>GET requests are $0.0004 per 1,000 requests. In the context of
-Amazon S3, “GET” requests refer to the action of retrieving or
-downloading data from an S3 bucket. Each time a file or object is
-accessed in S3, it incurs a small cost per request. This means that if
-you have code that reads data from S3 frequently, such as loading
-datasets repeatedly, each read operation counts as a GET request.</li>
-</ul><p><strong><em>To calculate specific costs based on your needs, storage
+<p>Every operation on a bucket is an API request, and each one is billed
+by count. Two kinds matter: <strong>GET</strong> (<code>$0.0004</code>
+per 1,000), charged every time an object is read, and
+<strong>PUT/LIST</strong> (<code>$0.005</code> per 1,000), charged every
+time an object is written or a prefix is listed. One request is one
+object, whatever its size: reading a 5 GB file is one GET; reading 5,000
+one-kilobyte files is 5,000 GETs.</p>
+<p>A GET happens whenever code opens an object:
+<code>pd.read_csv("s3://...")</code>,
+<code>s3.download_file(...)</code>, a training job pulling its input
+channel (one GET per object in the prefix), a PyTorch
+<code>Dataset</code> that fetches images from S3 one by one. The last
+case is the one that bites in ML: a dataset of 100,000 images read once
+per epoch is 100,000 GETs per epoch, and a 50-epoch run is 5 million
+requests, about $2. Still small, but no longer zero, and a
+hyperparameter sweep multiplies it by the number of trials. The usual
+fix is the one SageMaker already uses for input channels: copy the data
+to the instance once (<code>File</code> mode) and read it from local
+disk during training.</p>
+<p>For this lesson, requests round to nothing: two CSVs read a few dozen
+times. Over a research project, the costs rank in a stable order:
+<strong>storage</strong> is the one that accumulates (every dataset,
+model and output you forget to delete keeps billing monthly),
+<strong>transfer out</strong> is the one that spikes (one bulk download
+of results to a laptop), and <strong>requests</strong> matter only with
+many small files read repeatedly.</p>
+<p><strong><em>To calculate specific costs based on your needs, storage
 class, and region, refer to AWS’s <a href="https://aws.amazon.com/s3/pricing/" class="external-link">S3 Pricing
 Information</a>.</em></strong></p>
 <div id="challenge-estimating-storage-costs" class="callout challenge">
@@ -918,6 +964,10 @@ model training will incur one <code>GET</code> request)</li>
 Pricing</a> page for more details.</li>
 </ul><p><strong>2. Repeat the above calculation using the following dataset
 sizes: 10 GB, 100 GB, 1 TB (1024 GB)</strong></p>
+<p><strong>3. Wrong region.</strong> Suppose the 100 GB bucket had been
+created in us-east-1 but the SageMaker jobs run in us-east-2. The 100
+training reads are now cross-region transfers at $0.02 per GB each. What
+does that add, and how does it compare to the download charge?</p>
 </div>
 </div>
 </div>
@@ -926,7 +976,7 @@ sizes: 10 GB, 100 GB, 1 TB (1024 GB)</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal"><li>
@@ -991,7 +1041,22 @@ $0.00004<br></li>
 </ul></li>
 </ol><p>These costs assume no additional request charges beyond those for
 storage, the download, and <code>GET</code> requests for training.</p>
-</div>
+<p>Two things to notice. The <code>GET</code> line is the same
+four-thousandths of a cent at every size: request costs depend on how
+many objects you touch, not how big they are. And the download line
+grows from 80% of the total at 1 GB to almost all of it at 1 TB: for a
+dataset of any size, moving it out of AWS costs several times more than
+keeping it there for a month, so plan to keep large data in the region
+and bring code to it, not the other way round.</p>
+<ol start="3" style="list-style-type: decimal"><li>
+<strong>Wrong region, 100 GB</strong>: 100 reads x 100 GB x $0.02 =
+<strong>$200</strong> of inter-region transfer, on top of the $11.30
+above. The one-time download to a laptop was $9; the misplaced bucket
+costs twenty times that, silently, and keeps costing with every job.
+This is why the region is the first setting on the create-bucket form
+and why the warning above tells you to check it before clicking
+Create.</li>
+</ol></div>
 </div>
 </div>
 </div>
@@ -1004,13 +1069,17 @@ other datasets)</strong></p>
 <ul><li>Go to S3, navigate to the bucket.</li>
 <li>Select files to delete, then <strong>Actions &gt;
 Delete</strong>.</li>
+<li>An empty bucket costs nothing: S3 bills for stored bytes and
+requests, and an empty bucket has neither. Keeping it is fine; the
+lesson’s end-of-workshop cleanup deletes it only because the shared
+account is swept between terms.</li>
 </ul><p><strong>Option 2: Delete the S3 bucket entirely (you no longer need
 the bucket or data)</strong></p>
 <ul><li>Select the bucket, click <strong>Actions &gt; Delete</strong>.</li>
 <li>Type the bucket name to confirm deletion.</li>
 </ul><p><strong><em>Please complete option 2 following this
-workshop</em></strong>. Deleting the bucket stops all costs associated
-with storage, requests, and data transfer.</p>
+workshop</em></strong>. On your own account, either option stops the
+bill: the charges come from the objects, not the bucket.</p>
 <div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
 <i class="callout-icon" data-feather="key"></i>
