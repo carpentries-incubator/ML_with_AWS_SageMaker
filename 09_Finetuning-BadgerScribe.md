@@ -138,9 +138,13 @@ Worked for the class run: 120 pages × ~1,600 tokens (1,300 visual + 300 text) �
 The same two rules are in `helpers.estimate_finetune_cost`, so that you can run them on a job you have not launched: your own model size, example count, tokens per example and epochs. It picks the cheapest instance that fits unless you name one, prints the memory check, GPU-hours, wall-clock, cost per run and for the whole project, and the `max_run` to set. Here it is on the class run:
 
 ```python
+import sys
+sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
+import helpers
+
 helpers.estimate_finetune_cost(
     params_billions=3.75,        # CHURRO-3B: 3B language model + vision tower
-    examples=120, tokens_per_example=1600, epochs=3,   # ~1,300 visual + 300 text tokens per page
+    examples=120, tokens_per_example=1600, epochs=3,   # tokens, not words: ~1,300 for the image + ~300 of text; counted in Setup below
     method="lora",
     instance_type="ml.g5.xlarge",
 )
@@ -155,7 +159,7 @@ helpers.estimate_finetune_cost(
 )
 ```
 
-`tokens_per_example` is the input you have to think about: text is about 1.3 tokens per word; an image on a Qwen-VL style model is its pixels divided by 784 (about 1,300 for a megapixel) plus the prompt; for audio, EEG windows or anything else, the model card says what one example becomes. The estimate is good to a factor of two, and it is the number to write down before the launch.
+`tokens_per_example` is the input you have to think about, and it is tokens, not words: the model never sees words. Text is about 1.3 tokens per English word, more for German and for old spellings; an image on a Qwen-VL style model is one token per 28 × 28 pixel block after resizing, about 1,300 for a megapixel; for audio, EEG windows or anything else, the model card says what one example becomes. Do not guess it when you can count it: the Setup section below counts the tokens in one page with the model's own processor. The estimate is good to a factor of two, and it is the number to write down before the launch.
 
 **More GPUs do not make it cheaper.** GPU-hours are the cost; spreading them across eight GPUs changes the wall-clock time, not the bill, and only helps if the job is large enough to keep all eight busy. You add GPUs when the memory row above says one GPU cannot hold the job, not to save money.
 
@@ -291,9 +295,7 @@ import pandas as pd
 import sagemaker
 from sagemaker import get_execution_role
 
-import sys
-sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
-import helpers   # estimate_finetune_cost, get_notebook_instance_info, ...
+import helpers   # already on sys.path from the Step 0 cell; imported again so Setup runs on its own after a kernel restart
 
 session = sagemaker.Session()
 region = session.boto_region_name
@@ -341,6 +343,70 @@ page_path = os.path.join(local_data_dir, f"{row.page_id}.jpg")
 s3_client.download_file(shared_bucket, f"{data_prefix}/images/{row.page_id}.jpg", page_path)
 display(Image(filename=page_path, width=500))
 ```
+
+### How many tokens is a page?
+
+The cost estimate in Step 0 used 1,600 tokens per page. That number is tokens, not words: the model never sees words. The image becomes one token per 28 × 28 pixel block once it is resized to `max_pixels`, and the transcription becomes pieces of words, more pieces for German and for old spellings than for modern English. Count it with the model's own processor rather than guess it; the processor's files are a few megabytes, so the 7.5 GB of weights stay in S3.
+
+```python
+%pip install -q "transformers>=4.56"   # the processor that turns an image + text into the model's tokens; same version as the training job
+```
+
+```python
+from transformers import AutoProcessor
+import badger_common as bc
+
+proc_dir = os.path.join(local_data_dir, "churro-processor")
+os.makedirs(proc_dir, exist_ok=True)
+for fname in ["config.json", "preprocessor_config.json", "tokenizer.json", "tokenizer_config.json", "special_tokens_map.json",
+              "added_tokens.json", "vocab.json", "merges.txt", "chat_template.json", "video_preprocessor_config.json"]:
+    s3_client.download_file(shared_bucket, f"{data_prefix}/model/churro-3B/{fname}", os.path.join(proc_dir, fname))
+processor = AutoProcessor.from_pretrained(proc_dir, min_pixels=bc.DEFAULT_MIN_PIXELS, max_pixels=bc.DEFAULT_MAX_PIXELS)
+
+image = bc.load_page_image(page_path, bc.DEFAULT_MAX_PIXELS)   # resized exactly as the training script resizes it
+prompt = bc.build_prompt(row.category)
+full = processor.apply_chat_template(bc.full_messages(prompt, row.text), tokenize=False)
+enc = processor(text=[full], images=[image], return_tensors="pt")
+n_total = enc["input_ids"].shape[1]
+n_prompt = processor(text=[processor.apply_chat_template(bc.user_messages(prompt), tokenize=False, add_generation_prompt=True)],
+                     images=[image], return_tensors="pt")["input_ids"].shape[1]
+n_image = int((enc["image_grid_thw"].prod(dim=1) // 4).sum())   # 14-px patches merged 2x2: one token per 28x28 block
+
+print(f"page {row.page_id}: {image.size[0]} x {image.size[1]} px after resizing -> {n_image} image tokens")
+print(f"instructions: {n_prompt - n_image} tokens;  transcription: {len(row.text.split())} words, {len(row.text)} characters -> {n_total - n_prompt} tokens")
+print(f"tokens the model sees for this page: {n_total}")
+```
+
+One page is a point, not an average. Text length varies a lot from page to page; image tokens hardly vary, because almost every scan is larger than `max_pixels` and gets resized to the same cap. So count text tokens for every training page with the tokenizer alone, which needs no images and takes seconds, and image tokens over a sample of pages.
+
+```python
+text_tokens = train_df.text.map(lambda t: len(processor.tokenizer(t)["input_ids"]))   # every page, tokenizer only
+
+sample = train_df.sample(20, random_state=0)
+image_tokens = []
+for pid in sample.page_id:
+    path = os.path.join(local_data_dir, f"{pid}.jpg")
+    if not os.path.exists(path):
+        s3_client.download_file(shared_bucket, f"{data_prefix}/images/{pid}.jpg", path)
+    grid = processor.image_processor(images=[bc.load_page_image(path, bc.DEFAULT_MAX_PIXELS)], return_tensors="pt")["image_grid_thw"]
+    image_tokens.append(int((grid.prod(dim=1) // 4).sum()))
+
+n_instructions = n_prompt - n_image                      # the same for every page
+avg_text, avg_image = text_tokens.mean(), sum(image_tokens) / len(image_tokens)
+avg_tokens_per_page = avg_image + n_instructions + avg_text
+print(f"text tokens per page, all {len(train_df)} training pages: mean {avg_text:.0f}, min {text_tokens.min()}, max {text_tokens.max()}")
+print(f"image tokens per page, {len(image_tokens)} sampled pages: mean {avg_image:.0f}")
+print(f"average tokens per page: {avg_image:.0f} image + {n_instructions} instructions + {avg_text:.0f} text = {avg_tokens_per_page:.0f}")
+```
+
+That average is the `tokens_per_example` the estimate should have used. Re-run the estimator with it and compare with the 1,600 guess:
+
+```python
+helpers.estimate_finetune_cost(params_billions=3.75, examples=120, tokens_per_example=int(avg_tokens_per_page), epochs=3,
+                               method="lora", instance_type="ml.g5.xlarge")
+```
+
+Multiply by pages and passes and that is the "tokens seen" in the cost table. Halve `max_pixels` and the image count halves with it; that is the knob Exercise 1 turns.
 
 ### The scripts
 
