@@ -80,7 +80,7 @@ The Processing Jobs episode runs this same pipeline as short-lived jobs, so the 
 
 ## Overview: WattBot RAG on a single notebook GPU
 
-In this episode we rerun the [WattBot 2025](https://www.kaggle.com/competitions/WattBot2025/overview) RAG pipeline from the Bedrock episode, this time entirely from a single GPU-backed SageMaker notebook with self-hosted models.
+In this episode we rerun the [WattBot 2025](https://www.kaggle.com/competitions/WattBot2025/overview) RAG pipeline from the Bedrock episode, this time entirely from a single GPU-backed SageMaker notebook with self-hosted models. The generator is the same Qwen3.8-27B as in the Processing Jobs episode: an open-weight model that fits one GPU and sits within a few points of a frontier commercial model on agent tasks and science questions (see that episode's chart), which is why it is worth the trouble of hosting.
 
 In this episode we will:
 

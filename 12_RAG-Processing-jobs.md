@@ -39,6 +39,12 @@ For research RAG, almost all the work is batch: embed everything once, answer a 
 
 The generator is **Qwen3.8-27B**, a 27-billion-parameter open-weight model (Apache 2.0, released August 2026) that is not on Bedrock. Its weights are served in FP8 through vLLM: inference needs no gradients, so the weights are the memory cost, and 27B parameters at one byte each is about 27 GB, which fits one 48 GB GPU (`ml.g6e.xlarge`) with room for the KV cache. In bf16 the same model is 54 GB and would need a multi-GPU instance for no gain in output quality. (The fine-tuning episode has the full memory arithmetic; the short version is that inference runs on reduced-precision weights and training cannot.)
 
+Why bother serving a 27B model yourself when Bedrock is a call away? Because an open-weight model of this size is now close to the frontier on the kinds of tasks research code runs, and it runs on one GPU, on data that never leaves your account.
+
+![Qwen3.8-27B against Claude Opus 4.8 on three benchmarks: 73.0 vs 74.6 on Terminal-Bench 2.1, 89.2 vs 93.6 on GPQA Diamond, 83.7 vs 80.5 on CharXiv reasoning](fig/qwen27b-vs-opus.png){alt="Paired horizontal bars comparing a 27B open-weight model on one GPU with a frontier commercial model; within a few points on agent tasks and science questions, ahead on chart reasoning"}
+
+Qwen figures are from the Qwen3.8-27B model card and were not reproduced here; Opus 4.8 figures are from its published evaluations.
+
 ::::::::::::::::::::::::::::::::::::: callout
 
 ### What this episode costs
