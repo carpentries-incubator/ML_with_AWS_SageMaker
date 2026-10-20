@@ -480,6 +480,25 @@ while it is running and nothing while it is stopped, and the files you
 keep under <code>/home/ec2-user/SageMaker/</code> survive a stop.</p>
 </div>
 <div class="section level3">
+<h3 id="using-the-notebook-as-a-controller">Using the notebook as a controller<a class="anchor" aria-label="anchor" href="#using-the-notebook-as-a-controller"></a></h3>
+<p>In this setup, the notebook instance functions as a
+<em>controller</em> to manage more resource-intensive compute tasks. By
+selecting a minimal instance (e.g., <code>ml.t3.medium</code>: 2 vCPUs,
+4 GB of memory, $0.05 per hour), you can perform lightweight operations
+while leveraging the <strong>SageMaker Python SDK</strong> to launch
+scalable compute instances for model training, batch processing, and
+hyperparameter tuning. Those instances start, run your script, write
+their results to S3, and shut themselves down. This approach minimizes
+costs while accessing the full power of SageMaker for demanding
+tasks.</p>
+<figure><img src="fig/aws-ml-ecosystem.svg" alt="Diagram from the overview episode: S3 buckets at the top, the notebook instance on the left launching SageMaker training, tuning and processing jobs, and Bedrock on the right" class="figure mx-auto d-block"><div class="figcaption">The notebook instance launches SageMaker jobs
+that read from and write to S3 and end on their own, and calls Bedrock
+as an API</div>
+</figure><p>The notebook is the box on the left of the diagram from the overview
+episode. Everything else in the picture is launched or called from it,
+and every later episode uses this same instance.</p>
+</div>
+<div class="section level3">
 <h3 id="why-we-work-from-a-notebook-instance-in-this-lesson">Why we work from a notebook instance in this lesson<a class="anchor" aria-label="anchor" href="#why-we-work-from-a-notebook-instance-in-this-lesson"></a></h3>
 <p>The SageMaker SDK runs anywhere Python does, so the lesson could be
 run from a laptop. We use a notebook instance for three reasons:</p>
@@ -501,26 +520,7 @@ from S3 to the instance is free. Pulling the same files to a laptop
 costs $0.09 per GB wherever the laptop is: “region” means the AWS data
 center your resources live in, and a machine outside AWS is never in
 one.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="using-the-notebook-as-a-controller">Using the notebook as a controller<a class="anchor" aria-label="anchor" href="#using-the-notebook-as-a-controller"></a></h3>
-<p>In this setup, the notebook instance functions as a
-<em>controller</em> to manage more resource-intensive compute tasks. By
-selecting a minimal instance (e.g., <code>ml.t3.medium</code>: 2 vCPUs,
-4 GB of memory, $0.05 per hour), you can perform lightweight operations
-while leveraging the <strong>SageMaker Python SDK</strong> to launch
-scalable compute instances for model training, batch processing, and
-hyperparameter tuning. Those instances start, run your script, write
-their results to S3, and shut themselves down. This approach minimizes
-costs while accessing the full power of SageMaker for demanding
-tasks.</p>
-<figure><img src="fig/aws-ml-ecosystem.svg" alt="Diagram from the overview episode: S3 buckets at the top, the notebook instance on the left launching SageMaker training, tuning and processing jobs, and Bedrock on the right" class="figure mx-auto d-block"><div class="figcaption">The notebook instance launches SageMaker jobs
-that read from and write to S3 and end on their own, and calls Bedrock
-as an API</div>
-</figure><p>The notebook is the box on the left of the diagram from the overview
-episode. Everything else in the picture is launched or called from it,
-and every later episode uses this same instance.</p>
-<p>We’ll follow these steps to create our first “SageMaker notebook
+</ul><p>We’ll follow these steps to create our first “SageMaker notebook
 instance”.</p>
 <div class="section level4">
 <h4 id="navigate-to-sagemaker">1. Navigate to SageMaker<a class="anchor" aria-label="anchor" href="#navigate-to-sagemaker"></a></h4>
@@ -745,17 +745,17 @@ the cleanup episode walks through this.</p>
 <span class="callout-header">Key Points</span>
 <div class="callout-inner">
 <div class="callout-content">
-<ul><li><p>Use a minimal SageMaker notebook instance as a controller to
-manage larger, resource-intensive tasks.</p></li>
-<li><p>The notebook does not do the heavy computation; later episodes
-use it to launch training, tuning and processing jobs on separate
-instances.</p></li>
-<li><p>Tags can help track costs effectively, especially in
-multi-project or team settings.</p></li>
-<li><p>Stop the notebook instance whenever you leave, and delete it when
-the workshop is over.</p></li>
-<li><p>Use the SageMaker SDK documentation to explore additional options
-for managing compute resources in AWS.</p></li>
+<ul><li>Use a minimal SageMaker notebook instance as a controller to manage
+larger, resource-intensive tasks.</li>
+<li>The notebook does not do the heavy computation; later episodes use
+it to launch training, tuning and processing jobs on separate
+instances.</li>
+<li>Tags can help track costs effectively, especially in multi-project
+or team settings.</li>
+<li>Stop the notebook instance whenever you leave, and delete it when
+the workshop is over.</li>
+<li>Use the SageMaker SDK documentation to explore additional options
+for managing compute resources in AWS.</li>
 </ul></div>
 </div>
 </div>
