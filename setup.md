@@ -6,7 +6,7 @@ title: Setup
 Before attending this workshop, you'll need to complete a few setup steps to ensure you can follow along smoothly. The main requirements are:
 
 1. **GitHub Account (optional)** – Only needed for the optional episode on pushing your own code to GitHub.
-2. **AWS Access** – Use a **shared AWS account** (if attending Machine Learning Marathon or Research Bazaar) or sign up for an AWS Free Tier account.
+2. **AWS Access** – Use a **shared AWS account** (UW-Madison) or sign up for an AWS Free Tier account.
 3. **Data** – Download one small zip.
 4. **Visit Glossary** — Find and briefly review the workshop glossary
 
@@ -20,17 +20,17 @@ There are two ways to get access to AWS for this lesson. Please wait for a pre-w
 
 ::::::::::::::::::::::::::::::::::::: tab
 
-### Shared account (ML Marathon, Research Bazaar)
+### Shared account (UW-Madison)
 
-If you are attending this lesson as part of the Machine Learning Marathon or Research Bazaar, the instructors will provide a shared AWS account for all attendees. You do not need to set up your own AWS account. What to expect:
+If you are attending this lesson at UW-Madison, the instructors will provide a shared AWS account for all attendees. You do not need to set up your own AWS account. What to expect:
 
-* Before the workshop, the instructor adds you to the shared account and emails you a **sign-in link**. It opens the AWS console directly in the workshop account and role after you sign in with your university login (UW–Madison NetID for the ML Marathon). Bookmark it; it is the link you will use every session. The link is sent by email rather than posted here on purpose: treat it like any other sign-in page and only use the one your instructor sent.
+* Before the workshop, the instructor adds you to the shared account and emails you a **sign-in link**. It opens the AWS console directly in the workshop account and role after you sign in with your UW–Madison NetID. Bookmark it; it is the link you will use every session. The link is sent by email rather than posted here on purpose: treat it like any other sign-in page and only use the one your instructor sent.
 * **Verify your access before the workshop**: open the link and sign in. If you see a "no access" or "not assigned" message, email the instructor with your username. Check that the account name and region in the top-right of the console match the email.
 * This setup ensures that all participants have the same environment and eliminates concerns about unexpected costs for attendees.
-* These shared AWS credits should not be wasted, as we repurpose them for additional training events each year.
-  * Attendees are expected to **stick to the lesson materials** to ensure expensive pipelines (e.g., training/tuning LLMs) do not lead to high costs and wasted credits.
-  * Do not use any tools we do not explicitly cover without discussing with the instructors first.
-  * Stop (and at the end of the workshop, delete) every notebook instance you create. A GPU notebook left running costs about $60 a day.
+* These shared AWS credits should not be wasted, as we repurpose them for additional training events each year. Three rules follow from that:
+    * Stick to the lesson materials, so that expensive pipelines (e.g., training/tuning LLMs) do not lead to high costs and wasted credits.
+    * Do not use any tools we do not explicitly cover without discussing with the instructors first.
+    * Stop (and at the end of the workshop, delete) every notebook instance you create. A GPU notebook left running costs about $60 a day.
 
 ### Your own AWS account
 
@@ -44,7 +44,7 @@ If you are not attending through the shared account, follow these steps:
 
 :::::::::::::::::::::::::::::::::::::
 
-Once your AWS account is set up, log in to the **AWS Management Console** to get started with SageMaker.
+Once your AWS account is set up, log in to the **AWS Management Console**. For the shared account that means the sign-in link from your instructor's email, of the form `https://<org>.awsapps.com/start/#/console?account_id=...&role_name=...`; for your own account, the regular console sign-in at `https://console.aws.amazon.com/`.
 
 ### 3. Download the Data
 
