@@ -103,7 +103,7 @@ For this episode you need a notebook instance with a GPU that can hold the FP8 2
 
 - **Instance type:** `ml.g6e.xlarge` (1 × L40S, 48 GB GPU memory, $2.61/h). The FP8 weights are ~27 GB; the rest is for the embedding model and the KV cache that generation needs for long prompts. The L40S runs FP8 natively. A 24 GB instance such as `ml.g5.xlarge` cannot hold this model; a 16 GB `ml.g4dn.xlarge` cannot hold anything in this size class.
 - **Volume size:** `100` GB (the default of 5 GB will not fit the weights or the vLLM install). This volume bills at $0.14 per GB-month even while the instance is stopped.
-- **Tags:** the same `Project`, `Name`, `Purpose` keys as every other resource. `Purpose` could be `RAG-GPU-notebook`.
+- **Tags:** the same `Project`, `Name`, `Purpose` keys as every other resource; `Purpose` is `Notebook`.
 
 See [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for further guidance. This instance bills by the hour from the moment it starts, whether or not it is doing anything: **stop it when you leave**, and **delete it** when the episode is over.
 

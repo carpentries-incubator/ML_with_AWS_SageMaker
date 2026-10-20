@@ -68,7 +68,7 @@ import helpers
 ```
 
 ```python
-notebook_instance_name = 'sinkorswim-doejohn-trainclassifier' # replace with your notebook instance name
+notebook_instance_name = 'SinkOrSwim-DoeJohn-TrainClassifier' # replace with your notebook instance name
 
 local_instance_info = helpers.get_notebook_instance_info(notebook_instance_name, region)
 local_instance = local_instance_info['InstanceType']
@@ -169,9 +169,9 @@ Now that we have tested things locally, we can try to train with a larger number
 As in the XGBoost episode, every training job needs its own tags: a job does not inherit the notebook instance's tags, and an untagged job is anonymous on the bill. Define them once here and pass `tags=job_tags` to every estimator below.
 
 ```python
-name = "John Doe" # replace with your name
-project = "sinkorswim" # replace with your challenge name
-purpose = "train_PyTorch"
+name = "DoeJohn" # replace with your name
+project = "SinkOrSwim" # replace with your challenge name
+purpose = "Training"
 
 job_tags = [
     {"Key": "Name", "Value": name},

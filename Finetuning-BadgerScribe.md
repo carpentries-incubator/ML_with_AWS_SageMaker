@@ -368,8 +368,8 @@ DEFAULT_MAX_PIXELS = 1280 * 28 * 28
 As in every episode: tags do not propagate from the notebook to the jobs it launches. Pass them to every estimator.
 
 ```python
-name = "John Doe"        # replace with your name
-project = "sinkorswim"   # replace with your challenge name
+name = "DoeJohn"         # replace with your name
+project = "SinkOrSwim"   # replace with your challenge name
 
 def make_job_tags(purpose: str):
     return [
@@ -393,7 +393,7 @@ estimator = HuggingFace(
     entry_point="finetune_churro_lora.py",
     source_dir="code/",
     role=role,
-    tags=make_job_tags("finetune-churro-mini"),
+    tags=make_job_tags("Training"),
     instance_type=instance_type,
     instance_count=1,
     volume_size=50,                       # GB of disk for the container, weights and images
@@ -659,7 +659,7 @@ full_estimator = HuggingFace(
     entry_point="finetune_churro_lora.py",
     source_dir="code/",
     role=role,
-    tags=make_job_tags("finetune-churro-full"),
+    tags=make_job_tags("Training"),
     instance_type=instance_type,
     instance_count=1,
     volume_size=50,
@@ -742,7 +742,7 @@ def run_transcription_job(label: str, adapter_uri: str = None):
 
     processor = HuggingFaceProcessor(
         role=role,
-        tags=make_job_tags(f"transcribe-{label}"),
+        tags=make_job_tags("Inference"),
         instance_type=instance_type,
         instance_count=1,
         volume_size_in_gb=50,

@@ -91,7 +91,7 @@ Click **Create bucket**. The form has the sections below; most defaults are righ
 - **AWS Region**: the region your instructor named (in the workshop account, US East (Ohio), `us-east-2`). This must be the same region your notebook instance and jobs run in.
 - **Bucket type**: General purpose (the default).
 - **Bucket namespace**: **Global namespace**. The console recommends the account Regional namespace, but that appends your account ID, region and `-an` to every bucket name, which would turn `sinkorswim-doejohn` into `sinkorswim-doejohn-123456789012-us-east-2-an` everywhere in the lesson. Global keeps the name as you type it.
-- **Bucket name**: `challenge-lastnamefirstname`, all lowercase, e.g. `sinkorswim-doejohn`: the challenge you are working on (`sinkorswim`, `wattbot2026`, `badgerscribe`, `badgercode`, ...), a hyphen, then your last and first name run together. S3 requires lowercase letters, digits and hyphens only, 3 to 63 characters, starting and ending with a letter or digit. The same lowercase string is what we will use for your notebook instance and your `Project` tag. **This is the only bucket you will create in the workshop.** Every later episode writes its outputs (trained models, embeddings, predictions) into this same bucket under its own prefix, such as `xgboost/`, `wattbot/` or `badger-scribe/`.
+- **Bucket name**: `challenge-lastnamefirstname`, all lowercase, e.g. `sinkorswim-doejohn`: the challenge you are working on (`sinkorswim`, `wattbot2026`, `badgerscribe`, `badgercode`, ...), a hyphen, then your last and first name run together. S3 requires lowercase letters, digits and hyphens only, 3 to 63 characters, starting and ending with a letter or digit. Buckets are the one place AWS forces lowercase; for the notebook instance and the tags we use the same words with capitals, `SinkOrSwim` and `DoeJohn`. **This is the only bucket you will create in the workshop.** Every later episode writes its outputs (trained models, embeddings, predictions) into this same bucket under its own prefix, such as `xgboost/`, `wattbot/` or `badger-scribe/`.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
@@ -109,11 +109,21 @@ A SageMaker training or processing job reads only from buckets in its own region
 
 **Tags (NOT OPTIONAL)**: tags are how the bill is broken down by project, person and purpose; this is the one section you must fill in. Add the following three keys, spelled exactly (they are the account's approved cost-allocation keys, see [KB 72454](https://kb.wisc.edu/72454)). You will put the same three keys on every resource you create in this lesson.
 
-- **Project**: your challenge name, e.g. `sinkorswim`
-- **Name**: your name, e.g. `John Doe`
-- **Purpose**: `Bucket-titanic`
+- **Project**: your challenge name, e.g. `SinkOrSwim`
+- **Name**: your last and first name run together, e.g. `DoeJohn`
+- **Purpose**: one of five fixed values, here `Storage`
 
-Tag values are case-sensitive on the bill: `SinkOrSwim` and `sinkorswim` would be two separate rows in Cost Explorer. Use the same lowercase challenge name you put in the bucket name.
+AWS allows tag values of up to 256 characters made of letters, digits, spaces and `+ - = . _ : / @`, and they are case-sensitive. We use capitalised words with no spaces, and the same spelling on every resource: `SinkOrSwim` and `sinkorswim` would be separate rows in Cost Explorer.
+
+`Purpose` takes one of five values, so that the bill can be summed by kind of work rather than by individual job. Which job it was is already in the job's name.
+
+| `Purpose` | Used for |
+|---|---|
+| `Storage` | your bucket |
+| `Notebook` | the controller notebook instance |
+| `Training` | training jobs, including the fine-tune |
+| `Tuning` | hyperparameter tuning jobs |
+| `Inference` | Bedrock calls, RAG jobs, batch transcription |
 
 ![Example of Tags for an S3 Bucket](fig/bucket_tags2.png){alt="Screenshot showing required tags for an S3 bucket"}
 

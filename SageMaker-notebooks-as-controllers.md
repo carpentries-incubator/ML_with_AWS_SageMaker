@@ -46,7 +46,7 @@ We'll follow these steps to create our first "SageMaker notebook instance".
 
 #### 2. Create a new notebook instance
 - In the SageMaker left-side menu, click on **Notebook instances**, then click **Create notebook instance**.
-- **Notebook name**: To easily track this resource in our shared account, please use the following naming convention: `challenge-lastnamefirstname-purpose`, all lowercase (same convention as your bucket, with a purpose on the end). For example, `sinkorswim-doejohn-trainclassifier`. Can include hyphens, but not spaces. This name is also reused as the prefix of every training job you launch from the notebook.
+- **Notebook name**: Same words as your bucket, with a purpose on the end: `Challenge-LastnameFirstname-Purpose`, e.g. `SinkOrSwim-DoeJohn-TrainClassifier`. SageMaker allows letters, digits and hyphens (no spaces or underscores, up to 63 characters). Capitals are fine here and in tags; only bucket names must be lowercase. This name is also reused as the prefix of every training job you launch from the notebook, which is how you will find your jobs in a shared account.
 - **Instance type**: SageMaker notebooks run on AWS EC2 instances. The instance type determines the compute resources allocated to the notebook. Since our notebook will act as a **low-resource "controller"**, we'll select a small instance such as `ml.t3.medium` (2 vCPU, 4 GB RAM, $0.05/hour)  
   - This keeps costs low while allowing us to launch separate training/tuning jobs on more powerful instances when needed.  
   - For guidance on common instances for ML procedures, refer to our supplemental [Instances for ML webpage](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html).  
@@ -61,9 +61,9 @@ We'll follow these steps to create our first "SageMaker notebook instance".
 
   | Key | Value |
   |---|---|
-  | `Project` | your challenge name, e.g. `sinkorswim` |
-  | `Name` | your name, e.g. `John Doe` |
-  | `Purpose` | what this resource is for, e.g. `Train` |
+  | `Project` | your challenge name, e.g. `SinkOrSwim` |
+  | `Name` | your name, e.g. `DoeJohn` |
+  | `Purpose` | what this resource is for, `Notebook` |
 
 ![Tag Setup Example](fig/notebook_tags.PNG){alt="Screenshot showing required tags for a SageMaker notebook instance"}
 

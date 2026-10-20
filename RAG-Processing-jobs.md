@@ -202,8 +202,8 @@ Tags do **not** propagate in AWS. The tags you put on your notebook instance cov
 Define the tags once and pass `tags=job_tags` to **every** `HuggingFaceProcessor` you create. Use a distinct `Purpose` per job so you can tell the embedding job from the batch RAG job on the bill.
 
 ```python
-name = "John Doe"        # replace with your name
-project = "sinkorswim"   # replace with your challenge name
+name = "DoeJohn"         # replace with your name
+project = "SinkOrSwim"   # replace with your challenge name
 
 def make_job_tags(purpose: str):
     return [
@@ -224,7 +224,7 @@ emb_output_path = f"s3://{bucket_name}/{emb_output_prefix}/"
 embedding_processor = HuggingFaceProcessor(
     base_job_name="WattBot-embed-gte-large",
     role=role,
-    tags=make_job_tags("RAG-embed"),   # tags are per job; nothing is inherited from the notebook
+    tags=make_job_tags("Inference"),   # tags are per job; nothing is inherited from the notebook
     instance_type="ml.g5.xlarge",
     instance_count=1,
     transformers_version="4.56",
@@ -321,7 +321,7 @@ generation_model_id = "Qwen/Qwen3.8-27B-FP8"   # open-weight, not on Bedrock; ~2
 rag_processor = HuggingFaceProcessor(
     base_job_name="WattBot-rag-batch",
     role=role,
-    tags=make_job_tags("RAG-batch"),   # separate job, separate tags
+    tags=make_job_tags("Inference"),   # separate job, separate tags
     instance_type="ml.g6e.xlarge",     # 1 x L40S, 48 GB: holds the FP8 27B model plus KV cache
     instance_count=1,
     volume_size_in_gb=60,              # 27 GB of weights + vLLM install; mounted at /opt/ml/processing

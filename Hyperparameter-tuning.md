@@ -72,7 +72,7 @@ We'll use our notebook instance name again to label the training jobs launched i
 ```python
 import boto3
 
-notebook_instance_name = 'sinkorswim-doejohn-trainclassifier' # adjust to your notebook name. we'll use this variable to name the training jobs launched by the tuner.
+notebook_instance_name = 'SinkOrSwim-DoeJohn-TrainClassifier' # adjust to your notebook name. we'll use this variable to name the training jobs launched by the tuner.
 
 # the following code just verifies you have the right name for your notebook instance
 region = boto3.Session().region_name  # inherited from the notebook instance; do not hard-code a region
@@ -88,9 +88,9 @@ print(f"Instance Type: {local_instance}")
 **Cost tracking**: Just like in the previous episode, we explicitly tag each training job at launch time. This ensures that compute usage is traceable to a project, a purpose, and a human-readable name, even after the job has completed. Tags on the `HyperparameterTuner` are copied to every child training job it launches, so we only need to set them once, on the tuner (we also set them on the estimator so a plain `.fit()` on it is tagged too).
 
 ```python
-name = "John Doe" # replace with your name
-project = "sinkorswim" # replace with your challenge name
-purpose = "tune_PyTorch"
+name = "DoeJohn" # replace with your name
+project = "SinkOrSwim" # replace with your challenge name
+purpose = "Tuning"
 
 job_tags = [
     {"Key": "Name", "Value": name},
