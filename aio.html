@@ -246,7 +246,7 @@
 <div class="accordion accordion-flush" id="accordionFlush2">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading2">
-        <a href="SageMaker-overview.html">1. Overview of Amazon SageMaker</a>
+        <a href="SageMaker-overview.html">1. Overview: ML on AWS</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -498,7 +498,7 @@
     <main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>All in One View</h1>
         
-<section id="aio-SageMaker-overview"><p>Content from <a href="SageMaker-overview.html">Overview of Amazon SageMaker</a></p>
+<section id="aio-SageMaker-overview"><p>Content from <a href="SageMaker-overview.html">Overview: ML on AWS</a></p>
 <hr>
 <p>Last updated on 2026-10-20 |
 
@@ -516,7 +516,7 @@
 <ul>
 <li>When is cloud compute the right tool for a researcher who already
 has a cluster or a workstation?</li>
-<li>What does SageMaker add on top of renting a machine?</li>
+<li>What do SageMaker and Bedrock add on top of renting a machine?</li>
 </ul>
 </div>
 </div>
@@ -528,7 +528,7 @@ has a cluster or a workstation?</li>
 <ul>
 <li>Compare cloud compute with campus HPC and lab hardware on hardware
 generation, cost and control.</li>
-<li>Introduce SageMaker and the controller-plus-jobs pattern.</li>
+<li>Introduce SageMaker and Bedrock.</li>
 <li>Preview the three parts of the lesson.</li>
 </ul>
 </div>
@@ -537,8 +537,8 @@ generation, cost and control.</li>
 </div>
 </div>
 <p>This episode compares cloud compute with the compute researchers
-usually already have, then introduces SageMaker, the AWS service this
-lesson is built on.</p>
+usually already have, then introduces the two AWS services the lesson
+uses, SageMaker and Bedrock.</p>
 <div class="section level3">
 <h3 id="cloud-vs--the-cluster-down-the-hall">Cloud vs. the cluster down the hall<a class="anchor" aria-label="anchor" href="#cloud-vs--the-cluster-down-the-hall"></a>
 </h3>
@@ -581,16 +581,23 @@ a runtime cap.</li>
 </ul>
 </div>
 <div class="section level3">
-<h3 id="what-sagemaker-is">What SageMaker is<a class="anchor" aria-label="anchor" href="#what-sagemaker-is"></a>
+<h3 id="sagemaker-and-bedrock">SageMaker and Bedrock<a class="anchor" aria-label="anchor" href="#sagemaker-and-bedrock"></a>
 </h3>
-<p>Amazon SageMaker is AWS’s managed service for machine learning. It
-runs on the same instances as plain EC2, but adds a job model built for
-ML: you submit a script and an instance type, AWS provisions the machine
-with a framework container (PyTorch, scikit-learn, Hugging Face, …)
-installed, runs the script, saves the outputs to S3, and terminates the
-instance. Renting a bare EC2 GPU gets you the hardware; with SageMaker
-you do not install the frameworks, move the data by hand, or remember to
-shut the machine down.</p>
+<p><strong>Amazon SageMaker</strong> is AWS’s managed service for
+machine learning. It runs on the same instances as plain EC2, but adds a
+job model built for ML: you submit a script and an instance type, AWS
+provisions the machine with a framework container (PyTorch,
+scikit-learn, Hugging Face, …) installed, runs the script, saves the
+outputs to S3, and terminates the instance. Renting a bare EC2 GPU gets
+you the hardware; with SageMaker you do not install the frameworks, move
+the data by hand, or remember to shut the machine down.</p>
+<p><strong>Amazon Bedrock</strong> is the other AWS service this lesson
+uses. Where SageMaker runs your script on a machine you rent by the
+second, Bedrock serves models that AWS hosts (DeepSeek, Claude, Amazon’s
+own, and others) through an API billed per token. There is no instance
+to choose, start or stop; when you stop calling it, you stop paying. The
+RAG part of the lesson uses Bedrock first for that reason, and turns to
+SageMaker only for a model Bedrock does not offer.</p>
 </div>
 <div class="section level3">
 <h3 id="why-use-sagemaker-for-machine-learning">Why use SageMaker for machine learning?<a class="anchor" aria-label="anchor" href="#why-use-sagemaker-for-machine-learning"></a>
@@ -610,7 +617,7 @@ In many cases, you can simply include a <code>requirements.txt</code>
 file to add any additional dependencies you need. When you need more
 control, SageMaker also supports fully custom Docker containers, so you
 can bring your own code, dependencies, and environments for training,
-tuning, and inference for training, tuning, and inference.</p></li>
+tuning, and inference.</p></li>
 <li>
 <p><strong>Flexible compute options</strong>: SageMaker lets you
 easily select instance types tailored to your project needs. For
@@ -618,7 +625,7 @@ exploratory analysis, use a lightweight CPU (e.g., ml.m5.large). For
 compute-intensive tasks, such as training deep learning models, you can
 switch to GPU instances for faster processing. We’ll cover instances
 more in-depth throughout the lesson (and how to select them), but here’s
-a preview of the the different types:</p>
+a preview of the different types:</p>
 <ul>
 <li>
 <strong>CPU instances (e.g., ml.m5.large — $0.115/hour)</strong>:
@@ -693,13 +700,10 @@ fixed cost but a fixed generation and a queue.</li>
 <li>Renting is cheaper for bursty research work; owning is cheaper for
 GPUs that stay busy.</li>
 <li>An idle rented GPU costs the same as a busy one, so every job in
-this lesson is launched with a runtime cap and a stopping rule.</li>
-<li>A cheap controller notebook launches jobs that run on separate
-instances and end on their own; each job carries tags and a cost
-estimate.</li>
-<li>SageMaker runs custom scripts in preconfigured framework containers,
-and parallelizes training and hyperparameter tuning with little extra
-code.</li>
+this lesson is launched with a runtime cap.</li>
+<li>SageMaker runs your script in a preconfigured framework container on
+an instance that exists only for the job; Bedrock serves AWS-hosted
+models per token with nothing to start or stop.</li>
 </ul>
 </div>
 </div>
@@ -710,7 +714,7 @@ any links that you are not going to use.
  -->
 </div></section><section id="aio-Data-storage-setting-up-S3"><p>Content from <a href="Data-storage-setting-up-S3.html">Data Storage: Setting up S3</a></p>
 <hr>
-<p>Last updated on 2026-10-19 |
+<p>Last updated on 2026-10-20 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/Data-storage-setting-up-S3.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <div class="text-end">
@@ -741,8 +745,10 @@ machine learning projects?</li>
 projects.</li>
 <li>Describe the advantages of S3 for large datasets and multi-user
 workflows.</li>
-<li>Outline steps to set up an S3 bucket and manage data within
-SageMaker.</li>
+<li>Create an S3 bucket in the class region with a bucket policy and
+cost-allocation tags, and upload the Titanic data to it.</li>
+<li>Estimate S3 storage, transfer and request costs for a small
+dataset.</li>
 </ul>
 </div>
 </div>
@@ -1232,7 +1238,7 @@ sizes: 10 GB, 100 GB, 1 TB (1024 GB)</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -1372,7 +1378,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-SageMaker-notebooks-as-controllers"><p>Content from <a href="SageMaker-notebooks-as-controllers.html">Notebooks as Controllers</a></p>
 <hr>
-<p>Last updated on 2026-10-19 |
+<p>Last updated on 2026-10-20 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/SageMaker-notebooks-as-controllers.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <div class="text-end">
@@ -1399,11 +1405,10 @@ controller notebook approach?</li>
 <div class="inner bordered">
 <h3 class="card-title">Objectives</h3>
 <ul>
-<li>Describe how to use SageMaker notebooks for ML workflows.</li>
-<li>Set up a Jupyter notebook instance as a controller to manage compute
-tasks.</li>
-<li>Use SageMaker SDK to launch training and tuning jobs on scalable
-instances.</li>
+<li>Explain why the lesson works from a SageMaker notebook instance, and
+what the controller pattern is.</li>
+<li>Create a tagged notebook instance on a small instance type, open the
+lesson notebooks in it, and stop it when done.</li>
 </ul>
 </div>
 </div>
@@ -2203,7 +2208,7 @@ prefixes instead of a new bucket per episode?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>One way to do it:</li>
@@ -2710,7 +2715,7 @@ change on GitHub.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Still inside
 <code>/home/ec2-user/SageMaker/sagemaker-work</code>:</p>
@@ -2765,7 +2770,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-Training-models-in-SageMaker-notebooks"><p>Content from <a href="Training-models-in-SageMaker-notebooks.html">Training Models in SageMaker: Intro</a></p>
 <hr>
-<p>Last updated on 2026-10-19 |
+<p>Last updated on 2026-10-20 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/Training-models-in-SageMaker-notebooks.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <div class="text-end">
@@ -2895,19 +2900,6 @@ same notebook works in any account.</p>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a><span class="bu">print</span>(<span class="ss">f"region = </span><span class="sc">{</span>region<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 </div>
-<div class="section level4">
-<h4 id="get-code-from-git-repo-skip-if-completed-already-from-earlier-episodes">4. Get code from git repo (skip if completed already from earlier
-episodes)<a class="anchor" aria-label="anchor" href="#get-code-from-git-repo-skip-if-completed-already-from-earlier-episodes"></a>
-</h4>
-<p>If you didn’t complete the earlier episodes, you’ll need to clone our
-code repo before moving forward. Check to make sure we’re in our EC2
-root folder first (<code>/home/ec2-user/SageMaker</code>).</p>
-<div class="codewrapper sourceCode" id="cb4">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span></span></code></pre>
-</div>
-</div>
 </section><section><h2 class="section-heading" id="testing-train-py-on-this-notebooks-instance">Testing train.py on this notebook’s instance<a class="anchor" aria-label="anchor" href="#testing-train-py-on-this-notebooks-instance"></a>
 </h2>
 <hr class="half-width">
@@ -2964,7 +2956,7 @@ potential issues early. <strong>In your group, discuss:</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Which checks do you think are most critical before scaling up?</p>
 <ul>
@@ -3082,7 +3074,7 @@ group.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li><p><strong>Data Preprocessing</strong>: The script fills missing
@@ -3153,28 +3145,28 @@ the left to see this file. If you get any permission issues…</p>
 notebook</li>
 <li>check that your bucket has the appropriate policy permissions</li>
 </ul>
+<div class="codewrapper sourceCode" id="cb4">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="co"># Define the S3 bucket and file location</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a>file_key <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>train_filename<span class="sc">}</span><span class="ss">"</span>  <span class="co"># Path to your file in the S3 bucket</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a>local_file_path <span class="op">=</span> <span class="ss">f"./</span><span class="sc">{</span>train_filename<span class="sc">}</span><span class="ss">"</span>  <span class="co"># Local path to save the file</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1" aria-label="code-block-4-5"></a><span class="co"># Download the file using the s3 client variable we initialized earlier</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1" aria-label="code-block-4-6"></a>s3.download_file(bucket_name, file_key, local_file_path)</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1" aria-label="code-block-4-7"></a><span class="bu">print</span>(<span class="st">"File downloaded:"</span>, local_file_path)</span></code></pre>
+</div>
+<p>We can do the same for the test set.</p>
 <div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="co"># Define the S3 bucket and file location</span></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a>file_key <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>train_filename<span class="sc">}</span><span class="ss">"</span>  <span class="co"># Path to your file in the S3 bucket</span></span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a>local_file_path <span class="op">=</span> <span class="ss">f"./</span><span class="sc">{</span>train_filename<span class="sc">}</span><span class="ss">"</span>  <span class="co"># Local path to save the file</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a>file_key <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>test_filename<span class="sc">}</span><span class="ss">"</span>  <span class="co"># Path to your file in the S3 bucket</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a>local_file_path <span class="op">=</span> <span class="ss">f"./</span><span class="sc">{</span>test_filename<span class="sc">}</span><span class="ss">"</span>  <span class="co"># Local path to save the file</span></span>
 <span id="cb5-4"><a href="#cb5-4" tabindex="-1" aria-label="code-block-5-4"></a></span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1" aria-label="code-block-5-5"></a><span class="co"># Download the file using the s3 client variable we initialized earlier</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1" aria-label="code-block-5-5"></a><span class="co"># Download the file</span></span>
 <span id="cb5-6"><a href="#cb5-6" tabindex="-1" aria-label="code-block-5-6"></a>s3.download_file(bucket_name, file_key, local_file_path)</span>
 <span id="cb5-7"><a href="#cb5-7" tabindex="-1" aria-label="code-block-5-7"></a><span class="bu">print</span>(<span class="st">"File downloaded:"</span>, local_file_path)</span></code></pre>
-</div>
-<p>We can do the same for the test set.</p>
-<div class="codewrapper sourceCode" id="cb6">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="co"># Define the S3 bucket and file location</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a>file_key <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>test_filename<span class="sc">}</span><span class="ss">"</span>  <span class="co"># Path to your file in the S3 bucket</span></span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a>local_file_path <span class="op">=</span> <span class="ss">f"./</span><span class="sc">{</span>test_filename<span class="sc">}</span><span class="ss">"</span>  <span class="co"># Local path to save the file</span></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a></span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1" aria-label="code-block-6-5"></a><span class="co"># Download the file</span></span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1" aria-label="code-block-6-6"></a>s3.download_file(bucket_name, file_key, local_file_path)</span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1" aria-label="code-block-6-7"></a><span class="bu">print</span>(<span class="st">"File downloaded:"</span>, local_file_path)</span></code></pre>
 </div>
 <div class="section level4">
 <h4 id="logging-runtime-instance-info">Logging runtime &amp; instance info<a class="anchor" aria-label="anchor" href="#logging-runtime-instance-info"></a>
@@ -3182,20 +3174,20 @@ notebook</li>
 <p>To compare our local runtime with future experiments, we’ll need to
 know what instance was used, as this will greatly impact runtime in many
 cases. We can extract the instance name for this notebook using…</p>
-<div class="codewrapper sourceCode" id="cb7">
+<div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a><span class="co"># Replace with your notebook instance name.</span></span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1" aria-label="code-block-7-2"></a><span class="co"># This does NOT refer to specific ipynb files, but to the SageMaker notebook instance.</span></span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1" aria-label="code-block-7-3"></a>notebook_instance_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn-trainclassifier'</span></span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1" aria-label="code-block-7-4"></a></span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1" aria-label="code-block-7-5"></a><span class="co"># Describe the notebook instance (sagemaker_client was created from our session above)</span></span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1" aria-label="code-block-7-6"></a>response <span class="op">=</span> sagemaker_client.describe_notebook_instance(NotebookInstanceName<span class="op">=</span>notebook_instance_name)</span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1" aria-label="code-block-7-7"></a></span>
-<span id="cb7-8"><a href="#cb7-8" tabindex="-1" aria-label="code-block-7-8"></a><span class="co"># Display the status and instance type</span></span>
-<span id="cb7-9"><a href="#cb7-9" tabindex="-1" aria-label="code-block-7-9"></a><span class="bu">print</span>(<span class="ss">f"Notebook Instance '</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">' status: </span><span class="sc">{</span>response[<span class="st">'NotebookInstanceStatus'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1" aria-label="code-block-7-10"></a>local_instance <span class="op">=</span> response[<span class="st">'InstanceType'</span>]</span>
-<span id="cb7-11"><a href="#cb7-11" tabindex="-1" aria-label="code-block-7-11"></a><span class="bu">print</span>(<span class="ss">f"Instance Type: </span><span class="sc">{</span>local_instance<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="co"># Replace with your notebook instance name.</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a><span class="co"># This does NOT refer to specific ipynb files, but to the SageMaker notebook instance.</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a>notebook_instance_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn-trainclassifier'</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1" aria-label="code-block-6-5"></a><span class="co"># Describe the notebook instance (sagemaker_client was created from our session above)</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1" aria-label="code-block-6-6"></a>response <span class="op">=</span> sagemaker_client.describe_notebook_instance(NotebookInstanceName<span class="op">=</span>notebook_instance_name)</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1" aria-label="code-block-6-7"></a></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1" aria-label="code-block-6-8"></a><span class="co"># Display the status and instance type</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1" aria-label="code-block-6-9"></a><span class="bu">print</span>(<span class="ss">f"Notebook Instance '</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">' status: </span><span class="sc">{</span>response[<span class="st">'NotebookInstanceStatus'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1" aria-label="code-block-6-10"></a>local_instance <span class="op">=</span> response[<span class="st">'InstanceType'</span>]</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1" aria-label="code-block-6-11"></a><span class="bu">print</span>(<span class="ss">f"Instance Type: </span><span class="sc">{</span>local_instance<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 </div>
 <div class="section level4">
@@ -3205,45 +3197,45 @@ cases. We can extract the instance name for this notebook using…</p>
 <p>You can also use the <code>get_notebook_instance_info()</code>
 function found in the lesson’s <code>scripts/helpers.py</code> to
 retrieve this info for your own project.</p>
-<div class="codewrapper sourceCode" id="cb8">
+<div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" tabindex="-1" aria-label="code-block-8-1"></a>helpers.get_notebook_instance_info(notebook_instance_name, region)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a>helpers.get_notebook_instance_info(notebook_instance_name, region)</span></code></pre>
 </div>
 <p>Test train.py on this notebook’s instance (or when possible, on your
 own machine) before doing anything more complicated (e.g.,
 hyperparameter tuning on multiple instances)</p>
-<div class="codewrapper sourceCode" id="cb9">
+<div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a><span class="op">!</span>pip install xgboost <span class="co"># need to add this to environment to run train.py</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" tabindex="-1" aria-label="code-block-8-1"></a><span class="op">!</span>pip install xgboost <span class="co"># need to add this to environment to run train.py</span></span></code></pre>
 </div>
 </div>
 </div>
 <div class="section level3">
 <h3 id="local-test">Local test<a class="anchor" aria-label="anchor" href="#local-test"></a>
 </h3>
-<div class="codewrapper sourceCode" id="cb10">
+<div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a><span class="im">import</span> time <span class="im">as</span> t <span class="co"># we'll use the time package to measure runtime</span></span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a></span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1" aria-label="code-block-10-3"></a>start_time <span class="op">=</span> t.time()</span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1" aria-label="code-block-10-4"></a></span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1" aria-label="code-block-10-5"></a><span class="co"># Define your parameters. These python vars wil be passed as input args to our train_xgboost.py script using %run</span></span>
-<span id="cb10-6"><a href="#cb10-6" tabindex="-1" aria-label="code-block-10-6"></a></span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1" aria-label="code-block-10-7"></a>max_depth <span class="op">=</span> <span class="dv">3</span> <span class="co"># Sets the maximum depth of each tree in the model to 3. Limiting tree depth helps control model complexity and can reduce overfitting, especially on small datasets.</span></span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1" aria-label="code-block-10-8"></a>eta <span class="op">=</span> <span class="fl">0.1</span> <span class="co">#  Sets the learning rate to 0.1, which scales the contribution of each tree to the final model. A smaller learning rate often requires more rounds to converge but can lead to better performance.</span></span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1" aria-label="code-block-10-9"></a>subsample <span class="op">=</span> <span class="fl">0.8</span> <span class="co"># Specifies that 80% of the training data will be randomly sampled to build each tree. Subsampling can help with model robustness by preventing overfitting and increasing variance.</span></span>
-<span id="cb10-10"><a href="#cb10-10" tabindex="-1" aria-label="code-block-10-10"></a>colsample_bytree <span class="op">=</span> <span class="fl">0.8</span> <span class="co"># Specifies that 80% of the features will be randomly sampled for each tree, enhancing the model's ability to generalize by reducing feature reliance.</span></span>
-<span id="cb10-11"><a href="#cb10-11" tabindex="-1" aria-label="code-block-10-11"></a>num_round <span class="op">=</span> <span class="dv">100</span> <span class="co"># Sets the number of boosting rounds (trees) to 100. More rounds typically allow for a more refined model, but too many rounds can lead to overfitting.</span></span>
-<span id="cb10-12"><a href="#cb10-12" tabindex="-1" aria-label="code-block-10-12"></a>train_file <span class="op">=</span> <span class="st">'titanic_train.csv'</span> <span class="co">#  Points to the location of the training data</span></span>
-<span id="cb10-13"><a href="#cb10-13" tabindex="-1" aria-label="code-block-10-13"></a></span>
-<span id="cb10-14"><a href="#cb10-14" tabindex="-1" aria-label="code-block-10-14"></a><span class="co"># Use f-strings to format the command with your variables</span></span>
-<span id="cb10-15"><a href="#cb10-15" tabindex="-1" aria-label="code-block-10-15"></a><span class="op">%</span>run ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>train_xgboost.py <span class="op">--</span>max_depth {max_depth} <span class="op">--</span>eta {eta} <span class="op">--</span>subsample {subsample} <span class="op">--</span>colsample_bytree {colsample_bytree} <span class="op">--</span>num_round {num_round} <span class="op">--</span>train {train_file}</span>
-<span id="cb10-16"><a href="#cb10-16" tabindex="-1" aria-label="code-block-10-16"></a></span>
-<span id="cb10-17"><a href="#cb10-17" tabindex="-1" aria-label="code-block-10-17"></a><span class="co"># Measure and print the time taken</span></span>
-<span id="cb10-18"><a href="#cb10-18" tabindex="-1" aria-label="code-block-10-18"></a><span class="bu">print</span>(<span class="ss">f"Total local runtime: </span><span class="sc">{</span>t<span class="sc">.</span>time() <span class="op">-</span> start_time<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type = </span><span class="sc">{</span>local_instance<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a><span class="im">import</span> time <span class="im">as</span> t <span class="co"># we'll use the time package to measure runtime</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1" aria-label="code-block-9-3"></a>start_time <span class="op">=</span> t.time()</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a><span class="co"># Define your parameters. These python vars wil be passed as input args to our train_xgboost.py script using %run</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1" aria-label="code-block-9-6"></a></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1" aria-label="code-block-9-7"></a>max_depth <span class="op">=</span> <span class="dv">3</span> <span class="co"># Sets the maximum depth of each tree in the model to 3. Limiting tree depth helps control model complexity and can reduce overfitting, especially on small datasets.</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1" aria-label="code-block-9-8"></a>eta <span class="op">=</span> <span class="fl">0.1</span> <span class="co">#  Sets the learning rate to 0.1, which scales the contribution of each tree to the final model. A smaller learning rate often requires more rounds to converge but can lead to better performance.</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1" aria-label="code-block-9-9"></a>subsample <span class="op">=</span> <span class="fl">0.8</span> <span class="co"># Specifies that 80% of the training data will be randomly sampled to build each tree. Subsampling can help with model robustness by preventing overfitting and increasing variance.</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1" aria-label="code-block-9-10"></a>colsample_bytree <span class="op">=</span> <span class="fl">0.8</span> <span class="co"># Specifies that 80% of the features will be randomly sampled for each tree, enhancing the model's ability to generalize by reducing feature reliance.</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1" aria-label="code-block-9-11"></a>num_round <span class="op">=</span> <span class="dv">100</span> <span class="co"># Sets the number of boosting rounds (trees) to 100. More rounds typically allow for a more refined model, but too many rounds can lead to overfitting.</span></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1" aria-label="code-block-9-12"></a>train_file <span class="op">=</span> <span class="st">'titanic_train.csv'</span> <span class="co">#  Points to the location of the training data</span></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1" aria-label="code-block-9-13"></a></span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1" aria-label="code-block-9-14"></a><span class="co"># Use f-strings to format the command with your variables</span></span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1" aria-label="code-block-9-15"></a><span class="op">%</span>run ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>train_xgboost.py <span class="op">--</span>max_depth {max_depth} <span class="op">--</span>eta {eta} <span class="op">--</span>subsample {subsample} <span class="op">--</span>colsample_bytree {colsample_bytree} <span class="op">--</span>num_round {num_round} <span class="op">--</span>train {train_file}</span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1" aria-label="code-block-9-16"></a></span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1" aria-label="code-block-9-17"></a><span class="co"># Measure and print the time taken</span></span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1" aria-label="code-block-9-18"></a><span class="bu">print</span>(<span class="ss">f"Total local runtime: </span><span class="sc">{</span>t<span class="sc">.</span>time() <span class="op">-</span> start_time<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type = </span><span class="sc">{</span>local_instance<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <p>Training on this relatively small dataset should take less than a
 minute, but as we scale up with larger datasets and more complex models
@@ -3266,35 +3258,35 @@ resources.</p>
 good sanity check to ensure our model is training properly. Here’s how
 you would apply the outputted model to your test set using your local
 notebook instance.</p>
-<div class="codewrapper sourceCode" id="cb11">
+<div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a><span class="im">import</span> xgboost <span class="im">as</span> xgb</span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> accuracy_score</span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1" aria-label="code-block-11-5"></a><span class="im">import</span> joblib</span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1" aria-label="code-block-11-6"></a><span class="im">from</span> train_xgboost <span class="im">import</span> preprocess_data</span>
-<span id="cb11-7"><a href="#cb11-7" tabindex="-1" aria-label="code-block-11-7"></a></span>
-<span id="cb11-8"><a href="#cb11-8" tabindex="-1" aria-label="code-block-11-8"></a><span class="co"># Load the test data</span></span>
-<span id="cb11-9"><a href="#cb11-9" tabindex="-1" aria-label="code-block-11-9"></a>test_data <span class="op">=</span> pd.read_csv(<span class="st">'./titanic_test.csv'</span>)</span>
-<span id="cb11-10"><a href="#cb11-10" tabindex="-1" aria-label="code-block-11-10"></a></span>
-<span id="cb11-11"><a href="#cb11-11" tabindex="-1" aria-label="code-block-11-11"></a><span class="co"># Preprocess the test data using the imported preprocess_data function</span></span>
-<span id="cb11-12"><a href="#cb11-12" tabindex="-1" aria-label="code-block-11-12"></a>X_test, y_test <span class="op">=</span> preprocess_data(test_data)</span>
-<span id="cb11-13"><a href="#cb11-13" tabindex="-1" aria-label="code-block-11-13"></a></span>
-<span id="cb11-14"><a href="#cb11-14" tabindex="-1" aria-label="code-block-11-14"></a><span class="co"># Convert the test features to DMatrix for XGBoost</span></span>
-<span id="cb11-15"><a href="#cb11-15" tabindex="-1" aria-label="code-block-11-15"></a>dtest <span class="op">=</span> xgb.DMatrix(X_test)</span>
-<span id="cb11-16"><a href="#cb11-16" tabindex="-1" aria-label="code-block-11-16"></a></span>
-<span id="cb11-17"><a href="#cb11-17" tabindex="-1" aria-label="code-block-11-17"></a><span class="co"># Load the trained model from the saved file</span></span>
-<span id="cb11-18"><a href="#cb11-18" tabindex="-1" aria-label="code-block-11-18"></a>model <span class="op">=</span> joblib.load(<span class="st">'./xgboost-model'</span>)</span>
-<span id="cb11-19"><a href="#cb11-19" tabindex="-1" aria-label="code-block-11-19"></a></span>
-<span id="cb11-20"><a href="#cb11-20" tabindex="-1" aria-label="code-block-11-20"></a><span class="co"># Make predictions on the test set</span></span>
-<span id="cb11-21"><a href="#cb11-21" tabindex="-1" aria-label="code-block-11-21"></a>preds <span class="op">=</span> model.predict(dtest)</span>
-<span id="cb11-22"><a href="#cb11-22" tabindex="-1" aria-label="code-block-11-22"></a>predictions <span class="op">=</span> np.<span class="bu">round</span>(preds)  <span class="co"># Round predictions to 0 or 1 for binary classification</span></span>
-<span id="cb11-23"><a href="#cb11-23" tabindex="-1" aria-label="code-block-11-23"></a></span>
-<span id="cb11-24"><a href="#cb11-24" tabindex="-1" aria-label="code-block-11-24"></a><span class="co"># Calculate and print the accuracy of the model on the test data</span></span>
-<span id="cb11-25"><a href="#cb11-25" tabindex="-1" aria-label="code-block-11-25"></a>accuracy <span class="op">=</span> accuracy_score(y_test, predictions)</span>
-<span id="cb11-26"><a href="#cb11-26" tabindex="-1" aria-label="code-block-11-26"></a><span class="bu">print</span>(<span class="ss">f"Test Set Accuracy: </span><span class="sc">{</span>accuracy<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a><span class="im">import</span> xgboost <span class="im">as</span> xgb</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1" aria-label="code-block-10-3"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1" aria-label="code-block-10-4"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> accuracy_score</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1" aria-label="code-block-10-5"></a><span class="im">import</span> joblib</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1" aria-label="code-block-10-6"></a><span class="im">from</span> train_xgboost <span class="im">import</span> preprocess_data</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1" aria-label="code-block-10-7"></a></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1" aria-label="code-block-10-8"></a><span class="co"># Load the test data</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1" aria-label="code-block-10-9"></a>test_data <span class="op">=</span> pd.read_csv(<span class="st">'./titanic_test.csv'</span>)</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1" aria-label="code-block-10-10"></a></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1" aria-label="code-block-10-11"></a><span class="co"># Preprocess the test data using the imported preprocess_data function</span></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1" aria-label="code-block-10-12"></a>X_test, y_test <span class="op">=</span> preprocess_data(test_data)</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1" aria-label="code-block-10-13"></a></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1" aria-label="code-block-10-14"></a><span class="co"># Convert the test features to DMatrix for XGBoost</span></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1" aria-label="code-block-10-15"></a>dtest <span class="op">=</span> xgb.DMatrix(X_test)</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1" aria-label="code-block-10-16"></a></span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1" aria-label="code-block-10-17"></a><span class="co"># Load the trained model from the saved file</span></span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1" aria-label="code-block-10-18"></a>model <span class="op">=</span> joblib.load(<span class="st">'./xgboost-model'</span>)</span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1" aria-label="code-block-10-19"></a></span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1" aria-label="code-block-10-20"></a><span class="co"># Make predictions on the test set</span></span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1" aria-label="code-block-10-21"></a>preds <span class="op">=</span> model.predict(dtest)</span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1" aria-label="code-block-10-22"></a>predictions <span class="op">=</span> np.<span class="bu">round</span>(preds)  <span class="co"># Round predictions to 0 or 1 for binary classification</span></span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1" aria-label="code-block-10-23"></a></span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1" aria-label="code-block-10-24"></a><span class="co"># Calculate and print the accuracy of the model on the test data</span></span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1" aria-label="code-block-10-25"></a>accuracy <span class="op">=</span> accuracy_score(y_test, predictions)</span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1" aria-label="code-block-10-26"></a><span class="bu">print</span>(<span class="ss">f"Test Set Accuracy: </span><span class="sc">{</span>accuracy<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <p>A reasonably high test set accuracy suggests our code/model is
 working correctly.</p>
@@ -3562,18 +3554,18 @@ instance’s tags.</p>
 <p>To avoid this, we explicitly tag each training job at launch time.
 This ensures that compute usage is traceable to a project, a purpose,
 and a human-readable name, even after the job has completed.</p>
-<div class="codewrapper sourceCode" id="cb13">
+<div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1" aria-label="code-block-13-1"></a>name <span class="op">=</span> <span class="st">"John Doe"</span> <span class="co"># replace with your name</span></span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1" aria-label="code-block-13-2"></a>project <span class="op">=</span> <span class="st">"sinkorswim"</span> <span class="co"># replace with your challenge name</span></span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a>purpose <span class="op">=</span> <span class="st">"train_XGBoost"</span></span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1" aria-label="code-block-13-4"></a></span>
-<span id="cb13-5"><a href="#cb13-5" tabindex="-1" aria-label="code-block-13-5"></a>job_tags <span class="op">=</span> [</span>
-<span id="cb13-6"><a href="#cb13-6" tabindex="-1" aria-label="code-block-13-6"></a>    {<span class="st">"Key"</span>: <span class="st">"Name"</span>, <span class="st">"Value"</span>: name},</span>
-<span id="cb13-7"><a href="#cb13-7" tabindex="-1" aria-label="code-block-13-7"></a>    {<span class="st">"Key"</span>: <span class="st">"Project"</span>, <span class="st">"Value"</span>: project},</span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1" aria-label="code-block-13-8"></a>    {<span class="st">"Key"</span>: <span class="st">"Purpose"</span>, <span class="st">"Value"</span>: purpose},</span>
-<span id="cb13-9"><a href="#cb13-9" tabindex="-1" aria-label="code-block-13-9"></a>]</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1" aria-label="code-block-12-1"></a>name <span class="op">=</span> <span class="st">"John Doe"</span> <span class="co"># replace with your name</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1" aria-label="code-block-12-2"></a>project <span class="op">=</span> <span class="st">"sinkorswim"</span> <span class="co"># replace with your challenge name</span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1" aria-label="code-block-12-3"></a>purpose <span class="op">=</span> <span class="st">"train_XGBoost"</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1" aria-label="code-block-12-4"></a></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1" aria-label="code-block-12-5"></a>job_tags <span class="op">=</span> [</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1" aria-label="code-block-12-6"></a>    {<span class="st">"Key"</span>: <span class="st">"Name"</span>, <span class="st">"Value"</span>: name},</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1" aria-label="code-block-12-7"></a>    {<span class="st">"Key"</span>: <span class="st">"Project"</span>, <span class="st">"Value"</span>: project},</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1" aria-label="code-block-12-8"></a>    {<span class="st">"Key"</span>: <span class="st">"Purpose"</span>, <span class="st">"Value"</span>: purpose},</span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1" aria-label="code-block-12-9"></a>]</span></code></pre>
 </div>
 </div>
 <div class="section level4">
@@ -3587,59 +3579,59 @@ $0.115/hour (us-east-1 on-demand; see the <a href="https://carpentries-incubator
 for ML page</a>). Our local test finished in under a minute, so the
 estimate is roughly 1 minute of training + 3 minutes of startup = 4
 minutes, or about $0.01.</p>
-<div class="codewrapper sourceCode" id="cb14">
+<div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a><span class="im">from</span> sagemaker.inputs <span class="im">import</span> TrainingInput</span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1" aria-label="code-block-14-2"></a><span class="im">from</span> sagemaker.xgboost.estimator <span class="im">import</span> XGBoost</span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1" aria-label="code-block-14-3"></a></span>
-<span id="cb14-4"><a href="#cb14-4" tabindex="-1" aria-label="code-block-14-4"></a><span class="co"># Define instance type/count we'll use for training</span></span>
-<span id="cb14-5"><a href="#cb14-5" tabindex="-1" aria-label="code-block-14-5"></a>instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span></span>
-<span id="cb14-6"><a href="#cb14-6" tabindex="-1" aria-label="code-block-14-6"></a>instance_count<span class="op">=</span><span class="dv">1</span> <span class="co"># always start with 1 (see "When training takes too long" at the end of this episode)</span></span>
-<span id="cb14-7"><a href="#cb14-7" tabindex="-1" aria-label="code-block-14-7"></a>price_per_hour <span class="op">=</span> <span class="fl">0.115</span> <span class="co"># ml.m5.large, us-east-1 on-demand (2026-10-16); check the instances page for your region</span></span>
-<span id="cb14-8"><a href="#cb14-8" tabindex="-1" aria-label="code-block-14-8"></a></span>
-<span id="cb14-9"><a href="#cb14-9" tabindex="-1" aria-label="code-block-14-9"></a><span class="co"># Define max runtime in seconds to ensure you don't use more compute time than expected. Use a generous threshold (2x expected time but &lt; 2 days) so that work isn't interrupted without any gains.</span></span>
-<span id="cb14-10"><a href="#cb14-10" tabindex="-1" aria-label="code-block-14-10"></a>max_run <span class="op">=</span> <span class="dv">2</span><span class="op">*</span><span class="dv">60</span><span class="op">*</span><span class="dv">60</span> <span class="co"># 2 hours</span></span>
-<span id="cb14-11"><a href="#cb14-11" tabindex="-1" aria-label="code-block-14-11"></a></span>
-<span id="cb14-12"><a href="#cb14-12" tabindex="-1" aria-label="code-block-14-12"></a><span class="co"># Define S3 paths for input and output</span></span>
-<span id="cb14-13"><a href="#cb14-13" tabindex="-1" aria-label="code-block-14-13"></a>train_s3_path <span class="op">=</span> <span class="ss">f's3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>train_filename<span class="sc">}</span><span class="ss">'</span></span>
-<span id="cb14-14"><a href="#cb14-14" tabindex="-1" aria-label="code-block-14-14"></a></span>
-<span id="cb14-15"><a href="#cb14-15" tabindex="-1" aria-label="code-block-14-15"></a><span class="co"># we'll store all results in a subfolder called xgboost on our bucket. This folder will automatically be created if it doesn't exist already.</span></span>
-<span id="cb14-16"><a href="#cb14-16" tabindex="-1" aria-label="code-block-14-16"></a>output_folder <span class="op">=</span> <span class="st">'xgboost'</span></span>
-<span id="cb14-17"><a href="#cb14-17" tabindex="-1" aria-label="code-block-14-17"></a>output_path <span class="op">=</span> <span class="ss">f's3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>output_folder<span class="sc">}</span><span class="ss">/'</span> </span>
-<span id="cb14-18"><a href="#cb14-18" tabindex="-1" aria-label="code-block-14-18"></a></span>
-<span id="cb14-19"><a href="#cb14-19" tabindex="-1" aria-label="code-block-14-19"></a><span class="co"># Set up the SageMaker XGBoost Estimator with custom script</span></span>
-<span id="cb14-20"><a href="#cb14-20" tabindex="-1" aria-label="code-block-14-20"></a>xgboost_estimator <span class="op">=</span> XGBoost(</span>
-<span id="cb14-21"><a href="#cb14-21" tabindex="-1" aria-label="code-block-14-21"></a>    base_job_name<span class="op">=</span>notebook_instance_name,</span>
-<span id="cb14-22"><a href="#cb14-22" tabindex="-1" aria-label="code-block-14-22"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
-<span id="cb14-23"><a href="#cb14-23" tabindex="-1" aria-label="code-block-14-23"></a>    entry_point<span class="op">=</span><span class="st">'train_xgboost.py'</span>,      <span class="co"># Custom script path</span></span>
-<span id="cb14-24"><a href="#cb14-24" tabindex="-1" aria-label="code-block-14-24"></a>    source_dir<span class="op">=</span><span class="st">'ML_with_AWS_SageMaker/scripts'</span>,  <span class="co"># Directory where your script is located (uploaded to the job with it)</span></span>
-<span id="cb14-25"><a href="#cb14-25" tabindex="-1" aria-label="code-block-14-25"></a>    role<span class="op">=</span>role,</span>
-<span id="cb14-26"><a href="#cb14-26" tabindex="-1" aria-label="code-block-14-26"></a>    tags<span class="op">=</span>job_tags,</span>
-<span id="cb14-27"><a href="#cb14-27" tabindex="-1" aria-label="code-block-14-27"></a>    instance_count<span class="op">=</span>instance_count,</span>
-<span id="cb14-28"><a href="#cb14-28" tabindex="-1" aria-label="code-block-14-28"></a>    instance_type<span class="op">=</span>instance_type,</span>
-<span id="cb14-29"><a href="#cb14-29" tabindex="-1" aria-label="code-block-14-29"></a>    output_path<span class="op">=</span>output_path,</span>
-<span id="cb14-30"><a href="#cb14-30" tabindex="-1" aria-label="code-block-14-30"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb14-31"><a href="#cb14-31" tabindex="-1" aria-label="code-block-14-31"></a>    framework_version<span class="op">=</span><span class="st">"1.7-1"</span>,           <span class="co"># XGBoost container version</span></span>
-<span id="cb14-32"><a href="#cb14-32" tabindex="-1" aria-label="code-block-14-32"></a>    hyperparameters<span class="op">=</span>{</span>
-<span id="cb14-33"><a href="#cb14-33" tabindex="-1" aria-label="code-block-14-33"></a>        <span class="st">'train'</span>: train_file,</span>
-<span id="cb14-34"><a href="#cb14-34" tabindex="-1" aria-label="code-block-14-34"></a>        <span class="st">'max_depth'</span>: max_depth,</span>
-<span id="cb14-35"><a href="#cb14-35" tabindex="-1" aria-label="code-block-14-35"></a>        <span class="st">'eta'</span>: eta,</span>
-<span id="cb14-36"><a href="#cb14-36" tabindex="-1" aria-label="code-block-14-36"></a>        <span class="st">'subsample'</span>: subsample,</span>
-<span id="cb14-37"><a href="#cb14-37" tabindex="-1" aria-label="code-block-14-37"></a>        <span class="st">'colsample_bytree'</span>: colsample_bytree,</span>
-<span id="cb14-38"><a href="#cb14-38" tabindex="-1" aria-label="code-block-14-38"></a>        <span class="st">'num_round'</span>: num_round</span>
-<span id="cb14-39"><a href="#cb14-39" tabindex="-1" aria-label="code-block-14-39"></a>    }</span>
-<span id="cb14-40"><a href="#cb14-40" tabindex="-1" aria-label="code-block-14-40"></a>)</span>
-<span id="cb14-41"><a href="#cb14-41" tabindex="-1" aria-label="code-block-14-41"></a></span>
-<span id="cb14-42"><a href="#cb14-42" tabindex="-1" aria-label="code-block-14-42"></a><span class="co"># Define input data</span></span>
-<span id="cb14-43"><a href="#cb14-43" tabindex="-1" aria-label="code-block-14-43"></a>train_input <span class="op">=</span> TrainingInput(train_s3_path, content_type<span class="op">=</span><span class="st">'csv'</span>)</span>
-<span id="cb14-44"><a href="#cb14-44" tabindex="-1" aria-label="code-block-14-44"></a></span>
-<span id="cb14-45"><a href="#cb14-45" tabindex="-1" aria-label="code-block-14-45"></a><span class="co"># Measure and start training time</span></span>
-<span id="cb14-46"><a href="#cb14-46" tabindex="-1" aria-label="code-block-14-46"></a>start <span class="op">=</span> t.time()</span>
-<span id="cb14-47"><a href="#cb14-47" tabindex="-1" aria-label="code-block-14-47"></a>xgboost_estimator.fit({<span class="st">'train'</span>: train_input})</span>
-<span id="cb14-48"><a href="#cb14-48" tabindex="-1" aria-label="code-block-14-48"></a>end <span class="op">=</span> t.time()</span>
-<span id="cb14-49"><a href="#cb14-49" tabindex="-1" aria-label="code-block-14-49"></a></span>
-<span id="cb14-50"><a href="#cb14-50" tabindex="-1" aria-label="code-block-14-50"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1" aria-label="code-block-13-1"></a><span class="im">from</span> sagemaker.inputs <span class="im">import</span> TrainingInput</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1" aria-label="code-block-13-2"></a><span class="im">from</span> sagemaker.xgboost.estimator <span class="im">import</span> XGBoost</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1" aria-label="code-block-13-4"></a><span class="co"># Define instance type/count we'll use for training</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1" aria-label="code-block-13-5"></a>instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1" aria-label="code-block-13-6"></a>instance_count<span class="op">=</span><span class="dv">1</span> <span class="co"># always start with 1 (see "When training takes too long" at the end of this episode)</span></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1" aria-label="code-block-13-7"></a>price_per_hour <span class="op">=</span> <span class="fl">0.115</span> <span class="co"># ml.m5.large, us-east-1 on-demand (2026-10-16); check the instances page for your region</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1" aria-label="code-block-13-8"></a></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1" aria-label="code-block-13-9"></a><span class="co"># Define max runtime in seconds to ensure you don't use more compute time than expected. Use a generous threshold (2x expected time but &lt; 2 days) so that work isn't interrupted without any gains.</span></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1" aria-label="code-block-13-10"></a>max_run <span class="op">=</span> <span class="dv">2</span><span class="op">*</span><span class="dv">60</span><span class="op">*</span><span class="dv">60</span> <span class="co"># 2 hours</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1" aria-label="code-block-13-11"></a></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1" aria-label="code-block-13-12"></a><span class="co"># Define S3 paths for input and output</span></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1" aria-label="code-block-13-13"></a>train_s3_path <span class="op">=</span> <span class="ss">f's3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>train_filename<span class="sc">}</span><span class="ss">'</span></span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1" aria-label="code-block-13-14"></a></span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1" aria-label="code-block-13-15"></a><span class="co"># we'll store all results in a subfolder called xgboost on our bucket. This folder will automatically be created if it doesn't exist already.</span></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1" aria-label="code-block-13-16"></a>output_folder <span class="op">=</span> <span class="st">'xgboost'</span></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1" aria-label="code-block-13-17"></a>output_path <span class="op">=</span> <span class="ss">f's3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>output_folder<span class="sc">}</span><span class="ss">/'</span> </span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1" aria-label="code-block-13-18"></a></span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1" aria-label="code-block-13-19"></a><span class="co"># Set up the SageMaker XGBoost Estimator with custom script</span></span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1" aria-label="code-block-13-20"></a>xgboost_estimator <span class="op">=</span> XGBoost(</span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1" aria-label="code-block-13-21"></a>    base_job_name<span class="op">=</span>notebook_instance_name,</span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1" aria-label="code-block-13-22"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1" aria-label="code-block-13-23"></a>    entry_point<span class="op">=</span><span class="st">'train_xgboost.py'</span>,      <span class="co"># Custom script path</span></span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1" aria-label="code-block-13-24"></a>    source_dir<span class="op">=</span><span class="st">'ML_with_AWS_SageMaker/scripts'</span>,  <span class="co"># Directory where your script is located (uploaded to the job with it)</span></span>
+<span id="cb13-25"><a href="#cb13-25" tabindex="-1" aria-label="code-block-13-25"></a>    role<span class="op">=</span>role,</span>
+<span id="cb13-26"><a href="#cb13-26" tabindex="-1" aria-label="code-block-13-26"></a>    tags<span class="op">=</span>job_tags,</span>
+<span id="cb13-27"><a href="#cb13-27" tabindex="-1" aria-label="code-block-13-27"></a>    instance_count<span class="op">=</span>instance_count,</span>
+<span id="cb13-28"><a href="#cb13-28" tabindex="-1" aria-label="code-block-13-28"></a>    instance_type<span class="op">=</span>instance_type,</span>
+<span id="cb13-29"><a href="#cb13-29" tabindex="-1" aria-label="code-block-13-29"></a>    output_path<span class="op">=</span>output_path,</span>
+<span id="cb13-30"><a href="#cb13-30" tabindex="-1" aria-label="code-block-13-30"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb13-31"><a href="#cb13-31" tabindex="-1" aria-label="code-block-13-31"></a>    framework_version<span class="op">=</span><span class="st">"1.7-1"</span>,           <span class="co"># XGBoost container version</span></span>
+<span id="cb13-32"><a href="#cb13-32" tabindex="-1" aria-label="code-block-13-32"></a>    hyperparameters<span class="op">=</span>{</span>
+<span id="cb13-33"><a href="#cb13-33" tabindex="-1" aria-label="code-block-13-33"></a>        <span class="st">'train'</span>: train_file,</span>
+<span id="cb13-34"><a href="#cb13-34" tabindex="-1" aria-label="code-block-13-34"></a>        <span class="st">'max_depth'</span>: max_depth,</span>
+<span id="cb13-35"><a href="#cb13-35" tabindex="-1" aria-label="code-block-13-35"></a>        <span class="st">'eta'</span>: eta,</span>
+<span id="cb13-36"><a href="#cb13-36" tabindex="-1" aria-label="code-block-13-36"></a>        <span class="st">'subsample'</span>: subsample,</span>
+<span id="cb13-37"><a href="#cb13-37" tabindex="-1" aria-label="code-block-13-37"></a>        <span class="st">'colsample_bytree'</span>: colsample_bytree,</span>
+<span id="cb13-38"><a href="#cb13-38" tabindex="-1" aria-label="code-block-13-38"></a>        <span class="st">'num_round'</span>: num_round</span>
+<span id="cb13-39"><a href="#cb13-39" tabindex="-1" aria-label="code-block-13-39"></a>    }</span>
+<span id="cb13-40"><a href="#cb13-40" tabindex="-1" aria-label="code-block-13-40"></a>)</span>
+<span id="cb13-41"><a href="#cb13-41" tabindex="-1" aria-label="code-block-13-41"></a></span>
+<span id="cb13-42"><a href="#cb13-42" tabindex="-1" aria-label="code-block-13-42"></a><span class="co"># Define input data</span></span>
+<span id="cb13-43"><a href="#cb13-43" tabindex="-1" aria-label="code-block-13-43"></a>train_input <span class="op">=</span> TrainingInput(train_s3_path, content_type<span class="op">=</span><span class="st">'csv'</span>)</span>
+<span id="cb13-44"><a href="#cb13-44" tabindex="-1" aria-label="code-block-13-44"></a></span>
+<span id="cb13-45"><a href="#cb13-45" tabindex="-1" aria-label="code-block-13-45"></a><span class="co"># Measure and start training time</span></span>
+<span id="cb13-46"><a href="#cb13-46" tabindex="-1" aria-label="code-block-13-46"></a>start <span class="op">=</span> t.time()</span>
+<span id="cb13-47"><a href="#cb13-47" tabindex="-1" aria-label="code-block-13-47"></a>xgboost_estimator.fit({<span class="st">'train'</span>: train_input})</span>
+<span id="cb13-48"><a href="#cb13-48" tabindex="-1" aria-label="code-block-13-48"></a>end <span class="op">=</span> t.time()</span>
+<span id="cb13-49"><a href="#cb13-49" tabindex="-1" aria-label="code-block-13-49"></a></span>
+<span id="cb13-50"><a href="#cb13-50" tabindex="-1" aria-label="code-block-13-50"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <p>When running longer training jobs, you can check on their status
 periodically from the AWS SageMaker Console (where we originally
@@ -3676,16 +3668,16 @@ for you, which also includes pulling the container and downloading
 data). SageMaker bills per second, with no rounding, so cost is billable
 seconds x instance count x hourly rate. We’ll wrap this in a small
 helper and call it after every job in this lesson.</p>
-<div class="codewrapper sourceCode" id="cb15">
+<div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a><span class="kw">def</span> job_cost_report(job_name: <span class="bu">str</span>, price_per_hour: <span class="bu">float</span>):</span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a>    desc <span class="op">=</span> session.sagemaker_client.describe_training_job(TrainingJobName<span class="op">=</span>job_name)</span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1" aria-label="code-block-15-3"></a>    billable <span class="op">=</span> desc[<span class="st">"BillableTimeInSeconds"</span>] <span class="op">*</span> desc[<span class="st">"ResourceConfig"</span>][<span class="st">"InstanceCount"</span>]</span>
-<span id="cb15-4"><a href="#cb15-4" tabindex="-1" aria-label="code-block-15-4"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>job_name<span class="sc">}</span><span class="ss">: status </span><span class="sc">{</span>desc[<span class="st">'TrainingJobStatus'</span>]<span class="sc">}</span><span class="ss">, training </span><span class="sc">{</span>desc<span class="sc">.</span>get(<span class="st">'TrainingTimeInSeconds'</span>, <span class="dv">0</span>)<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min, billable </span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min, cost $</span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">3600</span><span class="op">*</span>price_per_hour<span class="sc">:.2f}</span><span class="ss"> at $</span><span class="sc">{</span>price_per_hour<span class="sc">}</span><span class="ss">/h"</span>)</span>
-<span id="cb15-5"><a href="#cb15-5" tabindex="-1" aria-label="code-block-15-5"></a>    <span class="cf">return</span> desc</span>
-<span id="cb15-6"><a href="#cb15-6" tabindex="-1" aria-label="code-block-15-6"></a></span>
-<span id="cb15-7"><a href="#cb15-7" tabindex="-1" aria-label="code-block-15-7"></a>desc <span class="op">=</span> job_cost_report(xgboost_estimator.latest_training_job.name, price_per_hour)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a><span class="kw">def</span> job_cost_report(job_name: <span class="bu">str</span>, price_per_hour: <span class="bu">float</span>):</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1" aria-label="code-block-14-2"></a>    desc <span class="op">=</span> session.sagemaker_client.describe_training_job(TrainingJobName<span class="op">=</span>job_name)</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1" aria-label="code-block-14-3"></a>    billable <span class="op">=</span> desc[<span class="st">"BillableTimeInSeconds"</span>] <span class="op">*</span> desc[<span class="st">"ResourceConfig"</span>][<span class="st">"InstanceCount"</span>]</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1" aria-label="code-block-14-4"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>job_name<span class="sc">}</span><span class="ss">: status </span><span class="sc">{</span>desc[<span class="st">'TrainingJobStatus'</span>]<span class="sc">}</span><span class="ss">, training </span><span class="sc">{</span>desc<span class="sc">.</span>get(<span class="st">'TrainingTimeInSeconds'</span>, <span class="dv">0</span>)<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min, billable </span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min, cost $</span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">3600</span><span class="op">*</span>price_per_hour<span class="sc">:.2f}</span><span class="ss"> at $</span><span class="sc">{</span>price_per_hour<span class="sc">}</span><span class="ss">/h"</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1" aria-label="code-block-14-5"></a>    <span class="cf">return</span> desc</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1" aria-label="code-block-14-6"></a></span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1" aria-label="code-block-14-7"></a>desc <span class="op">=</span> job_cost_report(xgboost_estimator.latest_training_job.name, price_per_hour)</span></code></pre>
 </div>
 <p>Compare this with the estimate you made above. The gap between
 training time and billable time is the startup overhead of every job; it
@@ -3736,51 +3728,51 @@ compute accuracy or other metrics on the results.</li>
 </ul>
 <p>If additional metrics or custom evaluation steps are needed, you can
 add them in place of or alongside accuracy.</p>
+<div class="codewrapper sourceCode" id="cb15">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a><span class="co"># Model results are saved in auto-generated folders. Use xgboost_estimator.latest_training_job.name to get the folder name</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a>model_s3_path <span class="op">=</span> <span class="ss">f'</span><span class="sc">{</span>output_folder<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>xgboost_estimator<span class="sc">.</span>latest_training_job<span class="sc">.</span>name<span class="sc">}</span><span class="ss">/output/model.tar.gz'</span></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1" aria-label="code-block-15-3"></a><span class="bu">print</span>(model_s3_path)</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1" aria-label="code-block-15-4"></a>local_model_path <span class="op">=</span> <span class="st">'model.tar.gz'</span></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1" aria-label="code-block-15-5"></a></span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1" aria-label="code-block-15-6"></a><span class="co"># Download the trained model from S3</span></span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1" aria-label="code-block-15-7"></a>s3.download_file(bucket_name, model_s3_path, local_model_path)</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1" aria-label="code-block-15-8"></a></span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1" aria-label="code-block-15-9"></a><span class="co"># Extract the model file</span></span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1" aria-label="code-block-15-10"></a><span class="im">import</span> tarfile</span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1" aria-label="code-block-15-11"></a><span class="cf">with</span> tarfile.<span class="bu">open</span>(local_model_path) <span class="im">as</span> tar:</span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1" aria-label="code-block-15-12"></a>    tar.extractall()</span></code></pre>
+</div>
 <div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a><span class="co"># Model results are saved in auto-generated folders. Use xgboost_estimator.latest_training_job.name to get the folder name</span></span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a>model_s3_path <span class="op">=</span> <span class="ss">f'</span><span class="sc">{</span>output_folder<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>xgboost_estimator<span class="sc">.</span>latest_training_job<span class="sc">.</span>name<span class="sc">}</span><span class="ss">/output/model.tar.gz'</span></span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a><span class="bu">print</span>(model_s3_path)</span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a>local_model_path <span class="op">=</span> <span class="st">'model.tar.gz'</span></span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a></span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a><span class="co"># Download the trained model from S3</span></span>
-<span id="cb16-7"><a href="#cb16-7" tabindex="-1" aria-label="code-block-16-7"></a>s3.download_file(bucket_name, model_s3_path, local_model_path)</span>
-<span id="cb16-8"><a href="#cb16-8" tabindex="-1" aria-label="code-block-16-8"></a></span>
-<span id="cb16-9"><a href="#cb16-9" tabindex="-1" aria-label="code-block-16-9"></a><span class="co"># Extract the model file</span></span>
-<span id="cb16-10"><a href="#cb16-10" tabindex="-1" aria-label="code-block-16-10"></a><span class="im">import</span> tarfile</span>
-<span id="cb16-11"><a href="#cb16-11" tabindex="-1" aria-label="code-block-16-11"></a><span class="cf">with</span> tarfile.<span class="bu">open</span>(local_model_path) <span class="im">as</span> tar:</span>
-<span id="cb16-12"><a href="#cb16-12" tabindex="-1" aria-label="code-block-16-12"></a>    tar.extractall()</span></code></pre>
-</div>
-<div class="codewrapper sourceCode" id="cb17">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1" aria-label="code-block-17-1"></a><span class="im">import</span> xgboost <span class="im">as</span> xgb</span>
-<span id="cb17-2"><a href="#cb17-2" tabindex="-1" aria-label="code-block-17-2"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb17-3"><a href="#cb17-3" tabindex="-1" aria-label="code-block-17-3"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb17-4"><a href="#cb17-4" tabindex="-1" aria-label="code-block-17-4"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> accuracy_score</span>
-<span id="cb17-5"><a href="#cb17-5" tabindex="-1" aria-label="code-block-17-5"></a><span class="im">import</span> joblib</span>
-<span id="cb17-6"><a href="#cb17-6" tabindex="-1" aria-label="code-block-17-6"></a><span class="im">from</span> train_xgboost <span class="im">import</span> preprocess_data</span>
-<span id="cb17-7"><a href="#cb17-7" tabindex="-1" aria-label="code-block-17-7"></a></span>
-<span id="cb17-8"><a href="#cb17-8" tabindex="-1" aria-label="code-block-17-8"></a><span class="co"># Load the test data</span></span>
-<span id="cb17-9"><a href="#cb17-9" tabindex="-1" aria-label="code-block-17-9"></a>test_data <span class="op">=</span> pd.read_csv(<span class="st">'./titanic_test.csv'</span>)</span>
-<span id="cb17-10"><a href="#cb17-10" tabindex="-1" aria-label="code-block-17-10"></a></span>
-<span id="cb17-11"><a href="#cb17-11" tabindex="-1" aria-label="code-block-17-11"></a><span class="co"># Preprocess the test data using the imported preprocess_data function</span></span>
-<span id="cb17-12"><a href="#cb17-12" tabindex="-1" aria-label="code-block-17-12"></a>X_test, y_test <span class="op">=</span> preprocess_data(test_data)</span>
-<span id="cb17-13"><a href="#cb17-13" tabindex="-1" aria-label="code-block-17-13"></a></span>
-<span id="cb17-14"><a href="#cb17-14" tabindex="-1" aria-label="code-block-17-14"></a><span class="co"># Convert the test features to DMatrix for XGBoost</span></span>
-<span id="cb17-15"><a href="#cb17-15" tabindex="-1" aria-label="code-block-17-15"></a>dtest <span class="op">=</span> xgb.DMatrix(X_test)</span>
-<span id="cb17-16"><a href="#cb17-16" tabindex="-1" aria-label="code-block-17-16"></a></span>
-<span id="cb17-17"><a href="#cb17-17" tabindex="-1" aria-label="code-block-17-17"></a><span class="co"># Load the trained model from the saved file</span></span>
-<span id="cb17-18"><a href="#cb17-18" tabindex="-1" aria-label="code-block-17-18"></a>model <span class="op">=</span> joblib.load(<span class="st">'./xgboost-model'</span>)</span>
-<span id="cb17-19"><a href="#cb17-19" tabindex="-1" aria-label="code-block-17-19"></a></span>
-<span id="cb17-20"><a href="#cb17-20" tabindex="-1" aria-label="code-block-17-20"></a><span class="co"># Make predictions on the test set</span></span>
-<span id="cb17-21"><a href="#cb17-21" tabindex="-1" aria-label="code-block-17-21"></a>preds <span class="op">=</span> model.predict(dtest)</span>
-<span id="cb17-22"><a href="#cb17-22" tabindex="-1" aria-label="code-block-17-22"></a>predictions <span class="op">=</span> np.<span class="bu">round</span>(preds)  <span class="co"># Round predictions to 0 or 1 for binary classification</span></span>
-<span id="cb17-23"><a href="#cb17-23" tabindex="-1" aria-label="code-block-17-23"></a></span>
-<span id="cb17-24"><a href="#cb17-24" tabindex="-1" aria-label="code-block-17-24"></a><span class="co"># Calculate and print the accuracy of the model on the test data</span></span>
-<span id="cb17-25"><a href="#cb17-25" tabindex="-1" aria-label="code-block-17-25"></a>accuracy <span class="op">=</span> accuracy_score(y_test, predictions)</span>
-<span id="cb17-26"><a href="#cb17-26" tabindex="-1" aria-label="code-block-17-26"></a><span class="bu">print</span>(<span class="ss">f"Test Set Accuracy: </span><span class="sc">{</span>accuracy<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a><span class="im">import</span> xgboost <span class="im">as</span> xgb</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> accuracy_score</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a><span class="im">import</span> joblib</span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a><span class="im">from</span> train_xgboost <span class="im">import</span> preprocess_data</span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1" aria-label="code-block-16-7"></a></span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1" aria-label="code-block-16-8"></a><span class="co"># Load the test data</span></span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1" aria-label="code-block-16-9"></a>test_data <span class="op">=</span> pd.read_csv(<span class="st">'./titanic_test.csv'</span>)</span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1" aria-label="code-block-16-10"></a></span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1" aria-label="code-block-16-11"></a><span class="co"># Preprocess the test data using the imported preprocess_data function</span></span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1" aria-label="code-block-16-12"></a>X_test, y_test <span class="op">=</span> preprocess_data(test_data)</span>
+<span id="cb16-13"><a href="#cb16-13" tabindex="-1" aria-label="code-block-16-13"></a></span>
+<span id="cb16-14"><a href="#cb16-14" tabindex="-1" aria-label="code-block-16-14"></a><span class="co"># Convert the test features to DMatrix for XGBoost</span></span>
+<span id="cb16-15"><a href="#cb16-15" tabindex="-1" aria-label="code-block-16-15"></a>dtest <span class="op">=</span> xgb.DMatrix(X_test)</span>
+<span id="cb16-16"><a href="#cb16-16" tabindex="-1" aria-label="code-block-16-16"></a></span>
+<span id="cb16-17"><a href="#cb16-17" tabindex="-1" aria-label="code-block-16-17"></a><span class="co"># Load the trained model from the saved file</span></span>
+<span id="cb16-18"><a href="#cb16-18" tabindex="-1" aria-label="code-block-16-18"></a>model <span class="op">=</span> joblib.load(<span class="st">'./xgboost-model'</span>)</span>
+<span id="cb16-19"><a href="#cb16-19" tabindex="-1" aria-label="code-block-16-19"></a></span>
+<span id="cb16-20"><a href="#cb16-20" tabindex="-1" aria-label="code-block-16-20"></a><span class="co"># Make predictions on the test set</span></span>
+<span id="cb16-21"><a href="#cb16-21" tabindex="-1" aria-label="code-block-16-21"></a>preds <span class="op">=</span> model.predict(dtest)</span>
+<span id="cb16-22"><a href="#cb16-22" tabindex="-1" aria-label="code-block-16-22"></a>predictions <span class="op">=</span> np.<span class="bu">round</span>(preds)  <span class="co"># Round predictions to 0 or 1 for binary classification</span></span>
+<span id="cb16-23"><a href="#cb16-23" tabindex="-1" aria-label="code-block-16-23"></a></span>
+<span id="cb16-24"><a href="#cb16-24" tabindex="-1" aria-label="code-block-16-24"></a><span class="co"># Calculate and print the accuracy of the model on the test data</span></span>
+<span id="cb16-25"><a href="#cb16-25" tabindex="-1" aria-label="code-block-16-25"></a>accuracy <span class="op">=</span> accuracy_score(y_test, predictions)</span>
+<span id="cb16-26"><a href="#cb16-26" tabindex="-1" aria-label="code-block-16-26"></a><span class="bu">print</span>(<span class="ss">f"Test Set Accuracy: </span><span class="sc">{</span>accuracy<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <p>Now that we’ve covered training using a custom script with the
 <code>XGBoost</code> estimator, let’s examine the built-in image-based
@@ -3871,23 +3863,23 @@ raw <code>titanic_train.csv</code> (header, <code>Name</code> and
 load. So we run the same preprocessing we used in
 <code>train_xgboost.py</code> here in the notebook, write the result in
 the expected layout, and upload it to its own prefix in our bucket.</p>
-<div class="codewrapper sourceCode" id="cb18">
+<div class="codewrapper sourceCode" id="cb17">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1" aria-label="code-block-18-1"></a><span class="im">from</span> train_xgboost <span class="im">import</span> preprocess_data</span>
-<span id="cb18-2"><a href="#cb18-2" tabindex="-1" aria-label="code-block-18-2"></a></span>
-<span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a><span class="co"># Same preprocessing the custom script applies: fill missing values, encode Sex/Embarked, drop text columns</span></span>
-<span id="cb18-4"><a href="#cb18-4" tabindex="-1" aria-label="code-block-18-4"></a>X, y <span class="op">=</span> preprocess_data(pd.read_csv(train_filename))</span>
-<span id="cb18-5"><a href="#cb18-5" tabindex="-1" aria-label="code-block-18-5"></a></span>
-<span id="cb18-6"><a href="#cb18-6" tabindex="-1" aria-label="code-block-18-6"></a><span class="co"># Built-in XGBoost wants: no header, all numeric, label first</span></span>
-<span id="cb18-7"><a href="#cb18-7" tabindex="-1" aria-label="code-block-18-7"></a>builtin_filename <span class="op">=</span> <span class="st">"train_builtin.csv"</span></span>
-<span id="cb18-8"><a href="#cb18-8" tabindex="-1" aria-label="code-block-18-8"></a>pd.concat([y, X], axis<span class="op">=</span><span class="dv">1</span>).to_csv(builtin_filename, header<span class="op">=</span><span class="va">False</span>, index<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb18-9"><a href="#cb18-9" tabindex="-1" aria-label="code-block-18-9"></a></span>
-<span id="cb18-10"><a href="#cb18-10" tabindex="-1" aria-label="code-block-18-10"></a><span class="co"># Upload to a dedicated prefix so it doesn't get confused with the raw CSV</span></span>
-<span id="cb18-11"><a href="#cb18-11" tabindex="-1" aria-label="code-block-18-11"></a>builtin_s3_key <span class="op">=</span> <span class="ss">f"xgboost/builtin/</span><span class="sc">{</span>builtin_filename<span class="sc">}</span><span class="ss">"</span></span>
-<span id="cb18-12"><a href="#cb18-12" tabindex="-1" aria-label="code-block-18-12"></a>s3.upload_file(builtin_filename, bucket_name, builtin_s3_key)</span>
-<span id="cb18-13"><a href="#cb18-13" tabindex="-1" aria-label="code-block-18-13"></a>builtin_s3_path <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>builtin_s3_key<span class="sc">}</span><span class="ss">"</span></span>
-<span id="cb18-14"><a href="#cb18-14" tabindex="-1" aria-label="code-block-18-14"></a><span class="bu">print</span>(<span class="st">"Uploaded:"</span>, builtin_s3_path)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1" aria-label="code-block-17-1"></a><span class="im">from</span> train_xgboost <span class="im">import</span> preprocess_data</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1" aria-label="code-block-17-2"></a></span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1" aria-label="code-block-17-3"></a><span class="co"># Same preprocessing the custom script applies: fill missing values, encode Sex/Embarked, drop text columns</span></span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1" aria-label="code-block-17-4"></a>X, y <span class="op">=</span> preprocess_data(pd.read_csv(train_filename))</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1" aria-label="code-block-17-5"></a></span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1" aria-label="code-block-17-6"></a><span class="co"># Built-in XGBoost wants: no header, all numeric, label first</span></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1" aria-label="code-block-17-7"></a>builtin_filename <span class="op">=</span> <span class="st">"train_builtin.csv"</span></span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1" aria-label="code-block-17-8"></a>pd.concat([y, X], axis<span class="op">=</span><span class="dv">1</span>).to_csv(builtin_filename, header<span class="op">=</span><span class="va">False</span>, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1" aria-label="code-block-17-9"></a></span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1" aria-label="code-block-17-10"></a><span class="co"># Upload to a dedicated prefix so it doesn't get confused with the raw CSV</span></span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1" aria-label="code-block-17-11"></a>builtin_s3_key <span class="op">=</span> <span class="ss">f"xgboost/builtin/</span><span class="sc">{</span>builtin_filename<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb17-12"><a href="#cb17-12" tabindex="-1" aria-label="code-block-17-12"></a>s3.upload_file(builtin_filename, bucket_name, builtin_s3_key)</span>
+<span id="cb17-13"><a href="#cb17-13" tabindex="-1" aria-label="code-block-17-13"></a>builtin_s3_path <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>builtin_s3_key<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb17-14"><a href="#cb17-14" tabindex="-1" aria-label="code-block-17-14"></a><span class="bu">print</span>(<span class="st">"Uploaded:"</span>, builtin_s3_path)</span></code></pre>
 </div>
 </div>
 <div class="section level4">
@@ -3900,51 +3892,51 @@ method, where we specified a custom script with argument inputs
 hyperparameters only to specify the model’s hyperparameters. We also add
 <code>objective</code>, because the built-in algorithm’s default
 objective is regression rather than binary classification.</p>
+<div class="codewrapper sourceCode" id="cb18">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1" aria-label="code-block-18-1"></a><span class="im">from</span> sagemaker.estimator <span class="im">import</span> Estimator <span class="co"># when using images, we use the general Estimator class</span></span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1" aria-label="code-block-18-2"></a></span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a><span class="co"># Define instance type/count we'll use for training</span></span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1" aria-label="code-block-18-4"></a>instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span></span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1" aria-label="code-block-18-5"></a>instance_count<span class="op">=</span><span class="dv">1</span> <span class="co"># always start with 1</span></span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1" aria-label="code-block-18-6"></a></span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1" aria-label="code-block-18-7"></a><span class="co"># Use Estimator directly for built-in container without specifying entry_point</span></span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1" aria-label="code-block-18-8"></a>xgboost_estimator_builtin <span class="op">=</span> Estimator(</span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1" aria-label="code-block-18-9"></a>    base_job_name<span class="op">=</span>notebook_instance_name,</span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1" aria-label="code-block-18-10"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1" aria-label="code-block-18-11"></a>    image_uri<span class="op">=</span>sagemaker.image_uris.retrieve(<span class="st">"xgboost"</span>, region, version<span class="op">=</span><span class="st">"1.7-1"</span>),</span>
+<span id="cb18-12"><a href="#cb18-12" tabindex="-1" aria-label="code-block-18-12"></a>    role<span class="op">=</span>role,</span>
+<span id="cb18-13"><a href="#cb18-13" tabindex="-1" aria-label="code-block-18-13"></a>    tags<span class="op">=</span>job_tags,</span>
+<span id="cb18-14"><a href="#cb18-14" tabindex="-1" aria-label="code-block-18-14"></a>    instance_count<span class="op">=</span>instance_count,</span>
+<span id="cb18-15"><a href="#cb18-15" tabindex="-1" aria-label="code-block-18-15"></a>    instance_type<span class="op">=</span>instance_type,</span>
+<span id="cb18-16"><a href="#cb18-16" tabindex="-1" aria-label="code-block-18-16"></a>    output_path<span class="op">=</span>output_path,</span>
+<span id="cb18-17"><a href="#cb18-17" tabindex="-1" aria-label="code-block-18-17"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb18-18"><a href="#cb18-18" tabindex="-1" aria-label="code-block-18-18"></a>    hyperparameters<span class="op">=</span>{</span>
+<span id="cb18-19"><a href="#cb18-19" tabindex="-1" aria-label="code-block-18-19"></a>        <span class="st">'objective'</span>: <span class="st">'binary:logistic'</span>,  <span class="co"># the built-in default is regression; we are classifying</span></span>
+<span id="cb18-20"><a href="#cb18-20" tabindex="-1" aria-label="code-block-18-20"></a>        <span class="st">'max_depth'</span>: max_depth,</span>
+<span id="cb18-21"><a href="#cb18-21" tabindex="-1" aria-label="code-block-18-21"></a>        <span class="st">'eta'</span>: eta,</span>
+<span id="cb18-22"><a href="#cb18-22" tabindex="-1" aria-label="code-block-18-22"></a>        <span class="st">'subsample'</span>: subsample,</span>
+<span id="cb18-23"><a href="#cb18-23" tabindex="-1" aria-label="code-block-18-23"></a>        <span class="st">'colsample_bytree'</span>: colsample_bytree,</span>
+<span id="cb18-24"><a href="#cb18-24" tabindex="-1" aria-label="code-block-18-24"></a>        <span class="st">'num_round'</span>: num_round</span>
+<span id="cb18-25"><a href="#cb18-25" tabindex="-1" aria-label="code-block-18-25"></a>    }</span>
+<span id="cb18-26"><a href="#cb18-26" tabindex="-1" aria-label="code-block-18-26"></a>)</span>
+<span id="cb18-27"><a href="#cb18-27" tabindex="-1" aria-label="code-block-18-27"></a></span>
+<span id="cb18-28"><a href="#cb18-28" tabindex="-1" aria-label="code-block-18-28"></a><span class="co"># Define input data: the headerless, label-first CSV we just uploaded</span></span>
+<span id="cb18-29"><a href="#cb18-29" tabindex="-1" aria-label="code-block-18-29"></a>train_input_builtin <span class="op">=</span> TrainingInput(builtin_s3_path, content_type<span class="op">=</span><span class="st">"text/csv"</span>)</span>
+<span id="cb18-30"><a href="#cb18-30" tabindex="-1" aria-label="code-block-18-30"></a></span>
+<span id="cb18-31"><a href="#cb18-31" tabindex="-1" aria-label="code-block-18-31"></a><span class="co"># Measure and start training time</span></span>
+<span id="cb18-32"><a href="#cb18-32" tabindex="-1" aria-label="code-block-18-32"></a>start <span class="op">=</span> t.time()</span>
+<span id="cb18-33"><a href="#cb18-33" tabindex="-1" aria-label="code-block-18-33"></a>xgboost_estimator_builtin.fit({<span class="st">'train'</span>: train_input_builtin})</span>
+<span id="cb18-34"><a href="#cb18-34" tabindex="-1" aria-label="code-block-18-34"></a>end <span class="op">=</span> t.time()</span>
+<span id="cb18-35"><a href="#cb18-35" tabindex="-1" aria-label="code-block-18-35"></a></span>
+<span id="cb18-36"><a href="#cb18-36" tabindex="-1" aria-label="code-block-18-36"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+</div>
+<p>Then the cost report:</p>
 <div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1" aria-label="code-block-19-1"></a><span class="im">from</span> sagemaker.estimator <span class="im">import</span> Estimator <span class="co"># when using images, we use the general Estimator class</span></span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1" aria-label="code-block-19-2"></a></span>
-<span id="cb19-3"><a href="#cb19-3" tabindex="-1" aria-label="code-block-19-3"></a><span class="co"># Define instance type/count we'll use for training</span></span>
-<span id="cb19-4"><a href="#cb19-4" tabindex="-1" aria-label="code-block-19-4"></a>instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span></span>
-<span id="cb19-5"><a href="#cb19-5" tabindex="-1" aria-label="code-block-19-5"></a>instance_count<span class="op">=</span><span class="dv">1</span> <span class="co"># always start with 1</span></span>
-<span id="cb19-6"><a href="#cb19-6" tabindex="-1" aria-label="code-block-19-6"></a></span>
-<span id="cb19-7"><a href="#cb19-7" tabindex="-1" aria-label="code-block-19-7"></a><span class="co"># Use Estimator directly for built-in container without specifying entry_point</span></span>
-<span id="cb19-8"><a href="#cb19-8" tabindex="-1" aria-label="code-block-19-8"></a>xgboost_estimator_builtin <span class="op">=</span> Estimator(</span>
-<span id="cb19-9"><a href="#cb19-9" tabindex="-1" aria-label="code-block-19-9"></a>    base_job_name<span class="op">=</span>notebook_instance_name,</span>
-<span id="cb19-10"><a href="#cb19-10" tabindex="-1" aria-label="code-block-19-10"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
-<span id="cb19-11"><a href="#cb19-11" tabindex="-1" aria-label="code-block-19-11"></a>    image_uri<span class="op">=</span>sagemaker.image_uris.retrieve(<span class="st">"xgboost"</span>, region, version<span class="op">=</span><span class="st">"1.7-1"</span>),</span>
-<span id="cb19-12"><a href="#cb19-12" tabindex="-1" aria-label="code-block-19-12"></a>    role<span class="op">=</span>role,</span>
-<span id="cb19-13"><a href="#cb19-13" tabindex="-1" aria-label="code-block-19-13"></a>    tags<span class="op">=</span>job_tags,</span>
-<span id="cb19-14"><a href="#cb19-14" tabindex="-1" aria-label="code-block-19-14"></a>    instance_count<span class="op">=</span>instance_count,</span>
-<span id="cb19-15"><a href="#cb19-15" tabindex="-1" aria-label="code-block-19-15"></a>    instance_type<span class="op">=</span>instance_type,</span>
-<span id="cb19-16"><a href="#cb19-16" tabindex="-1" aria-label="code-block-19-16"></a>    output_path<span class="op">=</span>output_path,</span>
-<span id="cb19-17"><a href="#cb19-17" tabindex="-1" aria-label="code-block-19-17"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb19-18"><a href="#cb19-18" tabindex="-1" aria-label="code-block-19-18"></a>    hyperparameters<span class="op">=</span>{</span>
-<span id="cb19-19"><a href="#cb19-19" tabindex="-1" aria-label="code-block-19-19"></a>        <span class="st">'objective'</span>: <span class="st">'binary:logistic'</span>,  <span class="co"># the built-in default is regression; we are classifying</span></span>
-<span id="cb19-20"><a href="#cb19-20" tabindex="-1" aria-label="code-block-19-20"></a>        <span class="st">'max_depth'</span>: max_depth,</span>
-<span id="cb19-21"><a href="#cb19-21" tabindex="-1" aria-label="code-block-19-21"></a>        <span class="st">'eta'</span>: eta,</span>
-<span id="cb19-22"><a href="#cb19-22" tabindex="-1" aria-label="code-block-19-22"></a>        <span class="st">'subsample'</span>: subsample,</span>
-<span id="cb19-23"><a href="#cb19-23" tabindex="-1" aria-label="code-block-19-23"></a>        <span class="st">'colsample_bytree'</span>: colsample_bytree,</span>
-<span id="cb19-24"><a href="#cb19-24" tabindex="-1" aria-label="code-block-19-24"></a>        <span class="st">'num_round'</span>: num_round</span>
-<span id="cb19-25"><a href="#cb19-25" tabindex="-1" aria-label="code-block-19-25"></a>    }</span>
-<span id="cb19-26"><a href="#cb19-26" tabindex="-1" aria-label="code-block-19-26"></a>)</span>
-<span id="cb19-27"><a href="#cb19-27" tabindex="-1" aria-label="code-block-19-27"></a></span>
-<span id="cb19-28"><a href="#cb19-28" tabindex="-1" aria-label="code-block-19-28"></a><span class="co"># Define input data: the headerless, label-first CSV we just uploaded</span></span>
-<span id="cb19-29"><a href="#cb19-29" tabindex="-1" aria-label="code-block-19-29"></a>train_input_builtin <span class="op">=</span> TrainingInput(builtin_s3_path, content_type<span class="op">=</span><span class="st">"text/csv"</span>)</span>
-<span id="cb19-30"><a href="#cb19-30" tabindex="-1" aria-label="code-block-19-30"></a></span>
-<span id="cb19-31"><a href="#cb19-31" tabindex="-1" aria-label="code-block-19-31"></a><span class="co"># Measure and start training time</span></span>
-<span id="cb19-32"><a href="#cb19-32" tabindex="-1" aria-label="code-block-19-32"></a>start <span class="op">=</span> t.time()</span>
-<span id="cb19-33"><a href="#cb19-33" tabindex="-1" aria-label="code-block-19-33"></a>xgboost_estimator_builtin.fit({<span class="st">'train'</span>: train_input_builtin})</span>
-<span id="cb19-34"><a href="#cb19-34" tabindex="-1" aria-label="code-block-19-34"></a>end <span class="op">=</span> t.time()</span>
-<span id="cb19-35"><a href="#cb19-35" tabindex="-1" aria-label="code-block-19-35"></a></span>
-<span id="cb19-36"><a href="#cb19-36" tabindex="-1" aria-label="code-block-19-36"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
-</div>
-<p>Then the cost report:</p>
-<div class="codewrapper sourceCode" id="cb20">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1" aria-label="code-block-20-1"></a>desc <span class="op">=</span> job_cost_report(xgboost_estimator_builtin.latest_training_job.name, price_per_hour)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1" aria-label="code-block-19-1"></a>desc <span class="op">=</span> job_cost_report(xgboost_estimator_builtin.latest_training_job.name, price_per_hour)</span></code></pre>
 </div>
 </div>
 </div>
@@ -4131,7 +4123,7 @@ any links that you are not going to use.
 </div>
 </section></section><section id="aio-Training-models-in-SageMaker-notebooks-part2"><p>Content from <a href="Training-models-in-SageMaker-notebooks-part2.html">Training Models in SageMaker: PyTorch Example</a></p>
 <hr>
-<p>Last updated on 2026-10-19 |
+<p>Last updated on 2026-10-20 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/Training-models-in-SageMaker-notebooks-part2.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <div class="text-end">
@@ -4164,8 +4156,8 @@ PyTorch.</li>
 format to S3.</li>
 <li>Understand the trade-offs between CPU and GPU training for smaller
 datasets.</li>
-<li>Deploy a PyTorch model to SageMaker and evaluate instance types for
-training performance.</li>
+<li>Train a PyTorch model as a SageMaker training job and compare CPU
+and GPU instance types on time and cost.</li>
 <li>Differentiate between data parallelism and model parallelism, and
 determine when each is appropriate in SageMaker.</li>
 </ul>
@@ -6425,7 +6417,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-RAG-Bedrock"><p>Content from <a href="RAG-Bedrock.html">RAG with Bedrock</a></p>
 <hr>
-<p>Last updated on 2026-10-19 |
+<p>Last updated on 2026-10-20 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/RAG-Bedrock.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <div class="text-end">
@@ -6457,9 +6449,8 @@ that the spend is tagged to our project?</li>
 <li>Read the WattBot metadata, questions and PDF corpus from the shared
 bucket, and cache what you derive from them (<code>chunks.jsonl</code>)
 in your own bucket for the later episodes.</li>
-<li>Convert PDFs into page-level records and overlapping text chunks,
-and cache them as <code>chunks.jsonl</code> on S3 for reuse in later
-episodes.</li>
+<li>Convert PDFs into page-level records and overlapping text
+chunks.</li>
 <li>Create tagged application inference profiles so that every Bedrock
 call is attributed to your project.</li>
 <li>Embed chunks with Amazon Titan Text Embeddings and retrieve relevant
@@ -7239,7 +7230,7 @@ month’s Bedrock spend by <code>Project</code>?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -7544,7 +7535,7 @@ whole WattBot pipeline on Bedrock”, and with one hour of the
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -8365,7 +8356,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -8422,7 +8413,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still installing
@@ -11115,7 +11106,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-CLI-equivalents"><p>Content from <a href="CLI-equivalents.html">(Optional) The Same Jobs from the Terminal</a></p>
 <hr>
-<p>Last updated on 2026-10-19 |
+<p>Last updated on 2026-10-20 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/CLI-equivalents.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <div class="text-end">
@@ -11148,6 +11139,7 @@ terminal?</li>
 never with access keys.</li>
 <li>List, inspect, and stop training jobs, processing jobs, tuning jobs
 and notebook instances from the terminal.</li>
+<li>Copy data to and from S3 in bulk with <code>aws s3 sync</code>.</li>
 <li>Launch one training job from its JSON description and recognise it
 as the request the SDK built in the training episodes.</li>
 <li>State which resources the lesson never creates from the CLI, and why
@@ -11432,7 +11424,7 @@ finds something. Then run them against your own resources.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -11492,7 +11484,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-Resource-management-cleanup"><p>Content from <a href="Resource-management-cleanup.html">Resource Management and Monitoring</a></p>
 <hr>
-<p>Last updated on 2026-10-19 |
+<p>Last updated on 2026-10-20 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/Resource-management-cleanup.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <div class="text-end">
@@ -11523,8 +11515,7 @@ utilization?</li>
 <ul>
 <li>Understand how to shut down SageMaker notebook instances to minimize
 costs.</li>
-<li>Learn to clean up S3 storage and terminate unused training
-jobs.</li>
+<li>Clean up S3 storage and stop running jobs.</li>
 <li>Explore basic resource management strategies and tools for AWS.</li>
 </ul>
 </div>
