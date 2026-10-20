@@ -451,26 +451,28 @@ tagging, the bucket policy and every upload, because the policy in step
 in step 1 are still there for the later steps. CloudShell’s home
 directory is 1 GB, which is why the data steps work one asset at a time
 under <code>/tmp</code> and the model is streamed rather than
-downloaded. The whole thing takes about half an hour, most of it the
-model copy.</p>
+downloaded. The whole thing takes about ten minutes; a run on 2026-10-20
+ended with 461 objects and 7.7 GB in the bucket.</p>
 </section><section><h2 class="section-heading" id="create-the-bucket">1. Create the bucket<a class="anchor" aria-label="anchor" href="#create-the-bucket"></a></h2>
 <hr class="half-width"><p>Same naming rules as the S3 episode, in the class region, with the
-three cost-allocation tags, and all public access blocked. Fill in your
-account ID first; it is used again in step 2.</p>
+three cost-allocation tags, and all public access blocked. The account
+ID is read from your identity; the <code>echo</code> line is there so
+you can check it is the class account before anything is created.</p>
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1" aria-label="code-block-2-1"></a><span class="va">BUCKET</span><span class="op">=</span>ml-marathon-shared</span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1" aria-label="code-block-2-2"></a><span class="va">REGION</span><span class="op">=</span>us-east-2</span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a><span class="va">ACCOUNT_ID</span><span class="op">=</span>123456789012</span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a><span class="ex">aws</span> sts get-caller-identity</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a><span class="va">ACCOUNT_ID</span><span class="op">=</span><span class="va">$(</span><span class="ex">aws</span> sts get-caller-identity <span class="at">--query</span> Account <span class="at">--output</span> text<span class="va">)</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a><span class="bu">echo</span> <span class="va">$ACCOUNT_ID</span></span>
 <span id="cb2-5"><a href="#cb2-5" tabindex="-1" aria-label="code-block-2-5"></a><span class="ex">aws</span> s3api create-bucket <span class="at">--bucket</span> <span class="va">$BUCKET</span> <span class="at">--region</span> <span class="va">$REGION</span> <span class="at">--create-bucket-configuration</span> LocationConstraint=<span class="va">$REGION</span></span>
 <span id="cb2-6"><a href="#cb2-6" tabindex="-1" aria-label="code-block-2-6"></a><span class="ex">aws</span> s3api put-bucket-tagging <span class="at">--bucket</span> <span class="va">$BUCKET</span> <span class="at">--tagging</span> <span class="st">'TagSet=[{Key=Project,Value=Workshop},{Key=Name,Value=Everyone},{Key=Purpose,Value=Storage}]'</span></span>
 <span id="cb2-7"><a href="#cb2-7" tabindex="-1" aria-label="code-block-2-7"></a><span class="ex">aws</span> s3api put-public-access-block <span class="at">--bucket</span> <span class="va">$BUCKET</span> <span class="at">--public-access-block-configuration</span> BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true</span></code></pre>
 </div>
 <p>If the bucket already exists (created in the console, or left from
-last term), skip the <code>create-bucket</code> line; the other two are
-safe to re-run.</p>
+last term), <code>create-bucket</code> reports
+<code>BucketAlreadyOwnedByYou</code> and nothing else changes; the other
+two lines are safe to re-run.</p>
 </section><section><h2 class="section-heading" id="make-it-readable-by-the-learner-roles">2. Make it readable by the learner roles<a class="anchor" aria-label="anchor" href="#make-it-readable-by-the-learner-roles"></a></h2>
 <hr class="half-width"><p>Learners reach the bucket through two execution roles:
 <code>ml-sagemaker-use</code> on notebook instances and training jobs,
@@ -505,7 +507,11 @@ channel lists the prefix before downloading it. No
 </div>
 <p>The same JSON can be pasted into the console instead (bucket →
 Permissions → Bucket policy), with the account ID and bucket name
-written in.</p>
+written in. <code>MalformedPolicy: Invalid principal</code> means an ARN
+in the <code>Principal</code> list does not exist: a wrong account ID,
+or a role name that differs from what IAM has
+(<code>aws iam list-roles --query 'Roles[].RoleName'</code> lists
+them).</p>
 </section><section><h2 class="section-heading" id="stage-wattbot-rag-episodes">3. Stage WattBot (RAG episodes)<a class="anchor" aria-label="anchor" href="#stage-wattbot-rag-episodes"></a></h2>
 <hr class="half-width"><p>Clone the lesson repository, build the corpus from the data it ships,
 and sync:</p>
@@ -513,7 +519,7 @@ and sync:</p>
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="fu">rm</span> <span class="at">-rf</span> /tmp/stage <span class="kw">&amp;&amp;</span> <span class="fu">mkdir</span> <span class="at">-p</span> /tmp/stage <span class="kw">&amp;&amp;</span> <span class="bu">cd</span> /tmp/stage</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a><span class="ex">pip</span> install <span class="at">-q</span> <span class="at">--user</span> pandas requests huggingface_hub</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a><span class="ex">pip</span> install <span class="at">-q</span> pandas requests huggingface_hub</span>
 <span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a><span class="fu">git</span> clone <span class="at">-q</span> <span class="at">--depth</span> 1 https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git lesson</span>
 <span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a><span class="fu">unzip</span> <span class="at">-q</span> <span class="at">-o</span> lesson/data/data.zip <span class="at">-d</span> data</span>
 <span id="cb4-5"><a href="#cb4-5" tabindex="-1" aria-label="code-block-4-5"></a><span class="fu">mkdir</span> <span class="at">-p</span> wattbot</span>
@@ -548,7 +554,8 @@ nothing larger than one zip is ever on disk.</p>
 from the bucket as a <code>model</code> channel, so that 100 jobs
 starting in the same minute copy it from S3 instead of each pulling 7.5
 GB from Hugging Face. This streams each file from Hugging Face straight
-into S3, nothing written to disk: about 7.5 GB, ten minutes or so.</p>
+into S3, nothing written to disk: about 7.5 GB, which took under two
+minutes from CloudShell.</p>
 <div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
