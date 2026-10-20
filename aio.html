@@ -536,11 +536,9 @@ generation, cost and control.</li>
 </div>
 </div>
 </div>
-<p>Amazon SageMaker is AWS’s managed platform for training, tuning and
-running machine learning models. You bring your own scripts and data;
-AWS provides the machines, the containers with common ML frameworks
-installed, and the bookkeeping. This episode compares it with the
-compute researchers usually already have.</p>
+<p>This episode compares cloud compute with the compute researchers
+usually already have, then introduces SageMaker, the AWS service this
+lesson is built on.</p>
 <div class="section level3">
 <h3 id="cloud-vs--the-cluster-down-the-hall">Cloud vs. the cluster down the hall<a class="anchor" aria-label="anchor" href="#cloud-vs--the-cluster-down-the-hall"></a>
 </h3>
@@ -560,15 +558,19 @@ air-cooled and cannot host them without a facility upgrade. Owned
 hardware costs the same busy or idle, so for GPUs that stay busy owning
 is cheaper, and for bursty research work renting is.</li>
 <li>
-<strong>Energy efficiency.</strong> Power usage effectiveness (PUE)
-is total facility power divided by IT power, so 1.0 is perfect. AWS
-reports a global average of 1.14 for 2025; the Uptime Institute’s 2025
-industry survey average is 1.54, and Amazon cites 1.63 for on-premises
-enterprise data centers. There is no comparable survey of university
-data centers, the cloud figures are self-reported, and PUE says nothing
-about whether the GPUs inside are busy. The direction is still clear: a
-hyperscale facility wastes less power on cooling and distribution than a
-typical campus machine room.</li>
+<strong>Energy efficiency tracks facility scale.</strong> Power
+usage effectiveness (PUE) is total facility power divided by IT power;
+1.0 is perfect. Hyperscale and flagship HPC facilities are in the same
+range: AWS reports a global average of <a href="https://aws.amazon.com/sustainability/" class="external-link">1.14 for 2025</a>, and a
+<a href="https://arxiv.org/html/2506.19019v1" class="external-link">2025 survey of US research
+HPC</a> puts TACC at about 1.15 and MGHPCC near 1.14. Smaller facilities
+do worse: the <a href="https://datacenter.uptimeinstitute.com/rs/711-RIA-145/images/2025.Annual.Survey.Report.pdf?version=0" class="external-link">Uptime
+Institute’s 2025 survey</a> puts enterprise and colocation data centers
+at 1.58-1.80, and a departmental server room is typically in that range
+or above. So the cloud is a large efficiency gain over a lab server, and
+roughly a wash against a campus HPC center. (Figures are self-reported,
+and PUE measures the building, not whether the GPUs in it are
+busy.)</li>
 <li>
 <strong>Control and data.</strong> On-prem gives full control over
 the software stack, no quotas, no egress charges, and data that never
@@ -579,15 +581,20 @@ a runtime cap.</li>
 </ul>
 </div>
 <div class="section level3">
+<h3 id="what-sagemaker-is">What SageMaker is<a class="anchor" aria-label="anchor" href="#what-sagemaker-is"></a>
+</h3>
+<p>Amazon SageMaker is AWS’s managed service for machine learning. It
+runs on the same instances as plain EC2, but adds a job model built for
+ML: you submit a script and an instance type, AWS provisions the machine
+with a framework container (PyTorch, scikit-learn, Hugging Face, …)
+installed, runs the script, saves the outputs to S3, and terminates the
+instance. Renting a bare EC2 GPU gets you the hardware; with SageMaker
+you do not install the frameworks, move the data by hand, or remember to
+shut the machine down.</p>
+</div>
+<div class="section level3">
 <h3 id="why-use-sagemaker-for-machine-learning">Why use SageMaker for machine learning?<a class="anchor" aria-label="anchor" href="#why-use-sagemaker-for-machine-learning"></a>
 </h3>
-<p>Renting a bare GPU instance from AWS (EC2) gets you the hardware
-above, but you still install the frameworks, move the data, and remember
-to shut the machine down. SageMaker wraps the same instances in a job
-model built for ML: you submit a script and an instance type, AWS
-provisions the machine with the framework container installed, runs the
-script, saves the outputs to S3, and terminates the instance. What that
-gives you:</p>
 <ul>
 <li><p><strong>High-performance compute only when needed</strong>:
 SageMaker lets you develop interactively in lightweight, inexpensive
@@ -2196,7 +2203,7 @@ prefixes instead of a new bucket per episode?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>One way to do it:</li>
@@ -2957,7 +2964,7 @@ potential issues early. <strong>In your group, discuss:</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Which checks do you think are most critical before scaling up?</p>
 <ul>
@@ -3075,7 +3082,7 @@ group.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li><p><strong>Data Preprocessing</strong>: The script fills missing
@@ -8358,7 +8365,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -8415,7 +8422,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still installing
