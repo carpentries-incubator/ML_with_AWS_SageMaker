@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420" font-family="Helvetica, Arial, sans-serif" font-size="14">
+  <rect width="960" height="420" fill="#ffffff"/>
+  <text x="480" y="28" text-anchor="middle" font-weight="bold" font-size="16">GPU memory per model parameter (bytes)</text>
+  <text x="480" y="48" text-anchor="middle" font-size="12" fill="#555">scale: 20 px per byte; activations not shown</text>
+
+  <!-- baseline -->
+  <line x1="60" y1="360" x2="920" y2="360" stroke="#888"/>
+
+  <!-- Inference FP8: 1 byte -->
+  <rect x="80" y="340" width="90" height="20" fill="#9ecae1" stroke="#444"/>
+  <text x="125" y="385" text-anchor="middle" font-size="12">Inference, FP8</text>
+  <text x="125" y="401" text-anchor="middle" font-weight="bold" font-size="12">1 byte</text>
+  <text x="125" y="330" text-anchor="middle" font-size="10">weights</text>
+
+  <!-- Inference bf16: 2 bytes -->
+  <rect x="230" y="320" width="90" height="40" fill="#9ecae1" stroke="#444"/>
+  <text x="275" y="385" text-anchor="middle" font-size="12">Inference, bf16</text>
+  <text x="275" y="401" text-anchor="middle" font-weight="bold" font-size="12">2 bytes</text>
+  <text x="275" y="310" text-anchor="middle" font-size="10">weights</text>
+
+  <!-- LoRA: ~2.5 bytes -->
+  <rect x="380" y="320" width="90" height="40" fill="#9ecae1" stroke="#444"/>
+  <rect x="380" y="310" width="90" height="10" fill="#fdae6b" stroke="#444"/>
+  <text x="425" y="385" text-anchor="middle" font-size="12">LoRA fine-tune</text>
+  <text x="425" y="401" text-anchor="middle" font-weight="bold" font-size="12">~2.5 bytes</text>
+  <text x="425" y="300" text-anchor="middle" font-size="10">frozen bf16 weights + small adapter</text>
+  <text x="425" y="288" text-anchor="middle" font-size="10">(its grads and optimizer state)</text>
+
+  <!-- Full fine-tune: 16 bytes -->
+  <rect x="560" y="320" width="90" height="40" fill="#9ecae1" stroke="#444"/>
+  <text x="605" y="344" text-anchor="middle" font-size="10">bf16 weights 2</text>
+  <rect x="560" y="280" width="90" height="40" fill="#fdae6b" stroke="#444"/>
+  <text x="605" y="304" text-anchor="middle" font-size="10">bf16 gradients 2</text>
+  <rect x="560" y="200" width="90" height="80" fill="#fd8d3c" stroke="#444"/>
+  <text x="605" y="244" text-anchor="middle" font-size="10">fp32 master weights 4</text>
+  <rect x="560" y="40" width="90" height="160" fill="#e6550d" stroke="#444"/>
+  <text x="605" y="115" text-anchor="middle" font-size="10" fill="#fff">Adam moments 8</text>
+  <text x="605" y="131" text-anchor="middle" font-size="10" fill="#fff">(fp32 x 2)</text>
+  <text x="605" y="385" text-anchor="middle" font-size="12">Full fine-tune, mixed precision</text>
+  <text x="605" y="401" text-anchor="middle" font-weight="bold" font-size="12">16 bytes</text>
+
+  <!-- side note -->
+  <text x="690" y="120" font-size="12" fill="#333">Training cannot run on quantized weights:</text>
+  <text x="690" y="138" font-size="12" fill="#333">gradient updates are tiny numbers that</text>
+  <text x="690" y="156" font-size="12" fill="#333">FP8 and 4-bit cannot represent, so the</text>
+  <text x="690" y="174" font-size="12" fill="#333">trainable copy stays in fp32/bf16.</text>
+  <text x="690" y="210" font-size="12" fill="#333">27B model x 1 byte = 27 GB: serves on</text>
+  <text x="690" y="228" font-size="12" fill="#333">one 48 GB GPU (ml.g6e.xlarge).</text>
+  <text x="690" y="246" font-size="12" fill="#333">27B x 16 bytes = 430 GB: a full fine-tune</text>
+  <text x="690" y="264" font-size="12" fill="#333">needs an 8-GPU node and sharding.</text>
+  <text x="690" y="300" font-size="12" fill="#333">Rule: multiply the bar by the parameter</text>
+  <text x="690" y="318" font-size="12" fill="#333">count, add room for activations, and</text>
+  <text x="690" y="336" font-size="12" fill="#333">compare with the instance's GPU memory.</text>
+</svg>
