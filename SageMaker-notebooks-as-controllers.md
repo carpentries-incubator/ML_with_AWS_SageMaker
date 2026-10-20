@@ -25,12 +25,11 @@ Amazon SageMaker provides a managed environment to simplify the process of build
 A **SageMaker notebook instance** is a virtual machine that AWS runs for you with JupyterLab already installed, a set of Python kernels that come with the AWS SDKs (`boto3` and the SageMaker Python SDK), and an IAM role attached that decides what the code running on it may do in your account. You create it from the console and open JupyterLab in a browser tab. It is billed per second while it is running and nothing while it is stopped, and the files you keep under `/home/ec2-user/SageMaker/` survive a stop.
 
 ### Why we work from a notebook instance in this lesson
-The SageMaker SDK runs anywhere Python does, so the lesson could be run from a laptop. We use a notebook instance for four reasons:
+The SageMaker SDK runs anywhere Python does, so the lesson could be run from a laptop. We use a notebook instance for three reasons:
 
 - **Identity comes from the instance, not from a file on your machine.** The IAM role attached to the notebook is what authorizes every call it makes. Nobody installs the AWS CLI, configures credentials, or has an access key that can end up in a notebook, a shell history or a GitHub commit.
 - **Everyone has the same environment.** The kernels, the SDK version and the paths are identical for every learner, so a cell that works for the instructor works for you.
-- **It is inside AWS.** Reading your S3 bucket from the instance is in-region, fast and free of transfer charges; the same reads from a laptop would be slower and billed as data leaving AWS.
-- **It is a billed resource like any other.** It has to be sized, tagged, started and stopped.
+- **It is inside AWS.** Transfer charges apply when data leaves AWS or crosses regions, not when it is read. Reading or even downloading your bucket's files onto the instance is in-region and free. A job launched from anywhere, laptop included, also reads its S3 inputs in-region for free; only data pulled to the laptop itself (a `read_csv` of an S3 path on your own machine) is billed as egress.
 
 ### Using the notebook as a controller
 In this setup, the notebook instance functions as a *controller* to manage more resource-intensive compute tasks. By selecting a minimal instance (e.g., `ml.t3.medium`: 2 vCPUs, 4 GB of memory, $0.05 per hour), you can perform lightweight operations while leveraging the **SageMaker Python SDK** to launch scalable compute instances for model training, batch processing, and hyperparameter tuning. Those instances start, run your script, write their results to S3, and shut themselves down. This approach minimizes costs while accessing the full power of SageMaker for demanding tasks.
@@ -49,7 +48,7 @@ We'll follow these steps to create our first "SageMaker notebook instance".
 #### 2. Create a new notebook instance
 - In the SageMaker left-side menu, click on **Notebook instances**, then click **Create notebook instance**.
 - **Notebook name**: the same words as your bucket, capitalised: `Challenge-LastnameFirstname`, e.g. `SinkOrSwim-DoeJohn`. One instance serves the whole workshop; the individual `.ipynb` notebooks inside it are where the per-episode work lives. SageMaker allows letters, digits and hyphens (no spaces or underscores, up to 63 characters); capitals are fine here and in tags, only bucket names must be lowercase. This name is also reused as the prefix of every training job you launch from the notebook, which is how you will find your jobs in a shared account.
-- **Instance type**: SageMaker notebooks run on AWS EC2 instances. The instance type determines the compute resources allocated to the notebook. Since our notebook will act as a **low-resource "controller"**, we'll select a small instance such as `ml.t3.medium` (2 vCPU, 4 GB RAM, $0.05/hour)  
+- **Instance type**: a SageMaker notebook instance is an EC2 virtual machine (the previous episode introduced these) with JupyterLab preinstalled, and the instance type sets its CPU, memory and price. Since our notebook will act as a **low-resource "controller"**, we'll select a small instance such as `ml.t3.medium` (2 vCPU, 4 GB RAM, $0.05/hour)  
   - This keeps costs low while allowing us to launch separate training/tuning jobs on more powerful instances when needed.  
   - For guidance on common instances for ML procedures, refer to our supplemental [Instances for ML webpage](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html).  
 - **Platform identifier**: This is an internal AWS setting related to the environment version and underlying platform. You can leave this as the default.
