@@ -23,6 +23,7 @@ exercises: 75
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/09_Finetuning-BadgerScribe.ipynb`. Select the **`conda_pytorch`** kernel (`conda_pytorch_p310` on older instances).
 ## Why a fine-tuning episode
 
 The training episodes so far trained small models from scratch on a few hundred rows. Fine-tuning starts from a large pretrained model and changes its weights, and that puts it in a different class of workload:

@@ -20,6 +20,8 @@ exercises: 10
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/04_Accessing-S3-via-SageMaker-notebooks.ipynb`. Select the **`conda_python3`** kernel (the same one you used in the last episode).
+
 #### Set up AWS environment
 To begin each notebook, it's important to set up an AWS environment that will allow seamless access to the necessary cloud resources. Here's what we'll do to get started:
 
@@ -45,11 +47,11 @@ print(f"AWS Region: {session.boto_region_name}")  # The region of the notebook i
 
 ::::::::::::::::::::::::::::::::::::: callout
 
-### Two messages this cell prints
+### Warnings this cell prints
 
-`sagemaker.config INFO - Not applying SDK defaults from location: ...`: the SDK looked for an optional defaults file in two standard places and found none. Nothing is wrong.
+`sagemaker.config INFO - Not applying SDK defaults from location: ...`: an info line, not an error. The SDK looked for an optional defaults file in two standard places and found none.
 
-`SageMakerV2DeprecationWarning: You are using the SageMaker Python SDK v2 ... v3 is the actively developed major version`: the notebook kernels ship version 2 of the SageMaker Python SDK, and this lesson is written for it (`Estimator`, `HuggingFace`, `HyperparameterTuner`). Version 3 is a rewrite with a different API, so do not `pip install` it into these kernels. The v2 API keeps working; for a project of your own, read the [migration guide](https://github.com/aws/sagemaker-python-sdk/blob/master/migration.md) and pick a version. You will see this warning once per kernel; ignore it.
+`SageMakerV2DeprecationWarning: You are using the SageMaker Python SDK v2 ...`: the kernels ship SDK v2 and this lesson is written for it. v3 is a rewrite with a different API, so do not install it here. Ignore the warning.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 

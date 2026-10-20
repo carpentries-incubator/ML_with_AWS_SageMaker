@@ -105,6 +105,8 @@ For this episode you need a notebook instance with a GPU that can hold the FP8 2
 - **Volume size:** `100` GB (the default of 5 GB will not fit the weights or the vLLM install). This volume bills at `$0.14` per GB-month even while the instance is stopped.
 - **Tags:** the same `Project`, `Name`, `Purpose` keys as every other resource; `Purpose` is `Notebook`.
 
+Once it is `InService`, open JupyterLab, clone the lesson repository as in the controller-notebook episode (this is a new instance, so it has no copy yet), and open `/ML_with_AWS_SageMaker/notebooks/13_RAG-GPU-notebook.ipynb`. Select the **`conda_pytorch`** kernel (`conda_pytorch_p310` on older instances); it is the one with PyTorch and CUDA.
+
 See [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for further guidance. This instance bills by the hour from the moment it starts, whether or not it is doing anything: **stop it when you leave**, and **delete it** when the episode is over.
 
 We reuse the same two buckets as the Bedrock episode: the shared bucket for `metadata.csv` and `train_QA.csv`, and your own bucket for the `wattbot/chunks.jsonl` you cached there. If you skipped that episode, go back and run its chunking step first. Your notebook instance carries the tags you gave it when you created it and your bucket carries its own tags, so in this episode those two resources are the only things being billed.

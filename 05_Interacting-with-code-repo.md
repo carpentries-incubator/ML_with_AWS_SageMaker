@@ -21,7 +21,7 @@ exercises: 10
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## Open prefilled .ipynb notebook
-Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/05_Interacting-with-code-repo.ipynb`.
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/05_Interacting-with-code-repo.ipynb`. Select the **`conda_python3`** kernel.
 
 This episode is **optional self-study**: it is not needed to run the rest of the lesson, but it is the workflow you will want once you start writing code of your own in SageMaker. It also doubles as a short git refresher. You need a GitHub account for it; nothing else in the lesson does.
 

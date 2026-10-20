@@ -22,6 +22,7 @@ exercises: 20
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/11_RAG-Bedrock.ipynb`. Select the **`conda_pytorch`** kernel (`conda_pytorch_p310` on older instances).
 This is the first hands-on RAG episode, and it starts where the overview told you to start: **Amazon Bedrock**. We build a complete RAG pipeline for the [WattBot 2025](https://www.kaggle.com/competitions/WattBot2025/overview) challenge from a small, CPU-only SageMaker notebook. Nothing in this episode needs a GPU: the core model work — **both text embeddings and answer generation** — runs on Bedrock-hosted models that bill per token and leave nothing running between calls. We'll use:
 
 - an **Amazon Titan Text Embeddings V2** model to turn WattBot chunks into vectors, and  

@@ -22,7 +22,7 @@ exercises: 20
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/12_RAG-Processing-jobs.ipynb`. Select the **`conda_pytorch`** kernel (`conda_pytorch_p310` on older instances).
 ## When Bedrock does not have your model
 
 The Bedrock episode is the default for RAG: per-token billing, nothing left running, two API calls. Bedrock's catalog is curated, though. It carries Amazon's models, Anthropic, Meta, Mistral, DeepSeek, and a few others, and within a family only some sizes, usually a generation behind: for Qwen, the serverless lineup is still the Qwen3 series. Hugging Face hosts well over a million open-weight checkpoints. The one you want (the newest release, a specific size, a fine-tune for scientific text, a model a paper just published) is usually not on Bedrock, and often never will be.
