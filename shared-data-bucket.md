@@ -26,23 +26,23 @@ Learners set `shared_bucket = "<this bucket's name>"` in the first cell of the R
 
 Everything below runs in **CloudShell** (console toolbar, with the region set to the class region), where you act as your own SSO identity. It cannot be done from a notebook instance: the learner execution role there can create a bucket but is refused on tagging, the bucket policy and every upload, because the policy in step 2 deliberately gives it read-only access.
 
-Paste the blocks in order in one CloudShell tab, so the variables set in step 1 are still there for the later steps. CloudShell's home directory is 1 GB, which is why the data steps work one asset at a time under `/tmp` and the model is streamed rather than downloaded. The whole thing takes about half an hour, most of it the model copy.
+Paste the blocks in order in one CloudShell tab, so the variables set in step 1 are still there for the later steps. CloudShell's home directory is 1 GB, which is why the data steps work one asset at a time under `/tmp` and the model is streamed rather than downloaded. The whole thing takes about ten minutes; a run on 2026-10-20 ended with 461 objects and 7.7 GB in the bucket.
 
 ## 1. Create the bucket
 
-Same naming rules as the S3 episode, in the class region, with the three cost-allocation tags, and all public access blocked. Fill in your account ID first; it is used again in step 2.
+Same naming rules as the S3 episode, in the class region, with the three cost-allocation tags, and all public access blocked. The account ID is read from your identity; the `echo` line is there so you can check it is the class account before anything is created.
 
 ```bash
 BUCKET=ml-marathon-shared
 REGION=us-east-2
-ACCOUNT_ID=123456789012
-aws sts get-caller-identity
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+echo $ACCOUNT_ID
 aws s3api create-bucket --bucket $BUCKET --region $REGION --create-bucket-configuration LocationConstraint=$REGION
 aws s3api put-bucket-tagging --bucket $BUCKET --tagging 'TagSet=[{Key=Project,Value=Workshop},{Key=Name,Value=Everyone},{Key=Purpose,Value=Storage}]'
 aws s3api put-public-access-block --bucket $BUCKET --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
 ```
 
-If the bucket already exists (created in the console, or left from last term), skip the `create-bucket` line; the other two are safe to re-run.
+If the bucket already exists (created in the console, or left from last term), `create-bucket` reports `BucketAlreadyOwnedByYou` and nothing else changes; the other two lines are safe to re-run.
 
 ## 2. Make it readable by the learner roles
 
@@ -71,7 +71,7 @@ aws s3api put-bucket-policy --bucket $BUCKET --policy file:///tmp/policy.json
 aws s3api get-bucket-policy --bucket $BUCKET --output text
 ```
 
-The same JSON can be pasted into the console instead (bucket → Permissions → Bucket policy), with the account ID and bucket name written in.
+The same JSON can be pasted into the console instead (bucket → Permissions → Bucket policy), with the account ID and bucket name written in. `MalformedPolicy: Invalid principal` means an ARN in the `Principal` list does not exist: a wrong account ID, or a role name that differs from what IAM has (`aws iam list-roles --query 'Roles[].RoleName'` lists them).
 
 ## 3. Stage WattBot (RAG episodes)
 
@@ -79,7 +79,7 @@ Clone the lesson repository, build the corpus from the data it ships, and sync:
 
 ```bash
 rm -rf /tmp/stage && mkdir -p /tmp/stage && cd /tmp/stage
-pip install -q --user pandas requests huggingface_hub
+pip install -q pandas requests huggingface_hub
 git clone -q --depth 1 https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git lesson
 unzip -q -o lesson/data/data.zip -d data
 mkdir -p wattbot
@@ -108,7 +108,7 @@ done
 
 ## 5. Stage the CHURRO-3B weights (fine-tuning episode)
 
-Every training and processing job in the episode reads the base model from the bucket as a `model` channel, so that 100 jobs starting in the same minute copy it from S3 instead of each pulling 7.5 GB from Hugging Face. This streams each file from Hugging Face straight into S3, nothing written to disk: about 7.5 GB, ten minutes or so.
+Every training and processing job in the episode reads the base model from the bucket as a `model` channel, so that 100 jobs starting in the same minute copy it from S3 instead of each pulling 7.5 GB from Hugging Face. This streams each file from Hugging Face straight into S3, nothing written to disk: about 7.5 GB, which took under two minutes from CloudShell.
 
 ```bash
 python3 - <<EOF
