@@ -84,24 +84,44 @@ In order to upload our titanic dataset to an S3 bucket on AWS, we'll follow the 
 - Select **S3 - Scalable Storage in the Cloud**
 
 ##### 3. Create a new bucket
-- **AWS Region**: the region your instructor named (the same one your SageMaker notebook will use; in the workshop account it is US East (Ohio), `us-east-2`). SageMaker jobs can only read buckets in their own region, so a bucket created in another region shows up later as "access denied" or "no such bucket" errors from your jobs.
-- Click **Create Bucket** and enter a unique name, and note that bucket name must not contain uppercase characters. To easily find this bucket later in our shared AWS account, please use the following naming convention: `challenge-lastnamefirstname`, all lowercase, e.g. `sinkorswim-doejohn`: the challenge you are working on (`wattbot2026`, `badgerscribe`, `badgercode`, ...), a hyphen, then your last and first name run together. The same lowercase string is what we will use for your notebook instance and your `Project` tag. **This is the only bucket you will create in the workshop.** Every later episode writes its outputs (trained models, embeddings, predictions) into this same bucket under its own prefix, such as `xgboost/`, `wattbot/` or `badger-scribe/`.
-- **Access Control (ACLs)**: Disable ACLs (recommended).  
-	- **What are ACLs?** Access Control Lists (ACLs) define fine-grained permissions at the object level, allowing you to grant specific users or AWS accounts access to individual files in your bucket.  
-	- **Why disable them?** AWS now recommends managing access through bucket policies and IAM roles, which offer better security and are easier to manage at scale. Unless you have a specific need for ACLs, disabling them is the best practice.
-- **Public Access**: Turn on "Block all public access" (recommended). This setting prevents unauthorized access and accidental data exposure. If you need external access, use IAM policies or signed URLs instead.
-- **Versioning**: Disable unless you need multiple versions of objects (unnecessary for ML Marathon). Enable only if needed, as versioning increases storage costs. Useful when tracking changes to datasets over time but unnecessary for static datasets.  
-- **Tags (NOT OPTIONAL)**: Adding tags to your S3 buckets is a great way to track project-specific costs and usage over time, especially as data and resources scale up. To easily track costs associated with your bucket in our shared AWS account, add the following three keys (spelled exactly; they are the account's approved cost-allocation keys, see [KB 72454](https://kb.wisc.edu/72454)). You will put the same three keys on every resource you create in this workshop, starting with this bucket:
-	- **Project**: your challenge name, e.g. `sinkorswim`
-	- **Name**: yourname
-  	- **Purpose**: Bucket-titanic
+Click **Create bucket**. The form has the sections below; most defaults are right. Change only what is listed.
 
-  Tag values are case-sensitive on the bill: `SinkOrSwim` and `sinkorswim` would be two separate rows in Cost Explorer. Use the same lowercase challenge name you put in the bucket name.
+**General configuration**
+
+- **AWS Region**: the region your instructor named (in the workshop account, US East (Ohio), `us-east-2`). This must be the same region your notebook instance and jobs run in.
+- **Bucket type**: General purpose (the default).
+- **Bucket namespace**: **Global namespace**. The console recommends the account Regional namespace, but that appends your account ID, region and `-an` to every bucket name, which would turn `sinkorswim-doejohn` into `sinkorswim-doejohn-123456789012-us-east-2-an` everywhere in the lesson. Global keeps the name as you type it.
+- **Bucket name**: `challenge-lastnamefirstname`, all lowercase, e.g. `sinkorswim-doejohn`: the challenge you are working on (`sinkorswim`, `wattbot2026`, `badgerscribe`, `badgercode`, ...), a hyphen, then your last and first name run together. S3 requires lowercase letters, digits and hyphens only, 3 to 63 characters, starting and ending with a letter or digit. The same lowercase string is what we will use for your notebook instance and your `Project` tag. **This is the only bucket you will create in the workshop.** Every later episode writes its outputs (trained models, embeddings, predictions) into this same bucket under its own prefix, such as `xgboost/`, `wattbot/` or `badger-scribe/`.
+
+::::::::::::::::::::::::::::::::::::: callout
+
+### Wrong region costs money and breaks jobs
+
+A SageMaker training or processing job reads only from buckets in its own region; a bucket created elsewhere shows up later as "no such bucket" or "access denied" from the job. Reading data across regions from a notebook does work, but every byte is billed as inter-region transfer (about $0.01-0.02 per GB each way), and a model that reads its training set every epoch pays that on every pass. Check the region before you click Create; it cannot be changed afterwards.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+**Object Ownership**: leave **ACLs disabled** (the default). Access is managed through the bucket policy you add in the next step and through IAM roles, which is what AWS recommends.
+
+**Block Public Access settings for this bucket**: leave **Block all public access** on (the default). Nothing in this lesson needs public access; if you ever do, use a policy or a signed URL instead of opening the bucket.
+
+**Bucket Versioning**: leave **Disable** (the default). Versioning keeps every overwritten copy and raises storage costs; it is useful for datasets that change over time, not for this workshop.
+
+**Tags (NOT OPTIONAL)**: tags are how the bill is broken down by project, person and purpose; this is the one section you must fill in. Add the following three keys, spelled exactly (they are the account's approved cost-allocation keys, see [KB 72454](https://kb.wisc.edu/72454)). You will put the same three keys on every resource you create in this lesson.
+
+- **Project**: your challenge name, e.g. `sinkorswim`
+- **Name**: your name, e.g. `John Doe`
+- **Purpose**: `Bucket-titanic`
+
+Tag values are case-sensitive on the bill: `SinkOrSwim` and `sinkorswim` would be two separate rows in Cost Explorer. Use the same lowercase challenge name you put in the bucket name.
 
 ![Example of Tags for an S3 Bucket](fig/bucket_tags2.png){alt="Screenshot showing required tags for an S3 bucket"}
 
-- Click **Create Bucket** at the bottom once everything above has been configured
+**Default encryption**: leave SSE-S3 (the default). Objects are encrypted at rest with keys S3 manages; KMS keys only matter when you need to control the keys yourself.
 
+**Advanced settings**: leave closed.
+
+Click **Create bucket** at the bottom.
 
 ##### 4. Edit bucket policy
 Once the bucket is created, you'll be brought to a page that shows all of your current buckets (and those on our shared account). We'll have to edit our bucket's policy to allow ourselves proper access to any files stored there (e.g., read from bucket, write to bucket). To set these permissions...
