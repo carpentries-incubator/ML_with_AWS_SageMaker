@@ -469,7 +469,33 @@ such as <code>ml.t3.medium</code>, may be eligible for the AWS Free
 Tier, which provides limited hours of usage per month. Free Tier
 eligibility can vary, so check <a href="https://aws.amazon.com/free/" class="external-link">AWS Free Tier details</a> before
 launching instances to avoid unexpected costs.</li>
-</ul><table class="table"><colgroup><col width="9%"><col width="15%"><col width="15%"><col width="5%"><col width="9%"><col width="4%"><col width="13%"><col width="27%"></colgroup><thead><tr><th align="right"><strong>Dataset Size</strong></th>
+</ul></div>
+<div class="section level4">
+<h4 id="how-to-read-an-instance-name-and-what-the-price-covers">How to read an instance name, and what the price covers<a class="anchor" aria-label="anchor" href="#how-to-read-an-instance-name-and-what-the-price-covers"></a></h4>
+<p>An instance is a fixed box: <code>ml.</code> + family + generation +
+size. The family letter says what the box is built around
+(<code>t</code> and <code>m</code> general CPU, <code>c</code>
+compute-optimised CPU, <code>g</code> one or a few GPUs, <code>p</code>
+the multi-GPU data-centre boxes); the number is the generation
+(<code>g5</code> is newer than <code>g4dn</code>); a trailing letter is
+a variant (<code>g4dn</code> adds NVMe disks, <code>g6e</code> is the
+L40S version of <code>g6</code>); and the size (<code>xlarge</code>,
+<code>2xlarge</code>, … <code>48xlarge</code>) scales vCPUs, RAM, and on
+GPU families the number of GPUs together. You cannot rent half a box or
+add a GPU to one.</p>
+<p><strong>The hourly price is for the whole box, not per GPU.</strong>
+An <code>ml.p5.48xlarge</code> is eight H100s for <code>$63.30</code> an
+hour, about <code>$7.90</code> per H100-hour; an
+<code>ml.p4d.24xlarge</code> is eight A100s for <code>$25.25</code>,
+about <code>$3.15</code> per A100-hour; an <code>ml.g5.xlarge</code> is
+one A10G for <code>$1.41</code>. To turn an estimate into a bill:</p>
+<pre class="text"><code>instance-hours = GPU-hours ÷ GPUs per box
+bill           = instance-hours × price per instance-hour</code></pre>
+<p>So “32 H100s for 25 hours” is 800 GPU-hours, which is four
+<code>ml.p5.48xlarge</code> for 25 hours, 100 instance-hours, about
+<code>$6,330</code>. The same 800 GPU-hours on one box would take 100
+hours of wall-clock time and cost the same.</p>
+<table class="table"><colgroup><col width="9%"><col width="15%"><col width="15%"><col width="5%"><col width="9%"><col width="4%"><col width="13%"><col width="27%"></colgroup><thead><tr><th align="right"><strong>Dataset Size</strong></th>
 <th><strong>Max Model Size (Approx.)</strong></th>
 <th><strong>Recommended Instance</strong></th>
 <th><strong>vCPU</strong></th>

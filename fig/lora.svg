@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" font-family="Helvetica, Arial, sans-serif" font-size="18">
+  <rect width="1200" height="520" fill="#ffffff"/>
+  <text x="600" y="36" text-anchor="middle" font-weight="bold" font-size="22">One weight matrix in one layer: full fine-tuning vs. LoRA</text>
+
+  <!-- legend -->
+  <rect x="400" y="56" width="22" height="22" fill="#fdae6b" stroke="#444"/>
+  <text x="430" y="73" font-size="16">trained (16 bytes per weight)</text>
+  <rect x="690" y="56" width="22" height="22" fill="#9ecae1" stroke="#444"/>
+  <text x="720" y="73" font-size="16">frozen (2 bytes per weight)</text>
+
+  <!-- LEFT PANEL -->
+  <text x="235" y="120" text-anchor="middle" font-weight="bold" font-size="20">Full fine-tuning</text>
+  <rect x="115" y="140" width="240" height="240" fill="#fdae6b" stroke="#444" stroke-width="1.5"/>
+  <text x="235" y="252" text-anchor="middle" font-weight="bold" font-size="40">W</text>
+  <text x="235" y="290" text-anchor="middle" font-size="16">d × d</text>
+  <text x="235" y="312" text-anchor="middle" font-size="16">all 4.2 M weights updated</text>
+  <text x="100" y="266" text-anchor="end" font-size="16">d</text>
+  <text x="235" y="404" text-anchor="middle" font-size="16">d</text>
+  <text x="235" y="450" text-anchor="middle" font-size="18" font-weight="bold">67 MB of training state</text>
+  <text x="235" y="476" text-anchor="middle" font-size="16" fill="#333">weights + gradients + fp32 copies + optimizer</text>
+  <text x="235" y="500" text-anchor="middle" font-size="16" fill="#333">whole 3B model: 48 GB</text>
+
+  <!-- divider -->
+  <line x1="470" y1="100" x2="470" y2="510" stroke="#bbb" stroke-dasharray="6 6"/>
+
+  <!-- RIGHT PANEL -->
+  <text x="840" y="120" text-anchor="middle" font-weight="bold" font-size="20">LoRA</text>
+  <rect x="520" y="140" width="240" height="240" fill="#9ecae1" stroke="#444" stroke-width="1.5"/>
+  <text x="640" y="252" text-anchor="middle" font-weight="bold" font-size="40">W</text>
+  <text x="640" y="290" text-anchor="middle" font-size="16">d × d, frozen</text>
+  <text x="640" y="312" text-anchor="middle" font-size="16">no gradients, no optimizer</text>
+  <text x="640" y="404" text-anchor="middle" font-size="16">d</text>
+
+  <text x="792" y="268" text-anchor="middle" font-size="34" font-weight="bold">+</text>
+
+  <!-- B: d x r, tall and thin -->
+  <rect x="822" y="140" width="28" height="240" fill="#fdae6b" stroke="#444" stroke-width="1.5"/>
+  <text x="836" y="266" text-anchor="middle" font-weight="bold" font-size="22">B</text>
+  <text x="836" y="404" text-anchor="middle" font-size="16">d × r</text>
+
+  <text x="878" y="268" text-anchor="middle" font-size="30" font-weight="bold">·</text>
+
+  <!-- A: r x d, short and wide -->
+  <rect x="905" y="246" width="240" height="28" fill="#fdae6b" stroke="#444" stroke-width="1.5"/>
+  <text x="1025" y="267" text-anchor="middle" font-weight="bold" font-size="22">A</text>
+  <text x="1025" y="300" text-anchor="middle" font-size="16">r × d</text>
+  <text x="1025" y="404" text-anchor="middle" font-size="16">d</text>
+
+  <text x="840" y="450" text-anchor="middle" font-size="18" font-weight="bold">1 MB of training state</text>
+  <text x="840" y="476" text-anchor="middle" font-size="16" fill="#333">only A and B train: 65 k weights, 1.6 % of W</text>
+  <text x="840" y="500" text-anchor="middle" font-size="16" fill="#333">whole 3B model: about 8 GB, fits one 24 GB GPU</text>
+
+  <text x="1025" y="340" text-anchor="middle" font-size="13" fill="#555">d = 2048, r = 16; A and B drawn thicker than scale</text>
+</svg>
