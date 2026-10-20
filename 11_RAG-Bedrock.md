@@ -118,6 +118,7 @@ import pandas as pd
 import numpy as np
 
 # ---- AWS configuration ----
+os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the kernel ships SDK v2; the Accessing S3 episode explains
 import sagemaker
 
 session = sagemaker.Session()
@@ -163,8 +164,7 @@ bedrock = boto3.client("bedrock", region_name=region)                  # manage 
 The retrieval, prompting, answer parsing and scoring logic of the WattBot pipeline is the same whether the models run on Bedrock, in a Processing job or on a notebook GPU. It lives once in the lesson repository, in `scripts/wattbot_rag.py`, and every RAG episode imports it; the only code that differs per episode is the two model calls. Clone the repository and copy the module next to this notebook (the Processing Jobs episode ships the same file inside its jobs).
 
 ```python
-!test -d ML_with_AWS_SageMaker || git clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git
-!cp ML_with_AWS_SageMaker/scripts/wattbot_rag.py .
+!cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/wattbot_rag.py .
 ```
 
 ```python

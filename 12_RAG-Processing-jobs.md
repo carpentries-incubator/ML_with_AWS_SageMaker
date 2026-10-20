@@ -68,10 +68,6 @@ In this episode we will:
 
 Jobs run in containers, so the code they execute has to be shipped with the job: a Processing job cannot import functions defined in this notebook. The lesson repository has the three files we need as standalone scripts. Clone it:
 
-```python
-!test -d ML_with_AWS_SageMaker || git clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git
-```
-
 - `scripts/embedding_inference.py`: generic embedding script (JSONL with a `text` field in, `embeddings.npy` out).
 - `scripts/wattbot_rag_batch.py`: the WattBot RAG loop as a batch job: loads the inputs, serves Qwen with vLLM, writes `wattbot_solutions.csv`.
 - `scripts/wattbot_rag.py`: the shared pipeline logic (retrieval, prompts, answer parsing, `run_single_qa`, the scorer) that the Bedrock episode imported too. The batch script imports it, so it ships with the job; the notebook imports it for scoring.
@@ -80,9 +76,9 @@ Each job gets its own source directory, because the two jobs need different Pyth
 
 ```python
 !mkdir -p code_embed code_rag
-!cp ML_with_AWS_SageMaker/scripts/embedding_inference.py code_embed/
-!cp ML_with_AWS_SageMaker/scripts/wattbot_rag_batch.py ML_with_AWS_SageMaker/scripts/wattbot_rag.py code_rag/
-!cp ML_with_AWS_SageMaker/scripts/wattbot_rag.py .
+!cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/embedding_inference.py code_embed/
+!cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/wattbot_rag_batch.py /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/wattbot_rag.py code_rag/
+!cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/wattbot_rag.py .
 !ls code_embed code_rag
 ```
 
@@ -95,6 +91,7 @@ import json
 import boto3
 import numpy as np
 import pandas as pd
+os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the kernel ships SDK v2; the Accessing S3 episode explains
 import sagemaker
 from sagemaker import get_execution_role
 from sagemaker.huggingface import HuggingFaceProcessor

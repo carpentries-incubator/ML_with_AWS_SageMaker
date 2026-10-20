@@ -54,7 +54,6 @@ Just to make sure we are all on the same directory starting point, let's cd to o
 
 ```python
 %cd /home/ec2-user/SageMaker/
-!test -d ML_with_AWS_SageMaker || git clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git
 import sys
 sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
 import helpers
@@ -102,6 +101,8 @@ job_tags = [
 Next, we'll configure the baseline estimator that we plan to do hyperparameter search on.
 
 ```python
+import os
+os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the kernel ships SDK v2; the Accessing S3 episode explains
 import sagemaker
 from sagemaker.tuner import HyperparameterTuner, IntegerParameter, ContinuousParameter, CategoricalParameter
 from sagemaker.pytorch import PyTorch
@@ -113,6 +114,8 @@ role = get_execution_role()
 bucket_name = 'sinkorswim-doejohn'  # replace with your S3 bucket name
 session = sagemaker.Session()
 s3 = boto3.client('s3')
+print("Role:", role)
+print("Region:", session.boto_region_name)
 
 # Define instance type/count we'll use for training
 instance_type="ml.m5.large"
