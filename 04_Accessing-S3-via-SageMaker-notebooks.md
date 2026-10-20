@@ -98,7 +98,7 @@ train_data.head()
 ```
 
 ### B) Download copy into notebook environment
-In some cases, downloading a local copy of the dataset may be useful, such as when performing repeated reads in an interactive notebook session.
+In some cases, downloading a local copy of the dataset may be useful, such as when performing repeated reads in an interactive notebook session. This download costs nothing: it moves data from S3 to an instance in the same region, which AWS does not bill. The same `download_file` run on your laptop would be a transfer out of AWS at $0.09 per GB.
 
 **Pros**:
 
