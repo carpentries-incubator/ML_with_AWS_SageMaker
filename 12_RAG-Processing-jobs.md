@@ -401,7 +401,7 @@ results_df = compute_wattbot_score(
     preds_path=local_solutions_path,
     gt_is_na_col="is_blank",
     pred_is_na_col="is_blank",
-    n_examples=10,   # print the 10 worst-scoring rows
+    n_examples=10,
 )
 ```
 

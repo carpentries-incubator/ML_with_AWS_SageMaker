@@ -117,7 +117,7 @@ We want our notebook under version control, but a `.ipynb` file is JSON with out
 import subprocess
 import os
 
-notebooks = [f for f in os.listdir() if f.endswith('.ipynb')]  # every notebook in the current directory
+notebooks = [f for f in os.listdir() if f.endswith('.ipynb')]
 for notebook in notebooks:
     output_file = notebook.replace('.ipynb', '.py')
     subprocess.run(["jupytext", "--to", "py", notebook, "--output", output_file])  # the same shell command, run from Python
@@ -177,7 +177,6 @@ with open(".gitignore", "a") as gitignore:   # "a" appends, so re-running the ce
 
 ```python
 with open(".gitignore", "a") as gitignore:
-    # a trailing slash matches a whole directory; *.tmp and *.log match by extension
     gitignore.write("\n# Cache and temp files\n__pycache__/\n*.tmp\n*.log\n")
 !cat .gitignore
 ```

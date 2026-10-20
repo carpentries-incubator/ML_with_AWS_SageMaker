@@ -22,7 +22,7 @@ exercises: 15
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## Initial setup: open prefilled .ipynb notebook
-Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/08_Hyperparameter-tuning.ipynb`. Select the **`conda_pytorch_p310`** kernel.
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/08_Hyperparameter-tuning.ipynb`. Select the **`conda_pytorch`** kernel (`conda_pytorch_p310` on older instances).
 
 ## Hyperparameter tuning in SageMaker
 To conduct efficient hyperparameter tuning with neural networks (or any model) in SageMaker, we'll leverage SageMaker's **hyperparameter tuning jobs** while carefully managing parameter ranges and model count. Here's an overview of the process, with a focus on both efficiency and cost-effectiveness.
@@ -53,7 +53,7 @@ By managing these settings and configuring metrics properly, you can achieve a b
 Just to make sure we are all on the same directory starting point, let's cd to our instance's root directory
 
 ```python
-%cd /home/ec2-user/SageMaker/
+%cd /home/ec2-user/SageMaker/   # work from the instance root: the %run, source_dir and download paths below are relative to it
 import sys
 sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
 import helpers
@@ -390,7 +390,7 @@ local_model_path = "best_model.tar.gz"
 model_bucket, model_key = best_model_s3_uri.split('/')[2], '/'.join(best_model_s3_uri.split('/')[3:])  # s3://bucket/key -> bucket, key
 s3.download_file(model_bucket, model_key, local_model_path)
 
-# Extract the model files from the tar.gz archive (nn_model.pth lands in the current directory)
+# Extract the model files from the tar.gz archive
 with tarfile.open(local_model_path, 'r:gz') as tar:
     tar.extractall()
 print("Best model downloaded and extracted.")
@@ -400,6 +400,10 @@ print("Best model downloaded and extracted.")
 In our previous episode, we converted our train dataset into train/validate subsets, and saved them out as .npz files for efficient processing. We'll need to preprocess our test data the same way to evaluate it on our model. 
 
 **Note**: It's always a good idea to keep preprocessing code as a function so you can apply the same exact procedure across datasets with ease. We'll import our preprocessing function from `train_nn.py`, and pass it the scaler that was fit on the training data (saved as `scaler.joblib` in the previous episode). Calling `preprocess_data(test_df)` without the scaler would fit a new one on the test set and transform the features differently from what the model saw in training.
+
+```python
+!pip install scikit-learn   # train_nn.py imports it; not in the notebook kernels
+```
 
 ```python
 import pandas as pd
@@ -429,7 +433,7 @@ import torch
 
 # Load the model (saved as 'nn_model.pth' by train_nn.py)
 model = TitanicNet()
-model.load_state_dict(torch.load("nn_model.pth", map_location="cpu"))  # map_location: load onto this CPU notebook whatever device trained it
+model.load_state_dict(torch.load("nn_model.pth", map_location="cpu"))
 model.eval()
 
 # Load test data
@@ -438,7 +442,7 @@ X_test = torch.tensor(test_data['X_test'], dtype=torch.float32)
 y_test = torch.tensor(test_data['y_test'], dtype=torch.float32).unsqueeze(1)
 
 # Evaluate the model on the test set
-with torch.no_grad():  # no gradients needed for evaluation
+with torch.no_grad():
     predictions = model(X_test)
     accuracy = calculate_accuracy(predictions, y_test)
     print(f"Test Accuracy: {accuracy:.4f}")

@@ -345,7 +345,7 @@ def embed_texts(embedder, docs, batch_size: int = 32) -> np.ndarray:
     all_embeddings = []
     start = time.time()
     for i in range(0, len(texts), batch_size):
-        batch = texts[i : i + batch_size]   # batches keep the GPU busy without running out of memory
+        batch = texts[i : i + batch_size]
         emb = embedder.encode(
             batch,
             convert_to_numpy=True,
@@ -487,14 +487,14 @@ def call_qwen_chat(system_prompt: str, user_prompt: str, max_new_tokens: int = 3
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_prompt},
     ]
-    params = SamplingParams(temperature=0.0, max_tokens=max_new_tokens)   # repeatable output, capped length
+    params = SamplingParams(temperature=0.0, max_tokens=max_new_tokens)
     outputs = llm.chat(
         messages,
         sampling_params=params,
         chat_template_kwargs={"enable_thinking": False},   # answer directly; no reasoning trace
         use_tqdm=False,
     )
-    return outputs[0].outputs[0].text.strip()   # one prompt in, one completion out
+    return outputs[0].outputs[0].text.strip()
 
 print("Generator model and helper loaded.")
 
@@ -597,7 +597,7 @@ results_df = compute_wattbot_score(
     preds_path=solutions_path,
     gt_is_na_col="is_blank",
     pred_is_na_col="is_blank",
-    n_examples=10,   # print the 10 worst-scoring rows
+    n_examples=10,
 )
 ```
 

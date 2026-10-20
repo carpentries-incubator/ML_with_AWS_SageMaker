@@ -293,7 +293,7 @@ print("Role:", role)
 for fname in ["train.csv", "test.csv", "metadata.csv", "metric.py"]:
     s3_client.download_file(shared_bucket, f"{data_prefix}/{fname}", os.path.join(local_data_dir, fname))
 
-train_df = pd.read_csv(os.path.join(local_data_dir, "train.csv"), keep_default_na=False)  # keep empty text as "" rather than NaN
+train_df = pd.read_csv(os.path.join(local_data_dir, "train.csv"), keep_default_na=False)
 test_df = pd.read_csv(os.path.join(local_data_dir, "test.csv"), keep_default_na=False)
 
 print("train pages:", len(train_df), " test pages:", len(test_df))
@@ -403,10 +403,10 @@ estimator = HuggingFace(
     hyperparameters={                     # passed to the script as command-line flags: --epochs 2 --lr 0.0002 ...
         # no model_id: the script reads the base weights from the "model" channel mounted at fit()
         "max_train_pages": 120,           # a slice in class; the homework uses all 251 training pages
-        "epochs": 2,                      # passes over the pages; training time scales linearly with it
+        "epochs": 2,
         "lr": 2e-4,                       # LoRA takes a higher learning rate than a full fine-tune (~1e-5)
         "lora_r": 16,                     # adapter rank: how many trainable parameters LoRA adds per layer
-        "batch_size": 1,                  # one page per step fits the 24 GB card
+        "batch_size": 1,
         "grad_accum": 4,                  # effective batch of 4 pages -> ~60 optimizer steps
         "max_pixels": 1280 * 28 * 28,     # ~1 megapixel per page; the cost knob: tokens per page scale with it
         "eval_pages": 15,                 # holdout pages scored before (eval_before=1) and after training
@@ -497,7 +497,7 @@ bucket, key = adapter_s3_uri.replace("s3://", "").split("/", 1)   # s3://bucket/
 s3_client.download_file(bucket, key, os.path.join(run_dir, "model.tar.gz"))
 with tarfile.open(os.path.join(run_dir, "model.tar.gz")) as tar:   # everything the script saved to /opt/ml/model
     tar.extractall(run_dir)
-print(sorted(os.listdir(run_dir)))   # adapter files, holdout_page_ids.csv, eval_before.csv, eval_after.csv, train_summary.json
+print(sorted(os.listdir(run_dir)))
 
 summary = json.load(open(os.path.join(run_dir, "train_summary.json")))   # train_pages, train_minutes, seconds_per_page, CER before/after
 print(json.dumps(summary, indent=2))

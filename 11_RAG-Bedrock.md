@@ -307,7 +307,6 @@ def pdfs_to_page_docs(metadata: pd.DataFrame, pdf_dir: str) -> List[Dict[str, An
             continue
 
         total_pages = len(reader.pages)
-        # One record per page: the text plus the metadata needed to cite it later
         for i, page in enumerate(reader.pages):
             try:
                 text = page.extract_text() or ""
@@ -326,8 +325,8 @@ def pdfs_to_page_docs(metadata: pd.DataFrame, pdf_dir: str) -> List[Dict[str, An
                     "doc_id": doc_id,
                     "title": title,
                     "url": url,
-                    "page_num": i,                 # zero-based index
-                    "page_label": str(i + 1),      # 1-based label, as a reader would cite it
+                    "page_num": i,
+                    "page_label": str(i + 1),
                     "total_pages": total_pages,
                 }
             )
@@ -425,7 +424,6 @@ Chunking is cheap CPU work, but there is no reason to repeat it on every run. We
 chunks_jsonl_path = os.path.join(local_data_dir, "chunks.jsonl")
 
 def save_chunked_docs_jsonl(path, chunks):
-    # JSONL: one JSON record per line, so the file streams and diffs well
     with open(path, "w", encoding="utf-8") as f:
         for rec in chunks:
             json.dump(rec, f, ensure_ascii=False)
@@ -764,7 +762,7 @@ scored_df = compute_wattbot_score(
     preds_path=output_path,         # our predictions, joined to it on id
     gt_is_na_col="is_blank",        # no separate column: "unanswerable" means answer_value == "is_blank"
     pred_is_na_col="is_blank",
-    n_examples=20,                  # print the 20 worst-scoring rows
+    n_examples=20,
 )
 ```
 

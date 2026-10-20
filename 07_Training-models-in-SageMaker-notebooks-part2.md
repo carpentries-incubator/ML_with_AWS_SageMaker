@@ -22,7 +22,7 @@ exercises: 15
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## Initial setup: open prefilled .ipynb notebook
-Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/07_Training-models-in-SageMaker-notebooks-part2.ipynb`. Select the **`conda_pytorch_p310`** kernel.
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/07_Training-models-in-SageMaker-notebooks-part2.ipynb`. Select the **`conda_pytorch`** kernel (`conda_pytorch_p310` on older instances).
 
 ## Setup notebook as controller
 Once your notebook is open, we can setup our SageMaker controller as usual:
@@ -60,7 +60,7 @@ print(f"region = {region}")
 We should also record our local instance information to report this information during testing. First, let's make sure we're starting in the same location to access helper functions
 
 ```python
-%cd /home/ec2-user/SageMaker/
+%cd /home/ec2-user/SageMaker/   # work from the instance root: the %run, source_dir and download paths below are relative to it
 import sys
 sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
 import helpers
@@ -109,6 +109,10 @@ In summary, saving the data in `.npz` files ensures a smooth workflow from data 
 :::::::::::::::::::::::::::::::::::::::
 
 We reuse the `preprocess_data()` function from the lesson's `scripts/train_nn.py` rather than re-typing the preprocessing here: the same function will later be applied to the test set, so train and test are transformed identically. It returns the fitted `StandardScaler`, and we save it with `joblib` so the next episode can load it.
+
+```python
+!pip install scikit-learn   # the notebook kernels do not ship it; train_nn.py imports it
+```
 
 ```python
 import numpy as np

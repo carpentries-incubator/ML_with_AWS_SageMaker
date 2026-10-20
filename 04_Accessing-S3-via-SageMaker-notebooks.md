@@ -87,15 +87,15 @@ Our data is stored in the S3 bucket you created in the previous episode, named '
 ```python
 import pandas as pd
 # Define the S3 bucket and object key
-bucket_name = 'sinkorswim-doejohn'  # replace with your S3 bucket name; a bucket is the top-level container, like a drive
+bucket_name = 'sinkorswim-doejohn'  # replace with your S3 bucket name
 
 # Read the train data from S3
-key = 'titanic_train.csv'  # replace with your object key; the key is the object's full path inside the bucket
+key = 'titanic_train.csv'  # the object key: the file's path inside the bucket
 response = s3.get_object(Bucket=bucket_name, Key=key)  # fetch the object; its bytes arrive as a stream in response['Body']
-train_data = pd.read_csv(response['Body'])  # pandas reads the stream straight into memory; nothing is written to disk
+train_data = pd.read_csv(response['Body'])
 
 # Read the test data from S3
-key = 'titanic_test.csv'  # replace with your object key
+key = 'titanic_test.csv'
 response = s3.get_object(Bucket=bucket_name, Key=key)
 test_data = pd.read_csv(response['Body'])
 
@@ -183,18 +183,15 @@ print(f"Total size of bucket '{bucket_name}': {total_size_mb:.2f} MB")
 ### Using the lesson's helper functions
 We have added code to calculate bucket size to a helper function called `get_s3_bucket_size(bucket_name)` for your convenience. There are also some other helper functions in `scripts/helpers.py` of the lesson repository, which you cloned to `/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/` in the previous episode.
 
-#### Directory setup
-Let's make sure we're starting in the root directory of this instance, and tell Python where the `scripts/` folder is:
+Tell Python where the lesson's `scripts/` folder is:
 
 ```python
-%cd /home/ec2-user/SageMaker/
 import sys
 # Put the lesson's scripts/ folder first on Python's import path
 sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
 import helpers  # the lesson's helper functions (bucket size, cost estimate, object listing)
 ```
 
-`sys.path.insert` tells Python where to find the lesson's `scripts/` folder; after it, `import helpers` works from any directory.
 
 Our helpers.py file can be found in `ML_with_AWS_SageMaker/scripts/helpers.py`. With this file downloaded, you can call this function via...
 
