@@ -114,6 +114,7 @@ We reuse the same two buckets as the Bedrock episode: the shared bucket for `met
 
 
 ```python
+# nvidia-smi lists the GPU, its memory and the driver; it fails when the instance has no GPU
 !nvidia-smi || echo "No GPU detected – please switch to a GPU-backed instance (ml.g6e.xlarge) before running this notebook."
 ```
 
@@ -121,7 +122,7 @@ We reuse the same two buckets as the Bedrock episode: the shared bucket for `met
 ```python
 # also verify you have selected a PyTorch (conda_pytorch_*) kernel
 import torch
-print("torch cuda available:", torch.cuda.is_available())
+print("torch cuda available:", torch.cuda.is_available())   # False means PyTorch cannot use the GPU even if nvidia-smi sees it
 print("num gpus:", torch.cuda.device_count())
 ```
 
@@ -140,6 +141,7 @@ If the install changes PyTorch, restart the kernel (**Kernel → Restart**) befo
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ```python
+# Several GB; it may replace torch, so restart the kernel (Kernel -> Restart) if the log says it did
 %pip install -q "vllm>=0.17"
 ```
 
@@ -156,7 +158,6 @@ import boto3
 import pandas as pd
 import numpy as np
 
-os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the kernel ships SDK v2; the Accessing S3 episode explains
 import sagemaker
 from sagemaker import get_execution_role
 
@@ -232,7 +233,7 @@ download_s3_object(shared_bucket, train_qa_key, train_qa_path)
 
 ```python
 import torch
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer   # embedding-model wrapper: encode(list of strings) -> matrix
 ```
 
 
@@ -330,7 +331,7 @@ print("CUDA available for embeddings:", use_cuda_for_embeddings)
 # Single shared embedder object that we can pass around.
 embedder = SentenceTransformer(
     embedding_model_id,
-    device="cuda" if use_cuda_for_embeddings else "cpu"
+    device="cuda" if use_cuda_for_embeddings else "cpu"   # on the GPU; CPU works too, but much more slowly
 )
 
 
@@ -344,12 +345,12 @@ def embed_texts(embedder, docs, batch_size: int = 32) -> np.ndarray:
     all_embeddings = []
     start = time.time()
     for i in range(0, len(texts), batch_size):
-        batch = texts[i : i + batch_size]
+        batch = texts[i : i + batch_size]   # batches keep the GPU busy without running out of memory
         emb = embedder.encode(
             batch,
             convert_to_numpy=True,
             show_progress_bar=False,
-            normalize_embeddings=True,
+            normalize_embeddings=True,   # unit-length vectors, so a dot product is the cosine similarity
         )
         all_embeddings.append(emb)
     embeddings = np.vstack(all_embeddings) if all_embeddings else np.zeros((0, 768))
@@ -419,7 +420,7 @@ without changing the overall RAG architecture: the model still sees “top–k r
 `retrieve_top_k` from `wattbot_rag.py` is that search: normalize the query and the matrix, one matrix multiply for the cosine similarities, `argsort` for the top *k*. Open the file to see it; it is a dozen lines. `embed_query_with` wraps the sentence-transformer as the `embed_query(question)` callable the rest of the pipeline expects.
 
 ```python
-embed_query = embed_query_with(embedder)
+embed_query = embed_query_with(embedder)   # embed_query(question) -> vector, with the same model that embedded the chunks
 
 # Quick sanity check for `retrieve_top_k` on the first training question
 first_row = train_df.iloc[0]
@@ -462,10 +463,10 @@ os.environ["HF_HOME"] = "/home/ec2-user/SageMaker/hf_cache"
 
 from vllm import LLM, SamplingParams
 
-qwen_model_id = "Qwen/Qwen3.8-27B-FP8"
+qwen_model_id = "Qwen/Qwen3.8-27B-FP8"   # pre-quantized FP8 checkpoint; vLLM reads that from its config, so no quantization= argument is needed
 
 llm = LLM(
-    model=qwen_model_id,
+    model=qwen_model_id,                         # Hugging Face id; the weights download to HF_HOME on first use
     max_model_len=8192,                          # longest prompt + answer we need; the model allows 262K, we do not
     gpu_memory_utilization=0.85,                 # leave ~7 GB for the embedding model and PyTorch overhead
     limit_mm_per_prompt={"image": 0, "video": 0},  # text only: skip reserving memory for the vision encoder
@@ -486,14 +487,14 @@ def call_qwen_chat(system_prompt: str, user_prompt: str, max_new_tokens: int = 3
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_prompt},
     ]
-    params = SamplingParams(temperature=0.0, max_tokens=max_new_tokens)
+    params = SamplingParams(temperature=0.0, max_tokens=max_new_tokens)   # repeatable output, capped length
     outputs = llm.chat(
         messages,
         sampling_params=params,
         chat_template_kwargs={"enable_thinking": False},   # answer directly; no reasoning trace
         use_tqdm=False,
     )
-    return outputs[0].outputs[0].text.strip()
+    return outputs[0].outputs[0].text.strip()   # one prompt in, one completion out
 
 print("Generator model and helper loaded.")
 
@@ -553,14 +554,14 @@ for idx, row in train_df.iterrows():
 
     res = run_single_qa(
         row=row,
-        embed_query=embed_query,
-        generate=call_qwen_chat,
+        embed_query=embed_query,             # the sentence-transformer on this GPU
+        generate=call_qwen_chat,             # the vLLM engine on this GPU; the Bedrock episode passed its converse wrapper here
         chunk_embeddings=chunk_embeddings,
         chunked_docs=chunked_docs,
         docid_to_url=docid_to_url,
         top_k=8,
         retrieval_threshold=0.25,
-        with_evidence_type=True,
+        with_evidence_type=True,             # ask the explanation call to tag [text], [table], [figure]
         verbose=True,
     )
     print(f"ANSWER: {res['answer']}")
@@ -596,7 +597,7 @@ results_df = compute_wattbot_score(
     preds_path=solutions_path,
     gt_is_na_col="is_blank",
     pred_is_na_col="is_blank",
-    n_examples=10,
+    n_examples=10,   # print the 10 worst-scoring rows
 )
 ```
 

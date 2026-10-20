@@ -101,9 +101,8 @@ job_tags = [
 Next, we'll configure the baseline estimator that we plan to do hyperparameter search on.
 
 ```python
-import os
-os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the kernel ships SDK v2; the Accessing S3 episode explains
 import sagemaker
+# range types for the search: ContinuousParameter (float range), IntegerParameter (whole-number range), CategoricalParameter (explicit list)
 from sagemaker.tuner import HyperparameterTuner, IntegerParameter, ContinuousParameter, CategoricalParameter
 from sagemaker.pytorch import PyTorch
 from sagemaker.inputs import TrainingInput
@@ -131,11 +130,12 @@ pytorch_estimator = PyTorch(
     max_run=max_run, # in seconds; always include (max 48 hours)
     entry_point="ML_with_AWS_SageMaker/scripts/train_nn.py",  # Your script for training
     role=role,
-    tags=job_tags,
+    tags=job_tags,  # tags a plain .fit() on this estimator; the tuner below sets its own
     instance_count=instance_count,
     instance_type=instance_type,
     framework_version="2.3",  # if a job fails with an image error, check with: sagemaker.image_uris.retrieve("pytorch", region, version="2.3", py_version="py311", image_scope="training", instance_type="ml.m5.large")
     py_version="py311",
+    # the Regex pulls the number out of each "validation:accuracy = 0.8123" line the script prints; SageMaker records it as the metric
     metric_definitions=[{"Name": "validation:accuracy", "Regex": "validation:accuracy = ([0-9\\.]+)"}],
     hyperparameters={
         "train": "/opt/ml/input/data/train/train_data.npz",  # SageMaker will mount this path
@@ -160,8 +160,8 @@ By default, SageMaker uses **Bayesian optimization**, adjusting future selection
 ```python
 # Hyperparameter tuning ranges
 hyperparameter_ranges = {
-    "epochs": CategoricalParameter([100, 1000, 10000]),       # Adjust as needed
-    "learning_rate": ContinuousParameter(0.001, 0.1),  # Range for continuous values
+    "epochs": CategoricalParameter([100, 1000, 10000]),       # exact values to try, nothing in between; adjust as needed
+    "learning_rate": ContinuousParameter(0.001, 0.1),  # any float in this range; the Bayesian strategy picks where to sample
 }
 ```
 
@@ -202,11 +202,12 @@ Before running the full search, let's test our setup by setting max_jobs = 1. Th
 # Tuner configuration
 tuner = HyperparameterTuner(
     base_tuning_job_name=notebook_instance_name,
-    estimator=pytorch_estimator,
+    estimator=pytorch_estimator,  # the blueprint: every child training job is this estimator with different hyperparameters
+    # same regex as the estimator; the value it captures is what the tuner compares across child jobs
     metric_definitions=[{"Name": "validation:accuracy", "Regex": "validation:accuracy = ([0-9\\.]+)"}],
-    objective_metric_name="validation:accuracy",  # Ensure this matches the metric name exactly
+    objective_metric_name="validation:accuracy",  # Ensure this matches the metric name exactly (the "Name" above)
     objective_type="Maximize",                   # Specify if maximizing or minimizing the metric
-    hyperparameter_ranges=hyperparameter_ranges,
+    hyperparameter_ranges=hyperparameter_ranges,  # the search space defined above
     strategy="Bayesian",  # Default setting (recommend sticking with this!); can adjust to "Random" for uniform sampling across the range
     max_jobs=1,                # Always start with 1 job for debugging purposes. Adjust based on exploration needs (keep below 30 to be kind to environment). 
     max_parallel_jobs=1,         # Always start with 1 for debugging purposes. Recommended to keep this value <= 4 since SageMaker tests values dynamically.
@@ -256,7 +257,7 @@ def job_cost_report(job_name: str, price_per_hour: float):
 
 def tuning_cost_report(tuner, price_per_hour):
     """Call job_cost_report on every training job the tuner launched; return the total cost in dollars."""
-    jobs_df = tuner.analytics().dataframe()
+    jobs_df = tuner.analytics().dataframe()  # one row per child training job: its hyperparameters, FinalObjectiveValue and TrainingJobName
     total_billable = 0
     for job_name in jobs_df["TrainingJobName"]:
         desc = job_cost_report(job_name, price_per_hour)
@@ -366,7 +367,7 @@ We can easily view the best hyperparameters from the tuning procedure...
 
 ```python
 # 1. Get the best training job from the completed tuning job
-best_job_name = tuner.best_training_job()
+best_job_name = tuner.best_training_job()  # the child job with the highest validation:accuracy
 print("Best training job name:", best_job_name)
 
 # 2. Use describe_training_job to retrieve full details, including hyperparameters...
@@ -375,7 +376,7 @@ best_hyperparameters = best_job_desc["HyperParameters"]
 print("Best hyperparameters:", best_hyperparameters)
 
 # ...  and model URI (location on S3)
-best_model_s3_uri = best_job_desc['ModelArtifacts']['S3ModelArtifacts']
+best_model_s3_uri = best_job_desc['ModelArtifacts']['S3ModelArtifacts']  # the model.tar.gz that job uploaded when it finished
 print(f"Best model artifact S3 URI: {best_model_s3_uri}")
 ```
 
@@ -384,12 +385,12 @@ print(f"Best model artifact S3 URI: {best_model_s3_uri}")
 ```python
 import tarfile
 
-# Download and extract the model artifact
+# Download and extract the model artifact: SageMaker packs whatever the script saved to /opt/ml/model into model.tar.gz
 local_model_path = "best_model.tar.gz"
-model_bucket, model_key = best_model_s3_uri.split('/')[2], '/'.join(best_model_s3_uri.split('/')[3:])
+model_bucket, model_key = best_model_s3_uri.split('/')[2], '/'.join(best_model_s3_uri.split('/')[3:])  # s3://bucket/key -> bucket, key
 s3.download_file(model_bucket, model_key, local_model_path)
 
-# Extract the model files from the tar.gz archive
+# Extract the model files from the tar.gz archive (nn_model.pth lands in the current directory)
 with tarfile.open(local_model_path, 'r:gz') as tar:
     tar.extractall()
 print("Best model downloaded and extracted.")
@@ -409,11 +410,11 @@ from train_nn import preprocess_data
 # Fetch the test CSV and the training-set scaler from S3 (both uploaded in earlier episodes)
 s3.download_file(bucket_name, "titanic_test.csv", "titanic_test.csv")
 s3.download_file(bucket_name, "scaler.joblib", "scaler.joblib")
-scaler = joblib.load("scaler.joblib")
+scaler = joblib.load("scaler.joblib")  # the StandardScaler fit on the training data in the previous episode
 
 # Preprocess test data with the same scaler used for training
 test_df = pd.read_csv("titanic_test.csv")
-X_test, y_test, _ = preprocess_data(test_df, scaler=scaler)
+X_test, y_test, _ = preprocess_data(test_df, scaler=scaler)  # transform only; passing the scaler stops it refitting on test data
 
 # Save processed data for testing
 np.savez('test_data.npz', X_test=X_test, y_test=y_test)
@@ -428,7 +429,7 @@ import torch
 
 # Load the model (saved as 'nn_model.pth' by train_nn.py)
 model = TitanicNet()
-model.load_state_dict(torch.load("nn_model.pth", map_location="cpu"))
+model.load_state_dict(torch.load("nn_model.pth", map_location="cpu"))  # map_location: load onto this CPU notebook whatever device trained it
 model.eval()
 
 # Load test data
@@ -437,7 +438,7 @@ X_test = torch.tensor(test_data['X_test'], dtype=torch.float32)
 y_test = torch.tensor(test_data['y_test'], dtype=torch.float32).unsqueeze(1)
 
 # Evaluate the model on the test set
-with torch.no_grad():
+with torch.no_grad():  # no gradients needed for evaluation
     predictions = model(X_test)
     accuracy = calculate_accuracy(predictions, y_test)
     print(f"Test Accuracy: {accuracy:.4f}")
@@ -458,7 +459,7 @@ Per-Second Billing: SageMaker bills per second, with no rounding to minutes or h
 For convenience, we have added this as a function in helpers.py
 
 ```python
-helpers.calculate_tuning_job_time(tuner, region)
+helpers.calculate_tuning_job_time(tuner, region)  # same per-child-job sum as tuning_cost_report, packaged in helpers.py
 ```
 
 ::::::::::::::::::::::::::::::::::::::: challenge

@@ -35,14 +35,15 @@ So far every notebook you have run came from the lesson repository, which you cl
 %cd /home/ec2-user/SageMaker/
 !mkdir -p sagemaker-work
 %cd sagemaker-work
-!git init -b main
+!git init -b main   # start an empty git repository here, with "main" as its first branch
 ```
 
 Connect it to the repository you just created, replacing `YOUR_GITHUB_USERNAME`:
 
 ```python
+# A remote is a copy of the repository elsewhere; "origin" is the conventional name for the main one (here, GitHub)
 !git remote add origin https://github.com/YOUR_GITHUB_USERNAME/sagemaker-work.git
-!git remote -v
+!git remote -v   # list the remotes and their URLs, to check the address
 ```
 
 ## Step 1: A GitHub personal access token (PAT)
@@ -67,10 +68,10 @@ A notebook instance is a machine that other people may be able to reach (an admi
 `input()` and `getpass.getpass()` prompt you in the notebook; the token is held in a Python variable for this kernel session and is not written into the notebook file.
 
 ```python
-import getpass
+import getpass   # prompts without echoing what you type, so the token never shows on screen or in the saved notebook
 
 username = input("GitHub Username: ")
-token = getpass.getpass("GitHub Personal Access Token (PAT): ")
+token = getpass.getpass("GitHub Personal Access Token (PAT): ")  # kept in this variable for the kernel session only
 ```
 
 **Note**: when you re-run the whole notebook later, this cell prompts again, because nothing is saved.
@@ -94,14 +95,15 @@ We want our notebook under version control, but a `.ipynb` file is JSON with out
 1. Install Jupytext, which converts in both directions.
 
 ```python
-!pip install jupytext
+!pip install jupytext   # converts between .ipynb and .py in both directions
 ```
 
 2. Copy the notebook from the Accessing S3 episode into our repository folder (we are still in `/home/ec2-user/SageMaker/sagemaker-work`) and convert it there. Copying keeps the lesson clone untouched and puts the `.py` file where git will see it.
 
 ```python
+# Copy the notebook into the repository folder ("." is the current directory); the lesson clone stays untouched
 !cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/notebooks/04_Accessing-S3-via-SageMaker-notebooks.ipynb .
-!jupytext --to py 04_Accessing-S3-via-SageMaker-notebooks.ipynb
+!jupytext --to py 04_Accessing-S3-via-SageMaker-notebooks.ipynb   # writes a .py next to it: code and markdown, no outputs
 ```
 
 ```text
@@ -115,10 +117,10 @@ We want our notebook under version control, but a `.ipynb` file is JSON with out
 import subprocess
 import os
 
-notebooks = [f for f in os.listdir() if f.endswith('.ipynb')]
+notebooks = [f for f in os.listdir() if f.endswith('.ipynb')]  # every notebook in the current directory
 for notebook in notebooks:
     output_file = notebook.replace('.ipynb', '.py')
-    subprocess.run(["jupytext", "--to", "py", notebook, "--output", output_file])
+    subprocess.run(["jupytext", "--to", "py", notebook, "--output", output_file])  # the same shell command, run from Python
     print(f"Converted {notebook} to {output_file}")
 ```
 
@@ -126,6 +128,7 @@ The same loop is `helpers.convert_files()` in the lesson's `scripts/helpers.py`.
 
 ```python
 import sys
+# Put the lesson's scripts/ folder on Python's import path, as in the Accessing S3 episode
 sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
 import helpers
 helpers.convert_files(direction="notebook_to_python")
@@ -137,20 +140,20 @@ helpers.convert_files(direction="notebook_to_python")
 
 ```python
 %cd /home/ec2-user/SageMaker/sagemaker-work
-!git status
+!git status   # shows the untracked files (the .ipynb and the .py); nothing is staged yet
 ```
 
 2. Add and commit. We add the `.py` by name rather than `git add .`, so the `.ipynb` copy is never tracked (Step 5 ignores it for good).
 
 ```python
-!git add 04_Accessing-S3-via-SageMaker-notebooks.py
-!git commit -m "Add Accessing-S3 notebook as a script"   # a commit message says what changed, specifically
+!git add 04_Accessing-S3-via-SageMaker-notebooks.py   # stage: mark this file to go into the next commit
+!git commit -m "Add Accessing-S3 notebook as a script"   # a commit is a snapshot of the staged files; the message says what changed, specifically
 ```
 
 3. Check the status again.
 
 ```python
-!git status
+!git status   # the .py is committed; only the untracked .ipynb remains, which Step 5 ignores
 ```
 
 ## Step 5: Ignore notebooks and clutter with `.gitignore`
@@ -165,8 +168,8 @@ A `.gitignore` file lists patterns git should never track. Ignoring `*.ipynb` ac
 2. Create the file (hidden in the file browser because it starts with a dot; `ls -a` shows it) and add the notebook pattern.
 
 ```python
-with open(".gitignore", "a") as gitignore:
-    gitignore.write("# Jupyter notebooks: we version the .py copies instead\n*.ipynb\n")
+with open(".gitignore", "a") as gitignore:   # "a" appends, so re-running the cell keeps earlier rules
+    gitignore.write("# Jupyter notebooks: we version the .py copies instead\n*.ipynb\n")  # one pattern per line; * matches any name
 !cat .gitignore
 ```
 
@@ -174,6 +177,7 @@ with open(".gitignore", "a") as gitignore:
 
 ```python
 with open(".gitignore", "a") as gitignore:
+    # a trailing slash matches a whole directory; *.tmp and *.log match by extension
     gitignore.write("\n# Cache and temp files\n__pycache__/\n*.tmp\n*.log\n")
 !cat .gitignore
 ```
@@ -181,7 +185,7 @@ with open(".gitignore", "a") as gitignore:
 4. Add and commit `.gitignore` so the rule travels with the repository.
 
 ```python
-!git add .gitignore
+!git add .gitignore   # .gitignore is itself tracked, so everyone who clones gets the same rules
 !git commit -m "Ignore notebooks, caches and temp files"
 ```
 
@@ -198,7 +202,8 @@ Git has to decide how to combine your local commits with remote ones. The three 
 We use merge. Because our folder and the GitHub repository started separately (one from `git init`, one from **Create repository**), git also needs `--allow-unrelated-histories` for this very first pull; never again after that.
 
 ```python
-!git config pull.rebase false
+!git config pull.rebase false   # pull strategy: merge (remote commits come in through a merge commit)
+# pull = fetch origin's main and merge it into ours; the flag is needed only this once, as the two histories share no commit
 !git pull origin main --allow-unrelated-histories --no-edit
 ```
 
@@ -220,6 +225,7 @@ The token goes into the URL for this one command, built from the variables `getp
 
 ```python
 github_url = f"github.com/{username}/sagemaker-work.git"
+# IPython substitutes the Python variables in {braces}; user:token@ in an HTTPS URL authenticates this one push and is not stored
 !git push https://{username}:{token}@{github_url} main
 ```
 
@@ -230,12 +236,13 @@ Suppose a collaborator edits the `.py` file on GitHub, or you edit it from anoth
 
 ```python
 !git config pull.rebase false
-!git pull origin main
+!git pull origin main   # a routine pull: no extra flag now that the histories are joined
 ```
 
 Then convert the script back to a notebook with Jupytext. The `.ipynb` it writes is ignored by git (Step 5), so the round trip leaves the repository clean.
 
 ```python
+# --to notebook converts the other way; the .ipynb it writes matches the *.ipynb rule in .gitignore
 !jupytext --to notebook 04_Accessing-S3-via-SageMaker-notebooks.py --output 04_Accessing-S3-via-SageMaker-notebooks.ipynb
 ```
 
