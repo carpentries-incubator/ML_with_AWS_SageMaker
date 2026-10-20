@@ -346,6 +346,8 @@ The previous episode gave the rule of thumb: upgrade the single instance first, 
 
 ### What `instance_count=2` does on its own
 
+![Left: two instances each receive the full dataset and run the whole script independently, same model and twice the bill. Right: data parallelism splits the batches across instances and syncs gradients each step.](fig/instance-count-vs-data-parallel.svg){alt="Two panels comparing instance_count=2 without distribution, where each instance trains on the full data, with data parallelism, where batches are split and gradients synced"}
+
 Setting `instance_count=2` on an estimator makes SageMaker start two instances and run **the full training script on each of them**. Nothing is split:
 
 - `TrainingInput` defaults to `distribution="FullyReplicated"`, so every instance downloads the complete dataset.

@@ -458,6 +458,8 @@ The `hyperparameters` section in this code defines the input arguments of `train
 Additionally, we define a TrainingInput object containing the training data's S3 path, to pass to `.fit({'train': train_input})`. SageMaker uses `TrainingInput` to download your dataset from S3 to a temporary location on the training instance. This location is mounted and managed by SageMaker and can be accessed by the training job if/when needed.
 
 #### What did that cost?
+
+![Timeline of one training job: instance requested, container pulled, data downloaded, script runs, outputs uploaded, instance released; TrainingTimeInSeconds spans the script, BillableTimeInSeconds spans everything after the instance is ready](fig/job-billable-time.svg){alt="Timeline of a SageMaker training job showing which phases count as training time and which as billable time"}
 `describe_training_job` returns two durations: `TrainingTimeInSeconds` (your script running) and `BillableTimeInSeconds` (the time the instance was reserved for you, which also includes pulling the container and downloading data). SageMaker bills per second, with no rounding, so cost is billable seconds x instance count x hourly rate. We'll wrap this in a small helper and call it after every job in this lesson.
 
 ```python

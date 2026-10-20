@@ -86,6 +86,8 @@ Two rules of thumb answer most of the question before you touch a console. They 
 
 **1. Memory: will it fit on the GPU?** Count bytes per parameter for what you are doing, multiply by the parameter count, then add a few GB for activations (more for long sequences and big batches).
 
+![Bars of GPU memory per parameter: 1 byte for FP8 inference, 2 for bf16 inference, about 2.5 for a LoRA fine-tune, 16 for a full mixed-precision fine-tune made of weights, gradients, fp32 master weights and Adam moments](fig/memory-per-parameter.svg){alt="Stacked bar chart of bytes per parameter for inference versus LoRA versus full fine-tuning"}
+
 | What you are doing | Bytes per parameter | Why | 3B | 7B | 27B | 70B |
 |---|---|---|---|---|---|---|
 | Inference, 4-bit weights | 0.5 | weights only | 1.5 GB | 3.5 GB | 14 GB | 35 GB |

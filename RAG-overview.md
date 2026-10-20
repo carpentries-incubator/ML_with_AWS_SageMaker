@@ -31,6 +31,8 @@ This episode introduces the major ways to build RAG systems on AWS, explains why
 
 ## What is RAG?
 
+![RAG pipeline: PDFs are chunked and embedded once; per question, the question is embedded, the top-k chunks are retrieved by cosine similarity, and a generator answers from question plus chunks. The embedder and generator are the only parts that change between episodes.](fig/rag-pipeline.svg){alt="Diagram of the RAG pipeline with the embedder and generator highlighted as the two model calls"}
+
 RAG combines two steps:
 
 1. **Retrieve**: Search your document store (vector DB or FAISS index) to find relevant text.
