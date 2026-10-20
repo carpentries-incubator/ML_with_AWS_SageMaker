@@ -31,40 +31,36 @@ To begin each notebook, it's important to set up an AWS environment that will al
 
 Starting with these initializations prepares our notebook environment to efficiently interact with AWS resources for model development, data management, and deployment.
 
-```python
-import os
-import logging
-os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"            # see the callout below
-logging.getLogger("sagemaker.config").setLevel(logging.WARNING)  # hide the "Not applying SDK defaults" lines
+Start with the role and the session, and print both. The role is the identity every call from this notebook uses. Check the region line against the bucket you made in the S3 episode: the two must match, or the training jobs in later episodes will fail to find their data and anything you do read will be billed as cross-region transfer. If they differ, the fix is a new bucket in this region, not a new notebook instance.
 
-import boto3
-import sagemaker
+```python
+import sagemaker                      # SageMaker Python SDK: higher-level API for training jobs, tuning, deployment
 from sagemaker import get_execution_role
 
-# Initialize the SageMaker role, session, and s3 client
-role = sagemaker.get_execution_role() # specifies your permissions to use AWS tools
-session = sagemaker.Session() 
-s3 = boto3.client('s3')
+role = sagemaker.get_execution_role() # the IAM role attached to this notebook instance; every call below acts as this role
+session = sagemaker.Session()         # tracks the region, default bucket and SageMaker client for this notebook
+print(f"Execution Role: {role}")
+print(f"AWS Region: {session.boto_region_name}")  # The region of the notebook instance; your bucket must be in this same region
 ```
 
 ::::::::::::::::::::::::::::::::::::: callout
 
-### Two messages you will see without the first two lines
+### Two messages this cell prints
 
-`sagemaker.config INFO - Not applying SDK defaults from location: ...` means the SDK looked for an optional defaults file in two standard places and found none. Nothing is wrong; the logging line above hides it.
+`sagemaker.config INFO - Not applying SDK defaults from location: ...`: the SDK looked for an optional defaults file in two standard places and found none. Nothing is wrong.
 
-`SageMakerV2DeprecationWarning: You are using the SageMaker Python SDK v2 ... v3 is the actively developed major version` is more important. The notebook kernels ship **version 2** of the SageMaker Python SDK, and this lesson is written for it: `Estimator`, `HuggingFace`, `HyperparameterTuner` and the rest. Version 3 is a rewrite with a different API, so do not `pip install` it into these kernels to make the warning go away; the environment variable above silences it instead. The v2 API keeps working; when you start a project of your own, look at the [migration guide](https://github.com/aws/sagemaker-python-sdk/blob/master/migration.md) and decide which version to build on.
+`SageMakerV2DeprecationWarning: You are using the SageMaker Python SDK v2 ... v3 is the actively developed major version`: the notebook kernels ship version 2 of the SageMaker Python SDK, and this lesson is written for it (`Estimator`, `HuggingFace`, `HyperparameterTuner`). Version 3 is a rewrite with a different API, so do not `pip install` it into these kernels. The v2 API keeps working; for a project of your own, read the [migration guide](https://github.com/aws/sagemaker-python-sdk/blob/master/migration.md) and pick a version. You will see this warning once per kernel; ignore it.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-Print what we just created. The role is the identity every call from this notebook uses. Check the region line against the bucket you made in the S3 episode: the two must match, or the training jobs in later episodes will fail to find their data and anything you do read will be billed as cross-region transfer. If they differ, the fix is a new bucket in this region, not a new notebook instance.
+Next, an S3 client, and a listing of the buckets this role can see.
 
 ```python
-# Print relevant details 
-print(f"Execution Role: {role}")  # Displays the IAM role being used
+import boto3                          # AWS SDK for Python: low-level access to every AWS service (S3, EC2, ...)
+
+s3 = boto3.client('s3')               # client for S3 API calls (list, upload, download)
 bucket_names = [bucket["Name"] for bucket in s3.list_buckets()["Buckets"]]
 print(f"Available S3 Buckets: {bucket_names}")  # Every bucket in the account this role can list, including other learners' buckets in a shared account
-print(f"AWS Region: {session.boto_region_name}")  # The region of the notebook instance; your bucket must be in this same region
 ```
 
 ## Reading data from S3
@@ -91,12 +87,12 @@ Our data is stored in the S3 bucket you created in the previous episode, named '
 ```python
 import pandas as pd
 # Define the S3 bucket and object key
-bucket_name = 'sinkorswim-doejohn'  # replace with your S3 bucket name
+bucket_name = 'sinkorswim-doejohn'  # replace with your S3 bucket name; a bucket is the top-level container, like a drive
 
 # Read the train data from S3
-key = 'titanic_train.csv'  # replace with your object key
-response = s3.get_object(Bucket=bucket_name, Key=key)
-train_data = pd.read_csv(response['Body'])
+key = 'titanic_train.csv'  # replace with your object key; the key is the object's full path inside the bucket
+response = s3.get_object(Bucket=bucket_name, Key=key)  # fetch the object; its bytes arrive as a stream in response['Body']
+train_data = pd.read_csv(response['Body'])  # pandas reads the stream straight into memory; nothing is written to disk
 
 # Read the test data from S3
 key = 'titanic_test.csv'  # replace with your object key
@@ -136,7 +132,7 @@ In some cases, downloading a local copy of the dataset may be useful, such as wh
 key = "titanic_train.csv"  # Path to your file in the S3 bucket
 local_file_path = "/home/ec2-user/SageMaker/titanic_train.csv"  # Local path to save the file
 
-# Initialize the S3 client and download the file
+# Copy the object to the instance's disk (unlike get_object above, which only read it into memory)
 s3.download_file(bucket_name, key, local_file_path)
 !ls "/home/ec2-user/SageMaker/"
 ```
@@ -161,7 +157,7 @@ The code below will calculate your bucket size for you. Here is a breakdown of t
 # Initialize the total size counter (bytes)
 total_size_bytes = 0
 
-# Use a paginator to handle large bucket listings
+# Use a paginator to handle large bucket listings (one list call returns at most 1000 objects)
 # This ensures that even if the bucket contains many objects, we can retrieve all of them
 paginator = s3.get_paginator("list_objects_v2")
 
@@ -193,8 +189,9 @@ Let's make sure we're starting in the root directory of this instance, and tell 
 ```python
 %cd /home/ec2-user/SageMaker/
 import sys
+# Put the lesson's scripts/ folder first on Python's import path
 sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
-import helpers
+import helpers  # the lesson's helper functions (bucket size, cost estimate, object listing)
 ```
 
 `sys.path.insert` tells Python where to find the lesson's `scripts/` folder; after it, `import helpers` works from any directory.
@@ -271,6 +268,7 @@ Then upload it. Here it goes under a `docs/` prefix; drop the `docs/` to put it 
 
 ```python
 notes_s3_key = "docs/Notes.txt"   # the object key: a "docs/" prefix plus the file name
+# local file -> bucket + key; S3 has no real folders, the "docs/" prefix exists as soon as one key uses it
 s3.upload_file(notes_file_path, bucket_name, notes_s3_key)
 print(f"Uploaded {notes_file_path} to s3://{bucket_name}/{notes_s3_key}")
 ```
@@ -279,7 +277,7 @@ After uploading, we can view the objects/files available on our bucket using...
 
 ```python
 # List and print all objects in the bucket
-response = s3.list_objects_v2(Bucket=bucket_name)
+response = s3.list_objects_v2(Bucket=bucket_name)  # one page (up to 1000 keys); the paginator above handles more
 
 # Check if there are objects in the bucket
 if 'Contents' in response:

@@ -75,9 +75,13 @@ Jobs run in containers, so the code they execute has to be shipped with the job:
 Each job gets its own source directory, because the two jobs need different Python packages and SageMaker installs whatever `requirements.txt` it finds next to the script. `code_embed/` holds the embedding job, `code_rag/` the RAG job, and a copy of `wattbot_rag.py` sits next to the notebook for the scoring step at the end.
 
 ```python
+# One source directory per job: SageMaker uploads the whole directory into the container
 !mkdir -p code_embed code_rag
+# The embedding job's script
 !cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/embedding_inference.py code_embed/
+# The RAG job's script plus the shared module it imports (the container cannot see this notebook)
 !cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/wattbot_rag_batch.py /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/wattbot_rag.py code_rag/
+# The notebook's own copy, for scoring at the end
 !cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/wattbot_rag.py .
 !ls code_embed code_rag
 ```
@@ -91,15 +95,14 @@ import json
 import boto3
 import numpy as np
 import pandas as pd
-os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the kernel ships SDK v2; the Accessing S3 episode explains
 import sagemaker
 from sagemaker import get_execution_role
-from sagemaker.huggingface import HuggingFaceProcessor
-from sagemaker.processing import ProcessingInput, ProcessingOutput
+from sagemaker.huggingface import HuggingFaceProcessor         # launches a job in the prebuilt Hugging Face container
+from sagemaker.processing import ProcessingInput, ProcessingOutput   # S3 <-> container path mappings for a job
 
 session = sagemaker.Session()
 region = session.boto_region_name
-role = get_execution_role()
+role = get_execution_role()   # the IAM role the jobs run under to read and write S3
 
 shared_bucket = "ml-marathon-shared"   # <-- EDIT ME: read-only inputs, from your instructor
 bucket_name = "sinkorswim-doejohn"     # <-- EDIT ME: your own bucket (chunks in, outputs out)
@@ -123,6 +126,7 @@ train_qa_key = "wattbot/train_QA.csv"
 metadata_key = "wattbot/metadata.csv"
 chunks_s3_key = "wattbot/chunks.jsonl"
 
+# Full S3 URIs: this is the form a ProcessingInput takes
 train_qa_s3 = f"s3://{shared_bucket}/{train_qa_key}"
 metadata_s3 = f"s3://{shared_bucket}/{metadata_key}"
 chunks_s3_uri = f"s3://{bucket_name}/{chunks_s3_key}"
@@ -174,6 +178,7 @@ We use the same `embedding_inference.py` script across projects; here it expects
 The Hugging Face container has `transformers` and PyTorch but not `sentence-transformers`. A `requirements.txt` in the job's `source_dir` is installed before the script runs. The RAG job's requirements are different (vLLM, plus `sentence-transformers` for the query embedder), which is why it has its own directory.
 
 ```python
+# A requirements.txt next to the script is pip-installed in the container before the script runs
 with open("code_embed/requirements.txt", "w") as f:
     f.write("sentence-transformers\n")
 
@@ -206,7 +211,7 @@ def make_job_tags(purpose: str):
     return [
         {"Key": "Name", "Value": name},
         {"Key": "Project", "Value": project},
-        {"Key": "Purpose", "Value": purpose},
+        {"Key": "Purpose", "Value": purpose},   # differs per job so the bill tells them apart
     ]
 ```
 
@@ -219,35 +224,36 @@ emb_output_prefix = "wattbot/embeddings"
 emb_output_path = f"s3://{bucket_name}/{emb_output_prefix}/"
 
 embedding_processor = HuggingFaceProcessor(
-    base_job_name="WattBot-embed-gte-large",
+    base_job_name="WattBot-embed-gte-large",   # SageMaker appends a timestamp to make each job name unique
     role=role,
     tags=make_job_tags("Inference"),   # tags are per job; nothing is inherited from the notebook
-    instance_type="ml.g5.xlarge",
+    instance_type="ml.g5.xlarge",      # the GPU the job rents (A10G, 24 GB): plenty for a 335M-parameter embedder
     instance_count=1,
-    transformers_version="4.56",
+    transformers_version="4.56",       # these three pick the prebuilt container image
     pytorch_version="2.8",
     py_version="py312",
     sagemaker_session=session,
-    max_runtime_in_seconds=2 * 60 * 60,   # backstop: the estimate is 8 minutes
+    max_runtime_in_seconds=2 * 60 * 60,   # backstop: SageMaker kills the job at this point, so a hang costs at most this
 )
 
+# run() uploads the code, starts the instance, streams the job's log here and returns when the script ends (wait=True is the default)
 embedding_processor.run(
-    code="embedding_inference.py",
-    source_dir="code_embed/",
+    code="embedding_inference.py",     # the script the container runs...
+    source_dir="code_embed/",          # ...uploaded with everything beside it, requirements.txt included
     inputs=[
         ProcessingInput(
-            source=chunks_s3_uri,
-            destination="/opt/ml/processing/input",
+            source=chunks_s3_uri,                       # S3 object (or prefix) copied in before the script starts
+            destination="/opt/ml/processing/input",    # where it appears inside the container
         )
     ],
     outputs=[
         ProcessingOutput(
             output_name="embeddings",
-            source="/opt/ml/processing/output",
-            destination=emb_output_path,
+            source="/opt/ml/processing/output",        # whatever the script writes here...
+            destination=emb_output_path,               # ...is copied to this S3 prefix when the script ends
         )
     ],
-    arguments=[
+    arguments=[                        # command-line flags, as the script's argparse expects them
         "--model_id", embedding_model_id,
         "--input_filename", "chunks.jsonl",
         "--text_key", "text",
@@ -272,7 +278,7 @@ We can download `embeddings.npy` back into the notebook and inspect its shape to
 
 ```python
 local_embeddings_path = os.path.join(local_data_dir, "embeddings.npy")
-embeddings_key = f"{emb_output_prefix}/embeddings.npy"
+embeddings_key = f"{emb_output_prefix}/embeddings.npy"   # the ProcessingOutput destination + the filename the script wrote
 
 s3_client.download_file(bucket_name, embeddings_key, local_embeddings_path)
 chunk_embeddings = np.load(local_embeddings_path)
@@ -336,7 +342,7 @@ rag_processor.run(
     inputs=[
         ProcessingInput(
             source=chunks_s3_uri,
-            destination="/opt/ml/processing/input/chunks",
+            destination="/opt/ml/processing/input/chunks",   # four inputs, each in its own subdirectory
         ),
         ProcessingInput(
             source=emb_output_s3,
@@ -395,7 +401,7 @@ results_df = compute_wattbot_score(
     preds_path=local_solutions_path,
     gt_is_na_col="is_blank",
     pred_is_na_col="is_blank",
-    n_examples=10,
+    n_examples=10,   # print the 10 worst-scoring rows
 )
 ```
 
@@ -411,8 +417,10 @@ Ask SageMaker what it recorded for each job: `session.sagemaker_client.describe_
 
 ```python
 def job_cost(job_name: str, price_per_hour: float):
-    d = session.sagemaker_client.describe_processing_job(ProcessingJobName=job_name)
+    d = session.sagemaker_client.describe_processing_job(ProcessingJobName=job_name)   # the record SageMaker keeps for the job
+    # CreationTime -> ProcessingStartTime: provisioning the instance, not billed
     provisioning = (d["ProcessingStartTime"] - d["CreationTime"]).total_seconds() / 60
+    # ProcessingStartTime -> ProcessingEndTime: the script running, billed by the second
     billed = (d["ProcessingEndTime"] - d["ProcessingStartTime"]).total_seconds() / 60
     cost = billed / 60 * price_per_hour
     print(f"{job_name}: {d['ProcessingJobStatus']}")

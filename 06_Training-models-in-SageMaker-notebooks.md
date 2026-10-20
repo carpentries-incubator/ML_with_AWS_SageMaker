@@ -1,7 +1,7 @@
 ---
 title: "Training Models in SageMaker: Intro"
 teaching: 45
-exercises: 15
+exercises: 20
 ---
 
 :::::::::::::::::::::::::::::::::::::: questions 
@@ -33,8 +33,9 @@ So we all can reference the helper functions using the same path, CD to the inst
 ```python
 %cd /home/ec2-user/SageMaker/
 import sys
+# Put the lesson's scripts/ folder on Python's import path
 sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
-import helpers
+import helpers  # lesson helper functions; train_xgboost.py lives in the same folder
 ```
 
 #### 3. Initialize SageMaker environment
@@ -44,15 +45,13 @@ This code initializes the AWS SageMaker environment by defining the SageMaker ro
 > Boto3 is the official AWS SDK for Python, allowing developers to interact programmatically with AWS services like S3, EC2, and Lambda. It provides both high-level and low-level APIs, making it easy to manage AWS resources and automate tasks. With built-in support for paginators, waiters, and session management, Boto3 simplifies working with AWS credentials, regions, and IAM permissions. It's ideal for automating cloud operations and integrating AWS services into Python applications.
 
 ```python
-import boto3
+import boto3                          # AWS SDK for Python: low-level access to every AWS service (S3, EC2, ...)
 import pandas as pd
-import os
-os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the kernel ships SDK v2; the Accessing S3 episode explains
-import sagemaker
+import sagemaker                      # SageMaker Python SDK: higher-level API for training jobs, tuning, deployment
 from sagemaker import get_execution_role
 
 # Initialize the SageMaker role (will reflect notebook instance's policy)
-role = sagemaker.get_execution_role()
+role = sagemaker.get_execution_role()  # the IAM role attached to this notebook instance; every call below acts as this role
 print(f'role = {role}')
 
 # Initialize an S3 client to interact with Amazon S3, allowing operations like uploading, downloading, and managing objects and buckets.
@@ -62,7 +61,7 @@ s3 = boto3.client('s3')
 bucket_name = 'sinkorswim-doejohn'  # replace with your S3 bucket name
 
 # Define train/test filenames
-train_filename = 'titanic_train.csv'
+train_filename = 'titanic_train.csv'  # object keys inside the bucket (no prefix: they sit at the bucket root)
 test_filename = 'titanic_test.csv'
 ```
 
@@ -70,8 +69,8 @@ Create a SageMaker session to manage interactions with Amazon SageMaker, such as
 
 ```python
 region = boto3.Session().region_name  # inherited from the notebook instance; do not hard-code a region
-session = sagemaker.Session()
-sagemaker_client = session.sagemaker_client  # low-level client we'll use to describe jobs
+session = sagemaker.Session()         # tracks the region, default bucket and SageMaker client for this notebook
+sagemaker_client = session.sagemaker_client  # the boto3 SageMaker client inside the session; we'll use it to describe jobs
 print(f"region = {region}")
 ```
 
@@ -182,6 +181,7 @@ file_key = f"{train_filename}"  # Path to your file in the S3 bucket
 local_file_path = f"./{train_filename}"  # Local path to save the file
 
 # Download the file using the s3 client variable we initialized earlier
+# This writes a copy to the instance's disk, unlike get_object, which reads the object into memory
 s3.download_file(bucket_name, file_key, local_file_path)
 print("File downloaded:", local_file_path)
 ```
@@ -211,7 +211,7 @@ response = sagemaker_client.describe_notebook_instance(NotebookInstanceName=note
 
 # Display the status and instance type
 print(f"Notebook Instance '{notebook_instance_name}' status: {response['NotebookInstanceStatus']}")
-local_instance = response['InstanceType']
+local_instance = response['InstanceType']  # e.g. ml.t3.medium; recorded so runtimes can be compared across instances
 print(f"Instance Type: {local_instance}")
 ```
 
@@ -243,7 +243,7 @@ colsample_bytree = 0.8 # Specifies that 80% of the features will be randomly sam
 num_round = 100 # Sets the number of boosting rounds (trees) to 100. More rounds typically allow for a more refined model, but too many rounds can lead to overfitting.
 train_file = 'titanic_train.csv' #  Points to the location of the training data
 
-# Use f-strings to format the command with your variables
+# %run executes the script in this kernel; IPython substitutes the Python variables in {braces} into the arguments
 %run ML_with_AWS_SageMaker/scripts/train_xgboost.py --max_depth {max_depth} --eta {eta} --subsample {subsample} --colsample_bytree {colsample_bytree} --num_round {num_round} --train {train_file}
 
 # Measure and print the time taken
@@ -263,7 +263,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import accuracy_score
 import joblib
-from train_xgboost import preprocess_data
+from train_xgboost import preprocess_data  # importable because scripts/ is on sys.path
 
 # Load the test data
 test_data = pd.read_csv('./titanic_test.csv')
@@ -275,7 +275,7 @@ X_test, y_test = preprocess_data(test_data)
 dtest = xgb.DMatrix(X_test)
 
 # Load the trained model from the saved file
-model = joblib.load('./xgboost-model')
+model = joblib.load('./xgboost-model')  # the file the local %run wrote to the current directory
 
 # Make predictions on the test set
 preds = model.predict(dtest)
@@ -293,6 +293,20 @@ Unlike "local" training (using this notebook), this next approach leverages Sage
 
 ### Which instance to start with?
 In this example, we start with one ml.m5.large instance, which is suitable for small- to medium-sized datasets and simpler models. Using a single instance is often cost-effective and sufficient for initial testing, allowing for straightforward scaling up to more powerful instance types or multiple instances if training takes too long. See here for further guidance on selecting an appropriate instance for your data/model: [Instances for ML page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html)
+
+::::::::::::::::::::::::::::::::::::: challenge
+
+### Challenge: pick an instance for a bigger job
+
+Open the supplemental [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page. A colleague has a **20 GB tabular dataset** (a CSV of sensor readings) and wants to train gradient-boosted trees on it, like we are about to do with the Titanic data. Which instance would you pick for the training job, and why?
+
+:::::::::::::::::::::::::::::::::::: solution
+
+The table's rule of thumb is RAM of at least 1.5× the dataset, so 20 GB of data wants about 32 GB of memory: `ml.m5.2xlarge` (8 vCPU, 32 GiB, about $0.46/h) is the natural fit for a tree-ensemble training job, or `ml.m5.4xlarge` (64 GiB) if feature engineering will add many columns. No GPU: gradient-boosted trees on tabular data are CPU work, so a `g4dn` or `g5` would cost more and run no faster.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::::::::::::::
 
 ### Overview of Estimator classes in SageMaker
 To launch this training "job", we'll use the XGBoost Estimator. In SageMaker, Estimator classes streamline the configuration and training of models on managed instances. Each Estimator can work with custom scripts and be enhanced with additional dependencies by specifying a `requirements.txt` file, which is automatically installed at the start of training. Here's a breakdown of some commonly used Estimator classes in SageMaker:
@@ -387,6 +401,7 @@ name = "DoeJohn" # replace with your name
 project = "SinkOrSwim" # replace with your challenge name
 purpose = "Training"
 
+# Tags: key/value labels attached to the job's resources, so its cost shows up under your name and project on the bill
 job_tags = [
     {"Key": "Name", "Value": name},
     {"Key": "Project", "Value": project},
@@ -399,37 +414,37 @@ Estimate the cost of every job *before* you run it: instance rate x expected min
 
 ```python
 from sagemaker.inputs import TrainingInput
-from sagemaker.xgboost.estimator import XGBoost
+from sagemaker.xgboost.estimator import XGBoost   # framework estimator: AWS's XGBoost container running your own script
 
 # Define instance type/count we'll use for training
-instance_type="ml.m5.large"
+instance_type="ml.m5.large"   # the managed machine SageMaker launches for the job, separate from this notebook's instance
 instance_count=1 # always start with 1 (see "When training takes too long" at the end of this episode)
 price_per_hour = 0.115 # ml.m5.large, us-east-1 on-demand (2026-10-16); check the instances page for your region
 
 # Define max runtime in seconds to ensure you don't use more compute time than expected. Use a generous threshold (2x expected time but < 2 days) so that work isn't interrupted without any gains.
-max_run = 2*60*60 # 2 hours
+max_run = 2*60*60 # 2 hours; SageMaker stops the job and releases the instance when this is reached
 
 # Define S3 paths for input and output
-train_s3_path = f's3://{bucket_name}/{train_filename}'
+train_s3_path = f's3://{bucket_name}/{train_filename}'  # an S3 URI: bucket plus key; SageMaker takes input in this form
 
 # we'll store all results in a subfolder called xgboost on our bucket. This folder will automatically be created if it doesn't exist already.
 output_folder = 'xgboost'
-output_path = f's3://{bucket_name}/{output_folder}/' 
+output_path = f's3://{bucket_name}/{output_folder}/'   # S3 prefix (a "folder") where SageMaker uploads the job's outputs
 
 # Set up the SageMaker XGBoost Estimator with custom script
 xgboost_estimator = XGBoost(
-    base_job_name=notebook_instance_name,
+    base_job_name=notebook_instance_name,  # prefix of the job name; SageMaker appends a timestamp to make it unique
     max_run=max_run, # in seconds; always include (max 48 hours)
-    entry_point='train_xgboost.py',      # Custom script path
+    entry_point='train_xgboost.py',      # the script SageMaker runs inside the container on the training instance
     source_dir='ML_with_AWS_SageMaker/scripts',  # Directory where your script is located (uploaded to the job with it)
-    role=role,
-    tags=job_tags,
+    role=role,                           # the job assumes this role to read its input and write its output in S3
+    tags=job_tags,                       # the cost-tracking tags defined above
     instance_count=instance_count,
     instance_type=instance_type,
     output_path=output_path,
     sagemaker_session=session,
     framework_version="1.7-1",           # XGBoost container version
-    hyperparameters={
+    hyperparameters={                    # passed to the script as command-line arguments: --train ..., --max_depth ...
         'train': train_file,
         'max_depth': max_depth,
         'eta': eta,
@@ -440,10 +455,12 @@ xgboost_estimator = XGBoost(
 )
 
 # Define input data
+# TrainingInput: where the data is and its format; SageMaker copies it onto the training instance before the script runs
 train_input = TrainingInput(train_s3_path, content_type='csv')
 
 # Measure and start training time
 start = t.time()
+# fit() launches the job and blocks until it finishes (wait=False would return at once); the 'train' channel becomes SM_CHANNEL_TRAIN
 xgboost_estimator.fit({'train': train_input})
 end = t.time()
 
@@ -465,12 +482,13 @@ Additionally, we define a TrainingInput object containing the training data's S3
 
 ```python
 def job_cost_report(job_name: str, price_per_hour: float):
-    desc = session.sagemaker_client.describe_training_job(TrainingJobName=job_name)
+    desc = session.sagemaker_client.describe_training_job(TrainingJobName=job_name)  # the job's full record: status, timings, resources, output
+    # TrainingTimeInSeconds: your script running; BillableTimeInSeconds: from instance ready to released, per instance
     billable = desc["BillableTimeInSeconds"] * desc["ResourceConfig"]["InstanceCount"]
     print(f"{job_name}: status {desc['TrainingJobStatus']}, training {desc.get('TrainingTimeInSeconds', 0)/60:.1f} min, billable {billable/60:.1f} min, cost ${billable/3600*price_per_hour:.2f} at ${price_per_hour}/h")
     return desc
 
-desc = job_cost_report(xgboost_estimator.latest_training_job.name, price_per_hour)
+desc = job_cost_report(xgboost_estimator.latest_training_job.name, price_per_hour)  # latest_training_job: the job fit() just ran
 ```
 
 Compare this with the estimate you made above. The gap between training time and billable time is the startup overhead of every job; it is the same whether you train for one minute or one hour.
@@ -500,6 +518,7 @@ If additional metrics or custom evaluation steps are needed, you can add them in
 
 ```python
 # Model results are saved in auto-generated folders. Use xgboost_estimator.latest_training_job.name to get the folder name
+# Key of the model artifact: <output prefix>/<job name>/output/model.tar.gz, a tarball of whatever the script saved to SM_MODEL_DIR
 model_s3_path = f'{output_folder}/{xgboost_estimator.latest_training_job.name}/output/model.tar.gz'
 print(model_s3_path)
 local_model_path = 'model.tar.gz'
@@ -510,7 +529,7 @@ s3.download_file(bucket_name, model_s3_path, local_model_path)
 # Extract the model file
 import tarfile
 with tarfile.open(local_model_path) as tar:
-    tar.extractall()
+    tar.extractall()  # unpacks the xgboost-model file into the current directory, replacing the local test's copy
 ```
 
 ```python
@@ -588,7 +607,7 @@ print("Uploaded:", builtin_s3_path)
 In this approach, using `TrainingInput` directly with SageMaker's built-in XGBoost container contrasts with our previous method, where we specified a custom script with argument inputs (specified in hyperparameters) for data paths and settings. Here, we use hyperparameters only to specify the model's hyperparameters. We also add `objective`, because the built-in algorithm's default objective is regression rather than binary classification.
 
 ```python
-from sagemaker.estimator import Estimator # when using images, we use the general Estimator class
+from sagemaker.estimator import Estimator # when using images, we use the general Estimator class: a container image, no script of ours
 
 # Define instance type/count we'll use for training
 instance_type="ml.m5.large"
@@ -598,6 +617,7 @@ instance_count=1 # always start with 1
 xgboost_estimator_builtin = Estimator(
     base_job_name=notebook_instance_name,
     max_run=max_run, # in seconds; always include (max 48 hours)
+    # image_uris.retrieve looks up AWS's prebuilt XGBoost container for this region; its built-in training code replaces entry_point
     image_uri=sagemaker.image_uris.retrieve("xgboost", region, version="1.7-1"),
     role=role,
     tags=job_tags,
@@ -605,7 +625,7 @@ xgboost_estimator_builtin = Estimator(
     instance_type=instance_type,
     output_path=output_path,
     sagemaker_session=session,
-    hyperparameters={
+    hyperparameters={                    # go straight to the XGBoost algorithm, not to a script of ours
         'objective': 'binary:logistic',  # the built-in default is regression; we are classifying
         'max_depth': max_depth,
         'eta': eta,
@@ -616,7 +636,7 @@ xgboost_estimator_builtin = Estimator(
 )
 
 # Define input data: the headerless, label-first CSV we just uploaded
-train_input_builtin = TrainingInput(builtin_s3_path, content_type="text/csv")
+train_input_builtin = TrainingInput(builtin_s3_path, content_type="text/csv")  # content_type tells the built-in algorithm how to parse the data
 
 # Measure and start training time
 start = t.time()

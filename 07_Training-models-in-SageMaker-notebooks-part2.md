@@ -30,8 +30,6 @@ Once your notebook is open, we can setup our SageMaker controller as usual:
 ```python
 import boto3
 import pandas as pd
-import os
-os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the kernel ships SDK v2; the Accessing S3 episode explains
 import sagemaker
 from sagemaker import get_execution_role
 
@@ -55,7 +53,7 @@ Create a SageMaker session to manage interactions with Amazon SageMaker, such as
 ```python
 region = boto3.Session().region_name  # inherited from the notebook instance; do not hard-code a region
 session = sagemaker.Session()
-sagemaker_client = session.sagemaker_client
+sagemaker_client = session.sagemaker_client  # low-level boto3 client; describe_training_job() below uses it
 print(f"region = {region}")
 ```
 
@@ -126,9 +124,9 @@ X, y, scaler = preprocess_data(df)   # scaler is fit on the training data only
 X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Save the preprocessed data (and the fitted scaler) to our local jupyter environment
-np.savez('train_data.npz', X_train=X_train, y_train=y_train)
+np.savez('train_data.npz', X_train=X_train, y_train=y_train)  # .npz = several numpy arrays in one compressed file, read back by key
 np.savez('val_data.npz', X_val=X_val, y_val=y_val)
-joblib.dump(scaler, 'scaler.joblib')
+joblib.dump(scaler, 'scaler.joblib')  # keep the fitted scaler: the test set must be transformed with these same means/stds, never refit
 print(X_train.shape, X_val.shape)
 ```
 
@@ -185,7 +183,8 @@ We'll also bring back the `job_cost_report()` helper from the previous episode, 
 
 ```python
 def job_cost_report(job_name: str, price_per_hour: float):
-    desc = session.sagemaker_client.describe_training_job(TrainingJobName=job_name)
+    desc = session.sagemaker_client.describe_training_job(TrainingJobName=job_name)  # the job record the console shows
+    # BillableTimeInSeconds = startup + training, charged per instance; TrainingTimeInSeconds is the script alone
     billable = desc["BillableTimeInSeconds"] * desc["ResourceConfig"]["InstanceCount"]
     print(f"{job_name}: status {desc['TrainingJobStatus']}, training {desc.get('TrainingTimeInSeconds', 0)/60:.1f} min, billable {billable/60:.1f} min, cost ${billable/3600*price_per_hour:.2f} at ${price_per_hour}/h")
     return desc
@@ -208,18 +207,19 @@ max_run = 2*60*60 # 2 hours
 
 # Define the PyTorch estimator and pass hyperparameters as arguments
 pytorch_estimator = PyTorch(
-    base_job_name=notebook_instance_name,
+    base_job_name=notebook_instance_name,  # SageMaker appends a timestamp to make each job name unique
     max_run=max_run, # in seconds; always include (max 48 hours)
-    entry_point="ML_with_AWS_SageMaker/scripts/train_nn.py",
+    entry_point="ML_with_AWS_SageMaker/scripts/train_nn.py",  # copied into the container and run there
     role=role,
-    tags=job_tags,
+    tags=job_tags,  # per job; nothing is inherited from the notebook instance
     instance_type=instance_type, # with this small dataset, we don't necessarily need a GPU for fast training. 
     instance_count=instance_count,
+    # framework_version + py_version pick the prebuilt PyTorch training image the job runs in
     framework_version="2.3",  # if fit() fails with an image error, check available versions with: sagemaker.image_uris.retrieve("pytorch", region, version="2.3", py_version="py311", image_scope="training", instance_type="ml.m5.large")
     py_version="py311",
     output_path=output_path,
     sagemaker_session=session,
-    hyperparameters={
+    hyperparameters={  # passed to train_nn.py as command-line flags: --train ... --epochs 1000 ...
         "train": "/opt/ml/input/data/train/train_data.npz",  # SageMaker will mount this path
         "val": "/opt/ml/input/data/val/val_data.npz",        # SageMaker will mount this path
         "epochs": epochs,
@@ -227,7 +227,8 @@ pytorch_estimator = PyTorch(
     }
 )
 
-# Define input paths
+# Define input paths: each TrainingInput is a channel; its S3 object is copied to /opt/ml/input/data/<channel>/ in the container
+# content_type is a label only; our script reads the file itself
 train_input = TrainingInput(f"s3://{bucket_name}/train_data.npz", content_type="application/x-npz")
 val_input = TrainingInput(f"s3://{bucket_name}/val_data.npz", content_type="application/x-npz")
 
@@ -279,7 +280,7 @@ We're about to run the identical job on an `ml.g4dn.xlarge` (one NVIDIA T4 GPU, 
 Then run the GPU job, call `job_cost_report()` for it, and compute cost = rate x billable minutes for both runs. Were you right? Explain the result.
 
 ```python
-instance_type = "ml.g4dn.xlarge"
+instance_type = "ml.g4dn.xlarge"  # one NVIDIA T4 GPU; train_nn.py moves to it on its own via torch.cuda.is_available()
 instance_count = 1
 
 pytorch_estimator_gpu = PyTorch(
@@ -368,7 +369,7 @@ pytorch_estimator_2x = PyTorch(
     role=role,
     tags=job_tags,
     instance_type=instance_type,
-    instance_count=instance_count,
+    instance_count=instance_count,  # no distribution= argument, so each instance runs the whole script on the whole dataset
     framework_version="2.3",
     py_version="py311",
     output_path=output_path,

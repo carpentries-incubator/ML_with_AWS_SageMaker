@@ -266,7 +266,6 @@ import time
 
 import boto3
 import pandas as pd
-os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the kernel ships SDK v2; the Accessing S3 episode explains
 import sagemaker
 from sagemaker import get_execution_role
 
@@ -275,8 +274,8 @@ region = session.boto_region_name
 role = get_execution_role()
 s3_client = boto3.client("s3", region_name=region)
 
-shared_bucket = "ml-marathon-shared"   # <-- EDIT ME: read-only bucket with the competition data
-bucket_name = "sinkorswim-doejohn"     # <-- EDIT ME: your own bucket from the S3 episode
+shared_bucket = "ml-marathon-shared"   # <-- EDIT ME: read-only bucket with the data and model weights; jobs read from it
+bucket_name = "sinkorswim-doejohn"     # <-- EDIT ME: your own bucket from the S3 episode; everything the jobs write goes here
 username = "doejohn"                   # <-- EDIT ME: lowercase letters/digits only; used in job names
 
 data_prefix = "badger-scribe"
@@ -294,7 +293,7 @@ print("Role:", role)
 for fname in ["train.csv", "test.csv", "metadata.csv", "metric.py"]:
     s3_client.download_file(shared_bucket, f"{data_prefix}/{fname}", os.path.join(local_data_dir, fname))
 
-train_df = pd.read_csv(os.path.join(local_data_dir, "train.csv"), keep_default_na=False)
+train_df = pd.read_csv(os.path.join(local_data_dir, "train.csv"), keep_default_na=False)  # keep empty text as "" rather than NaN
 test_df = pd.read_csv(os.path.join(local_data_dir, "test.csv"), keep_default_na=False)
 
 print("train pages:", len(train_df), " test pages:", len(test_df))
@@ -328,7 +327,7 @@ os.makedirs("code", exist_ok=True)
 for f in ["badger_common.py", "finetune_churro_lora.py", "churro_transcribe_batch.py"]:
     shutil.copy(f"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/{f}", f"code/{f}")
 
-with open("code/requirements.txt", "w") as f:
+with open("code/requirements.txt", "w") as f:  # pip-installed inside the container before the script starts
     f.write("\n".join(["peft>=0.14", "accelerate", "pillow", "pandas"]))
 
 print(os.listdir("code"))
@@ -383,33 +382,34 @@ One job does everything: scores 15 held-out German-letter pages with the base mo
 ```python
 from sagemaker.huggingface import HuggingFace
 
-instance_type = "ml.g5.xlarge"
-model_output_path = f"s3://{bucket_name}/{data_prefix}/models/"
+instance_type = "ml.g5.xlarge"   # one A10G GPU, 24 GB; the GPU lives in the job, not in this notebook
+model_output_path = f"s3://{bucket_name}/{data_prefix}/models/"   # the job's model.tar.gz lands under here, in your own bucket
 
 estimator = HuggingFace(
     entry_point="finetune_churro_lora.py",
-    source_dir="code/",
+    source_dir="code/",                   # the whole directory ships with the job: script, badger_common.py, requirements.txt
     role=role,
     tags=make_job_tags("Training"),
     instance_type=instance_type,
     instance_count=1,
     volume_size=50,                       # GB of disk for the container, weights and images
     max_run=45 * 60,                      # 45 minutes: about twice the estimate, never "whatever it takes"
+    # the three versions select the prebuilt Hugging Face training image (transformers + PyTorch + Python)
     transformers_version="4.56",
     pytorch_version="2.8",
     py_version="py312",
     output_path=model_output_path,
     sagemaker_session=session,
-    hyperparameters={
+    hyperparameters={                     # passed to the script as command-line flags: --epochs 2 --lr 0.0002 ...
         # no model_id: the script reads the base weights from the "model" channel mounted at fit()
         "max_train_pages": 120,           # a slice in class; the homework uses all 251 training pages
-        "epochs": 2,
-        "lr": 2e-4,
-        "lora_r": 16,
-        "batch_size": 1,
+        "epochs": 2,                      # passes over the pages; training time scales linearly with it
+        "lr": 2e-4,                       # LoRA takes a higher learning rate than a full fine-tune (~1e-5)
+        "lora_r": 16,                     # adapter rank: how many trainable parameters LoRA adds per layer
+        "batch_size": 1,                  # one page per step fits the 24 GB card
         "grad_accum": 4,                  # effective batch of 4 pages -> ~60 optimizer steps
-        "max_pixels": 1280 * 28 * 28,     # ~1 megapixel per page
-        "eval_pages": 15,
+        "max_pixels": 1280 * 28 * 28,     # ~1 megapixel per page; the cost knob: tokens per page scale with it
+        "eval_pages": 15,                 # holdout pages scored before (eval_before=1) and after training
         "eval_before": 1,
     },
 )
@@ -429,8 +429,11 @@ Now launch. Two details in this one line matter:
 The second input channel, `model`, is the copy of CHURRO-3B your instructor staged in the shared bucket: SageMaker mounts it at `/opt/ml/input/data/model` and the script loads from there, so a hundred jobs starting in the same minute copy 7.5 GB from S3 instead of each pulling it from Hugging Face.
 
 ```python
+# job_name must be unique in the account: rerunning this cell fails with ResourceInUse instead of launching a second job
 training_job_name = f"badger-{username}-mini-v1"
 
+# two channels: "train" is mounted at /opt/ml/input/data/train, "model" at /opt/ml/input/data/model inside the container
+# wait=True blocks this cell and streams the log here; the job keeps running (and billing) even if you interrupt the cell
 estimator.fit({"train": train_s3_uri, "model": model_s3_uri}, job_name=training_job_name, wait=True)
 ```
 
@@ -466,8 +469,8 @@ When the cell returns, ask SageMaker what it charged for. This is the number to 
 ```python
 def job_cost_report(job_name: str, price_per_hour: float):
     desc = session.sagemaker_client.describe_training_job(TrainingJobName=job_name)
-    billable = desc["BillableTimeInSeconds"]
-    training = desc.get("TrainingTimeInSeconds", 0)
+    billable = desc["BillableTimeInSeconds"]           # the bill: container pull, 7.5 GB model copy, then the script
+    training = desc.get("TrainingTimeInSeconds", 0)    # the script alone; the gap is the fixed startup overhead
     print(f"job:            {job_name}")
     print(f"status:         {desc['TrainingJobStatus']}")
     print(f"training time:  {training / 60:.1f} min  (script running)")
@@ -475,9 +478,9 @@ def job_cost_report(job_name: str, price_per_hour: float):
     print(f"cost:           ${billable / 3600 * price_per_hour:.2f} at ${price_per_hour}/h")
     return desc
 
-g5_price = 1.41
+g5_price = 1.41   # ml.g5.xlarge, us-east-1 on-demand, $/hour
 desc = job_cost_report(training_job_name, g5_price)
-adapter_s3_uri = desc["ModelArtifacts"]["S3ModelArtifacts"]
+adapter_s3_uri = desc["ModelArtifacts"]["S3ModelArtifacts"]   # the model.tar.gz this job uploaded to output_path
 print("adapter:", adapter_s3_uri)
 ```
 
@@ -490,13 +493,13 @@ import tarfile
 
 run_dir = os.path.join(local_data_dir, training_job_name)
 os.makedirs(run_dir, exist_ok=True)
-bucket, key = adapter_s3_uri.replace("s3://", "").split("/", 1)
+bucket, key = adapter_s3_uri.replace("s3://", "").split("/", 1)   # s3://bucket/key -> bucket, key
 s3_client.download_file(bucket, key, os.path.join(run_dir, "model.tar.gz"))
-with tarfile.open(os.path.join(run_dir, "model.tar.gz")) as tar:
+with tarfile.open(os.path.join(run_dir, "model.tar.gz")) as tar:   # everything the script saved to /opt/ml/model
     tar.extractall(run_dir)
-print(sorted(os.listdir(run_dir)))
+print(sorted(os.listdir(run_dir)))   # adapter files, holdout_page_ids.csv, eval_before.csv, eval_after.csv, train_summary.json
 
-summary = json.load(open(os.path.join(run_dir, "train_summary.json")))
+summary = json.load(open(os.path.join(run_dir, "train_summary.json")))   # train_pages, train_minutes, seconds_per_page, CER before/after
 print(json.dumps(summary, indent=2))
 ```
 
@@ -508,8 +511,9 @@ Both evaluations ran on the same 15 pages, so the difference is the fine-tune an
 before = pd.read_csv(os.path.join(run_dir, "eval_before.csv"), keep_default_na=False)
 after = pd.read_csv(os.path.join(run_dir, "eval_after.csv"), keep_default_na=False)
 
+# cer = character error rate per page: edits / characters in the reference, lower is better
 comparison = before[["page_id", "cer"]].merge(after[["page_id", "cer"]], on="page_id", suffixes=("_base", "_tuned"))
-comparison["gain"] = comparison.cer_base - comparison.cer_tuned
+comparison["gain"] = comparison.cer_base - comparison.cer_tuned   # positive = the fine-tune helped on that page
 print(comparison.sort_values("gain", ascending=False).round(3).to_string(index=False))
 print(f"\nmean CER  base: {comparison.cer_base.mean():.3f}   tuned: {comparison.cer_tuned.mean():.3f}")
 ```
@@ -583,6 +587,7 @@ Add it up from the job descriptions, not from memory.
 
 ```python
 total = 0.0
+# every job this episode launched shares the badger-<username> prefix, so one listing finds them all
 for job in session.sagemaker_client.list_training_jobs(NameContains=f"badger-{username}", MaxResults=50)["TrainingJobSummaries"]:
     d = session.sagemaker_client.describe_training_job(TrainingJobName=job["TrainingJobName"])
     cost = d.get("BillableTimeInSeconds", 0) / 3600 * g5_price
@@ -661,6 +666,7 @@ full_estimator = HuggingFace(
     instance_count=1,
     volume_size=50,
     max_run=90 * 60,                      # 90 minutes: twice the estimate
+    # Exercise 3: adding use_spot_instances=True, max_wait=3 * 60 * 60 runs this on spot capacity; max_wait (run + waiting) must be >= max_run
     transformers_version="4.56",
     pytorch_version="2.8",
     py_version="py312",
@@ -674,13 +680,14 @@ full_estimator = HuggingFace(
         "batch_size": 1,
         "grad_accum": 8,
         "max_pixels": 1280 * 28 * 28,
-        "holdout_frac": 0.15,
+        "holdout_frac": 0.15,             # share of pages per category held out of training
         "eval_pages": 40,
         "eval_before": 1,
     },
 )
 
 full_job_name = f"badger-{username}-full-v1"
+# wait=False: returns at once; poll the job with describe_training_job in the next cell
 full_estimator.fit({"train": train_s3_uri, "model": model_s3_uri}, job_name=full_job_name, wait=False)
 print("launched:", full_job_name)
 ```
@@ -726,11 +733,12 @@ from sagemaker.processing import ProcessingInput, ProcessingOutput
 
 def run_transcription_job(label: str, adapter_uri: str = None):
     output_uri = f"s3://{bucket_name}/{data_prefix}/predictions/{label}/"
-    inputs = [
+    inputs = [  # each ProcessingInput copies an S3 prefix to a container path before the script starts
         ProcessingInput(source=images_s3_uri, destination="/opt/ml/processing/input/images"),
         ProcessingInput(source=model_s3_uri, destination="/opt/ml/processing/input/model"),
         ProcessingInput(source=infer_data_s3_uri, destination="/opt/ml/processing/input/data"),
     ]
+    # arguments = command-line flags for the script (a processor has no hyperparameters=)
     arguments = ["--model_id", "/opt/ml/processing/input/model", "--pages_csv", "pages.csv",
                  "--batch_size", "4", "--max_pixels", str(1280 * 28 * 28)]
     if adapter_uri:
@@ -742,21 +750,22 @@ def run_transcription_job(label: str, adapter_uri: str = None):
         tags=make_job_tags("Inference"),
         instance_type=instance_type,
         instance_count=1,
-        volume_size_in_gb=50,
-        transformers_version="4.56",
+        volume_size_in_gb=50,             # same role as volume_size on the estimator
+        transformers_version="4.56",      # same image family as the training job
         pytorch_version="2.8",
         py_version="py312",
         sagemaker_session=session,
-        max_runtime_in_seconds=45 * 60,   # 45 minute cap; the estimate is 15 minutes
+        max_runtime_in_seconds=45 * 60,   # the processor's name for max_run: 45 minute cap; the estimate is 15 minutes
     )
     processor.run(
         code="churro_transcribe_batch.py",
         source_dir="code/",
         inputs=inputs,
+        # ProcessingOutput: whatever the script writes under source is copied to destination when the job ends
         outputs=[ProcessingOutput(output_name="predictions", source="/opt/ml/processing/output", destination=output_uri)],
         arguments=arguments,
         job_name=f"badger-{username}-transcribe-{label}-v1",   # unique, like the training jobs
-        wait=False, logs=False,
+        wait=False, logs=False,           # launch and return, so the two jobs run at the same time
     )
     return output_uri
 

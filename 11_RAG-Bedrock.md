@@ -118,7 +118,6 @@ import pandas as pd
 import numpy as np
 
 # ---- AWS configuration ----
-os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the kernel ships SDK v2; the Accessing S3 episode explains
 import sagemaker
 
 session = sagemaker.Session()
@@ -155,8 +154,8 @@ bedrock_runtime = boto3.client(
     "bedrock-runtime",
     region_name=region,
     config=Config(retries={"max_attempts": 10, "mode": "adaptive"}),
-)                                                                      # invoke models
-bedrock = boto3.client("bedrock", region_name=region)                  # manage profiles, list models
+)                                                                      # the client that calls models (invoke_model, converse)
+bedrock = boto3.client("bedrock", region_name=region)                  # the control-plane client (list models, inference profiles)
 ```
 
 ### Step 2 – Get the shared WattBot helpers
@@ -214,8 +213,8 @@ def smart_read_csv(path: str) -> pd.DataFrame:
     raise RuntimeError(f"Unable to read CSV at {path}")
 
 
-train_qa_path = download_from_s3(train_key, "train_QA.csv")
-metadata_path = download_from_s3(metadata_key, "metadata.csv")
+train_qa_path = download_from_s3(train_key, "train_QA.csv")      # labelled questions + answers: what we score against
+metadata_path = download_from_s3(metadata_key, "metadata.csv")   # one row per paper (id, title, url): the corpus index
 
 train_df = smart_read_csv(train_qa_path)
 metadata_df = smart_read_csv(metadata_path)
@@ -308,6 +307,7 @@ def pdfs_to_page_docs(metadata: pd.DataFrame, pdf_dir: str) -> List[Dict[str, An
             continue
 
         total_pages = len(reader.pages)
+        # One record per page: the text plus the metadata needed to cite it later
         for i, page in enumerate(reader.pages):
             try:
                 text = page.extract_text() or ""
@@ -326,8 +326,8 @@ def pdfs_to_page_docs(metadata: pd.DataFrame, pdf_dir: str) -> List[Dict[str, An
                     "doc_id": doc_id,
                     "title": title,
                     "url": url,
-                    "page_num": i,
-                    "page_label": str(i + 1),
+                    "page_num": i,                 # zero-based index
+                    "page_label": str(i + 1),      # 1-based label, as a reader would cite it
                     "total_pages": total_pages,
                 }
             )
@@ -357,8 +357,8 @@ In your own work, you may wish to plug in more sophisticated *semantic chunking*
 ```python
 def split_text_into_chunks(
     text: str,
-    chunk_size_chars: int = 1200,
-    chunk_overlap_chars: int = 200,
+    chunk_size_chars: int = 1200,     # max characters per chunk (~300 tokens)
+    chunk_overlap_chars: int = 200,   # consecutive chunks share this much, so a sentence cut at the edge survives
 ) -> List[str]:
     """Split `text` into overlapping character-based chunks.
 
@@ -413,7 +413,7 @@ def make_chunked_docs(
                     "page_num": page["page_num"],
                     "page_label": page["page_label"],
                     "total_pages": page["total_pages"],
-                    "chunk_idx_in_page": idx,
+                    "chunk_idx_in_page": idx,   # position within the page; the rest is copied from the page record
                 }
             )
     return chunked
@@ -425,6 +425,7 @@ Chunking is cheap CPU work, but there is no reason to repeat it on every run. We
 chunks_jsonl_path = os.path.join(local_data_dir, "chunks.jsonl")
 
 def save_chunked_docs_jsonl(path, chunks):
+    # JSONL: one JSON record per line, so the file streams and diffs well
     with open(path, "w", encoding="utf-8") as f:
         for rec in chunks:
             json.dump(rec, f, ensure_ascii=False)
@@ -518,8 +519,8 @@ def get_or_create_inference_profile(base_model_id: str, label: str) -> str:
     resp = bedrock.create_inference_profile(
         inferenceProfileName=profile_name,
         description=f"{project} / {name} WattBot RAG ({label}) -> {base_model_id}",
-        modelSource={"copyFrom": _source_arn(base_model_id)},
-        tags=profile_tags,
+        modelSource={"copyFrom": _source_arn(base_model_id)},   # the profile is an alias for one base model
+        tags=profile_tags,   # usage billed through the profile carries these tags; raw model-ID calls carry none
     )
     print(f"Created inference profile {profile_name}: {resp['inferenceProfileArn']}")
     return resp["inferenceProfileArn"]
@@ -574,7 +575,7 @@ print(f"Chunks: {len(chunked_docs)}")
 print(f"Train QAs: {len(train_df)}")
 print(f"Metadata rows: {len(metadata_df)}")
 
-docid_to_url = build_docid_to_url(metadata_df)
+docid_to_url = build_docid_to_url(metadata_df)   # doc_id -> url, for the ref_url column of the submission
 print(f"docid_to_url has {len(docid_to_url)} entries.")
 ```
 
@@ -591,10 +592,10 @@ def bedrock_embed_text(text: str, model_id: str = embedding_model_id_bedrock) ->
         modelId=model_id,
         contentType="application/json",
         accept="application/json",
-        body=json.dumps({"inputText": text}),
+        body=json.dumps({"inputText": text}),   # Titan's own request shape; add "dimensions": 256 or 512 to shrink the 1,024 default
     )
     response_body = json.loads(response["body"].read())
-    embedding = response_body.get("embedding")
+    embedding = response_body.get("embedding")   # a list of floats, one per dimension
     if embedding is None:
         raise ValueError(f"No 'embedding' found in response: {response_body}")
     return embedding
@@ -613,6 +614,7 @@ def _s3_object_exists(bucket: str, key: str) -> bool:
         return False
 
 
+# Cache order: local .npy, then your bucket, then recompute (and upload for next time)
 if emb_save_path.exists():
     print(f"Found existing embeddings at {emb_save_path}. Skipping re-computation.")
     chunk_embeddings = np.load(emb_save_path)
@@ -632,7 +634,7 @@ else:
             np.save(emb_partial_path, np.array(all_embeddings, dtype="float32"))
             print(f"Embedded {idx + 1} / {len(chunked_docs)} chunks (progress saved)")
 
-    chunk_embeddings = np.array(all_embeddings, dtype="float32")
+    chunk_embeddings = np.array(all_embeddings, dtype="float32")   # the embedding matrix: one row per chunk, one column per dimension
     np.save(emb_save_path, chunk_embeddings)
     emb_partial_path.unlink(missing_ok=True)
     s3.upload_file(str(emb_save_path), bucket_name, embeddings_key)
@@ -650,8 +652,9 @@ Retrieval is pure NumPy: embed the question with the same model, take the cosine
 first_row = train_df.iloc[0]
 print("Sample question:", first_row["question"])
 
+# Cosine similarity of the question vector against every row of the matrix; keep the k best
 test_retrieved = retrieve_top_k(embed_query(first_row["question"]), chunk_embeddings, chunked_docs, k=3)
-for r in test_retrieved:
+for r in test_retrieved:   # score is the cosine similarity; 1.0 would be an identical vector
     snippet = r["text"].replace("\n", " ")[:160]
     print(f"- score={r['score']:.3f} | doc_id={r['doc_id']} | page={r['page_label']} | {snippet}...")
 ```
@@ -673,15 +676,18 @@ def call_bedrock_chat(
     try:
         response = bedrock_runtime.converse(
             modelId=model_id,
+            # system: instructions that apply to the whole exchange
             system=[{"text": system_prompt}],
+            # messages: the conversation so far, here a single user turn
             messages=[{"role": "user", "content": [{"text": user_prompt}]}],
+            # inferenceConfig: generation settings; temperature 0 makes the output repeatable
             inferenceConfig={"maxTokens": max_new_tokens, "temperature": 0},
         )
     except ClientError as e:
         print(f"ERROR calling Bedrock model {model_id}: {e}")
         raise
 
-    bedrock_usage.append(response["usage"])
+    bedrock_usage.append(response["usage"])   # token counts for this call, kept so we can price the run later
     # Some models return extra content blocks (e.g. reasoning); keep only the text ones.
     text_blocks = [block["text"] for block in response["output"]["message"]["content"] if "text" in block]
     return "\n".join(text_blocks).strip()
@@ -720,14 +726,14 @@ for _, row in train_df.iterrows():
     print(f"QUESTION: {row['question']}")
 
     out = run_single_qa(
-        row=row,
-        embed_query=embed_query,
+        row=row,                             # one train_QA.csv row: id, question, expected answer_unit
+        embed_query=embed_query,             # the two model callables: the only episode-specific inputs
         generate=call_bedrock_chat,
-        chunk_embeddings=chunk_embeddings,
+        chunk_embeddings=chunk_embeddings,   # the index: the matrix plus the chunks it was built from
         chunked_docs=chunked_docs,
-        docid_to_url=docid_to_url,
-        top_k=8,
-        retrieval_threshold=0.25,
+        docid_to_url=docid_to_url,           # for the ref_url column
+        top_k=8,                             # chunks handed to the model as context
+        retrieval_threshold=0.25,            # best cosine score below this => unanswerable (is_blank)
         verbose=True,
     )
 
@@ -754,11 +760,11 @@ WattBot scores each prediction with three components: 0.75 for `answer_value` (n
 
 ```python
 scored_df = compute_wattbot_score(
-    train_qa_path=train_qa_path,
-    preds_path=output_path,
-    gt_is_na_col="is_blank",
+    train_qa_path=train_qa_path,    # ground truth
+    preds_path=output_path,         # our predictions, joined to it on id
+    gt_is_na_col="is_blank",        # no separate column: "unanswerable" means answer_value == "is_blank"
     pred_is_na_col="is_blank",
-    n_examples=20,
+    n_examples=20,                  # print the 20 worst-scoring rows
 )
 ```
 
