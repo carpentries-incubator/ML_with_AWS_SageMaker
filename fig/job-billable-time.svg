@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="300" viewBox="0 0 960 300" font-family="Helvetica, Arial, sans-serif" font-size="14">
+  <rect width="960" height="300" fill="#ffffff"/>
+  <text x="480" y="30" text-anchor="middle" font-weight="bold" font-size="16">One SageMaker training job, start to finish</text>
+
+  <!-- timeline segments -->
+  <rect x="60"  y="120" width="110" height="50" fill="#e0e0e0" stroke="#888"/>
+  <text x="115" y="141" text-anchor="middle" font-size="12">instance</text>
+  <text x="115" y="157" text-anchor="middle" font-size="12">requested</text>
+
+  <rect x="170" y="120" width="130" height="50" fill="#fde9c9" stroke="#d9931f"/>
+  <text x="235" y="141" text-anchor="middle" font-size="12">pull container</text>
+  <text x="235" y="157" text-anchor="middle" font-size="12">(framework image)</text>
+
+  <rect x="300" y="120" width="110" height="50" fill="#fde9c9" stroke="#d9931f"/>
+  <text x="355" y="141" text-anchor="middle" font-size="12">download data</text>
+  <text x="355" y="157" text-anchor="middle" font-size="12">and weights from S3</text>
+
+  <rect x="410" y="120" width="300" height="50" fill="#cde9d4" stroke="#2e8b57"/>
+  <text x="560" y="141" text-anchor="middle" font-weight="bold" font-size="13">your script runs</text>
+  <text x="560" y="157" text-anchor="middle" font-size="12">train_xgboost.py, train_nn.py, finetune...</text>
+
+  <rect x="710" y="120" width="110" height="50" fill="#fde9c9" stroke="#d9931f"/>
+  <text x="765" y="141" text-anchor="middle" font-size="12">upload outputs</text>
+  <text x="765" y="157" text-anchor="middle" font-size="12">model.tar.gz to S3</text>
+
+  <rect x="820" y="120" width="80" height="50" fill="#e0e0e0" stroke="#888"/>
+  <text x="860" y="141" text-anchor="middle" font-size="12">instance</text>
+  <text x="860" y="157" text-anchor="middle" font-size="12">released</text>
+
+  <!-- brackets -->
+  <line x1="410" y1="100" x2="710" y2="100" stroke="#2e8b57" stroke-width="2"/>
+  <line x1="410" y1="92" x2="410" y2="108" stroke="#2e8b57" stroke-width="2"/>
+  <line x1="710" y1="92" x2="710" y2="108" stroke="#2e8b57" stroke-width="2"/>
+  <text x="560" y="86" text-anchor="middle" font-size="13" fill="#2e8b57" font-weight="bold">TrainingTimeInSeconds</text>
+
+  <line x1="170" y1="200" x2="820" y2="200" stroke="#d9931f" stroke-width="2"/>
+  <line x1="170" y1="192" x2="170" y2="208" stroke="#d9931f" stroke-width="2"/>
+  <line x1="820" y1="192" x2="820" y2="208" stroke="#d9931f" stroke-width="2"/>
+  <text x="495" y="224" text-anchor="middle" font-size="13" fill="#b5720f" font-weight="bold">BillableTimeInSeconds  =  what you pay for, per second</text>
+
+  <text x="60" y="262" font-size="12" fill="#333">Not billed: the wait for an instance (grey). Billed but not training (orange): the fixed overhead of every job, two to four minutes here.</text>
+  <text x="60" y="282" font-size="12" fill="#333">cost = BillableTimeInSeconds x instance count x hourly rate / 3600. For a one-minute training run the overhead is most of the bill.</text>
+</svg>
