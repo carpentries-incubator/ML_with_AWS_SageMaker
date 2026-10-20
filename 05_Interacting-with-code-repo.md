@@ -21,7 +21,7 @@ exercises: 10
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## Open prefilled .ipynb notebook
-Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/Interacting-with-code-repo.ipynb`.
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/05_Interacting-with-code-repo.ipynb`.
 
 This episode is **optional self-study**: it is not needed to run the rest of the lesson, but it is the workflow you will want once you start writing code of your own in SageMaker. It also doubles as a short git refresher. You need a GitHub account for it; nothing else in the lesson does.
 
@@ -100,13 +100,13 @@ We want our notebook under version control, but a `.ipynb` file is JSON with out
 2. Copy the notebook from the Accessing S3 episode into our repository folder (we are still in `/home/ec2-user/SageMaker/sagemaker-work`) and convert it there. Copying keeps the lesson clone untouched and puts the `.py` file where git will see it.
 
 ```python
-!cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/notebooks/Accessing-S3-via-SageMaker-notebooks.ipynb .
-!jupytext --to py Accessing-S3-via-SageMaker-notebooks.ipynb
+!cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/notebooks/04_Accessing-S3-via-SageMaker-notebooks.ipynb .
+!jupytext --to py 04_Accessing-S3-via-SageMaker-notebooks.ipynb
 ```
 
 ```text
-[jupytext] Reading Accessing-S3-via-SageMaker-notebooks.ipynb in format ipynb
-[jupytext] Writing Accessing-S3-via-SageMaker-notebooks.py
+[jupytext] Reading 04_Accessing-S3-via-SageMaker-notebooks.ipynb in format ipynb
+[jupytext] Writing 04_Accessing-S3-via-SageMaker-notebooks.py
 ```
 
 3. With several notebooks, convert them all in a loop:
@@ -143,7 +143,7 @@ helpers.convert_files(direction="notebook_to_python")
 2. Add and commit. We add the `.py` by name rather than `git add .`, so the `.ipynb` copy is never tracked (Step 5 ignores it for good).
 
 ```python
-!git add Accessing-S3-via-SageMaker-notebooks.py
+!git add 04_Accessing-S3-via-SageMaker-notebooks.py
 !git commit -m "Add Accessing-S3 notebook as a script"   # a commit message says what changed, specifically
 ```
 
@@ -207,11 +207,11 @@ If git reports a merge conflict, each conflicting file has to be resolved one wa
 ```python
 # Example only.
 # Keep YOUR version of a file:
-# !git checkout --ours Accessing-S3-via-SageMaker-notebooks.py
+# !git checkout --ours 04_Accessing-S3-via-SageMaker-notebooks.py
 # Keep the REMOTE version of a file:
 # !git checkout --theirs README.md
 # Then stage and commit the resolution:
-# !git add Accessing-S3-via-SageMaker-notebooks.py README.md
+# !git add 04_Accessing-S3-via-SageMaker-notebooks.py README.md
 # !git commit -m "Resolve merge conflicts"
 ```
 
@@ -236,7 +236,7 @@ Suppose a collaborator edits the `.py` file on GitHub, or you edit it from anoth
 Then convert the script back to a notebook with Jupytext. The `.ipynb` it writes is ignored by git (Step 5), so the round trip leaves the repository clean.
 
 ```python
-!jupytext --to notebook Accessing-S3-via-SageMaker-notebooks.py --output Accessing-S3-via-SageMaker-notebooks.ipynb
+!jupytext --to notebook 04_Accessing-S3-via-SageMaker-notebooks.py --output 04_Accessing-S3-via-SageMaker-notebooks.ipynb
 ```
 
 To convert every `.py` in the folder back to notebooks, `helpers.convert_files(direction="python_to_notebook")` does the loop; remember it converts *every* `.py` in the current directory, so keep real modules out of that folder.

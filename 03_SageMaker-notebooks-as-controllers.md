@@ -29,7 +29,7 @@ The SageMaker SDK runs anywhere Python does, so the lesson could be run from a l
 
 - **Identity comes from the instance, not from a file on your machine.** The IAM role attached to the notebook is what authorizes every call it makes. Nobody installs the AWS CLI, configures credentials, or has an access key that can end up in a notebook, a shell history or a GitHub commit.
 - **Everyone has the same environment.** The kernels, the SDK version and the paths are identical for every learner, so a cell that works for the instructor works for you.
-- **It is inside AWS.** Transfer charges apply when data leaves AWS or crosses regions, not when it is read. Reading or even downloading your bucket's files onto the instance is in-region and free. A job launched from anywhere, laptop included, also reads its S3 inputs in-region for free; only data pulled to the laptop itself (a `read_csv` of an S3 path on your own machine) is billed as egress.
+- **No egress charges.** AWS bills data transfer when it leaves AWS, not when it moves within a region. The notebook instance sits in the same region as your bucket, so reading or downloading files from S3 to the instance is free. Pulling the same files to a laptop costs $0.09 per GB wherever the laptop is: "region" means the AWS data center your resources live in, and a machine outside AWS is never in one.
 
 ### Using the notebook as a controller
 In this setup, the notebook instance functions as a *controller* to manage more resource-intensive compute tasks. By selecting a minimal instance (e.g., `ml.t3.medium`: 2 vCPUs, 4 GB of memory, $0.05 per hour), you can perform lightweight operations while leveraging the **SageMaker Python SDK** to launch scalable compute instances for model training, batch processing, and hyperparameter tuning. Those instances start, run your script, write their results to S3, and shut themselves down. This approach minimizes costs while accessing the full power of SageMaker for demanding tasks.
@@ -97,7 +97,7 @@ In that notebook, run the following cell to clone the lesson repository into the
 !test -d ML_with_AWS_SageMaker || git clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git
 ```
 
-Then open `ML_with_AWS_SageMaker/notebooks/Accessing-S3-via-SageMaker-notebooks.ipynb` from the file browser to begin the first notebook.
+Then open `ML_with_AWS_SageMaker/notebooks/04_Accessing-S3-via-SageMaker-notebooks.ipynb` from the file browser to begin the first notebook.
 
 ::::::::::::::::::::::::::::::::::::: challenge
 
