@@ -132,9 +132,9 @@
           </button>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
 <li><a class="dropdown-item" href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li>
+<li><a class="dropdown-item" href="shared-data-bucket.html">Shared data bucket: staging before each term</a></li>
 <li><a class="dropdown-item" href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li>
 <li><a class="dropdown-item" href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li>
-<li><a class="dropdown-item" href="shared-data-bucket.html">Shared data bucket: staging before each term</a></li>
 <hr>
 <li><a class="dropdown-item" href="reference.html">Glossary</a></li>
 <li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
@@ -472,9 +472,9 @@
                   <div class="accordion-body">
                     <ul>
 <li><a href="aws-account-prep.html">Account preparation checklist (quotas, Bedrock, tags)</a></li>
+<li><a href="shared-data-bucket.html">Shared data bucket: staging before each term</a></li>
 <li><a href="badger-scribe-data-release.html">Badger Scribe data: publishing a release</a></li>
 <li><a href="finetuning-episode-cost-estimate.html">Fine-tuning episode: cost, capacity and setup</a></li>
-<li><a href="shared-data-bucket.html">Shared data bucket: staging before each term</a></li>
 <hr>
 <li><a class="dropdown-item" href="reference.html">Glossary</a></li>
 <li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
@@ -509,6 +509,37 @@
         <h1>Instructor Notes</h1>
         
 
+<div id="all-instructor-pages" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<span class="callout-header">Callout</span>
+<div id="all-instructor-pages" class="callout-inner">
+<h3 class="callout-title">All instructor pages</h3>
+<div class="callout-content">
+<p>These live under the <strong>Extras</strong> dropdown, which the site
+shows only when the <strong>Instructor View</strong> toggle (top bar) is
+on.</p>
+<ul>
+<li>
+<a href="aws-account-prep.html">Account preparation checklist
+(quotas, Bedrock, tags)</a>: before the term.</li>
+<li>
+<a href="shared-data-bucket.html">Shared data bucket: staging before
+each term</a>: create and fill <code>ml-marathon-shared</code> from
+CloudShell.</li>
+<li>
+<a href="badger-scribe-data-release.html">Badger Scribe data:
+publishing a release</a>: only when the competition data changes.</li>
+<li><a href="finetuning-episode-cost-estimate.html">Fine-tuning episode:
+cost, capacity and setup</a></li>
+<li>This page: cleaning the account with aws-nuke after the workshop.
+The config it uses is <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/instructors/nuke-config.yml" class="external-link">instructors/nuke-config.yml</a>
+in the repository.</li>
+</ul>
+</div>
+</div>
+</div>
 <p>Hello all! In this document, we will show you how to run an AWS Nuke
 script within the ML-Marathon Sagemaker server. As you progress through
 the Sagemaker workshop, towards the end of the workshop you’ll be tasked
@@ -531,125 +562,136 @@ that’s where we store our servers.</li>
 <li>Open CloudShell from the console toolbar.</li>
 <li>Verify exactly which account/role you are using:</li>
 </ol>
-<p><strong>aws sts get-caller-identity</strong></p>
-</div>
-<div class="section level3">
-<h3 id="create-a-config-file">2. Create a config file<a class="anchor" aria-label="anchor" href="#create-a-config-file"></a>
+<div class="codewrapper sourceCode" id="cb1">
+<h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<p><strong>In order to run the script, you’ll need to make a config
-file. This file MUST be in .yml or .yaml format or else your script will
-FAIL.</strong></p>
-<ol style="list-style-type: decimal">
-<li>Select Windows + E to open file-explorer.</li>
-<li>Click on the documents tab on the left. Then click on the “New”
-button in the top left corner.</li>
-<li>Select “Text Document,” please use notepad for this as it will be
-easy to edit.</li>
-<li>Once you’ve opened notepad. This is the format our config file will
-follow:</li>
-</ol>
-<p>regions: - global - us-east-2 # do not change</p>
-<p>blocklist: - “551379999285” # production, do not modify</p>
-<p>accounts: “183295408236”: # the shared workshop account
-resource-types: includes: # only these types are deleted; the key must
-be “includes” (v3) - S3Bucket - SageMakerNotebookInstance filters:
-S3Bucket: - property: Name value: “ml-marathon-shared” # the
-instructor-staged data bucket survives</p>
-<p><strong>MAKE SURE TO USE SPACE INDENTING AND NOT TAB INDENTING AS IT
-IS SENSITIVE TO USE IN CLOUDSHELL AND MAY CAUSE THE SCRIPT TO
-FAIL.</strong> The committed copy at
-<code>instructors/nuke-config.yml</code> is the reference. Two things it
-deliberately does <em>not</em> delete: the shared data bucket (the
-<code>filters</code> block) and Bedrock application inference profiles,
-which learners remove themselves in the cleanup episode. Everything else
-the lesson creates (training, processing and tuning jobs) has already
-ended and holds no billable resource.</p>
-<ol start="5" style="list-style-type: decimal">
-<li>Once you’ve gotten your config file set up, click on <strong>“FILE”
-&gt; “SAVE AS”</strong>
-</li>
-<li>Label your doc as “nuke-config.yml” under “File Name:” &amp; Ensure
-“All files (*)” is selected under “Save as type:”</li>
-</ol>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="ex">aws</span> sts get-caller-identity</span></code></pre>
+</div>
 </div>
 <div class="section level3">
-<h3 id="upload-your-config-file-to-cloudshell">3. Upload your config file to CloudShell<a class="anchor" aria-label="anchor" href="#upload-your-config-file-to-cloudshell"></a>
+<h3 id="get-the-config-file-into-cloudshell">2. Get the config file into CloudShell<a class="anchor" aria-label="anchor" href="#get-the-config-file-into-cloudshell"></a>
 </h3>
-<p>In CloudShell, choose <strong>“Actions” &gt; “Upload file”</strong>,
-then upload “nuke-config.yml”</p>
-<p>To confirm it’s inside your Shell:</p>
-<p><strong>pwd ls -l nuke-config.yml cat nuke-config.yml</strong></p>
+<p><strong>aws-nuke needs a config file in .yml or .yaml format or else
+your script will FAIL.</strong> The one for this workshop is committed
+in the lesson repository at <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/instructors/nuke-config.yml" class="external-link">instructors/nuke-config.yml</a>.
+Two things it deliberately does <em>not</em> delete: the shared data
+bucket (the <code>filters</code> block) and Bedrock application
+inference profiles, which learners remove themselves in the cleanup
+episode. Everything else the lesson creates (training, processing and
+tuning jobs) has already ended and holds no billable resource.</p>
+<p>Download it straight into CloudShell and check it:</p>
+<div class="codewrapper sourceCode" id="cb2">
+<h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1" aria-label="code-block-2-1"></a><span class="ex">curl</span> <span class="at">-fsSL</span> <span class="at">-o</span> <span class="st">"</span><span class="va">$HOME</span><span class="st">/nuke-config.yml"</span> https://raw.githubusercontent.com/carpentries-incubator/ML_with_AWS_SageMaker/main/instructors/nuke-config.yml</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1" aria-label="code-block-2-2"></a><span class="fu">cat</span> <span class="st">"</span><span class="va">$HOME</span><span class="st">/nuke-config.yml"</span></span></code></pre>
+</div>
+<p>If you need to change it (a different account ID, another bucket to
+keep), edit the file in CloudShell with
+<code>nano "$HOME/nuke-config.yml"</code>, or edit a copy on your own
+machine and upload it with <strong>“Actions” &gt; “Upload
+file”</strong>. Use space indenting, not tabs: YAML is sensitive to this
+and the script will fail on tabs.</p>
 </div>
 <div class="section level3">
-<h3 id="download-and-install-the-linux-version">4. Download and install the linux version<a class="anchor" aria-label="anchor" href="#download-and-install-the-linux-version"></a>
+<h3 id="download-and-install-the-linux-version">3. Download and install the linux version<a class="anchor" aria-label="anchor" href="#download-and-install-the-linux-version"></a>
 </h3>
 <p>AWS CloudShell uses Linux as their base distribution. So you will
 need to download the linux version of AWS Nuke from Github. You should
-download only from the official ekristen/aws-nuke releases-not use any
-local verision.</p>
+download only from the official ekristen/aws-nuke releases, not use any
+local version.</p>
 <p>Link: <a href="https://github.com/ekristen/aws-nuke/releases" class="external-link uri">https://github.com/ekristen/aws-nuke/releases</a></p>
-<p>Run the following script:</p>
-<p><code>mkdir -p "$HOME/bin"</code> <code>cd "$HOME"</code></p>
-<p>curl -fL<br>
--o aws-nuke-v3.67.0-linux-amd64.tar.gz<br><a href="https://github.com/ekristen/aws-nuke/releases/download/v3.67.0/aws-nuke-v3.67.0-linux-amd64.tar.gz" class="external-link uri">https://github.com/ekristen/aws-nuke/releases/download/v3.67.0/aws-nuke-v3.67.0-linux-amd64.tar.gz</a></p>
-<p>tar -xzf aws-nuke-v3.67.0-linux-amd64.tar.gz
-<code>mv aws-nuke "$HOME/bin/aws-nuke"</code>
-<code>chmod 700 "$HOME/bin/aws-nuke"</code></p>
-<p><code>export PATH="$HOME/bin:$PATH"</code> aws-nuke –version</p>
+<p>Run the following:</p>
+<div class="codewrapper sourceCode" id="cb3">
+<h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> <span class="st">"</span><span class="va">$HOME</span><span class="st">/bin"</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a><span class="bu">cd</span> <span class="st">"</span><span class="va">$HOME</span><span class="st">"</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1" aria-label="code-block-3-3"></a><span class="ex">curl</span> <span class="at">-fL</span> <span class="at">-o</span> aws-nuke-v3.67.0-linux-amd64.tar.gz <span class="dt">\</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a>  https://github.com/ekristen/aws-nuke/releases/download/v3.67.0/aws-nuke-v3.67.0-linux-amd64.tar.gz</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1" aria-label="code-block-3-5"></a><span class="fu">tar</span> <span class="at">-xzf</span> aws-nuke-v3.67.0-linux-amd64.tar.gz</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1" aria-label="code-block-3-6"></a><span class="fu">mv</span> aws-nuke <span class="st">"</span><span class="va">$HOME</span><span class="st">/bin/aws-nuke"</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1" aria-label="code-block-3-7"></a><span class="fu">chmod</span> 700 <span class="st">"</span><span class="va">$HOME</span><span class="st">/bin/aws-nuke"</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1" aria-label="code-block-3-8"></a><span class="bu">export</span> <span class="va">PATH</span><span class="op">=</span><span class="st">"</span><span class="va">$HOME</span><span class="st">/bin:</span><span class="va">$PATH</span><span class="st">"</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1" aria-label="code-block-3-9"></a><span class="ex">aws-nuke</span> <span class="at">--version</span></span></code></pre>
+</div>
 <p>To make aws-nuke stay on your PATH in later CloudShell sessions:</p>
-<p><code>echo 'export PATH="$HOME/bin:$PATH"' &gt;&gt; ~/.bashrc</code>
-<code>source ~/.bashrc</code></p>
+<div class="codewrapper sourceCode" id="cb4">
+<h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="bu">echo</span> <span class="st">'export PATH="$HOME/bin:$PATH"'</span> <span class="op">&gt;&gt;</span> ~/.bashrc</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a><span class="bu">source</span> ~/.bashrc</span></code></pre>
+</div>
 <p>Reminder: CloudShell is based on Amazon Linux, and software saved in
 <code>$HOME</code> persists; software installed elsewhere may disappear
 after the session ends.</p>
 </div>
 <div class="section level3">
-<h3 id="do-a-dry-run-first">5. DO a dry run first<a class="anchor" aria-label="anchor" href="#do-a-dry-run-first"></a>
+<h3 id="do-a-dry-run-first">4. DO a dry run first<a class="anchor" aria-label="anchor" href="#do-a-dry-run-first"></a>
 </h3>
 <p>It is important that you first run a dry-run so that you can verify
 which files you want to remove before executing the actual script.</p>
 <p>Here is the script to do so:</p>
-<p><code>aws-nuke run --config "$HOME/nuke-config.yml"</code></p>
+<div class="codewrapper sourceCode" id="cb5">
+<h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="ex">aws-nuke</span> run <span class="at">--config</span> <span class="st">"</span><span class="va">$HOME</span><span class="st">/nuke-config.yml"</span></span></code></pre>
+</div>
 <p>This should list resources it would remove, without deleting them.
-Review the output carefully—especially S3 buckets, IAM-related
+Review the output carefully, especially S3 buckets, IAM-related
 resources, and the displayed account identity.</p>
 </div>
 <div class="section level3">
-<h3 id="only-after-review-actual-deletion">6. Only after review: actual deletion<a class="anchor" aria-label="anchor" href="#only-after-review-actual-deletion"></a>
+<h3 id="only-after-review-actual-deletion">5. Only after review: actual deletion<a class="anchor" aria-label="anchor" href="#only-after-review-actual-deletion"></a>
 </h3>
 <p>Only if the dry-run output is correct and this is truly the intended
 non-production account:</p>
-<p><code>aws-nuke run --config "$HOME/nuke-config.yml" --no-dry-run</code></p>
-<p>Do not add –no-prompt / –force on your first real run; leave the
-confirmation prompt enabled as an additional safeguard.</p>
-<p>Oftentimes when running
-<code>aws-nuke run --config "$HOME/nuke-config.yml"</code>, you will run
-into an error stating:</p>
-<p>WARN[0000] ‘targets’ is deprecated. Please use ‘includes’ instead.
-aws-nuke - v3.67.0 - 9cc98ccaed6303dac29001642879320ab584d41a FATA[0000]
-specified account doesn’t have an alias. For safety reasons you need to
-specify an account alias. Your production account should contain the
-term ‘prod’</p>
+<div class="codewrapper sourceCode" id="cb6">
+<h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="ex">aws-nuke</span> run <span class="at">--config</span> <span class="st">"</span><span class="va">$HOME</span><span class="st">/nuke-config.yml"</span> <span class="at">--no-dry-run</span></span></code></pre>
+</div>
+<p>Do not add <code>--no-prompt</code> / <code>--force</code> on your
+first real run; leave the confirmation prompt enabled as an additional
+safeguard.</p>
+</div>
+<div class="section level3">
+<h3 id="if-the-dry-run-stops-on-account-doesnt-have-an-alias">If the dry run stops on “account doesn’t have an alias”<a class="anchor" aria-label="anchor" href="#if-the-dry-run-stops-on-account-doesnt-have-an-alias"></a>
+</h3>
+<p>Oftentimes when running the dry run, you will run into an error
+stating:</p>
+<pre><code>WARN[0000] 'targets' is deprecated. Please use 'includes' instead.
+aws-nuke - v3.67.0 - 9cc98ccaed6303dac29001642879320ab584d41a
+FATA[0000] specified account doesn't have an alias. For safety reasons you need
+to specify an account alias. Your production account should contain the term 'prod'</code></pre>
 <p>Do not panic, this isn’t related to CloudShell or credentials.
 Rather, it connected to AWS successfully but stopped abruptly since the
 account you are trying to target has <strong>no AWS account
 alias.</strong> By default, aws-nuke requires an alias so you must
 visually confirm a recognizable account name before proceeding. It also
-blocks aliases containing prod by default</p>
-<p>Recommended: create a non-production account alias First, verify the
+blocks aliases containing prod by default.</p>
+<p>Recommended: create a non-production account alias. First, verify the
 exact account:</p>
-<p><strong>aws sts get-caller-identity</strong></p>
+<div class="codewrapper sourceCode" id="cb8">
+<h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1" aria-label="code-block-8-1"></a><span class="ex">aws</span> sts get-caller-identity</span></code></pre>
+</div>
 <p>Then add an alias in the AWS Console:</p>
 <ol style="list-style-type: decimal">
 <li>Go to IAM</li>
 <li>Open Dashboard</li>
 <li>Under AWS Account, choose Create Alias</li>
-<li>Set a clear, unique non-production alias—e.g. mycompany-sandbox or
+<li>Set a clear, unique non-production alias, e.g. mycompany-sandbox or
 training-cleanup</li>
 <li>Do not use a name containing prod, production, or live.</li>
 </ol>
-<p>Then run the dry-run again:
-<code>aws-nuke run --config "$HOME/nuke-config.yml"</code></p>
+<p>Then run the dry-run again:</p>
+<div class="codewrapper sourceCode" id="cb9">
+<h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a><span class="ex">aws-nuke</span> run <span class="at">--config</span> <span class="st">"</span><span class="va">$HOME</span><span class="st">/nuke-config.yml"</span></span></code></pre>
+</div>
 <p>Congratulations, you have reached the end of this tutorial! By now,
 all scripts should work and the specified notebooks/buckets you wanted
 to clean should now be all empty!</p>

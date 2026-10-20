@@ -477,16 +477,21 @@ account’s:</p>
 channel lists the prefix before downloading it. No
 <code>PutObject</code>: learners never write here.</p>
 </section><section><h2 class="section-heading" id="stage-wattbot-rag-episodes">2. Stage WattBot (RAG episodes)<a class="anchor" aria-label="anchor" href="#stage-wattbot-rag-episodes"></a></h2>
-<hr class="half-width"><p>From a machine with Python and the AWS CLI (CloudShell works), in a
-clone of the lesson repo:</p>
+<hr class="half-width"><p>From a machine with Python and the AWS CLI (CloudShell works). Set
+the bucket name, clone the lesson repository, build the corpus from the
+data it ships, and sync:</p>
 <div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a><span class="fu">unzip</span> <span class="at">-o</span> data/data.zip <span class="at">-d</span> /tmp/lessondata</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a><span class="ex">pip</span> install pandas requests</span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1" aria-label="code-block-3-3"></a><span class="ex">python</span> scripts/build_wattbot_corpus.py <span class="at">--metadata</span> /tmp/lessondata/data/wattbot/metadata.csv <span class="at">--out</span> /tmp/lessondata/wattbot/corpus.zip</span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a><span class="fu">cp</span> /tmp/lessondata/data/wattbot/metadata.csv /tmp/lessondata/data/wattbot/train_QA.csv /tmp/lessondata/wattbot/</span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1" aria-label="code-block-3-5"></a><span class="ex">aws</span> s3 sync /tmp/lessondata/wattbot/ s3://<span class="op">&lt;</span>shared-bucket<span class="op">&gt;</span>/wattbot/</span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a><span class="va">BUCKET</span><span class="op">=</span>ml-marathon-shared</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a><span class="ex">pip</span> install <span class="at">-q</span> <span class="at">--user</span> pandas requests</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1" aria-label="code-block-3-3"></a><span class="fu">rm</span> <span class="at">-rf</span> /tmp/lessondata <span class="kw">&amp;&amp;</span> <span class="fu">mkdir</span> <span class="at">-p</span> /tmp/lessondata <span class="kw">&amp;&amp;</span> <span class="bu">cd</span> /tmp/lessondata</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a><span class="fu">git</span> clone <span class="at">-q</span> <span class="at">--depth</span> 1 https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git lesson</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1" aria-label="code-block-3-5"></a><span class="fu">unzip</span> <span class="at">-q</span> <span class="at">-o</span> lesson/data/data.zip <span class="at">-d</span> data</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1" aria-label="code-block-3-6"></a><span class="fu">mkdir</span> <span class="at">-p</span> wattbot</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1" aria-label="code-block-3-7"></a><span class="fu">cp</span> data/data/wattbot/metadata.csv data/data/wattbot/train_QA.csv wattbot/</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1" aria-label="code-block-3-8"></a><span class="ex">python3</span> lesson/scripts/build_wattbot_corpus.py <span class="at">--metadata</span> wattbot/metadata.csv <span class="at">--out</span> wattbot/corpus.zip</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1" aria-label="code-block-3-9"></a><span class="ex">aws</span> s3 sync wattbot/ s3://<span class="va">$BUCKET</span>/wattbot/</span></code></pre>
 </div>
 <p>The corpus script downloads every PDF listed in
 <code>metadata.csv</code> and reports any URL that failed; decide
@@ -503,20 +508,21 @@ published):</p>
 <div class="codewrapper sourceCode" id="cb4">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="va">V</span><span class="op">=</span>1</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a><span class="va">R</span><span class="op">=</span>https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/releases/download/badger-scribe-data-v<span class="va">$V</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a><span class="cf">for</span> a <span class="kw">in</span> labels images-train images-test<span class="kw">;</span> <span class="cf">do</span></span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a>  <span class="fu">rm</span> <span class="at">-rf</span> /tmp/bs <span class="kw">&amp;&amp;</span> <span class="fu">mkdir</span> <span class="at">-p</span> /tmp/bs</span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1" aria-label="code-block-4-5"></a>  <span class="ex">curl</span> <span class="at">-L</span> <span class="at">-o</span> /tmp/bs/<span class="va">$a</span>.zip <span class="va">$R</span>/badger-scribe-v<span class="va">$V</span>-<span class="va">$a</span>.zip</span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1" aria-label="code-block-4-6"></a>  <span class="fu">unzip</span> <span class="at">-q</span> <span class="at">-o</span> /tmp/bs/<span class="va">$a</span>.zip <span class="at">-d</span> /tmp/bs/badger-scribe <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> /tmp/bs/<span class="va">$a</span>.zip</span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1" aria-label="code-block-4-7"></a>  <span class="ex">aws</span> s3 sync /tmp/bs/badger-scribe/ s3://<span class="op">&lt;</span>shared-bucket<span class="op">&gt;</span>/badger-scribe/</span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1" aria-label="code-block-4-8"></a>  <span class="fu">rm</span> <span class="at">-rf</span> /tmp/bs</span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1" aria-label="code-block-4-9"></a><span class="cf">done</span></span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="va">BUCKET</span><span class="op">=</span>ml-marathon-shared</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a><span class="va">V</span><span class="op">=</span>1</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a><span class="va">R</span><span class="op">=</span>https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/releases/download/badger-scribe-data-v<span class="va">$V</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a><span class="cf">for</span> a <span class="kw">in</span> labels images-train images-test<span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1" aria-label="code-block-4-5"></a>  <span class="fu">rm</span> <span class="at">-rf</span> /tmp/bs <span class="kw">&amp;&amp;</span> <span class="fu">mkdir</span> <span class="at">-p</span> /tmp/bs</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1" aria-label="code-block-4-6"></a>  <span class="ex">curl</span> <span class="at">-sSL</span> <span class="at">-o</span> /tmp/bs/<span class="va">$a</span>.zip <span class="va">$R</span>/badger-scribe-v<span class="va">$V</span>-<span class="va">$a</span>.zip</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1" aria-label="code-block-4-7"></a>  <span class="fu">unzip</span> <span class="at">-q</span> <span class="at">-o</span> /tmp/bs/<span class="va">$a</span>.zip <span class="at">-d</span> /tmp/bs/badger-scribe <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> /tmp/bs/<span class="va">$a</span>.zip</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1" aria-label="code-block-4-8"></a>  <span class="ex">aws</span> s3 sync /tmp/bs/badger-scribe/ s3://<span class="va">$BUCKET</span>/badger-scribe/</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1" aria-label="code-block-4-9"></a>  <span class="fu">rm</span> <span class="at">-rf</span> /tmp/bs</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1" aria-label="code-block-4-10"></a><span class="cf">done</span></span></code></pre>
 </div>
 <p>Then run the full fine-tune once (homework estimator in the episode)
 and copy <code>train_summary.json</code>, <code>eval_before.csv</code>,
 <code>eval_after.csv</code> from its <code>model.tar.gz</code> to
-<code>s3://&lt;shared-bucket&gt;/badger-scribe/instructor/full-run/</code>.</p>
+<code>s3://$BUCKET/badger-scribe/instructor/full-run/</code>.</p>
 </section><section><h2 class="section-heading" id="stage-the-churro-3b-weights-fine-tuning-episode">4. Stage the CHURRO-3B weights (fine-tuning episode)<a class="anchor" aria-label="anchor" href="#stage-the-churro-3b-weights-fine-tuning-episode"></a></h2>
 <hr class="half-width"><p>Every training and processing job in the episode reads the base model
 from the bucket as a <code>model</code> channel, so that 100 jobs
@@ -526,11 +532,15 @@ notebook instance with at least 10 GB free (not CloudShell):</p>
 <div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="ex">pip</span> install huggingface_hub</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a><span class="ex">huggingface-cli</span> download stanford-oval/churro-3B <span class="at">--local-dir</span> churro-3B</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a><span class="ex">aws</span> s3 sync churro-3B/ s3://<span class="op">&lt;</span>shared-bucket<span class="op">&gt;</span>/badger-scribe/model/churro-3B/</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1" aria-label="code-block-5-4"></a><span class="fu">rm</span> <span class="at">-rf</span> churro-3B</span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="va">BUCKET</span><span class="op">=</span>ml-marathon-shared</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a><span class="ex">pip</span> install <span class="at">-q</span> huggingface_hub</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a><span class="ex">huggingface-cli</span> download stanford-oval/churro-3B <span class="at">--local-dir</span> churro-3B</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1" aria-label="code-block-5-4"></a><span class="ex">aws</span> s3 sync churro-3B/ s3://<span class="va">$BUCKET</span>/badger-scribe/model/churro-3B/</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1" aria-label="code-block-5-5"></a><span class="fu">rm</span> <span class="at">-rf</span> churro-3B</span></code></pre>
 </div>
+<p>From CloudShell, where there is no room to download it, use Block 3
+at the end of this page instead: it streams each file from Hugging Face
+straight into S3.</p>
 <p>About 7.5 GB; it only needs redoing if the Hub repository changes or
 the bucket is rebuilt.</p>
 </section><section><h2 class="section-heading" id="the-whole-procedure-from-cloudshell">The whole procedure, from CloudShell<a class="anchor" aria-label="anchor" href="#the-whole-procedure-from-cloudshell"></a></h2>
