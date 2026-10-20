@@ -15,7 +15,7 @@ exercises: 0
 
 - Compare cloud compute with campus HPC and lab hardware on hardware generation, cost and control.
 - Introduce SageMaker and the controller-plus-jobs pattern.
-- Preview the three parts of the lesson and the cost practices used in all of them.
+- Preview the three parts of the lesson.
   
 ::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -52,16 +52,15 @@ Renting a bare GPU instance from AWS (EC2) gets you the hardware above, but you 
 
 - **Cost tracking**: every job reports its billable seconds, and every resource can be tagged so that the bill can be broken down by project. For many common research workloads SageMaker is cheap. For example, training roughly 100 small to medium-sized models (e.g., logistic regression, random forests, or lightweight deep learning models with a few million parameters) on a small dataset (under 10GB) can cost under $20, making it accessible for many research projects.
 
-### What this lesson covers
+### Lesson outline
 
-The lesson has three parts:
+The rest of the lesson is hands-on, in three parts:
 
-1. **SageMaker foundations and classic ML.** An S3 bucket for your data, a small notebook instance as a *controller*, then training jobs (XGBoost and PyTorch) and hyperparameter tuning, with guidance on CPU vs. GPU instances and when parallel instances help.
-2. **Retrieval-augmented generation (RAG).** A RAG pipeline over a corpus of research papers, built on Amazon Bedrock (pay per token, nothing left running) and then as SageMaker Processing jobs serving an open-weight model that Bedrock does not offer.
-3. **Fine-tuning.** A LoRA fine-tune of a 3B open-weight vision-language model as a training job, for handwriting transcription, scored before and after.
+1. **SageMaker foundations and classic ML.** Set up an S3 bucket and a small notebook instance, then launch training jobs (XGBoost and PyTorch) and a hyperparameter tuning job from it.
+2. **Retrieval-augmented generation (RAG).** Build a RAG pipeline over research papers on Amazon Bedrock, then run the same pipeline as SageMaker Processing jobs with an open-weight model.
+3. **Fine-tuning.** Fine-tune a vision-language model for handwriting transcription as a SageMaker training job.
 
-Every episode applies the same cost controls: tags on every resource, a runtime cap on every job, a cost estimate before each launch compared to the bill after, and cleanup at the end.
-
+Every job is tagged, capped, estimated before launch and checked against the bill after.
 
 ::::::::::::::::::::::::::::::::::::: keypoints
 
