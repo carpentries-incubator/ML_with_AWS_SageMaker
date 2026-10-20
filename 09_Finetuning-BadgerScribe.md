@@ -122,20 +122,21 @@ Two rules of thumb answer most of the question before you touch a console. They 
 
 Note the jump from the inference rows to the training rows. Training cannot run on quantized weights the way inference can: each step's update is too small for 8-bit or 4-bit numbers to hold, so every trained weight keeps a 32-bit copy plus Adam's two averages, 16 bytes against 2. **That is why a 7B model you can *run* on a 24 GB GPU needs 112 GB plus activations to *fully fine-tune*, which means several GPUs with the model sharded across them, at `$25` to `$63` an hour.** LoRA sidesteps it by freezing the model and training a few million adapter parameters, which is why this episode fits on one 24 GB card.
 
-**2. Time: how many GPU-hours?** Training compute is roughly proportional to parameters × tokens seen:
+**2. Time: how many GPU-hours?** Training a token costs three matrix products per layer, each one multiply and one add per weight. Full fine-tuning does all three; LoRA skips the weight update for the frozen base.
+
+![Three matrix products per token: forward (2 FLOPs per weight), error passed back to the inputs (2), and the weight update (2); full fine-tuning does all three for 6, LoRA skips the update for 4](fig/flops-per-token.svg){alt="A layer W with an input arrow, an output arrow, an error arrow going back and an update arrow into W, each labelled 2 FLOPs; a box totals 6 for full fine-tuning and 4 for LoRA"}
 
 ```text
-tokens      = examples × tokens per example × epochs
-FLOPs       ≈ 6 × parameters × tokens      (full fine-tune)
-            ≈ 4 × parameters × tokens      (LoRA: no weight gradients for the frozen base)
-GPU-seconds = FLOPs / (GPU peak bf16 FLOPS × utilization)
+tokens      = examples × tokens per example × passes over the data
+FLOPs       = 6 × parameters × tokens      (4 × for LoRA)
+GPU-seconds = FLOPs ÷ (GPU peak FLOPS × 0.25)      a real job reaches about a quarter of the data-sheet peak
 ```
 
-Utilization is the number people forget. A GPU running one page at a time with gradient checkpointing manages 20–30% of its peak; a well-tuned multi-GPU job reaches 40–50%. Use 25% unless you have measured otherwise, and add ~50% to the FLOPs when gradient checkpointing is on, because it recomputes the forward pass during the backward pass. Both corrections sit inside the factor of two the rule promises. Then cost = GPU-hours × hourly rate + the fixed startup overhead per job (~10 minutes here).
+Peak FLOPS is on the GPU's data sheet: about 70 trillion per second for an A10G, 312 for an A100, 989 for an H100. Cost is GPU-hours × the hourly rate, plus about 10 minutes of startup per job.
 
-Worked for the class run: 120 pages × ~1,600 tokens (1,300 visual + 300 text) × 3 epochs = 576k tokens. LoRA on a 3.75B model (3B language model plus the vision tower): 4 × 3.75e9 × 5.76e5 ≈ 8.6e15 FLOPs. An A10G peaks at about 70 TFLOPS in bf16; at 25% utilization that is 17 TFLOPS, so about 500 seconds, call it 9 minutes. The "~15 min" in the table below adds the image preprocessing on four vCPUs and the checkpointing overhead. Same arithmetic, same answer within the factor of two.
+The class run: 120 pages × 1,600 tokens × 3 passes = 576k tokens. LoRA on 3.75B parameters: 4 × 3.75e9 × 5.76e5 ≈ 8.6e15 FLOPs. A quarter of an A10G's 70 TFLOPS is 17 TFLOPS, so about 500 seconds, call it 9 minutes; the table below says 15 to cover image preprocessing and checkpointing.
 
-The same two rules are in `helpers.estimate_finetune_cost`, so that you can run them on a job you have not launched: your own model size, example count, tokens per example and epochs. It picks the cheapest instance that fits unless you name one, prints the memory check, GPU-hours, wall-clock, cost per run and for the whole project, and the `max_run` to set. Here it is on the class run:
+`helpers.estimate_finetune_cost` does the same arithmetic for any model size, example count, tokens per example and passes. It picks the cheapest instance that fits, or the one you name, and prints memory, GPU-hours, cost per run and per project, and the `max_run` to set:
 
 ```python
 import sys
@@ -167,13 +168,13 @@ helpers.estimate_finetune_cost(
 
 ### Estimate a run you have not launched
 
-A lab wants to **fully fine-tune a 7B model** on 50,000 documents of ~2,000 tokens for 3 epochs. They are choosing between `ml.p4d.24xlarge` (8 × A100 40 GB, `$25.25`/h, ~312 TFLOPS bf16 per GPU) and renting a single `ml.g5.xlarge`. Using the two rules: does it fit on the g5? How many GPU-hours on the p4d, and what does one run cost? What does a realistic project cost?
+A lab wants to **fully fine-tune a 7B model** on 50,000 documents of ~2,000 tokens for 3 epochs. They are choosing between `ml.p4d.24xlarge` (8 × A100 40 GB, `$25.25`/h, ~312 TFLOPS bf16 per GPU) and renting a single `ml.g5.xlarge`; the supplemental [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page has both, with what each box holds and how its price covers all its GPUs. Using the two rules: does it fit on the g5? How many GPU-hours on the p4d, and what does one run cost? What does a realistic project cost?
 
 :::::::::::::::::::::::: solution
 
 It does not fit on the g5: full fine-tuning a 7B model needs ~112 GB plus activations, and the g5 has 24 GB. On the p4d the 8 × 40 GB = 320 GB holds it with the model sharded.
 
-Tokens: 50,000 × 2,000 × 3 = 3 × 10^8. FLOPs: 6 × 7 × 10^9 × 3 × 10^8 ≈ 1.26 × 10^19. Per GPU at 312 TFLOPS × 25% utilization = 78 TFLOPS: 1.26 × 10^19 / 7.8 × 10^13 ≈ 1.6 × 10^5 GPU-seconds ≈ 45 GPU-hours, which is about 6 hours of wall-clock on 8 GPUs, about `$140` for one run (the "7B full fine-tune" row in the table above). A team that has measured 40% utilization on its own jobs would get 28 GPU-hours and ~`$90`; the rule is for before you have measured. The helper gives the same answer:
+Tokens: 50,000 × 2,000 × 3 = 3 × 10^8. FLOPs: 6 × 7 × 10^9 × 3 × 10^8 ≈ 1.26 × 10^19. A quarter of an A100's 312 TFLOPS is 78 TFLOPS: 1.26 × 10^19 / 7.8 × 10^13 ≈ 1.6 × 10^5 GPU-seconds ≈ 45 GPU-hours, which is about 6 hours of wall-clock on 8 GPUs, about `$140` for one run (the "7B full fine-tune" row in the table above). The helper gives the same answer:
 
 ```python
 helpers.estimate_finetune_cost(params_billions=7, examples=50_000, tokens_per_example=2000, epochs=3,
@@ -189,7 +190,7 @@ A realistic project is not one run. The first run finds a data bug, the second a
 
 ### The instance
 
-The model we fine-tune fits on one 24 GB GPU. Single-GPU and multi-GPU SageMaker training instances, same price list:
+The model we fine-tune fits on one 24 GB GPU. Single-GPU and multi-GPU SageMaker training instances, same price list (the full table, with CPU instances and the GPU-by-GPU notes, is on the supplemental [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page):
 
 | Instance | GPU | GPU memory | `$`/hour |
 |---|---|---|---|
