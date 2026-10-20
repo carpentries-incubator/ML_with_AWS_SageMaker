@@ -16,6 +16,19 @@ The below table provides general recommendations for selecting AWS SageMaker ins
 - The **g4dn** instances are cost-effective GPU options, suitable for moderate-scale deep learning tasks.
 - **Free Tier Eligibility**: Some smaller instance types, such as `ml.t3.medium`, may be eligible for the AWS Free Tier, which provides limited hours of usage per month. Free Tier eligibility can vary, so check [AWS Free Tier details](https://aws.amazon.com/free/) before launching instances to avoid unexpected costs.
 
+#### How to read an instance name, and what the price covers
+
+An instance is a fixed box: `ml.` + family + generation + size. The family letter says what the box is built around (`t` and `m` general CPU, `c` compute-optimised CPU, `g` one or a few GPUs, `p` the multi-GPU data-centre boxes); the number is the generation (`g5` is newer than `g4dn`); a trailing letter is a variant (`g4dn` adds NVMe disks, `g6e` is the L40S version of `g6`); and the size (`xlarge`, `2xlarge`, ... `48xlarge`) scales vCPUs, RAM, and on GPU families the number of GPUs together. You cannot rent half a box or add a GPU to one.
+
+**The hourly price is for the whole box, not per GPU.** An `ml.p5.48xlarge` is eight H100s for `$63.30` an hour, about `$7.90` per H100-hour; an `ml.p4d.24xlarge` is eight A100s for `$25.25`, about `$3.15` per A100-hour; an `ml.g5.xlarge` is one A10G for `$1.41`. To turn an estimate into a bill:
+
+```text
+instance-hours = GPU-hours ÷ GPUs per box
+bill           = instance-hours × price per instance-hour
+```
+
+So "32 H100s for 25 hours" is 800 GPU-hours, which is four `ml.p5.48xlarge` for 25 hours, 100 instance-hours, about `$6,330`. The same 800 GPU-hours on one box would take 100 hours of wall-clock time and cost the same.
+
 | **Dataset Size** | **Max Model Size (Approx.)** | **Recommended Instance** | **vCPU** | **Memory (GiB)** | **GPU** | **Price per Hour (USD)** | **Suitable Tasks** |
 |------------------:|------------------------------|------------------------------|----------|------------------|---------|--------------------------|------------------------------------------------------|
 | < 1 GB | Up to 100 M params | ml.t3.medium | 2 | 4 | None | `$0.05` | Controller notebook; lightweight preprocessing or small models |
