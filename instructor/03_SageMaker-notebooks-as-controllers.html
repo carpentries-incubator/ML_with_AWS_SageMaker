@@ -499,7 +499,7 @@ and every later episode uses this same instance.</p>
 <div class="section level3">
 <h3 id="why-we-work-from-a-notebook-instance-in-this-lesson">Why we work from a notebook instance in this lesson<a class="anchor" aria-label="anchor" href="#why-we-work-from-a-notebook-instance-in-this-lesson"></a></h3>
 <p>The SageMaker SDK runs anywhere Python does, so the lesson could be
-run from a laptop. We use a notebook instance for three reasons:</p>
+run from a laptop. We use a notebook instance for four reasons:</p>
 <ul><li>
 <strong>No credential setup.</strong> The IAM role attached to the
 instance authorizes every call made from it, so there is nothing to
@@ -512,6 +512,13 @@ an access key instead. The role sidesteps all of it.</li>
 <strong>Everyone has the same environment.</strong> The kernels, the
 SDK version and the paths are identical for every learner, so a cell
 that works for the instructor works for you.</li>
+<li>
+<strong>Instructors can see what happened.</strong> Every notebook
+instance in the shared account shows up in the console, and an
+instructor can open yours and see the notebook that launched a job, with
+its outputs. Jobs launched from a laptop are just as visible in the job
+list, but the code that launched them is on your machine, so when
+something breaks or a charge looks wrong there is less to go on.</li>
 <li>
 <strong>No egress charges.</strong> AWS bills data transfer when it
 leaves AWS, not when it moves within a region. The notebook instance
@@ -553,6 +560,11 @@ for ML</a> page compares them.</p></li>
 <li><p><strong>Platform identifier</strong>: This is an internal AWS
 setting related to the environment version and underlying platform. You
 can leave this as the default.</p></li>
+<li><p><strong>Additional configuration (leave collapsed)</strong>:
+holds the <strong>Volume size in GB</strong> of the instance’s
+persistent disk, default 5 GB. The default is enough for this lesson;
+the disk is the one thing a stopped instance keeps billing for, so do
+not make it larger than you need.</p></li>
 <li>
 <p><strong>Permissions and encryption</strong>:</p>
 <ul><li>
@@ -612,25 +624,30 @@ applies here too.</p>
 JupyterLab</strong> next to it. In JupyterLab, create a new notebook
 with the <code>conda_python3</code> kernel (we aren’t training anything
 yet, so the plain Python environment is enough).</p>
-<p>The instance’s home directory holds AWS’s own setup: the
-<code>anaconda3</code> folder with the conda environments behind the
-kernel list, AWS’s <code>sample-notebooks</code>, and a pile of license
-files. One folder is different: <code>/home/ec2-user/SageMaker</code> is
-a separate disk, the storage volume you saw as a setting when creating
-the instance. Everything else in the home directory lives on the system
-disk and is reset when the instance stops; <code>SageMaker/</code> is
-the only place that survives a stop. JupyterLab’s file browser opens
-there for that reason, and it is where everything in this lesson
-goes.</p>
-<p>In that notebook, run the following cell to clone the lesson
-repository into that persistent folder. The <code>test -d ... ||</code>
-guard makes it a no-op if the folder already exists, and every later
-episode starts with the same cell:</p>
+<p>In the new notebook, run:</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="ex">%cd</span> /home/ec2-user/SageMaker/</span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="ex">!test</span> <span class="at">-d</span> ML_with_AWS_SageMaker <span class="kw">||</span> <span class="fu">git</span> clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git</span></code></pre>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="ex">!pwd</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="ex">!ls</span> ..</span></code></pre>
+</div>
+<p>The first line prints <code>/home/ec2-user/SageMaker</code>: new
+notebooks start in that folder. The second lists its parent, the
+instance’s home directory, which holds AWS’s own setup: the
+<code>anaconda3</code> folder with the conda environments behind the
+kernel list, AWS’s <code>sample-notebooks</code>, and a pile of license
+files. <code>SageMaker/</code> is the one folder that is different. It
+is a separate disk, the volume whose size sits under <strong>Additional
+configuration</strong> on the create form (5 GB by default). Everything
+else in the home directory lives on the system disk and is reset when
+the instance stops; <code>SageMaker/</code> is the only place that
+survives a stop. JupyterLab’s file browser opens there for that reason,
+and it is where everything in this lesson goes.</p>
+<p>Now clone the lesson repository into it:</p>
+<div class="codewrapper sourceCode" id="cb2">
+<h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1" aria-label="code-block-2-1"></a><span class="ex">!git</span> clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git</span></code></pre>
 </div>
 <p>Then open
 <code>ML_with_AWS_SageMaker/notebooks/04_Accessing-S3-via-SageMaker-notebooks.ipynb</code>
