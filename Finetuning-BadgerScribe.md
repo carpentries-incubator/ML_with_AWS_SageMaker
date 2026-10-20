@@ -25,7 +25,7 @@ exercises: 75
 
 ## Why a fine-tuning episode
 
-Everything so far in the RAG episodes left the model's weights alone. Fine-tuning changes them, and that puts it in a different class of workload:
+The training episodes so far trained small models from scratch on a few hundred rows. Fine-tuning starts from a large pretrained model and changes its weights, and that puts it in a different class of workload:
 
 - It needs a GPU for the whole run, not just for inference calls.
 - It is iterative. Nobody gets the learning rate, the image resolution or the data split right the first time, so the first run is never the last.
@@ -52,7 +52,7 @@ We will fine-tune [CHURRO-3B](https://github.com/stanford-oval/Churro), a 3-bill
 
 ### Fine-tune, RAG, or prompt?
 
-Ask what the model is missing. If it lacks **facts** (your documents, your data), retrieval gives it those at inference time and no training is needed. If it lacks a **skill or a style** (reading Kurrent, following your lab's labelling conventions, producing output in a strict format), you need to change the weights, and that is fine-tuning. Badger Scribe is squarely the second case: no amount of context will teach a model what a Kurrent "e" looks like.
+Ask what the model is missing. If it lacks **facts** (your documents, your data), retrieval-augmented generation (RAG, the subject of the next part of the lesson) looks them up and puts them in the prompt at inference time; no training is needed. If it lacks a **skill or a style** (reading Kurrent, following your lab's labelling conventions, producing output in a strict format), you need to change the weights, and that is fine-tuning. Badger Scribe is squarely the second case: no amount of context will teach a model what a Kurrent "e" looks like.
 
 Full fine-tuning updates all 3 billion weights and needs several times the model's size in GPU memory for optimizer state. **LoRA** (low-rank adaptation) freezes the model and trains a few million extra parameters in small matrices bolted onto the attention and MLP layers. The adapter is ~100 MB, trains on a single 24 GB GPU, and recovers most of the gain of a full fine-tune for a task like this. We use LoRA.
 
@@ -699,7 +699,7 @@ if desc["TrainingJobStatus"] == "Completed":
 
 ### Base vs. fine-tuned over the holdout and the test set
 
-The evaluation inside the training job covers a sample. To score the whole holdout *and* produce predictions for the 141 test pages, run the transcription script as a Processing job, once without the adapter and once with it. Each run transcribes about 185 pages in roughly 15 minutes.
+The evaluation inside the training job covers a sample. To score the whole holdout *and* produce predictions for the 141 test pages, run the transcription script as a Processing job, once without the adapter and once with it. Each run transcribes about 185 pages in roughly 15 minutes. Processing jobs are introduced in the RAG part of the lesson; do this homework after that part, or treat the launch cell below as a preview: it is the same pattern as a training job, with a script, an instance type, tags and a runtime cap.
 
 First, build the list of pages and upload it together with the metadata.
 

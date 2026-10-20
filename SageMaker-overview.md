@@ -15,7 +15,7 @@ exercises: 0
 
 - Compare cloud compute with campus HPC and lab hardware on hardware generation, cost and control.
 - Introduce S3, SageMaker and Bedrock.
-- Preview the three parts of the lesson.
+- Preview the two parts of the lesson.
   
 ::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -69,11 +69,10 @@ Everything in the lesson is one of these four boxes. S3 holds your data and ever
 
 ### Lesson outline
 
-The rest of the lesson is hands-on, in three parts:
+The rest of the lesson is hands-on, in two parts:
 
-1. **SageMaker foundations and classic ML.** Set up an S3 bucket and a small notebook instance, then launch training jobs (XGBoost and PyTorch) and a hyperparameter tuning job from it.
+1. **SageMaker: training, tuning and fine-tuning.** Set up an S3 bucket and a small notebook instance, launch training jobs (XGBoost and PyTorch) and a hyperparameter tuning job from it, then fine-tune a vision-language model for handwriting transcription as a training job.
 2. **Retrieval-augmented generation (RAG).** Build a RAG pipeline over research papers on Amazon Bedrock, then run the same pipeline as SageMaker Processing jobs with an open-weight model.
-3. **Fine-tuning.** Fine-tune a vision-language model for handwriting transcription as a SageMaker training job.
 
 Every job is tagged, capped, estimated before launch and checked against the bill after.
 

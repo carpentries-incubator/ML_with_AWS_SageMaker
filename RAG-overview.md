@@ -191,6 +191,6 @@ When you build your own RAG system afterward, start from the Bedrock episode.
 - Among the GPU options, Processing Jobs are the safest because the instance terminates itself; notebook GPUs and endpoints bill by the hour until you stop them.
 - A forgotten GPU instance costs tens of dollars overnight and hundreds to thousands over a month; a full WattBot run on Bedrock costs well under a dollar.
 - Tags never propagate: tag every job at launch, and route Bedrock calls through a tagged application inference profile, or the spend is untraceable.
-- The hands‑on episodes start with Bedrock, then show the same pipeline on Processing Jobs; the notebook-GPU version, after the fine-tuning episode, is optional self-study.
+- The hands‑on episodes start with Bedrock, then show the same pipeline on Processing Jobs; the notebook-GPU version is optional self-study.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
