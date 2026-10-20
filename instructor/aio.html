@@ -1006,8 +1006,9 @@ e.g. <code>sinkorswim-doejohn</code>: the challenge you are working on
 <code>badgerscribe</code>, <code>badgercode</code>, …), a hyphen, then
 your last and first name run together. S3 requires lowercase letters,
 digits and hyphens only, 3 to 63 characters, starting and ending with a
-letter or digit. The same lowercase string is what we will use for your
-notebook instance and your <code>Project</code> tag. <strong>This is the
+letter or digit. Buckets are the one place AWS forces lowercase; for the
+notebook instance and the tags we use the same words with capitals,
+<code>SinkOrSwim</code> and <code>DoeJohn</code>. <strong>This is the
 only bucket you will create in the workshop.</strong> Every later
 episode writes its outputs (trained models, embeddings, predictions)
 into this same bucket under its own prefix, such as
@@ -1052,18 +1053,53 @@ three keys on every resource you create in this lesson.</p>
 <ul>
 <li>
 <strong>Project</strong>: your challenge name,
-e.g. <code>sinkorswim</code>
+e.g. <code>SinkOrSwim</code>
 </li>
 <li>
-<strong>Name</strong>: your name, e.g. <code>John Doe</code>
+<strong>Name</strong>: your last and first name run together,
+e.g. <code>DoeJohn</code>
 </li>
 <li>
-<strong>Purpose</strong>: <code>Bucket-titanic</code>
+<strong>Purpose</strong>: one of five fixed values, here
+<code>Storage</code>
 </li>
 </ul>
-<p>Tag values are case-sensitive on the bill: <code>SinkOrSwim</code>
-and <code>sinkorswim</code> would be two separate rows in Cost Explorer.
-Use the same lowercase challenge name you put in the bucket name.</p>
+<p>AWS allows tag values of up to 256 characters made of letters,
+digits, spaces and <code>+ - = . _ : / @</code>, and they are
+case-sensitive. We use capitalised words with no spaces, and the same
+spelling on every resource: <code>SinkOrSwim</code> and
+<code>sinkorswim</code> would be separate rows in Cost Explorer.</p>
+<p><code>Purpose</code> takes one of five values, so that the bill can
+be summed by kind of work rather than by individual job. Which job it
+was is already in the job’s name.</p>
+<table class="table">
+<thead><tr>
+<th><code>Purpose</code></th>
+<th>Used for</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>Storage</code></td>
+<td>your bucket</td>
+</tr>
+<tr>
+<td><code>Notebook</code></td>
+<td>the controller notebook instance</td>
+</tr>
+<tr>
+<td><code>Training</code></td>
+<td>training jobs, including the fine-tune</td>
+</tr>
+<tr>
+<td><code>Tuning</code></td>
+<td>hyperparameter tuning jobs</td>
+</tr>
+<tr>
+<td><code>Inference</code></td>
+<td>Bedrock calls, RAG jobs, batch transcription</td>
+</tr>
+</tbody>
+</table>
 <figure><img src="../fig/bucket_tags2.png" alt="Screenshot showing required tags for an S3 bucket" class="figure mx-auto d-block"><div class="figcaption">Example of Tags for an S3 Bucket</div>
 </figure><p><strong>Default encryption</strong>: leave SSE-S3 (the default).
 Objects are encrypted at rest with keys S3 manages; KMS keys only matter
@@ -1302,7 +1338,7 @@ sizes: 10 GB, 100 GB, 1 TB (1024 GB)</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -1559,13 +1595,14 @@ AI</strong> to save SageMaker as a bookmark in your AWS toolbar</li>
 <li><p>In the SageMaker left-side menu, click on <strong>Notebook
 instances</strong>, then click <strong>Create notebook
 instance</strong>.</p></li>
-<li><p><strong>Notebook name</strong>: To easily track this resource in
-our shared account, please use the following naming convention:
-<code>challenge-lastnamefirstname-purpose</code>, all lowercase (same
-convention as your bucket, with a purpose on the end). For example,
-<code>sinkorswim-doejohn-trainclassifier</code>. Can include hyphens,
-but not spaces. This name is also reused as the prefix of every training
-job you launch from the notebook.</p></li>
+<li><p><strong>Notebook name</strong>: Same words as your bucket, with a
+purpose on the end: <code>Challenge-LastnameFirstname-Purpose</code>,
+e.g. <code>SinkOrSwim-DoeJohn-TrainClassifier</code>. SageMaker allows
+letters, digits and hyphens (no spaces or underscores, up to 63
+characters). Capitals are fine here and in tags; only bucket names must
+be lowercase. This name is also reused as the prefix of every training
+job you launch from the notebook, which is how you will find your jobs
+in a shared account.</p></li>
 <li>
 <p><strong>Instance type</strong>: SageMaker notebooks run on AWS
 EC2 instances. The instance type determines the compute resources
@@ -1631,17 +1668,17 @@ keys exactly as shown; capitalization matters):</p>
 <tbody>
 <tr>
 <td><code>Project</code></td>
-<td>your challenge name, e.g. <code>sinkorswim</code>
+<td>your challenge name, e.g. <code>SinkOrSwim</code>
 </td>
 </tr>
 <tr>
 <td><code>Name</code></td>
-<td>your name, e.g. <code>John Doe</code>
+<td>your name, e.g. <code>DoeJohn</code>
 </td>
 </tr>
 <tr>
 <td><code>Purpose</code></td>
-<td>what this resource is for, e.g. <code>Train</code>
+<td>what this resource is for, <code>Notebook</code>
 </td>
 </tr>
 </tbody>
@@ -1748,7 +1785,7 @@ and say which of them need the three tags.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
@@ -2274,7 +2311,7 @@ prefixes instead of a new bucket per episode?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>One way to do it:</li>
@@ -2782,7 +2819,7 @@ change on GitHub.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Still inside
 <code>/home/ec2-user/SageMaker/sagemaker-work</code>:</p>
@@ -3247,7 +3284,7 @@ cases. We can extract the instance name for this notebook using…</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="co"># Replace with your notebook instance name.</span></span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a><span class="co"># This does NOT refer to specific ipynb files, but to the SageMaker notebook instance.</span></span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a>notebook_instance_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn-trainclassifier'</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a>notebook_instance_name <span class="op">=</span> <span class="st">'SinkOrSwim-DoeJohn-TrainClassifier'</span></span>
 <span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a></span>
 <span id="cb6-5"><a href="#cb6-5" tabindex="-1" aria-label="code-block-6-5"></a><span class="co"># Describe the notebook instance (sagemaker_client was created from our session above)</span></span>
 <span id="cb6-6"><a href="#cb6-6" tabindex="-1" aria-label="code-block-6-6"></a>response <span class="op">=</span> sagemaker_client.describe_notebook_instance(NotebookInstanceName<span class="op">=</span>notebook_instance_name)</span>
@@ -3625,9 +3662,9 @@ and a human-readable name, even after the job has completed.</p>
 <div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1" aria-label="code-block-12-1"></a>name <span class="op">=</span> <span class="st">"John Doe"</span> <span class="co"># replace with your name</span></span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1" aria-label="code-block-12-2"></a>project <span class="op">=</span> <span class="st">"sinkorswim"</span> <span class="co"># replace with your challenge name</span></span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1" aria-label="code-block-12-3"></a>purpose <span class="op">=</span> <span class="st">"train_XGBoost"</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1" aria-label="code-block-12-1"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span> <span class="co"># replace with your name</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1" aria-label="code-block-12-2"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span> <span class="co"># replace with your challenge name</span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1" aria-label="code-block-12-3"></a>purpose <span class="op">=</span> <span class="st">"Training"</span></span>
 <span id="cb12-4"><a href="#cb12-4" tabindex="-1" aria-label="code-block-12-4"></a></span>
 <span id="cb12-5"><a href="#cb12-5" tabindex="-1" aria-label="code-block-12-5"></a>job_tags <span class="op">=</span> [</span>
 <span id="cb12-6"><a href="#cb12-6" tabindex="-1" aria-label="code-block-12-6"></a>    {<span class="st">"Key"</span>: <span class="st">"Name"</span>, <span class="st">"Value"</span>: name},</span>
@@ -4035,7 +4072,7 @@ include jobs from other users in the account.</li>
 <strong>Verify your training Job</strong>
 <ul>
 <li>Identify your job by looking for the specific name format (e.g.,
-<code>sinkorswim-doejohn-trainclassifier-YYYY-MM-DD-HH-MM-SS-XXX</code>)
+<code>SinkOrSwim-DoeJohn-TrainClassifier-YYYY-MM-DD-HH-MM-SS-XXX</code>)
 generated when you launched the job. Click on its name to access
 detailed information. Cross-check the job details, such as the
 <strong>Instance Type</strong> and <strong>Input data
@@ -4295,7 +4332,7 @@ same location to access helper functions</p>
 <div class="codewrapper sourceCode" id="cb4">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a>notebook_instance_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn-trainclassifier'</span> <span class="co"># replace with your notebook instance name</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a>notebook_instance_name <span class="op">=</span> <span class="st">'SinkOrSwim-DoeJohn-TrainClassifier'</span> <span class="co"># replace with your notebook instance name</span></span>
 <span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a></span>
 <span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a>local_instance_info <span class="op">=</span> helpers.get_notebook_instance_info(notebook_instance_name, region)</span>
 <span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a>local_instance <span class="op">=</span> local_instance_info[<span class="st">'InstanceType'</span>]</span>
@@ -4465,9 +4502,9 @@ is anonymous on the bill. Define them once here and pass
 <div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a>name <span class="op">=</span> <span class="st">"John Doe"</span> <span class="co"># replace with your name</span></span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a>project <span class="op">=</span> <span class="st">"sinkorswim"</span> <span class="co"># replace with your challenge name</span></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1" aria-label="code-block-9-3"></a>purpose <span class="op">=</span> <span class="st">"train_PyTorch"</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span> <span class="co"># replace with your name</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span> <span class="co"># replace with your challenge name</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1" aria-label="code-block-9-3"></a>purpose <span class="op">=</span> <span class="st">"Training"</span></span>
 <span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a></span>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a>job_tags <span class="op">=</span> [</span>
 <span id="cb9-6"><a href="#cb9-6" tabindex="-1" aria-label="code-block-9-6"></a>    {<span class="st">"Key"</span>: <span class="st">"Name"</span>, <span class="st">"Value"</span>: name},</span>
@@ -4647,7 +4684,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -4878,7 +4915,7 @@ any links that you are not going to use.
 </div>
 </section></section><section id="aio-Hyperparameter-tuning"><p>Content from <a href="Hyperparameter-tuning.html">Hyperparameter Tuning in SageMaker: Neural Network Example</a></p>
 <hr>
-<p>Last updated on 2026-10-19 |
+<p>Last updated on 2026-10-20 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/Hyperparameter-tuning.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 60 minutes</p>
@@ -5019,7 +5056,7 @@ launched in this episode</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1" aria-label="code-block-2-1"></a><span class="im">import</span> boto3</span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1" aria-label="code-block-2-2"></a></span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a>notebook_instance_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn-trainclassifier'</span> <span class="co"># adjust to your notebook name. we'll use this variable to name the training jobs launched by the tuner.</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a>notebook_instance_name <span class="op">=</span> <span class="st">'SinkOrSwim-DoeJohn-TrainClassifier'</span> <span class="co"># adjust to your notebook name. we'll use this variable to name the training jobs launched by the tuner.</span></span>
 <span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a></span>
 <span id="cb2-5"><a href="#cb2-5" tabindex="-1" aria-label="code-block-2-5"></a><span class="co"># the following code just verifies you have the right name for your notebook instance</span></span>
 <span id="cb2-6"><a href="#cb2-6" tabindex="-1" aria-label="code-block-2-6"></a>region <span class="op">=</span> boto3.Session().region_name  <span class="co"># inherited from the notebook instance; do not hard-code a region</span></span>
@@ -5042,9 +5079,9 @@ too).</p>
 <div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a>name <span class="op">=</span> <span class="st">"John Doe"</span> <span class="co"># replace with your name</span></span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a>project <span class="op">=</span> <span class="st">"sinkorswim"</span> <span class="co"># replace with your challenge name</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1" aria-label="code-block-3-3"></a>purpose <span class="op">=</span> <span class="st">"tune_PyTorch"</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span> <span class="co"># replace with your name</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span> <span class="co"># replace with your challenge name</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1" aria-label="code-block-3-3"></a>purpose <span class="op">=</span> <span class="st">"Tuning"</span></span>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a></span>
 <span id="cb3-5"><a href="#cb3-5" tabindex="-1" aria-label="code-block-3-5"></a>job_tags <span class="op">=</span> [</span>
 <span id="cb3-6"><a href="#cb3-6" tabindex="-1" aria-label="code-block-3-6"></a>    {<span class="st">"Key"</span>: <span class="st">"Name"</span>, <span class="st">"Value"</span>: name},</span>
@@ -5755,7 +5792,7 @@ and the runtime print.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <ul>
 <li>
@@ -5800,7 +5837,7 @@ in the notebook?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>The tuner can only vary what the script reads. Right now
 <code>train_nn.py</code> has no <code>--batch_size</code> argument and
@@ -6281,7 +6318,7 @@ does one run cost? What does a realistic project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5: full fine-tuning a 7B model needs ~112 GB
 plus activations, and the g5 has 24 GB. On the p4d the 8 × 40 GB = 320
@@ -6542,7 +6579,7 @@ description and compare.</li>
 <button class="accordion-button instructor-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInstructor1" aria-expanded="false" aria-controls="collapseInstructor1">
   <h3 class="accordion-header" id="headingInstructor1">  <div class="note-square"><i aria-hidden="true" class="callout-icon" data-feather="edit-2"></i></div> Before class (instructor checklist) </h3>
 </button>
-<div id="collapseInstructor1" class="accordion-collapse collapse" aria-labelledby="headingInstructor1" data-bs-parent="#accordionInstructor1">
+<div id="collapseInstructor1" class="accordion-collapse collapse" data-bs-parent="#accordionInstructor1" aria-labelledby="headingInstructor1">
 <div class="accordion-body">
 <p>Students never download the data themselves; five things have to be
 in place before the session. Each is written out in the instructor
@@ -6792,8 +6829,8 @@ jobs it launches. Pass them to every estimator.</p>
 <div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1" aria-label="code-block-13-1"></a>name <span class="op">=</span> <span class="st">"John Doe"</span>        <span class="co"># replace with your name</span></span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1" aria-label="code-block-13-2"></a>project <span class="op">=</span> <span class="st">"sinkorswim"</span>   <span class="co"># replace with your challenge name</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1" aria-label="code-block-13-1"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span>         <span class="co"># replace with your name</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1" aria-label="code-block-13-2"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>   <span class="co"># replace with your challenge name</span></span>
 <span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a></span>
 <span id="cb13-4"><a href="#cb13-4" tabindex="-1" aria-label="code-block-13-4"></a><span class="kw">def</span> make_job_tags(purpose: <span class="bu">str</span>):</span>
 <span id="cb13-5"><a href="#cb13-5" tabindex="-1" aria-label="code-block-13-5"></a>    <span class="cf">return</span> [</span>
@@ -6822,7 +6859,7 @@ below are what the Step 0 estimate was built from.</p>
 <span id="cb14-7"><a href="#cb14-7" tabindex="-1" aria-label="code-block-14-7"></a>    entry_point<span class="op">=</span><span class="st">"finetune_churro_lora.py"</span>,</span>
 <span id="cb14-8"><a href="#cb14-8" tabindex="-1" aria-label="code-block-14-8"></a>    source_dir<span class="op">=</span><span class="st">"code/"</span>,</span>
 <span id="cb14-9"><a href="#cb14-9" tabindex="-1" aria-label="code-block-14-9"></a>    role<span class="op">=</span>role,</span>
-<span id="cb14-10"><a href="#cb14-10" tabindex="-1" aria-label="code-block-14-10"></a>    tags<span class="op">=</span>make_job_tags(<span class="st">"finetune-churro-mini"</span>),</span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1" aria-label="code-block-14-10"></a>    tags<span class="op">=</span>make_job_tags(<span class="st">"Training"</span>),</span>
 <span id="cb14-11"><a href="#cb14-11" tabindex="-1" aria-label="code-block-14-11"></a>    instance_type<span class="op">=</span>instance_type,</span>
 <span id="cb14-12"><a href="#cb14-12" tabindex="-1" aria-label="code-block-14-12"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
 <span id="cb14-13"><a href="#cb14-13" tabindex="-1" aria-label="code-block-14-13"></a>    volume_size<span class="op">=</span><span class="dv">50</span>,                       <span class="co"># GB of disk for the container, weights and images</span></span>
@@ -7037,7 +7074,7 @@ real bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Expect startup to be close to 10 minutes and the two evaluations to
@@ -7154,7 +7191,7 @@ help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -7194,7 +7231,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
 <div class="accordion-body">
 <p>Startup (~10 min, $0.44 at $2.61/h) does not speed up: the container
 pull and the S3 downloads are the same on any instance. For the class
@@ -7242,7 +7279,7 @@ estimator and relaunch under a new job name.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
 <div class="accordion-body">
 <p>Checkpointing. If the instance is reclaimed, the job restarts and, as
 written, starts training from scratch. For a 25-minute job that costs 25
@@ -7279,7 +7316,7 @@ explicit job name still protects you from a double launch.</p>
 <span id="cb25-2"><a href="#cb25-2" tabindex="-1" aria-label="code-block-25-2"></a>    entry_point<span class="op">=</span><span class="st">"finetune_churro_lora.py"</span>,</span>
 <span id="cb25-3"><a href="#cb25-3" tabindex="-1" aria-label="code-block-25-3"></a>    source_dir<span class="op">=</span><span class="st">"code/"</span>,</span>
 <span id="cb25-4"><a href="#cb25-4" tabindex="-1" aria-label="code-block-25-4"></a>    role<span class="op">=</span>role,</span>
-<span id="cb25-5"><a href="#cb25-5" tabindex="-1" aria-label="code-block-25-5"></a>    tags<span class="op">=</span>make_job_tags(<span class="st">"finetune-churro-full"</span>),</span>
+<span id="cb25-5"><a href="#cb25-5" tabindex="-1" aria-label="code-block-25-5"></a>    tags<span class="op">=</span>make_job_tags(<span class="st">"Training"</span>),</span>
 <span id="cb25-6"><a href="#cb25-6" tabindex="-1" aria-label="code-block-25-6"></a>    instance_type<span class="op">=</span>instance_type,</span>
 <span id="cb25-7"><a href="#cb25-7" tabindex="-1" aria-label="code-block-25-7"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
 <span id="cb25-8"><a href="#cb25-8" tabindex="-1" aria-label="code-block-25-8"></a>    volume_size<span class="op">=</span><span class="dv">50</span>,</span>
@@ -7376,7 +7413,7 @@ channel, so the model directory is passed explicitly as
 <span id="cb28-16"><a href="#cb28-16" tabindex="-1" aria-label="code-block-28-16"></a></span>
 <span id="cb28-17"><a href="#cb28-17" tabindex="-1" aria-label="code-block-28-17"></a>    processor <span class="op">=</span> HuggingFaceProcessor(</span>
 <span id="cb28-18"><a href="#cb28-18" tabindex="-1" aria-label="code-block-28-18"></a>        role<span class="op">=</span>role,</span>
-<span id="cb28-19"><a href="#cb28-19" tabindex="-1" aria-label="code-block-28-19"></a>        tags<span class="op">=</span>make_job_tags(<span class="ss">f"transcribe-</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">"</span>),</span>
+<span id="cb28-19"><a href="#cb28-19" tabindex="-1" aria-label="code-block-28-19"></a>        tags<span class="op">=</span>make_job_tags(<span class="st">"Inference"</span>),</span>
 <span id="cb28-20"><a href="#cb28-20" tabindex="-1" aria-label="code-block-28-20"></a>        instance_type<span class="op">=</span>instance_type,</span>
 <span id="cb28-21"><a href="#cb28-21" tabindex="-1" aria-label="code-block-28-21"></a>        instance_count<span class="op">=</span><span class="dv">1</span>,</span>
 <span id="cb28-22"><a href="#cb28-22" tabindex="-1" aria-label="code-block-28-22"></a>        volume_size_in_gb<span class="op">=</span><span class="dv">50</span>,</span>
@@ -8815,9 +8852,9 @@ exists, so re‑running the notebook does not create duplicates.</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a><span class="im">import</span> re</span>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a></span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a>name <span class="op">=</span> <span class="st">"John Doe"</span>        <span class="co"># replace with your name</span></span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a>project <span class="op">=</span> <span class="st">"sinkorswim"</span>   <span class="co"># replace with your challenge name</span></span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1" aria-label="code-block-11-5"></a>purpose <span class="op">=</span> <span class="st">"RAG-bedrock"</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span>         <span class="co"># replace with your name</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>   <span class="co"># replace with your challenge name</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1" aria-label="code-block-11-5"></a>purpose <span class="op">=</span> <span class="st">"Inference"</span></span>
 <span id="cb11-6"><a href="#cb11-6" tabindex="-1" aria-label="code-block-11-6"></a></span>
 <span id="cb11-7"><a href="#cb11-7" tabindex="-1" aria-label="code-block-11-7"></a><span class="co"># Bedrock tags are lowercase key/value (SageMaker jobs use Key/Value)</span></span>
 <span id="cb11-8"><a href="#cb11-8" tabindex="-1" aria-label="code-block-11-8"></a>profile_tags <span class="op">=</span> [</span>
@@ -8926,7 +8963,7 @@ month’s Bedrock spend by <code>Project</code>?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -9231,7 +9268,7 @@ whole WattBot pipeline on Bedrock”, and with one hour of the
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -9383,7 +9420,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-RAG-Processing-jobs"><p>Content from <a href="RAG-Processing-jobs.html">RAG with Processing Jobs</a></p>
 <hr>
-<p>Last updated on 2026-10-19 |
+<p>Last updated on 2026-10-20 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/RAG-Processing-jobs.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 50 minutes</p>
@@ -9773,8 +9810,8 @@ job from the batch RAG job on the bill.</p>
 <div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a>name <span class="op">=</span> <span class="st">"John Doe"</span>        <span class="co"># replace with your name</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a>project <span class="op">=</span> <span class="st">"sinkorswim"</span>   <span class="co"># replace with your challenge name</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span>         <span class="co"># replace with your name</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>   <span class="co"># replace with your challenge name</span></span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a></span>
 <span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a><span class="kw">def</span> make_job_tags(purpose: <span class="bu">str</span>):</span>
 <span id="cb6-5"><a href="#cb6-5" tabindex="-1" aria-label="code-block-6-5"></a>    <span class="cf">return</span> [</span>
@@ -9798,7 +9835,7 @@ job from the batch RAG job on the bill.</p>
 <span id="cb7-6"><a href="#cb7-6" tabindex="-1" aria-label="code-block-7-6"></a>embedding_processor <span class="op">=</span> HuggingFaceProcessor(</span>
 <span id="cb7-7"><a href="#cb7-7" tabindex="-1" aria-label="code-block-7-7"></a>    base_job_name<span class="op">=</span><span class="st">"WattBot-embed-gte-large"</span>,</span>
 <span id="cb7-8"><a href="#cb7-8" tabindex="-1" aria-label="code-block-7-8"></a>    role<span class="op">=</span>role,</span>
-<span id="cb7-9"><a href="#cb7-9" tabindex="-1" aria-label="code-block-7-9"></a>    tags<span class="op">=</span>make_job_tags(<span class="st">"RAG-embed"</span>),   <span class="co"># tags are per job; nothing is inherited from the notebook</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1" aria-label="code-block-7-9"></a>    tags<span class="op">=</span>make_job_tags(<span class="st">"Inference"</span>),   <span class="co"># tags are per job; nothing is inherited from the notebook</span></span>
 <span id="cb7-10"><a href="#cb7-10" tabindex="-1" aria-label="code-block-7-10"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>,</span>
 <span id="cb7-11"><a href="#cb7-11" tabindex="-1" aria-label="code-block-7-11"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
 <span id="cb7-12"><a href="#cb7-12" tabindex="-1" aria-label="code-block-7-12"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,</span>
@@ -9932,7 +9969,7 @@ go.</p>
 <span id="cb10-6"><a href="#cb10-6" tabindex="-1" aria-label="code-block-10-6"></a>rag_processor <span class="op">=</span> HuggingFaceProcessor(</span>
 <span id="cb10-7"><a href="#cb10-7" tabindex="-1" aria-label="code-block-10-7"></a>    base_job_name<span class="op">=</span><span class="st">"WattBot-rag-batch"</span>,</span>
 <span id="cb10-8"><a href="#cb10-8" tabindex="-1" aria-label="code-block-10-8"></a>    role<span class="op">=</span>role,</span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1" aria-label="code-block-10-9"></a>    tags<span class="op">=</span>make_job_tags(<span class="st">"RAG-batch"</span>),   <span class="co"># separate job, separate tags</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1" aria-label="code-block-10-9"></a>    tags<span class="op">=</span>make_job_tags(<span class="st">"Inference"</span>),   <span class="co"># separate job, separate tags</span></span>
 <span id="cb10-10"><a href="#cb10-10" tabindex="-1" aria-label="code-block-10-10"></a>    instance_type<span class="op">=</span><span class="st">"ml.g6e.xlarge"</span>,     <span class="co"># 1 x L40S, 48 GB: holds the FP8 27B model plus KV cache</span></span>
 <span id="cb10-11"><a href="#cb10-11" tabindex="-1" aria-label="code-block-10-11"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
 <span id="cb10-12"><a href="#cb10-12" tabindex="-1" aria-label="code-block-10-12"></a>    volume_size_in_gb<span class="op">=</span><span class="dv">60</span>,              <span class="co"># 27 GB of weights + vLLM install; mounted at /opt/ml/processing</span></span>
@@ -10167,7 +10204,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-RAG-GPU-notebook"><p>Content from <a href="RAG-GPU-notebook.html">(Optional) RAG with a Notebook GPU</a></p>
 <hr>
-<p>Last updated on 2026-10-19 |
+<p>Last updated on 2026-10-20 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/RAG-GPU-notebook.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 45 minutes</p>
@@ -10431,8 +10468,8 @@ GB will not fit the weights or the vLLM install). This volume bills at
 $0.14 per GB-month even while the instance is stopped.</li>
 <li>
 <strong>Tags:</strong> the same <code>Project</code>,
-<code>Name</code>, <code>Purpose</code> keys as every other resource.
-<code>Purpose</code> could be <code>RAG-GPU-notebook</code>.</li>
+<code>Name</code>, <code>Purpose</code> keys as every other resource;
+<code>Purpose</code> is <code>Notebook</code>.</li>
 </ul>
 <p>See <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
 for ML</a> for further guidance. This instance bills by the hour from
@@ -11488,9 +11525,9 @@ the account.</p>
 <span id="cb9-21"><a href="#cb9-21" tabindex="-1" aria-label="code-block-9-21"></a><span class="st">  "ResourceConfig": { "InstanceType": "ml.m5.large", "InstanceCount": 1, "VolumeSizeInGB": 10 },</span></span>
 <span id="cb9-22"><a href="#cb9-22" tabindex="-1" aria-label="code-block-9-22"></a><span class="st">  "StoppingCondition": { "MaxRuntimeInSeconds": 1200 },</span></span>
 <span id="cb9-23"><a href="#cb9-23" tabindex="-1" aria-label="code-block-9-23"></a><span class="st">  "Tags": [</span></span>
-<span id="cb9-24"><a href="#cb9-24" tabindex="-1" aria-label="code-block-9-24"></a><span class="st">    { "Key": "Project", "Value": "&lt;challenge name&gt;" },</span></span>
-<span id="cb9-25"><a href="#cb9-25" tabindex="-1" aria-label="code-block-9-25"></a><span class="st">    { "Key": "Name",    "Value": "&lt;your name&gt;" },</span></span>
-<span id="cb9-26"><a href="#cb9-26" tabindex="-1" aria-label="code-block-9-26"></a><span class="st">    { "Key": "Purpose", "Value": "train_XGBoost_cli" }</span></span>
+<span id="cb9-24"><a href="#cb9-24" tabindex="-1" aria-label="code-block-9-24"></a><span class="st">    { "Key": "Project", "Value": "&lt;ChallengeName&gt;" },</span></span>
+<span id="cb9-25"><a href="#cb9-25" tabindex="-1" aria-label="code-block-9-25"></a><span class="st">    { "Key": "Name",    "Value": "&lt;LastnameFirstname&gt;" },</span></span>
+<span id="cb9-26"><a href="#cb9-26" tabindex="-1" aria-label="code-block-9-26"></a><span class="st">    { "Key": "Purpose", "Value": "Training" }</span></span>
 <span id="cb9-27"><a href="#cb9-27" tabindex="-1" aria-label="code-block-9-27"></a><span class="st">  ]</span></span>
 <span id="cb9-28"><a href="#cb9-28" tabindex="-1" aria-label="code-block-9-28"></a><span class="st">}</span></span>
 <span id="cb9-29"><a href="#cb9-29" tabindex="-1" aria-label="code-block-9-29"></a><span class="op">JSON</span></span>
@@ -11567,7 +11604,7 @@ finds something. Then run them against your own resources.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>

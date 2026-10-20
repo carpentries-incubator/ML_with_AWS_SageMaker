@@ -531,13 +531,14 @@ AI</strong> to save SageMaker as a bookmark in your AWS toolbar</li>
 <ul><li><p>In the SageMaker left-side menu, click on <strong>Notebook
 instances</strong>, then click <strong>Create notebook
 instance</strong>.</p></li>
-<li><p><strong>Notebook name</strong>: To easily track this resource in
-our shared account, please use the following naming convention:
-<code>challenge-lastnamefirstname-purpose</code>, all lowercase (same
-convention as your bucket, with a purpose on the end). For example,
-<code>sinkorswim-doejohn-trainclassifier</code>. Can include hyphens,
-but not spaces. This name is also reused as the prefix of every training
-job you launch from the notebook.</p></li>
+<li><p><strong>Notebook name</strong>: Same words as your bucket, with a
+purpose on the end: <code>Challenge-LastnameFirstname-Purpose</code>,
+e.g. <code>SinkOrSwim-DoeJohn-TrainClassifier</code>. SageMaker allows
+letters, digits and hyphens (no spaces or underscores, up to 63
+characters). Capitals are fine here and in tags; only bucket names must
+be lowercase. This name is also reused as the prefix of every training
+job you launch from the notebook, which is how you will find your jobs
+in a shared account.</p></li>
 <li>
 <p><strong>Instance type</strong>: SageMaker notebooks run on AWS
 EC2 instances. The instance type determines the compute resources
@@ -591,13 +592,13 @@ keys exactly as shown; capitalization matters):</p>
 <table class="table"><thead><tr><th>Key</th>
 <th>Value</th>
 </tr></thead><tbody><tr><td><code>Project</code></td>
-<td>your challenge name, e.g. <code>sinkorswim</code>
+<td>your challenge name, e.g. <code>SinkOrSwim</code>
 </td>
 </tr><tr><td><code>Name</code></td>
-<td>your name, e.g. <code>John Doe</code>
+<td>your name, e.g. <code>DoeJohn</code>
 </td>
 </tr><tr><td><code>Purpose</code></td>
-<td>what this resource is for, e.g. <code>Train</code>
+<td>what this resource is for, <code>Notebook</code>
 </td>
 </tr></tbody></table></li>
 </ul><figure><img src="../fig/notebook_tags.PNG" alt="Screenshot showing required tags for a SageMaker notebook instance" class="figure mx-auto d-block"><div class="figcaption">Tag Setup Example</div>
@@ -692,7 +693,7 @@ and say which of them need the three tags.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
 GB of data wants about 32 GB of memory: <code>ml.m5.2xlarge</code> (8

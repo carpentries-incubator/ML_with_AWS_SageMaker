@@ -643,8 +643,9 @@ e.g. <code>sinkorswim-doejohn</code>: the challenge you are working on
 <code>badgerscribe</code>, <code>badgercode</code>, …), a hyphen, then
 your last and first name run together. S3 requires lowercase letters,
 digits and hyphens only, 3 to 63 characters, starting and ending with a
-letter or digit. The same lowercase string is what we will use for your
-notebook instance and your <code>Project</code> tag. <strong>This is the
+letter or digit. Buckets are the one place AWS forces lowercase; for the
+notebook instance and the tags we use the same words with capitals,
+<code>SinkOrSwim</code> and <code>DoeJohn</code>. <strong>This is the
 only bucket you will create in the workshop.</strong> Every later
 episode writes its outputs (trained models, embeddings, predictions)
 into this same bucket under its own prefix, such as
@@ -687,18 +688,37 @@ account’s approved cost-allocation keys, see <a href="https://kb.wisc.edu/7245
 three keys on every resource you create in this lesson.</p>
 <ul><li>
 <strong>Project</strong>: your challenge name,
-e.g. <code>sinkorswim</code>
+e.g. <code>SinkOrSwim</code>
 </li>
 <li>
-<strong>Name</strong>: your name, e.g. <code>John Doe</code>
+<strong>Name</strong>: your last and first name run together,
+e.g. <code>DoeJohn</code>
 </li>
 <li>
-<strong>Purpose</strong>: <code>Bucket-titanic</code>
+<strong>Purpose</strong>: one of five fixed values, here
+<code>Storage</code>
 </li>
-</ul><p>Tag values are case-sensitive on the bill: <code>SinkOrSwim</code>
-and <code>sinkorswim</code> would be two separate rows in Cost Explorer.
-Use the same lowercase challenge name you put in the bucket name.</p>
-<figure><img src="fig/bucket_tags2.png" alt="Screenshot showing required tags for an S3 bucket" class="figure mx-auto d-block"><div class="figcaption">Example of Tags for an S3 Bucket</div>
+</ul><p>AWS allows tag values of up to 256 characters made of letters,
+digits, spaces and <code>+ - = . _ : / @</code>, and they are
+case-sensitive. We use capitalised words with no spaces, and the same
+spelling on every resource: <code>SinkOrSwim</code> and
+<code>sinkorswim</code> would be separate rows in Cost Explorer.</p>
+<p><code>Purpose</code> takes one of five values, so that the bill can
+be summed by kind of work rather than by individual job. Which job it
+was is already in the job’s name.</p>
+<table class="table"><thead><tr><th><code>Purpose</code></th>
+<th>Used for</th>
+</tr></thead><tbody><tr><td><code>Storage</code></td>
+<td>your bucket</td>
+</tr><tr><td><code>Notebook</code></td>
+<td>the controller notebook instance</td>
+</tr><tr><td><code>Training</code></td>
+<td>training jobs, including the fine-tune</td>
+</tr><tr><td><code>Tuning</code></td>
+<td>hyperparameter tuning jobs</td>
+</tr><tr><td><code>Inference</code></td>
+<td>Bedrock calls, RAG jobs, batch transcription</td>
+</tr></tbody></table><figure><img src="fig/bucket_tags2.png" alt="Screenshot showing required tags for an S3 bucket" class="figure mx-auto d-block"><div class="figcaption">Example of Tags for an S3 Bucket</div>
 </figure><p><strong>Default encryption</strong>: leave SSE-S3 (the default).
 Objects are encrypted at rest with keys S3 manages; KMS keys only matter
 when you need to control the keys yourself.</p>
@@ -906,7 +926,7 @@ sizes: 10 GB, 100 GB, 1 TB (1024 GB)</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal"><li>
