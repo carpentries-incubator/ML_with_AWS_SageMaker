@@ -527,7 +527,8 @@ billed</strong>:</p>
 <td>Per token processed</td>
 <td>Per hour the instance exists</td>
 </tr><tr><td><strong>Cost while idle</strong></td>
-<td>$0 — nothing is running between calls</td>
+<td>
+<code>$0</code> — nothing is running between calls</td>
 <td>Full hourly rate, 24/7, whether or not you use it</td>
 </tr><tr><td><strong>What you must remember to do</strong></td>
 <td>Nothing</td>
@@ -550,50 +551,67 @@ of writing; see the <a href="https://carpentries-incubator.github.io/ML_with_AWS
 page</a>):</p>
 <table style="width:100%;" class="table"><colgroup><col width="16%"><col width="16%"><col width="16%"><col width="16%"><col width="16%"><col width="16%"></colgroup><thead><tr><th>Instance</th>
 <th>GPU</th>
-<th>$/hour</th>
+<th>
+<code>$</code>/hour</th>
 <th>Forgotten overnight (12 h)</th>
 <th>Forgotten over a weekend (64 h)</th>
 <th>Forgotten for a month (730 h)</th>
 </tr></thead><tbody><tr><td>ml.g4dn.xlarge</td>
 <td>1 × T4 (16 GB)</td>
-<td>$0.74</td>
-<td>~$9</td>
-<td>~$47</td>
-<td>~$540</td>
+<td><code>$0.74</code></td>
+<td>~<code>$9</code>
+</td>
+<td>~<code>$47</code>
+</td>
+<td>~<code>$540</code>
+</td>
 </tr><tr><td>ml.g5.xlarge</td>
 <td>1 × A10G (24 GB)</td>
-<td>$1.41</td>
-<td>~$17</td>
-<td>~$90</td>
-<td>~$1,030</td>
+<td><code>$1.41</code></td>
+<td>~<code>$17</code>
+</td>
+<td>~<code>$90</code>
+</td>
+<td>~<code>$1,030</code>
+</td>
 </tr><tr><td>ml.g5.2xlarge</td>
 <td>1 × A10G (24 GB)</td>
-<td>$1.52</td>
-<td>~$18</td>
-<td>~$97</td>
-<td>~$1,110</td>
+<td><code>$1.52</code></td>
+<td>~<code>$18</code>
+</td>
+<td>~<code>$97</code>
+</td>
+<td>~<code>$1,110</code>
+</td>
 </tr><tr><td>ml.g6e.xlarge</td>
 <td>1 × L40S (48 GB)</td>
-<td>$2.61</td>
-<td>~$31</td>
-<td>~$167</td>
-<td>~$1,905</td>
+<td><code>$2.61</code></td>
+<td>~<code>$31</code>
+</td>
+<td>~<code>$167</code>
+</td>
+<td>~<code>$1,905</code>
+</td>
 </tr><tr><td>ml.p4d.24xlarge</td>
 <td>8 × A100 (40 GB)</td>
-<td>$25.25</td>
-<td>~$303</td>
-<td>~$1,616</td>
-<td>~$18,430</td>
+<td><code>$25.25</code></td>
+<td>~<code>$303</code>
+</td>
+<td>~<code>$1,616</code>
+</td>
+<td>~<code>$18,430</code>
+</td>
 </tr></tbody></table><p>Compare that to running the <strong>entire WattBot pipeline</strong>
 from this lesson on Bedrock. Using DeepSeek V3 (check the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
-for current per‑token prices) and Titan Text Embeddings V2 ($0.02 per
-million tokens):</p>
+for current per‑token prices) and Titan Text Embeddings V2
+(<code>$0.02</code> per million tokens):</p>
 <table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>Step</th>
 <th>Rough volume</th>
 <th>Cost</th>
 </tr></thead><tbody><tr><td>Embed ~3,000 chunks (~1M tokens)</td>
 <td>1M input tokens</td>
-<td>~$0.02</td>
+<td>~<code>$0.02</code>
+</td>
 </tr><tr><td>Answer 100 questions (~3K‑token prompt + ~300‑token answer each)
 with DeepSeek V3</td>
 <td>300K in / 30K out</td>
@@ -603,7 +621,7 @@ with DeepSeek V3</td>
 <td>cents</td>
 </tr><tr><td><strong>Total</strong></td>
 <td></td>
-<td><strong>well under $1</strong></td>
+<td><strong>well under <code>$1</code></strong></td>
 </tr></tbody></table><p>A single forgotten weekend on the <em>cheapest</em> GPU instance
 costs more than fifty full runs of the pipeline on Bedrock; a forgotten
 weekend on the <code>ml.g6e.xlarge</code> the later episodes use costs
@@ -712,7 +730,7 @@ approach:</p>
 <li>Set up an <a href="https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html" class="external-link">AWS
 Budget</a> alert and consider a <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/notebook-lifecycle-config.html" class="external-link">lifecycle
 configuration</a> that auto‑stops idle notebooks.</li>
-<li>For larger models the hourly rate (e.g., $25/hour for a
+<li>For larger models the hourly rate (e.g., <code>$25</code>/hour for a
 p4d.24xlarge) becomes a limiting factor very quickly.</li>
 </ul><p><strong>Use it for:</strong> walking through RAG internals step by
 step, debugging a model locally before packaging it as a job, or short

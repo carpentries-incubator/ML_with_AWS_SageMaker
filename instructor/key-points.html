@@ -621,9 +621,10 @@ format is optimized for efficient loading, reducing I/O overhead and
 enabling batch compatibility for PyTorch’s <code>DataLoader</code>.</li>
 <li>
 <strong>Startup dominates small jobs</strong>: Every SageMaker
-training job pays a few minutes of provisioning, container pull and data
-download; <code>job_cost_report()</code> shows how much of the bill that
-is.</li>
+training job waits a minute or so for an instance (not billed), then
+spends one to three minutes on container pull and data download (billed)
+before the script runs; for a job whose script finishes in seconds, that
+overhead is the whole bill.</li>
 <li>
 <strong>GPU training</strong>: While beneficial for larger models or
 datasets, GPUs may introduce overhead for smaller tasks; selecting the
@@ -672,8 +673,8 @@ tags are inherited.</li>
 <li>
 <strong>Read the bill from the child jobs</strong>: SageMaker bills
 per second of <code>BillableTimeInSeconds</code> x instance count on
-each training job; the gap to <code>TrainingTimeInSeconds</code> is
-startup overhead, and it dominates short jobs.</li>
+each training job; container pull and data download are inside that
+number and dominate short jobs.</li>
 <li>
 <strong>Transform the test set with the training scaler</strong>:
 Load the saved scaler and pass it to
@@ -779,10 +780,10 @@ one 48 GB GPU (<code>ml.g6e.xlarge</code>); bf16 would need 54 GB and a
 multi-GPU instance.</li>
 <li>
 <strong>The meter never stops on its own</strong>:
-<code>ml.g6e.xlarge</code> is $2.61/h, $167 per forgotten weekend,
-$1,906 per forgotten month, plus $14/month for the storage volume even
-when stopped. Stop it when you stand up; delete it when the episode is
-over.</li>
+<code>ml.g6e.xlarge</code> is <code>$2.61</code>/h, <code>$167</code>
+per forgotten weekend, <code>$1,906</code> per forgotten month, plus
+<code>$14</code>/month for the storage volume even when stopped. Stop it
+when you stand up; delete it when the episode is over.</li>
 <li>
 <strong>Local-first RAG</strong>: For teaching (and small corpora),
 we avoid an external vector database and instead perform cosine

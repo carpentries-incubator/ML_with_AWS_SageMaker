@@ -425,7 +425,8 @@ with a class of about 50 in a 3-hour slot (quotas below are sized for
 published 2026-10-16 (<code>us-east-1</code> and the class account’s
 <code>us-east-2</code> are the same for these instance types); re-check
 them before the term, since <code>ml.g5.xlarge</code> has already moved
-from $1.21 to $1.41 since the RAG episodes were written.</p>
+from <code>$1.21</code> to <code>$1.41</code> since the RAG episodes
+were written.</p>
 <section><h2 class="section-heading" id="the-in-class-design">The in-class design<a class="anchor" aria-label="anchor" href="#the-in-class-design"></a></h2>
 <hr class="half-width"><p>The full 295-page fine-tune takes about 45 minutes, which does not
 fit a 3-hour class once setup and discussion are added. In class, every
@@ -457,37 +458,37 @@ say it out loud.</p>
 <th>Cost</th>
 </tr></thead><tbody><tr><td>Controller notebook (CPU)</td>
 <td>
-<code>ml.t3.medium</code> ($0.05/h)</td>
+<code>ml.t3.medium</code> (<code>$0.05</code>/h)</td>
 <td>3 h</td>
-<td>$0.15</td>
+<td><code>$0.15</code></td>
 </tr><tr><td>In-class mini fine-tune (120 German-letter pages × 2 epochs, 15
 pages scored before and after)</td>
 <td>
-<code>ml.g5.xlarge</code> ($1.41/h)</td>
+<code>ml.g5.xlarge</code> (<code>$1.41</code>/h)</td>
 <td>~25 min</td>
-<td>$0.60</td>
+<td><code>$0.60</code></td>
 </tr><tr><td>Exercise 1: same job at 2 megapixels</td>
 <td><code>ml.g5.xlarge</code></td>
 <td>~35 min</td>
-<td>$0.80</td>
+<td><code>$0.80</code></td>
 </tr><tr><td><strong>In class</strong></td>
 <td></td>
 <td><strong>~1 GPU-hour</strong></td>
-<td><strong>~$1.55</strong></td>
+<td><strong>~<code>$1.55</code></strong></td>
 </tr><tr><td>Homework: full fine-tune (251 pages × 2 epochs, 40 pages scored
 before and after)</td>
 <td><code>ml.g5.xlarge</code></td>
 <td>~45 min</td>
-<td>$1.05</td>
+<td><code>$1.05</code></td>
 </tr><tr><td>Homework: base and fine-tuned over holdout + test (~185 pages, two
 Processing jobs)</td>
 <td><code>ml.g5.xlarge</code></td>
 <td>~15 min each</td>
-<td>$0.70</td>
+<td><code>$0.70</code></td>
 </tr><tr><td><strong>In class + homework</strong></td>
 <td></td>
 <td><strong>~2.3 GPU-hours</strong></td>
-<td><strong>~$3.30</strong></td>
+<td><strong>~<code>$3.30</code></strong></td>
 </tr></tbody></table><p>Assumptions behind the training lines: CHURRO-3B in bf16 with LoRA
 rank 16, gradient checkpointing, one page per step,
 <code>max_pixels</code> of 1280 × 28 × 28 (about one megapixel, ~1,300
@@ -500,35 +501,42 @@ pull). These are estimates, not measurements; a 2x miss either way would
 not be surprising until you have timed a run. Every job is capped
 (<code>max_run</code> of 45 min on the mini job, 90 min on the full run,
 45 min on each Processing job), so the worst case from the scripted
-steps is about $6 per student.</p>
+steps is about <code>$6</code> per student.</p>
 </section><section><h2 class="section-heading" id="what-the-class-spends">What the class spends<a class="anchor" aria-label="anchor" href="#what-the-class-spends"></a></h2>
 <hr class="half-width"><table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>Scenario</th>
 <th>Per student</th>
 <th>50 students (double for 100)</th>
 </tr></thead><tbody><tr><td>In class, one clean pass each (mini job + Exercise 1)</td>
-<td>$1.55</td>
-<td>$80</td>
+<td><code>$1.55</code></td>
+<td><code>$80</code></td>
 </tr><tr><td>In class, realistic (one extra relaunch each)</td>
-<td>~$2.20</td>
-<td>~$110</td>
+<td>~<code>$2.20</code>
+</td>
+<td>~<code>$110</code>
+</td>
 </tr><tr><td>In class, everything hits its <code>max_run</code> cap</td>
-<td>~$3.20</td>
-<td>~$160</td>
+<td>~<code>$3.20</code>
+</td>
+<td>~<code>$160</code>
+</td>
 </tr><tr><td>Homework, if everyone does it</td>
-<td>~$1.75</td>
-<td>~$90</td>
+<td>~<code>$1.75</code>
+</td>
+<td>~<code>$90</code>
+</td>
 </tr><tr><td>
 <strong>Budget to request</strong> (realistic class + homework +
 50%)</td>
 <td></td>
-<td><strong>$400</strong></td>
+<td><strong><code>$400</code></strong></td>
 </tr></tbody></table><p>For comparison, teaching the same material on
 <code>ml.g5.xlarge</code> <em>notebook</em> instances costs about the
-same during class ($1.41 × 3 h × 50 = $212) but adds the
-forgotten-instance risk: each one left running costs $34/day, $237/week,
-$1,029/month. Two forgotten instances over a long weekend exceed the
-entire jobs-based budget above. That difference is the point of the
-episode, and it is worth saying out loud to the class.</p>
+same during class (<code>$1.41</code> × 3 h × 50 = <code>$212</code>)
+but adds the forgotten-instance risk: each one left running costs
+<code>$34</code>/day, <code>$237</code>/week, <code>$1,029</code>/month.
+Two forgotten instances over a long weekend exceed the entire jobs-based
+budget above. That difference is the point of the episode, and it is
+worth saying out loud to the class.</p>
 </section><section><h2 class="section-heading" id="suggested-timeline-3-h">Suggested timeline (3 h)<a class="anchor" aria-label="anchor" href="#suggested-timeline-3-h"></a></h2>
 <hr class="half-width"><table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>Time</th>
 <th>What</th>
@@ -573,9 +581,10 @@ file them <strong>three to four weeks</strong> before class.</p>
 within the same minute in one region can fail with
 <code>InsufficientCapacity</code> even when the quota allows it.
 Mitigations, in order: launch the mini jobs in waves (table by table),
-and have <code>ml.g6.xlarge</code> (L4, 24 GB, $1.13/h; somewhat slower
-on this workload, with half the memory bandwidth, but still well within
-<code>max_run</code>) ready as a documented fallback instance type.</p>
+and have <code>ml.g6.xlarge</code> (L4, 24 GB, <code>$1.13</code>/h;
+somewhat slower on this workload, with half the memory bandwidth, but
+still well within <code>max_run</code>) ready as a documented fallback
+instance type.</p>
 <p><strong>Model download.</strong> The base weights
 (<code>stanford-oval/churro-3B</code>, ~7.5 GB) are <em>not</em> pulled
 from Hugging Face by the jobs. They are staged once in the shared bucket

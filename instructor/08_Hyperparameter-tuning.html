@@ -854,7 +854,7 @@ keeping track of the best model parameters based on validation
 accuracy.</p>
 <p>Estimate first: one child job is the same ~1 minute of training plus
 ~3 minutes of startup we saw in the previous episode, so about
-$0.01.</p>
+<code>$0.01</code>.</p>
 <div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -862,9 +862,12 @@ $0.01.</p>
 <span id="cb8-2"><a href="#cb8-2" tabindex="-1" aria-label="code-block-8-2"></a>train_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/train_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
 <span id="cb8-3"><a href="#cb8-3" tabindex="-1" aria-label="code-block-8-3"></a>val_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/val_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
 <span id="cb8-4"><a href="#cb8-4" tabindex="-1" aria-label="code-block-8-4"></a></span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1" aria-label="code-block-8-5"></a><span class="co"># Launch the hyperparameter tuning job (blocks until the single job has finished)</span></span>
-<span id="cb8-6"><a href="#cb8-6" tabindex="-1" aria-label="code-block-8-6"></a>tuner.fit({<span class="st">"train"</span>: train_input, <span class="st">"val"</span>: val_input})</span>
-<span id="cb8-7"><a href="#cb8-7" tabindex="-1" aria-label="code-block-8-7"></a><span class="bu">print</span>(<span class="st">"Hyperparameter tuning job finished."</span>)</span></code></pre>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1" aria-label="code-block-8-5"></a><span class="im">import</span> time <span class="im">as</span> t</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1" aria-label="code-block-8-6"></a></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1" aria-label="code-block-8-7"></a><span class="co"># Launch the hyperparameter tuning job (blocks until the single job has finished)</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1" aria-label="code-block-8-8"></a>start_time <span class="op">=</span> t.time()</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1" aria-label="code-block-8-9"></a>tuner.fit({<span class="st">"train"</span>: train_input, <span class="st">"val"</span>: val_input})</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1" aria-label="code-block-8-10"></a><span class="bu">print</span>(<span class="ss">f"Hyperparameter tuning job finished in </span><span class="sc">{</span>t<span class="sc">.</span>time() <span class="op">-</span> start_time<span class="sc">:.1f}</span><span class="ss"> seconds (wall-clock, including instance startup)"</span>)</span></code></pre>
 </div>
 </div>
 <div class="section level4">
@@ -886,22 +889,23 @@ with its hyperparameters and final objective value).</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a><span class="kw">def</span> job_cost_report(job_name: <span class="bu">str</span>, price_per_hour: <span class="bu">float</span>):</span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a>    desc <span class="op">=</span> session.sagemaker_client.describe_training_job(TrainingJobName<span class="op">=</span>job_name)</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1" aria-label="code-block-9-3"></a>    billable <span class="op">=</span> desc[<span class="st">"BillableTimeInSeconds"</span>] <span class="op">*</span> desc[<span class="st">"ResourceConfig"</span>][<span class="st">"InstanceCount"</span>]</span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>job_name<span class="sc">}</span><span class="ss">: status </span><span class="sc">{</span>desc[<span class="st">'TrainingJobStatus'</span>]<span class="sc">}</span><span class="ss">, training </span><span class="sc">{</span>desc<span class="sc">.</span>get(<span class="st">'TrainingTimeInSeconds'</span>, <span class="dv">0</span>)<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min, billable </span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min, cost $</span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">3600</span><span class="op">*</span>price_per_hour<span class="sc">:.2f}</span><span class="ss"> at $</span><span class="sc">{</span>price_per_hour<span class="sc">}</span><span class="ss">/h"</span>)</span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a>    <span class="cf">return</span> desc</span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1" aria-label="code-block-9-6"></a></span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1" aria-label="code-block-9-7"></a><span class="kw">def</span> tuning_cost_report(tuner, price_per_hour):</span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1" aria-label="code-block-9-8"></a>    <span class="co">"""Call job_cost_report on every training job the tuner launched; return the total cost in dollars."""</span></span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1" aria-label="code-block-9-9"></a>    jobs_df <span class="op">=</span> tuner.analytics().dataframe()  <span class="co"># one row per child training job: its hyperparameters, FinalObjectiveValue and TrainingJobName</span></span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1" aria-label="code-block-9-10"></a>    total_billable <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1" aria-label="code-block-9-11"></a>    <span class="cf">for</span> job_name <span class="kw">in</span> jobs_df[<span class="st">"TrainingJobName"</span>]:</span>
-<span id="cb9-12"><a href="#cb9-12" tabindex="-1" aria-label="code-block-9-12"></a>        desc <span class="op">=</span> job_cost_report(job_name, price_per_hour)</span>
-<span id="cb9-13"><a href="#cb9-13" tabindex="-1" aria-label="code-block-9-13"></a>        total_billable <span class="op">+=</span> desc[<span class="st">"BillableTimeInSeconds"</span>] <span class="op">*</span> desc[<span class="st">"ResourceConfig"</span>][<span class="st">"InstanceCount"</span>]</span>
-<span id="cb9-14"><a href="#cb9-14" tabindex="-1" aria-label="code-block-9-14"></a>    total_cost <span class="op">=</span> total_billable <span class="op">/</span> <span class="dv">3600</span> <span class="op">*</span> price_per_hour</span>
-<span id="cb9-15"><a href="#cb9-15" tabindex="-1" aria-label="code-block-9-15"></a>    <span class="bu">print</span>(<span class="ss">f"Tuning job </span><span class="sc">{</span>tuner<span class="sc">.</span>latest_tuning_job<span class="sc">.</span>name<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span><span class="bu">len</span>(jobs_df)<span class="sc">}</span><span class="ss"> training jobs, </span><span class="sc">{</span>total_billable<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> billable min, $</span><span class="sc">{</span>total_cost<span class="sc">:.2f}</span><span class="ss"> total"</span>)</span>
-<span id="cb9-16"><a href="#cb9-16" tabindex="-1" aria-label="code-block-9-16"></a>    <span class="cf">return</span> total_cost</span>
-<span id="cb9-17"><a href="#cb9-17" tabindex="-1" aria-label="code-block-9-17"></a></span>
-<span id="cb9-18"><a href="#cb9-18" tabindex="-1" aria-label="code-block-9-18"></a>tuning_cost_report(tuner, price_per_hour)</span></code></pre>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1" aria-label="code-block-9-3"></a>    n <span class="op">=</span> desc[<span class="st">"ResourceConfig"</span>][<span class="st">"InstanceCount"</span>]</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a>    billable <span class="op">=</span> desc[<span class="st">"BillableTimeInSeconds"</span>] <span class="op">*</span> n</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>job_name<span class="sc">}</span><span class="ss">: status </span><span class="sc">{</span>desc[<span class="st">'TrainingJobStatus'</span>]<span class="sc">}</span><span class="ss">, billable </span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min on </span><span class="sc">{</span>n<span class="sc">}</span><span class="ss"> instance(s), cost $</span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">3600</span><span class="op">*</span>price_per_hour<span class="sc">:.3f}</span><span class="ss"> at $</span><span class="sc">{</span>price_per_hour<span class="sc">}</span><span class="ss">/h"</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1" aria-label="code-block-9-6"></a>    <span class="cf">return</span> desc</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1" aria-label="code-block-9-7"></a></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1" aria-label="code-block-9-8"></a><span class="kw">def</span> tuning_cost_report(tuner, price_per_hour):</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1" aria-label="code-block-9-9"></a>    <span class="co">"""Call job_cost_report on every training job the tuner launched; return the total cost in dollars."""</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1" aria-label="code-block-9-10"></a>    jobs_df <span class="op">=</span> tuner.analytics().dataframe()  <span class="co"># one row per child training job: its hyperparameters, FinalObjectiveValue and TrainingJobName</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1" aria-label="code-block-9-11"></a>    total_billable <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1" aria-label="code-block-9-12"></a>    <span class="cf">for</span> job_name <span class="kw">in</span> jobs_df[<span class="st">"TrainingJobName"</span>]:</span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1" aria-label="code-block-9-13"></a>        desc <span class="op">=</span> job_cost_report(job_name, price_per_hour)</span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1" aria-label="code-block-9-14"></a>        total_billable <span class="op">+=</span> desc[<span class="st">"BillableTimeInSeconds"</span>] <span class="op">*</span> desc[<span class="st">"ResourceConfig"</span>][<span class="st">"InstanceCount"</span>]</span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1" aria-label="code-block-9-15"></a>    total_cost <span class="op">=</span> total_billable <span class="op">/</span> <span class="dv">3600</span> <span class="op">*</span> price_per_hour</span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1" aria-label="code-block-9-16"></a>    <span class="bu">print</span>(<span class="ss">f"Tuning job </span><span class="sc">{</span>tuner<span class="sc">.</span>latest_tuning_job<span class="sc">.</span>name<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span><span class="bu">len</span>(jobs_df)<span class="sc">}</span><span class="ss"> training jobs, </span><span class="sc">{</span>total_billable<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> billable min, $</span><span class="sc">{</span>total_cost<span class="sc">:.2f}</span><span class="ss"> total"</span>)</span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1" aria-label="code-block-9-17"></a>    <span class="cf">return</span> total_cost</span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1" aria-label="code-block-9-18"></a></span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1" aria-label="code-block-9-19"></a>tuning_cost_report(tuner, price_per_hour)</span></code></pre>
 </div>
 </div>
 </div>
@@ -925,9 +929,10 @@ simultaneously.</strong></p>
 without overloading resources or risking inefficient exploration, making
 <code>max_parallel_jobs=2</code> a solid default for most use cases.</p>
 <p>Estimate first: 10 child jobs at roughly 3-4 billable minutes each is
-30-40 billable minutes on <code>ml.m5.large</code>, so about $0.06 in
-total (the 10,000-epoch configurations run a little longer). Wall-clock
-is five rounds of two jobs, so expect 15-20 minutes.</p>
+30-40 billable minutes on <code>ml.m5.large</code>, so about
+<code>$0.06</code> in total (the 10,000-epoch configurations run a
+little longer). Wall-clock is five rounds of two jobs, so expect 15-20
+minutes.</p>
 <div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1190,24 +1195,20 @@ on the test set. However, this performance does come at a cost (albeit
 manageable if you’ve stuck with our advice thus far). This next section
 will help you assess the total compute time that was used by your tuning
 job.</p>
-<p>In SageMaker, training time and billing time (extracted in our code
-above) are expected to differ for training jobs, including the child
-jobs of a tuning job; the tuning job itself costs nothing. Here’s a
-breakdown of what’s happening:</p>
-<ul><li><p>Training Time (<code>TrainingTimeInSeconds</code>): This is the
-time that each training job’s script takes to run, from start to end.
-This metric represents the pure time spent on training without
-considering the compute resources.</p></li>
-<li><p>Billing Time (<code>BillableTimeInSeconds</code>): This includes
-the training time plus the startup overhead of pulling the container and
-downloading the data, and is adjusted for the resources used. Billing
-time considers:</p></li>
-</ul><p>Instance Count: The number of instances used for training affects
-billing time. Per-Second Billing: SageMaker bills per second, with no
-rounding to minutes or hours, and multiplies the billable seconds by the
-instance count used. For short jobs, the startup overhead makes the
-difference between training and billing time more pronounced.</p>
-<p>For convenience, we have added this as a function in helpers.py</p>
+<p>Each child job is billed like any training job; the tuning job itself
+costs nothing. Here’s a breakdown of what’s happening:</p>
+<ul><li><p>Billable Time (<code>BillableTimeInSeconds</code>): the seconds
+each child job’s instance was yours, from container pull through the
+script to model upload. The wait for an instance before that is not
+billed. (<code>TrainingTimeInSeconds</code> is the same number on
+on-demand instances; it only differs on spot.)</p></li>
+<li><p>Instance Count: billable seconds are multiplied by the number of
+instances the job used.</p></li>
+<li><p>Per-Second Billing: SageMaker bills per second, with no rounding
+to minutes or hours. For short jobs like ours, container pull and data
+download are most of the bill, which is why ten short jobs cost more
+than one job that trained ten times as long.</p></li>
+</ul><p>For convenience, we have added this as a function in helpers.py</p>
 <div class="codewrapper sourceCode" id="cb17">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1256,14 +1257,15 @@ and the runtime print.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ul><li>
-<strong>Cost</strong>: about the same (~$0.06). You pay per child
-training job, and each job’s billable time does not depend on how many
-other jobs are running. (If your account has a quota on concurrent
-<code>ml.m5.large</code> training instances, the request may be rejected
-or throttled, which is the practical limit on this approach.)</li>
+<strong>Cost</strong>: about the same (~<code>$0.06</code>). You pay
+per child training job, and each job’s billable time does not depend on
+how many other jobs are running. (If your account has a quota on
+concurrent <code>ml.m5.large</code> training instances, the request may
+be rejected or throttled, which is the practical limit on this
+approach.)</li>
 <li>
 <strong>Wall-clock</strong>: roughly one job’s duration (4-5
 minutes) instead of five rounds of two, so about 4-5x faster.</li>
@@ -1299,7 +1301,7 @@ in the notebook?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>The tuner can only vary what the script reads. Right now
 <code>train_nn.py</code> has no <code>--batch_size</code> argument and
@@ -1370,8 +1372,8 @@ tags are inherited.</li>
 <li>
 <strong>Read the bill from the child jobs</strong>: SageMaker bills
 per second of <code>BillableTimeInSeconds</code> x instance count on
-each training job; the gap to <code>TrainingTimeInSeconds</code> is
-startup overhead, and it dominates short jobs.</li>
+each training job; container pull and data download are inside that
+number and dominate short jobs.</li>
 <li>
 <strong>Transform the test set with the training scaler</strong>:
 Load the saved scaler and pass it to

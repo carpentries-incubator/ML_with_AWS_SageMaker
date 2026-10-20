@@ -566,15 +566,15 @@ to what you asked about.</p>
 <span id="cb3-6"><a href="#cb3-6" tabindex="-1" aria-label="code-block-3-6"></a><span class="ex">aws</span> sagemaker list-endpoints       <span class="co"># must print an empty list on the workshop account</span></span></code></pre>
 </div>
 <p><code>describe-training-job</code> is the call behind
-<code>job_cost_report()</code> in the training episodes. The same two
-numbers are there: training time, and billable time, which includes the
-startup you paid for.</p>
+<code>job_cost_report()</code> in the training episodes. The same number
+is there: billable time, which includes the container pull and data
+download you paid for.</p>
 <div class="codewrapper sourceCode" id="cb4">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="va">JOB</span><span class="op">=&lt;</span>a <span class="ex">training</span> job name from the list above<span class="op">&gt;</span></span>
 <span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a><span class="ex">aws</span> sagemaker describe-training-job <span class="at">--training-job-name</span> <span class="va">$JOB</span> <span class="dt">\</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a>  <span class="at">--query</span> <span class="st">'{status:TrainingJobStatus, instance:ResourceConfig.InstanceType, count:ResourceConfig.InstanceCount, training_s:TrainingTimeInSeconds, billable_s:BillableTimeInSeconds, tags:Tags}'</span></span></code></pre>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a>  <span class="at">--query</span> <span class="st">'{status:TrainingJobStatus, instance:ResourceConfig.InstanceType, count:ResourceConfig.InstanceCount, billable_s:BillableTimeInSeconds, tags:Tags}'</span></span></code></pre>
 </div>
 <p>Cost is billable seconds × instance count × the hourly rate, exactly
 as in the notebooks. Tags are returned by a separate call, which is also
@@ -619,9 +619,9 @@ better tool:</p>
 <span id="cb8-3"><a href="#cb8-3" tabindex="-1" aria-label="code-block-8-3"></a><span class="ex">aws</span> s3 sync ./my-data/ s3://<span class="op">&lt;</span>your-bucket<span class="op">&gt;</span>/my-data/                         <span class="co"># upload a folder the same way</span></span>
 <span id="cb8-4"><a href="#cb8-4" tabindex="-1" aria-label="code-block-8-4"></a><span class="ex">aws</span> s3 rm s3://<span class="op">&lt;</span>your-bucket<span class="op">&gt;</span>/scratch/ <span class="at">--recursive</span>                          <span class="co"># delete a prefix; this one asks no questions</span></span></code></pre>
 </div>
-<p>Downloads to a laptop are a transfer out of AWS ($0.09 per GB). For
-anything larger than a few hundred megabytes, keep the data in the
-region and let a job read it, which is the lesson’s pattern.</p>
+<p>Downloads to a laptop are a transfer out of AWS (<code>$0.09</code>
+per GB). For anything larger than a few hundred megabytes, keep the data
+in the region and let a job read it, which is the lesson’s pattern.</p>
 </section><section><h2 class="section-heading" id="launch-one-training-job-as-json">5. Launch: one training job, as JSON<a class="anchor" aria-label="anchor" href="#launch-one-training-job-as-json"></a></h2>
 <hr class="half-width"><p>Every <code>estimator.fit()</code> in the training episodes assembled
 a JSON request and sent it to <code>CreateTrainingJob</code>. Here is
@@ -699,9 +699,9 @@ processing jobs and Bedrock so that nothing of this kind exists in the
 account.</li>
 <li>
 <code>aws sagemaker create-notebook-instance</code> with a GPU type:
-a GPU notebook is $60 a day while you are asleep. The optional
-GPU-notebook episode creates one through the console, where it stays
-visible, and deletes it the same hour.</li>
+a GPU notebook is <code>$60</code> a day while you are asleep. The
+optional GPU-notebook episode creates one through the console, where it
+stays visible, and deletes it the same hour.</li>
 <li>
 <code>aws ec2 run-instances</code>: bare virtual machines have no
 tags required, no runtime cap and no SageMaker job list to appear
@@ -734,7 +734,7 @@ finds something. Then run them against your own resources.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>

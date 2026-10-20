@@ -744,10 +744,12 @@ directory).</p></li>
 <li><p><strong>Training and Saving the Model</strong>: The dataset is
 converted into <strong>XGBoost’s <code>DMatrix</code> format</strong>,
 which is optimized for memory and computation efficiency. The trained
-model is saved using <code>joblib.dump()</code> to
-<code>xgboost-model</code>, stored either in the SageMaker
+model is saved with XGBoost’s own <code>save_model()</code> as
+<code>xgboost-model.json</code>, stored either in the SageMaker
 <code>SM_MODEL_DIR</code> (if running in SageMaker) or in the local
-directory.</p></li>
+directory. The JSON format can be loaded by any later XGBoost version,
+which matters here because the SageMaker container and the notebook
+kernel do not run the same version.</p></li>
 </ol></div>
 </div>
 </div>
@@ -895,20 +897,20 @@ notebook instance.</p>
 <span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb10-3"><a href="#cb10-3" tabindex="-1" aria-label="code-block-10-3"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb10-4"><a href="#cb10-4" tabindex="-1" aria-label="code-block-10-4"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> accuracy_score</span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1" aria-label="code-block-10-5"></a><span class="im">import</span> joblib</span>
-<span id="cb10-6"><a href="#cb10-6" tabindex="-1" aria-label="code-block-10-6"></a><span class="im">from</span> train_xgboost <span class="im">import</span> preprocess_data  <span class="co"># importable because scripts/ is on sys.path</span></span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1" aria-label="code-block-10-7"></a></span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1" aria-label="code-block-10-8"></a><span class="co"># Load the test data</span></span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1" aria-label="code-block-10-9"></a>test_data <span class="op">=</span> pd.read_csv(<span class="st">'./titanic_test.csv'</span>)</span>
-<span id="cb10-10"><a href="#cb10-10" tabindex="-1" aria-label="code-block-10-10"></a></span>
-<span id="cb10-11"><a href="#cb10-11" tabindex="-1" aria-label="code-block-10-11"></a><span class="co"># Preprocess the test data using the imported preprocess_data function</span></span>
-<span id="cb10-12"><a href="#cb10-12" tabindex="-1" aria-label="code-block-10-12"></a>X_test, y_test <span class="op">=</span> preprocess_data(test_data)</span>
-<span id="cb10-13"><a href="#cb10-13" tabindex="-1" aria-label="code-block-10-13"></a></span>
-<span id="cb10-14"><a href="#cb10-14" tabindex="-1" aria-label="code-block-10-14"></a><span class="co"># Convert the test features to DMatrix for XGBoost</span></span>
-<span id="cb10-15"><a href="#cb10-15" tabindex="-1" aria-label="code-block-10-15"></a>dtest <span class="op">=</span> xgb.DMatrix(X_test)</span>
-<span id="cb10-16"><a href="#cb10-16" tabindex="-1" aria-label="code-block-10-16"></a></span>
-<span id="cb10-17"><a href="#cb10-17" tabindex="-1" aria-label="code-block-10-17"></a><span class="co"># Load the trained model from the saved file</span></span>
-<span id="cb10-18"><a href="#cb10-18" tabindex="-1" aria-label="code-block-10-18"></a>model <span class="op">=</span> joblib.load(<span class="st">'./xgboost-model'</span>)  <span class="co"># the file the local %run wrote to the current directory</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1" aria-label="code-block-10-5"></a><span class="im">from</span> train_xgboost <span class="im">import</span> preprocess_data  <span class="co"># importable because scripts/ is on sys.path</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1" aria-label="code-block-10-6"></a></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1" aria-label="code-block-10-7"></a><span class="co"># Load the test data</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1" aria-label="code-block-10-8"></a>test_data <span class="op">=</span> pd.read_csv(<span class="st">'./titanic_test.csv'</span>)</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1" aria-label="code-block-10-9"></a></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1" aria-label="code-block-10-10"></a><span class="co"># Preprocess the test data using the imported preprocess_data function</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1" aria-label="code-block-10-11"></a>X_test, y_test <span class="op">=</span> preprocess_data(test_data)</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1" aria-label="code-block-10-12"></a></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1" aria-label="code-block-10-13"></a><span class="co"># Convert the test features to DMatrix for XGBoost</span></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1" aria-label="code-block-10-14"></a>dtest <span class="op">=</span> xgb.DMatrix(X_test)</span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1" aria-label="code-block-10-15"></a></span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1" aria-label="code-block-10-16"></a><span class="co"># Load the trained model from the saved file</span></span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1" aria-label="code-block-10-17"></a>model <span class="op">=</span> xgb.Booster()</span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1" aria-label="code-block-10-18"></a>model.load_model(<span class="st">'./xgboost-model.json'</span>)  <span class="co"># the file the local %run wrote to the current directory</span></span>
 <span id="cb10-19"><a href="#cb10-19" tabindex="-1" aria-label="code-block-10-19"></a></span>
 <span id="cb10-20"><a href="#cb10-20" tabindex="-1" aria-label="code-block-10-20"></a><span class="co"># Make predictions on the test set</span></span>
 <span id="cb10-21"><a href="#cb10-21" tabindex="-1" aria-label="code-block-10-21"></a>preds <span class="op">=</span> model.predict(dtest)</span>
@@ -964,11 +966,11 @@ data. Which instance would you pick for the training job, and why?</p>
 <div class="accordion-body">
 <p>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
 GB of data wants about 32 GB of memory: <code>ml.m5.2xlarge</code> (8
-vCPU, 32 GiB, about $0.46/h) is the natural fit for a tree-ensemble
-training job, or <code>ml.m5.4xlarge</code> (64 GiB) if feature
-engineering will add many columns. No GPU: gradient-boosted trees on
-tabular data are CPU work, so a <code>g4dn</code> or <code>g5</code>
-would cost more and run no faster.</p>
+vCPU, 32 GiB, about <code>$0.46</code>/h) is the natural fit for a
+tree-ensemble training job, or <code>ml.m5.4xlarge</code> (64 GiB) if
+feature engineering will add many columns. No GPU: gradient-boosted
+trees on tabular data are CPU work, so a <code>g4dn</code> or
+<code>g5</code> would cost more and run no faster.</p>
 </div>
 </div>
 </div>
@@ -1203,10 +1205,10 @@ and a human-readable name, even after the job has completed.</p>
 rate x expected minutes, plus about 3 minutes of startup (SageMaker has
 to provision the instance, pull the container, and download your data
 before your script starts). An <code>ml.m5.large</code> costs about
-$0.115/hour (us-east-1 on-demand; see the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
+<code>$0.115</code>/hour (us-east-1 on-demand; see the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
 for ML page</a>). Our local test finished in under a minute, so the
 estimate is roughly 1 minute of training + 3 minutes of startup = 4
-minutes, or about $0.01.</p>
+minutes, or about <code>$0.01</code>.</p>
 <div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1288,44 +1290,66 @@ needed.</p>
 </div>
 <div class="section level4">
 <h4 id="what-did-that-cost">What did that cost?<a class="anchor" aria-label="anchor" href="#what-did-that-cost"></a></h4>
-<p><img src="fig/job-billable-time.svg" alt="Timeline of a SageMaker training job showing which phases count as training time and which as billable time" class="figure"><code>describe_training_job</code> returns two durations:
-<code>TrainingTimeInSeconds</code> (your script running) and
-<code>BillableTimeInSeconds</code> (the time the instance was reserved
-for you, which also includes pulling the container and downloading
-data). SageMaker bills per second, with no rounding, so cost is billable
-seconds x instance count x hourly rate. We’ll wrap this in a small
-helper and call it after every job in this lesson.</p>
+<p><img src="fig/job-billable-time.svg" alt="Timeline of a SageMaker training job showing the unbilled wait for an instance and the billed phases from container pull to model upload" class="figure"><code>describe_training_job</code> returns
+<code>BillableTimeInSeconds</code>: the seconds the instance was yours,
+from container pull to model upload, per instance. It also returns
+<code>TrainingTimeInSeconds</code>, which on on-demand instances is the
+same number (it only differs on spot instances), so do not expect it to
+isolate your script. The minute or so before that, while SageMaker finds
+an instance, is not billed. SageMaker bills per second, with no
+rounding, so cost is billable seconds x instance count x hourly rate.
+We’ll wrap this in a small helper and call it after every job in this
+lesson.</p>
 <div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a><span class="kw">def</span> job_cost_report(job_name: <span class="bu">str</span>, price_per_hour: <span class="bu">float</span>):</span>
 <span id="cb14-2"><a href="#cb14-2" tabindex="-1" aria-label="code-block-14-2"></a>    desc <span class="op">=</span> session.sagemaker_client.describe_training_job(TrainingJobName<span class="op">=</span>job_name)  <span class="co"># the job's full record: status, timings, resources, output</span></span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1" aria-label="code-block-14-3"></a>    <span class="co"># TrainingTimeInSeconds: your script running; BillableTimeInSeconds: from instance ready to released, per instance</span></span>
-<span id="cb14-4"><a href="#cb14-4" tabindex="-1" aria-label="code-block-14-4"></a>    billable <span class="op">=</span> desc[<span class="st">"BillableTimeInSeconds"</span>] <span class="op">*</span> desc[<span class="st">"ResourceConfig"</span>][<span class="st">"InstanceCount"</span>]</span>
-<span id="cb14-5"><a href="#cb14-5" tabindex="-1" aria-label="code-block-14-5"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>job_name<span class="sc">}</span><span class="ss">: status </span><span class="sc">{</span>desc[<span class="st">'TrainingJobStatus'</span>]<span class="sc">}</span><span class="ss">, training </span><span class="sc">{</span>desc<span class="sc">.</span>get(<span class="st">'TrainingTimeInSeconds'</span>, <span class="dv">0</span>)<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min, billable </span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min, cost $</span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">3600</span><span class="op">*</span>price_per_hour<span class="sc">:.2f}</span><span class="ss"> at $</span><span class="sc">{</span>price_per_hour<span class="sc">}</span><span class="ss">/h"</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1" aria-label="code-block-14-3"></a>    n <span class="op">=</span> desc[<span class="st">"ResourceConfig"</span>][<span class="st">"InstanceCount"</span>]</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1" aria-label="code-block-14-4"></a>    billable <span class="op">=</span> desc[<span class="st">"BillableTimeInSeconds"</span>] <span class="op">*</span> n   <span class="co"># BillableTimeInSeconds: container pull to model upload, charged per instance</span></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1" aria-label="code-block-14-5"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>job_name<span class="sc">}</span><span class="ss">: status </span><span class="sc">{</span>desc[<span class="st">'TrainingJobStatus'</span>]<span class="sc">}</span><span class="ss">, billable </span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min on </span><span class="sc">{</span>n<span class="sc">}</span><span class="ss"> instance(s), cost $</span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">3600</span><span class="op">*</span>price_per_hour<span class="sc">:.3f}</span><span class="ss"> at $</span><span class="sc">{</span>price_per_hour<span class="sc">}</span><span class="ss">/h"</span>)</span>
 <span id="cb14-6"><a href="#cb14-6" tabindex="-1" aria-label="code-block-14-6"></a>    <span class="cf">return</span> desc</span>
 <span id="cb14-7"><a href="#cb14-7" tabindex="-1" aria-label="code-block-14-7"></a></span>
 <span id="cb14-8"><a href="#cb14-8" tabindex="-1" aria-label="code-block-14-8"></a>desc <span class="op">=</span> job_cost_report(xgboost_estimator.latest_training_job.name, price_per_hour)  <span class="co"># latest_training_job: the job fit() just ran</span></span></code></pre>
 </div>
-<p>Compare this with the estimate you made above. The gap between
-training time and billable time is the startup overhead of every job; it
-is the same whether you train for one minute or one hour.</p>
+<p>Compare this with the estimate you made above. The job’s log (scroll
+up in the <code>fit()</code> output) shows the script itself trained in
+a fraction of a second, yet the bill is about two minutes. The rest is
+container pull, data download and model upload: the fixed overhead of
+every job, the same whether you train for one minute or one hour. The
+extra minute between calling <code>fit()</code> and the first billed
+second is SageMaker finding an instance, which is free.</p>
 </div>
 <div class="section level4">
-<h4 id="model-results">Model results<a class="anchor" aria-label="anchor" href="#model-results"></a></h4>
-<p>With this code, the training results and model artifacts are saved in
-a subfolder called <code>xgboost</code> in your specified S3 bucket.
-This folder (<code>s3://{bucket_name}/xgboost/</code>) will be
-automatically created if it doesn’t already exist, and will contain:</p>
+<h4 id="what-landed-in-s3">What landed in S3<a class="anchor" aria-label="anchor" href="#what-landed-in-s3"></a></h4>
+<p>Open the <a href="https://us-east-2.console.aws.amazon.com/s3/home?region=us-east-2" class="external-link">S3
+console</a> and look at what the job wrote.</p>
+<p>In <strong>your bucket</strong>, under
+<code>xgboost/&lt;job-name&gt;/</code> (the prefix from
+<code>output_path</code> plus the job name):</p>
 <ol style="list-style-type: decimal"><li>
-<strong>Model “artifacts”</strong>: The trained model file (often a
-<code>.tar.gz</code> file) that SageMaker saves in the
-<code>output_path</code>.</li>
+<code>output/model.tar.gz</code>: the model artifacts, a tarball of
+whatever the script saved to <code>SM_MODEL_DIR</code> (here
+<code>xgboost-model.json</code>). This is the file we download
+below.</li>
 <li>
-<strong>Logs and metrics</strong>: Any metrics and logs related to
-the training job, stored in the same <code>xgboost</code> folder.</li>
-</ol><p>This setup allows for convenient access to both the trained model and
-related output for later evaluation or deployment.</p>
+<code>profiler-output/</code> and <code>debug-output/</code>: small
+files from SageMaker’s built-in profiler, written for every training
+job. Ignore them; they can be turned off with
+<code>disable_profiler=True</code> on the estimator.</li>
+</ol><p>The job’s log is not in S3; it is in CloudWatch, reachable from the
+job’s page in the SageMaker console.</p>
+<p>A <strong>second bucket</strong> also appeared,
+<code>sagemaker-&lt;region&gt;-&lt;account-id&gt;</code>. The SageMaker
+SDK creates this <em>default bucket</em> the first time it needs
+somewhere to stage files: before the job started, <code>fit()</code>
+zipped <code>source_dir</code> and uploaded it there as
+<code>&lt;job-name&gt;/source/sourcedir.tar.gz</code> for the training
+instance to download. It holds kilobytes per job and nothing you need,
+but it is shared by everyone in the account and carries no tags, so it
+is one more thing on the cleanup list. If you want everything in your
+own bucket, create the session as
+<code>sagemaker.Session(default_bucket=bucket_name)</code>.</p>
 </div>
 </div>
 <div class="section level3">
@@ -1372,20 +1396,20 @@ add them in place of or alongside accuracy.</p>
 <span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> accuracy_score</span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a><span class="im">import</span> joblib</span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a><span class="im">from</span> train_xgboost <span class="im">import</span> preprocess_data</span>
-<span id="cb16-7"><a href="#cb16-7" tabindex="-1" aria-label="code-block-16-7"></a></span>
-<span id="cb16-8"><a href="#cb16-8" tabindex="-1" aria-label="code-block-16-8"></a><span class="co"># Load the test data</span></span>
-<span id="cb16-9"><a href="#cb16-9" tabindex="-1" aria-label="code-block-16-9"></a>test_data <span class="op">=</span> pd.read_csv(<span class="st">'./titanic_test.csv'</span>)</span>
-<span id="cb16-10"><a href="#cb16-10" tabindex="-1" aria-label="code-block-16-10"></a></span>
-<span id="cb16-11"><a href="#cb16-11" tabindex="-1" aria-label="code-block-16-11"></a><span class="co"># Preprocess the test data using the imported preprocess_data function</span></span>
-<span id="cb16-12"><a href="#cb16-12" tabindex="-1" aria-label="code-block-16-12"></a>X_test, y_test <span class="op">=</span> preprocess_data(test_data)</span>
-<span id="cb16-13"><a href="#cb16-13" tabindex="-1" aria-label="code-block-16-13"></a></span>
-<span id="cb16-14"><a href="#cb16-14" tabindex="-1" aria-label="code-block-16-14"></a><span class="co"># Convert the test features to DMatrix for XGBoost</span></span>
-<span id="cb16-15"><a href="#cb16-15" tabindex="-1" aria-label="code-block-16-15"></a>dtest <span class="op">=</span> xgb.DMatrix(X_test)</span>
-<span id="cb16-16"><a href="#cb16-16" tabindex="-1" aria-label="code-block-16-16"></a></span>
-<span id="cb16-17"><a href="#cb16-17" tabindex="-1" aria-label="code-block-16-17"></a><span class="co"># Load the trained model from the saved file</span></span>
-<span id="cb16-18"><a href="#cb16-18" tabindex="-1" aria-label="code-block-16-18"></a>model <span class="op">=</span> joblib.load(<span class="st">'./xgboost-model'</span>)</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a><span class="im">from</span> train_xgboost <span class="im">import</span> preprocess_data</span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a></span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1" aria-label="code-block-16-7"></a><span class="co"># Load the test data</span></span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1" aria-label="code-block-16-8"></a>test_data <span class="op">=</span> pd.read_csv(<span class="st">'./titanic_test.csv'</span>)</span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1" aria-label="code-block-16-9"></a></span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1" aria-label="code-block-16-10"></a><span class="co"># Preprocess the test data using the imported preprocess_data function</span></span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1" aria-label="code-block-16-11"></a>X_test, y_test <span class="op">=</span> preprocess_data(test_data)</span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1" aria-label="code-block-16-12"></a></span>
+<span id="cb16-13"><a href="#cb16-13" tabindex="-1" aria-label="code-block-16-13"></a><span class="co"># Convert the test features to DMatrix for XGBoost</span></span>
+<span id="cb16-14"><a href="#cb16-14" tabindex="-1" aria-label="code-block-16-14"></a>dtest <span class="op">=</span> xgb.DMatrix(X_test)</span>
+<span id="cb16-15"><a href="#cb16-15" tabindex="-1" aria-label="code-block-16-15"></a></span>
+<span id="cb16-16"><a href="#cb16-16" tabindex="-1" aria-label="code-block-16-16"></a><span class="co"># Load the trained model from the saved file (the container's XGBoost 1.7 wrote it; the kernel's newer XGBoost reads it)</span></span>
+<span id="cb16-17"><a href="#cb16-17" tabindex="-1" aria-label="code-block-16-17"></a>model <span class="op">=</span> xgb.Booster()</span>
+<span id="cb16-18"><a href="#cb16-18" tabindex="-1" aria-label="code-block-16-18"></a>model.load_model(<span class="st">'./xgboost-model.json'</span>)</span>
 <span id="cb16-19"><a href="#cb16-19" tabindex="-1" aria-label="code-block-16-19"></a></span>
 <span id="cb16-20"><a href="#cb16-20" tabindex="-1" aria-label="code-block-16-20"></a><span class="co"># Make predictions on the test set</span></span>
 <span id="cb16-21"><a href="#cb16-21" tabindex="-1" aria-label="code-block-16-21"></a>preds <span class="op">=</span> model.predict(dtest)</span>

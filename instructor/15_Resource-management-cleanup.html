@@ -476,9 +476,9 @@ costs.</li>
 essential to stop or delete them when they are no longer needed. Earlier
 in the <strong>Notebooks as controllers</strong> episode, we discussed
 using lower-cost instance types like <code>ml.t3.medium</code>
-(approximately $0.05/hour) for controlling workflows. While this makes
-open notebooks less costly than larger instances, it’s still a good
-habit to stop or delete notebooks to avoid unnecessary spending,
+(approximately <code>$0.05</code>/hour) for controlling workflows. While
+this makes open notebooks less costly than larger instances, it’s still
+a good habit to stop or delete notebooks to avoid unnecessary spending,
 especially if left idle for long periods.</p>
 <ol style="list-style-type: decimal"><li><strong>Navigate to SageMaker in the AWS Console.</strong></li>
 <li>In the left-hand menu, click <strong>Notebook
@@ -490,10 +490,10 @@ instances</strong>.</li>
 it is sufficient. Deleting is recommended if you are finished with the
 workshop.</li>
 </ol><p>A stopped instance stops the compute charge but keeps its storage
-volume, which bills at about $0.14 per GB-month. The default 5 GB is
-cents; the 100 GB volume the optional GPU-notebook episode asks for is
-$14 a month. If you enlarged the volume to hold model weights, delete
-the instance once the episode is done.</p>
+volume, which bills at about <code>$0.14</code> per GB-month. The
+default 5 GB is cents; the 100 GB volume the optional GPU-notebook
+episode asks for is <code>$14</code> a month. If you enlarged the volume
+to hold model weights, delete the instance once the episode is done.</p>
 </section><section><h2 class="section-heading" id="cleaning-up-s3-storage">Cleaning up S3 storage<a class="anchor" aria-label="anchor" href="#cleaning-up-s3-storage"></a></h2>
 <hr class="half-width"><p>While S3 storage is relatively inexpensive, cleaning up unused
 buckets and files helps keep costs minimal and your workspace
@@ -577,8 +577,14 @@ nothing but is yours to remove.</li>
 <strong>S3 bucket</strong>: empty and delete your
 <code>challenge-lastnamefirstname</code> bucket (S3 → select bucket →
 Empty, then Delete). Download anything you want to keep first, once:
-egress is $0.09/GB. Leave the shared data bucket alone; it is the
-instructors’.</li>
+egress is <code>$0.09</code>/GB. Leave the shared data bucket alone; it
+is the instructors’.</li>
+<li>
+<strong>Default SDK bucket</strong>
+<code>sagemaker-&lt;region&gt;-&lt;account-id&gt;</code>: created
+automatically the first time a job staged its code. In the shared
+account the instructors delete it; on your own account, empty and delete
+it with the rest.</li>
 <li>
 <strong>Training, tuning and Processing jobs</strong>: confirm none
 are still running (SageMaker → each job list, filter by status
@@ -663,6 +669,14 @@ it (the Titanic files and <code>.npz</code> arrays at the root, and the
 <td>S3 episode</td>
 <td>Yes: storage per GB-month</td>
 <td>S3 console → Empty bucket → Delete bucket</td>
+</tr><tr><td>The SDK’s default bucket
+<code>sagemaker-&lt;region&gt;-&lt;account-id&gt;</code> (code tarballs
+staged by every <code>fit()</code> and <code>run()</code>)</td>
+<td>Training episode, automatically</td>
+<td>Yes, a little: storage per GB-month, shared by the whole
+account</td>
+<td>Instructors delete it at the end of term; on your own account, empty
+and delete it like any other bucket</td>
 </tr><tr><td>Controller notebook instance (<code>ml.t3.medium</code>)</td>
 <td>Notebooks as controllers</td>
 <td>Yes while InService; its volume bills while Stopped</td>
@@ -683,7 +697,8 @@ afterwards</td>
 </tr><tr><td>GPU notebook instance (<code>ml.g6e.xlarge</code>, 100 GB
 volume)</td>
 <td>Optional GPU-notebook episode</td>
-<td>Yes: $2.61/h InService, $14/month for the volume when Stopped</td>
+<td>Yes: <code>$2.61</code>/h InService, <code>$14</code>/month for the
+volume when Stopped</td>
 <td>SageMaker → Notebook instances → Delete</td>
 </tr><tr><td>Lifecycle configuration (if you made one)</td>
 <td>Any notebook-instance episode</td>
@@ -695,10 +710,10 @@ Delete</td>
 <td>No, but it is a credential</td>
 <td>GitHub → Settings → Developer settings → revoke</td>
 </tr></tbody></table><p>Stopping the controller and walking away leaves the bucket billing
-for storage, a stopped GPU instance’s volume billing at $0.14/GB-month,
-and any Processing job that had not hit its <code>max_run</code> yet.
-Model artifacts in your bucket are the only thing worth keeping;
-download them once, then delete the bucket.</p>
+for storage, a stopped GPU instance’s volume billing at
+<code>$0.14</code>/GB-month, and any Processing job that had not hit its
+<code>max_run</code> yet. Model artifacts in your bucket are the only
+thing worth keeping; download them once, then delete the bucket.</p>
 </div>
 </div>
 </div>

@@ -659,50 +659,51 @@ below and everything else works unchanged.</p>
 <span id="cb1-4"><a href="#cb1-4" tabindex="-1" aria-label="code-block-1-4"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb1-5"><a href="#cb1-5" tabindex="-1" aria-label="code-block-1-5"></a></span>
 <span id="cb1-6"><a href="#cb1-6" tabindex="-1" aria-label="code-block-1-6"></a><span class="im">import</span> boto3</span>
-<span id="cb1-7"><a href="#cb1-7" tabindex="-1" aria-label="code-block-1-7"></a><span class="im">from</span> botocore.config <span class="im">import</span> Config</span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1" aria-label="code-block-1-8"></a><span class="im">from</span> botocore.exceptions <span class="im">import</span> ClientError</span>
-<span id="cb1-9"><a href="#cb1-9" tabindex="-1" aria-label="code-block-1-9"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1" aria-label="code-block-1-10"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb1-11"><a href="#cb1-11" tabindex="-1" aria-label="code-block-1-11"></a></span>
-<span id="cb1-12"><a href="#cb1-12" tabindex="-1" aria-label="code-block-1-12"></a><span class="co"># ---- AWS configuration ----</span></span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1" aria-label="code-block-1-13"></a><span class="im">import</span> sagemaker</span>
-<span id="cb1-14"><a href="#cb1-14" tabindex="-1" aria-label="code-block-1-14"></a></span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1" aria-label="code-block-1-15"></a>session <span class="op">=</span> sagemaker.Session()</span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1" aria-label="code-block-1-16"></a>region <span class="op">=</span> session.boto_region_name</span>
-<span id="cb1-17"><a href="#cb1-17" tabindex="-1" aria-label="code-block-1-17"></a></span>
-<span id="cb1-18"><a href="#cb1-18" tabindex="-1" aria-label="code-block-1-18"></a><span class="co"># Base model IDs. These are the models we want to call, but we will NOT pass</span></span>
-<span id="cb1-19"><a href="#cb1-19" tabindex="-1" aria-label="code-block-1-19"></a><span class="co"># them to the runtime directly -- see "Cost tracking" below for why.</span></span>
-<span id="cb1-20"><a href="#cb1-20" tabindex="-1" aria-label="code-block-1-20"></a><span class="co"># Any chat model in the Bedrock catalog works here (e.g. a Claude or Llama model ID)</span></span>
-<span id="cb1-21"><a href="#cb1-21" tabindex="-1" aria-label="code-block-1-21"></a><span class="co"># because we call it through the provider-neutral `converse` API.</span></span>
-<span id="cb1-22"><a href="#cb1-22" tabindex="-1" aria-label="code-block-1-22"></a>base_generation_model_id <span class="op">=</span> <span class="st">"deepseek.v3-v1:0"</span></span>
-<span id="cb1-23"><a href="#cb1-23" tabindex="-1" aria-label="code-block-1-23"></a>base_embedding_model_id <span class="op">=</span> <span class="st">"amazon.titan-embed-text-v2:0"</span></span>
-<span id="cb1-24"><a href="#cb1-24" tabindex="-1" aria-label="code-block-1-24"></a></span>
-<span id="cb1-25"><a href="#cb1-25" tabindex="-1" aria-label="code-block-1-25"></a><span class="co"># Buckets: the shared one is read-only (inputs); yours receives everything derived.</span></span>
-<span id="cb1-26"><a href="#cb1-26" tabindex="-1" aria-label="code-block-1-26"></a>shared_bucket <span class="op">=</span> <span class="st">"ml-marathon-shared"</span>   <span class="co"># &lt;-- EDIT ME: the name your instructor gives you</span></span>
-<span id="cb1-27"><a href="#cb1-27" tabindex="-1" aria-label="code-block-1-27"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>     <span class="co"># &lt;-- EDIT ME: your own bucket from the S3 episode</span></span>
-<span id="cb1-28"><a href="#cb1-28" tabindex="-1" aria-label="code-block-1-28"></a></span>
-<span id="cb1-29"><a href="#cb1-29" tabindex="-1" aria-label="code-block-1-29"></a><span class="co"># Keys in the shared bucket (inputs) and in your bucket (derived artifacts)</span></span>
-<span id="cb1-30"><a href="#cb1-30" tabindex="-1" aria-label="code-block-1-30"></a>metadata_key <span class="op">=</span> <span class="st">"wattbot/metadata.csv"</span></span>
-<span id="cb1-31"><a href="#cb1-31" tabindex="-1" aria-label="code-block-1-31"></a>train_key <span class="op">=</span> <span class="st">"wattbot/train_QA.csv"</span></span>
-<span id="cb1-32"><a href="#cb1-32" tabindex="-1" aria-label="code-block-1-32"></a>corpus_key <span class="op">=</span> <span class="st">"wattbot/corpus.zip"</span></span>
-<span id="cb1-33"><a href="#cb1-33" tabindex="-1" aria-label="code-block-1-33"></a>chunks_key <span class="op">=</span> <span class="st">"wattbot/chunks.jsonl"</span>                         <span class="co"># written to YOUR bucket at the end of chunking</span></span>
-<span id="cb1-34"><a href="#cb1-34" tabindex="-1" aria-label="code-block-1-34"></a>embeddings_key <span class="op">=</span> <span class="st">"wattbot/embeddings/embeddings_bedrock.npy"</span>  <span class="co"># YOUR bucket</span></span>
-<span id="cb1-35"><a href="#cb1-35" tabindex="-1" aria-label="code-block-1-35"></a>solutions_key <span class="op">=</span> <span class="st">"wattbot/solutions/wattbot_solutions_bedrock.csv"</span>  <span class="co"># YOUR bucket</span></span>
-<span id="cb1-36"><a href="#cb1-36" tabindex="-1" aria-label="code-block-1-36"></a></span>
-<span id="cb1-37"><a href="#cb1-37" tabindex="-1" aria-label="code-block-1-37"></a><span class="co"># Local working directory in the notebook instance</span></span>
-<span id="cb1-38"><a href="#cb1-38" tabindex="-1" aria-label="code-block-1-38"></a>local_data_dir <span class="op">=</span> <span class="st">"./data"</span></span>
-<span id="cb1-39"><a href="#cb1-39" tabindex="-1" aria-label="code-block-1-39"></a>os.makedirs(local_data_dir, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb1-40"><a href="#cb1-40" tabindex="-1" aria-label="code-block-1-40"></a></span>
-<span id="cb1-41"><a href="#cb1-41" tabindex="-1" aria-label="code-block-1-41"></a><span class="co"># AWS clients. On-demand Bedrock throughput is rate-limited per model, so a long loop of</span></span>
-<span id="cb1-42"><a href="#cb1-42" tabindex="-1" aria-label="code-block-1-42"></a><span class="co"># calls will occasionally be throttled; the adaptive retry mode backs off and retries</span></span>
-<span id="cb1-43"><a href="#cb1-43" tabindex="-1" aria-label="code-block-1-43"></a><span class="co"># instead of raising, which is what we want for a few thousand embedding calls.</span></span>
-<span id="cb1-44"><a href="#cb1-44" tabindex="-1" aria-label="code-block-1-44"></a>s3 <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
-<span id="cb1-45"><a href="#cb1-45" tabindex="-1" aria-label="code-block-1-45"></a>bedrock_runtime <span class="op">=</span> boto3.client(</span>
-<span id="cb1-46"><a href="#cb1-46" tabindex="-1" aria-label="code-block-1-46"></a>    <span class="st">"bedrock-runtime"</span>,</span>
-<span id="cb1-47"><a href="#cb1-47" tabindex="-1" aria-label="code-block-1-47"></a>    region_name<span class="op">=</span>region,</span>
-<span id="cb1-48"><a href="#cb1-48" tabindex="-1" aria-label="code-block-1-48"></a>    config<span class="op">=</span>Config(retries<span class="op">=</span>{<span class="st">"max_attempts"</span>: <span class="dv">10</span>, <span class="st">"mode"</span>: <span class="st">"adaptive"</span>}),</span>
-<span id="cb1-49"><a href="#cb1-49" tabindex="-1" aria-label="code-block-1-49"></a>)                                                                      <span class="co"># the client that calls models (invoke_model, converse)</span></span>
-<span id="cb1-50"><a href="#cb1-50" tabindex="-1" aria-label="code-block-1-50"></a>bedrock <span class="op">=</span> boto3.client(<span class="st">"bedrock"</span>, region_name<span class="op">=</span>region)                  <span class="co"># the control-plane client (list models, inference profiles)</span></span></code></pre>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1" aria-label="code-block-1-7"></a><span class="im">import</span> time</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1" aria-label="code-block-1-8"></a><span class="im">from</span> botocore.config <span class="im">import</span> Config</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1" aria-label="code-block-1-9"></a><span class="im">from</span> botocore.exceptions <span class="im">import</span> ClientError</span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1" aria-label="code-block-1-10"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1" aria-label="code-block-1-11"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1" aria-label="code-block-1-12"></a></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1" aria-label="code-block-1-13"></a><span class="co"># ---- AWS configuration ----</span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1" aria-label="code-block-1-14"></a><span class="im">import</span> sagemaker</span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1" aria-label="code-block-1-15"></a></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1" aria-label="code-block-1-16"></a>session <span class="op">=</span> sagemaker.Session()</span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1" aria-label="code-block-1-17"></a>region <span class="op">=</span> session.boto_region_name</span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1" aria-label="code-block-1-18"></a></span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1" aria-label="code-block-1-19"></a><span class="co"># Base model IDs. These are the models we want to call, but we will NOT pass</span></span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1" aria-label="code-block-1-20"></a><span class="co"># them to the runtime directly -- see "Cost tracking" below for why.</span></span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1" aria-label="code-block-1-21"></a><span class="co"># Any chat model in the Bedrock catalog works here (e.g. a Claude or Llama model ID)</span></span>
+<span id="cb1-22"><a href="#cb1-22" tabindex="-1" aria-label="code-block-1-22"></a><span class="co"># because we call it through the provider-neutral `converse` API.</span></span>
+<span id="cb1-23"><a href="#cb1-23" tabindex="-1" aria-label="code-block-1-23"></a>base_generation_model_id <span class="op">=</span> <span class="st">"deepseek.v3-v1:0"</span></span>
+<span id="cb1-24"><a href="#cb1-24" tabindex="-1" aria-label="code-block-1-24"></a>base_embedding_model_id <span class="op">=</span> <span class="st">"amazon.titan-embed-text-v2:0"</span></span>
+<span id="cb1-25"><a href="#cb1-25" tabindex="-1" aria-label="code-block-1-25"></a></span>
+<span id="cb1-26"><a href="#cb1-26" tabindex="-1" aria-label="code-block-1-26"></a><span class="co"># Buckets: the shared one is read-only (inputs); yours receives everything derived.</span></span>
+<span id="cb1-27"><a href="#cb1-27" tabindex="-1" aria-label="code-block-1-27"></a>shared_bucket <span class="op">=</span> <span class="st">"ml-marathon-shared"</span>   <span class="co"># &lt;-- EDIT ME: the name your instructor gives you</span></span>
+<span id="cb1-28"><a href="#cb1-28" tabindex="-1" aria-label="code-block-1-28"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>     <span class="co"># &lt;-- EDIT ME: your own bucket from the S3 episode</span></span>
+<span id="cb1-29"><a href="#cb1-29" tabindex="-1" aria-label="code-block-1-29"></a></span>
+<span id="cb1-30"><a href="#cb1-30" tabindex="-1" aria-label="code-block-1-30"></a><span class="co"># Keys in the shared bucket (inputs) and in your bucket (derived artifacts)</span></span>
+<span id="cb1-31"><a href="#cb1-31" tabindex="-1" aria-label="code-block-1-31"></a>metadata_key <span class="op">=</span> <span class="st">"wattbot/metadata.csv"</span></span>
+<span id="cb1-32"><a href="#cb1-32" tabindex="-1" aria-label="code-block-1-32"></a>train_key <span class="op">=</span> <span class="st">"wattbot/train_QA.csv"</span></span>
+<span id="cb1-33"><a href="#cb1-33" tabindex="-1" aria-label="code-block-1-33"></a>corpus_key <span class="op">=</span> <span class="st">"wattbot/corpus.zip"</span></span>
+<span id="cb1-34"><a href="#cb1-34" tabindex="-1" aria-label="code-block-1-34"></a>chunks_key <span class="op">=</span> <span class="st">"wattbot/chunks.jsonl"</span>                         <span class="co"># written to YOUR bucket at the end of chunking</span></span>
+<span id="cb1-35"><a href="#cb1-35" tabindex="-1" aria-label="code-block-1-35"></a>embeddings_key <span class="op">=</span> <span class="st">"wattbot/embeddings/embeddings_bedrock.npy"</span>  <span class="co"># YOUR bucket</span></span>
+<span id="cb1-36"><a href="#cb1-36" tabindex="-1" aria-label="code-block-1-36"></a>solutions_key <span class="op">=</span> <span class="st">"wattbot/solutions/wattbot_solutions_bedrock.csv"</span>  <span class="co"># YOUR bucket</span></span>
+<span id="cb1-37"><a href="#cb1-37" tabindex="-1" aria-label="code-block-1-37"></a></span>
+<span id="cb1-38"><a href="#cb1-38" tabindex="-1" aria-label="code-block-1-38"></a><span class="co"># Local working directory in the notebook instance</span></span>
+<span id="cb1-39"><a href="#cb1-39" tabindex="-1" aria-label="code-block-1-39"></a>local_data_dir <span class="op">=</span> <span class="st">"./data"</span></span>
+<span id="cb1-40"><a href="#cb1-40" tabindex="-1" aria-label="code-block-1-40"></a>os.makedirs(local_data_dir, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-41"><a href="#cb1-41" tabindex="-1" aria-label="code-block-1-41"></a></span>
+<span id="cb1-42"><a href="#cb1-42" tabindex="-1" aria-label="code-block-1-42"></a><span class="co"># AWS clients. On-demand Bedrock throughput is rate-limited per model, so a long loop of</span></span>
+<span id="cb1-43"><a href="#cb1-43" tabindex="-1" aria-label="code-block-1-43"></a><span class="co"># calls will occasionally be throttled; the adaptive retry mode backs off and retries</span></span>
+<span id="cb1-44"><a href="#cb1-44" tabindex="-1" aria-label="code-block-1-44"></a><span class="co"># instead of raising, which is what we want for a few thousand embedding calls.</span></span>
+<span id="cb1-45"><a href="#cb1-45" tabindex="-1" aria-label="code-block-1-45"></a>s3 <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
+<span id="cb1-46"><a href="#cb1-46" tabindex="-1" aria-label="code-block-1-46"></a>bedrock_runtime <span class="op">=</span> boto3.client(</span>
+<span id="cb1-47"><a href="#cb1-47" tabindex="-1" aria-label="code-block-1-47"></a>    <span class="st">"bedrock-runtime"</span>,</span>
+<span id="cb1-48"><a href="#cb1-48" tabindex="-1" aria-label="code-block-1-48"></a>    region_name<span class="op">=</span>region,</span>
+<span id="cb1-49"><a href="#cb1-49" tabindex="-1" aria-label="code-block-1-49"></a>    config<span class="op">=</span>Config(retries<span class="op">=</span>{<span class="st">"max_attempts"</span>: <span class="dv">10</span>, <span class="st">"mode"</span>: <span class="st">"adaptive"</span>}),</span>
+<span id="cb1-50"><a href="#cb1-50" tabindex="-1" aria-label="code-block-1-50"></a>)                                                                      <span class="co"># the client that calls models (invoke_model, converse)</span></span>
+<span id="cb1-51"><a href="#cb1-51" tabindex="-1" aria-label="code-block-1-51"></a>bedrock <span class="op">=</span> boto3.client(<span class="st">"bedrock"</span>, region_name<span class="op">=</span>region)                  <span class="co"># the control-plane client (list models, inference profiles)</span></span></code></pre>
 </div>
 </div>
 <div class="section level3">
@@ -1204,7 +1205,7 @@ month’s Bedrock spend by <code>Project</code>?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -1302,21 +1303,23 @@ bucket.</p>
 <span id="cb14-43"><a href="#cb14-43" tabindex="-1" aria-label="code-block-14-43"></a>    all_embeddings <span class="op">=</span> <span class="bu">list</span>(np.load(emb_partial_path)) <span class="cf">if</span> emb_partial_path.exists() <span class="cf">else</span> []</span>
 <span id="cb14-44"><a href="#cb14-44" tabindex="-1" aria-label="code-block-14-44"></a>    start <span class="op">=</span> <span class="bu">len</span>(all_embeddings)</span>
 <span id="cb14-45"><a href="#cb14-45" tabindex="-1" aria-label="code-block-14-45"></a>    <span class="bu">print</span>(<span class="ss">f"Computing embeddings via Bedrock from chunk </span><span class="sc">{</span>start<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss">..."</span>)</span>
-<span id="cb14-46"><a href="#cb14-46" tabindex="-1" aria-label="code-block-14-46"></a></span>
-<span id="cb14-47"><a href="#cb14-47" tabindex="-1" aria-label="code-block-14-47"></a>    <span class="cf">for</span> idx <span class="kw">in</span> <span class="bu">range</span>(start, <span class="bu">len</span>(chunked_docs)):</span>
-<span id="cb14-48"><a href="#cb14-48" tabindex="-1" aria-label="code-block-14-48"></a>        all_embeddings.append(bedrock_embed_text(chunked_docs[idx][<span class="st">"text"</span>]))</span>
-<span id="cb14-49"><a href="#cb14-49" tabindex="-1" aria-label="code-block-14-49"></a>        <span class="cf">if</span> (idx <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> <span class="dv">500</span> <span class="op">==</span> <span class="dv">0</span> <span class="kw">or</span> idx <span class="op">+</span> <span class="dv">1</span> <span class="op">==</span> <span class="bu">len</span>(chunked_docs):</span>
-<span id="cb14-50"><a href="#cb14-50" tabindex="-1" aria-label="code-block-14-50"></a>            np.save(emb_partial_path, np.array(all_embeddings, dtype<span class="op">=</span><span class="st">"float32"</span>))</span>
-<span id="cb14-51"><a href="#cb14-51" tabindex="-1" aria-label="code-block-14-51"></a>            <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span>idx <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss"> / </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss"> chunks (progress saved)"</span>)</span>
-<span id="cb14-52"><a href="#cb14-52" tabindex="-1" aria-label="code-block-14-52"></a></span>
-<span id="cb14-53"><a href="#cb14-53" tabindex="-1" aria-label="code-block-14-53"></a>    chunk_embeddings <span class="op">=</span> np.array(all_embeddings, dtype<span class="op">=</span><span class="st">"float32"</span>)   <span class="co"># the embedding matrix: one row per chunk, one column per dimension</span></span>
-<span id="cb14-54"><a href="#cb14-54" tabindex="-1" aria-label="code-block-14-54"></a>    np.save(emb_save_path, chunk_embeddings)</span>
-<span id="cb14-55"><a href="#cb14-55" tabindex="-1" aria-label="code-block-14-55"></a>    emb_partial_path.unlink(missing_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb14-56"><a href="#cb14-56" tabindex="-1" aria-label="code-block-14-56"></a>    s3.upload_file(<span class="bu">str</span>(emb_save_path), bucket_name, embeddings_key)</span>
-<span id="cb14-57"><a href="#cb14-57" tabindex="-1" aria-label="code-block-14-57"></a>    <span class="bu">print</span>(<span class="ss">f"Saved embeddings to </span><span class="sc">{</span>emb_save_path<span class="sc">}</span><span class="ss"> and s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>embeddings_key<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb14-58"><a href="#cb14-58" tabindex="-1" aria-label="code-block-14-58"></a></span>
-<span id="cb14-59"><a href="#cb14-59" tabindex="-1" aria-label="code-block-14-59"></a><span class="cf">assert</span> chunk_embeddings.shape[<span class="dv">0</span>] <span class="op">==</span> <span class="bu">len</span>(chunked_docs), <span class="st">"embeddings and chunks are out of step; delete the cached files and rerun"</span></span>
-<span id="cb14-60"><a href="#cb14-60" tabindex="-1" aria-label="code-block-14-60"></a><span class="bu">print</span>(<span class="st">"Embeddings shape:"</span>, chunk_embeddings.shape)</span></code></pre>
+<span id="cb14-46"><a href="#cb14-46" tabindex="-1" aria-label="code-block-14-46"></a>    t0 <span class="op">=</span> time.time()</span>
+<span id="cb14-47"><a href="#cb14-47" tabindex="-1" aria-label="code-block-14-47"></a></span>
+<span id="cb14-48"><a href="#cb14-48" tabindex="-1" aria-label="code-block-14-48"></a>    <span class="cf">for</span> idx <span class="kw">in</span> <span class="bu">range</span>(start, <span class="bu">len</span>(chunked_docs)):</span>
+<span id="cb14-49"><a href="#cb14-49" tabindex="-1" aria-label="code-block-14-49"></a>        all_embeddings.append(bedrock_embed_text(chunked_docs[idx][<span class="st">"text"</span>]))</span>
+<span id="cb14-50"><a href="#cb14-50" tabindex="-1" aria-label="code-block-14-50"></a>        <span class="cf">if</span> (idx <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> <span class="dv">500</span> <span class="op">==</span> <span class="dv">0</span> <span class="kw">or</span> idx <span class="op">+</span> <span class="dv">1</span> <span class="op">==</span> <span class="bu">len</span>(chunked_docs):</span>
+<span id="cb14-51"><a href="#cb14-51" tabindex="-1" aria-label="code-block-14-51"></a>            np.save(emb_partial_path, np.array(all_embeddings, dtype<span class="op">=</span><span class="st">"float32"</span>))</span>
+<span id="cb14-52"><a href="#cb14-52" tabindex="-1" aria-label="code-block-14-52"></a>            <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span>idx <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss"> / </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss"> chunks (progress saved)"</span>)</span>
+<span id="cb14-53"><a href="#cb14-53" tabindex="-1" aria-label="code-block-14-53"></a></span>
+<span id="cb14-54"><a href="#cb14-54" tabindex="-1" aria-label="code-block-14-54"></a>    <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs) <span class="op">-</span> start<span class="sc">}</span><span class="ss"> chunks in </span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.1f}</span><span class="ss"> seconds"</span>)</span>
+<span id="cb14-55"><a href="#cb14-55" tabindex="-1" aria-label="code-block-14-55"></a>    chunk_embeddings <span class="op">=</span> np.array(all_embeddings, dtype<span class="op">=</span><span class="st">"float32"</span>)   <span class="co"># the embedding matrix: one row per chunk, one column per dimension</span></span>
+<span id="cb14-56"><a href="#cb14-56" tabindex="-1" aria-label="code-block-14-56"></a>    np.save(emb_save_path, chunk_embeddings)</span>
+<span id="cb14-57"><a href="#cb14-57" tabindex="-1" aria-label="code-block-14-57"></a>    emb_partial_path.unlink(missing_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb14-58"><a href="#cb14-58" tabindex="-1" aria-label="code-block-14-58"></a>    s3.upload_file(<span class="bu">str</span>(emb_save_path), bucket_name, embeddings_key)</span>
+<span id="cb14-59"><a href="#cb14-59" tabindex="-1" aria-label="code-block-14-59"></a>    <span class="bu">print</span>(<span class="ss">f"Saved embeddings to </span><span class="sc">{</span>emb_save_path<span class="sc">}</span><span class="ss"> and s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>embeddings_key<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb14-60"><a href="#cb14-60" tabindex="-1" aria-label="code-block-14-60"></a></span>
+<span id="cb14-61"><a href="#cb14-61" tabindex="-1" aria-label="code-block-14-61"></a><span class="cf">assert</span> chunk_embeddings.shape[<span class="dv">0</span>] <span class="op">==</span> <span class="bu">len</span>(chunked_docs), <span class="st">"embeddings and chunks are out of step; delete the cached files and rerun"</span></span>
+<span id="cb14-62"><a href="#cb14-62" tabindex="-1" aria-label="code-block-14-62"></a><span class="bu">print</span>(<span class="st">"Embeddings shape:"</span>, chunk_embeddings.shape)</span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="step-9-retrieve-cosine-similarity-over-the-embedding-matrix">Step 9 – Retrieve: cosine similarity over the embedding matrix<a class="anchor" aria-label="anchor" href="#step-9-retrieve-cosine-similarity-over-the-embedding-matrix"></a></h2>
 <hr class="half-width"><p>Retrieval is pure NumPy: embed the question with the same model, take
@@ -1420,39 +1423,41 @@ explanation phases call local models instead of Bedrock-hosted ones.</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1" aria-label="code-block-18-1"></a>results <span class="op">=</span> []</span>
-<span id="cb18-2"><a href="#cb18-2" tabindex="-1" aria-label="code-block-18-2"></a></span>
-<span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a><span class="co"># For quick smoke tests, slice train_df (e.g., train_df.head(5))</span></span>
-<span id="cb18-4"><a href="#cb18-4" tabindex="-1" aria-label="code-block-18-4"></a><span class="cf">for</span> _, row <span class="kw">in</span> train_df.iterrows():</span>
-<span id="cb18-5"><a href="#cb18-5" tabindex="-1" aria-label="code-block-18-5"></a>    <span class="bu">print</span>(<span class="st">"#"</span> <span class="op">*</span> <span class="dv">96</span>)</span>
-<span id="cb18-6"><a href="#cb18-6" tabindex="-1" aria-label="code-block-18-6"></a>    <span class="bu">print</span>(<span class="ss">f"QUESTION: </span><span class="sc">{</span>row[<span class="st">'question'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb18-7"><a href="#cb18-7" tabindex="-1" aria-label="code-block-18-7"></a></span>
-<span id="cb18-8"><a href="#cb18-8" tabindex="-1" aria-label="code-block-18-8"></a>    out <span class="op">=</span> run_single_qa(</span>
-<span id="cb18-9"><a href="#cb18-9" tabindex="-1" aria-label="code-block-18-9"></a>        row<span class="op">=</span>row,                             <span class="co"># one train_QA.csv row: id, question, expected answer_unit</span></span>
-<span id="cb18-10"><a href="#cb18-10" tabindex="-1" aria-label="code-block-18-10"></a>        embed_query<span class="op">=</span>embed_query,             <span class="co"># the two model callables: the only episode-specific inputs</span></span>
-<span id="cb18-11"><a href="#cb18-11" tabindex="-1" aria-label="code-block-18-11"></a>        generate<span class="op">=</span>call_bedrock_chat,</span>
-<span id="cb18-12"><a href="#cb18-12" tabindex="-1" aria-label="code-block-18-12"></a>        chunk_embeddings<span class="op">=</span>chunk_embeddings,   <span class="co"># the index: the matrix plus the chunks it was built from</span></span>
-<span id="cb18-13"><a href="#cb18-13" tabindex="-1" aria-label="code-block-18-13"></a>        chunked_docs<span class="op">=</span>chunked_docs,</span>
-<span id="cb18-14"><a href="#cb18-14" tabindex="-1" aria-label="code-block-18-14"></a>        docid_to_url<span class="op">=</span>docid_to_url,           <span class="co"># for the ref_url column</span></span>
-<span id="cb18-15"><a href="#cb18-15" tabindex="-1" aria-label="code-block-18-15"></a>        top_k<span class="op">=</span><span class="dv">8</span>,                             <span class="co"># chunks handed to the model as context</span></span>
-<span id="cb18-16"><a href="#cb18-16" tabindex="-1" aria-label="code-block-18-16"></a>        retrieval_threshold<span class="op">=</span><span class="fl">0.25</span>,            <span class="co"># best cosine score below this =&gt; unanswerable (is_blank)</span></span>
-<span id="cb18-17"><a href="#cb18-17" tabindex="-1" aria-label="code-block-18-17"></a>        verbose<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb18-18"><a href="#cb18-18" tabindex="-1" aria-label="code-block-18-18"></a>    )</span>
-<span id="cb18-19"><a href="#cb18-19" tabindex="-1" aria-label="code-block-18-19"></a></span>
-<span id="cb18-20"><a href="#cb18-20" tabindex="-1" aria-label="code-block-18-20"></a>    <span class="bu">print</span>(<span class="ss">f"ANSWER: </span><span class="sc">{</span>out[<span class="st">'answer'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb18-21"><a href="#cb18-21" tabindex="-1" aria-label="code-block-18-21"></a>    <span class="bu">print</span>(<span class="ss">f"ref_ids: </span><span class="sc">{</span>out[<span class="st">'ref_id'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb18-22"><a href="#cb18-22" tabindex="-1" aria-label="code-block-18-22"></a>    <span class="bu">print</span>(<span class="ss">f"EXPLANATION: </span><span class="sc">{</span>out[<span class="st">'explanation'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb18-23"><a href="#cb18-23" tabindex="-1" aria-label="code-block-18-23"></a>    results.append(out)</span>
-<span id="cb18-24"><a href="#cb18-24" tabindex="-1" aria-label="code-block-18-24"></a></span>
-<span id="cb18-25"><a href="#cb18-25" tabindex="-1" aria-label="code-block-18-25"></a>results_df <span class="op">=</span> pd.DataFrame(results)</span>
-<span id="cb18-26"><a href="#cb18-26" tabindex="-1" aria-label="code-block-18-26"></a></span>
-<span id="cb18-27"><a href="#cb18-27" tabindex="-1" aria-label="code-block-18-27"></a>output_dir <span class="op">=</span> <span class="st">"outputs"</span></span>
-<span id="cb18-28"><a href="#cb18-28" tabindex="-1" aria-label="code-block-18-28"></a>os.makedirs(output_dir, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb18-29"><a href="#cb18-29" tabindex="-1" aria-label="code-block-18-29"></a>output_path <span class="op">=</span> os.path.join(output_dir, <span class="st">"wattbot_solutions_bedrock.csv"</span>)</span>
-<span id="cb18-30"><a href="#cb18-30" tabindex="-1" aria-label="code-block-18-30"></a>results_df.to_csv(output_path, index<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb18-31"><a href="#cb18-31" tabindex="-1" aria-label="code-block-18-31"></a>s3.upload_file(output_path, bucket_name, solutions_key)</span>
-<span id="cb18-32"><a href="#cb18-32" tabindex="-1" aria-label="code-block-18-32"></a><span class="bu">print</span>(<span class="ss">f"Wrote predictions to </span><span class="sc">{</span>output_path<span class="sc">}</span><span class="ss"> and s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>solutions_key<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb18-33"><a href="#cb18-33" tabindex="-1" aria-label="code-block-18-33"></a></span>
-<span id="cb18-34"><a href="#cb18-34" tabindex="-1" aria-label="code-block-18-34"></a>results_df.head()</span></code></pre>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1" aria-label="code-block-18-2"></a>run_start <span class="op">=</span> time.time()</span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a></span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1" aria-label="code-block-18-4"></a><span class="co"># For quick smoke tests, slice train_df (e.g., train_df.head(5))</span></span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1" aria-label="code-block-18-5"></a><span class="cf">for</span> _, row <span class="kw">in</span> train_df.iterrows():</span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1" aria-label="code-block-18-6"></a>    <span class="bu">print</span>(<span class="st">"#"</span> <span class="op">*</span> <span class="dv">96</span>)</span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1" aria-label="code-block-18-7"></a>    <span class="bu">print</span>(<span class="ss">f"QUESTION: </span><span class="sc">{</span>row[<span class="st">'question'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1" aria-label="code-block-18-8"></a></span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1" aria-label="code-block-18-9"></a>    out <span class="op">=</span> run_single_qa(</span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1" aria-label="code-block-18-10"></a>        row<span class="op">=</span>row,                             <span class="co"># one train_QA.csv row: id, question, expected answer_unit</span></span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1" aria-label="code-block-18-11"></a>        embed_query<span class="op">=</span>embed_query,             <span class="co"># the two model callables: the only episode-specific inputs</span></span>
+<span id="cb18-12"><a href="#cb18-12" tabindex="-1" aria-label="code-block-18-12"></a>        generate<span class="op">=</span>call_bedrock_chat,</span>
+<span id="cb18-13"><a href="#cb18-13" tabindex="-1" aria-label="code-block-18-13"></a>        chunk_embeddings<span class="op">=</span>chunk_embeddings,   <span class="co"># the index: the matrix plus the chunks it was built from</span></span>
+<span id="cb18-14"><a href="#cb18-14" tabindex="-1" aria-label="code-block-18-14"></a>        chunked_docs<span class="op">=</span>chunked_docs,</span>
+<span id="cb18-15"><a href="#cb18-15" tabindex="-1" aria-label="code-block-18-15"></a>        docid_to_url<span class="op">=</span>docid_to_url,           <span class="co"># for the ref_url column</span></span>
+<span id="cb18-16"><a href="#cb18-16" tabindex="-1" aria-label="code-block-18-16"></a>        top_k<span class="op">=</span><span class="dv">8</span>,                             <span class="co"># chunks handed to the model as context</span></span>
+<span id="cb18-17"><a href="#cb18-17" tabindex="-1" aria-label="code-block-18-17"></a>        retrieval_threshold<span class="op">=</span><span class="fl">0.25</span>,            <span class="co"># best cosine score below this =&gt; unanswerable (is_blank)</span></span>
+<span id="cb18-18"><a href="#cb18-18" tabindex="-1" aria-label="code-block-18-18"></a>        verbose<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb18-19"><a href="#cb18-19" tabindex="-1" aria-label="code-block-18-19"></a>    )</span>
+<span id="cb18-20"><a href="#cb18-20" tabindex="-1" aria-label="code-block-18-20"></a></span>
+<span id="cb18-21"><a href="#cb18-21" tabindex="-1" aria-label="code-block-18-21"></a>    <span class="bu">print</span>(<span class="ss">f"ANSWER: </span><span class="sc">{</span>out[<span class="st">'answer'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb18-22"><a href="#cb18-22" tabindex="-1" aria-label="code-block-18-22"></a>    <span class="bu">print</span>(<span class="ss">f"ref_ids: </span><span class="sc">{</span>out[<span class="st">'ref_id'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb18-23"><a href="#cb18-23" tabindex="-1" aria-label="code-block-18-23"></a>    <span class="bu">print</span>(<span class="ss">f"EXPLANATION: </span><span class="sc">{</span>out[<span class="st">'explanation'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb18-24"><a href="#cb18-24" tabindex="-1" aria-label="code-block-18-24"></a>    results.append(out)</span>
+<span id="cb18-25"><a href="#cb18-25" tabindex="-1" aria-label="code-block-18-25"></a></span>
+<span id="cb18-26"><a href="#cb18-26" tabindex="-1" aria-label="code-block-18-26"></a>results_df <span class="op">=</span> pd.DataFrame(results)</span>
+<span id="cb18-27"><a href="#cb18-27" tabindex="-1" aria-label="code-block-18-27"></a><span class="bu">print</span>(<span class="ss">f"Answered </span><span class="sc">{</span><span class="bu">len</span>(results_df)<span class="sc">}</span><span class="ss"> questions in </span><span class="sc">{</span>(time.time() <span class="op">-</span> run_start) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
+<span id="cb18-28"><a href="#cb18-28" tabindex="-1" aria-label="code-block-18-28"></a></span>
+<span id="cb18-29"><a href="#cb18-29" tabindex="-1" aria-label="code-block-18-29"></a>output_dir <span class="op">=</span> <span class="st">"outputs"</span></span>
+<span id="cb18-30"><a href="#cb18-30" tabindex="-1" aria-label="code-block-18-30"></a>os.makedirs(output_dir, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb18-31"><a href="#cb18-31" tabindex="-1" aria-label="code-block-18-31"></a>output_path <span class="op">=</span> os.path.join(output_dir, <span class="st">"wattbot_solutions_bedrock.csv"</span>)</span>
+<span id="cb18-32"><a href="#cb18-32" tabindex="-1" aria-label="code-block-18-32"></a>results_df.to_csv(output_path, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb18-33"><a href="#cb18-33" tabindex="-1" aria-label="code-block-18-33"></a>s3.upload_file(output_path, bucket_name, solutions_key)</span>
+<span id="cb18-34"><a href="#cb18-34" tabindex="-1" aria-label="code-block-18-34"></a><span class="bu">print</span>(<span class="ss">f"Wrote predictions to </span><span class="sc">{</span>output_path<span class="sc">}</span><span class="ss"> and s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>solutions_key<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb18-35"><a href="#cb18-35" tabindex="-1" aria-label="code-block-18-35"></a></span>
+<span id="cb18-36"><a href="#cb18-36" tabindex="-1" aria-label="code-block-18-36"></a>results_df.head()</span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="step-12-score-against-the-training-answers">Step 12 – Score against the training answers<a class="anchor" aria-label="anchor" href="#step-12-score-against-the-training-answers"></a></h2>
 <hr class="half-width"><p>WattBot scores each prediction with three components: 0.75 for
@@ -1491,10 +1496,10 @@ block, and <code>call_bedrock_chat</code> kept them all in
 evaluation run and price them at the current on-demand rates for
 DeepSeek V3 on the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
 (fill the two prices in below). Add the embedding step: ~3,000 chunks of
-1,200 characters at Titan Text Embeddings V2’s $0.02 per million input
-tokens. How does the total compare with the overview’s estimate for “the
-whole WattBot pipeline on Bedrock”, and with one hour of the
-<code>ml.g6e.xlarge</code> the Processing Jobs episode rents?</p>
+1,200 characters at Titan Text Embeddings V2’s <code>$0.02</code> per
+million input tokens. How does the total compare with the overview’s
+estimate for “the whole WattBot pipeline on Bedrock”, and with one hour
+of the <code>ml.g6e.xlarge</code> the Processing Jobs episode rents?</p>
 </div>
 </div>
 </div>
@@ -1503,7 +1508,7 @@ whole WattBot pipeline on Bedrock”, and with one hour of the
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -1526,8 +1531,8 @@ whole WattBot pipeline on Bedrock”, and with one hour of the
 <p>With ~40 questions, two calls each and ~3,000-token prompts, the run
 is on the order of 250K input and 20K output tokens: cents, not dollars,
 at any price in DeepSeek V3’s class, plus about two cents of embeddings.
-That matches the overview’s “well under $1” for the whole pipeline, and
-it is a small fraction of a single GPU-hour.</p>
+That matches the overview’s “well under <code>$1</code>” for the whole
+pipeline, and it is a small fraction of a single GPU-hour.</p>
 </div>
 </div>
 </div>

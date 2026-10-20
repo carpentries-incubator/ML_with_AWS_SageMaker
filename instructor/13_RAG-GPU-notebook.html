@@ -537,29 +537,33 @@ pattern.</p>
 </div>
 <span class="callout-header">Callout</span>
 <div id="this-instance-bills-2.61-an-hour-until-you-stop-it-and-nothing-stops-it-for-you" class="callout-inner">
-<h3 class="callout-title">This instance bills $2.61 an hour until you
-stop it, and nothing stops it for you</h3>
+<h3 class="callout-title">This instance bills <code>$2.61</code> an hour
+until you stop it, and nothing stops it for you</h3>
 <div class="callout-content">
 <p>A GPU notebook instance is a rental with the meter running. It bills
 by the hour from the moment it starts until the moment <em>you</em> stop
 it, whether it is generating answers, sitting at an idle prompt, or
 showing a closed browser tab on a laptop that went home for the weekend.
 Nothing in this episode turns it off for you. The instance we use,
-<code>ml.g6e.xlarge</code> (one L40S GPU, 48 GB), costs <strong>$2.61
-per hour</strong> on-demand in <code>us-east-1</code> (AWS price list,
-October 2026). That is:</p>
+<code>ml.g6e.xlarge</code> (one L40S GPU, 48 GB), costs
+<strong><code>$2.61</code> per hour</strong> on-demand in
+<code>us-east-1</code> (AWS price list, October 2026). That is:</p>
 <table class="table"><thead><tr><th>Left running for</th>
 <th>Cost</th>
 </tr></thead><tbody><tr><td>This episode (~2 hours)</td>
-<td>~$5</td>
+<td>~<code>$5</code>
+</td>
 </tr><tr><td>Overnight (12 h)</td>
-<td>~$31</td>
+<td>~<code>$31</code>
+</td>
 </tr><tr><td>A weekend (64 h)</td>
-<td>~$167</td>
+<td>~<code>$167</code>
+</td>
 </tr><tr><td>A week</td>
-<td>~$438</td>
+<td>~<code>$438</code>
+</td>
 </tr><tr><td>A month</td>
-<td><strong>~$1,906</strong></td>
+<td><strong>~<code>$1,906</code></strong></td>
 </tr></tbody></table><p>The same evaluation on Bedrock cost well under a dollar. One
 forgotten weekend on this instance costs a thousand times more than the
 work it was rented for. A forgotten GPU notebook is the most common way
@@ -568,15 +572,16 @@ research groups overspend cloud credits.</p>
 <ul><li>
 <strong>A stopped instance still bills for its storage.</strong> We
 give this notebook a 100 GB volume for model weights. SageMaker charges
-$0.14 per GB-month for notebook storage, so a stopped-but-not-deleted
-instance costs about <strong>$14 a month</strong> forever. When you are
-done with the episode, delete the instance, not just stop it, unless you
-will use it again within days.</li>
+<code>$0.14</code> per GB-month for notebook storage, so a
+stopped-but-not-deleted instance costs about <strong><code>$14</code> a
+month</strong> forever. When you are done with the episode, delete the
+instance, not just stop it, unless you will use it again within
+days.</li>
 <li>
 <strong>Idle is billed the same as busy.</strong> There is no
 discount for a GPU that is loaded and waiting. Loading a 27B model takes
 a few minutes, which tempts people to leave the instance up “so I don’t
-have to reload”. That is the $1,906.</li>
+have to reload”. That is the <code>$1,906</code>.</li>
 </ul><p>The habits that keep this safe:</p>
 <ol style="list-style-type: decimal"><li>
 <strong>Stop the instance when you stand up</strong>, every time,
@@ -647,16 +652,16 @@ generation. Create a new notebook instance (same steps as the
 controller-notebook episode, same three tags) with:</p>
 <ul><li>
 <strong>Instance type:</strong> <code>ml.g6e.xlarge</code> (1 ×
-L40S, 48 GB GPU memory, $2.61/h). The FP8 weights are ~27 GB; the rest
-is for the embedding model and the KV cache that generation needs for
-long prompts. The L40S runs FP8 natively. A 24 GB instance such as
-<code>ml.g5.xlarge</code> cannot hold this model; a 16 GB
+L40S, 48 GB GPU memory, <code>$2.61</code>/h). The FP8 weights are ~27
+GB; the rest is for the embedding model and the KV cache that generation
+needs for long prompts. The L40S runs FP8 natively. A 24 GB instance
+such as <code>ml.g5.xlarge</code> cannot hold this model; a 16 GB
 <code>ml.g4dn.xlarge</code> cannot hold anything in this size
 class.</li>
 <li>
 <strong>Volume size:</strong> <code>100</code> GB (the default of 5
 GB will not fit the weights or the vLLM install). This volume bills at
-$0.14 per GB-month even while the instance is stopped.</li>
+<code>$0.14</code> per GB-month even while the instance is stopped.</li>
 <li>
 <strong>Tags:</strong> the same <code>Project</code>,
 <code>Name</code>, <code>Purpose</code> keys as every other resource;
@@ -707,12 +712,12 @@ meter is running</h3>
 <p><code>pip install vllm</code> downloads several gigabytes (it brings
 its own CUDA kernels and may replace the kernel’s PyTorch build) and
 takes 5–10 minutes. Qwen3.8 needs vLLM 0.17 or newer. The 27 GB of model
-weights take another 4–6 minutes to download the first time. At $2.61 an
-hour that is about 60 cents of waiting, which is fine; what is not fine
-is doing it twice because the instance was deleted and recreated. Keep
-the Hugging Face cache on the 100 GB volume (the <code>HF_HOME</code>
-line in the serving cell below does that) so the weights survive a
-stop/start.</p>
+weights take another 4–6 minutes to download the first time. At
+<code>$2.61</code> an hour that is about 60 cents of waiting, which is
+fine; what is not fine is doing it twice because the instance was
+deleted and recreated. Keep the Hugging Face cache on the 100 GB volume
+(the <code>HF_HOME</code> line in the serving cell below does that) so
+the weights survive a stop/start.</p>
 <p>If the install changes PyTorch, restart the kernel (<strong>Kernel →
 Restart</strong>) before continuing.</p>
 </div>
@@ -1095,13 +1100,15 @@ generate a short explanation (&lt;= 100 characters).</li>
 <span id="cb17-6"><a href="#cb17-6" tabindex="-1" aria-label="code-block-17-6"></a></span>
 <span id="cb17-7"><a href="#cb17-7" tabindex="-1" aria-label="code-block-17-7"></a>qwen_model_id <span class="op">=</span> <span class="st">"Qwen/Qwen3.8-27B-FP8"</span>   <span class="co"># pre-quantized FP8 checkpoint; vLLM reads that from its config, so no quantization= argument is needed</span></span>
 <span id="cb17-8"><a href="#cb17-8" tabindex="-1" aria-label="code-block-17-8"></a></span>
-<span id="cb17-9"><a href="#cb17-9" tabindex="-1" aria-label="code-block-17-9"></a>llm <span class="op">=</span> LLM(</span>
-<span id="cb17-10"><a href="#cb17-10" tabindex="-1" aria-label="code-block-17-10"></a>    model<span class="op">=</span>qwen_model_id,                         <span class="co"># Hugging Face id; the weights download to HF_HOME on first use</span></span>
-<span id="cb17-11"><a href="#cb17-11" tabindex="-1" aria-label="code-block-17-11"></a>    max_model_len<span class="op">=</span><span class="dv">8192</span>,                          <span class="co"># longest prompt + answer we need; the model allows 262K, we do not</span></span>
-<span id="cb17-12"><a href="#cb17-12" tabindex="-1" aria-label="code-block-17-12"></a>    gpu_memory_utilization<span class="op">=</span><span class="fl">0.85</span>,                 <span class="co"># leave ~7 GB for the embedding model and PyTorch overhead</span></span>
-<span id="cb17-13"><a href="#cb17-13" tabindex="-1" aria-label="code-block-17-13"></a>    limit_mm_per_prompt<span class="op">=</span>{<span class="st">"image"</span>: <span class="dv">0</span>, <span class="st">"video"</span>: <span class="dv">0</span>},  <span class="co"># text only: skip reserving memory for the vision encoder</span></span>
-<span id="cb17-14"><a href="#cb17-14" tabindex="-1" aria-label="code-block-17-14"></a>)</span>
-<span id="cb17-15"><a href="#cb17-15" tabindex="-1" aria-label="code-block-17-15"></a><span class="bu">print</span>(<span class="st">"vLLM engine ready:"</span>, qwen_model_id)</span></code></pre>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1" aria-label="code-block-17-9"></a>load_start <span class="op">=</span> time.time()</span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1" aria-label="code-block-17-10"></a>llm <span class="op">=</span> LLM(</span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1" aria-label="code-block-17-11"></a>    model<span class="op">=</span>qwen_model_id,                         <span class="co"># Hugging Face id; the weights download to HF_HOME on first use</span></span>
+<span id="cb17-12"><a href="#cb17-12" tabindex="-1" aria-label="code-block-17-12"></a>    max_model_len<span class="op">=</span><span class="dv">8192</span>,                          <span class="co"># longest prompt + answer we need; the model allows 262K, we do not</span></span>
+<span id="cb17-13"><a href="#cb17-13" tabindex="-1" aria-label="code-block-17-13"></a>    gpu_memory_utilization<span class="op">=</span><span class="fl">0.85</span>,                 <span class="co"># leave ~7 GB for the embedding model and PyTorch overhead</span></span>
+<span id="cb17-14"><a href="#cb17-14" tabindex="-1" aria-label="code-block-17-14"></a>    limit_mm_per_prompt<span class="op">=</span>{<span class="st">"image"</span>: <span class="dv">0</span>, <span class="st">"video"</span>: <span class="dv">0</span>},  <span class="co"># text only: skip reserving memory for the vision encoder</span></span>
+<span id="cb17-15"><a href="#cb17-15" tabindex="-1" aria-label="code-block-17-15"></a>)</span>
+<span id="cb17-16"><a href="#cb17-16" tabindex="-1" aria-label="code-block-17-16"></a><span class="bu">print</span>(<span class="ss">f"Model loaded in </span><span class="sc">{</span>(time.time() <span class="op">-</span> load_start) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min (download on first use, then weights into GPU memory)"</span>)</span>
+<span id="cb17-17"><a href="#cb17-17" tabindex="-1" aria-label="code-block-17-17"></a><span class="bu">print</span>(<span class="st">"vLLM engine ready:"</span>, qwen_model_id)</span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -1206,36 +1213,38 @@ makes the explanation call.</li>
 <span id="cb22-2"><a href="#cb22-2" tabindex="-1" aria-label="code-block-22-2"></a></span>
 <span id="cb22-3"><a href="#cb22-3" tabindex="-1" aria-label="code-block-22-3"></a>all_results <span class="op">=</span> []</span>
 <span id="cb22-4"><a href="#cb22-4" tabindex="-1" aria-label="code-block-22-4"></a>max_N <span class="op">=</span> np.inf   <span class="co"># set to e.g. 5 for a smoke test</span></span>
-<span id="cb22-5"><a href="#cb22-5" tabindex="-1" aria-label="code-block-22-5"></a></span>
-<span id="cb22-6"><a href="#cb22-6" tabindex="-1" aria-label="code-block-22-6"></a><span class="cf">for</span> idx, row <span class="kw">in</span> train_df.iterrows():</span>
-<span id="cb22-7"><a href="#cb22-7" tabindex="-1" aria-label="code-block-22-7"></a>    <span class="cf">if</span> idx <span class="op">&gt;=</span> max_N:</span>
-<span id="cb22-8"><a href="#cb22-8" tabindex="-1" aria-label="code-block-22-8"></a>        <span class="cf">break</span></span>
-<span id="cb22-9"><a href="#cb22-9" tabindex="-1" aria-label="code-block-22-9"></a>    <span class="bu">print</span>(<span class="st">"#"</span> <span class="op">*</span> <span class="dv">96</span>)</span>
-<span id="cb22-10"><a href="#cb22-10" tabindex="-1" aria-label="code-block-22-10"></a>    <span class="bu">print</span>(<span class="ss">f"QUESTION: </span><span class="sc">{</span>row[<span class="st">'question'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb22-11"><a href="#cb22-11" tabindex="-1" aria-label="code-block-22-11"></a></span>
-<span id="cb22-12"><a href="#cb22-12" tabindex="-1" aria-label="code-block-22-12"></a>    res <span class="op">=</span> run_single_qa(</span>
-<span id="cb22-13"><a href="#cb22-13" tabindex="-1" aria-label="code-block-22-13"></a>        row<span class="op">=</span>row,</span>
-<span id="cb22-14"><a href="#cb22-14" tabindex="-1" aria-label="code-block-22-14"></a>        embed_query<span class="op">=</span>embed_query,             <span class="co"># the sentence-transformer on this GPU</span></span>
-<span id="cb22-15"><a href="#cb22-15" tabindex="-1" aria-label="code-block-22-15"></a>        generate<span class="op">=</span>call_qwen_chat,             <span class="co"># the vLLM engine on this GPU; the Bedrock episode passed its converse wrapper here</span></span>
-<span id="cb22-16"><a href="#cb22-16" tabindex="-1" aria-label="code-block-22-16"></a>        chunk_embeddings<span class="op">=</span>chunk_embeddings,</span>
-<span id="cb22-17"><a href="#cb22-17" tabindex="-1" aria-label="code-block-22-17"></a>        chunked_docs<span class="op">=</span>chunked_docs,</span>
-<span id="cb22-18"><a href="#cb22-18" tabindex="-1" aria-label="code-block-22-18"></a>        docid_to_url<span class="op">=</span>docid_to_url,</span>
-<span id="cb22-19"><a href="#cb22-19" tabindex="-1" aria-label="code-block-22-19"></a>        top_k<span class="op">=</span><span class="dv">8</span>,</span>
-<span id="cb22-20"><a href="#cb22-20" tabindex="-1" aria-label="code-block-22-20"></a>        retrieval_threshold<span class="op">=</span><span class="fl">0.25</span>,</span>
-<span id="cb22-21"><a href="#cb22-21" tabindex="-1" aria-label="code-block-22-21"></a>        with_evidence_type<span class="op">=</span><span class="va">True</span>,             <span class="co"># ask the explanation call to tag [text], [table], [figure]</span></span>
-<span id="cb22-22"><a href="#cb22-22" tabindex="-1" aria-label="code-block-22-22"></a>        verbose<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb22-23"><a href="#cb22-23" tabindex="-1" aria-label="code-block-22-23"></a>    )</span>
-<span id="cb22-24"><a href="#cb22-24" tabindex="-1" aria-label="code-block-22-24"></a>    <span class="bu">print</span>(<span class="ss">f"ANSWER: </span><span class="sc">{</span>res[<span class="st">'answer'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb22-25"><a href="#cb22-25" tabindex="-1" aria-label="code-block-22-25"></a>    <span class="bu">print</span>(<span class="ss">f"ref_ids: </span><span class="sc">{</span>res[<span class="st">'ref_id'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb22-26"><a href="#cb22-26" tabindex="-1" aria-label="code-block-22-26"></a>    <span class="bu">print</span>(<span class="ss">f"EXPLANATION: </span><span class="sc">{</span>res[<span class="st">'explanation'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb22-27"><a href="#cb22-27" tabindex="-1" aria-label="code-block-22-27"></a>    all_results.append(res)</span>
-<span id="cb22-28"><a href="#cb22-28" tabindex="-1" aria-label="code-block-22-28"></a></span>
-<span id="cb22-29"><a href="#cb22-29" tabindex="-1" aria-label="code-block-22-29"></a>solutions_df <span class="op">=</span> pd.DataFrame(all_results)</span>
-<span id="cb22-30"><a href="#cb22-30" tabindex="-1" aria-label="code-block-22-30"></a>solutions_path <span class="op">=</span> os.path.join(local_data_dir, <span class="st">"train_solutions_qwen.csv"</span>)</span>
-<span id="cb22-31"><a href="#cb22-31" tabindex="-1" aria-label="code-block-22-31"></a>solutions_df.to_csv(solutions_path, index<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb22-32"><a href="#cb22-32" tabindex="-1" aria-label="code-block-22-32"></a></span>
-<span id="cb22-33"><a href="#cb22-33" tabindex="-1" aria-label="code-block-22-33"></a><span class="bu">print</span>(<span class="ss">f"Saved solutions for </span><span class="sc">{</span><span class="bu">len</span>(solutions_df)<span class="sc">}</span><span class="ss"> questions to: </span><span class="sc">{</span>solutions_path<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb22-34"><a href="#cb22-34" tabindex="-1" aria-label="code-block-22-34"></a>solutions_df.head(<span class="dv">20</span>)</span></code></pre>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1" aria-label="code-block-22-5"></a>run_start <span class="op">=</span> time.time()</span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1" aria-label="code-block-22-6"></a></span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1" aria-label="code-block-22-7"></a><span class="cf">for</span> idx, row <span class="kw">in</span> train_df.iterrows():</span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1" aria-label="code-block-22-8"></a>    <span class="cf">if</span> idx <span class="op">&gt;=</span> max_N:</span>
+<span id="cb22-9"><a href="#cb22-9" tabindex="-1" aria-label="code-block-22-9"></a>        <span class="cf">break</span></span>
+<span id="cb22-10"><a href="#cb22-10" tabindex="-1" aria-label="code-block-22-10"></a>    <span class="bu">print</span>(<span class="st">"#"</span> <span class="op">*</span> <span class="dv">96</span>)</span>
+<span id="cb22-11"><a href="#cb22-11" tabindex="-1" aria-label="code-block-22-11"></a>    <span class="bu">print</span>(<span class="ss">f"QUESTION: </span><span class="sc">{</span>row[<span class="st">'question'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb22-12"><a href="#cb22-12" tabindex="-1" aria-label="code-block-22-12"></a></span>
+<span id="cb22-13"><a href="#cb22-13" tabindex="-1" aria-label="code-block-22-13"></a>    res <span class="op">=</span> run_single_qa(</span>
+<span id="cb22-14"><a href="#cb22-14" tabindex="-1" aria-label="code-block-22-14"></a>        row<span class="op">=</span>row,</span>
+<span id="cb22-15"><a href="#cb22-15" tabindex="-1" aria-label="code-block-22-15"></a>        embed_query<span class="op">=</span>embed_query,             <span class="co"># the sentence-transformer on this GPU</span></span>
+<span id="cb22-16"><a href="#cb22-16" tabindex="-1" aria-label="code-block-22-16"></a>        generate<span class="op">=</span>call_qwen_chat,             <span class="co"># the vLLM engine on this GPU; the Bedrock episode passed its converse wrapper here</span></span>
+<span id="cb22-17"><a href="#cb22-17" tabindex="-1" aria-label="code-block-22-17"></a>        chunk_embeddings<span class="op">=</span>chunk_embeddings,</span>
+<span id="cb22-18"><a href="#cb22-18" tabindex="-1" aria-label="code-block-22-18"></a>        chunked_docs<span class="op">=</span>chunked_docs,</span>
+<span id="cb22-19"><a href="#cb22-19" tabindex="-1" aria-label="code-block-22-19"></a>        docid_to_url<span class="op">=</span>docid_to_url,</span>
+<span id="cb22-20"><a href="#cb22-20" tabindex="-1" aria-label="code-block-22-20"></a>        top_k<span class="op">=</span><span class="dv">8</span>,</span>
+<span id="cb22-21"><a href="#cb22-21" tabindex="-1" aria-label="code-block-22-21"></a>        retrieval_threshold<span class="op">=</span><span class="fl">0.25</span>,</span>
+<span id="cb22-22"><a href="#cb22-22" tabindex="-1" aria-label="code-block-22-22"></a>        with_evidence_type<span class="op">=</span><span class="va">True</span>,             <span class="co"># ask the explanation call to tag [text], [table], [figure]</span></span>
+<span id="cb22-23"><a href="#cb22-23" tabindex="-1" aria-label="code-block-22-23"></a>        verbose<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb22-24"><a href="#cb22-24" tabindex="-1" aria-label="code-block-22-24"></a>    )</span>
+<span id="cb22-25"><a href="#cb22-25" tabindex="-1" aria-label="code-block-22-25"></a>    <span class="bu">print</span>(<span class="ss">f"ANSWER: </span><span class="sc">{</span>res[<span class="st">'answer'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb22-26"><a href="#cb22-26" tabindex="-1" aria-label="code-block-22-26"></a>    <span class="bu">print</span>(<span class="ss">f"ref_ids: </span><span class="sc">{</span>res[<span class="st">'ref_id'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb22-27"><a href="#cb22-27" tabindex="-1" aria-label="code-block-22-27"></a>    <span class="bu">print</span>(<span class="ss">f"EXPLANATION: </span><span class="sc">{</span>res[<span class="st">'explanation'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb22-28"><a href="#cb22-28" tabindex="-1" aria-label="code-block-22-28"></a>    all_results.append(res)</span>
+<span id="cb22-29"><a href="#cb22-29" tabindex="-1" aria-label="code-block-22-29"></a></span>
+<span id="cb22-30"><a href="#cb22-30" tabindex="-1" aria-label="code-block-22-30"></a>solutions_df <span class="op">=</span> pd.DataFrame(all_results)</span>
+<span id="cb22-31"><a href="#cb22-31" tabindex="-1" aria-label="code-block-22-31"></a><span class="bu">print</span>(<span class="ss">f"Answered </span><span class="sc">{</span><span class="bu">len</span>(solutions_df)<span class="sc">}</span><span class="ss"> questions in </span><span class="sc">{</span>(time.time() <span class="op">-</span> run_start) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min on the notebook GPU"</span>)</span>
+<span id="cb22-32"><a href="#cb22-32" tabindex="-1" aria-label="code-block-22-32"></a>solutions_path <span class="op">=</span> os.path.join(local_data_dir, <span class="st">"train_solutions_qwen.csv"</span>)</span>
+<span id="cb22-33"><a href="#cb22-33" tabindex="-1" aria-label="code-block-22-33"></a>solutions_df.to_csv(solutions_path, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb22-34"><a href="#cb22-34" tabindex="-1" aria-label="code-block-22-34"></a></span>
+<span id="cb22-35"><a href="#cb22-35" tabindex="-1" aria-label="code-block-22-35"></a><span class="bu">print</span>(<span class="ss">f"Saved solutions for </span><span class="sc">{</span><span class="bu">len</span>(solutions_df)<span class="sc">}</span><span class="ss"> questions to: </span><span class="sc">{</span>solutions_path<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb22-36"><a href="#cb22-36" tabindex="-1" aria-label="code-block-22-36"></a>solutions_df.head(<span class="dv">20</span>)</span></code></pre>
 </div>
 </div>
 <div class="section level3">
@@ -1369,10 +1378,10 @@ one 48 GB GPU (<code>ml.g6e.xlarge</code>); bf16 would need 54 GB and a
 multi-GPU instance.</li>
 <li>
 <strong>The meter never stops on its own</strong>:
-<code>ml.g6e.xlarge</code> is $2.61/h, $167 per forgotten weekend,
-$1,906 per forgotten month, plus $14/month for the storage volume even
-when stopped. Stop it when you stand up; delete it when the episode is
-over.</li>
+<code>ml.g6e.xlarge</code> is <code>$2.61</code>/h, <code>$167</code>
+per forgotten weekend, <code>$1,906</code> per forgotten month, plus
+<code>$14</code>/month for the storage volume even when stopped. Stop it
+when you stand up; delete it when the episode is over.</li>
 <li>
 <strong>Local-first RAG</strong>: For teaching (and small corpora),
 we avoid an external vector database and instead perform cosine

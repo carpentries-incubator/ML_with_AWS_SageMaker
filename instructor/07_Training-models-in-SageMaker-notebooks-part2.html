@@ -642,10 +642,10 @@ fitted <code>StandardScaler</code>, and we save it with
 <span id="cb7-17"><a href="#cb7-17" tabindex="-1" aria-label="code-block-7-17"></a><span class="bu">print</span>(X_train.shape, X_val.shape)</span></code></pre>
 </div>
 <p>Next, we will upload our compressed files (and the scaler) to our S3
-bucket. Storage is fairly cheap on AWS (around $0.023 per GB per month),
-but be mindful of uploading too much data. It may be convenient to store
-a preprocessed version of the data at times, but try not to store too
-many versions that aren’t being actively used.</p>
+bucket. Storage is fairly cheap on AWS (around <code>$0.023</code> per
+GB per month), but be mindful of uploading too much data. It may be
+convenient to store a preprocessed version of the data at times, but try
+not to store too many versions that aren’t being actively used.</p>
 <div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -714,15 +714,15 @@ is anonymous on the bill. Define them once here and pass
 the previous episode, plus the hourly rates of the instances we’re about
 to use. Estimate first: 1000 full-batch epochs took a few seconds
 locally, so expect roughly 1 minute of training plus ~3 minutes of
-startup, i.e. about $0.01 on <code>ml.m5.large</code>.</p>
+startup, i.e. about <code>$0.01</code> on <code>ml.m5.large</code>.</p>
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a><span class="kw">def</span> job_cost_report(job_name: <span class="bu">str</span>, price_per_hour: <span class="bu">float</span>):</span>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a>    desc <span class="op">=</span> session.sagemaker_client.describe_training_job(TrainingJobName<span class="op">=</span>job_name)  <span class="co"># the job record the console shows</span></span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a>    <span class="co"># BillableTimeInSeconds = startup + training, charged per instance; TrainingTimeInSeconds is the script alone</span></span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a>    billable <span class="op">=</span> desc[<span class="st">"BillableTimeInSeconds"</span>] <span class="op">*</span> desc[<span class="st">"ResourceConfig"</span>][<span class="st">"InstanceCount"</span>]</span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1" aria-label="code-block-11-5"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>job_name<span class="sc">}</span><span class="ss">: status </span><span class="sc">{</span>desc[<span class="st">'TrainingJobStatus'</span>]<span class="sc">}</span><span class="ss">, training </span><span class="sc">{</span>desc<span class="sc">.</span>get(<span class="st">'TrainingTimeInSeconds'</span>, <span class="dv">0</span>)<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min, billable </span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min, cost $</span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">3600</span><span class="op">*</span>price_per_hour<span class="sc">:.2f}</span><span class="ss"> at $</span><span class="sc">{</span>price_per_hour<span class="sc">}</span><span class="ss">/h"</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a>    n <span class="op">=</span> desc[<span class="st">"ResourceConfig"</span>][<span class="st">"InstanceCount"</span>]</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a>    billable <span class="op">=</span> desc[<span class="st">"BillableTimeInSeconds"</span>] <span class="op">*</span> n   <span class="co"># container pull to model upload, charged per instance</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1" aria-label="code-block-11-5"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>job_name<span class="sc">}</span><span class="ss">: status </span><span class="sc">{</span>desc[<span class="st">'TrainingJobStatus'</span>]<span class="sc">}</span><span class="ss">, billable </span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min on </span><span class="sc">{</span>n<span class="sc">}</span><span class="ss"> instance(s), cost $</span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">3600</span><span class="op">*</span>price_per_hour<span class="sc">:.3f}</span><span class="ss"> at $</span><span class="sc">{</span>price_per_hour<span class="sc">}</span><span class="ss">/h"</span>)</span>
 <span id="cb11-6"><a href="#cb11-6" tabindex="-1" aria-label="code-block-11-6"></a>    <span class="cf">return</span> desc</span>
 <span id="cb11-7"><a href="#cb11-7" tabindex="-1" aria-label="code-block-11-7"></a></span>
 <span id="cb11-8"><a href="#cb11-8" tabindex="-1" aria-label="code-block-11-8"></a><span class="co"># us-east-1 on-demand rates (2026-10-16); check the instances page for your region</span></span>
@@ -824,9 +824,9 @@ X_train, y_train = X_train.to(device), y_train.to(device)</code></pre>
 <h3 class="callout-title">CPU or GPU: predict, then measure</h3>
 <div class="callout-content">
 <p>We’re about to run the identical job on an
-<code>ml.g4dn.xlarge</code> (one NVIDIA T4 GPU, about $0.74/hour)
-instead of the <code>ml.m5.large</code> ($0.115/hour). Before you run
-the cell:</p>
+<code>ml.g4dn.xlarge</code> (one NVIDIA T4 GPU, about
+<code>$0.74</code>/hour) instead of the <code>ml.m5.large</code>
+(<code>$0.115</code>/hour). Before you run the cell:</p>
 <ol style="list-style-type: decimal"><li>Predict which instance finishes first (total wall-clock, as
 <code>fit()</code> reports it).</li>
 <li>Predict which costs less for this job.</li>
@@ -893,8 +893,8 @@ dominates both bills, and the GPU bill is about 6x higher per minute
 <p>A GPU pays off when the per-step work is large enough to keep it
 busy: bigger models, bigger batches, or datasets of hundreds of MB and
 up. If you ever do need more GPU than a <code>g4dn.xlarge</code>, the
-next sensible step is an <code>ml.g5.xlarge</code> (~$1.41/hour), not a
-multi-GPU box.</p>
+next sensible step is an <code>ml.g5.xlarge</code>
+(~<code>$1.41</code>/hour), not a multi-GPU box.</p>
 </div>
 </div>
 </div>
@@ -967,7 +967,7 @@ trains its own independent copy of the model on all of the data for all
 </ul><p>So without a distribution strategy, two instances means the same job
 twice, in parallel, at double the cost. Estimate first: about the same 4
 minutes of wall-clock as the single-instance run, but billed for two
-instances, so about $0.02 on <code>ml.m5.large</code>.</p>
+instances, so about <code>$0.02</code> on <code>ml.m5.large</code>.</p>
 <div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1061,9 +1061,10 @@ format is optimized for efficient loading, reducing I/O overhead and
 enabling batch compatibility for PyTorch’s <code>DataLoader</code>.</li>
 <li>
 <strong>Startup dominates small jobs</strong>: Every SageMaker
-training job pays a few minutes of provisioning, container pull and data
-download; <code>job_cost_report()</code> shows how much of the bill that
-is.</li>
+training job waits a minute or so for an instance (not billed), then
+spends one to three minutes on container pull and data download (billed)
+before the script runs; for a job whose script finishes in seconds, that
+overhead is the whole bill.</li>
 <li>
 <strong>GPU training</strong>: While beneficial for larger models or
 datasets, GPUs may introduce overhead for smaller tasks; selecting the

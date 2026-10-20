@@ -526,14 +526,17 @@ as an API</div>
 <hr class="half-width"></section><section id="06_Training-models-in-SageMaker-notebooks"><h2 class="section-heading"><a href="06_Training-models-in-SageMaker-notebooks.html">Training Models in SageMaker: Intro</a></h2>
 <hr class="half-width">
 <h3 id="06_Training-models-in-SageMaker-notebooks-figure-1">Figure 1</h3>
-<p aria-hidden="true">Image 1 of 1: ‘Timeline of a SageMaker training job showing which phases count as training time and which as billable time’</p>
-<p><img src="fig/job-billable-time.svg" alt="Timeline of a SageMaker training job showing which phases count as training time and which as billable time" class="figure"><code>describe_training_job</code> returns two durations:
-<code>TrainingTimeInSeconds</code> (your script running) and
-<code>BillableTimeInSeconds</code> (the time the instance was reserved
-for you, which also includes pulling the container and downloading
-data). SageMaker bills per second, with no rounding, so cost is billable
-seconds x instance count x hourly rate. We’ll wrap this in a small
-helper and call it after every job in this lesson.</p>
+<p aria-hidden="true">Image 1 of 1: ‘Timeline of a SageMaker training job showing the unbilled wait for an instance and the billed phases from container pull to model upload’</p>
+<p><img src="fig/job-billable-time.svg" alt="Timeline of a SageMaker training job showing the unbilled wait for an instance and the billed phases from container pull to model upload" class="figure"><code>describe_training_job</code> returns
+<code>BillableTimeInSeconds</code>: the seconds the instance was yours,
+from container pull to model upload, per instance. It also returns
+<code>TrainingTimeInSeconds</code>, which on on-demand instances is the
+same number (it only differs on spot instances), so do not expect it to
+isolate your script. The minute or so before that, while SageMaker finds
+an instance, is not billed. SageMaker bills per second, with no
+rounding, so cost is billable seconds x instance count x hourly rate.
+We’ll wrap this in a small helper and call it after every job in this
+lesson.</p>
 <hr></section><section id="07_Training-models-in-SageMaker-notebooks-part2"><h2 class="section-heading"><a href="07_Training-models-in-SageMaker-notebooks-part2.html">Training Models in SageMaker: PyTorch Example</a></h2>
 <hr class="half-width">
 <h3 id="07_Training-models-in-SageMaker-notebooks-part2-figure-1">Figure 1</h3>
