@@ -471,7 +471,8 @@ jobs.</li>
 <section><h2 class="section-heading" id="initial-setup-open-prefilled--ipynb-notebook">Initial setup: open prefilled .ipynb notebook<a class="anchor" aria-label="anchor" href="#initial-setup-open-prefilled--ipynb-notebook"></a></h2>
 <hr class="half-width"><p>Open the notebook from:
 <code>/ML_with_AWS_SageMaker/notebooks/08_Hyperparameter-tuning.ipynb</code>.
-Select the <strong><code>conda_pytorch_p310</code></strong> kernel.</p>
+Select the <strong><code>conda_pytorch</code></strong> kernel
+(<code>conda_pytorch_p310</code> on older instances).</p>
 </section><section><h2 class="section-heading" id="hyperparameter-tuning-in-sagemaker">Hyperparameter tuning in SageMaker<a class="anchor" aria-label="anchor" href="#hyperparameter-tuning-in-sagemaker"></a></h2>
 <hr class="half-width"><p>To conduct efficient hyperparameter tuning with neural networks (or
 any model) in SageMaker, we’ll leverage SageMaker’s
@@ -519,7 +520,7 @@ let’s cd to our instance’s root directory</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>   <span class="co"># work from the instance root: the %run, source_dir and download paths below are relative to it</span></span>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="im">import</span> sys</span>
 <span id="cb1-3"><a href="#cb1-3" tabindex="-1" aria-label="code-block-1-3"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)</span>
 <span id="cb1-4"><a href="#cb1-4" tabindex="-1" aria-label="code-block-1-4"></a><span class="im">import</span> helpers</span></code></pre>
@@ -1105,7 +1106,7 @@ procedure…</p>
 <span id="cb13-5"><a href="#cb13-5" tabindex="-1" aria-label="code-block-13-5"></a>model_bucket, model_key <span class="op">=</span> best_model_s3_uri.split(<span class="st">'/'</span>)[<span class="dv">2</span>], <span class="st">'/'</span>.join(best_model_s3_uri.split(<span class="st">'/'</span>)[<span class="dv">3</span>:])  <span class="co"># s3://bucket/key -&gt; bucket, key</span></span>
 <span id="cb13-6"><a href="#cb13-6" tabindex="-1" aria-label="code-block-13-6"></a>s3.download_file(model_bucket, model_key, local_model_path)</span>
 <span id="cb13-7"><a href="#cb13-7" tabindex="-1" aria-label="code-block-13-7"></a></span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1" aria-label="code-block-13-8"></a><span class="co"># Extract the model files from the tar.gz archive (nn_model.pth lands in the current directory)</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1" aria-label="code-block-13-8"></a><span class="co"># Extract the model files from the tar.gz archive</span></span>
 <span id="cb13-9"><a href="#cb13-9" tabindex="-1" aria-label="code-block-13-9"></a><span class="cf">with</span> tarfile.<span class="bu">open</span>(local_model_path, <span class="st">'r:gz'</span>) <span class="im">as</span> tar:</span>
 <span id="cb13-10"><a href="#cb13-10" tabindex="-1" aria-label="code-block-13-10"></a>    tar.extractall()</span>
 <span id="cb13-11"><a href="#cb13-11" tabindex="-1" aria-label="code-block-13-11"></a><span class="bu">print</span>(<span class="st">"Best model downloaded and extracted."</span>)</span></code></pre>
@@ -1128,48 +1129,53 @@ differently from what the model saw in training.</p>
 <div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1" aria-label="code-block-14-2"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1" aria-label="code-block-14-3"></a><span class="im">import</span> joblib</span>
-<span id="cb14-4"><a href="#cb14-4" tabindex="-1" aria-label="code-block-14-4"></a><span class="im">from</span> train_nn <span class="im">import</span> preprocess_data</span>
-<span id="cb14-5"><a href="#cb14-5" tabindex="-1" aria-label="code-block-14-5"></a></span>
-<span id="cb14-6"><a href="#cb14-6" tabindex="-1" aria-label="code-block-14-6"></a><span class="co"># Fetch the test CSV and the training-set scaler from S3 (both uploaded in earlier episodes)</span></span>
-<span id="cb14-7"><a href="#cb14-7" tabindex="-1" aria-label="code-block-14-7"></a>s3.download_file(bucket_name, <span class="st">"titanic_test.csv"</span>, <span class="st">"titanic_test.csv"</span>)</span>
-<span id="cb14-8"><a href="#cb14-8" tabindex="-1" aria-label="code-block-14-8"></a>s3.download_file(bucket_name, <span class="st">"scaler.joblib"</span>, <span class="st">"scaler.joblib"</span>)</span>
-<span id="cb14-9"><a href="#cb14-9" tabindex="-1" aria-label="code-block-14-9"></a>scaler <span class="op">=</span> joblib.load(<span class="st">"scaler.joblib"</span>)  <span class="co"># the StandardScaler fit on the training data in the previous episode</span></span>
-<span id="cb14-10"><a href="#cb14-10" tabindex="-1" aria-label="code-block-14-10"></a></span>
-<span id="cb14-11"><a href="#cb14-11" tabindex="-1" aria-label="code-block-14-11"></a><span class="co"># Preprocess test data with the same scaler used for training</span></span>
-<span id="cb14-12"><a href="#cb14-12" tabindex="-1" aria-label="code-block-14-12"></a>test_df <span class="op">=</span> pd.read_csv(<span class="st">"titanic_test.csv"</span>)</span>
-<span id="cb14-13"><a href="#cb14-13" tabindex="-1" aria-label="code-block-14-13"></a>X_test, y_test, _ <span class="op">=</span> preprocess_data(test_df, scaler<span class="op">=</span>scaler)  <span class="co"># transform only; passing the scaler stops it refitting on test data</span></span>
-<span id="cb14-14"><a href="#cb14-14" tabindex="-1" aria-label="code-block-14-14"></a></span>
-<span id="cb14-15"><a href="#cb14-15" tabindex="-1" aria-label="code-block-14-15"></a><span class="co"># Save processed data for testing</span></span>
-<span id="cb14-16"><a href="#cb14-16" tabindex="-1" aria-label="code-block-14-16"></a>np.savez(<span class="st">'test_data.npz'</span>, X_test<span class="op">=</span>X_test, y_test<span class="op">=</span>y_test)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a><span class="op">!</span>pip install scikit<span class="op">-</span>learn   <span class="co"># train_nn.py imports it; not in the notebook kernels</span></span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb15">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1" aria-label="code-block-15-3"></a><span class="im">import</span> joblib</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1" aria-label="code-block-15-4"></a><span class="im">from</span> train_nn <span class="im">import</span> preprocess_data</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1" aria-label="code-block-15-5"></a></span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1" aria-label="code-block-15-6"></a><span class="co"># Fetch the test CSV and the training-set scaler from S3 (both uploaded in earlier episodes)</span></span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1" aria-label="code-block-15-7"></a>s3.download_file(bucket_name, <span class="st">"titanic_test.csv"</span>, <span class="st">"titanic_test.csv"</span>)</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1" aria-label="code-block-15-8"></a>s3.download_file(bucket_name, <span class="st">"scaler.joblib"</span>, <span class="st">"scaler.joblib"</span>)</span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1" aria-label="code-block-15-9"></a>scaler <span class="op">=</span> joblib.load(<span class="st">"scaler.joblib"</span>)  <span class="co"># the StandardScaler fit on the training data in the previous episode</span></span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1" aria-label="code-block-15-10"></a></span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1" aria-label="code-block-15-11"></a><span class="co"># Preprocess test data with the same scaler used for training</span></span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1" aria-label="code-block-15-12"></a>test_df <span class="op">=</span> pd.read_csv(<span class="st">"titanic_test.csv"</span>)</span>
+<span id="cb15-13"><a href="#cb15-13" tabindex="-1" aria-label="code-block-15-13"></a>X_test, y_test, _ <span class="op">=</span> preprocess_data(test_df, scaler<span class="op">=</span>scaler)  <span class="co"># transform only; passing the scaler stops it refitting on test data</span></span>
+<span id="cb15-14"><a href="#cb15-14" tabindex="-1" aria-label="code-block-15-14"></a></span>
+<span id="cb15-15"><a href="#cb15-15" tabindex="-1" aria-label="code-block-15-15"></a><span class="co"># Save processed data for testing</span></span>
+<span id="cb15-16"><a href="#cb15-16" tabindex="-1" aria-label="code-block-15-16"></a>np.savez(<span class="st">'test_data.npz'</span>, X_test<span class="op">=</span>X_test, y_test<span class="op">=</span>y_test)</span></code></pre>
 </div>
 </div>
 <div class="section level4">
 <h4 id="evaluate-the-model-on-test-data">Evaluate the model on test data<a class="anchor" aria-label="anchor" href="#evaluate-the-model-on-test-data"></a></h4>
-<div class="codewrapper sourceCode" id="cb15">
+<div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a><span class="im">from</span> train_nn <span class="im">import</span> TitanicNet</span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a><span class="im">from</span> train_nn <span class="im">import</span> calculate_accuracy</span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1" aria-label="code-block-15-3"></a><span class="im">import</span> torch</span>
-<span id="cb15-4"><a href="#cb15-4" tabindex="-1" aria-label="code-block-15-4"></a></span>
-<span id="cb15-5"><a href="#cb15-5" tabindex="-1" aria-label="code-block-15-5"></a><span class="co"># Load the model (saved as 'nn_model.pth' by train_nn.py)</span></span>
-<span id="cb15-6"><a href="#cb15-6" tabindex="-1" aria-label="code-block-15-6"></a>model <span class="op">=</span> TitanicNet()</span>
-<span id="cb15-7"><a href="#cb15-7" tabindex="-1" aria-label="code-block-15-7"></a>model.load_state_dict(torch.load(<span class="st">"nn_model.pth"</span>, map_location<span class="op">=</span><span class="st">"cpu"</span>))  <span class="co"># map_location: load onto this CPU notebook whatever device trained it</span></span>
-<span id="cb15-8"><a href="#cb15-8" tabindex="-1" aria-label="code-block-15-8"></a>model.<span class="bu">eval</span>()</span>
-<span id="cb15-9"><a href="#cb15-9" tabindex="-1" aria-label="code-block-15-9"></a></span>
-<span id="cb15-10"><a href="#cb15-10" tabindex="-1" aria-label="code-block-15-10"></a><span class="co"># Load test data</span></span>
-<span id="cb15-11"><a href="#cb15-11" tabindex="-1" aria-label="code-block-15-11"></a>test_data <span class="op">=</span> np.load(<span class="st">"test_data.npz"</span>)</span>
-<span id="cb15-12"><a href="#cb15-12" tabindex="-1" aria-label="code-block-15-12"></a>X_test <span class="op">=</span> torch.tensor(test_data[<span class="st">'X_test'</span>], dtype<span class="op">=</span>torch.float32)</span>
-<span id="cb15-13"><a href="#cb15-13" tabindex="-1" aria-label="code-block-15-13"></a>y_test <span class="op">=</span> torch.tensor(test_data[<span class="st">'y_test'</span>], dtype<span class="op">=</span>torch.float32).unsqueeze(<span class="dv">1</span>)</span>
-<span id="cb15-14"><a href="#cb15-14" tabindex="-1" aria-label="code-block-15-14"></a></span>
-<span id="cb15-15"><a href="#cb15-15" tabindex="-1" aria-label="code-block-15-15"></a><span class="co"># Evaluate the model on the test set</span></span>
-<span id="cb15-16"><a href="#cb15-16" tabindex="-1" aria-label="code-block-15-16"></a><span class="cf">with</span> torch.no_grad():  <span class="co"># no gradients needed for evaluation</span></span>
-<span id="cb15-17"><a href="#cb15-17" tabindex="-1" aria-label="code-block-15-17"></a>    predictions <span class="op">=</span> model(X_test)</span>
-<span id="cb15-18"><a href="#cb15-18" tabindex="-1" aria-label="code-block-15-18"></a>    accuracy <span class="op">=</span> calculate_accuracy(predictions, y_test)</span>
-<span id="cb15-19"><a href="#cb15-19" tabindex="-1" aria-label="code-block-15-19"></a>    <span class="bu">print</span>(<span class="ss">f"Test Accuracy: </span><span class="sc">{</span>accuracy<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a><span class="im">from</span> train_nn <span class="im">import</span> TitanicNet</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a><span class="im">from</span> train_nn <span class="im">import</span> calculate_accuracy</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a><span class="im">import</span> torch</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a></span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a><span class="co"># Load the model (saved as 'nn_model.pth' by train_nn.py)</span></span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a>model <span class="op">=</span> TitanicNet()</span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1" aria-label="code-block-16-7"></a>model.load_state_dict(torch.load(<span class="st">"nn_model.pth"</span>, map_location<span class="op">=</span><span class="st">"cpu"</span>))</span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1" aria-label="code-block-16-8"></a>model.<span class="bu">eval</span>()</span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1" aria-label="code-block-16-9"></a></span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1" aria-label="code-block-16-10"></a><span class="co"># Load test data</span></span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1" aria-label="code-block-16-11"></a>test_data <span class="op">=</span> np.load(<span class="st">"test_data.npz"</span>)</span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1" aria-label="code-block-16-12"></a>X_test <span class="op">=</span> torch.tensor(test_data[<span class="st">'X_test'</span>], dtype<span class="op">=</span>torch.float32)</span>
+<span id="cb16-13"><a href="#cb16-13" tabindex="-1" aria-label="code-block-16-13"></a>y_test <span class="op">=</span> torch.tensor(test_data[<span class="st">'y_test'</span>], dtype<span class="op">=</span>torch.float32).unsqueeze(<span class="dv">1</span>)</span>
+<span id="cb16-14"><a href="#cb16-14" tabindex="-1" aria-label="code-block-16-14"></a></span>
+<span id="cb16-15"><a href="#cb16-15" tabindex="-1" aria-label="code-block-16-15"></a><span class="co"># Evaluate the model on the test set</span></span>
+<span id="cb16-16"><a href="#cb16-16" tabindex="-1" aria-label="code-block-16-16"></a><span class="cf">with</span> torch.no_grad():</span>
+<span id="cb16-17"><a href="#cb16-17" tabindex="-1" aria-label="code-block-16-17"></a>    predictions <span class="op">=</span> model(X_test)</span>
+<span id="cb16-18"><a href="#cb16-18" tabindex="-1" aria-label="code-block-16-18"></a>    accuracy <span class="op">=</span> calculate_accuracy(predictions, y_test)</span>
+<span id="cb16-19"><a href="#cb16-19" tabindex="-1" aria-label="code-block-16-19"></a>    <span class="bu">print</span>(<span class="ss">f"Test Accuracy: </span><span class="sc">{</span>accuracy<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 </div>
 </div>
@@ -1198,10 +1204,10 @@ rounding to minutes or hours, and multiplies the billable seconds by the
 instance count used. For short jobs, the startup overhead makes the
 difference between training and billing time more pronounced.</p>
 <p>For convenience, we have added this as a function in helpers.py</p>
-<div class="codewrapper sourceCode" id="cb16">
+<div class="codewrapper sourceCode" id="cb17">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a>helpers.calculate_tuning_job_time(tuner, region)  <span class="co"># same per-child-job sum as tuning_cost_report, packaged in helpers.py</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1" aria-label="code-block-17-1"></a>helpers.calculate_tuning_job_time(tuner, region)  <span class="co"># same per-child-job sum as tuning_cost_report, packaged in helpers.py</span></span></code></pre>
 </div>
 <div id="all-at-once" class="callout challenge">
 <div class="callout-square">
@@ -1216,27 +1222,27 @@ to <code>max_jobs</code>). Before you launch it, predict what changes in
 (a) total cost, (b) wall-clock time, and (c) the quality of the search.
 Then run it and check (a) and (b) with <code>tuning_cost_report()</code>
 and the runtime print.</p>
-<div class="codewrapper sourceCode" id="cb17">
+<div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1" aria-label="code-block-17-1"></a>tuner_parallel <span class="op">=</span> HyperparameterTuner(</span>
-<span id="cb17-2"><a href="#cb17-2" tabindex="-1" aria-label="code-block-17-2"></a>    base_tuning_job_name<span class="op">=</span>notebook_instance_name,</span>
-<span id="cb17-3"><a href="#cb17-3" tabindex="-1" aria-label="code-block-17-3"></a>    estimator<span class="op">=</span>pytorch_estimator,</span>
-<span id="cb17-4"><a href="#cb17-4" tabindex="-1" aria-label="code-block-17-4"></a>    metric_definitions<span class="op">=</span>[{<span class="st">"Name"</span>: <span class="st">"validation:accuracy"</span>, <span class="st">"Regex"</span>: <span class="st">"validation:accuracy = ([0-9</span><span class="ch">\\</span><span class="st">.]+)"</span>}],</span>
-<span id="cb17-5"><a href="#cb17-5" tabindex="-1" aria-label="code-block-17-5"></a>    objective_metric_name<span class="op">=</span><span class="st">"validation:accuracy"</span>,</span>
-<span id="cb17-6"><a href="#cb17-6" tabindex="-1" aria-label="code-block-17-6"></a>    objective_type<span class="op">=</span><span class="st">"Maximize"</span>,</span>
-<span id="cb17-7"><a href="#cb17-7" tabindex="-1" aria-label="code-block-17-7"></a>    hyperparameter_ranges<span class="op">=</span>hyperparameter_ranges,</span>
-<span id="cb17-8"><a href="#cb17-8" tabindex="-1" aria-label="code-block-17-8"></a>    max_jobs<span class="op">=</span><span class="dv">10</span>,</span>
-<span id="cb17-9"><a href="#cb17-9" tabindex="-1" aria-label="code-block-17-9"></a>    max_parallel_jobs<span class="op">=</span><span class="dv">10</span>,</span>
-<span id="cb17-10"><a href="#cb17-10" tabindex="-1" aria-label="code-block-17-10"></a>    tags<span class="op">=</span>job_tags,</span>
-<span id="cb17-11"><a href="#cb17-11" tabindex="-1" aria-label="code-block-17-11"></a>)</span>
-<span id="cb17-12"><a href="#cb17-12" tabindex="-1" aria-label="code-block-17-12"></a></span>
-<span id="cb17-13"><a href="#cb17-13" tabindex="-1" aria-label="code-block-17-13"></a>start_time <span class="op">=</span> t.time()</span>
-<span id="cb17-14"><a href="#cb17-14" tabindex="-1" aria-label="code-block-17-14"></a>tuner_parallel.fit({<span class="st">"train"</span>: train_input, <span class="st">"val"</span>: val_input})</span>
-<span id="cb17-15"><a href="#cb17-15" tabindex="-1" aria-label="code-block-17-15"></a><span class="bu">print</span>(<span class="ss">f"Tuning runtime: </span><span class="sc">{</span>t<span class="sc">.</span>time() <span class="op">-</span> start_time<span class="sc">:.2f}</span><span class="ss"> seconds with max_parallel_jobs=10"</span>)</span>
-<span id="cb17-16"><a href="#cb17-16" tabindex="-1" aria-label="code-block-17-16"></a>tuning_cost_report(tuner_parallel, price_per_hour)</span>
-<span id="cb17-17"><a href="#cb17-17" tabindex="-1" aria-label="code-block-17-17"></a><span class="bu">print</span>(<span class="st">"Best objective, sequential-ish run:"</span>, tuner.analytics().dataframe()[<span class="st">"FinalObjectiveValue"</span>].<span class="bu">max</span>())</span>
-<span id="cb17-18"><a href="#cb17-18" tabindex="-1" aria-label="code-block-17-18"></a><span class="bu">print</span>(<span class="st">"Best objective, all-parallel run:  "</span>, tuner_parallel.analytics().dataframe()[<span class="st">"FinalObjectiveValue"</span>].<span class="bu">max</span>())</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1" aria-label="code-block-18-1"></a>tuner_parallel <span class="op">=</span> HyperparameterTuner(</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1" aria-label="code-block-18-2"></a>    base_tuning_job_name<span class="op">=</span>notebook_instance_name,</span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a>    estimator<span class="op">=</span>pytorch_estimator,</span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1" aria-label="code-block-18-4"></a>    metric_definitions<span class="op">=</span>[{<span class="st">"Name"</span>: <span class="st">"validation:accuracy"</span>, <span class="st">"Regex"</span>: <span class="st">"validation:accuracy = ([0-9</span><span class="ch">\\</span><span class="st">.]+)"</span>}],</span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1" aria-label="code-block-18-5"></a>    objective_metric_name<span class="op">=</span><span class="st">"validation:accuracy"</span>,</span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1" aria-label="code-block-18-6"></a>    objective_type<span class="op">=</span><span class="st">"Maximize"</span>,</span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1" aria-label="code-block-18-7"></a>    hyperparameter_ranges<span class="op">=</span>hyperparameter_ranges,</span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1" aria-label="code-block-18-8"></a>    max_jobs<span class="op">=</span><span class="dv">10</span>,</span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1" aria-label="code-block-18-9"></a>    max_parallel_jobs<span class="op">=</span><span class="dv">10</span>,</span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1" aria-label="code-block-18-10"></a>    tags<span class="op">=</span>job_tags,</span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1" aria-label="code-block-18-11"></a>)</span>
+<span id="cb18-12"><a href="#cb18-12" tabindex="-1" aria-label="code-block-18-12"></a></span>
+<span id="cb18-13"><a href="#cb18-13" tabindex="-1" aria-label="code-block-18-13"></a>start_time <span class="op">=</span> t.time()</span>
+<span id="cb18-14"><a href="#cb18-14" tabindex="-1" aria-label="code-block-18-14"></a>tuner_parallel.fit({<span class="st">"train"</span>: train_input, <span class="st">"val"</span>: val_input})</span>
+<span id="cb18-15"><a href="#cb18-15" tabindex="-1" aria-label="code-block-18-15"></a><span class="bu">print</span>(<span class="ss">f"Tuning runtime: </span><span class="sc">{</span>t<span class="sc">.</span>time() <span class="op">-</span> start_time<span class="sc">:.2f}</span><span class="ss"> seconds with max_parallel_jobs=10"</span>)</span>
+<span id="cb18-16"><a href="#cb18-16" tabindex="-1" aria-label="code-block-18-16"></a>tuning_cost_report(tuner_parallel, price_per_hour)</span>
+<span id="cb18-17"><a href="#cb18-17" tabindex="-1" aria-label="code-block-18-17"></a><span class="bu">print</span>(<span class="st">"Best objective, sequential-ish run:"</span>, tuner.analytics().dataframe()[<span class="st">"FinalObjectiveValue"</span>].<span class="bu">max</span>())</span>
+<span id="cb18-18"><a href="#cb18-18" tabindex="-1" aria-label="code-block-18-18"></a><span class="bu">print</span>(<span class="st">"Best objective, all-parallel run:  "</span>, tuner_parallel.analytics().dataframe()[<span class="st">"FinalObjectiveValue"</span>].<span class="bu">max</span>())</span></code></pre>
 </div>
 </div>
 </div>

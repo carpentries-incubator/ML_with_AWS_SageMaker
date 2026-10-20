@@ -743,7 +743,7 @@ does one run cost? What does a realistic project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5: full fine-tuning a 7B model needs ~112 GB
 plus activations, and the g5 has 24 GB. On the p4d the 8 × 40 GB = 320
@@ -1039,7 +1039,7 @@ run the homework’s full fine-tune yourself instead.</p>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="cf">for</span> fname <span class="kw">in</span> [<span class="st">"train.csv"</span>, <span class="st">"test.csv"</span>, <span class="st">"metadata.csv"</span>, <span class="st">"metric.py"</span>]:</span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a>    s3_client.download_file(shared_bucket, <span class="ss">f"</span><span class="sc">{</span>data_prefix<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>fname<span class="sc">}</span><span class="ss">"</span>, os.path.join(local_data_dir, fname))</span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a>train_df <span class="op">=</span> pd.read_csv(os.path.join(local_data_dir, <span class="st">"train.csv"</span>), keep_default_na<span class="op">=</span><span class="va">False</span>)  <span class="co"># keep empty text as "" rather than NaN</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a>train_df <span class="op">=</span> pd.read_csv(os.path.join(local_data_dir, <span class="st">"train.csv"</span>), keep_default_na<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb6-5"><a href="#cb6-5" tabindex="-1" aria-label="code-block-6-5"></a>test_df <span class="op">=</span> pd.read_csv(os.path.join(local_data_dir, <span class="st">"test.csv"</span>), keep_default_na<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb6-6"><a href="#cb6-6" tabindex="-1" aria-label="code-block-6-6"></a></span>
 <span id="cb6-7"><a href="#cb6-7" tabindex="-1" aria-label="code-block-6-7"></a><span class="bu">print</span>(<span class="st">"train pages:"</span>, <span class="bu">len</span>(train_df), <span class="st">" test pages:"</span>, <span class="bu">len</span>(test_df))</span>
@@ -1167,10 +1167,10 @@ below are what the Step 0 estimate was built from.</p>
 <span id="cb13-21"><a href="#cb13-21" tabindex="-1" aria-label="code-block-13-21"></a>    hyperparameters<span class="op">=</span>{                     <span class="co"># passed to the script as command-line flags: --epochs 2 --lr 0.0002 ...</span></span>
 <span id="cb13-22"><a href="#cb13-22" tabindex="-1" aria-label="code-block-13-22"></a>        <span class="co"># no model_id: the script reads the base weights from the "model" channel mounted at fit()</span></span>
 <span id="cb13-23"><a href="#cb13-23" tabindex="-1" aria-label="code-block-13-23"></a>        <span class="st">"max_train_pages"</span>: <span class="dv">120</span>,           <span class="co"># a slice in class; the homework uses all 251 training pages</span></span>
-<span id="cb13-24"><a href="#cb13-24" tabindex="-1" aria-label="code-block-13-24"></a>        <span class="st">"epochs"</span>: <span class="dv">2</span>,                      <span class="co"># passes over the pages; training time scales linearly with it</span></span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1" aria-label="code-block-13-24"></a>        <span class="st">"epochs"</span>: <span class="dv">2</span>,</span>
 <span id="cb13-25"><a href="#cb13-25" tabindex="-1" aria-label="code-block-13-25"></a>        <span class="st">"lr"</span>: <span class="fl">2e-4</span>,                       <span class="co"># LoRA takes a higher learning rate than a full fine-tune (~1e-5)</span></span>
 <span id="cb13-26"><a href="#cb13-26" tabindex="-1" aria-label="code-block-13-26"></a>        <span class="st">"lora_r"</span>: <span class="dv">16</span>,                     <span class="co"># adapter rank: how many trainable parameters LoRA adds per layer</span></span>
-<span id="cb13-27"><a href="#cb13-27" tabindex="-1" aria-label="code-block-13-27"></a>        <span class="st">"batch_size"</span>: <span class="dv">1</span>,                  <span class="co"># one page per step fits the 24 GB card</span></span>
+<span id="cb13-27"><a href="#cb13-27" tabindex="-1" aria-label="code-block-13-27"></a>        <span class="st">"batch_size"</span>: <span class="dv">1</span>,</span>
 <span id="cb13-28"><a href="#cb13-28" tabindex="-1" aria-label="code-block-13-28"></a>        <span class="st">"grad_accum"</span>: <span class="dv">4</span>,                  <span class="co"># effective batch of 4 pages -&gt; ~60 optimizer steps</span></span>
 <span id="cb13-29"><a href="#cb13-29" tabindex="-1" aria-label="code-block-13-29"></a>        <span class="st">"max_pixels"</span>: <span class="dv">1280</span> <span class="op">*</span> <span class="dv">28</span> <span class="op">*</span> <span class="dv">28</span>,     <span class="co"># ~1 megapixel per page; the cost knob: tokens per page scale with it</span></span>
 <span id="cb13-30"><a href="#cb13-30" tabindex="-1" aria-label="code-block-13-30"></a>        <span class="st">"eval_pages"</span>: <span class="dv">15</span>,                 <span class="co"># holdout pages scored before (eval_before=1) and after training</span></span>
@@ -1305,7 +1305,7 @@ copied anywhere.</p>
 <span id="cb18-6"><a href="#cb18-6" tabindex="-1" aria-label="code-block-18-6"></a>s3_client.download_file(bucket, key, os.path.join(run_dir, <span class="st">"model.tar.gz"</span>))</span>
 <span id="cb18-7"><a href="#cb18-7" tabindex="-1" aria-label="code-block-18-7"></a><span class="cf">with</span> tarfile.<span class="bu">open</span>(os.path.join(run_dir, <span class="st">"model.tar.gz"</span>)) <span class="im">as</span> tar:   <span class="co"># everything the script saved to /opt/ml/model</span></span>
 <span id="cb18-8"><a href="#cb18-8" tabindex="-1" aria-label="code-block-18-8"></a>    tar.extractall(run_dir)</span>
-<span id="cb18-9"><a href="#cb18-9" tabindex="-1" aria-label="code-block-18-9"></a><span class="bu">print</span>(<span class="bu">sorted</span>(os.listdir(run_dir)))   <span class="co"># adapter files, holdout_page_ids.csv, eval_before.csv, eval_after.csv, train_summary.json</span></span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1" aria-label="code-block-18-9"></a><span class="bu">print</span>(<span class="bu">sorted</span>(os.listdir(run_dir)))</span>
 <span id="cb18-10"><a href="#cb18-10" tabindex="-1" aria-label="code-block-18-10"></a></span>
 <span id="cb18-11"><a href="#cb18-11" tabindex="-1" aria-label="code-block-18-11"></a>summary <span class="op">=</span> json.load(<span class="bu">open</span>(os.path.join(run_dir, <span class="st">"train_summary.json"</span>)))   <span class="co"># train_pages, train_minutes, seconds_per_page, CER before/after</span></span>
 <span id="cb18-12"><a href="#cb18-12" tabindex="-1" aria-label="code-block-18-12"></a><span class="bu">print</span>(json.dumps(summary, indent<span class="op">=</span><span class="dv">2</span>))</span></code></pre>
@@ -1363,7 +1363,7 @@ real bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>Expect startup to be close to 10 minutes and the two evaluations to
 be 2–4 minutes each. Training is the line most likely to differ: if you
@@ -1475,7 +1475,7 @@ help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -1515,7 +1515,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
 <div class="accordion-body">
 <p>Startup (~10 min, $0.44 at $2.61/h) does not speed up: the container
 pull and the S3 downloads are the same on any instance. For the class
@@ -1563,7 +1563,7 @@ estimator and relaunch under a new job name.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
 <div class="accordion-body">
 <p>Checkpointing. If the instance is reclaimed, the job restarts and, as
 written, starts training from scratch. For a 25-minute job that costs 25

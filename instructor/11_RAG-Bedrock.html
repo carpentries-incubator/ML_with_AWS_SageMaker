@@ -899,37 +899,36 @@ workflow cleaner and easier to reason about.</p>
 <span id="cb7-24"><a href="#cb7-24" tabindex="-1" aria-label="code-block-7-24"></a>            <span class="cf">continue</span></span>
 <span id="cb7-25"><a href="#cb7-25" tabindex="-1" aria-label="code-block-7-25"></a></span>
 <span id="cb7-26"><a href="#cb7-26" tabindex="-1" aria-label="code-block-7-26"></a>        total_pages <span class="op">=</span> <span class="bu">len</span>(reader.pages)</span>
-<span id="cb7-27"><a href="#cb7-27" tabindex="-1" aria-label="code-block-7-27"></a>        <span class="co"># One record per page: the text plus the metadata needed to cite it later</span></span>
-<span id="cb7-28"><a href="#cb7-28" tabindex="-1" aria-label="code-block-7-28"></a>        <span class="cf">for</span> i, page <span class="kw">in</span> <span class="bu">enumerate</span>(reader.pages):</span>
-<span id="cb7-29"><a href="#cb7-29" tabindex="-1" aria-label="code-block-7-29"></a>            <span class="cf">try</span>:</span>
-<span id="cb7-30"><a href="#cb7-30" tabindex="-1" aria-label="code-block-7-30"></a>                text <span class="op">=</span> page.extract_text() <span class="kw">or</span> <span class="st">""</span></span>
-<span id="cb7-31"><a href="#cb7-31" tabindex="-1" aria-label="code-block-7-31"></a>            <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
-<span id="cb7-32"><a href="#cb7-32" tabindex="-1" aria-label="code-block-7-32"></a>                <span class="bu">print</span>(<span class="ss">f"Failed to extract text from </span><span class="sc">{</span>doc_id<span class="sc">}</span><span class="ss"> page </span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb7-33"><a href="#cb7-33" tabindex="-1" aria-label="code-block-7-33"></a>                text <span class="op">=</span> <span class="st">""</span></span>
-<span id="cb7-34"><a href="#cb7-34" tabindex="-1" aria-label="code-block-7-34"></a></span>
-<span id="cb7-35"><a href="#cb7-35" tabindex="-1" aria-label="code-block-7-35"></a>            text <span class="op">=</span> text.strip()</span>
-<span id="cb7-36"><a href="#cb7-36" tabindex="-1" aria-label="code-block-7-36"></a>            <span class="cf">if</span> <span class="kw">not</span> text:</span>
-<span id="cb7-37"><a href="#cb7-37" tabindex="-1" aria-label="code-block-7-37"></a>                <span class="co"># Still keep the page so we know it exists, but mark it as empty</span></span>
-<span id="cb7-38"><a href="#cb7-38" tabindex="-1" aria-label="code-block-7-38"></a>                text <span class="op">=</span> <span class="st">"[[EMPTY PAGE TEXT – see original PDF for tables/figures]]"</span></span>
-<span id="cb7-39"><a href="#cb7-39" tabindex="-1" aria-label="code-block-7-39"></a></span>
-<span id="cb7-40"><a href="#cb7-40" tabindex="-1" aria-label="code-block-7-40"></a>            page_docs.append(</span>
-<span id="cb7-41"><a href="#cb7-41" tabindex="-1" aria-label="code-block-7-41"></a>                {</span>
-<span id="cb7-42"><a href="#cb7-42" tabindex="-1" aria-label="code-block-7-42"></a>                    <span class="st">"text"</span>: text,</span>
-<span id="cb7-43"><a href="#cb7-43" tabindex="-1" aria-label="code-block-7-43"></a>                    <span class="st">"doc_id"</span>: doc_id,</span>
-<span id="cb7-44"><a href="#cb7-44" tabindex="-1" aria-label="code-block-7-44"></a>                    <span class="st">"title"</span>: title,</span>
-<span id="cb7-45"><a href="#cb7-45" tabindex="-1" aria-label="code-block-7-45"></a>                    <span class="st">"url"</span>: url,</span>
-<span id="cb7-46"><a href="#cb7-46" tabindex="-1" aria-label="code-block-7-46"></a>                    <span class="st">"page_num"</span>: i,                 <span class="co"># zero-based index</span></span>
-<span id="cb7-47"><a href="#cb7-47" tabindex="-1" aria-label="code-block-7-47"></a>                    <span class="st">"page_label"</span>: <span class="bu">str</span>(i <span class="op">+</span> <span class="dv">1</span>),      <span class="co"># 1-based label, as a reader would cite it</span></span>
-<span id="cb7-48"><a href="#cb7-48" tabindex="-1" aria-label="code-block-7-48"></a>                    <span class="st">"total_pages"</span>: total_pages,</span>
-<span id="cb7-49"><a href="#cb7-49" tabindex="-1" aria-label="code-block-7-49"></a>                }</span>
-<span id="cb7-50"><a href="#cb7-50" tabindex="-1" aria-label="code-block-7-50"></a>            )</span>
-<span id="cb7-51"><a href="#cb7-51" tabindex="-1" aria-label="code-block-7-51"></a></span>
-<span id="cb7-52"><a href="#cb7-52" tabindex="-1" aria-label="code-block-7-52"></a>    <span class="cf">return</span> page_docs</span>
+<span id="cb7-27"><a href="#cb7-27" tabindex="-1" aria-label="code-block-7-27"></a>        <span class="cf">for</span> i, page <span class="kw">in</span> <span class="bu">enumerate</span>(reader.pages):</span>
+<span id="cb7-28"><a href="#cb7-28" tabindex="-1" aria-label="code-block-7-28"></a>            <span class="cf">try</span>:</span>
+<span id="cb7-29"><a href="#cb7-29" tabindex="-1" aria-label="code-block-7-29"></a>                text <span class="op">=</span> page.extract_text() <span class="kw">or</span> <span class="st">""</span></span>
+<span id="cb7-30"><a href="#cb7-30" tabindex="-1" aria-label="code-block-7-30"></a>            <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
+<span id="cb7-31"><a href="#cb7-31" tabindex="-1" aria-label="code-block-7-31"></a>                <span class="bu">print</span>(<span class="ss">f"Failed to extract text from </span><span class="sc">{</span>doc_id<span class="sc">}</span><span class="ss"> page </span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb7-32"><a href="#cb7-32" tabindex="-1" aria-label="code-block-7-32"></a>                text <span class="op">=</span> <span class="st">""</span></span>
+<span id="cb7-33"><a href="#cb7-33" tabindex="-1" aria-label="code-block-7-33"></a></span>
+<span id="cb7-34"><a href="#cb7-34" tabindex="-1" aria-label="code-block-7-34"></a>            text <span class="op">=</span> text.strip()</span>
+<span id="cb7-35"><a href="#cb7-35" tabindex="-1" aria-label="code-block-7-35"></a>            <span class="cf">if</span> <span class="kw">not</span> text:</span>
+<span id="cb7-36"><a href="#cb7-36" tabindex="-1" aria-label="code-block-7-36"></a>                <span class="co"># Still keep the page so we know it exists, but mark it as empty</span></span>
+<span id="cb7-37"><a href="#cb7-37" tabindex="-1" aria-label="code-block-7-37"></a>                text <span class="op">=</span> <span class="st">"[[EMPTY PAGE TEXT – see original PDF for tables/figures]]"</span></span>
+<span id="cb7-38"><a href="#cb7-38" tabindex="-1" aria-label="code-block-7-38"></a></span>
+<span id="cb7-39"><a href="#cb7-39" tabindex="-1" aria-label="code-block-7-39"></a>            page_docs.append(</span>
+<span id="cb7-40"><a href="#cb7-40" tabindex="-1" aria-label="code-block-7-40"></a>                {</span>
+<span id="cb7-41"><a href="#cb7-41" tabindex="-1" aria-label="code-block-7-41"></a>                    <span class="st">"text"</span>: text,</span>
+<span id="cb7-42"><a href="#cb7-42" tabindex="-1" aria-label="code-block-7-42"></a>                    <span class="st">"doc_id"</span>: doc_id,</span>
+<span id="cb7-43"><a href="#cb7-43" tabindex="-1" aria-label="code-block-7-43"></a>                    <span class="st">"title"</span>: title,</span>
+<span id="cb7-44"><a href="#cb7-44" tabindex="-1" aria-label="code-block-7-44"></a>                    <span class="st">"url"</span>: url,</span>
+<span id="cb7-45"><a href="#cb7-45" tabindex="-1" aria-label="code-block-7-45"></a>                    <span class="st">"page_num"</span>: i,</span>
+<span id="cb7-46"><a href="#cb7-46" tabindex="-1" aria-label="code-block-7-46"></a>                    <span class="st">"page_label"</span>: <span class="bu">str</span>(i <span class="op">+</span> <span class="dv">1</span>),</span>
+<span id="cb7-47"><a href="#cb7-47" tabindex="-1" aria-label="code-block-7-47"></a>                    <span class="st">"total_pages"</span>: total_pages,</span>
+<span id="cb7-48"><a href="#cb7-48" tabindex="-1" aria-label="code-block-7-48"></a>                }</span>
+<span id="cb7-49"><a href="#cb7-49" tabindex="-1" aria-label="code-block-7-49"></a>            )</span>
+<span id="cb7-50"><a href="#cb7-50" tabindex="-1" aria-label="code-block-7-50"></a></span>
+<span id="cb7-51"><a href="#cb7-51" tabindex="-1" aria-label="code-block-7-51"></a>    <span class="cf">return</span> page_docs</span>
+<span id="cb7-52"><a href="#cb7-52" tabindex="-1" aria-label="code-block-7-52"></a></span>
 <span id="cb7-53"><a href="#cb7-53" tabindex="-1" aria-label="code-block-7-53"></a></span>
-<span id="cb7-54"><a href="#cb7-54" tabindex="-1" aria-label="code-block-7-54"></a></span>
-<span id="cb7-55"><a href="#cb7-55" tabindex="-1" aria-label="code-block-7-55"></a>page_docs <span class="op">=</span> pdfs_to_page_docs(metadata_df, PDF_DIR)</span>
-<span id="cb7-56"><a href="#cb7-56" tabindex="-1" aria-label="code-block-7-56"></a><span class="bu">print</span>(<span class="ss">f"Loaded </span><span class="sc">{</span><span class="bu">len</span>(page_docs)<span class="sc">}</span><span class="ss"> page-level records from </span><span class="sc">{</span><span class="bu">len</span>(metadata_df)<span class="sc">}</span><span class="ss"> PDFs."</span>)</span>
-<span id="cb7-57"><a href="#cb7-57" tabindex="-1" aria-label="code-block-7-57"></a>page_docs[<span class="dv">0</span>] <span class="cf">if</span> page_docs <span class="cf">else</span> <span class="va">None</span></span></code></pre>
+<span id="cb7-54"><a href="#cb7-54" tabindex="-1" aria-label="code-block-7-54"></a>page_docs <span class="op">=</span> pdfs_to_page_docs(metadata_df, PDF_DIR)</span>
+<span id="cb7-55"><a href="#cb7-55" tabindex="-1" aria-label="code-block-7-55"></a><span class="bu">print</span>(<span class="ss">f"Loaded </span><span class="sc">{</span><span class="bu">len</span>(page_docs)<span class="sc">}</span><span class="ss"> page-level records from </span><span class="sc">{</span><span class="bu">len</span>(metadata_df)<span class="sc">}</span><span class="ss"> PDFs."</span>)</span>
+<span id="cb7-56"><a href="#cb7-56" tabindex="-1" aria-label="code-block-7-56"></a>page_docs[<span class="dv">0</span>] <span class="cf">if</span> page_docs <span class="cf">else</span> <span class="va">None</span></span></code></pre>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="step-6-simple-explicit-text-chunking">Step 6 – Simple, explicit text chunking<a class="anchor" aria-label="anchor" href="#step-6-simple-explicit-text-chunking"></a></h2>
@@ -1025,34 +1024,33 @@ every run. We save the chunks locally as <code>data/chunks.jsonl</code>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a>chunks_jsonl_path <span class="op">=</span> os.path.join(local_data_dir, <span class="st">"chunks.jsonl"</span>)</span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a></span>
 <span id="cb9-3"><a href="#cb9-3" tabindex="-1" aria-label="code-block-9-3"></a><span class="kw">def</span> save_chunked_docs_jsonl(path, chunks):</span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a>    <span class="co"># JSONL: one JSON record per line, so the file streams and diffs well</span></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a>    <span class="cf">with</span> <span class="bu">open</span>(path, <span class="st">"w"</span>, encoding<span class="op">=</span><span class="st">"utf-8"</span>) <span class="im">as</span> f:</span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1" aria-label="code-block-9-6"></a>        <span class="cf">for</span> rec <span class="kw">in</span> chunks:</span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1" aria-label="code-block-9-7"></a>            json.dump(rec, f, ensure_ascii<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1" aria-label="code-block-9-8"></a>            f.write(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a>    <span class="cf">with</span> <span class="bu">open</span>(path, <span class="st">"w"</span>, encoding<span class="op">=</span><span class="st">"utf-8"</span>) <span class="im">as</span> f:</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a>        <span class="cf">for</span> rec <span class="kw">in</span> chunks:</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1" aria-label="code-block-9-6"></a>            json.dump(rec, f, ensure_ascii<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1" aria-label="code-block-9-7"></a>            f.write(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span>)</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1" aria-label="code-block-9-8"></a></span>
 <span id="cb9-9"><a href="#cb9-9" tabindex="-1" aria-label="code-block-9-9"></a></span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1" aria-label="code-block-9-10"></a></span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1" aria-label="code-block-9-11"></a><span class="kw">def</span> load_chunked_docs_jsonl(path):</span>
-<span id="cb9-12"><a href="#cb9-12" tabindex="-1" aria-label="code-block-9-12"></a>    <span class="cf">with</span> <span class="bu">open</span>(path, <span class="st">"r"</span>, encoding<span class="op">=</span><span class="st">"utf-8"</span>) <span class="im">as</span> f:</span>
-<span id="cb9-13"><a href="#cb9-13" tabindex="-1" aria-label="code-block-9-13"></a>        <span class="cf">return</span> [json.loads(line) <span class="cf">for</span> line <span class="kw">in</span> f]</span>
-<span id="cb9-14"><a href="#cb9-14" tabindex="-1" aria-label="code-block-9-14"></a></span>
-<span id="cb9-15"><a href="#cb9-15" tabindex="-1" aria-label="code-block-9-15"></a><span class="co"># -------------------------------------------------------------------</span></span>
-<span id="cb9-16"><a href="#cb9-16" tabindex="-1" aria-label="code-block-9-16"></a><span class="co"># Cached chunking logic</span></span>
-<span id="cb9-17"><a href="#cb9-17" tabindex="-1" aria-label="code-block-9-17"></a><span class="co"># -------------------------------------------------------------------</span></span>
-<span id="cb9-18"><a href="#cb9-18" tabindex="-1" aria-label="code-block-9-18"></a><span class="cf">if</span> os.path.exists(chunks_jsonl_path):</span>
-<span id="cb9-19"><a href="#cb9-19" tabindex="-1" aria-label="code-block-9-19"></a>    <span class="bu">print</span>(<span class="ss">f"Found existing chunk file: </span><span class="sc">{</span>chunks_jsonl_path<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb9-20"><a href="#cb9-20" tabindex="-1" aria-label="code-block-9-20"></a>    chunked_docs <span class="op">=</span> load_chunked_docs_jsonl(chunks_jsonl_path)</span>
-<span id="cb9-21"><a href="#cb9-21" tabindex="-1" aria-label="code-block-9-21"></a>    <span class="bu">print</span>(<span class="st">"Loaded chunked docs:"</span>, <span class="bu">len</span>(chunked_docs))</span>
-<span id="cb9-22"><a href="#cb9-22" tabindex="-1" aria-label="code-block-9-22"></a><span class="cf">else</span>:</span>
-<span id="cb9-23"><a href="#cb9-23" tabindex="-1" aria-label="code-block-9-23"></a>    <span class="bu">print</span>(<span class="st">"No chunk file found. Running chunking step..."</span>)</span>
-<span id="cb9-24"><a href="#cb9-24" tabindex="-1" aria-label="code-block-9-24"></a>    chunked_docs <span class="op">=</span> make_chunked_docs(page_docs)</span>
-<span id="cb9-25"><a href="#cb9-25" tabindex="-1" aria-label="code-block-9-25"></a>    save_chunked_docs_jsonl(chunks_jsonl_path, chunked_docs)</span>
-<span id="cb9-26"><a href="#cb9-26" tabindex="-1" aria-label="code-block-9-26"></a>    <span class="bu">print</span>(<span class="ss">f"Saved chunked docs to </span><span class="sc">{</span>chunks_jsonl_path<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb9-27"><a href="#cb9-27" tabindex="-1" aria-label="code-block-9-27"></a></span>
-<span id="cb9-28"><a href="#cb9-28" tabindex="-1" aria-label="code-block-9-28"></a><span class="co"># Show first chunk</span></span>
-<span id="cb9-29"><a href="#cb9-29" tabindex="-1" aria-label="code-block-9-29"></a><span class="bu">print</span>(<span class="st">"Raw pages:"</span>, <span class="bu">len</span>(page_docs))</span>
-<span id="cb9-30"><a href="#cb9-30" tabindex="-1" aria-label="code-block-9-30"></a><span class="bu">print</span>(<span class="st">"Chunked docs:"</span>, <span class="bu">len</span>(chunked_docs))</span>
-<span id="cb9-31"><a href="#cb9-31" tabindex="-1" aria-label="code-block-9-31"></a>chunked_docs[<span class="dv">0</span>] <span class="cf">if</span> chunked_docs <span class="cf">else</span> <span class="va">None</span></span></code></pre>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1" aria-label="code-block-9-10"></a><span class="kw">def</span> load_chunked_docs_jsonl(path):</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1" aria-label="code-block-9-11"></a>    <span class="cf">with</span> <span class="bu">open</span>(path, <span class="st">"r"</span>, encoding<span class="op">=</span><span class="st">"utf-8"</span>) <span class="im">as</span> f:</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1" aria-label="code-block-9-12"></a>        <span class="cf">return</span> [json.loads(line) <span class="cf">for</span> line <span class="kw">in</span> f]</span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1" aria-label="code-block-9-13"></a></span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1" aria-label="code-block-9-14"></a><span class="co"># -------------------------------------------------------------------</span></span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1" aria-label="code-block-9-15"></a><span class="co"># Cached chunking logic</span></span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1" aria-label="code-block-9-16"></a><span class="co"># -------------------------------------------------------------------</span></span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1" aria-label="code-block-9-17"></a><span class="cf">if</span> os.path.exists(chunks_jsonl_path):</span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1" aria-label="code-block-9-18"></a>    <span class="bu">print</span>(<span class="ss">f"Found existing chunk file: </span><span class="sc">{</span>chunks_jsonl_path<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1" aria-label="code-block-9-19"></a>    chunked_docs <span class="op">=</span> load_chunked_docs_jsonl(chunks_jsonl_path)</span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1" aria-label="code-block-9-20"></a>    <span class="bu">print</span>(<span class="st">"Loaded chunked docs:"</span>, <span class="bu">len</span>(chunked_docs))</span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1" aria-label="code-block-9-21"></a><span class="cf">else</span>:</span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1" aria-label="code-block-9-22"></a>    <span class="bu">print</span>(<span class="st">"No chunk file found. Running chunking step..."</span>)</span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1" aria-label="code-block-9-23"></a>    chunked_docs <span class="op">=</span> make_chunked_docs(page_docs)</span>
+<span id="cb9-24"><a href="#cb9-24" tabindex="-1" aria-label="code-block-9-24"></a>    save_chunked_docs_jsonl(chunks_jsonl_path, chunked_docs)</span>
+<span id="cb9-25"><a href="#cb9-25" tabindex="-1" aria-label="code-block-9-25"></a>    <span class="bu">print</span>(<span class="ss">f"Saved chunked docs to </span><span class="sc">{</span>chunks_jsonl_path<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb9-26"><a href="#cb9-26" tabindex="-1" aria-label="code-block-9-26"></a></span>
+<span id="cb9-27"><a href="#cb9-27" tabindex="-1" aria-label="code-block-9-27"></a><span class="co"># Show first chunk</span></span>
+<span id="cb9-28"><a href="#cb9-28" tabindex="-1" aria-label="code-block-9-28"></a><span class="bu">print</span>(<span class="st">"Raw pages:"</span>, <span class="bu">len</span>(page_docs))</span>
+<span id="cb9-29"><a href="#cb9-29" tabindex="-1" aria-label="code-block-9-29"></a><span class="bu">print</span>(<span class="st">"Chunked docs:"</span>, <span class="bu">len</span>(chunked_docs))</span>
+<span id="cb9-30"><a href="#cb9-30" tabindex="-1" aria-label="code-block-9-30"></a>chunked_docs[<span class="dv">0</span>] <span class="cf">if</span> chunked_docs <span class="cf">else</span> <span class="va">None</span></span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -1476,7 +1474,7 @@ tells the scorer to derive that flag from
 <span id="cb19-3"><a href="#cb19-3" tabindex="-1" aria-label="code-block-19-3"></a>    preds_path<span class="op">=</span>output_path,         <span class="co"># our predictions, joined to it on id</span></span>
 <span id="cb19-4"><a href="#cb19-4" tabindex="-1" aria-label="code-block-19-4"></a>    gt_is_na_col<span class="op">=</span><span class="st">"is_blank"</span>,        <span class="co"># no separate column: "unanswerable" means answer_value == "is_blank"</span></span>
 <span id="cb19-5"><a href="#cb19-5" tabindex="-1" aria-label="code-block-19-5"></a>    pred_is_na_col<span class="op">=</span><span class="st">"is_blank"</span>,</span>
-<span id="cb19-6"><a href="#cb19-6" tabindex="-1" aria-label="code-block-19-6"></a>    n_examples<span class="op">=</span><span class="dv">20</span>,                  <span class="co"># print the 20 worst-scoring rows</span></span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1" aria-label="code-block-19-6"></a>    n_examples<span class="op">=</span><span class="dv">20</span>,</span>
 <span id="cb19-7"><a href="#cb19-7" tabindex="-1" aria-label="code-block-19-7"></a>)</span></code></pre>
 </div>
 <div id="what-did-that-run-cost" class="callout challenge">

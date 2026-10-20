@@ -585,15 +585,15 @@ of train.csv as a local file.</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a><span class="co"># Define the S3 bucket and object key</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1" aria-label="code-block-3-3"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn'</span>  <span class="co"># replace with your S3 bucket name; a bucket is the top-level container, like a drive</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1" aria-label="code-block-3-3"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn'</span>  <span class="co"># replace with your S3 bucket name</span></span>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a></span>
 <span id="cb3-5"><a href="#cb3-5" tabindex="-1" aria-label="code-block-3-5"></a><span class="co"># Read the train data from S3</span></span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1" aria-label="code-block-3-6"></a>key <span class="op">=</span> <span class="st">'titanic_train.csv'</span>  <span class="co"># replace with your object key; the key is the object's full path inside the bucket</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1" aria-label="code-block-3-6"></a>key <span class="op">=</span> <span class="st">'titanic_train.csv'</span>  <span class="co"># the object key: the file's path inside the bucket</span></span>
 <span id="cb3-7"><a href="#cb3-7" tabindex="-1" aria-label="code-block-3-7"></a>response <span class="op">=</span> s3.get_object(Bucket<span class="op">=</span>bucket_name, Key<span class="op">=</span>key)  <span class="co"># fetch the object; its bytes arrive as a stream in response['Body']</span></span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1" aria-label="code-block-3-8"></a>train_data <span class="op">=</span> pd.read_csv(response[<span class="st">'Body'</span>])  <span class="co"># pandas reads the stream straight into memory; nothing is written to disk</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1" aria-label="code-block-3-8"></a>train_data <span class="op">=</span> pd.read_csv(response[<span class="st">'Body'</span>])</span>
 <span id="cb3-9"><a href="#cb3-9" tabindex="-1" aria-label="code-block-3-9"></a></span>
 <span id="cb3-10"><a href="#cb3-10" tabindex="-1" aria-label="code-block-3-10"></a><span class="co"># Read the test data from S3</span></span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1" aria-label="code-block-3-11"></a>key <span class="op">=</span> <span class="st">'titanic_test.csv'</span>  <span class="co"># replace with your object key</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1" aria-label="code-block-3-11"></a>key <span class="op">=</span> <span class="st">'titanic_test.csv'</span></span>
 <span id="cb3-12"><a href="#cb3-12" tabindex="-1" aria-label="code-block-3-12"></a>response <span class="op">=</span> s3.get_object(Bucket<span class="op">=</span>bucket_name, Key<span class="op">=</span>key)</span>
 <span id="cb3-13"><a href="#cb3-13" tabindex="-1" aria-label="code-block-3-13"></a>test_data <span class="op">=</span> pd.read_csv(response[<span class="st">'Body'</span>])</span>
 <span id="cb3-14"><a href="#cb3-14" tabindex="-1" aria-label="code-block-3-14"></a></span>
@@ -714,22 +714,15 @@ convenience. There are also some other helper functions in
 <code>scripts/helpers.py</code> of the lesson repository, which you
 cloned to <code>/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/</code>
 in the previous episode.</p>
-<div class="section level4">
-<h4 id="directory-setup">Directory setup<a class="anchor" aria-label="anchor" href="#directory-setup"></a></h4>
-<p>Let’s make sure we’re starting in the root directory of this
-instance, and tell Python where the <code>scripts/</code> folder is:</p>
+<p>Tell Python where the lesson’s <code>scripts/</code> folder is:</p>
 <div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span></span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1" aria-label="code-block-7-2"></a><span class="im">import</span> sys</span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1" aria-label="code-block-7-3"></a><span class="co"># Put the lesson's scripts/ folder first on Python's import path</span></span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1" aria-label="code-block-7-4"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)</span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1" aria-label="code-block-7-5"></a><span class="im">import</span> helpers  <span class="co"># the lesson's helper functions (bucket size, cost estimate, object listing)</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a><span class="im">import</span> sys</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1" aria-label="code-block-7-2"></a><span class="co"># Put the lesson's scripts/ folder first on Python's import path</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1" aria-label="code-block-7-3"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1" aria-label="code-block-7-4"></a><span class="im">import</span> helpers  <span class="co"># the lesson's helper functions (bucket size, cost estimate, object listing)</span></span></code></pre>
 </div>
-<p><code>sys.path.insert</code> tells Python where to find the lesson’s
-<code>scripts/</code> folder; after it, <code>import helpers</code>
-works from any directory.</p>
 <p>Our helpers.py file can be found in
 <code>ML_with_AWS_SageMaker/scripts/helpers.py</code>. With this file
 downloaded, you can call this function via…</p>
@@ -737,7 +730,6 @@ downloaded, you can call this function via…</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" tabindex="-1" aria-label="code-block-8-1"></a>helpers.get_s3_bucket_size(bucket_name)</span></code></pre>
-</div>
 </div>
 </div>
 <div class="section level3">
