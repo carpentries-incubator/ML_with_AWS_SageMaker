@@ -866,7 +866,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -935,7 +935,11 @@ was Option 1. Let’s now look at Option 2, starting with what
 <code>instance_count=2</code> does.</p>
 <div class="section level3">
 <h3 id="what-instance_count2-does-on-its-own">What <code>instance_count=2</code> does on its own<a class="anchor" aria-label="anchor" href="#what-instance_count2-does-on-its-own"></a></h3>
-<p>Setting <code>instance_count=2</code> on an estimator makes SageMaker
+<figure><img src="fig/instance-count-vs-data-parallel.svg" alt="Two panels comparing instance_count=2 without distribution, where each instance trains on the full data, with data parallelism, where batches are split and gradients synced" class="figure mx-auto d-block"><div class="figcaption">Left: two instances each receive the full
+dataset and run the whole script independently, same model and twice the
+bill. Right: data parallelism splits the batches across instances and
+syncs gradients each step.</div>
+</figure><p>Setting <code>instance_count=2</code> on an estimator makes SageMaker
 start two instances and run <strong>the full training script on each of
 them</strong>. Nothing is split:</p>
 <ul><li>

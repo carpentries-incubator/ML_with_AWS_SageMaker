@@ -518,13 +518,45 @@ on their own; Bedrock is called as an API per token</div>
 </figure><hr></section><section id="Accessing-S3-via-SageMaker-notebooks"><h2 class="section-heading"><a href="Accessing-S3-via-SageMaker-notebooks.html">Accessing and Managing Data in S3 with SageMaker Notebooks</a></h2>
 <hr class="half-width"></section><section id="Interacting-with-code-repo"><h2 class="section-heading"><a href="Interacting-with-code-repo.html">(Optional) Pushing Your Notebooks to GitHub from SageMaker</a></h2>
 <hr class="half-width"></section><section id="Training-models-in-SageMaker-notebooks"><h2 class="section-heading"><a href="Training-models-in-SageMaker-notebooks.html">Training Models in SageMaker: Intro</a></h2>
-<hr class="half-width"></section><section id="Training-models-in-SageMaker-notebooks-part2"><h2 class="section-heading"><a href="Training-models-in-SageMaker-notebooks-part2.html">Training Models in SageMaker: PyTorch Example</a></h2>
-<hr class="half-width"></section><section id="Hyperparameter-tuning"><h2 class="section-heading"><a href="Hyperparameter-tuning.html">Hyperparameter Tuning in SageMaker: Neural Network Example</a></h2>
+<hr class="half-width">
+<h3 id="Training-models-in-SageMaker-notebooks-figure-1">Figure 1</h3>
+<p aria-hidden="true">Image 1 of 1: ‘Timeline of a SageMaker training job showing which phases count as training time and which as billable time’</p>
+<p><img src="fig/job-billable-time.svg" alt="Timeline of a SageMaker training job showing which phases count as training time and which as billable time" class="figure"><code>describe_training_job</code> returns two durations:
+<code>TrainingTimeInSeconds</code> (your script running) and
+<code>BillableTimeInSeconds</code> (the time the instance was reserved
+for you, which also includes pulling the container and downloading
+data). SageMaker bills per second, with no rounding, so cost is billable
+seconds x instance count x hourly rate. We’ll wrap this in a small
+helper and call it after every job in this lesson.</p>
+<hr></section><section id="Training-models-in-SageMaker-notebooks-part2"><h2 class="section-heading"><a href="Training-models-in-SageMaker-notebooks-part2.html">Training Models in SageMaker: PyTorch Example</a></h2>
+<hr class="half-width">
+<h3 id="Training-models-in-SageMaker-notebooks-part2-figure-1">Figure 1</h3>
+<p aria-hidden="true">Image 1 of 1: ‘Two panels comparing instance_count=2 without distribution, where each instance trains on the full data, with data parallelism, where batches are split and gradients synced’</p>
+<figure><img src="fig/instance-count-vs-data-parallel.svg" alt="Two panels comparing instance_count=2 without distribution, where each instance trains on the full data, with data parallelism, where batches are split and gradients synced" class="figure mx-auto d-block"><div class="figcaption">Left: two instances each receive the full
+dataset and run the whole script independently, same model and twice the
+bill. Right: data parallelism splits the batches across instances and
+syncs gradients each step.</div>
+</figure><hr></section><section id="Hyperparameter-tuning"><h2 class="section-heading"><a href="Hyperparameter-tuning.html">Hyperparameter Tuning in SageMaker: Neural Network Example</a></h2>
 <hr class="half-width"></section><section id="RAG-overview"><h2 class="section-heading"><a href="RAG-overview.html">Overview of RAG Workflows on AWS</a></h2>
-<hr class="half-width"></section><section id="RAG-Bedrock"><h2 class="section-heading"><a href="RAG-Bedrock.html">RAG with Bedrock</a></h2>
+<hr class="half-width">
+<h3 id="RAG-overview-figure-1">Figure 1</h3>
+<p aria-hidden="true">Image 1 of 1: ‘Diagram of the RAG pipeline with the embedder and generator highlighted as the two model calls’</p>
+<figure><img src="fig/rag-pipeline.svg" alt="Diagram of the RAG pipeline with the embedder and generator highlighted as the two model calls" class="figure mx-auto d-block"><div class="figcaption">RAG pipeline: PDFs are chunked and embedded
+once; per question, the question is embedded, the top-k chunks are
+retrieved by cosine similarity, and a generator answers from question
+plus chunks. The embedder and generator are the only parts that change
+between episodes.</div>
+</figure><hr></section><section id="RAG-Bedrock"><h2 class="section-heading"><a href="RAG-Bedrock.html">RAG with Bedrock</a></h2>
 <hr class="half-width"></section><section id="RAG-Processing-jobs"><h2 class="section-heading"><a href="RAG-Processing-jobs.html">RAG with Processing Jobs</a></h2>
 <hr class="half-width"></section><section id="Finetuning-BadgerScribe"><h2 class="section-heading"><a href="Finetuning-BadgerScribe.html">Fine-tuning a Vision-Language Model with Training Jobs</a></h2>
-<hr class="half-width"></section><section id="RAG-GPU-notebook"><h2 class="section-heading"><a href="RAG-GPU-notebook.html">(Optional) RAG with a Notebook GPU</a></h2>
+<hr class="half-width">
+<h3 id="Finetuning-BadgerScribe-figure-1">Figure 1</h3>
+<p aria-hidden="true">Image 1 of 1: ‘Stacked bar chart of bytes per parameter for inference versus LoRA versus full fine-tuning’</p>
+<figure><img src="fig/memory-per-parameter.svg" alt="Stacked bar chart of bytes per parameter for inference versus LoRA versus full fine-tuning" class="figure mx-auto d-block"><div class="figcaption">Bars of GPU memory per parameter: 1 byte for FP8
+inference, 2 for bf16 inference, about 2.5 for a LoRA fine-tune, 16 for
+a full mixed-precision fine-tune made of weights, gradients, fp32 master
+weights and Adam moments</div>
+</figure><hr></section><section id="RAG-GPU-notebook"><h2 class="section-heading"><a href="RAG-GPU-notebook.html">(Optional) RAG with a Notebook GPU</a></h2>
 <hr class="half-width"></section><section id="CLI-equivalents"><h2 class="section-heading"><a href="CLI-equivalents.html">(Optional) The Same Jobs from the Terminal</a></h2>
 <hr class="half-width"></section><section id="Resource-management-cleanup"><h2 class="section-heading"><a href="Resource-management-cleanup.html">Resource Management and Monitoring</a></h2>
 <hr class="half-width"></section>

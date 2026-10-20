@@ -702,7 +702,9 @@ on their own; Bedrock is called as an API per token</div>
 data and every job’s outputs. The notebook instance is where you work;
 it is small because it only launches things. SageMaker jobs are where
 compute happens, on an instance that exists only for the job. Bedrock is
-an API: no instance at all.</p>
+an API: no instance at all. Everything the notebook does here can also
+be done from the AWS command line or from Python on your own machine;
+the optional last episode shows the CLI equivalents.</p>
 </div>
 <div class="section level3">
 <h3 id="lesson-outline">Lesson outline<a class="anchor" aria-label="anchor" href="#lesson-outline"></a>
@@ -946,7 +948,12 @@ experiments.</li>
 <h5 id="sign-in-to-the-aws-management-console">1. Sign in to the AWS Management Console<a class="anchor" aria-label="anchor" href="#sign-in-to-the-aws-management-console"></a>
 </h5>
 <ul>
-<li>Log in to AWS Console using your credentials.</li>
+<li>Log in to the AWS Console through the sign-in link your instructor
+emailed you. It looks like
+<code>https://&lt;org&gt;.awsapps.com/start/#/console?account_id=...&amp;role_name=...</code>
+and opens the console directly in the workshop account and role after
+you sign in with your university login. Working on your own account, use
+the regular console sign-in instead.</li>
 </ul>
 </div>
 <div class="section level5">
@@ -1275,7 +1282,7 @@ sizes: 10 GB, 100 GB, 1 TB (1024 GB)</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -1720,7 +1727,7 @@ and say which of them need the three tags.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
@@ -2245,7 +2252,7 @@ prefixes instead of a new bucket per episode?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>One way to do it:</li>
@@ -2993,7 +3000,7 @@ potential issues early. <strong>In your group, discuss:</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Which checks do you think are most critical before scaling up?</p>
 <ul>
@@ -3111,7 +3118,7 @@ group.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li><p><strong>Data Preprocessing</strong>: The script fills missing
@@ -3698,7 +3705,7 @@ needed.</p>
 <div class="section level4">
 <h4 id="what-did-that-cost">What did that cost?<a class="anchor" aria-label="anchor" href="#what-did-that-cost"></a>
 </h4>
-<p><code>describe_training_job</code> returns two durations:
+<p><img src="fig/job-billable-time.svg" alt="Timeline of a SageMaker training job showing which phases count as training time and which as billable time" class="figure"><code>describe_training_job</code> returns two durations:
 <code>TrainingTimeInSeconds</code> (your script running) and
 <code>BillableTimeInSeconds</code> (the time the instance was reserved
 for you, which also includes pulling the container and downloading
@@ -4615,7 +4622,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -4689,7 +4696,11 @@ was Option 1. Let’s now look at Option 2, starting with what
 <div class="section level3">
 <h3 id="what-instance_count2-does-on-its-own">What <code>instance_count=2</code> does on its own<a class="anchor" aria-label="anchor" href="#what-instance_count2-does-on-its-own"></a>
 </h3>
-<p>Setting <code>instance_count=2</code> on an estimator makes SageMaker
+<figure><img src="fig/instance-count-vs-data-parallel.svg" alt="Two panels comparing instance_count=2 without distribution, where each instance trains on the full data, with data parallelism, where batches are split and gradients synced" class="figure mx-auto d-block"><div class="figcaption">Left: two instances each receive the full
+dataset and run the whole script independently, same model and twice the
+bill. Right: data parallelism splits the batches across instances and
+syncs gradients each step.</div>
+</figure><p>Setting <code>instance_count=2</code> on an estimator makes SageMaker
 start two instances and run <strong>the full training script on each of
 them</strong>. Nothing is split:</p>
 <ul>
@@ -5718,7 +5729,7 @@ and the runtime print.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ul>
 <li>
@@ -5763,7 +5774,7 @@ in the notebook?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>The tuner can only vary what the script reads. Right now
 <code>train_nn.py</code> has no <code>--batch_size</code> argument and
@@ -5857,7 +5868,7 @@ any links that you are not going to use.
 </div>
 </section></section><section id="aio-RAG-overview"><p>Content from <a href="RAG-overview.html">Overview of RAG Workflows on AWS</a></p>
 <hr>
-<p>Last updated on 2026-10-19 |
+<p>Last updated on 2026-10-20 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/RAG-overview.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <div class="text-end">
@@ -5918,7 +5929,12 @@ approach to use.</li>
 </section><section><h2 class="section-heading" id="what-is-rag">What is RAG?<a class="anchor" aria-label="anchor" href="#what-is-rag"></a>
 </h2>
 <hr class="half-width">
-<p>RAG combines two steps:</p>
+<figure><img src="fig/rag-pipeline.svg" alt="Diagram of the RAG pipeline with the embedder and generator highlighted as the two model calls" class="figure mx-auto d-block"><div class="figcaption">RAG pipeline: PDFs are chunked and embedded
+once; per question, the question is embedded, the top-k chunks are
+retrieved by cosine similarity, and a generator answers from question
+plus chunks. The embedder and generator are the only parts that change
+between episodes.</div>
+</figure><p>RAG combines two steps:</p>
 <ol style="list-style-type: decimal">
 <li>
 <strong>Retrieve</strong>: Search your document store (vector DB or
@@ -7267,7 +7283,7 @@ month’s Bedrock spend by <code>Project</code>?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -7572,7 +7588,7 @@ whole WattBot pipeline on Bedrock”, and with one hour of the
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -8393,7 +8409,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -8450,7 +8466,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still installing
@@ -8507,7 +8523,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-Finetuning-BadgerScribe"><p>Content from <a href="Finetuning-BadgerScribe.html">Fine-tuning a Vision-Language Model with Training Jobs</a></p>
 <hr>
-<p>Last updated on 2026-10-19 |
+<p>Last updated on 2026-10-20 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/Finetuning-BadgerScribe.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <div class="text-end">
@@ -8759,7 +8775,11 @@ to tell a $5 run from a $500 one.</p>
 parameter for what you are doing, multiply by the parameter count, then
 add a few GB for activations (more for long sequences and big
 batches).</p>
-<table style="width:100%;" class="table">
+<figure><img src="fig/memory-per-parameter.svg" alt="Stacked bar chart of bytes per parameter for inference versus LoRA versus full fine-tuning" class="figure mx-auto d-block"><div class="figcaption">Bars of GPU memory per parameter: 1 byte for FP8
+inference, 2 for bf16 inference, about 2.5 for a LoRA fine-tune, 16 for
+a full mixed-precision fine-tune made of weights, gradients, fp32 master
+weights and Adam moments</div>
+</figure><table style="width:100%;" class="table">
 <colgroup>
 <col width="14%">
 <col width="14%">
@@ -11767,7 +11787,7 @@ stopped your notebook instance and walked away?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>A complete list for someone who did every episode, including the
 optional ones:</p>
