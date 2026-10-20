@@ -31,7 +31,8 @@ Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/06_Training-models-in-
 So we all can reference the helper functions using the same path, CD to the instance's root directory and make the lesson repository's `scripts/` importable. The training scripts for this episode (`train_xgboost.py`) and the next (`train_nn.py`) are in that folder.
 
 ```python
-%cd /home/ec2-user/SageMaker/   # work from the instance root: the %run, source_dir and download paths below are relative to it
+# Work from the instance root: the %run, source_dir and download paths below are relative to it
+%cd /home/ec2-user/SageMaker/
 import sys
 # Put the lesson's scripts/ folder on Python's import path
 sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")

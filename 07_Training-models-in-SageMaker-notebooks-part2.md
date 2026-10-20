@@ -60,7 +60,8 @@ print(f"region = {region}")
 We should also record our local instance information to report this information during testing. First, let's make sure we're starting in the same location to access helper functions
 
 ```python
-%cd /home/ec2-user/SageMaker/   # work from the instance root: the %run, source_dir and download paths below are relative to it
+# Work from the instance root: the %run, source_dir and download paths below are relative to it
+%cd /home/ec2-user/SageMaker/
 import sys
 sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
 import helpers
