@@ -141,5 +141,5 @@ Console: **Service Quotas → Amazon Bedrock**, and **Bedrock → Model access**
 
 ## Capacity fallbacks to have on a slide
 
-- Processing Jobs episode: if `ml.g6e.xlarge` capacity is short, `ml.g6e.2xlarge` (\$2.80/h, same GPU) is the only same-memory alternative; a 24 GB instance cannot hold the 27B model.
-- Fine-tuning episode: `ml.g6.xlarge` (\$1.13/h, L4, 24 GB) runs the mini job at about the same speed as `ml.g5.xlarge`.
+- Processing Jobs episode: if `ml.g6e.xlarge` capacity is short, `ml.g6e.2xlarge` (`$2.80`/h, same GPU) is the only same-memory alternative; a 24 GB instance cannot hold the 27B model.
+- Fine-tuning episode: `ml.g6.xlarge` (`$1.13`/h, L4, 24 GB) runs the mini job at about the same speed as `ml.g5.xlarge`.

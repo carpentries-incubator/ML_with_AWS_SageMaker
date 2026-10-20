@@ -97,7 +97,7 @@ Click **Create bucket**. The form has the sections below; most defaults are righ
 
 ### Wrong region costs money and breaks jobs
 
-A SageMaker training or processing job reads only from buckets in its own region; a bucket created elsewhere shows up later as "no such bucket" or "access denied" from the job. Reading data across regions from a notebook does work, but every byte is billed as inter-region transfer (about \$0.01-0.02 per GB each way), and a model that reads its training set every epoch pays that on every pass. Check the region before you click Create; it cannot be changed afterwards.
+A SageMaker training or processing job reads only from buckets in its own region; a bucket created elsewhere shows up later as "no such bucket" or "access denied" from the job. Reading data across regions from a notebook does work, but every byte is billed as inter-region transfer (about `$0.01`-0.02 per GB each way), and a model that reads its training set every epoch pays that on every pass. Check the region before you click Create; it cannot be changed afterwards.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -221,19 +221,19 @@ Two buckets appear in this workshop, and this is the only one you create. Your b
 S3 bucket storage incurs costs based on data storage, data transfer, and request counts.
 
 ### Storage costs
-- Storage is charged per GB per month. Typical: Storing 10 GB costs approximately \$0.23/month in S3 Standard (\$0.023/GB-month in us-east-1).
+- Storage is charged per GB per month. Typical: Storing 10 GB costs approximately `$0.23`/month in S3 Standard (`$0.023`/GB-month in us-east-1).
 - Pricing Tiers: S3 offers multiple storage classes (Standard, Intelligent-Tiering, Glacier, etc.), with different costs based on access frequency and retrieval times. Standard S3 fits most purposes. 
 
 ### Data transfer costs
 - **Uploading** data to S3 is free.
-- **Downloading** data (out of S3) incurs charges (~\$0.09/GB). Be sure to take note of this fee, as it can add up fast for large datasets.
-- **In-region transfer** (e.g., S3 to EC2) is free, while cross-region data transfer is charged (~\$0.02/GB). This is one reason your bucket and your SageMaker resources must be in the same region.
+- **Downloading** data (out of S3) incurs charges (~`$0.09`/GB). Be sure to take note of this fee, as it can add up fast for large datasets.
+- **In-region transfer** (e.g., S3 to EC2) is free, while cross-region data transfer is charged (~`$0.02`/GB). This is one reason your bucket and your SageMaker resources must be in the same region.
 - **Deleting** objects is free.
 
 ### Request costs
 Every operation on a bucket is an API request, and each one is billed by count. Two kinds matter: **GET** (`$0.0004` per 1,000), charged every time an object is read, and **PUT/LIST** (`$0.005` per 1,000), charged every time an object is written or a prefix is listed. One request is one object, whatever its size: reading a 5 GB file is one GET; reading 5,000 one-kilobyte files is 5,000 GETs.
 
-A GET happens whenever code opens an object: `pd.read_csv("s3://...")`, `s3.download_file(...)`, a training job pulling its input channel (one GET per object in the prefix), a PyTorch `Dataset` that fetches images from S3 one by one. The last case is the one that bites in ML: a dataset of 100,000 images read once per epoch is 100,000 GETs per epoch, and a 50-epoch run is 5 million requests, about \$2. Still small, but no longer zero, and a hyperparameter sweep multiplies it by the number of trials. The usual fix is the one SageMaker already uses for input channels: copy the data to the instance once (`File` mode) and read it from local disk during training.
+A GET happens whenever code opens an object: `pd.read_csv("s3://...")`, `s3.download_file(...)`, a training job pulling its input channel (one GET per object in the prefix), a PyTorch `Dataset` that fetches images from S3 one by one. The last case is the one that bites in ML: a dataset of 100,000 images read once per epoch is 100,000 GETs per epoch, and a 50-epoch run is 5 million requests, about `$2`. Still small, but no longer zero, and a hyperparameter sweep multiplies it by the number of trials. The usual fix is the one SageMaker already uses for input channels: copy the data to the instance once (`File` mode) and read it from local disk during training.
 
 For this lesson, requests round to nothing: two CSVs read a few dozen times. Over a research project, the costs rank in a stable order: **storage** is the one that accumulates (every dataset, model and output you forget to delete keeps billing monthly), **transfer out** is the one that spikes (one bulk download of results to a laptop), and **requests** matter only with many small files read repeatedly.
 
@@ -253,16 +253,16 @@ For this lesson, requests round to nothing: two CSVs read a few dozen times. Ove
 
 **Hints**
 
-- S3 storage cost: \$0.023 per GB per month (us-east-1)
-- Data transfer cost (download to your laptop): \$0.09 per GB (us-east-1 out to internet)
+- S3 storage cost: `$0.023` per GB per month (us-east-1)
+- Data transfer cost (download to your laptop): `$0.09` per GB (us-east-1 out to internet)
 - In-region transfer (reads by SageMaker jobs): free
-- `GET` requests cost: \$0.0004 per 1,000 requests (each model training will incur one `GET` request)
+- `GET` requests cost: `$0.0004` per 1,000 requests (each model training will incur one `GET` request)
 - Deleting objects: free
 - Check the [AWS S3 Pricing](https://aws.amazon.com/s3/pricing/) page for more details.
  
 **2. Repeat the above calculation using the following dataset sizes: 10 GB, 100 GB, 1 TB (1024 GB)**
 
-**3. Wrong region.** Suppose the 100 GB bucket had been created in us-east-1 but the SageMaker jobs run in us-east-2. The 100 training reads are now cross-region transfers at \$0.02 per GB each. What does that add, and how does it compare to the download charge?
+**3. Wrong region.** Suppose the 100 GB bucket had been created in us-east-1 but the SageMaker jobs run in us-east-2. The 100 training reads are now cross-region transfers at `$0.02` per GB each. What does that add, and how does it compare to the download charge?
 
 :::::::::::::::::::::::::::::::::::: solution
 
@@ -271,38 +271,38 @@ For this lesson, requests round to nothing: two CSVs read a few dozen times. Ove
 Using the S3 Standard rate in us-east-1:
 
 1. **1 GB**:  
-   - **Storage**: 1 GB * \$0.023 = \$0.023
-   - **Download**: 1 GB * \$0.09 = \$0.09  
-   - **GET Requests**: 100 requests * \$0.0004 per 1,000 = \$0.00004  
-   - **Deletion**: \$0
-   - **Total Cost**: **\$0.11304**
+   - **Storage**: 1 GB * `$0.023` = `$0.023`
+   - **Download**: 1 GB * `$0.09` = `$0.09`  
+   - **GET Requests**: 100 requests * `$0.0004` per 1,000 = `$0.00004`  
+   - **Deletion**: `$0`
+   - **Total Cost**: **`$0.11304`**
 
 2. **10 GB**:  
-   - **Storage**: 10 GB * \$0.023 = \$0.23
-   - **Download**: 10 GB * \$0.09 = \$0.90  
-   - **GET Requests**: 100 requests * \$0.0004 per 1,000 = \$0.00004  
-   - **Deletion**: \$0
-   - **Total Cost**: **\$1.13004**
+   - **Storage**: 10 GB * `$0.023` = `$0.23`
+   - **Download**: 10 GB * `$0.09` = `$0.90`  
+   - **GET Requests**: 100 requests * `$0.0004` per 1,000 = `$0.00004`  
+   - **Deletion**: `$0`
+   - **Total Cost**: **`$1.13004`**
 
 3. **100 GB**:  
-   - **Storage**: 100 GB * \$0.023 = \$2.30
-   - **Download**: 100 GB * \$0.09 = \$9.00  
-   - **GET Requests**: 100 requests * \$0.0004 per 1,000 = \$0.00004  
-   - **Deletion**: \$0
-   - **Total Cost**: **\$11.30004**
+   - **Storage**: 100 GB * `$0.023` = `$2.30`
+   - **Download**: 100 GB * `$0.09` = `$9.00`  
+   - **GET Requests**: 100 requests * `$0.0004` per 1,000 = `$0.00004`  
+   - **Deletion**: `$0`
+   - **Total Cost**: **`$11.30004`**
 
 4. **1 TB (1024 GB)**:  
-   - **Storage**: 1024 GB * \$0.023 = \$23.55
-   - **Download**: 1024 GB * \$0.09 = \$92.16  
-   - **GET Requests**: 100 requests * \$0.0004 per 1,000 = \$0.00004  
-   - **Deletion**: \$0
-   - **Total Cost**: **\$115.71004**
+   - **Storage**: 1024 GB * `$0.023` = `$23.55`
+   - **Download**: 1024 GB * `$0.09` = `$92.16`  
+   - **GET Requests**: 100 requests * `$0.0004` per 1,000 = `$0.00004`  
+   - **Deletion**: `$0`
+   - **Total Cost**: **`$115.71004`**
 
 These costs assume no additional request charges beyond those for storage, the download, and `GET` requests for training.
 
 Two things to notice. The `GET` line is the same four-thousandths of a cent at every size: request costs depend on how many objects you touch, not how big they are. And the download line grows from 80% of the total at 1 GB to almost all of it at 1 TB: for a dataset of any size, moving it out of AWS costs several times more than keeping it there for a month, so plan to keep large data in the region and bring code to it, not the other way round.
 
-3. **Wrong region, 100 GB**: 100 reads x 100 GB x \$0.02 = **\$200** of inter-region transfer, on top of the \$11.30 above. The one-time download to a laptop was \$9; the misplaced bucket costs twenty times that, silently, and keeps costing with every job. This is why the region is the first setting on the create-bucket form and why the warning above tells you to check it before clicking Create.
+3. **Wrong region, 100 GB**: 100 reads x 100 GB x `$0.02` = **`$200`** of inter-region transfer, on top of the `$11.30` above. The one-time download to a laptop was `$9`; the misplaced bucket costs twenty times that, silently, and keeps costing with every job. This is why the region is the first setting on the create-bucket form and why the warning above tells you to check it before clicking Create.
 
 
 ::::::::::::::::::::::::::::::::::::::::::::::::

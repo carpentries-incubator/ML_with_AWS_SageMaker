@@ -77,26 +77,26 @@ Link: https://github.com/ekristen/aws-nuke/releases
 
 Run the following script:
 
-mkdir -p "\$HOME/bin"
-cd "\$HOME"
+`mkdir -p "$HOME/bin"`
+`cd "$HOME"`
 
 curl -fL   
 -o aws-nuke-v3.67.0-linux-amd64.tar.gz   
 https://github.com/ekristen/aws-nuke/releases/download/v3.67.0/aws-nuke-v3.67.0-linux-amd64.tar.gz
 
 tar -xzf aws-nuke-v3.67.0-linux-amd64.tar.gz
-mv aws-nuke "\$HOME/bin/aws-nuke"
-chmod 700 "\$HOME/bin/aws-nuke"
+`mv aws-nuke "$HOME/bin/aws-nuke"`
+`chmod 700 "$HOME/bin/aws-nuke"`
 
-export PATH="\$HOME/bin:\$PATH"
+`export PATH="$HOME/bin:$PATH"`
 aws-nuke --version
 
 To make aws-nuke stay on your PATH in later CloudShell sessions:
 
-**echo 'export PATH="\$HOME/bin:\$PATH"' >> \~/.bashrc
-source \~/.bashrc**
+`echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc`
+`source ~/.bashrc`
 
-Reminder: CloudShell is based on Amazon Linux, and software saved in \$HOME
+Reminder: CloudShell is based on Amazon Linux, and software saved in `$HOME`
 persists; software installed elsewhere may disappear after the session ends.
 
 ### 5\. DO a dry run first
@@ -106,7 +106,7 @@ files you want to remove before executing the actual script.
 
 Here is the script to do so:
 
-**aws-nuke run --config "\$HOME/nuke-config.yml"**
+`aws-nuke run --config "$HOME/nuke-config.yml"`
 
 This should list resources it would remove, without deleting them. Review the
 output carefully—especially S3 buckets, IAM-related resources, and the displayed
@@ -117,13 +117,13 @@ account identity.
 
 Only if the dry-run output is correct and this is truly the intended non-production account:
 
-**aws-nuke run --config "\$HOME/nuke-config.yml" --no-dry-run**
+`aws-nuke run --config "$HOME/nuke-config.yml" --no-dry-run`
 
 Do not add --no-prompt / --force on your first real run; leave the confirmation
 prompt enabled as an additional safeguard.
 
 
-Oftentimes when running **aws-nuke run --config "\$HOME/nuke-config.yml"**, you
+Oftentimes when running `aws-nuke run --config "$HOME/nuke-config.yml"`, you
 will run into an error stating:
 
 WARN\[0000] 'targets' is deprecated. Please use 'includes' instead.
@@ -149,7 +149,7 @@ Then add an alias in the AWS Console:
 5. Do not use a name containing prod, production, or live.
 
 Then run the dry-run again:
-**aws-nuke run --config "\$HOME/nuke-config.yml"**
+`aws-nuke run --config "$HOME/nuke-config.yml"`
 
 Congratulations, you have reached the end of this tutorial! By now, all scripts
 should work and the specified notebooks/buckets you wanted to clean should

@@ -71,12 +71,12 @@ aws sagemaker list-notebook-instances --query 'NotebookInstances[].[NotebookInst
 aws sagemaker list-endpoints       # must print an empty list on the workshop account
 ```
 
-`describe-training-job` is the call behind `job_cost_report()` in the training episodes. The same two numbers are there: training time, and billable time, which includes the startup you paid for.
+`describe-training-job` is the call behind `job_cost_report()` in the training episodes. The same number is there: billable time, which includes the container pull and data download you paid for.
 
 ```bash
 JOB=<a training job name from the list above>
 aws sagemaker describe-training-job --training-job-name $JOB \
-  --query '{status:TrainingJobStatus, instance:ResourceConfig.InstanceType, count:ResourceConfig.InstanceCount, training_s:TrainingTimeInSeconds, billable_s:BillableTimeInSeconds, tags:Tags}'
+  --query '{status:TrainingJobStatus, instance:ResourceConfig.InstanceType, count:ResourceConfig.InstanceCount, billable_s:BillableTimeInSeconds, tags:Tags}'
 ```
 
 Cost is billable seconds × instance count × the hourly rate, exactly as in the notebooks. Tags are returned by a separate call, which is also how you find the untagged job that will show up as "unallocated" on the bill:
@@ -114,7 +114,7 @@ aws s3 sync ./my-data/ s3://<your-bucket>/my-data/                         # upl
 aws s3 rm s3://<your-bucket>/scratch/ --recursive                          # delete a prefix; this one asks no questions
 ```
 
-Downloads to a laptop are a transfer out of AWS (\$0.09 per GB). For anything larger than a few hundred megabytes, keep the data in the region and let a job read it, which is the lesson's pattern.
+Downloads to a laptop are a transfer out of AWS (`$0.09` per GB). For anything larger than a few hundred megabytes, keep the data in the region and let a job read it, which is the lesson's pattern.
 
 ## 5. Launch: one training job, as JSON
 
@@ -169,7 +169,7 @@ Estimate first, compare after, as always: this is the same ~4 minutes billable o
 ### What the lesson never does from the CLI
 
 - `aws sagemaker create-endpoint` / `create-endpoint-config`: an endpoint is a server that runs until you delete it, with no runtime cap. The lesson serves models with processing jobs and Bedrock so that nothing of this kind exists in the account.
-- `aws sagemaker create-notebook-instance` with a GPU type: a GPU notebook is \$60 a day while you are asleep. The optional GPU-notebook episode creates one through the console, where it stays visible, and deletes it the same hour.
+- `aws sagemaker create-notebook-instance` with a GPU type: a GPU notebook is `$60` a day while you are asleep. The optional GPU-notebook episode creates one through the console, where it stays visible, and deletes it the same hour.
 - `aws ec2 run-instances`: bare virtual machines have no tags required, no runtime cap and no SageMaker job list to appear in.
 
 On the workshop account all three are denied by the permission set, as is any instance type outside the lesson's list and any job without the three tags; the instructor page *Account preparation checklist* has the policy. On your own account, the same denies take about fifteen minutes to set up.

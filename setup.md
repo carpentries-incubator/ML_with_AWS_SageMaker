@@ -30,17 +30,17 @@ If you are attending this lesson at UW-Madison, the instructors will provide a s
 * These shared AWS credits should not be wasted, as we repurpose them for additional training events each year. Three rules follow from that:
     * Stick to the lesson materials, so that expensive pipelines (e.g., training/tuning LLMs) do not lead to high costs and wasted credits.
     * Do not use any tools we do not explicitly cover without discussing with the instructors first.
-    * Stop (and at the end of the workshop, delete) every notebook instance you create. A GPU notebook left running costs about \$60 a day.
+    * Stop (and at the end of the workshop, delete) every notebook instance you create. A GPU notebook left running costs about `$60` a day.
 
 ### Your own AWS account
 
 If you are not attending through the shared account, follow these steps:
 
 1. Go to the [AWS Free Tier page](https://aws.amazon.com/free/) and click **Create a Free Account**.
-2. Complete the sign-up process. AWS's free tier covers very little of this workshop: SageMaker GPU instances, Bedrock calls and Processing jobs are all billed. Following the materials end to end costs about **\$30** (the Titanic episodes a few dollars, the Bedrock episode cents, the Processing Jobs episode about \$2, the fine-tuning episode about \$1.55 in class plus about \$1.75 for the optional homework). The one way to spend much more is to leave a GPU notebook instance running: about \$60 a day. Set a [Budgets alert](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html) at \$50 before you start.
+2. Complete the sign-up process. AWS's free tier covers very little of this workshop: SageMaker GPU instances, Bedrock calls and Processing jobs are all billed. Following the materials end to end costs about **`$30`** (the Titanic episodes a few dollars, the Bedrock episode cents, the Processing Jobs episode about `$2,` the fine-tuning episode about `$1.55` in class plus about `$1.75` for the optional homework). The one way to spend much more is to leave a GPU notebook instance running: about `$60` a day. Set a [Budgets alert](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html) at `$50` before you start.
 3. **Request GPU quotas three to four weeks before the workshop.** New accounts have a quota of 0 for GPU instances, and increases can take weeks. In the console, go to **Service Quotas → Amazon SageMaker** and request: `ml.g5.xlarge for training job usage` (1), `ml.g4dn.xlarge for training job usage` (1), `ml.g5.xlarge for processing job usage` (2), `ml.g6e.xlarge for processing job usage` (1), and `ml.g6e.xlarge for notebook instance usage` (1, optional GPU-notebook episode only). A justification like "self-paced machine learning workshop" is enough.
 4. Enable the two Bedrock models the RAG episode uses, under **Amazon Bedrock → Model access**: DeepSeek V3 and Titan Text Embeddings V2.
-5. Stage the shared datasets yourself, since there is no instructor bucket: the commands are in the lesson's instructor page *Shared data bucket: staging before each term*.
+5. Stage the shared datasets yourself, since there is no instructor bucket: the WattBot files for the RAG episodes, and the Badger Scribe data and the CHURRO-3B weights for the fine-tuning episode. The commands are in the lesson's instructor page *Shared data bucket: staging before each term*; set `shared_bucket` in those episodes to your own bucket. The fine-tuning episode's Step 3 compares against a full run the instructor staged; on your own account, run the homework's full fine-tune yourself instead.
 
 :::::::::::::::::::::::::::::::::::::
 

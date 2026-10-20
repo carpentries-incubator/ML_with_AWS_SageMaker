@@ -4,6 +4,8 @@ title: 'Shared data bucket: staging before each term'
 
 Learners create exactly one bucket of their own (S3 episode) and write every output there. Everything larger than the Titanic CSVs lives in **one shared, read-only bucket** that instructors stage before class, so the class holds one copy of each dataset instead of fifty. This page is the whole staging procedure; the episodes assume the layout below.
 
+The ready-to-paste version is the *From CloudShell* section at the end of this page; the sections before it explain each step.
+
 ## Layout
 
 ```
@@ -97,6 +99,78 @@ rm -rf churro-3B
 ```
 
 About 7.5 GB; it only needs redoing if the Hub repository changes or the bucket is rebuilt.
+
+## The whole procedure, from CloudShell
+
+The learner execution role on a notebook instance can create the bucket but is refused on tagging, bucket policy and uploads (the bucket policy deliberately grants it read only). So the staging is done as your own SSO identity in **CloudShell** (console toolbar, same region). Three blocks, pasted in order. CloudShell's home is 1 GB, which is why the work happens one asset at a time under `/tmp` and the model is streamed rather than downloaded.
+
+**Block 1: bucket, tags, public access, policy.** Fill in the account id.
+
+```bash
+BUCKET=ml-marathon-shared
+REGION=us-east-2
+ACCOUNT_ID=123456789012
+aws s3api head-bucket --bucket $BUCKET 2>/dev/null || aws s3api create-bucket --bucket $BUCKET --region $REGION --create-bucket-configuration LocationConstraint=$REGION
+aws s3api put-bucket-tagging --bucket $BUCKET --tagging 'TagSet=[{Key=Project,Value=Workshop},{Key=Name,Value=Everyone},{Key=Purpose,Value=Storage}]'
+aws s3api put-public-access-block --bucket $BUCKET --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+cat > /tmp/policy.json <<JSON
+{"Version": "2012-10-17", "Statement": [{"Effect": "Allow",
+  "Principal": {"AWS": ["arn:aws:iam::$ACCOUNT_ID:role/ml-sagemaker-use", "arn:aws:iam::$ACCOUNT_ID:role/ml-sagemaker-bedrock-use"]},
+  "Action": ["s3:GetObject", "s3:ListBucket"],
+  "Resource": ["arn:aws:s3:::$BUCKET", "arn:aws:s3:::$BUCKET/*"]}]}
+JSON
+aws s3api put-bucket-policy --bucket $BUCKET --policy file:///tmp/policy.json
+```
+
+**Block 2: WattBot and Badger Scribe.**
+
+```bash
+REPO=https://github.com/carpentries-incubator/ML_with_AWS_SageMaker
+V=1   # Badger Scribe data release version
+rm -rf /tmp/stage && mkdir -p /tmp/stage && cd /tmp/stage
+git clone -q --depth 1 $REPO lesson
+pip install -q --user pandas requests huggingface_hub
+unzip -q -o lesson/data/data.zip -d data
+mkdir -p wattbot && cp data/data/wattbot/metadata.csv data/data/wattbot/train_QA.csv wattbot/
+python3 lesson/scripts/build_wattbot_corpus.py --metadata wattbot/metadata.csv --out wattbot/corpus.zip
+aws s3 sync wattbot/ s3://$BUCKET/wattbot/
+R=$REPO/releases/download/badger-scribe-data-v$V
+for a in labels images-train images-test; do
+  rm -rf bs && mkdir -p bs
+  curl -sSL -o bs/$a.zip $R/badger-scribe-v$V-$a.zip
+  unzip -q -o bs/$a.zip -d bs/badger-scribe && rm bs/$a.zip
+  aws s3 sync bs/badger-scribe/ s3://$BUCKET/badger-scribe/
+  rm -rf bs
+done
+```
+
+**Block 3: CHURRO-3B weights**, streamed from Hugging Face into S3 file by file (about 7.5 GB, ten minutes or so, nothing written to disk).
+
+```bash
+python3 - <<'EOF'
+import boto3, requests
+from huggingface_hub import HfApi, hf_hub_url
+s3 = boto3.client("s3")
+bucket, model_id, prefix = "ml-marathon-shared", "stanford-oval/churro-3B", "badger-scribe/model/churro-3B"
+for f in [f for f in HfApi().list_repo_files(model_id) if not f.startswith(".")]:
+    with requests.get(hf_hub_url(model_id, f), stream=True, timeout=60) as r:
+        r.raise_for_status(); r.raw.decode_content = True
+        s3.upload_fileobj(r.raw, bucket, f"{prefix}/{f}")
+    print("uploaded", f)
+EOF
+```
+
+**Check, then clean up.**
+
+```bash
+aws s3 ls s3://$BUCKET/ --recursive --summarize | tail -2
+aws s3 ls s3://$BUCKET/wattbot/
+aws s3 ls s3://$BUCKET/badger-scribe/
+aws s3 ls s3://$BUCKET/badger-scribe/model/churro-3B/
+cd / && rm -rf /tmp/stage
+```
+
+Still by hand: run the fine-tuning episode's homework estimator once and copy `train_summary.json`, `eval_before.csv` and `eval_after.csv` from its `model.tar.gz` to `s3://ml-marathon-shared/badger-scribe/instructor/full-run/`.
 
 ## 5. Keep it, or rebuild it
 

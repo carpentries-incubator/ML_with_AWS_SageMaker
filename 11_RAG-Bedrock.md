@@ -112,6 +112,7 @@ from typing import Dict, Any, List
 from pathlib import Path
 
 import boto3
+import time
 from botocore.config import Config
 from botocore.exceptions import ClientError
 import pandas as pd
@@ -625,6 +626,7 @@ else:
     all_embeddings = list(np.load(emb_partial_path)) if emb_partial_path.exists() else []
     start = len(all_embeddings)
     print(f"Computing embeddings via Bedrock from chunk {start} of {len(chunked_docs)}...")
+    t0 = time.time()
 
     for idx in range(start, len(chunked_docs)):
         all_embeddings.append(bedrock_embed_text(chunked_docs[idx]["text"]))
@@ -632,6 +634,7 @@ else:
             np.save(emb_partial_path, np.array(all_embeddings, dtype="float32"))
             print(f"Embedded {idx + 1} / {len(chunked_docs)} chunks (progress saved)")
 
+    print(f"Embedded {len(chunked_docs) - start} chunks in {time.time() - t0:.1f} seconds")
     chunk_embeddings = np.array(all_embeddings, dtype="float32")   # the embedding matrix: one row per chunk, one column per dimension
     np.save(emb_save_path, chunk_embeddings)
     emb_partial_path.unlink(missing_ok=True)
@@ -717,6 +720,7 @@ and explanation phases call local models instead of Bedrock-hosted ones.
 
 ```python
 results = []
+run_start = time.time()
 
 # For quick smoke tests, slice train_df (e.g., train_df.head(5))
 for _, row in train_df.iterrows():
@@ -741,6 +745,7 @@ for _, row in train_df.iterrows():
     results.append(out)
 
 results_df = pd.DataFrame(results)
+print(f"Answered {len(results_df)} questions in {(time.time() - run_start) / 60:.1f} min")
 
 output_dir = "outputs"
 os.makedirs(output_dir, exist_ok=True)
@@ -770,7 +775,7 @@ scored_df = compute_wattbot_score(
 
 ### What did that run cost?
 
-Every `converse` response carried a `usage` block, and `call_bedrock_chat` kept them all in `bedrock_usage`. Sum the input and output tokens over the evaluation run and price them at the current on-demand rates for DeepSeek V3 on the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/) (fill the two prices in below). Add the embedding step: ~3,000 chunks of 1,200 characters at Titan Text Embeddings V2's \$0.02 per million input tokens. How does the total compare with the overview's estimate for "the whole WattBot pipeline on Bedrock", and with one hour of the `ml.g6e.xlarge` the Processing Jobs episode rents?
+Every `converse` response carried a `usage` block, and `call_bedrock_chat` kept them all in `bedrock_usage`. Sum the input and output tokens over the evaluation run and price them at the current on-demand rates for DeepSeek V3 on the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/) (fill the two prices in below). Add the embedding step: ~3,000 chunks of 1,200 characters at Titan Text Embeddings V2's `$0.02` per million input tokens. How does the total compare with the overview's estimate for "the whole WattBot pipeline on Bedrock", and with one hour of the `ml.g6e.xlarge` the Processing Jobs episode rents?
 
 :::::::::::::::::::::::: solution
 
@@ -791,7 +796,7 @@ print(f"~{embed_tokens:,.0f} embedding tokens -> ${embed_cost:.3f}")
 print(f"Total ~${gen_cost + embed_cost:.2f}; one hour of ml.g6e.xlarge is $2.61")
 ```
 
-With ~40 questions, two calls each and ~3,000-token prompts, the run is on the order of 250K input and 20K output tokens: cents, not dollars, at any price in DeepSeek V3's class, plus about two cents of embeddings. That matches the overview's "well under \$1" for the whole pipeline, and it is a small fraction of a single GPU-hour.
+With ~40 questions, two calls each and ~3,000-token prompts, the run is on the order of 250K input and 20K output tokens: cents, not dollars, at any price in DeepSeek V3's class, plus about two cents of embeddings. That matches the overview's "well under `$1`" for the whole pipeline, and it is a small fraction of a single GPU-hour.
 
 :::::::::::::::::::::::::::::::::
 

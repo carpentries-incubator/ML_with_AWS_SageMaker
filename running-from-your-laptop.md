@@ -43,7 +43,7 @@ jupyter lab
 | Every episode's setup cell | `region = boto3.Session().region_name` | Unchanged; it now reads the profile's default region. If it prints `None`, set `AWS_DEFAULT_REGION` or re-run `aws configure sso`. |
 | Accessing S3, PyTorch episodes | `%cd /home/ec2-user/SageMaker/`, paths under it | Any folder you like; clone the lesson repository there and point the `sys.path.insert` line at its `scripts/` folder. |
 | PyTorch episode | `helpers.get_notebook_instance_info(...)` to label the local run | There is no notebook instance to describe. Replace with `local_instance = "laptop"` (or your CPU model). The local timing is still the point of the cell. |
-| Accessing S3 episode | Reads directly from S3 in the same region, free | A `read_csv` or `download_file` on the laptop pulls the data out of AWS at \$0.09/GB. Jobs you launch from the laptop are unaffected: they read S3 in-region. The lesson's data is megabytes; for larger datasets, let jobs read it and keep only results on the laptop. |
+| Accessing S3 episode | Reads directly from S3 in the same region, free | A `read_csv` or `download_file` on the laptop pulls the data out of AWS at `$0.09`/GB. Jobs you launch from the laptop are unaffected: they read S3 in-region. The lesson's data is megabytes; for larger datasets, let jobs read it and keep only results on the laptop. |
 | Optional GPU-notebook episode | Needs a `ml.g6e.xlarge` notebook instance | Does not apply. The Processing-jobs episode is the laptop-friendly version of the same work. |
 | Resource management | Stop the notebook instance when you leave | Nothing to stop; your laptop is the controller. Everything else on the cleanup list (buckets, jobs, Bedrock profiles, endpoints) is the same. |
 

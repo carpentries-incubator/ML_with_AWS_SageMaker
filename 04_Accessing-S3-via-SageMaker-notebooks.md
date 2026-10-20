@@ -108,7 +108,7 @@ train_data.head()
 ```
 
 ### B) Download copy into notebook environment
-In some cases, downloading a local copy of the dataset may be useful, such as when performing repeated reads in an interactive notebook session. This download costs nothing: it moves data from S3 to a SageMaker notebook instance in the same region, which AWS does not bill. The same `download_file` run on your laptop would be a transfer out of AWS at \$0.09 per GB.
+In some cases, downloading a local copy of the dataset may be useful, such as when performing repeated reads in an interactive notebook session. This download costs nothing: it moves data from S3 to a SageMaker notebook instance in the same region, which AWS does not bill. The same `download_file` run on your laptop would be a transfer out of AWS at `$0.09` per GB.
 
 **Pros**:
 
@@ -296,7 +296,7 @@ file_list
 
 ### Challenge: before and after
 
-1. Using `helpers.get_s3_bucket_size(bucket_name)`, record the size of your bucket. Then create a second file (say `docs/Notes2.txt` with a few lines of text), upload it under the `docs/` prefix, and measure the bucket size again. By how much did it grow, and what does that cost per month at \$0.023 per GB?
+1. Using `helpers.get_s3_bucket_size(bucket_name)`, record the size of your bucket. Then create a second file (say `docs/Notes2.txt` with a few lines of text), upload it under the `docs/` prefix, and measure the bucket size again. By how much did it grow, and what does that cost per month at `$0.023` per GB?
 2. The next episode launches a training job that writes its outputs to your bucket. Why does the lesson keep everything in one bucket, organised with prefixes like `docs/`, rather than creating a bucket per task?
 
 :::::::::::::::::::::::::::::::::::: solution
@@ -314,7 +314,7 @@ size_after = helpers.get_s3_bucket_size(bucket_name)
 print(size_before, size_after)
 ```
 
-The bucket grows by the size of the file (a few hundred bytes here), and at \$0.023 per GB-month that is well under a thousandth of a cent per month. The same two lines, run before and after a training job, tell you what the job wrote and whether something is accumulating that you should clean up.
+The bucket grows by the size of the file (a few hundred bytes here), and at `$0.023` per GB-month that is well under a thousandth of a cent per month. The same two lines, run before and after a training job, tell you what the job wrote and whether something is accumulating that you should clean up.
 
 2. A prefix is just part of the object key, so `docs/Notes.txt`, `xgboost/output/...` and `wattbot/chunks.jsonl` can all live in one bucket and still be listed, downloaded or deleted as groups. One bucket means one policy, one set of tags, one region to get right, and one thing to empty and delete at the end; a bucket per task would repeat the setup each time and lengthen the cleanup list.
 
