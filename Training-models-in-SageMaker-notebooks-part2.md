@@ -68,7 +68,7 @@ import helpers
 ```
 
 ```python
-notebook_instance_name = 'SinkOrSwim-DoeJohn-TrainClassifier' # replace with your notebook instance name
+notebook_instance_name = 'SinkOrSwim-DoeJohn' # replace with your notebook instance name
 
 local_instance_info = helpers.get_notebook_instance_info(notebook_instance_name, region)
 local_instance = local_instance_info['InstanceType']
