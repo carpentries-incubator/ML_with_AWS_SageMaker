@@ -24,19 +24,19 @@ Amazon SageMaker provides a managed environment to simplify the process of build
 ### What a SageMaker notebook instance is
 A **SageMaker notebook instance** is a virtual machine that AWS runs for you with JupyterLab already installed, a set of Python kernels that come with the AWS SDKs (`boto3` and the SageMaker Python SDK), and an IAM role attached that decides what the code running on it may do in your account. You create it from the console and open JupyterLab in a browser tab. It is billed per second while it is running and nothing while it is stopped, and the files you keep under `/home/ec2-user/SageMaker/` survive a stop.
 
-### Why we work from a notebook instance in this lesson
-The SageMaker SDK runs anywhere Python does, so the lesson could be run from a laptop. We use a notebook instance for three reasons:
-
-- **Identity comes from the instance, not from a file on your machine.** The IAM role attached to the notebook is what authorizes every call it makes. Nobody installs the AWS CLI, configures credentials, or has an access key that can end up in a notebook, a shell history or a GitHub commit.
-- **Everyone has the same environment.** The kernels, the SDK version and the paths are identical for every learner, so a cell that works for the instructor works for you.
-- **No egress charges.** AWS bills data transfer when it leaves AWS, not when it moves within a region. The notebook instance sits in the same region as your bucket, so reading or downloading files from S3 to the instance is free. Pulling the same files to a laptop costs $0.09 per GB wherever the laptop is: "region" means the AWS data center your resources live in, and a machine outside AWS is never in one.
-
 ### Using the notebook as a controller
 In this setup, the notebook instance functions as a *controller* to manage more resource-intensive compute tasks. By selecting a minimal instance (e.g., `ml.t3.medium`: 2 vCPUs, 4 GB of memory, $0.05 per hour), you can perform lightweight operations while leveraging the **SageMaker Python SDK** to launch scalable compute instances for model training, batch processing, and hyperparameter tuning. Those instances start, run your script, write their results to S3, and shut themselves down. This approach minimizes costs while accessing the full power of SageMaker for demanding tasks.
 
 ![The notebook instance launches SageMaker jobs that read from and write to S3 and end on their own, and calls Bedrock as an API](fig/aws-ml-ecosystem.svg){alt="Diagram from the overview episode: S3 buckets at the top, the notebook instance on the left launching SageMaker training, tuning and processing jobs, and Bedrock on the right"}
 
 The notebook is the box on the left of the diagram from the overview episode. Everything else in the picture is launched or called from it, and every later episode uses this same instance.
+
+### Why we work from a notebook instance in this lesson
+The SageMaker SDK runs anywhere Python does, so the lesson could be run from a laptop. We use a notebook instance for three reasons:
+
+- **Identity comes from the instance, not from a file on your machine.** The IAM role attached to the notebook is what authorizes every call it makes. Nobody installs the AWS CLI, configures credentials, or has an access key that can end up in a notebook, a shell history or a GitHub commit.
+- **Everyone has the same environment.** The kernels, the SDK version and the paths are identical for every learner, so a cell that works for the instructor works for you.
+- **No egress charges.** AWS bills data transfer when it leaves AWS, not when it moves within a region. The notebook instance sits in the same region as your bucket, so reading or downloading files from S3 to the instance is free. Pulling the same files to a laptop costs $0.09 per GB wherever the laptop is: "region" means the AWS data center your resources live in, and a machine outside AWS is never in one.
 
 We'll follow these steps to create our first "SageMaker notebook instance".
 
@@ -126,7 +126,6 @@ A notebook instance bills for every second it is **InService**. When you step aw
 - Use a minimal SageMaker notebook instance as a controller to manage larger, resource-intensive tasks.
 - The notebook does not do the heavy computation; later episodes use it to launch training, tuning and processing jobs on separate instances.
 - Tags can help track costs effectively, especially in multi-project or team settings.
-
 - Stop the notebook instance whenever you leave, and delete it when the workshop is over.
 - Use the SageMaker SDK documentation to explore additional options for managing compute resources in AWS.
 
