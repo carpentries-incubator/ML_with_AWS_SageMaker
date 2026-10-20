@@ -1,0 +1,921 @@
+---
+title: "Fine-tuning a Vision-Language Model with Training Jobs"
+teaching: 105
+exercises: 75
+---
+
+:::::::::::::::::::::::::::::::::::::: questions
+
+- When is fine-tuning worth it?
+- Why does fine-tuning cost anywhere from a dollar to tens of thousands, and how do I estimate where my run falls *before* I launch it?
+- How do I run a GPU fine-tune as a SageMaker training job so the meter stops the moment it finishes?
+- How do I measure whether the fine-tune helped?
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::: objectives
+
+- Explain what drives the cost of a fine-tuning run (model size × tokens × epochs × number of attempts) and why the same four habits apply at `$1` and at `$10,000`: a time cap, a small first run, and an estimate written down before launch.
+- Launch a LoRA fine-tune of a 3B vision-language model (CHURRO-3B) as a `HuggingFace` training job on a single 24 GB GPU, with tags, a unique job name and a `max_run` cap.
+- Read a job's billable time and compare it to the estimate.
+- Compare the base model and the fine-tuned model on held-out pages using the competition's own character error rate (CER).
+- Know how to scale the same job up to the full dataset (homework) and to multi-GPU instances for larger models.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/09_Finetuning-BadgerScribe.ipynb`. Select the **`conda_pytorch`** kernel (`conda_pytorch_p310` on older instances).
+
+## Why fine-tune an LLM
+
+The training episodes so far trained small models from scratch. This episode fine-tunes a large language model: a vision-language model with billions of parameters, pretrained on more data and compute than any lab could repeat. That is what makes it a different kind of job, in what it can do and in what it costs.
+
+General-purpose models are trained on the average of the internet, and research problems are rarely average. A 19th-century German hand, a lab's own annotation conventions, species names, a regional dialect, the layout of a specific archive: the largest commercial model has seen little of it, and no prompt can make up for that.
+
+Done on the right data, a small fine-tuned model beats a much larger general one. The model we fine-tune in this episode is itself the example: [CHURRO](https://github.com/stanford-oval/Churro), a 3-billion-parameter vision-language model, was fine-tuned from Qwen2.5-VL-3B on about 100,000 pages of historical documents, and its authors report that it exceeds the accuracy of Gemini 2.5 Pro on historical text recognition at 15.5x lower cost ([paper](https://arxiv.org/abs/2509.19768)). A model that size also runs on one GPU you control, which matters when the data cannot leave your institution, when results have to be reproducible with fixed weights, and when the job is a million pages rather than a demo. CHURRO is not a one-off: the same pattern shows up wherever a research task has its own data.
+
+![Three research tasks where a small specialist model scores above a much larger general one: CHURRO (3B) over Gemini 2.5 Pro on historical handwriting, Goedel-Prover-V2 (8B) over DeepSeek-Prover-V2 on formal proofs, MedGemma (27B) over GPT-4o on medical questions](fig/specialists-vs-large-models.png){alt="Dot plot of benchmark scores for three task-specific models against a much larger general model on the same benchmark; the specialist is ahead in each row by 6.5, 2.2 and 1.2 points"}
+
+Sources: [CHURRO, EMNLP 2025](https://arxiv.org/abs/2509.19768); Goedel-Prover-V2 (arXiv 2025); MedGemma (arXiv 2025). Scores are as reported by each model's authors.
+
+### The trick
+
+Fine-tuning is ordinary training that starts from a trained model instead of random weights. You show the model your examples, it computes how wrong its output was, and gradient descent nudges the weights toward your data. Because the model already knows how to read, write and look at images, it needs hundreds of examples to learn your task where training from scratch would need millions. Everything it learned before stays in the weights; you are adjusting them, not replacing them.
+
+### Full fine-tuning is expensive
+
+Training every weight means storing four numbers per weight instead of one. There is the weight itself, and its gradient, which says which way to nudge it this step. Then there is what the optimizer remembers: Adam, the optimizer everyone uses, keeps for every weight a running average of its recent gradients and a running average of their squares, so that it can give each weight its own step size. And the weight has to be kept in 32-bit as well as 16-bit, because each step's nudge is far smaller than a 16-bit number can hold; applied to a 16-bit weight it would round away to nothing. Two bytes for the working weight, two for the gradient, four for the 32-bit weight and eight for Adam's two averages: 16 bytes per parameter, against 2 for inference. A 3B model that runs in 6 GB needs 48 GB to fully fine-tune; a 7B model needs 112 GB, which is already a multi-GPU instance at **`$25` an hour or more**, and the bill scales with every epoch and every retry.
+
+**Do not fully fine-tune anything in this workshop (that is, update all the weights), and do not LoRA fine-tune a model larger than 7B on the class account.** A 7B LoRA needs about 22 GB, which is the most the 24 GB GPU the class uses will hold; anything larger needs the 48 GB instance, and above about 13B no instance the account allows holds the model at all. On a few hundred examples a 7B LoRA run is still a few dollars, so retries are cheap. A full fine-tune of a 7B model needs 112 GB, more than any instance the class account allows, and would be **a few hundred dollars per run** on one that did; a 70B model is **`$6,000` to `$12,000` per run**, and a hyperparameter sweep multiplies that by ten. Those runs exist in this episode only as estimates, so that you can recognise one before you launch it.
+
+### LoRA
+
+**LoRA** (low-rank adaptation) freezes the pretrained weights and trains a few million extra parameters in small matrices bolted onto the attention and MLP layers. For each large weight matrix `W` (d × d), it adds two thin ones, `B` (d × r) and `A` (r × d), with a rank `r` of 8 to 64; the layer computes `W·x + B·A·x`, and only `A` and `B` get gradients.
+
+![Full fine-tuning updates every entry of a d × d weight matrix; LoRA freezes it and trains two thin matrices of rank r whose product is added to its output](fig/lora.svg){alt="Left: a d by d weight matrix, all trained, 16 bytes per weight. Right: the same matrix frozen in bf16 plus two thin trained matrices B (d by r) and A (r by d); output is W x plus B A x."}
+
+ The frozen weights can stay in 16-bit, since nothing updates them, and the gradients and optimizer state only exist for the adapter. The adapter is about 100 MB, trains on a single 24 GB GPU for a 3B model, and recovers most of the gain of a full fine-tune for a task like this: the model still learns your hands and your conventions, it just learns them through the adapter. This episode uses LoRA.
+
+### Scale, and how easy it is to get wrong
+
+What makes fine-tuning an LLM different is scale. The training episodes ran for minutes on a `$0.12`-an-hour CPU; a fine-tune runs for hours on a GPU, and every knob multiplies the bill: model size, epochs, image resolution, instance type, and whether anyone is watching when the job should have ended. Any one of them off by 10x is a 10x bill, and the first run is never the last. **Fine-tuning is one of the most common surprise costs we see hurt people**, and it is the reason this episode spends as long on estimating and capping a run as on running it. We measure the gain ourselves: the episode ends by scoring the base model and the fine-tuned model on the same held-out pages.
+
+### The task: Badger Scribe
+
+[Badger Scribe](https://www.kaggle.com/competitions/badger-scribe) is a Kaggle challenge built from UW Digital Collections material: 19th-century surveyors' field notebooks, craftsmen's account books, and German immigrant letters in Kurrent script. Given a page image, produce a verbatim transcription. The score is character error rate (CER): edits per reference character, lower is better.
+
+This lesson uses the German letters, the Anna Seifert correspondence held by the Max Kade Institute: 191 letters and postcards written between 1932 and 1942 by one woman to her son in Kurrent (the old German handwriting taught in schools until the 1940s, whose letterforms look nothing like today's cursive: an `e` is two short strokes, an `s` can take three shapes, and most Germans alive today cannot read it), transcribed by the Institute's Kurrent Transcription Group. It is the part of the competition data where every label was produced by a person, and it is most of the hidden test set.
+
+| split | pages | documents | label source |
+|---|---|---|---|
+| train | 295 | 4 letter bundles | all human-transcribed, ~620 characters per page |
+| test | 141 | 5 other letter bundles | labels held by Kaggle |
+
+Small is the point. 295 labelled pages is a realistic amount of data for a library or a lab to have, and it is enough to move a model that was pre-trained on the right kind of material. Kurrent is also a genuinely different script, not a style of the one the model already reads, so this is a case where the model has to learn something new.
+
+We fine-tune CHURRO-3B. It already reads old handwriting across 46 language clusters; we are teaching it *these* hands and *these* transcription conventions.
+
+## Step 0: Estimate the cost before you launch anything
+
+Before launching a fine-tune, write down what it should cost. If the bill is 3x your number, something is wrong, and you want to know on the first run, not the fiftieth.
+
+### What fine-tuning costs, from one dollar to ten thousand
+
+The cost of a run is GPU-hours × the hourly rate, and GPU-hours scale with **model size × tokens seen × epochs**, multiplied by **how many runs you do before one works**. Our class run sits at the very bottom of that curve. The rows below use current SageMaker on-demand prices in `us-east-1` (AWS price list, October 2026):
+
+| Run | GPUs | Instances rented (price per instance-hour) | Hours | GPU-hours | Cost = instance-hours × price |
+|---|---|---|---|---|---|
+| **This episode:** 3B LoRA, 120 Kurrent pages, 0.6M tokens seen | 1 × A10G | 1 × `ml.g5.xlarge` (`$1.41`) | 0.6 | 0.6 | **~`$0.80`** |
+| Homework for Badger Scribe teams: 3B LoRA, the whole train set (619 pages, all three categories), 2M tokens | 1 × A10G | 1 × `ml.g5.xlarge` (`$1.41`) | 1.6 | 1.6 | ~`$2.25` |
+| 7B full fine-tune, 50k documents, 300M tokens (the challenge below) | 8 × A100 | 1 × `ml.p4d.24xlarge` (`$25.25`) | 5.5 | 44 | **~`$140`** |
+| 70B LoRA, one day | 8 × A100 | 1 × `ml.p4d.24xlarge` (`$25.25`) | 24 | 192 | **~`$600`** |
+| CHURRO-3B's own training: full fine-tune, 100k pages | 32 × H100 | 4 × `ml.p5.48xlarge` (`$63.30`) | 25 | 800 | **~`$6,300`** |
+| 70B full fine-tune, two days | 32 × H100 | 4 × `ml.p5.48xlarge` (`$63.30`) | 48 | 1,536 | **~`$12,000`** |
+| Any row above × a 10-run hyperparameter sweep | | | | | **× 10** |
+
+Tokens seen is examples × tokens per example × passes over the data, and it is what the time rule below multiplies by model size. The number of passes is a knob you tune, and the class run's three passes are a budget choice for a 35-minute class, not a recommendation: large instruction-tuning corpora are usually passed over one to three times, but a few hundred examples often take five to ten passes before the loss settles. Each extra pass adds one more unit of the same row, so a ten-pass run over the whole train set is about `$10`, and the sweep row still applies on top.
+
+The homework row is the competition's full training set at two passes, scaled from the class run at the same seconds per page; the shared bucket holds only the German letters, so a team trains on everything from the competition's own data download.
+
+GPUs come in fixed boxes: an `ml.g5.xlarge` is one A10G, an `ml.p4d.24xlarge` is eight A100s, an `ml.p5.48xlarge` is eight H100s, and you rent whole boxes. So "32 H100s for 25 hours" is four `ml.p5.48xlarge` for 25 hours: 100 instance-hours at `$63.30` is `$6,330`. GPU-hours (GPUs × hours) is what the time estimate below produces; divide by the GPUs per box to get instance-hours, and multiply by the box's price to get the bill.
+
+![Cost per run on a log scale, from eighty cents for this episode's LoRA run to twelve thousand dollars for a 70B full fine-tune; a ten-run sweep shifts every bar up by one decade](fig/finetune-cost-ladder.svg){alt="Horizontal bar chart on a logarithmic dollar axis: this episode 0.80, homework on the full Badger Scribe train set 2.25, 7B full fine-tune 140, 70B LoRA 600, CHURRO-3B 6,300, 70B full fine-tune 12,000, with the ten-run sweep shown as a lighter extension of each bar"}
+
+Two rows to note. The CHURRO row is the model you are about to fine-tune: Stanford spent on the order of 800 H100-hours making it, and you get the benefit for eighty cents because you are *adapting* it, not retraining it. Starting from a model that already knows most of the task is the largest cost saving available, and it is decided before any GPU is involved. The sweep row: a first run is rarely the last, so a "`$140` fine-tune" is usually a `$700` to `$1,400` project. That is the number that surprises research groups. (The 7B row is worked out in the challenge below; the 70B rows are rule-of-thumb magnitudes; the CHURRO figures come from a published review of the paper.)
+
+The habits in this episode are cheap practice at eighty cents a run. **At `$140` a run they are the difference between a project and a budget incident; at `$6,000` a run, one forgotten `max_run` or one wrong instance type is a grant line.**
+
+### Back of the envelope: will it fit, and how long will it take?
+
+Two rules of thumb answer most of the question before you touch a console. They are good to within a factor of two, which is what you need to tell a `$5` run from a `$500` one.
+
+**1. Memory: will it fit on the GPU?** Count bytes per parameter for what you are doing, multiply by the parameter count, then add a few GB for activations (more for long sequences and big batches).
+
+![Bars of GPU memory per parameter: 1 byte for FP8 inference, 2 for bf16 inference, about 2.5 for a LoRA fine-tune, 16 for a full fine-tune made of the weight, its gradient, a 32-bit copy of the weight and the two averages Adam keeps](fig/memory-per-parameter.svg){alt="Stacked bar chart of bytes per parameter for inference versus LoRA versus full fine-tuning"}
+
+| What you are doing | Bytes per parameter | Why | 3B | 7B | 27B | 70B |
+|---|---|---|---|---|---|---|
+| Inference, 4-bit weights | 0.5 | weights only | 1.5 GB | 3.5 GB | 14 GB | 35 GB |
+| Inference, FP8 | 1 | weights only | 3 GB | 7 GB | 27 GB | 70 GB |
+| Inference, bf16 | 2 | weights only | 6 GB | 14 GB | 54 GB | 140 GB |
+| LoRA fine-tune | ~2.5 | frozen bf16 weights + a small adapter with its gradients and optimizer + activations | 8 GB | 18 GB | 68 GB | 175 GB |
+| Full fine-tune, mixed precision | 16 | 16-bit weights 2 + gradients 2 + 32-bit copy of the weights 4 + Adam's two running averages 8 | 48 GB | 112 GB | 430 GB | 1.1 TB |
+
+Note the jump from the inference rows to the training rows. Training cannot run on quantized weights the way inference can: each step's update is too small for 8-bit or 4-bit numbers to hold, so every trained weight keeps a 32-bit copy plus Adam's two averages, 16 bytes against 2. **That is why a 7B model you can *run* on a 24 GB GPU needs 112 GB plus activations to *fully fine-tune*, which means several GPUs with the model sharded across them, at `$25` to `$63` an hour.** LoRA sidesteps it by freezing the model and training a few million adapter parameters, which is why this episode fits on one 24 GB card.
+
+**2. Time: how many GPU-hours?** Training compute is roughly proportional to parameters × tokens seen:
+
+```text
+tokens      = examples × tokens per example × epochs
+FLOPs       ≈ 6 × parameters × tokens      (full fine-tune)
+            ≈ 4 × parameters × tokens      (LoRA: no weight gradients for the frozen base)
+GPU-seconds = FLOPs / (GPU peak bf16 FLOPS × utilization)
+```
+
+Utilization is the number people forget. A GPU running one page at a time with gradient checkpointing manages 20–30% of its peak; a well-tuned multi-GPU job reaches 40–50%. Use 25% unless you have measured otherwise, and add ~50% to the FLOPs when gradient checkpointing is on, because it recomputes the forward pass during the backward pass. Both corrections sit inside the factor of two the rule promises. Then cost = GPU-hours × hourly rate + the fixed startup overhead per job (~10 minutes here).
+
+Worked for the class run: 120 pages × ~1,600 tokens (1,300 visual + 300 text) × 3 epochs = 576k tokens. LoRA on a 3.75B model (3B language model plus the vision tower): 4 × 3.75e9 × 5.76e5 ≈ 8.6e15 FLOPs. An A10G peaks at about 70 TFLOPS in bf16; at 25% utilization that is 17 TFLOPS, so about 500 seconds, call it 9 minutes. The "~15 min" in the table below adds the image preprocessing on four vCPUs and the checkpointing overhead. Same arithmetic, same answer within the factor of two.
+
+The same two rules are in `helpers.estimate_finetune_cost`, so that you can run them on a job you have not launched: your own model size, example count, tokens per example and epochs. It picks the cheapest instance that fits unless you name one, prints the memory check, GPU-hours, wall-clock, cost per run and for the whole project, and the `max_run` to set. Here it is on the class run:
+
+```python
+helpers.estimate_finetune_cost(
+    params_billions=3.75,        # CHURRO-3B: 3B language model + vision tower
+    examples=120, tokens_per_example=1600, epochs=3,   # ~1,300 visual + 300 text tokens per page
+    method="lora",
+    instance_type="ml.g5.xlarge",
+)
+```
+
+And on the kind of run a marathon team might be weighing, with the attempts a real project takes:
+
+```python
+helpers.estimate_finetune_cost(
+    params_billions=7, examples=5000, tokens_per_example=800, epochs=3,
+    method="lora", runs=8,       # instance_type=None: the cheapest that fits
+)
+```
+
+`tokens_per_example` is the input you have to think about: text is about 1.3 tokens per word; an image on a Qwen-VL style model is its pixels divided by 784 (about 1,300 for a megapixel) plus the prompt; for audio, EEG windows or anything else, the model card says what one example becomes. The estimate is good to a factor of two, and it is the number to write down before the launch.
+
+**More GPUs do not make it cheaper.** GPU-hours are the cost; spreading them across eight GPUs changes the wall-clock time, not the bill, and only helps if the job is large enough to keep all eight busy. You add GPUs when the memory row above says one GPU cannot hold the job, not to save money.
+
+::::::::::::::::::::::::::::::::::::: challenge
+
+### Estimate a run you have not launched
+
+A lab wants to **fully fine-tune a 7B model** on 50,000 documents of ~2,000 tokens for 3 epochs. They are choosing between `ml.p4d.24xlarge` (8 × A100 40 GB, `$25.25`/h, ~312 TFLOPS bf16 per GPU) and renting a single `ml.g5.xlarge`. Using the two rules: does it fit on the g5? How many GPU-hours on the p4d, and what does one run cost? What does a realistic project cost?
+
+:::::::::::::::::::::::: solution
+
+It does not fit on the g5: full fine-tuning a 7B model needs ~112 GB plus activations, and the g5 has 24 GB. On the p4d the 8 × 40 GB = 320 GB holds it with the model sharded.
+
+Tokens: 50,000 × 2,000 × 3 = 3 × 10^8. FLOPs: 6 × 7 × 10^9 × 3 × 10^8 ≈ 1.26 × 10^19. Per GPU at 312 TFLOPS × 25% utilization = 78 TFLOPS: 1.26 × 10^19 / 7.8 × 10^13 ≈ 1.6 × 10^5 GPU-seconds ≈ 45 GPU-hours, which is about 6 hours of wall-clock on 8 GPUs, about `$140` for one run (the "7B full fine-tune" row in the table above). A team that has measured 40% utilization on its own jobs would get 28 GPU-hours and ~`$90`; the rule is for before you have measured. The helper gives the same answer:
+
+```python
+helpers.estimate_finetune_cost(params_billions=7, examples=50_000, tokens_per_example=2000, epochs=3,
+                               method="full", instance_type="ml.p4d.24xlarge",
+                               gradient_checkpointing=False, runs=10)
+```
+
+A realistic project is not one run. The first run finds a data bug, the second a bad learning rate, then two or three are compared, then the one that worked is rerun on the final data: five to ten runs, so `$700` to `$1,400,` before anyone touches a hyperparameter sweep. That is the number to put in the proposal, and it is why the four habits matter more as the model gets bigger.
+
+:::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+### The instance
+
+The model we fine-tune fits on one 24 GB GPU. Single-GPU and multi-GPU SageMaker training instances, same price list:
+
+| Instance | GPU | GPU memory | `$`/hour |
+|---|---|---|---|
+| `ml.g4dn.xlarge` | 1 × T4 | 16 GB | `$0.74` |
+| `ml.g6.xlarge` | 1 × L4 | 24 GB | `$1.13` |
+| `ml.g5.xlarge` | 1 × A10G | 24 GB | `$1.41` |
+| `ml.g6e.xlarge` | 1 × L40S | 48 GB | `$2.61` |
+| `ml.g5.12xlarge` | 4 × A10G | 96 GB | `$7.09` |
+| `ml.p4d.24xlarge` | 8 × A100 | 320 GB | `$25.25` |
+| `ml.p5.48xlarge` | 8 × H100 | 640 GB | `$63.30` |
+
+Multi-GPU instances are the right tool when the model, its optimizer state and a batch do not fit on one GPU: a full fine-tune of a 7B model, or anything at 70B. They are the wrong tool when the job *does* fit on one GPU, because the price goes up 5x to 45x and a job too small to split gets no faster. A 3B LoRA run fits with room to spare, so `ml.g5.xlarge` is the workhorse for this episode. A T4 is too small and too slow for a 3B vision model with page-sized images; `ml.g6.xlarge` is a fine substitute if g5 capacity is short; `ml.g6e.xlarge` is roughly 2–3x faster for less than 2x the price, so it becomes *cheaper per run* once training outweighs the fixed startup (Exercise 2).
+
+### Scaling the same job to more GPUs
+
+Nothing in this episode is specific to small runs. The training script uses Hugging Face `Trainer`, which handles multi-GPU data parallelism when SageMaker launches it under `torchrun`. To run the same script on a multi-GPU instance, change the estimator, not the script:
+
+```text
+instance_type="ml.p4d.24xlarge",                        # 8 x A100, or ml.g5.12xlarge for 4 x A10G
+distribution={"torch_distributed": {"enabled": True}},  # one process per GPU, each on a different slice of the data
+max_run=6 * 60 * 60,                                     # from the Step 0 estimate, with margin
+```
+
+Each GPU holds a full copy of the model, so the effective batch becomes `batch_size x grad_accum x number of GPUs`, and the learning rate usually needs a modest increase. Two lines in the script should be wrapped in `if trainer.is_world_process_zero():` so that evaluation and saving run once rather than on every process. When the model, its optimizer state and a batch do not fit on one GPU (a full fine-tune of 7B or more; see the bytes-per-parameter table), data parallelism is not enough: pass `fsdp="full_shard"` in `TrainingArguments` (or a DeepSpeed ZeRO config) so the model is sharded across the GPUs, and use `instance_count=2` or more for multi-node runs.
+
+**The cost controls do not change with size, but the stakes do.** An `ml.p4d.24xlarge` bills **`$25.25` an hour** and an `ml.p5.48xlarge` **`$63.30` an hour** from the moment the job starts, and a `max_run` of six hours is a **`$150` to `$380`** ceiling on a single launch. Estimate GPU-hours from the Step 0 rules, set `max_run` to about twice that estimate, tag the job, and run a slice of the data on one GPU first so that a bug costs a dollar rather than a few hundred. **Do not launch a multi-GPU job on the class account.**
+
+### The run
+
+A training job bills from the moment its instance is ready until the job ends, including the minutes spent pulling the container and downloading data and model weights. In class we train on 120 German-letter pages for 3 epochs and score 15 held-out pages before and after, all inside one job:
+
+| Phase | Time | Cost |
+|---|---|---|
+| Startup: container pull, ~130 MB of images, 7.5 GB of model weights (from the shared bucket) | ~10 min | `$0.24` |
+| Score 15 holdout pages with the base model, ~10 s each | ~3 min | `$0.07` |
+| Training: 120 pages × 3 epochs, ~2.5 s per page with gradient checkpointing | ~15 min | `$0.35` |
+| Score 8 of the holdout pages at the end of each epoch, for the curve | ~4 min | `$0.09` |
+| Score the same 15 pages with the fine-tuned model | ~3 min | `$0.07` |
+| **One run** | **~35 min** | **~`$0.80`** |
+
+Training time scales linearly with pages × epochs, and roughly linearly with image resolution (every 28 × 28 pixel block of the page becomes one token in the model's sequence). Doubling `max_pixels` doubles the time; doubling epochs doubles it again. Those two knobs, left at careless values, are why the estimate must be written down before the first run and compared to the real `BillableTimeInSeconds` after it.
+
+We set `max_run` to about twice the estimate. If a run goes past that, SageMaker kills it and we lose at most a dollar, not a weekend.
+
+### The whole episode
+
+| What | Instance | Time | Cost |
+|---|---|---|---|
+| Controller notebook (no GPU needed) | `ml.t3.medium` | 3 h | `$0.15` |
+| Mini fine-tune with before/after scoring and a per-epoch curve | `ml.g5.xlarge` | ~35 min | `$0.80` |
+| Exercise 1: same job at 2 megapixels | `ml.g5.xlarge` | ~55 min | `$1.30` |
+| **Total** | | | **~`$2.25`** |
+
+Compare the classic mistake: doing all of this interactively on a `ml.g5.xlarge` *notebook* instance. The class itself costs about the same, but a notebook instance keeps billing after you close the tab. Forgotten over a weekend: `$90`. Forgotten for a month: `$1,029`. A training job cannot be forgotten, because it ends.
+
+::::::::::::::::::::::::::::::::::::: callout
+
+### The four habits
+
+1. **Cap it.** Every job gets `max_run`. Every notebook GPU instance gets stopped when you stand up.
+2. **Start small.** The first launch of any training script uses a slice of the data and a short cap. The in-class run below *is* that small first run; the homework scales it up only after it has been seen to work.
+3. **Estimate it, then check.** Write the number down. After the run, read `BillableTimeInSeconds` from the job description and compare.
+4. **Checkpoint it.** Save progress to S3 as the job runs, so that a killed, interrupted or crashed run costs one epoch, not the whole bill.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+## Setup
+
+::::::::::::::::::::::::::::::::::::: instructor
+
+### Before class (instructor checklist)
+
+Students never download the data themselves; five things have to be in place before the session. Each is written out in the instructor pages.
+
+1. **Stage the data in the shared read-only bucket** from the lesson's data release (`badger-scribe-data-v1`, ~130 MB): a few minutes from CloudShell, a laptop or a notebook instance; commands and the read-only bucket policy in *Shared data bucket: staging before each term* (the same bucket holds the WattBot data for the RAG episodes). The bucket must survive the end-of-workshop cleanup, or be recreated from the release next term.
+2. **Stage the base model in the same bucket** (`badger-scribe/model/churro-3B/`, ~7.5 GB, once, from a laptop or notebook instance, not CloudShell). Every job reads the weights from S3 as a `model` channel instead of 100 students pulling 7.5 GB each from Hugging Face in the same minute.
+3. **Run the full fine-tune once** (the estimator in the Homework section, all 251 training pages, `eval_pages` 40) and copy `train_summary.json`, `eval_before.csv` and `eval_after.csv` from its `model.tar.gz` to `badger-scribe/instructor/full-run/` in the shared bucket. Step 3 compares against these. Replace the time estimates in Step 0 with the job's real `BillableTimeInSeconds`.
+4. **Quotas**: `ml.g5.xlarge for training job usage` at least the class size (request 100). Default is often 0 to 4 and increases take days; file three to four weeks ahead. Full list in *Account preparation checklist*.
+5. **Tell students the bucket name** at the start; it is the `shared_bucket` value in the first code cell.
+
+Fallback instance if g5 capacity is short: `ml.g6.xlarge` (L4, 24 GB, `$1.13`/h).
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+This episode runs from a **CPU** notebook instance (`ml.t3.medium` or `ml.m5.xlarge`). The notebook is only a controller: it stages data, launches jobs, and reads results. The GPU lives in the job.
+
+There is no data upload in this episode. The competition data is published as a [release on the lesson repository](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/releases) (three zip files: labels, train images, test images), and your instructor has staged it in a shared read-only bucket:
+
+- `s3://<shared-bucket>/badger-scribe/train.csv`, `test.csv`, `metadata.csv`, `metric.py`, `sample_submission.csv`, `transcription_conventions.md`
+- `s3://<shared-bucket>/badger-scribe/images/<page_id>.jpg`: train and test pages together, about 130 MB
+- `s3://<shared-bucket>/badger-scribe/model/churro-3B/`: a copy of the CHURRO-3B weights (~7.5 GB), so that jobs read them from S3 instead of every student pulling them from Hugging Face at once
+- `s3://<shared-bucket>/badger-scribe/instructor/full-run/`: the output of a full fine-tune your instructor ran before class, for comparison in Step 3
+
+The training job reads the images and the model straight from that bucket; the only files your notebook downloads are the small CSVs. Outputs go to your own bucket from the S3 episode, under `badger-scribe/`.
+
+```python
+import os
+import json
+import time
+
+import boto3
+import pandas as pd
+import sagemaker
+from sagemaker import get_execution_role
+
+import sys
+sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
+import helpers   # estimate_finetune_cost, get_notebook_instance_info, ...
+
+session = sagemaker.Session()
+region = session.boto_region_name
+role = get_execution_role()
+s3_client = boto3.client("s3", region_name=region)
+
+shared_bucket = "ml-marathon-shared"   # <-- EDIT ME: read-only bucket with the data and model weights; jobs read from it
+bucket_name = "sinkorswim-doejohn"     # <-- EDIT ME: your own bucket from the S3 episode; everything the jobs write goes here
+username = "doejohn"                   # <-- EDIT ME: lowercase letters/digits only; used in job names
+
+data_prefix = "badger-scribe"
+train_s3_uri = f"s3://{shared_bucket}/{data_prefix}/"                  # training channel: csvs + images/
+model_s3_uri = f"s3://{shared_bucket}/{data_prefix}/model/churro-3B/"  # model channel: staged CHURRO-3B weights
+
+local_data_dir = "./data"
+os.makedirs(local_data_dir, exist_ok=True)
+
+print("Region:", region)
+print("Role:", role)
+```
+
+```python
+for fname in ["train.csv", "test.csv", "metadata.csv", "metric.py"]:
+    s3_client.download_file(shared_bucket, f"{data_prefix}/{fname}", os.path.join(local_data_dir, fname))
+
+train_df = pd.read_csv(os.path.join(local_data_dir, "train.csv"), keep_default_na=False)
+test_df = pd.read_csv(os.path.join(local_data_dir, "test.csv"), keep_default_na=False)
+
+print("train pages:", len(train_df), " test pages:", len(test_df))
+print(train_df.groupby(["category", "label_source"]).size())
+```
+
+Look at one page and its transcription. Note what "verbatim" means here: the writer's spelling and punctuation, umlauts and `ß` kept as written, Kurrent letterforms mapped to their Latin equivalents, and `#` for a character the transcriber could not read.
+
+```python
+row = train_df[train_df.category == "kade_letters"].iloc[3]
+print(row.page_id, "|", row.category, "|", row.label_source)
+print(row.text[:600])
+```
+
+```python
+from IPython.display import Image, display
+
+page_path = os.path.join(local_data_dir, f"{row.page_id}.jpg")
+s3_client.download_file(shared_bucket, f"{data_prefix}/images/{row.page_id}.jpg", page_path)
+display(Image(filename=page_path, width=500))
+```
+
+### The scripts
+
+Jobs run in containers, so the code they execute has to be shipped with the job. Copy the scripts from the lesson repository into a `code/` directory:
+
+```python
+import shutil
+
+os.makedirs("code", exist_ok=True)
+for f in ["badger_common.py", "finetune_churro_lora.py", "churro_transcribe_batch.py"]:
+    shutil.copy(f"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/{f}", f"code/{f}")
+
+with open("code/requirements.txt", "w") as f:  # pip-installed inside the container before the script starts
+    f.write("\n".join(["peft>=0.14", "accelerate", "pillow", "pandas"]))
+
+print(os.listdir("code"))
+```
+
+- `badger_common.py`: the prompt, image loading, and a copy of the competition's CER. Shared by the other two so the model is trained on exactly the prompt it is later asked.
+- `finetune_churro_lora.py`: the training job entry point. Holds out 15% of pages per category, filters to the categories you ask for, scores a sample of holdout pages with the base model, trains a LoRA adapter, scores the same pages again, and saves everything.
+- `churro_transcribe_batch.py`: used in the homework. Transcribes any list of pages with the base model or with the adapter merged in, and writes `predictions.csv` in the submission format.
+
+Open `code/finetune_churro_lora.py` and read it before launching it. The pieces worth understanding:
+
+```text
+# Only the language model's projection layers get LoRA weights.
+# The vision tower ("visual") stays frozen.
+lora = LoraConfig(
+    r=16, lora_alpha=32, lora_dropout=0.05, task_type="CAUSAL_LM",
+    target_modules=r"^(?!.*visual).*\.(q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj)$",
+)
+
+# The loss is computed on the transcription only. Prompt and image tokens
+# are masked to -100 so the model is not graded on repeating the question.
+labels[i, :n_prompt] = -100
+```
+
+And the one setting that controls cost more than any other:
+
+```python
+# Every 28x28 block of the page becomes one token. 1280 blocks ~ 1 megapixel.
+DEFAULT_MAX_PIXELS = 1280 * 28 * 28
+```
+
+### Tags
+
+As in every episode: tags do not propagate from the notebook to the jobs it launches. Pass them to every estimator.
+
+```python
+name = "DoeJohn"         # replace with your name
+project = "SinkOrSwim"   # replace with your challenge name
+
+def make_job_tags(purpose: str):
+    return [
+        {"Key": "Name", "Value": name},
+        {"Key": "Project", "Value": project},
+        {"Key": "Purpose", "Value": purpose},
+    ]
+```
+
+## Step 1: Launch the fine-tune
+
+One job does everything: scores 15 held-out German-letter pages with the base model, trains on 120 German-letter pages for 3 epochs, scoring 8 of the holdout pages at the end of each epoch, scores the same 15 pages again, and saves the adapter. The hyperparameters below are what the Step 0 estimate was built from.
+
+First the guard rails, each one a named variable so that the printout below shows exactly what the job is allowed to cost and where it saves its progress.
+
+```python
+instance_type = "ml.g5.xlarge"            # one A10G GPU, 24 GB; the GPU lives in the job, not in this notebook
+g5_price = 1.41                           # $/hour, us-east-1 on-demand
+estimated_minutes = 35                    # the Step 0 estimate
+max_run_minutes = 70                      # about twice the estimate; SageMaker kills the job at this cap, whatever it is doing
+training_job_name = f"badger-{username}-mini-v1"   # must be unique in the account: a rerun fails instead of launching a second job
+checkpoint_s3_uri = f"s3://{bucket_name}/{data_prefix}/checkpoints/{training_job_name}/"   # the script saves the adapter here at the end of every epoch
+
+print(f"job name:     {training_job_name}")
+print(f"instance:     {instance_type} at ${g5_price}/h")
+print(f"estimate:     {estimated_minutes} min  ->  about ${g5_price * estimated_minutes / 60:.2f}")
+print(f"max_run cap:  {max_run_minutes} min  ->  worst case ${g5_price * max_run_minutes / 60:.2f}, then SageMaker stops it")
+print(f"checkpoints:  {checkpoint_s3_uri}")
+print(f"tags:         {make_job_tags('Training')}")
+```
+
+::::::::::::::::::::::::::::::::::::: callout
+
+### Four guard rails on every fine-tuning job
+
+- **`max_run` is the only thing standing between a bug and your whole budget.** A training loop that diverges, hangs on a bad batch or waits on a dead data loader bills the same as one that works. The cap turns "whatever it takes" into a number you chose: here **`$1.65` worst case**. Set it to about twice the estimate, never leave it at the default of 24 hours, and on a **`$25`-an-hour instance treat it as the price of the launch**.
+- **A unique `job_name` prevents the double launch.** Running the launch cell twice fails with `ResourceInUse` instead of starting a second job. Without it, SageMaker generates a fresh name every time and happily runs two copies.
+- **Checkpoints to S3 bound the wasted work.** The script saves the adapter and optimizer state to `/opt/ml/checkpoints` at the end of every epoch, SageMaker syncs that folder to `checkpoint_s3_uri` while the job runs, and when a job is launched with the same `checkpoint_s3_uri` the script resumes from the latest checkpoint. A job killed by `max_run`, a spot interruption or a crash costs at most one epoch, not the whole run. **On a ten-hour run, this is the difference between losing ten minutes and losing `$150`.**
+- **Tags make the bill readable.** Every job carries `Name`, `Project` and `Purpose`; without them a GPU job is anonymous spend that nobody can attribute.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+Now the estimator itself.
+
+```python
+from sagemaker.huggingface import HuggingFace
+
+model_output_path = f"s3://{bucket_name}/{data_prefix}/models/"   # the job's model.tar.gz lands under here, in your own bucket
+
+estimator = HuggingFace(
+    entry_point="finetune_churro_lora.py",
+    source_dir="code/",                   # the whole directory ships with the job: script, badger_common.py, requirements.txt
+    role=role,
+    tags=make_job_tags("Training"),
+    instance_type=instance_type,
+    instance_count=1,
+    volume_size=50,                       # GB of disk for the container, weights and images
+    max_run=max_run_minutes * 60,         # the cap, in seconds: SageMaker stops the job here no matter what
+    checkpoint_s3_uri=checkpoint_s3_uri,  # SageMaker syncs checkpoint_local_path to here while the job runs
+    checkpoint_local_path="/opt/ml/checkpoints",   # where the script writes a checkpoint at the end of each epoch
+    # the three versions select the prebuilt Hugging Face training image (transformers + PyTorch + Python)
+    transformers_version="4.56",
+    pytorch_version="2.8",
+    py_version="py312",
+    output_path=model_output_path,
+    sagemaker_session=session,
+    hyperparameters={                     # passed to the script as command-line flags: --epochs 2 --lr 0.0002 ...
+        # no model_id: the script reads the base weights from the "model" channel mounted at fit()
+        "max_train_pages": 120,           # a slice in class; the homework uses all 251 training pages
+        "epochs": 3,                      # three passes over the 120 pages; the per-epoch curve below says whether the third was worth it
+        "lr": 2e-4,                       # LoRA takes a higher learning rate than a full fine-tune (~1e-5)
+        "lora_r": 16,                     # adapter rank: how many trainable parameters LoRA adds per layer
+        "batch_size": 1,
+        "grad_accum": 4,                  # effective batch of 4 pages -> ~60 optimizer steps
+        "max_pixels": 1280 * 28 * 28,     # ~1 megapixel per page; the cost knob: tokens per page scale with it
+        "eval_pages": 15,                 # holdout pages scored before (eval_before=1) and after training
+        "eval_before": 1,
+        "curve_pages": 8,                 # of those 15, scored again at the end of every epoch: the CER curve
+    },
+)
+```
+
+Before launching, check that you do not already have a job running. An empty list means go.
+
+```python
+session.sagemaker_client.list_training_jobs(StatusEquals="InProgress", NameContains="badger")["TrainingJobSummaries"]
+```
+
+Now launch. Two details in this one line matter:
+
+- `job_name` is the one defined with the guard rails. SageMaker requires training job names to be unique in the account, so running this cell a second time fails immediately with `ResourceInUse` and nothing is launched. To run again on purpose, change `v1` to `v2` in both `training_job_name` and (automatically) `checkpoint_s3_uri`; to **resume** a job that was killed, keep the `checkpoint_s3_uri` and change only the job name.
+- `wait=True` (the default) blocks the notebook until the job ends and streams its log here. For a 25-minute job that is the right choice: you cannot accidentally queue a second launch while you wait, and everything worth doing in the meantime happens in the console, not in this notebook.
+
+The second input channel, `model`, is the copy of CHURRO-3B your instructor staged in the shared bucket: SageMaker mounts it at `/opt/ml/input/data/model` and the script loads from there, so a hundred jobs starting in the same minute copy 7.5 GB from S3 instead of each pulling it from Hugging Face.
+
+```python
+# two channels: "train" is mounted at /opt/ml/input/data/train, "model" at /opt/ml/input/data/model inside the container
+# wait=True blocks this cell and streams the log here; the job keeps running (and billing) even if you interrupt the cell
+start = time.time()
+estimator.fit({"train": train_s3_uri, "model": model_s3_uri}, job_name=training_job_name, wait=True)
+print(f"Wall-clock from launch to finish: {(time.time() - start) / 60:.1f} min (the billed part is reported below)")
+```
+
+::::::::::::::::::::::::::::::::::::: callout
+
+### Interrupting the cell does not stop the job
+
+The square "interrupt kernel" button stops the *notebook* from watching the job. The GPU instance keeps running and keeps billing until the script finishes or `max_run` expires. To stop a job, use the console (**SageMaker AI → Training → Training jobs → select → Stop**) or:
+
+```python
+# session.sagemaker_client.stop_training_job(TrainingJobName=training_job_name)
+```
+
+Billing stops within a minute or two. If you launched with the wrong instance, the wrong data or the wrong number of epochs, stop it immediately; the cents already spent are not a reason to let it run.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+### While it runs
+
+Open a second browser tab on the SageMaker console: **SageMaker AI → Training → Training jobs**. Find your job and watch its status move through `Starting`, `Downloading`, `Training`, `Uploading`, `Completed`. The job page shows the instance type, the `max_run` you set, the tags, and a link to the CloudWatch log, which is where every `print()` from the script goes. The log is the same text the notebook cell is streaming, but it stays available after the kernel is gone, which is what you will use when a job you launched yesterday fails overnight.
+
+Things to find in the log while you wait:
+
+- `pages: 295 total -> 251 train / 44 holdout`: the split, before the 120-page slice.
+- `trainable params: ...`: what fraction of the 3B parameters LoRA trains.
+- `[eval before] 15 holdout pages in ...s (... s/page) -> macro CER ...`: the base model's score, and the per-page time that the homework inference jobs will cost.
+- The Trainer's loss lines every 5 steps, and `[eval epoch1] ...` at the end of each epoch: the points of the curve you plot in Step 2.
+
+## Step 2: Read the results and the bill
+
+When the cell returns, ask SageMaker what it charged for. This is the number to compare against the estimate every time.
+
+```python
+def job_cost_report(job_name: str, price_per_hour: float):
+    desc = session.sagemaker_client.describe_training_job(TrainingJobName=job_name)
+    billable = desc["BillableTimeInSeconds"]           # the bill: container pull, 7.5 GB model copy, the script, model upload
+    print(f"job:            {job_name}")
+    print(f"status:         {desc['TrainingJobStatus']}")
+    print(f"billable time:  {billable / 60:.1f} min  (what you pay for; the script's own timing is in train_summary.json)")
+    print(f"cost:           ${billable / 3600 * price_per_hour:.3f} at ${price_per_hour}/h")
+    return desc
+
+desc = job_cost_report(training_job_name, g5_price)
+adapter_s3_uri = desc["ModelArtifacts"]["S3ModelArtifacts"]   # the model.tar.gz this job uploaded to output_path
+print("adapter:", adapter_s3_uri)
+```
+
+Compare the billable minutes with `train_minutes` in the summary you download next: the difference is the fixed overhead of every job, container pull, data download and the 7.5 GB model copy from S3. It is the same whether you train for one minute or one hour, which is why a small first run is cheap and why batching work into fewer, longer jobs is cheaper than many tiny ones.
+
+The whole output of the job is a `model.tar.gz` of about 100 MB: the LoRA adapter, the processor configuration, the holdout list, the evaluation files, the loss and CER curves (`train_log.json`) and a summary. The 3B base model is never copied anywhere.
+
+```python
+import tarfile
+
+run_dir = os.path.join(local_data_dir, training_job_name)
+os.makedirs(run_dir, exist_ok=True)
+bucket, key = adapter_s3_uri.replace("s3://", "").split("/", 1)   # s3://bucket/key -> bucket, key
+s3_client.download_file(bucket, key, os.path.join(run_dir, "model.tar.gz"))
+with tarfile.open(os.path.join(run_dir, "model.tar.gz")) as tar:   # everything the script saved to /opt/ml/model
+    tar.extractall(run_dir)
+print(sorted(os.listdir(run_dir)))
+
+summary = json.load(open(os.path.join(run_dir, "train_summary.json")))   # train_pages, train_minutes, seconds_per_page, CER before/after
+print(json.dumps(summary, indent=2))
+```
+
+### Before vs. after
+
+Both evaluations ran on the same 15 pages, so the difference is the fine-tune and nothing else.
+
+```python
+before = pd.read_csv(os.path.join(run_dir, "eval_before.csv"), keep_default_na=False)
+after = pd.read_csv(os.path.join(run_dir, "eval_after.csv"), keep_default_na=False)
+
+# cer = character error rate per page: edits / characters in the reference, lower is better
+comparison = before[["page_id", "cer"]].merge(after[["page_id", "cer"]], on="page_id", suffixes=("_base", "_tuned"))
+comparison["gain"] = comparison.cer_base - comparison.cer_tuned   # positive = the fine-tune helped on that page
+print(comparison.sort_values("gain", ascending=False).round(3).to_string(index=False))
+print(f"\nmean CER  base: {comparison.cer_base.mean():.3f}   tuned: {comparison.cer_tuned.mean():.3f}")
+```
+
+Look at the page that improved most. The fine-tuned model should have picked up the conventions (umlauts and `ß` as written, no modernised spelling, Kurrent `s` and `e` forms read correctly) as well as this particular writer's hand.
+
+```python
+best = comparison.sort_values("gain", ascending=False).iloc[0].page_id
+ref = before.set_index("page_id").loc[best, "text_ref"]
+print("REFERENCE\n", ref[:500])
+print("\nBASE\n", before.set_index("page_id").loc[best, "text_pred"][:500])
+print("\nTUNED\n", after.set_index("page_id").loc[best, "text_pred"][:500])
+```
+
+### How many passes were worth paying for
+
+Before and after says whether the fine-tune helped. The curve says whether you bought the right amount of it. The job recorded the training loss every 5 steps and scored 8 of the holdout pages at the end of every epoch, with the base model as epoch 0.
+
+```python
+import matplotlib.pyplot as plt
+
+log = json.load(open(os.path.join(run_dir, "train_log.json")))
+loss = pd.DataFrame(log["loss"])
+curve = pd.DataFrame(log["holdout_cer_by_epoch"])
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 3.8))
+ax1.plot(loss.epoch, loss.loss, marker=".")
+ax1.set(xlabel="epoch", ylabel="training loss", title="Training loss (what the optimizer sees)")
+ax2.plot(curve.epoch, curve.macro_cer, marker="o")
+ax2.set(xlabel="epoch (0 = base model)", ylabel="holdout CER", title=f"Holdout CER on {log['curve_pages']} pages (what you care about)")
+ax2.set_xticks(curve.epoch)
+plt.tight_layout(); plt.show()
+print(curve.to_string(index=False))
+```
+
+Read the right-hand plot, not the left. Training loss almost always keeps falling; it is measured on pages the model is being fitted to. The holdout CER is the number the competition scores, and it has three shapes:
+
+- **Still falling at the last epoch**: another pass would probably have helped, and the time rule says what it costs (one more unit of the training row). That is the usual result on a few hundred pages, and the reason the table's "passes" column is a knob and not a rule.
+- **Flat**: you have what this data can give; more passes buy nothing. Stop here next time and save the money.
+- **Rising while the loss still falls**: the model is memorising the training pages. Fewer passes, or more data.
+
+Eight pages is a noisy estimate (one hard page moves it), so read the trend, not the third decimal. For a run you will repeat, set `curve_pages` higher; each point costs about ten seconds per page.
+
+::::::::::::::::::::::::::::::::::::: challenge
+
+### Was the estimate right?
+
+1. Compare the billable time from `job_cost_report` with the ~35 minutes estimated in Step 0. Which phase was off, and by how much? (`train_minutes` and `seconds_per_page` in `train_summary.json` tell you.)
+2. Using your measured seconds per page, estimate the homework run: 251 pages × 2 epochs, plus 40 evaluation pages before and after, plus the same startup overhead. Write the number down; you will compare it to the real bill after the homework.
+
+:::::::::::::::::::::::: solution
+
+1. Expect startup to be close to 10 minutes, the two evaluations 2–4 minutes each and the three curve points about a minute each. Training is the line most likely to differ: if you measured 2.5 s/page, 360 page-passes is 15 minutes; at 4 s/page it is 24.
+2. At 2.5 s/page: 502 passes is 21 minutes, plus ~13 minutes of evaluation at 10 s/page, plus 10 minutes startup, so about 45 minutes and `$1.05`. Scale every line by the ratio you measured.
+
+:::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+## Step 3: What a full run buys
+
+Your instructor ran the same script before class on all 251 training pages (2 epochs, 40 evaluation pages) from the same data release. Its output is in the shared bucket. The holdout split and the evaluation sample are both seeded, and the sample is the first *n* of one fixed shuffle, so the instructor's 40 evaluation pages include your 15 by construction.
+
+```python
+full_dir = os.path.join(local_data_dir, "instructor-full-run")
+os.makedirs(full_dir, exist_ok=True)
+for fname in ["train_summary.json", "eval_before.csv", "eval_after.csv"]:
+    s3_client.download_file(shared_bucket, f"{data_prefix}/instructor/full-run/{fname}", os.path.join(full_dir, fname))
+
+full_summary = json.load(open(os.path.join(full_dir, "train_summary.json")))
+print("full run:", full_summary["train_pages"], "pages,", full_summary["train_minutes"], "min of training")
+print("CER before :", full_summary["holdout_eval_before"]["per_category"])
+print("CER after  :", full_summary["holdout_eval_after"]["per_category"])
+```
+
+Put the three models side by side on the German-letter pages they have in common:
+
+```python
+full_after = pd.read_csv(os.path.join(full_dir, "eval_after.csv"), keep_default_na=False)
+three = (comparison
+         .merge(full_after[["page_id", "cer"]].rename(columns={"cer": "cer_full"}), on="page_id", how="inner")
+         [["page_id", "cer_base", "cer_tuned", "cer_full"]])
+print(three.round(3).to_string(index=False))
+print("\nmean on", len(three), "shared pages:", three[["cer_base", "cer_tuned", "cer_full"]].mean().round(3).to_dict())
+```
+
+Three numbers: the base model, 10 minutes of training on 120 pages, and 20 minutes on 251. The second gap is what more data and more time buy, and it cost about fifty cents. Whether that dollar is worth it depends on the gap; whether the next `$140` is worth it is the same question at a different scale, and the only way to answer it is to measure, as you just did.
+
+::::::::::::::::::::::::::::::::::::: callout
+
+### Why the holdout number flatters you
+
+The script holds out 15% of *pages*, so pages from the same letter bundle appear in both the training and holdout halves. The competition's hidden test set is split by *document*: the five test bundles are letters the model has never seen. All the letters are from one writer, which softens the gap here, but her hand, pen and paper change over a decade, so expect the leaderboard CER to be somewhat worse than the holdout CER. A document-level holdout is the fix; it is left as an exercise because with only four bundles in train, holding one out means giving up a quarter of the data.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+## Step 4: What did this episode cost?
+
+Add it up from the job descriptions, not from memory.
+
+```python
+total = 0.0
+# every job this episode launched shares the badger-<username> prefix, so one listing finds them all
+for job in session.sagemaker_client.list_training_jobs(NameContains=f"badger-{username}", MaxResults=50)["TrainingJobSummaries"]:
+    d = session.sagemaker_client.describe_training_job(TrainingJobName=job["TrainingJobName"])
+    cost = d.get("BillableTimeInSeconds", 0) / 3600 * g5_price
+    total += cost
+    print(f"{job['TrainingJobName']:<40} {d['TrainingJobStatus']:<10} {d.get('BillableTimeInSeconds', 0) / 60:5.1f} min  ${cost:.2f}")
+print(f"\nGPU spend so far: ${total:.2f}  (plus the CPU notebook at $0.05/h)")
+```
+
+Then compare that number to the estimate in Step 0. If you are within 50%, your estimating is good enough to be trusted with a bigger run. If you are not, find out which line was wrong before launching anything else.
+
+::::::::::::::::::::::::::::::::::::: challenge
+
+### Exercise 1: The resolution knob
+
+Relaunch the same job with `"max_pixels": 2560 * 28 * 28` (~2 megapixels) and the job name `badger-{username}-mini-v2`. Before it starts, write down your prediction for its billable time. Then compare `train_minutes` and `seconds_per_page` in the two summaries, and the before/after CER. Did the extra pixels help?
+
+:::::::::::::::::::::::: solution
+
+Time per page roughly doubles: the sequence is twice as long and attention cost grows faster than linearly. On these scans the strokes are legible well below 1 megapixel, so the extra pixels mostly buy tokens that carry no information, and CER usually moves very little. Resolution is the first knob to turn *down* when a fine-tune is over budget, and the first to turn *up* if the model is misreading small characters such as the `½` fractions.
+
+:::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::: challenge
+
+### Exercise 2: Cheaper per run, or just faster?
+
+`ml.g6e.xlarge` (one L40S, 48 GB) costs `$2.61`/h, 1.85x the price of `ml.g5.xlarge`, and runs this workload roughly 2.5–3x faster. It also has twice the GPU memory, so `batch_size` can be 2 or 4 instead of 1, which uses the GPU more efficiently.
+
+Using the Step 0 "The run" table, estimate the cost of the class job on `ml.g6e.xlarge`. Then do the same for the homework run (21 min of training, 13 min of evaluation, 10 min of startup on the g5). Which phase does *not* get faster, and when does the faster instance save money?
+
+:::::::::::::::::::::::: solution
+
+Startup (~10 min, `$0.44` at `$2.61`/h) does not speed up: the container pull and the S3 downloads are the same on any instance. For the class job, training drops from ~10 to ~4 minutes and each evaluation from ~3 to ~1 minute, so the job is about 16 minutes and ~`$0.70`: a little *more* than the `$0.60` g5 run, because on a job this short the fixed overhead dominates.
+
+The homework run on the g5 is 21 + 13 + 10 = 44 minutes, about `$1.03`. On the g6e at 2.5–3x: ~8 minutes of training, ~5 of evaluation, the same 10 of startup, about 23 minutes and ~`$1.00`. Break-even, at this size. The g6e only wins once training dominates startup: at four epochs, or at 2 megapixels, or on a thousand pages, the g5 bill grows linearly while the g6e bill grows at a third of the slope, and then the faster card is cheaper per run.
+
+The hourly rate is the wrong thing to compare; the cost per run is what matters, and the fixed overhead is a larger share of it on faster hardware. The catch is quotas: the account needs a service quota for `ml.g6e.xlarge` training jobs, and those often default to zero.
+
+:::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::: challenge
+
+### Exercise 3: Managed spot training
+
+SageMaker can run a training job on spare ("spot") capacity at a discount of up to 70% in exchange for the risk of being interrupted. Add `use_spot_instances=True` and `max_wait=3 * 60 * 60` (the total time allowed including waiting for capacity; it must be at least `max_run`) to the estimator and relaunch under a new job name.
+
+What else would the script need before this is safe to rely on for a 10-hour run?
+
+:::::::::::::::::::::::: solution
+
+Nothing more for this run: the script already checkpoints to `/opt/ml/checkpoints` at the end of every epoch, SageMaker syncs that to `checkpoint_s3_uri`, and a job restarted after an interruption resumes from the latest checkpoint. What changes for a ten-hour run is the granularity: an epoch may be hours, so switch to `save_strategy="steps"` with a `save_steps` worth about ten minutes of training, so that an interruption costs minutes rather than hours. Spot is the right choice for long, restartable jobs and the wrong one for a 25-minute class exercise, where waiting for capacity can take longer than the job.
+
+:::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+## Homework: the full run and (optionally) a Kaggle submission
+
+Everything below is the same pattern at a larger scale: about `$1.05` for the fine-tune and `$0.80` for inference, roughly an hour and a half of wall-clock time that you do not need to sit through. Launch, go do something else, come back.
+
+### The full fine-tune
+
+Same estimator with the page slice removed, all 251 training pages, and a 90-minute cap. Write your estimate down first (Step 2's challenge). Launch with `wait=False` here only because you will not be watching: it returns immediately and you poll later. The explicit job name still protects you from a double launch.
+
+```python
+full_job_name = f"badger-{username}-full-v1"
+full_checkpoint_s3_uri = f"s3://{bucket_name}/{data_prefix}/checkpoints/{full_job_name}/"
+print(f"max_run cap: 90 min -> worst case ${g5_price * 90 / 60:.2f}; checkpoints -> {full_checkpoint_s3_uri}")
+
+full_estimator = HuggingFace(
+    entry_point="finetune_churro_lora.py",
+    source_dir="code/",
+    role=role,
+    tags=make_job_tags("Training"),
+    instance_type=instance_type,
+    instance_count=1,
+    volume_size=50,
+    max_run=90 * 60,                      # 90 minutes: twice the estimate
+    checkpoint_s3_uri=full_checkpoint_s3_uri,
+    checkpoint_local_path="/opt/ml/checkpoints",
+    # Exercise 3: adding use_spot_instances=True, max_wait=3 * 60 * 60 runs this on spot capacity; max_wait (run + waiting) must be >= max_run
+    transformers_version="4.56",
+    pytorch_version="2.8",
+    py_version="py312",
+    output_path=model_output_path,
+    sagemaker_session=session,
+    hyperparameters={
+        # no model_id: read from the "model" channel, as in class
+        "epochs": 2,
+        "lr": 2e-4,
+        "lora_r": 16,
+        "batch_size": 1,
+        "grad_accum": 8,
+        "max_pixels": 1280 * 28 * 28,
+        "holdout_frac": 0.15,             # share of pages per category held out of training
+        "eval_pages": 40,
+        "eval_before": 1,
+    },
+)
+
+# wait=False: returns at once; poll the job with describe_training_job in the next cell
+full_estimator.fit({"train": train_s3_uri, "model": model_s3_uri}, job_name=full_job_name, wait=False)
+print("launched:", full_job_name)
+```
+
+```python
+# Come back later and run this until it says Completed.
+desc = session.sagemaker_client.describe_training_job(TrainingJobName=full_job_name)
+print(desc["TrainingJobStatus"], "-", desc.get("SecondaryStatus"))
+if desc["TrainingJobStatus"] == "Completed":
+    desc = job_cost_report(full_job_name, g5_price)
+    full_adapter_s3_uri = desc["ModelArtifacts"]["S3ModelArtifacts"]
+```
+
+### Base vs. fine-tuned over the holdout and the test set
+
+The evaluation inside the training job covers a sample. To score the whole holdout *and* produce predictions for the 141 test pages, run the transcription script as a Processing job, once without the adapter and once with it. Each run transcribes about 185 pages in roughly 15 minutes. Processing jobs are introduced in the RAG part of the lesson; do this homework after that part, or treat the launch cell below as a preview: it is the same pattern as a training job, with a script, an instance type, tags and a runtime cap.
+
+First, build the list of pages and upload it together with the metadata.
+
+```python
+holdout_df = pd.read_csv(os.path.join(local_data_dir, training_job_name, "holdout_page_ids.csv"))
+
+pages_df = pd.concat([
+    train_df[train_df.page_id.isin(holdout_df.page_id)][["page_id", "doc_id", "category", "text"]],
+    test_df[["page_id", "doc_id", "category"]].assign(text=""),
+], ignore_index=True)
+print(len(pages_df), "pages to transcribe")
+
+infer_prefix = f"{data_prefix}/inference"
+pages_df.to_csv(os.path.join(local_data_dir, "pages.csv"), index=False)
+for fname in ["pages.csv", "metadata.csv"]:
+    s3_client.upload_file(os.path.join(local_data_dir, fname), bucket_name, f"{infer_prefix}/{fname}")
+
+images_s3_uri = f"s3://{shared_bucket}/{data_prefix}/images/"
+infer_data_s3_uri = f"s3://{bucket_name}/{infer_prefix}/"
+```
+
+Then one function that launches a transcription job. Four inputs are mounted into the container: the images and the staged base model (both from the shared bucket; a Processing job has no `model` channel, so the model directory is passed explicitly as `--model_id`), your CSVs, and, optionally, the adapter.
+
+```python
+from sagemaker.huggingface import HuggingFaceProcessor
+from sagemaker.processing import ProcessingInput, ProcessingOutput
+
+def run_transcription_job(label: str, adapter_uri: str = None):
+    output_uri = f"s3://{bucket_name}/{data_prefix}/predictions/{label}/"
+    inputs = [  # each ProcessingInput copies an S3 prefix to a container path before the script starts
+        ProcessingInput(source=images_s3_uri, destination="/opt/ml/processing/input/images"),
+        ProcessingInput(source=model_s3_uri, destination="/opt/ml/processing/input/model"),
+        ProcessingInput(source=infer_data_s3_uri, destination="/opt/ml/processing/input/data"),
+    ]
+    # arguments = command-line flags for the script (a processor has no hyperparameters=)
+    arguments = ["--model_id", "/opt/ml/processing/input/model", "--pages_csv", "pages.csv",
+                 "--batch_size", "4", "--max_pixels", str(1280 * 28 * 28)]
+    if adapter_uri:
+        inputs.append(ProcessingInput(source=adapter_uri, destination="/opt/ml/processing/input/adapter"))
+        arguments += ["--adapter_tar", "/opt/ml/processing/input/adapter/model.tar.gz"]
+
+    processor = HuggingFaceProcessor(
+        role=role,
+        tags=make_job_tags("Inference"),
+        instance_type=instance_type,
+        instance_count=1,
+        volume_size_in_gb=50,             # same role as volume_size on the estimator
+        transformers_version="4.56",      # same image family as the training job
+        pytorch_version="2.8",
+        py_version="py312",
+        sagemaker_session=session,
+        max_runtime_in_seconds=45 * 60,   # the processor's name for max_run: 45 minute cap; the estimate is 15 minutes
+    )
+    processor.run(
+        code="churro_transcribe_batch.py",
+        source_dir="code/",
+        inputs=inputs,
+        # ProcessingOutput: whatever the script writes under source is copied to destination when the job ends
+        outputs=[ProcessingOutput(output_name="predictions", source="/opt/ml/processing/output", destination=output_uri)],
+        arguments=arguments,
+        job_name=f"badger-{username}-transcribe-{label}-v1",   # unique, like the training jobs
+        wait=False, logs=False,           # launch and return, so the two jobs run at the same time
+    )
+    return output_uri
+
+base_output_uri = run_transcription_job("base")
+tuned_output_uri = run_transcription_job("tuned", adapter_uri=full_adapter_s3_uri)
+```
+
+Both jobs run in parallel on their own GPU, which doubles the instantaneous spend but halves the wall-clock time; the total cost is the same. Watch them under **SageMaker AI → Data preparation → Processing jobs**, and when both are `Completed`, score the holdout rows with `metric.py`, the exact file that scores the leaderboard.
+
+```python
+import subprocess
+
+def fetch_predictions(output_uri: str, label: str) -> pd.DataFrame:
+    bucket, key = output_uri.replace("s3://", "").split("/", 1)
+    local = os.path.join(local_data_dir, f"predictions_{label}.csv")
+    s3_client.download_file(bucket, key + "predictions.csv", local)
+    return pd.read_csv(local, keep_default_na=False)
+
+preds = {label: fetch_predictions(uri, label) for label, uri in [("base", base_output_uri), ("tuned", tuned_output_uri)]}
+
+holdout_solution = train_df[train_df.page_id.isin(holdout_df.page_id)][["page_id", "text", "category"]]
+holdout_solution.to_csv(os.path.join(local_data_dir, "holdout_solution.csv"), index=False)
+
+for label, df in preds.items():
+    df[df.page_id.isin(holdout_solution.page_id)].to_csv(os.path.join(local_data_dir, f"holdout_pred_{label}.csv"), index=False)
+    print(f"\n=== {label} ===")
+    print(subprocess.run(
+        ["python", os.path.join(local_data_dir, "metric.py"),
+         "--solution", os.path.join(local_data_dir, "holdout_solution.csv"),
+         "--submission", os.path.join(local_data_dir, f"holdout_pred_{label}.csv")],
+        capture_output=True, text=True).stdout)
+```
+
+### Submit
+
+The `tuned` prediction file already contains every test page. Keep only those rows, in the order `test.csv` lists them. If you want a leaderboard score, this file is what you upload on the competition's **Submit Prediction** page (two submissions per day; this is the only step that needs a Kaggle account, and it is optional).
+
+```python
+submission = test_df[["page_id"]].merge(preds["tuned"], on="page_id", how="left").fillna({"text": ""})
+assert len(submission) == len(test_df) and submission.text.str.len().gt(0).all(), "every test page needs a prediction"
+
+submission_path = os.path.join(local_data_dir, "submission_churro_lora.csv")
+submission.to_csv(submission_path, index=False)
+s3_client.upload_file(submission_path, bucket_name, f"{data_prefix}/submissions/submission_churro_lora.csv")
+print("wrote", submission_path, len(submission), "rows")
+```
+
+Finally, rerun Step 4 and compare the total with the estimate you wrote down before the full run.
+
+## Cleanup
+
+- The training and processing jobs have already ended; there is nothing to stop. Check **Training jobs** and **Processing jobs** in the console anyway: nothing should say `InProgress`.
+- Delete what you no longer need from `s3://<your-bucket>/badger-scribe/` (the `models/` and `predictions/` prefixes). The adapter is small, but prediction outputs accumulate across runs.
+- **Stop your notebook instance.** It is a CPU instance at five cents an hour, which is exactly the kind of charge that goes unnoticed for a semester.
+
+::::::::::::::::::::::::::::::::::::: keypoints
+
+- Fine-tuning cost is GPU-hours × hourly rate, and GPU-hours scale with model size × tokens × epochs × attempts. The same recipe runs from under a dollar (3B, LoRA, a few hundred pages) to tens of thousands (70B, full fine-tune, days on multi-GPU nodes). Starting from a model that already knows most of the task is the biggest saving available.
+- Training jobs, not GPU notebooks, are the safe way to run it: they end, `max_run` guarantees it, a unique `job_name` prevents a second copy launching by accident, and checkpoints synced to S3 mean a killed job costs an epoch rather than the run. Interrupting a notebook cell does not stop a job.
+- Estimate before launching (startup overhead + pages × epochs × seconds per page, at the instance's rate), then compare to `BillableTimeInSeconds`.
+- Image resolution (`max_pixels`) and epochs change cost by multiples; the instance size changes it by 5–45x, which is right when the model does not fit on one GPU and waste when it does.
+- Score the holdout at the end of every epoch: the curve, not a rule of thumb, says how many passes were worth paying for. Measure the gain on the same held-out pages before and after, with the task's own metric, and remember that a page-level holdout is optimistic when the real test is split by document.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
