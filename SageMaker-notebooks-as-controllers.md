@@ -35,7 +35,9 @@ The SageMaker SDK runs anywhere Python does, so the lesson could be run from a l
 ### Using the notebook as a controller
 In this setup, the notebook instance functions as a *controller* to manage more resource-intensive compute tasks. By selecting a minimal instance (e.g., `ml.t3.medium`: 2 vCPUs, 4 GB of memory, $0.05 per hour), you can perform lightweight operations while leveraging the **SageMaker Python SDK** to launch scalable compute instances for model training, batch processing, and hyperparameter tuning. Those instances start, run your script, write their results to S3, and shut themselves down. This approach minimizes costs while accessing the full power of SageMaker for demanding tasks.
 
-Every later episode uses the same instance.
+![The notebook instance launches SageMaker jobs that read from and write to S3 and end on their own, and calls Bedrock as an API](fig/aws-ml-ecosystem.svg){alt="Diagram from the overview episode: S3 buckets at the top, the notebook instance on the left launching SageMaker training, tuning and processing jobs, and Bedrock on the right"}
+
+The notebook is the box on the left of the diagram from the overview episode. Everything else in the picture is launched or called from it, and every later episode uses this same instance.
 
 We'll follow these steps to create our first "SageMaker notebook instance".
 
@@ -61,7 +63,7 @@ We'll follow these steps to create our first "SageMaker notebook instance".
 
   | Key | Value |
   |---|---|
-  | `Project` | your challenge name, e.g. `SinkOrSwim` |
+  | `Project` | your challenge name (`SinkOrSwim`, `WattBot2026`, `BadgerScribe`, `BadgerCode`, ...), e.g. `SinkOrSwim` |
   | `Name` | your name, e.g. `DoeJohn` |
   | `Purpose` | what this resource is for, `Notebook` |
 
@@ -89,14 +91,14 @@ Once your newly created *instance* shows as `InService`, open the instance in Ju
 
 We will then select the standard python3 environment (conda_python3) to start our first .ipynb notebook (Jupyter notebook). We can use the standard conda_python3 environment since we aren't doing any training/tuning just yet.
 
-##### Load pre-filled Jupyter notebooks
-Within the Jupyter notebook, run the following command to clone the lesson repo into our Jupyter environment:
+In that notebook, run the following cell to clone the lesson repository into the instance's persistent directory. The `test -d ... ||` guard makes it a no-op if the folder already exists, and every later episode starts with the same cell:
 
 ```sh
-!git clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git
+%cd /home/ec2-user/SageMaker/
+!test -d ML_with_AWS_SageMaker || git clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git
 ```
 
-Then, navigate to `/ML_with_AWS_SageMaker/notebooks/Accessing-S3-via-SageMaker-notebooks.ipynb` to begin the first notebook.
+Then open `ML_with_AWS_SageMaker/notebooks/Accessing-S3-via-SageMaker-notebooks.ipynb` from the file browser to begin the first notebook.
 
 ::::::::::::::::::::::::::::::::::::: challenge
 
@@ -123,7 +125,7 @@ A notebook instance bills for every second it is **InService**. When you step aw
 ::::::::::::::::::::::::::::::::::::: keypoints 
 
 - Use a minimal SageMaker notebook instance as a controller to manage larger, resource-intensive tasks.
-- Launch training and tuning jobs on scalable instances using the SageMaker SDK.
+- The notebook does not do the heavy computation; later episodes use it to launch training, tuning and processing jobs on separate instances.
 - Tags can help track costs effectively, especially in multi-project or team settings.
 
 - Stop the notebook instance whenever you leave, and delete it when the workshop is over.
