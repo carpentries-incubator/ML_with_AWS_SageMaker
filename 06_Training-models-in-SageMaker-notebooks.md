@@ -28,11 +28,10 @@ exercises: 15
 Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/06_Training-models-in-SageMaker-notebooks.ipynb`. When asked for a kernel, pick **`conda_pytorch_p310`**; we will use the same kernel for the next two episodes.
 
 #### 2. CD to instance home directory
-So we all can reference the helper functions using the same path, CD to the instance's root directory, clone the lesson repository if it is not already there, and make its `scripts/` importable. The training scripts for this episode (`train_xgboost.py`) and the next (`train_nn.py`) are in that folder.
+So we all can reference the helper functions using the same path, CD to the instance's root directory and make the lesson repository's `scripts/` importable. The training scripts for this episode (`train_xgboost.py`) and the next (`train_nn.py`) are in that folder.
 
 ```python
 %cd /home/ec2-user/SageMaker/
-!test -d ML_with_AWS_SageMaker || git clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git
 import sys
 sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
 import helpers
@@ -47,6 +46,8 @@ This code initializes the AWS SageMaker environment by defining the SageMaker ro
 ```python
 import boto3
 import pandas as pd
+import os
+os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the kernel ships SDK v2; the Accessing S3 episode explains
 import sagemaker
 from sagemaker import get_execution_role
 

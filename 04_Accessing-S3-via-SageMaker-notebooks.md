@@ -32,6 +32,11 @@ To begin each notebook, it's important to set up an AWS environment that will al
 Starting with these initializations prepares our notebook environment to efficiently interact with AWS resources for model development, data management, and deployment.
 
 ```python
+import os
+import logging
+os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"            # see the callout below
+logging.getLogger("sagemaker.config").setLevel(logging.WARNING)  # hide the "Not applying SDK defaults" lines
+
 import boto3
 import sagemaker
 from sagemaker import get_execution_role
@@ -40,10 +45,19 @@ from sagemaker import get_execution_role
 role = sagemaker.get_execution_role() # specifies your permissions to use AWS tools
 session = sagemaker.Session() 
 s3 = boto3.client('s3')
-
 ```
 
-Preview variable details.
+::::::::::::::::::::::::::::::::::::: callout
+
+### Two messages you will see without the first two lines
+
+`sagemaker.config INFO - Not applying SDK defaults from location: ...` means the SDK looked for an optional defaults file in two standard places and found none. Nothing is wrong; the logging line above hides it.
+
+`SageMakerV2DeprecationWarning: You are using the SageMaker Python SDK v2 ... v3 is the actively developed major version` is more important. The notebook kernels ship **version 2** of the SageMaker Python SDK, and this lesson is written for it: `Estimator`, `HuggingFace`, `HyperparameterTuner` and the rest. Version 3 is a rewrite with a different API, so do not `pip install` it into these kernels to make the warning go away; the environment variable above silences it instead. The v2 API keeps working; when you start a project of your own, look at the [migration guide](https://github.com/aws/sagemaker-python-sdk/blob/master/migration.md) and decide which version to build on.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+Print what we just created. The role is the identity every call from this notebook uses. Check the region line against the bucket you made in the S3 episode: the two must match, or the training jobs in later episodes will fail to find their data and anything you do read will be billed as cross-region transfer. If they differ, the fix is a new bucket in this region, not a new notebook instance.
 
 ```python
 # Print relevant details 
@@ -98,7 +112,7 @@ train_data.head()
 ```
 
 ### B) Download copy into notebook environment
-In some cases, downloading a local copy of the dataset may be useful, such as when performing repeated reads in an interactive notebook session. This download costs nothing: it moves data from S3 to an instance in the same region, which AWS does not bill. The same `download_file` run on your laptop would be a transfer out of AWS at $0.09 per GB.
+In some cases, downloading a local copy of the dataset may be useful, such as when performing repeated reads in an interactive notebook session. This download costs nothing: it moves data from S3 to a SageMaker notebook instance in the same region, which AWS does not bill. The same `download_file` run on your laptop would be a transfer out of AWS at $0.09 per GB.
 
 **Pros**:
 
@@ -124,7 +138,7 @@ local_file_path = "/home/ec2-user/SageMaker/titanic_train.csv"  # Local path to 
 
 # Initialize the S3 client and download the file
 s3.download_file(bucket_name, key, local_file_path)
-!ls
+!ls "/home/ec2-user/SageMaker/"
 ```
 
 **Note**: You may need to hit refresh on the file explorer panel to the left to see this file. If you get any permission issues...
@@ -170,15 +184,14 @@ print(f"Total size of bucket '{bucket_name}': {total_size_mb:.2f} MB")
 #print(f"Total size of bucket '{bucket_name}': {total_size_gb:.2f} GB")
 ```
 
-### Using helper functions from GitHub
-We have added code to calculate bucket size to a helper function called `get_s3_bucket_size(bucket_name)` for your convenience. There are also some other helper functions in `scripts/helpers.py` of the lesson repository to assist you with common AWS/SageMaker workflows. We'll show you how to clone this code into your notebook environment.
+### Using the lesson's helper functions
+We have added code to calculate bucket size to a helper function called `get_s3_bucket_size(bucket_name)` for your convenience. There are also some other helper functions in `scripts/helpers.py` of the lesson repository, which you cloned to `/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/` in the previous episode.
 
 #### Directory setup
-Let's make sure we're starting in the root directory of this instance, so that we all have our helpers.py file located in the same path (/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/helpers.py). This directory survives stopping the instance, so a clone placed there is still present next session. The `test -d ... ||` guard skips the clone if the folder already exists; every later episode starts with the same cell.
+Let's make sure we're starting in the root directory of this instance, and tell Python where the `scripts/` folder is:
 
 ```python
 %cd /home/ec2-user/SageMaker/
-!test -d ML_with_AWS_SageMaker || git clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git
 import sys
 sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
 import helpers
@@ -244,19 +257,22 @@ print(f"Estimated annual cost ({storage_size_gb:.4f} GB): ${monthly_cost*12:.5f}
 For detailed and up-to-date information on AWS S3 pricing, please refer to the [AWS S3 Pricing page](https://aws.amazon.com/s3/pricing/).
 
 ## Writing output files to S3
-As your analysis generates new files or demands additional documentation, you can upload files to your bucket as demonstrated below. For this demo, you can create a blank `Notes.txt` file to upload to your bucket. To do so, go to **File** -> **New** -> **Text file**, and save it out as `Notes.txt`. (The code below also writes the file, so the notebook runs end to end.)
+As your analysis generates new files or demands additional documentation, you can upload files to your bucket as demonstrated below. For this demo, we write a small `Notes.txt` file on the instance and check that it exists:
 
 ```python
-# Define the S3 bucket name and the file paths
-notes_file_path = "Notes.txt" # assuming your file is in root directory of jupyter notebook (check file explorer tab)
+notes_file_path = "/home/ec2-user/SageMaker/Notes.txt"
 with open(notes_file_path, "w") as f:
-    f.write("Workshop notes: Titanic data uploaded from the S3 episode; outputs go under per-episode prefixes.\n")
+    f.write("Workshop notes.\n")
 
-# Upload the training file to a new folder called "docs". You can also just place it in the bucket's root directory if you prefer (remove docs/ in code below).
-s3.upload_file(notes_file_path, bucket_name, "docs/Notes.txt")
+!ls -l "/home/ec2-user/SageMaker/Notes.txt"
+```
 
-print("Files uploaded successfully.")
+Then upload it. Here it goes under a `docs/` prefix; drop the `docs/` to put it in the bucket's root instead.
 
+```python
+notes_s3_key = "docs/Notes.txt"   # the object key: a "docs/" prefix plus the file name
+s3.upload_file(notes_file_path, bucket_name, notes_s3_key)
+print(f"Uploaded {notes_file_path} to s3://{bucket_name}/{notes_s3_key}")
 ```
 
 After uploading, we can view the objects/files available on our bucket using...
@@ -286,7 +302,7 @@ file_list
 ### Challenge: before and after
 
 1. Using `helpers.get_s3_bucket_size(bucket_name)`, record the size of your bucket. Then create a second file (say `docs/Notes2.txt` with a few lines of text), upload it under the `docs/` prefix, and measure the bucket size again. By how much did it grow, and what does that cost per month at $0.023 per GB?
-2. The next episodes train an XGBoost model with a SageMaker training job that writes its outputs to your bucket. Looking at how this episode organized `Notes.txt`, which prefix do you expect those outputs to land under, and why does the lesson use one bucket with prefixes instead of a new bucket per episode?
+2. The next episode launches a training job that writes its outputs to your bucket. Why does the lesson keep everything in one bucket, organised with prefixes like `docs/`, rather than creating a bucket per task?
 
 :::::::::::::::::::::::::::::::::::: solution
 
@@ -305,7 +321,7 @@ print(size_before, size_after)
 
 The bucket grows by the size of the file (a few hundred bytes here), and at $0.023 per GB-month that is well under a thousandth of a cent per month. The same two lines, run before and after a training job, tell you what the job wrote and whether something is accumulating that you should clean up.
 
-2. The training episode writes under `xgboost/` (`s3://sinkorswim-doejohn/xgboost/`), the same way this episode wrote under `docs/`; the PyTorch episode uses `pytorch/`, the RAG episodes `wattbot/`, and the fine-tuning episode `badger-scribe/`. One bucket with prefixes keeps a single bucket policy, a single set of tags, and a single thing to delete at the end of the workshop; one bucket per episode would mean repeating the policy and tag setup five times and a longer cleanup list.
+2. A prefix is just part of the object key, so `docs/Notes.txt`, `xgboost/output/...` and `wattbot/chunks.jsonl` can all live in one bucket and still be listed, downloaded or deleted as groups. One bucket means one policy, one set of tags, one region to get right, and one thing to empty and delete at the end; a bucket per task would repeat the setup each time and lengthen the cleanup list.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -316,7 +332,7 @@ The bucket grows by the size of the file (a few hundred bytes here), and at $0.0
 - Load data from S3 into memory for efficient storage and processing.
 - Periodically check storage usage and costs to manage S3 budgets.
 - Use SageMaker to upload analysis results and maintain an organized workflow.
-- Clone the lesson repository once, into `/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/`; every later episode starts with the same guarded clone-and-import cell.
+- The lesson repository lives at `/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/`; every later episode adds its `scripts/` folder to `sys.path` and imports `helpers`.
 
 
 ::::::::::::::::::::::::::::::::::::::::::::::::

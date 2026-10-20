@@ -266,6 +266,7 @@ import time
 
 import boto3
 import pandas as pd
+os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the kernel ships SDK v2; the Accessing S3 episode explains
 import sagemaker
 from sagemaker import get_execution_role
 
@@ -318,18 +319,14 @@ display(Image(filename=page_path, width=500))
 
 ### The scripts
 
-Jobs run in containers, so the code they execute has to be shipped with the job. Clone the lesson repository and copy the scripts into a `code/` directory:
-
-```python
-!test -d ML_with_AWS_SageMaker || git clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git
-```
+Jobs run in containers, so the code they execute has to be shipped with the job. Copy the scripts from the lesson repository into a `code/` directory:
 
 ```python
 import shutil
 
 os.makedirs("code", exist_ok=True)
 for f in ["badger_common.py", "finetune_churro_lora.py", "churro_transcribe_batch.py"]:
-    shutil.copy(f"ML_with_AWS_SageMaker/scripts/{f}", f"code/{f}")
+    shutil.copy(f"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/{f}", f"code/{f}")
 
 with open("code/requirements.txt", "w") as f:
     f.write("\n".join(["peft>=0.14", "accelerate", "pillow", "pandas"]))

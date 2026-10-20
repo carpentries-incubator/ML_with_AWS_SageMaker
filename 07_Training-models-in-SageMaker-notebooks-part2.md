@@ -30,6 +30,8 @@ Once your notebook is open, we can setup our SageMaker controller as usual:
 ```python
 import boto3
 import pandas as pd
+import os
+os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the kernel ships SDK v2; the Accessing S3 episode explains
 import sagemaker
 from sagemaker import get_execution_role
 
@@ -61,7 +63,6 @@ We should also record our local instance information to report this information 
 
 ```python
 %cd /home/ec2-user/SageMaker/
-!test -d ML_with_AWS_SageMaker || git clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git
 import sys
 sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
 import helpers

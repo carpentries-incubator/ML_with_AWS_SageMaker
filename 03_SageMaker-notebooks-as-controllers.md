@@ -32,10 +32,11 @@ The notebook instance is a *controller*: a small, cheap machine where you write 
 The notebook is the box on the left of the diagram from the overview episode. Everything else in the picture is launched or called from it, and every later episode uses this same instance.
 
 ### Why we work from a notebook instance in this lesson
-The SageMaker SDK runs anywhere Python does, so the lesson could be run from a laptop. We use a notebook instance for three reasons:
+The SageMaker SDK runs anywhere Python does, so the lesson could be run from a laptop. We use a notebook instance for four reasons:
 
 - **No credential setup.** The IAM role attached to the instance authorizes every call made from it, so there is nothing to install or log in to. Working from a laptop is not hard, `aws configure sso` and `aws sso login` take a few minutes, but in a room of a hundred people that is a hundred setups, plus SSO sessions expiring mid-episode and the occasional person pasting an access key instead. The role sidesteps all of it.
 - **Everyone has the same environment.** The kernels, the SDK version and the paths are identical for every learner, so a cell that works for the instructor works for you.
+- **Instructors can see what happened.** Every notebook instance in the shared account shows up in the console, and an instructor can open yours and see the notebook that launched a job, with its outputs. Jobs launched from a laptop are just as visible in the job list, but the code that launched them is on your machine, so when something breaks or a charge looks wrong there is less to go on.
 - **No egress charges.** AWS bills data transfer when it leaves AWS, not when it moves within a region. The notebook instance sits in the same region as your bucket, so reading or downloading files from S3 to the instance is free. Pulling the same files to a laptop costs $0.09 per GB wherever the laptop is: "region" means the AWS data center your resources live in, and a machine outside AWS is never in one.
 
 We'll follow these steps to create our first "SageMaker notebook instance".
@@ -50,6 +51,7 @@ We'll follow these steps to create our first "SageMaker notebook instance".
 - **Notebook name**: the same words as your bucket, capitalised: `Challenge-LastnameFirstname`, e.g. `SinkOrSwim-DoeJohn`. One instance serves the whole workshop; the individual `.ipynb` notebooks inside it are where the per-episode work lives. SageMaker allows letters, digits and hyphens (no spaces or underscores, up to 63 characters); capitals are fine here and in tags, only bucket names must be lowercase. This name is also reused as the prefix of every training job you launch from the notebook, which is how you will find your jobs in a shared account.
 - **Instance type**: sets the CPU, memory and price of the virtual machine. Our notebook is a controller, so pick a small one: `ml.t3.medium` (2 vCPU, 4 GB RAM, $0.05/hour). The jobs we launch from it will run on more powerful instances; the supplemental [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page compares them.
 - **Platform identifier**: This is an internal AWS setting related to the environment version and underlying platform. You can leave this as the default.
+- **Additional configuration (leave collapsed)**: holds the **Volume size in GB** of the instance's persistent disk, default 5 GB. The default is enough for this lesson; the disk is the one thing a stopped instance keeps billing for, so do not make it larger than you need.
 - **Permissions and encryption**:
    - **IAM role**: For this workshop, we have pre-configured the "ml-sagemaker-use" role to enable access to AWS services like SageMaker, with some restrictions to prevent overuse/misuse of resources. Select the "ml-sagemaker-use" role. Outside of the workshop, you create/select a role that includes the `AmazonSageMakerFullAccess` policy.
    - **Root access**: Determines whether the user can run administrative commands within the notebook instance.  You should **Enable root access** to allow installing additional packages if/when needed.  
@@ -71,13 +73,19 @@ We'll follow these steps to create our first "SageMaker notebook instance".
 ### Load pre-filled Jupyter notebooks
 The new instance appears in the list with status `Pending`; after a few minutes it changes to `InService`. Once it does, click **Open JupyterLab** next to it. In JupyterLab, create a new notebook with the `conda_python3` kernel (we aren't training anything yet, so the plain Python environment is enough).
 
-The instance's home directory holds AWS's own setup: the `anaconda3` folder with the conda environments behind the kernel list, AWS's `sample-notebooks`, and a pile of license files. One folder is different: `/home/ec2-user/SageMaker` is a separate disk, the storage volume you saw as a setting when creating the instance. Everything else in the home directory lives on the system disk and is reset when the instance stops; `SageMaker/` is the only place that survives a stop. JupyterLab's file browser opens there for that reason, and it is where everything in this lesson goes.
-
-In that notebook, run the following cell to clone the lesson repository into that persistent folder. The `test -d ... ||` guard makes it a no-op if the folder already exists, and every later episode starts with the same cell:
+In the new notebook, run:
 
 ```sh
-%cd /home/ec2-user/SageMaker/
-!test -d ML_with_AWS_SageMaker || git clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git
+!pwd
+!ls ..
+```
+
+The first line prints `/home/ec2-user/SageMaker`: new notebooks start in that folder. The second lists its parent, the instance's home directory, which holds AWS's own setup: the `anaconda3` folder with the conda environments behind the kernel list, AWS's `sample-notebooks`, and a pile of license files. `SageMaker/` is the one folder that is different. It is a separate disk, the volume whose size sits under **Additional configuration** on the create form (5 GB by default). Everything else in the home directory lives on the system disk and is reset when the instance stops; `SageMaker/` is the only place that survives a stop. JupyterLab's file browser opens there for that reason, and it is where everything in this lesson goes.
+
+Now clone the lesson repository into it:
+
+```sh
+!git clone https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git
 ```
 
 Then open `ML_with_AWS_SageMaker/notebooks/04_Accessing-S3-via-SageMaker-notebooks.ipynb` from the file browser to begin the first notebook.

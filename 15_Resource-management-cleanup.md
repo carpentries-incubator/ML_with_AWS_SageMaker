@@ -116,7 +116,7 @@ A complete list for someone who did every episode, including the optional ones:
 
 | Resource | Created in | Bills while it exists? | Where it is deleted |
 |---|---|---|---|
-| S3 bucket `challenge-lastnamefirstname` and everything under its prefixes (`docs/`, `xgboost/`, `pytorch/`, `wattbot/`, `badger-scribe/`) | S3 episode | Yes: storage per GB-month | S3 console → Empty bucket → Delete bucket |
+| S3 bucket `challenge-lastnamefirstname` and everything in it (the Titanic files and `.npz` arrays at the root, and the `docs/`, `xgboost/`, `output_nn/`, `wattbot/` and `badger-scribe/` prefixes) | S3 episode | Yes: storage per GB-month | S3 console → Empty bucket → Delete bucket |
 | Controller notebook instance (`ml.t3.medium`) | Notebooks as controllers | Yes while InService; its volume bills while Stopped | SageMaker → Notebook instances → Stop → Delete |
 | Training jobs (XGBoost, PyTorch), tuning jobs, Processing jobs | Training, tuning, RAG and fine-tuning episodes | Only while running; all capped by `max_run` / `max_runtime_in_seconds` | SageMaker → job lists → Stop if InProgress; nothing to delete afterwards |
 | Bedrock application inference profiles | RAG on Bedrock | No (the calls billed per token when made) | Bedrock console or `bedrock.delete_inference_profile(...)` |
