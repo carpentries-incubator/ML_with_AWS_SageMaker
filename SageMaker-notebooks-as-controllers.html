@@ -482,7 +482,7 @@ keep under <code>/home/ec2-user/SageMaker/</code> survive a stop.</p>
 <div class="section level3">
 <h3 id="why-we-work-from-a-notebook-instance-in-this-lesson">Why we work from a notebook instance in this lesson<a class="anchor" aria-label="anchor" href="#why-we-work-from-a-notebook-instance-in-this-lesson"></a></h3>
 <p>The SageMaker SDK runs anywhere Python does, so the lesson could be
-run from a laptop. We use a notebook instance for four reasons:</p>
+run from a laptop. We use a notebook instance for three reasons:</p>
 <ul><li>
 <strong>Identity comes from the instance, not from a file on your
 machine.</strong> The IAM role attached to the notebook is what
@@ -494,12 +494,13 @@ history or a GitHub commit.</li>
 SDK version and the paths are identical for every learner, so a cell
 that works for the instructor works for you.</li>
 <li>
-<strong>It is inside AWS.</strong> Reading your S3 bucket from the
-instance is in-region, fast and free of transfer charges; the same reads
-from a laptop would be slower and billed as data leaving AWS.</li>
-<li>
-<strong>It is a billed resource like any other.</strong> It has to
-be sized, tagged, started and stopped.</li>
+<strong>It is inside AWS.</strong> Transfer charges apply when data
+leaves AWS or crosses regions, not when it is read. Reading or even
+downloading your bucket’s files onto the instance is in-region and free.
+A job launched from anywhere, laptop included, also reads its S3 inputs
+in-region for free; only data pulled to the laptop itself (a
+<code>read_csv</code> of an S3 path on your own machine) is billed as
+egress.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="using-the-notebook-as-a-controller">Using the notebook as a controller<a class="anchor" aria-label="anchor" href="#using-the-notebook-as-a-controller"></a></h3>
@@ -545,12 +546,12 @@ also reused as the prefix of every training job you launch from the
 notebook, which is how you will find your jobs in a shared
 account.</p></li>
 <li>
-<p><strong>Instance type</strong>: SageMaker notebooks run on AWS
-EC2 instances. The instance type determines the compute resources
-allocated to the notebook. Since our notebook will act as a
-<strong>low-resource “controller”</strong>, we’ll select a small
-instance such as <code>ml.t3.medium</code> (2 vCPU, 4 GB RAM,
-$0.05/hour)</p>
+<p><strong>Instance type</strong>: a SageMaker notebook instance is
+an EC2 virtual machine (the previous episode introduced these) with
+JupyterLab preinstalled, and the instance type sets its CPU, memory and
+price. Since our notebook will act as a <strong>low-resource
+“controller”</strong>, we’ll select a small instance such as
+<code>ml.t3.medium</code> (2 vCPU, 4 GB RAM, $0.05/hour)</p>
 <ul><li>This keeps costs low while allowing us to launch separate
 training/tuning jobs on more powerful instances when needed.<br></li>
 <li>For guidance on common instances for ML procedures, refer to our
@@ -701,7 +702,7 @@ and say which of them need the three tags.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
 GB of data wants about 32 GB of memory: <code>ml.m5.2xlarge</code> (8

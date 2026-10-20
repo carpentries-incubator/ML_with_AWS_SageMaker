@@ -821,14 +821,16 @@ for data storage, primarily <strong>EC2 instances</strong> or
 <div class="section level3">
 <h3 id="what-is-an-ec2-instance">What is an EC2 instance?<a class="anchor" aria-label="anchor" href="#what-is-an-ec2-instance"></a>
 </h3>
-<p>An Amazon EC2 (Elastic Compute Cloud) instance is a virtual server
-environment where you can run applications, process data, and store data
-temporarily. EC2 instances come in various types and sizes to meet
-different computing and memory needs, making them versatile for tasks
-ranging from light web servers to intensive machine learning workloads.
-For example, when you launch a new Jupyter notebook from Sagemaker, this
-notebook is run on an an EC2 instance configured to run Jupyter
-notebooks, enabling direct data processing.</p>
+<p>An Amazon EC2 (Elastic Compute Cloud) instance is a virtual server: a
+machine with a chosen amount of CPU, memory, disk and optionally GPU
+that you rent by the second. <em>Elastic</em> is the point of the name:
+you can start one, resize it to a different type, add more, and shut
+them down whenever you want, instead of owning a fixed machine. EC2
+instances come in hundreds of types, from small web servers to 8-GPU
+nodes. Every SageMaker notebook instance and every SageMaker job runs on
+an EC2 instance underneath; SageMaker’s <code>ml.t3.medium</code>,
+<code>ml.g5.xlarge</code> and so on are EC2 instance types with an
+<code>ml.</code> prefix and SageMaker’s software and billing on top.</p>
 </div>
 <div class="section level3">
 <h3 id="when-to-store-data-directly-on-ec2">When to store data directly on EC2<a class="anchor" aria-label="anchor" href="#when-to-store-data-directly-on-ec2"></a>
@@ -1376,7 +1378,7 @@ does that add, and how does it compare to the download charge?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -1598,7 +1600,7 @@ keep under <code>/home/ec2-user/SageMaker/</code> survive a stop.</p>
 <h3 id="why-we-work-from-a-notebook-instance-in-this-lesson">Why we work from a notebook instance in this lesson<a class="anchor" aria-label="anchor" href="#why-we-work-from-a-notebook-instance-in-this-lesson"></a>
 </h3>
 <p>The SageMaker SDK runs anywhere Python does, so the lesson could be
-run from a laptop. We use a notebook instance for four reasons:</p>
+run from a laptop. We use a notebook instance for three reasons:</p>
 <ul>
 <li>
 <strong>Identity comes from the instance, not from a file on your
@@ -1611,12 +1613,13 @@ history or a GitHub commit.</li>
 SDK version and the paths are identical for every learner, so a cell
 that works for the instructor works for you.</li>
 <li>
-<strong>It is inside AWS.</strong> Reading your S3 bucket from the
-instance is in-region, fast and free of transfer charges; the same reads
-from a laptop would be slower and billed as data leaving AWS.</li>
-<li>
-<strong>It is a billed resource like any other.</strong> It has to
-be sized, tagged, started and stopped.</li>
+<strong>It is inside AWS.</strong> Transfer charges apply when data
+leaves AWS or crosses regions, not when it is read. Reading or even
+downloading your bucket’s files onto the instance is in-region and free.
+A job launched from anywhere, laptop included, also reads its S3 inputs
+in-region for free; only data pulled to the laptop itself (a
+<code>read_csv</code> of an S3 path on your own machine) is billed as
+egress.</li>
 </ul>
 </div>
 <div class="section level3">
@@ -1669,12 +1672,12 @@ also reused as the prefix of every training job you launch from the
 notebook, which is how you will find your jobs in a shared
 account.</p></li>
 <li>
-<p><strong>Instance type</strong>: SageMaker notebooks run on AWS
-EC2 instances. The instance type determines the compute resources
-allocated to the notebook. Since our notebook will act as a
-<strong>low-resource “controller”</strong>, we’ll select a small
-instance such as <code>ml.t3.medium</code> (2 vCPU, 4 GB RAM,
-$0.05/hour)</p>
+<p><strong>Instance type</strong>: a SageMaker notebook instance is
+an EC2 virtual machine (the previous episode introduced these) with
+JupyterLab preinstalled, and the instance type sets its CPU, memory and
+price. Since our notebook will act as a <strong>low-resource
+“controller”</strong>, we’ll select a small instance such as
+<code>ml.t3.medium</code> (2 vCPU, 4 GB RAM, $0.05/hour)</p>
 <ul>
 <li>This keeps costs low while allowing us to launch separate
 training/tuning jobs on more powerful instances when needed.<br>
@@ -1856,7 +1859,7 @@ and say which of them need the three tags.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
@@ -2381,7 +2384,7 @@ prefixes instead of a new bucket per episode?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>One way to do it:</li>
@@ -4751,7 +4754,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -6383,7 +6386,7 @@ does one run cost? What does a realistic project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5: full fine-tuning a 7B model needs ~112 GB
 plus activations, and the g5 has 24 GB. On the p4d the 8 × 40 GB = 320
@@ -7090,7 +7093,7 @@ real bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Expect startup to be close to 10 minutes and the two evaluations to
@@ -7207,7 +7210,7 @@ help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -7247,7 +7250,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
 <div class="accordion-body">
 <p>Startup (~10 min, $0.44 at $2.61/h) does not speed up: the container
 pull and the S3 downloads are the same on any instance. For the class
@@ -7295,7 +7298,7 @@ estimator and relaunch under a new job name.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
 <div class="accordion-body">
 <p>Checkpointing. If the instance is reclaimed, the job restarts and, as
 written, starts training from scratch. For a 25-minute job that costs 25
@@ -11615,7 +11618,7 @@ finds something. Then run them against your own resources.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
