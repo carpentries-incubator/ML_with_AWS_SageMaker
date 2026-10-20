@@ -317,8 +317,7 @@
 
     <div id="flush-collapsecurrent" class="accordion-collapse collapse show" data-bs-parent="#accordionFlushcurrent">
       <div class="accordion-body">
-        <ul><li><a href="#when-bedrock-does-not-have-your-model">When Bedrock does not have your model</a></li>
-<li><a href="#setup">Setup</a></li>
+        <ul><li><a href="#setup">Setup</a></li>
 <li><a href="#step-1-check-the-inputs">Step 1 – Check the inputs</a></li>
 <li><a href="#step-2-processing-job-1-embed-all-chunks-on-a-gpu">Step 2 – Processing Job 1: embed all chunks on a GPU</a></li>
 <li><a href="#step-3-processing-job-2-full-wattbot-rag-over-all-questions">Step 3 – Processing Job 2: full WattBot RAG over all questions</a></li>
@@ -480,8 +479,12 @@ against the Bedrock run.</li>
 </div>
 </div>
 </div>
-<section><h2 class="section-heading" id="when-bedrock-does-not-have-your-model">When Bedrock does not have your model<a class="anchor" aria-label="anchor" href="#when-bedrock-does-not-have-your-model"></a></h2>
-<hr class="half-width"><p>The Bedrock episode is the default for RAG: per-token billing,
+<p>Open the notebook from:
+<code>/ML_with_AWS_SageMaker/notebooks/12_RAG-Processing-jobs.ipynb</code>.
+Select the <strong><code>conda_pytorch</code></strong> kernel
+(<code>conda_pytorch_p310</code> on older instances). ## When Bedrock
+does not have your model</p>
+<p>The Bedrock episode is the default for RAG: per-token billing,
 nothing left running, two API calls. Bedrock’s catalog is curated,
 though. It carries Amazon’s models, Anthropic, Meta, Mistral, DeepSeek,
 and a few others, and within a family only some sizes, usually a
@@ -583,7 +586,7 @@ the inputs in the shared bucket.</li>
 all chunks; the second serves Qwen3.8-27B with vLLM and runs the full
 RAG loop (retrieval + generation) over all training questions.</li>
 <li>Score the result and compare it with the Bedrock run.</li>
-</ul></section><section><h2 class="section-heading" id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a></h2>
+</ul><section><h2 class="section-heading" id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a></h2>
 <hr class="half-width"><div class="section level3">
 <h3 id="the-scripts">The scripts<a class="anchor" aria-label="anchor" href="#the-scripts"></a></h3>
 <p>Jobs run in containers, so the code they execute has to be shipped
@@ -1046,7 +1049,7 @@ total compare with the cost callout, and with the Bedrock run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -1107,7 +1110,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still installing

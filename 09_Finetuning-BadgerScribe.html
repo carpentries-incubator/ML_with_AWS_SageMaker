@@ -290,8 +290,7 @@
 
     <div id="flush-collapsecurrent" class="accordion-collapse collapse show" data-bs-parent="#accordionFlushcurrent">
       <div class="accordion-body">
-        <ul><li><a href="#why-a-fine-tuning-episode">Why a fine-tuning episode</a></li>
-<li><a href="#step-0-estimate-the-cost-before-you-launch-anything">Step 0: Estimate the cost before you launch anything</a></li>
+        <ul><li><a href="#step-0-estimate-the-cost-before-you-launch-anything">Step 0: Estimate the cost before you launch anything</a></li>
 <li><a href="#setup">Setup</a></li>
 <li><a href="#step-1-launch-the-fine-tune">Step 1: Launch the fine-tune</a></li>
 <li><a href="#step-2-read-the-results-and-the-bill">Step 2: Read the results and the bill</a></li>
@@ -482,8 +481,12 @@ to multi-GPU instances for larger models.</li>
 </div>
 </div>
 </div>
-<section><h2 class="section-heading" id="why-a-fine-tuning-episode">Why a fine-tuning episode<a class="anchor" aria-label="anchor" href="#why-a-fine-tuning-episode"></a></h2>
-<hr class="half-width"><p>The training episodes so far trained small models from scratch on a
+<p>Open the notebook from:
+<code>/ML_with_AWS_SageMaker/notebooks/09_Finetuning-BadgerScribe.ipynb</code>.
+Select the <strong><code>conda_pytorch</code></strong> kernel
+(<code>conda_pytorch_p310</code> on older instances). ## Why a
+fine-tuning episode</p>
+<p>The training episodes so far trained small models from scratch on a
 few hundred rows. Fine-tuning starts from a large pretrained model and
 changes its weights, and that puts it in a different class of
 workload:</p>
@@ -566,7 +569,7 @@ like this. We use LoRA.</p>
 </div>
 </div>
 </div>
-</section><section><h2 class="section-heading" id="step-0-estimate-the-cost-before-you-launch-anything">Step 0: Estimate the cost before you launch anything<a class="anchor" aria-label="anchor" href="#step-0-estimate-the-cost-before-you-launch-anything"></a></h2>
+<section><h2 class="section-heading" id="step-0-estimate-the-cost-before-you-launch-anything">Step 0: Estimate the cost before you launch anything<a class="anchor" aria-label="anchor" href="#step-0-estimate-the-cost-before-you-launch-anything"></a></h2>
 <hr class="half-width"><p>Before launching a fine-tune, write down what it should cost. If the
 bill is 3x your number, something is wrong, and you want to know on the
 first run, not the fiftieth.</p>
@@ -753,7 +756,7 @@ realistic project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5: full fine-tuning a 7B model needs ~112 GB
 plus activations, and the g5 has 24 GB. On the p4d the 8 × 40 GB = 320
@@ -1334,7 +1337,7 @@ real bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>Expect startup to be close to 10 minutes and the two evaluations to
 be 2–4 minutes each. Training is the line most likely to differ: if you
@@ -1446,7 +1449,7 @@ help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -1486,7 +1489,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
 <div class="accordion-body">
 <p>Startup (~10 min, <code>$0.44</code> at <code>$2.61</code>/h) does
 not speed up: the container pull and the S3 downloads are the same on
@@ -1535,7 +1538,7 @@ estimator and relaunch under a new job name.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
 <div class="accordion-body">
 <p>Checkpointing. If the instance is reclaimed, the job restarts and, as
 written, starts training from scratch. For a 25-minute job that costs 25

@@ -1954,6 +1954,10 @@ bucket.</li>
 </div>
 </div>
 </div>
+<p>Open the notebook from:
+<code>/ML_with_AWS_SageMaker/notebooks/04_Accessing-S3-via-SageMaker-notebooks.ipynb</code>.
+Select the <strong><code>conda_python3</code></strong> kernel (the same
+one you used in the last episode).</p>
 <div class="section level4">
 <h4 id="set-up-aws-environment">Set up AWS environment<a class="anchor" aria-label="anchor" href="#set-up-aws-environment"></a>
 </h4>
@@ -1998,26 +2002,21 @@ instance.</p>
 <span id="cb1-6"><a href="#cb1-6" tabindex="-1" aria-label="code-block-1-6"></a><span class="bu">print</span>(<span class="ss">f"Execution Role: </span><span class="sc">{</span>role<span class="sc">}</span><span class="ss">"</span>)</span>
 <span id="cb1-7"><a href="#cb1-7" tabindex="-1" aria-label="code-block-1-7"></a><span class="bu">print</span>(<span class="ss">f"AWS Region: </span><span class="sc">{</span>session<span class="sc">.</span>boto_region_name<span class="sc">}</span><span class="ss">"</span>)  <span class="co"># The region of the notebook instance; your bucket must be in this same region</span></span></code></pre>
 </div>
-<div id="two-messages-this-cell-prints" class="callout">
+<div id="warnings-this-cell-prints" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
 </div>
 <span class="callout-header">Callout</span>
-<div id="two-messages-this-cell-prints" class="callout-inner">
-<h3 class="callout-title">Two messages this cell prints</h3>
+<div id="warnings-this-cell-prints" class="callout-inner">
+<h3 class="callout-title">Warnings this cell prints</h3>
 <div class="callout-content">
 <p><code>sagemaker.config INFO - Not applying SDK defaults from location: ...</code>:
-the SDK looked for an optional defaults file in two standard places and
-found none. Nothing is wrong.</p>
-<p><code>SageMakerV2DeprecationWarning: You are using the SageMaker Python SDK v2 ... v3 is the actively developed major version</code>:
-the notebook kernels ship version 2 of the SageMaker Python SDK, and
-this lesson is written for it (<code>Estimator</code>,
-<code>HuggingFace</code>, <code>HyperparameterTuner</code>). Version 3
-is a rewrite with a different API, so do not <code>pip install</code> it
-into these kernels. The v2 API keeps working; for a project of your own,
-read the <a href="https://github.com/aws/sagemaker-python-sdk/blob/master/migration.md" class="external-link">migration
-guide</a> and pick a version. You will see this warning once per kernel;
-ignore it.</p>
+an info line, not an error. The SDK looked for an optional defaults file
+in two standard places and found none.</p>
+<p><code>SageMakerV2DeprecationWarning: You are using the SageMaker Python SDK v2 ...</code>:
+the kernels ship SDK v2 and this lesson is written for it. v3 is a
+rewrite with a different API, so do not install it here. Ignore the
+warning.</p>
 </div>
 </div>
 </div>
@@ -2501,7 +2500,8 @@ cleaner version control.</li>
 </h2>
 <hr class="half-width">
 <p>Open the notebook from:
-<code>/ML_with_AWS_SageMaker/notebooks/05_Interacting-with-code-repo.ipynb</code>.</p>
+<code>/ML_with_AWS_SageMaker/notebooks/05_Interacting-with-code-repo.ipynb</code>.
+Select the <strong><code>conda_python3</code></strong> kernel.</p>
 <p>This episode is <strong>optional self-study</strong>: it is not
 needed to run the rest of the lesson, but it is the workflow you will
 want once you start writing code of your own in SageMaker. It also
@@ -2904,7 +2904,7 @@ change on GitHub.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Still inside
 <code>/home/ec2-user/SageMaker/sagemaker-work</code>:</p>
@@ -3150,7 +3150,7 @@ potential issues early. <strong>In your group, discuss:</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Which checks do you think are most critical before scaling up?</p>
 <ul>
@@ -3268,7 +3268,7 @@ group.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li><p><strong>Data Preprocessing</strong>: The script fills missing
@@ -3530,7 +3530,7 @@ data. Which instance would you pick for the training job, and why?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <p>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
 GB of data wants about 32 GB of memory: <code>ml.m5.2xlarge</code> (8
@@ -4850,7 +4850,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -6162,9 +6162,11 @@ to multi-GPU instances for larger models.</li>
 </div>
 </div>
 </div>
-<section><h2 class="section-heading" id="why-a-fine-tuning-episode">Why a fine-tuning episode<a class="anchor" aria-label="anchor" href="#why-a-fine-tuning-episode"></a>
-</h2>
-<hr class="half-width">
+<p>Open the notebook from:
+<code>/ML_with_AWS_SageMaker/notebooks/09_Finetuning-BadgerScribe.ipynb</code>.
+Select the <strong><code>conda_pytorch</code></strong> kernel
+(<code>conda_pytorch_p310</code> on older instances). ## Why a
+fine-tuning episode</p>
 <p>The training episodes so far trained small models from scratch on a
 few hundred rows. Fine-tuning starts from a large pretrained model and
 changes its weights, and that puts it in a different class of
@@ -6267,7 +6269,7 @@ like this. We use LoRA.</p>
 </div>
 </div>
 </div>
-</section><section><h2 class="section-heading" id="step-0-estimate-the-cost-before-you-launch-anything">Step 0: Estimate the cost before you launch anything<a class="anchor" aria-label="anchor" href="#step-0-estimate-the-cost-before-you-launch-anything"></a>
+<section><h2 class="section-heading" id="step-0-estimate-the-cost-before-you-launch-anything">Step 0: Estimate the cost before you launch anything<a class="anchor" aria-label="anchor" href="#step-0-estimate-the-cost-before-you-launch-anything"></a>
 </h2>
 <hr class="half-width">
 <p>Before launching a fine-tune, write down what it should cost. If the
@@ -6509,7 +6511,7 @@ realistic project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5: full fine-tuning a 7B model needs ~112 GB
 plus activations, and the g5 has 24 GB. On the p4d the 8 × 40 GB = 320
@@ -6772,7 +6774,7 @@ description and compare.</li>
 <button class="accordion-button instructor-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInstructor1" aria-expanded="false" aria-controls="collapseInstructor1">
   <h3 class="accordion-header" id="headingInstructor1">  <div class="note-square"><i aria-hidden="true" class="callout-icon" data-feather="edit-2"></i></div> Before class (instructor checklist) </h3>
 </button>
-<div id="collapseInstructor1" class="accordion-collapse collapse" data-bs-parent="#accordionInstructor1" aria-labelledby="headingInstructor1">
+<div id="collapseInstructor1" class="accordion-collapse collapse" aria-labelledby="headingInstructor1" data-bs-parent="#accordionInstructor1">
 <div class="accordion-body">
 <p>Students never download the data themselves; five things have to be
 in place before the session. Each is written out in the instructor
@@ -7226,7 +7228,7 @@ real bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Expect startup to be close to 10 minutes and the two evaluations to
@@ -7344,7 +7346,7 @@ help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -7384,7 +7386,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
 <div class="accordion-body">
 <p>Startup (~10 min, <code>$0.44</code> at <code>$2.61</code>/h) does
 not speed up: the container pull and the S3 downloads are the same on
@@ -7433,7 +7435,7 @@ estimator and relaunch under a new job name.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
 <div class="accordion-body">
 <p>Checkpointing. If the instance is reclaimed, the job restarts and, as
 written, starts training from scratch. For a 25-minute job that costs 25
@@ -8373,9 +8375,13 @@ Bedrock-hosted model (DeepSeek V3) and score them against
 </div>
 </div>
 </div>
-<p>This is the first hands-on RAG episode, and it starts where the
-overview told you to start: <strong>Amazon Bedrock</strong>. We build a
-complete RAG pipeline for the <a href="https://www.kaggle.com/competitions/WattBot2025/overview" class="external-link">WattBot
+<p>Open the notebook from:
+<code>/ML_with_AWS_SageMaker/notebooks/11_RAG-Bedrock.ipynb</code>.
+Select the <strong><code>conda_pytorch</code></strong> kernel
+(<code>conda_pytorch_p310</code> on older instances). This is the first
+hands-on RAG episode, and it starts where the overview told you to
+start: <strong>Amazon Bedrock</strong>. We build a complete RAG pipeline
+for the <a href="https://www.kaggle.com/competitions/WattBot2025/overview" class="external-link">WattBot
 2025</a> challenge from a small, CPU-only SageMaker notebook. Nothing in
 this episode needs a GPU: the core model work — <strong>both text
 embeddings and answer generation</strong> — runs on Bedrock-hosted
@@ -9654,9 +9660,11 @@ against the Bedrock run.</li>
 </div>
 </div>
 </div>
-<section><h2 class="section-heading" id="when-bedrock-does-not-have-your-model">When Bedrock does not have your model<a class="anchor" aria-label="anchor" href="#when-bedrock-does-not-have-your-model"></a>
-</h2>
-<hr class="half-width">
+<p>Open the notebook from:
+<code>/ML_with_AWS_SageMaker/notebooks/12_RAG-Processing-jobs.ipynb</code>.
+Select the <strong><code>conda_pytorch</code></strong> kernel
+(<code>conda_pytorch_p310</code> on older instances). ## When Bedrock
+does not have your model</p>
 <p>The Bedrock episode is the default for RAG: per-token billing,
 nothing left running, two API calls. Bedrock’s catalog is curated,
 though. It carries Amazon’s models, Anthropic, Meta, Mistral, DeepSeek,
@@ -9797,7 +9805,8 @@ the inputs in the shared bucket.</li>
 all chunks; the second serves Qwen3.8-27B with vLLM and runs the full
 RAG loop (retrieval + generation) over all training questions.</li>
 <li>Score the result and compare it with the Bedrock run.</li>
-</ul></section><section><h2 class="section-heading" id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
+</ul>
+<section><h2 class="section-heading" id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
 </h2>
 <hr class="half-width">
 <div class="section level3">
@@ -10284,7 +10293,7 @@ total compare with the cost callout, and with the Bedrock run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -10345,7 +10354,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still installing
@@ -10676,6 +10685,13 @@ GB will not fit the weights or the vLLM install). This volume bills at
 <code>Name</code>, <code>Purpose</code> keys as every other resource;
 <code>Purpose</code> is <code>Notebook</code>.</li>
 </ul>
+<p>Once it is <code>InService</code>, open JupyterLab, clone the lesson
+repository as in the controller-notebook episode (this is a new
+instance, so it has no copy yet), and open
+<code>/ML_with_AWS_SageMaker/notebooks/13_RAG-GPU-notebook.ipynb</code>.
+Select the <strong><code>conda_pytorch</code></strong> kernel
+(<code>conda_pytorch_p310</code> on older instances); it is the one with
+PyTorch and CUDA.</p>
 <p>See <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
 for ML</a> for further guidance. This instance bills by the hour from
 the moment it starts, whether or not it is doing anything: <strong>stop
@@ -11814,7 +11830,7 @@ finds something. Then run them against your own resources.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -12127,7 +12143,7 @@ stopped your notebook instance and walked away?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>A complete list for someone who did every episode, including the
 optional ones:</p>
