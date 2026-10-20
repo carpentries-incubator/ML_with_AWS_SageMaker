@@ -57,14 +57,18 @@ Create the bucket in the class region (same naming rules as the S3 episode; some
 
 ## 2. Stage WattBot (RAG episodes)
 
-From a machine with Python and the AWS CLI (CloudShell works), in a clone of the lesson repo:
+From a machine with Python and the AWS CLI (CloudShell works). Set the bucket name, clone the lesson repository, build the corpus from the data it ships, and sync:
 
 ```bash
-unzip -o data/data.zip -d /tmp/lessondata
-pip install pandas requests
-python scripts/build_wattbot_corpus.py --metadata /tmp/lessondata/data/wattbot/metadata.csv --out /tmp/lessondata/wattbot/corpus.zip
-cp /tmp/lessondata/data/wattbot/metadata.csv /tmp/lessondata/data/wattbot/train_QA.csv /tmp/lessondata/wattbot/
-aws s3 sync /tmp/lessondata/wattbot/ s3://<shared-bucket>/wattbot/
+BUCKET=ml-marathon-shared
+pip install -q --user pandas requests
+rm -rf /tmp/lessondata && mkdir -p /tmp/lessondata && cd /tmp/lessondata
+git clone -q --depth 1 https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git lesson
+unzip -q -o lesson/data/data.zip -d data
+mkdir -p wattbot
+cp data/data/wattbot/metadata.csv data/data/wattbot/train_QA.csv wattbot/
+python3 lesson/scripts/build_wattbot_corpus.py --metadata wattbot/metadata.csv --out wattbot/corpus.zip
+aws s3 sync wattbot/ s3://$BUCKET/wattbot/
 ```
 
 The corpus script downloads every PDF listed in `metadata.csv` and reports any URL that failed; decide whether to drop or fix those before staging. The corpus only needs rebuilding when `metadata.csv` changes.
@@ -74,29 +78,33 @@ The corpus script downloads every PDF listed in `metadata.csv` and reports any U
 Run this from a laptop or a notebook instance, or from CloudShell for the ~130 MB Badger Scribe release only (CloudShell's home directory is 1 GB, which is why the loop handles one asset at a time in `/tmp`: download, unzip, sync, delete, so nothing larger than one zip is ever on disk). From the lesson's data release (see *Badger Scribe data: publishing a release* for how versions are published):
 
 ```bash
+BUCKET=ml-marathon-shared
 V=1
 R=https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/releases/download/badger-scribe-data-v$V
 for a in labels images-train images-test; do
   rm -rf /tmp/bs && mkdir -p /tmp/bs
-  curl -L -o /tmp/bs/$a.zip $R/badger-scribe-v$V-$a.zip
+  curl -sSL -o /tmp/bs/$a.zip $R/badger-scribe-v$V-$a.zip
   unzip -q -o /tmp/bs/$a.zip -d /tmp/bs/badger-scribe && rm /tmp/bs/$a.zip
-  aws s3 sync /tmp/bs/badger-scribe/ s3://<shared-bucket>/badger-scribe/
+  aws s3 sync /tmp/bs/badger-scribe/ s3://$BUCKET/badger-scribe/
   rm -rf /tmp/bs
 done
 ```
 
-Then run the full fine-tune once (homework estimator in the episode) and copy `train_summary.json`, `eval_before.csv`, `eval_after.csv` from its `model.tar.gz` to `s3://<shared-bucket>/badger-scribe/instructor/full-run/`.
+Then run the full fine-tune once (homework estimator in the episode) and copy `train_summary.json`, `eval_before.csv`, `eval_after.csv` from its `model.tar.gz` to `s3://$BUCKET/badger-scribe/instructor/full-run/`.
 
 ## 4. Stage the CHURRO-3B weights (fine-tuning episode)
 
 Every training and processing job in the episode reads the base model from the bucket as a `model` channel, so that 100 jobs starting in the same minute copy it from S3 instead of each pulling 7.5 GB from Hugging Face. Do this once per bucket, from a laptop or a notebook instance with at least 10 GB free (not CloudShell):
 
 ```bash
-pip install huggingface_hub
+BUCKET=ml-marathon-shared
+pip install -q huggingface_hub
 huggingface-cli download stanford-oval/churro-3B --local-dir churro-3B
-aws s3 sync churro-3B/ s3://<shared-bucket>/badger-scribe/model/churro-3B/
+aws s3 sync churro-3B/ s3://$BUCKET/badger-scribe/model/churro-3B/
 rm -rf churro-3B
 ```
+
+From CloudShell, where there is no room to download it, use Block 3 at the end of this page instead: it streams each file from Hugging Face straight into S3.
 
 About 7.5 GB; it only needs redoing if the Hub repository changes or the bucket is rebuilt.
 
