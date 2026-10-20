@@ -619,76 +619,92 @@ AWS toolbar</li>
 </ul></div>
 <div class="section level5">
 <h5 id="create-a-new-bucket">3. Create a new bucket<a class="anchor" aria-label="anchor" href="#create-a-new-bucket"></a></h5>
+<p>Click <strong>Create bucket</strong>. The form has the sections
+below; most defaults are right. Change only what is listed.</p>
+<p><strong>General configuration</strong></p>
 <ul><li>
-<strong>AWS Region</strong>: the region your instructor named (the
-same one your SageMaker notebook will use; in the workshop account it is
-US East (Ohio), <code>us-east-2</code>). SageMaker jobs can only read
-buckets in their own region, so a bucket created in another region shows
-up later as “access denied” or “no such bucket” errors from your
-jobs.</li>
-<li>Click <strong>Create Bucket</strong> and enter a unique name, and
-note that bucket name must not contain uppercase characters. To easily
-find this bucket later in our shared AWS account, please use the
-following naming convention: <code>challenge-lastnamefirstname</code>,
-all lowercase, e.g. <code>sinkorswim-doejohn</code>: the challenge you
-are working on (<code>wattbot2026</code>, <code>badgerscribe</code>,
-<code>badgercode</code>, …), a hyphen, then your last and first name run
-together. The same lowercase string is what we will use for your
+<strong>AWS Region</strong>: the region your instructor named (in
+the workshop account, US East (Ohio), <code>us-east-2</code>). This must
+be the same region your notebook instance and jobs run in.</li>
+<li>
+<strong>Bucket type</strong>: General purpose (the default).</li>
+<li>
+<strong>Bucket namespace</strong>: <strong>Global
+namespace</strong>. The console recommends the account Regional
+namespace, but that appends your account ID, region and <code>-an</code>
+to every bucket name, which would turn <code>sinkorswim-doejohn</code>
+into <code>sinkorswim-doejohn-123456789012-us-east-2-an</code>
+everywhere in the lesson. Global keeps the name as you type it.</li>
+<li>
+<strong>Bucket name</strong>:
+<code>challenge-lastnamefirstname</code>, all lowercase,
+e.g. <code>sinkorswim-doejohn</code>: the challenge you are working on
+(<code>sinkorswim</code>, <code>wattbot2026</code>,
+<code>badgerscribe</code>, <code>badgercode</code>, …), a hyphen, then
+your last and first name run together. S3 requires lowercase letters,
+digits and hyphens only, 3 to 63 characters, starting and ending with a
+letter or digit. The same lowercase string is what we will use for your
 notebook instance and your <code>Project</code> tag. <strong>This is the
 only bucket you will create in the workshop.</strong> Every later
 episode writes its outputs (trained models, embeddings, predictions)
 into this same bucket under its own prefix, such as
 <code>xgboost/</code>, <code>wattbot/</code> or
 <code>badger-scribe/</code>.</li>
-<li>
-<strong>Access Control (ACLs)</strong>: Disable ACLs (recommended).
-<ul><li>
-<strong>What are ACLs?</strong> Access Control Lists (ACLs) define
-fine-grained permissions at the object level, allowing you to grant
-specific users or AWS accounts access to individual files in your
-bucket.<br></li>
-<li>
-<strong>Why disable them?</strong> AWS now recommends managing
-access through bucket policies and IAM roles, which offer better
-security and are easier to manage at scale. Unless you have a specific
-need for ACLs, disabling them is the best practice.</li>
-</ul></li>
-<li>
-<strong>Public Access</strong>: Turn on “Block all public access”
-(recommended). This setting prevents unauthorized access and accidental
-data exposure. If you need external access, use IAM policies or signed
-URLs instead.</li>
-<li>
-<strong>Versioning</strong>: Disable unless you need multiple
-versions of objects (unnecessary for ML Marathon). Enable only if
-needed, as versioning increases storage costs. Useful when tracking
-changes to datasets over time but unnecessary for static datasets.<br></li>
-<li>
-<strong>Tags (NOT OPTIONAL)</strong>: Adding tags to your S3 buckets
-is a great way to track project-specific costs and usage over time,
-especially as data and resources scale up. To easily track costs
-associated with your bucket in our shared AWS account, add the following
-three keys (spelled exactly; they are the account’s approved
-cost-allocation keys, see <a href="https://kb.wisc.edu/72454" class="external-link">KB
-72454</a>). You will put the same three keys on every resource you
-create in this workshop, starting with this bucket:
+</ul><div id="wrong-region-costs-money-and-breaks-jobs" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<span class="callout-header">Callout</span>
+<div id="wrong-region-costs-money-and-breaks-jobs" class="callout-inner">
+<h3 class="callout-title">Wrong region costs money and breaks jobs</h3>
+<div class="callout-content">
+<p>A SageMaker training or processing job reads only from buckets in its
+own region; a bucket created elsewhere shows up later as “no such
+bucket” or “access denied” from the job. Reading data across regions
+from a notebook does work, but every byte is billed as inter-region
+transfer (about $0.01-0.02 per GB each way), and a model that reads its
+training set every epoch pays that on every pass. Check the region
+before you click Create; it cannot be changed afterwards.</p>
+</div>
+</div>
+</div>
+<p><strong>Object Ownership</strong>: leave <strong>ACLs
+disabled</strong> (the default). Access is managed through the bucket
+policy you add in the next step and through IAM roles, which is what AWS
+recommends.</p>
+<p><strong>Block Public Access settings for this bucket</strong>: leave
+<strong>Block all public access</strong> on (the default). Nothing in
+this lesson needs public access; if you ever do, use a policy or a
+signed URL instead of opening the bucket.</p>
+<p><strong>Bucket Versioning</strong>: leave <strong>Disable</strong>
+(the default). Versioning keeps every overwritten copy and raises
+storage costs; it is useful for datasets that change over time, not for
+this workshop.</p>
+<p><strong>Tags (NOT OPTIONAL)</strong>: tags are how the bill is broken
+down by project, person and purpose; this is the one section you must
+fill in. Add the following three keys, spelled exactly (they are the
+account’s approved cost-allocation keys, see <a href="https://kb.wisc.edu/72454" class="external-link">KB 72454</a>). You will put the same
+three keys on every resource you create in this lesson.</p>
 <ul><li>
 <strong>Project</strong>: your challenge name,
 e.g. <code>sinkorswim</code>
 </li>
 <li>
-<strong>Name</strong>: yourname
-<ul><li>
-<strong>Purpose</strong>: Bucket-titanic</li>
-</ul></li>
-</ul>
-Tag values are case-sensitive on the bill: <code>SinkOrSwim</code> and
-<code>sinkorswim</code> would be two separate rows in Cost Explorer. Use
-the same lowercase challenge name you put in the bucket name.</li>
-</ul><figure><img src="fig/bucket_tags2.png" alt="Screenshot showing required tags for an S3 bucket" class="figure mx-auto d-block"><div class="figcaption">Example of Tags for an S3 Bucket</div>
-</figure><ul><li>Click <strong>Create Bucket</strong> at the bottom once everything
-above has been configured</li>
-</ul></div>
+<strong>Name</strong>: your name, e.g. <code>John Doe</code>
+</li>
+<li>
+<strong>Purpose</strong>: <code>Bucket-titanic</code>
+</li>
+</ul><p>Tag values are case-sensitive on the bill: <code>SinkOrSwim</code>
+and <code>sinkorswim</code> would be two separate rows in Cost Explorer.
+Use the same lowercase challenge name you put in the bucket name.</p>
+<figure><img src="fig/bucket_tags2.png" alt="Screenshot showing required tags for an S3 bucket" class="figure mx-auto d-block"><div class="figcaption">Example of Tags for an S3 Bucket</div>
+</figure><p><strong>Default encryption</strong>: leave SSE-S3 (the default).
+Objects are encrypted at rest with keys S3 manages; KMS keys only matter
+when you need to control the keys yourself.</p>
+<p><strong>Advanced settings</strong>: leave closed.</p>
+<p>Click <strong>Create bucket</strong> at the bottom.</p>
+</div>
 <div class="section level5">
 <h5 id="edit-bucket-policy">4. Edit bucket policy<a class="anchor" aria-label="anchor" href="#edit-bucket-policy"></a></h5>
 <p>Once the bucket is created, you’ll be brought to a page that shows
@@ -890,7 +906,7 @@ sizes: 10 GB, 100 GB, 1 TB (1024 GB)</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal"><li>
