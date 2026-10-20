@@ -303,7 +303,7 @@ Open the supplemental [Instances for ML](https://carpentries-incubator.github.io
 
 :::::::::::::::::::::::::::::::::::: solution
 
-The table's rule of thumb is RAM of at least 1.5× the dataset, so 20 GB of data wants about 32 GB of memory: `ml.m5.2xlarge` (8 vCPU, 32 GiB, about $0.46/h) is the natural fit for a tree-ensemble training job, or `ml.m5.4xlarge` (64 GiB) if feature engineering will add many columns. No GPU: gradient-boosted trees on tabular data are CPU work, so a `g4dn` or `g5` would cost more and run no faster.
+The table's rule of thumb is RAM of at least 1.5× the dataset, so 20 GB of data wants about 32 GB of memory: `ml.m5.2xlarge` (8 vCPU, 32 GiB, about \$0.46/h) is the natural fit for a tree-ensemble training job, or `ml.m5.4xlarge` (64 GiB) if feature engineering will add many columns. No GPU: gradient-boosted trees on tabular data are CPU work, so a `g4dn` or `g5` would cost more and run no faster.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -408,10 +408,11 @@ job_tags = [
     {"Key": "Project", "Value": project},
     {"Key": "Purpose", "Value": purpose},
 ]
+print(f"Name: {name}, Project: {project}, Purpose: {purpose}")
 ```
 
 #### Estimate before you launch
-Estimate the cost of every job *before* you run it: instance rate x expected minutes, plus about 3 minutes of startup (SageMaker has to provision the instance, pull the container, and download your data before your script starts). An `ml.m5.large` costs about $0.115/hour (us-east-1 on-demand; see the [Instances for ML page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html)). Our local test finished in under a minute, so the estimate is roughly 1 minute of training + 3 minutes of startup = 4 minutes, or about $0.01.
+Estimate the cost of every job *before* you run it: instance rate x expected minutes, plus about 3 minutes of startup (SageMaker has to provision the instance, pull the container, and download your data before your script starts). An `ml.m5.large` costs about \$0.115/hour (us-east-1 on-demand; see the [Instances for ML page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html)). Our local test finished in under a minute, so the estimate is roughly 1 minute of training + 3 minutes of startup = 4 minutes, or about \$0.01.
 
 ```python
 from sagemaker.inputs import TrainingInput

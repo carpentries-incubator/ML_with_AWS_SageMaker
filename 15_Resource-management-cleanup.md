@@ -27,7 +27,7 @@ exercises: 10
 
 ## Shutting down notebook instances
 
-Notebook instances in SageMaker are billed per second, so it’s essential to stop or delete them when they are no longer needed. Earlier in the **Notebooks as controllers** episode, we discussed using lower-cost instance types like `ml.t3.medium` (approximately $0.05/hour) for controlling workflows. While this makes open notebooks less costly than larger instances, it’s still a good habit to stop or delete notebooks to avoid unnecessary spending, especially if left idle for long periods.
+Notebook instances in SageMaker are billed per second, so it’s essential to stop or delete them when they are no longer needed. Earlier in the **Notebooks as controllers** episode, we discussed using lower-cost instance types like `ml.t3.medium` (approximately \$0.05/hour) for controlling workflows. While this makes open notebooks less costly than larger instances, it’s still a good habit to stop or delete notebooks to avoid unnecessary spending, especially if left idle for long periods.
 
 1. **Navigate to SageMaker in the AWS Console.**
 2. In the left-hand menu, click **Notebook instances**.
@@ -35,7 +35,7 @@ Notebook instances in SageMaker are billed per second, so it’s essential to st
 4. Choose **Stop** to shut it down temporarily or **Delete** to permanently remove it.
    > **Tip:** If you plan to reuse the notebook later, stopping it is sufficient. Deleting is recommended if you are finished with the workshop.
 
-A stopped instance stops the compute charge but keeps its storage volume, which bills at about $0.14 per GB-month. The default 5 GB is cents; the 100 GB volume the optional GPU-notebook episode asks for is $14 a month. If you enlarged the volume to hold model weights, delete the instance once the episode is done.
+A stopped instance stops the compute charge but keeps its storage volume, which bills at about \$0.14 per GB-month. The default 5 GB is cents; the 100 GB volume the optional GPU-notebook episode asks for is \$14 a month. If you enlarged the volume to hold model weights, delete the instance once the episode is done.
 
 ## Cleaning up S3 storage
 
@@ -80,7 +80,7 @@ Work through this list before you sign off for the last time.
 
 - **Notebook instances**: Stop, then **Delete** (SageMaker → Notebook instances). Includes the optional GPU notebook instance if you created one.
 - **Lifecycle configurations**: if you created one (for example, a script that auto-stops an idle notebook instance), delete it (SageMaker → Notebook instances → Lifecycle configurations). It costs nothing but is yours to remove.
-- **S3 bucket**: empty and delete your `challenge-lastnamefirstname` bucket (S3 → select bucket → Empty, then Delete). Download anything you want to keep first, once: egress is $0.09/GB. Leave the shared data bucket alone; it is the instructors'.
+- **S3 bucket**: empty and delete your `challenge-lastnamefirstname` bucket (S3 → select bucket → Empty, then Delete). Download anything you want to keep first, once: egress is \$0.09/GB. Leave the shared data bucket alone; it is the instructors'.
 - **Training, tuning and Processing jobs**: confirm none are still running (SageMaker → each job list, filter by status *InProgress*). Completed jobs hold no billable resource; their artifacts are in your bucket and go with it.
 - **Bedrock application inference profiles**: delete the ones you created (from the Bedrock console, or with `bedrock.delete_inference_profile(...)` as shown in the RAG on Bedrock episode).
 - **GitHub personal access token**: revoke it on GitHub (Settings → Developer settings → Personal access tokens) if you made one for the optional PAT episode.
@@ -120,11 +120,11 @@ A complete list for someone who did every episode, including the optional ones:
 | Controller notebook instance (`ml.t3.medium`) | Notebooks as controllers | Yes while InService; its volume bills while Stopped | SageMaker → Notebook instances → Stop → Delete |
 | Training jobs (XGBoost, PyTorch), tuning jobs, Processing jobs | Training, tuning, RAG and fine-tuning episodes | Only while running; all capped by `max_run` / `max_runtime_in_seconds` | SageMaker → job lists → Stop if InProgress; nothing to delete afterwards |
 | Bedrock application inference profiles | RAG on Bedrock | No (the calls billed per token when made) | Bedrock console or `bedrock.delete_inference_profile(...)` |
-| GPU notebook instance (`ml.g6e.xlarge`, 100 GB volume) | Optional GPU-notebook episode | Yes: $2.61/h InService, $14/month for the volume when Stopped | SageMaker → Notebook instances → Delete |
+| GPU notebook instance (`ml.g6e.xlarge`, 100 GB volume) | Optional GPU-notebook episode | Yes: \$2.61/h InService, \$14/month for the volume when Stopped | SageMaker → Notebook instances → Delete |
 | Lifecycle configuration (if you made one) | Any notebook-instance episode | No | SageMaker → Notebook instances → Lifecycle configurations → Delete |
 | GitHub personal access token | Optional PAT episode | No, but it is a credential | GitHub → Settings → Developer settings → revoke |
 
-Stopping the controller and walking away leaves the bucket billing for storage, a stopped GPU instance's volume billing at $0.14/GB-month, and any Processing job that had not hit its `max_run` yet. Model artifacts in your bucket are the only thing worth keeping; download them once, then delete the bucket.
+Stopping the controller and walking away leaves the bucket billing for storage, a stopped GPU instance's volume billing at \$0.14/GB-month, and any Processing job that had not hit its `max_run` yet. Model artifacts in your bucket are the only thing worth keeping; download them once, then delete the bucket.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 

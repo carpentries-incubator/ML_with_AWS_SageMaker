@@ -42,24 +42,24 @@ When that happens you host the model yourself on a GPU you rent. This episode do
 
 ::::::::::::::::::::::::::::::::::::: callout
 
-### This instance bills $2.61 an hour until you stop it, and nothing stops it for you
+### This instance bills \$2.61 an hour until you stop it, and nothing stops it for you
 
-A GPU notebook instance is a rental with the meter running. It bills by the hour from the moment it starts until the moment *you* stop it, whether it is generating answers, sitting at an idle prompt, or showing a closed browser tab on a laptop that went home for the weekend. Nothing in this episode turns it off for you. The instance we use, `ml.g6e.xlarge` (one L40S GPU, 48 GB), costs **$2.61 per hour** on-demand in `us-east-1` (AWS price list, October 2026). That is:
+A GPU notebook instance is a rental with the meter running. It bills by the hour from the moment it starts until the moment *you* stop it, whether it is generating answers, sitting at an idle prompt, or showing a closed browser tab on a laptop that went home for the weekend. Nothing in this episode turns it off for you. The instance we use, `ml.g6e.xlarge` (one L40S GPU, 48 GB), costs **\$2.61 per hour** on-demand in `us-east-1` (AWS price list, October 2026). That is:
 
 | Left running for | Cost |
 |---|---|
-| This episode (~2 hours) | ~$5 |
-| Overnight (12 h) | ~$31 |
-| A weekend (64 h) | ~$167 |
-| A week | ~$438 |
-| A month | **~$1,906** |
+| This episode (~2 hours) | ~\$5 |
+| Overnight (12 h) | ~\$31 |
+| A weekend (64 h) | ~\$167 |
+| A week | ~\$438 |
+| A month | **~\$1,906** |
 
 The same evaluation on Bedrock cost well under a dollar. One forgotten weekend on this instance costs a thousand times more than the work it was rented for. A forgotten GPU notebook is the most common way research groups overspend cloud credits.
 
 Two further charges people do not expect:
 
-- **A stopped instance still bills for its storage.** We give this notebook a 100 GB volume for model weights. SageMaker charges $0.14 per GB-month for notebook storage, so a stopped-but-not-deleted instance costs about **$14 a month** forever. When you are done with the episode, delete the instance, not just stop it, unless you will use it again within days.
-- **Idle is billed the same as busy.** There is no discount for a GPU that is loaded and waiting. Loading a 27B model takes a few minutes, which tempts people to leave the instance up "so I don't have to reload". That is the $1,906.
+- **A stopped instance still bills for its storage.** We give this notebook a 100 GB volume for model weights. SageMaker charges \$0.14 per GB-month for notebook storage, so a stopped-but-not-deleted instance costs about **\$14 a month** forever. When you are done with the episode, delete the instance, not just stop it, unless you will use it again within days.
+- **Idle is billed the same as busy.** There is no discount for a GPU that is loaded and waiting. Loading a 27B model takes a few minutes, which tempts people to leave the instance up "so I don't have to reload". That is the \$1,906.
 
 The habits that keep this safe:
 
@@ -101,8 +101,8 @@ In this episode we will:
 
 For this episode you need a notebook instance with a GPU that can hold the FP8 27B model plus the embedding model plus working memory for generation. Create a new notebook instance (same steps as the controller-notebook episode, same three tags) with:
 
-- **Instance type:** `ml.g6e.xlarge` (1 × L40S, 48 GB GPU memory, $2.61/h). The FP8 weights are ~27 GB; the rest is for the embedding model and the KV cache that generation needs for long prompts. The L40S runs FP8 natively. A 24 GB instance such as `ml.g5.xlarge` cannot hold this model; a 16 GB `ml.g4dn.xlarge` cannot hold anything in this size class.
-- **Volume size:** `100` GB (the default of 5 GB will not fit the weights or the vLLM install). This volume bills at $0.14 per GB-month even while the instance is stopped.
+- **Instance type:** `ml.g6e.xlarge` (1 × L40S, 48 GB GPU memory, \$2.61/h). The FP8 weights are ~27 GB; the rest is for the embedding model and the KV cache that generation needs for long prompts. The L40S runs FP8 natively. A 24 GB instance such as `ml.g5.xlarge` cannot hold this model; a 16 GB `ml.g4dn.xlarge` cannot hold anything in this size class.
+- **Volume size:** `100` GB (the default of 5 GB will not fit the weights or the vLLM install). This volume bills at \$0.14 per GB-month even while the instance is stopped.
 - **Tags:** the same `Project`, `Name`, `Purpose` keys as every other resource; `Purpose` is `Notebook`.
 
 See [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for further guidance. This instance bills by the hour from the moment it starts, whether or not it is doing anything: **stop it when you leave**, and **delete it** when the episode is over.
@@ -134,7 +134,7 @@ We install the inference server before loading anything else, because the instal
 
 ### Installing vLLM takes a few minutes, and the meter is running
 
-`pip install vllm` downloads several gigabytes (it brings its own CUDA kernels and may replace the kernel's PyTorch build) and takes 5–10 minutes. Qwen3.8 needs vLLM 0.17 or newer. The 27 GB of model weights take another 4–6 minutes to download the first time. At $2.61 an hour that is about 60 cents of waiting, which is fine; what is not fine is doing it twice because the instance was deleted and recreated. Keep the Hugging Face cache on the 100 GB volume (the `HF_HOME` line in the serving cell below does that) so the weights survive a stop/start.
+`pip install vllm` downloads several gigabytes (it brings its own CUDA kernels and may replace the kernel's PyTorch build) and takes 5–10 minutes. Qwen3.8 needs vLLM 0.17 or newer. The 27 GB of model weights take another 4–6 minutes to download the first time. At \$2.61 an hour that is about 60 cents of waiting, which is fine; what is not fine is doing it twice because the instance was deleted and recreated. Keep the Hugging Face cache on the 100 GB volume (the `HF_HOME` line in the serving cell below does that) so the weights survive a stop/start.
 
 If the install changes PyTorch, restart the kernel (**Kernel → Restart**) before continuing.
 
@@ -142,7 +142,7 @@ If the install changes PyTorch, restart the kernel (**Kernel → Restart**) befo
 
 ```python
 # Several GB; it may replace torch, so restart the kernel (Kernel -> Restart) if the log says it did
-%pip install -q "vllm>=0.17"
+%pip install -q "vllm>=0.17" sentence-transformers
 ```
 
 
@@ -641,7 +641,7 @@ The Processing Jobs episode does the same work, with the same `wattbot_rag.py`, 
 
 - **Why self-host at all**: Bedrock's catalog is curated and lags releases; most open-weight models (including Qwen3.8-27B) are not on it. When the model you need is not offered, you rent a GPU and serve it yourself.
 - **Inference uses reduced-precision weights**: no gradients means the weights are the memory cost. FP8 puts a 27B model on one 48 GB GPU (`ml.g6e.xlarge`); bf16 would need 54 GB and a multi-GPU instance.
-- **The meter never stops on its own**: `ml.g6e.xlarge` is $2.61/h, $167 per forgotten weekend, $1,906 per forgotten month, plus $14/month for the storage volume even when stopped. Stop it when you stand up; delete it when the episode is over.
+- **The meter never stops on its own**: `ml.g6e.xlarge` is \$2.61/h, \$167 per forgotten weekend, \$1,906 per forgotten month, plus \$14/month for the storage volume even when stopped. Stop it when you stand up; delete it when the episode is over.
 - **Local-first RAG**: For teaching (and small corpora), we avoid an external vector database
   and instead perform cosine similarity search over in-memory embeddings.
 - **Ground-truth units**: The `answer_unit` column is always copied directly

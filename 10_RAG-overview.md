@@ -57,7 +57,7 @@ The reason this is the default comes down to **how you are billed**:
 | | Bedrock (managed API) | SageMaker GPU instance / endpoint |
 |---|---|---|
 | **Billing unit** | Per token processed | Per hour the instance exists |
-| **Cost while idle** | $0 — nothing is running between calls | Full hourly rate, 24/7, whether or not you use it |
+| **Cost while idle** | \$0 — nothing is running between calls | Full hourly rate, 24/7, whether or not you use it |
 | **What you must remember to do** | Nothing | Stop or delete the instance every time you finish |
 | **Model updates** | Managed by AWS / the provider | Your problem (containers, CUDA, VRAM) |
 | **Model choice** | Curated catalog (incl. proprietary models) | Any open‑weight model you can load |
@@ -68,22 +68,22 @@ A GPU instance is a rental that keeps the meter running until *you* turn it off.
 
 To make this concrete, here is what a GPU notebook instance costs if it is left running after you close your laptop (on‑demand prices at time of writing; see the [instances page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html)):
 
-| Instance | GPU | $/hour | Forgotten overnight (12 h) | Forgotten over a weekend (64 h) | Forgotten for a month (730 h) |
+| Instance | GPU | \$/hour | Forgotten overnight (12 h) | Forgotten over a weekend (64 h) | Forgotten for a month (730 h) |
 |---|---|---|---|---|---|
-| ml.g4dn.xlarge | 1 × T4 (16 GB) | $0.74 | ~$9 | ~$47 | ~$540 |
-| ml.g5.xlarge | 1 × A10G (24 GB) | $1.41 | ~$17 | ~$90 | ~$1,030 |
-| ml.g5.2xlarge | 1 × A10G (24 GB) | $1.52 | ~$18 | ~$97 | ~$1,110 |
-| ml.g6e.xlarge | 1 × L40S (48 GB) | $2.61 | ~$31 | ~$167 | ~$1,905 |
-| ml.p4d.24xlarge | 8 × A100 (40 GB) | $25.25 | ~$303 | ~$1,616 | ~$18,430 |
+| ml.g4dn.xlarge | 1 × T4 (16 GB) | \$0.74 | ~\$9 | ~\$47 | ~\$540 |
+| ml.g5.xlarge | 1 × A10G (24 GB) | \$1.41 | ~\$17 | ~\$90 | ~\$1,030 |
+| ml.g5.2xlarge | 1 × A10G (24 GB) | \$1.52 | ~\$18 | ~\$97 | ~\$1,110 |
+| ml.g6e.xlarge | 1 × L40S (48 GB) | \$2.61 | ~\$31 | ~\$167 | ~\$1,905 |
+| ml.p4d.24xlarge | 8 × A100 (40 GB) | \$25.25 | ~\$303 | ~\$1,616 | ~\$18,430 |
 
-Compare that to running the **entire WattBot pipeline** from this lesson on Bedrock. Using DeepSeek V3 (check the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/) for current per‑token prices) and Titan Text Embeddings V2 ($0.02 per million tokens):
+Compare that to running the **entire WattBot pipeline** from this lesson on Bedrock. Using DeepSeek V3 (check the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/) for current per‑token prices) and Titan Text Embeddings V2 (\$0.02 per million tokens):
 
 | Step | Rough volume | Cost |
 |---|---|---|
-| Embed ~3,000 chunks (~1M tokens) | 1M input tokens | ~$0.02 |
+| Embed ~3,000 chunks (~1M tokens) | 1M input tokens | ~\$0.02 |
 | Answer 100 questions (~3K‑token prompt + ~300‑token answer each) with DeepSeek V3 | 300K in / 30K out | cents |
 | Explanation pass over 100 answers with DeepSeek V3 | 300K in / 30K out | cents |
-| **Total** | | **well under $1** |
+| **Total** | | **well under \$1** |
 
 A single forgotten weekend on the *cheapest* GPU instance costs more than fifty full runs of the pipeline on Bedrock; a forgotten weekend on the `ml.g6e.xlarge` the later episodes use costs more than a hundred. That asymmetry is why Bedrock is the default, not just an alternative.
 
@@ -129,7 +129,7 @@ But it is the **most expensive way to run RAG and the easiest one to get wrong**
 - Treat it as a learning exercise, not a deployment pattern.
 - Stop the instance the moment you are done, and **verify** the status in the console.
 - Set up an [AWS Budget](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html) alert and consider a [lifecycle configuration](https://docs.aws.amazon.com/sagemaker/latest/dg/notebook-lifecycle-config.html) that auto‑stops idle notebooks.
-- For larger models the hourly rate (e.g., $25/hour for a p4d.24xlarge) becomes a limiting factor very quickly.
+- For larger models the hourly rate (e.g., \$25/hour for a p4d.24xlarge) becomes a limiting factor very quickly.
 
 **Use it for:** walking through RAG internals step by step, debugging a model locally before packaging it as a job, or short experiments where you will be at the keyboard the whole time.
 

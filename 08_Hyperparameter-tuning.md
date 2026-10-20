@@ -97,6 +97,7 @@ job_tags = [
     {"Key": "Project", "Value": project},
     {"Key": "Purpose", "Value": purpose},
 ]
+print(f"Name: {name}, Project: {project}, Purpose: {purpose}")
 ```
 
 Next, we'll configure the baseline estimator that we plan to do hyperparameter search on.
@@ -231,7 +232,7 @@ Paired with this, our `metric_definitions` above uses a regular expression `"val
 #### 5. Set data paths and launch tuner.fit()
 In step 5, we define the input data paths for the training job and launch the hyperparameter tuning process. Using `TrainingInput`, we specify the S3 paths to our `train_data.npz` and `val_data.npz` files (uploaded in the previous episode). This setup ensures that SageMaker correctly accesses our training and validation data during each job in the tuning process. We then call `tuner.fit` and pass a dictionary mapping each data channel ("train" and "val") to its respective path. This command initiates the tuning job, triggering SageMaker to begin sampling hyperparameter combinations, training the model, and evaluating performance based on our defined objective metric. Once the job is launched, SageMaker handles the tuning process automatically, running the specified number of configurations and keeping track of the best model parameters based on validation accuracy.
 
-Estimate first: one child job is the same ~1 minute of training plus ~3 minutes of startup we saw in the previous episode, so about $0.01.
+Estimate first: one child job is the same ~1 minute of training plus ~3 minutes of startup we saw in the previous episode, so about \$0.01.
 
 ```python
 # Define the input paths
@@ -275,7 +276,7 @@ If all goes well, we can scale up the experiment with the below code. In this co
 
 With this approach, SageMaker is better able to refine configurations without overloading resources or risking inefficient exploration, making `max_parallel_jobs=2` a solid default for most use cases.
 
-Estimate first: 10 child jobs at roughly 3-4 billable minutes each is 30-40 billable minutes on `ml.m5.large`, so about $0.06 in total (the 10,000-epoch configurations run a little longer). Wall-clock is five rounds of two jobs, so expect 15-20 minutes.
+Estimate first: 10 child jobs at roughly 3-4 billable minutes each is 30-40 billable minutes on `ml.m5.large`, so about \$0.06 in total (the 10,000-epoch configurations run a little longer). Wall-clock is five rounds of two jobs, so expect 15-20 minutes.
 
 ```python
 import time as t # always a good idea to keep a runtime of your experiments 
@@ -498,7 +499,7 @@ print("Best objective, all-parallel run:  ", tuner_parallel.analytics().datafram
 
 ### Solution
 
-- **Cost**: about the same (~$0.06). You pay per child training job, and each job's billable time does not depend on how many other jobs are running. (If your account has a quota on concurrent `ml.m5.large` training instances, the request may be rejected or throttled, which is the practical limit on this approach.)
+- **Cost**: about the same (~\$0.06). You pay per child training job, and each job's billable time does not depend on how many other jobs are running. (If your account has a quota on concurrent `ml.m5.large` training instances, the request may be rejected or throttled, which is the practical limit on this approach.)
 - **Wall-clock**: roughly one job's duration (4-5 minutes) instead of five rounds of two, so about 4-5x faster.
 - **Search quality**: with all 10 launched at once, the Bayesian strategy has no completed results to learn from, so the 10 configurations are effectively a random sample of the space. On a 2-parameter problem this small you will usually see a similar best objective either way; on a larger search space with more jobs, the sequential-ish run tends to find a better configuration for the same number of jobs.
 

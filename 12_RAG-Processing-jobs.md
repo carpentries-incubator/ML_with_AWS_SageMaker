@@ -43,13 +43,13 @@ The generator is **Qwen3.8-27B**, a 27-billion-parameter open-weight model (Apac
 
 ### What this episode costs
 
-| Job | Instance | $/h | Expected duration | Cost |
+| Job | Instance | \$/h | Expected duration | Cost |
 |---|---|---|---|---|
-| Embed ~3,000 chunks | `ml.g5.xlarge` (A10G, 24 GB) | $1.41 | ~8 min incl. startup | ~$0.20 |
-| RAG over the training questions with Qwen3.8-27B | `ml.g6e.xlarge` (L40S, 48 GB) | $2.61 | ~30 min: 5 startup, ~5 installing vLLM, ~5 downloading 27 GB of weights, the rest generating | ~$1.30 |
-| Controller notebook | `ml.t3.medium` | $0.05 | 2 h | $0.10 |
+| Embed ~3,000 chunks | `ml.g5.xlarge` (A10G, 24 GB) | \$1.41 | ~8 min incl. startup | ~\$0.20 |
+| RAG over the training questions with Qwen3.8-27B | `ml.g6e.xlarge` (L40S, 48 GB) | \$2.61 | ~30 min: 5 startup, ~5 installing vLLM, ~5 downloading 27 GB of weights, the rest generating | ~\$1.30 |
+| Controller notebook | `ml.t3.medium` | \$0.05 | 2 h | \$0.10 |
 
-About $1.60 for the episode, and the GPUs are off the moment each script ends. Both jobs carry `max_runtime_in_seconds`, so a hung job costs at most the cap. Compare the same pipeline on a GPU notebook instance (the optional GPU-notebook episode at the end of the lesson): the hardware is the same, but the meter runs until someone stops it, and a forgotten `ml.g6e.xlarge` is $63 a day.
+About \$1.60 for the episode, and the GPUs are off the moment each script ends. Both jobs carry `max_runtime_in_seconds`, so a hung job costs at most the cap. Compare the same pipeline on a GPU notebook instance (the optional GPU-notebook episode at the end of the lesson): the hardware is the same, but the meter runs until someone stops it, and a forgotten `ml.g6e.xlarge` is \$63 a day.
 
 The trade-off is latency. A job takes minutes to start, so this pattern is for batch questions, not a chatbot. For interactive use, Bedrock answers in seconds; for interactive use of a model Bedrock does not have, an inference endpoint does, at an hourly rate you have to remember to turn off.
 
@@ -411,7 +411,7 @@ Compare the overall score with the Bedrock run. The retrieval logic, prompts and
 
 ### What did the two jobs cost?
 
-Ask SageMaker what it recorded for each job: `session.sagemaker_client.describe_processing_job(ProcessingJobName=...)` returns `CreationTime`, `ProcessingStartTime` and `ProcessingEndTime`. The job names are `embedding_processor.latest_job.job_name` and `rag_processor.latest_job.job_name`. For each job, compute the minutes between creation and start (provisioning, before the instance is billed) and between start and end (the billed window), and price the billed window at $1.41/h for the `ml.g5.xlarge` and $2.61/h for the `ml.g6e.xlarge`. Then, from the RAG job's CloudWatch log timestamps, estimate how much of its billed window was setup (pip install and weight download) and how much was generation. How does the total compare with the cost callout, and with the Bedrock run?
+Ask SageMaker what it recorded for each job: `session.sagemaker_client.describe_processing_job(ProcessingJobName=...)` returns `CreationTime`, `ProcessingStartTime` and `ProcessingEndTime`. The job names are `embedding_processor.latest_job.job_name` and `rag_processor.latest_job.job_name`. For each job, compute the minutes between creation and start (provisioning, before the instance is billed) and between start and end (the billed window), and price the billed window at \$1.41/h for the `ml.g5.xlarge` and \$2.61/h for the `ml.g6e.xlarge`. Then, from the RAG job's CloudWatch log timestamps, estimate how much of its billed window was setup (pip install and weight download) and how much was generation. How does the total compare with the cost callout, and with the Bedrock run?
 
 :::::::::::::::::::::::: solution
 
@@ -433,7 +433,7 @@ total += job_cost(rag_processor.latest_job.job_name, 2.61)
 print(f"GPU total for the episode: ${total:.2f}")
 ```
 
-Typical numbers: the embedding job bills 5-6 minutes (about $0.13), the RAG job 22-28 minutes (about $1.00-$1.20), so roughly $1.20-$1.40 of GPU time against the callout's $1.50. In the RAG job's log, the first 10-12 minutes of the billed window are pip and the download; the model loads for another minute or two; the remaining ~10 minutes are the questions, about 15 seconds each for two generation calls. So well over half of what you paid for was setup, which is the argument for a custom container (skip the pip) and for keeping an `HF_HOME` cache on S3 (skip the download) once a job is run routinely. The Bedrock run of the same questions cost cents, and the self-hosted route is only justified here because the model is not in the catalog.
+Typical numbers: the embedding job bills 5-6 minutes (about \$0.13), the RAG job 22-28 minutes (about \$1.00-\$1.20), so roughly \$1.20-\$1.40 of GPU time against the callout's \$1.50. In the RAG job's log, the first 10-12 minutes of the billed window are pip and the download; the model loads for another minute or two; the remaining ~10 minutes are the questions, about 15 seconds each for two generation calls. So well over half of what you paid for was setup, which is the argument for a custom container (skip the pip) and for keeping an `HF_HOME` cache on S3 (skip the download) once a job is run routinely. The Bedrock run of the same questions cost cents, and the self-hosted route is only justified here because the model is not in the catalog.
 
 :::::::::::::::::::::::::::::::::
 
@@ -447,9 +447,9 @@ Both processors set `max_runtime_in_seconds=2 * 60 * 60`. Predict what would hap
 
 :::::::::::::::::::::::: solution
 
-With a 600-second cap the RAG job is killed by SageMaker ten minutes after `ProcessingStartTime`, while it is still installing vLLM or downloading the weights. The status becomes `Stopped` (the failure reason reads `MaxRuntimeExceeded`), the output prefix is empty because the script never reached the point of writing `wattbot_solutions.csv`, and the bill is the full 600 seconds: 600 / 3600 × $2.61 ≈ $0.44 for nothing. A cap has to leave room for the setup that precedes the work, which is why ours is four times the 30-minute estimate rather than ten percent over it.
+With a 600-second cap the RAG job is killed by SageMaker ten minutes after `ProcessingStartTime`, while it is still installing vLLM or downloading the weights. The status becomes `Stopped` (the failure reason reads `MaxRuntimeExceeded`), the output prefix is empty because the script never reached the point of writing `wattbot_solutions.csv`, and the bill is the full 600 seconds: 600 / 3600 × \$2.61 ≈ \$0.44 for nothing. A cap has to leave room for the setup that precedes the work, which is why ours is four times the 30-minute estimate rather than ten percent over it.
 
-Under the caps we set, the worst case for a job that hangs (a stuck download, a model that never finishes loading) is 2 h × $1.41 = **$2.82** for the embedding job and 2 h × $2.61 = **$5.22** for the RAG job. A `ml.g6e.xlarge` notebook instance forgotten over a weekend is 64 h × $2.61 = **$167**, and nothing caps it. That is the difference between a job and an instance: the job's worst case is a number you chose before you launched it.
+Under the caps we set, the worst case for a job that hangs (a stuck download, a model that never finishes loading) is 2 h × \$1.41 = **\$2.82** for the embedding job and 2 h × \$2.61 = **\$5.22** for the RAG job. A `ml.g6e.xlarge` notebook instance forgotten over a weekend is 64 h × \$2.61 = **\$167**, and nothing caps it. That is the difference between a job and an instance: the job's worst case is a number you chose before you launched it.
 
 :::::::::::::::::::::::::::::::::
 

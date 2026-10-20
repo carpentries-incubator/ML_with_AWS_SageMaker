@@ -135,7 +135,7 @@ joblib.dump(scaler, 'scaler.joblib')  # keep the fitted scaler: the test set mus
 print(X_train.shape, X_val.shape)
 ```
 
-Next, we will upload our compressed files (and the scaler) to our S3 bucket. Storage is fairly cheap on AWS (around $0.023 per GB per month), but be mindful of uploading too much data. It may be convenient to store a preprocessed version of the data at times, but try not to store too many versions that aren't being actively used.
+Next, we will upload our compressed files (and the scaler) to our S3 bucket. Storage is fairly cheap on AWS (around \$0.023 per GB per month), but be mindful of uploading too much data. It may be convenient to store a preprocessed version of the data at times, but try not to store too many versions that aren't being actively used.
 
 ```python
 train_file = "train_data.npz"  # Local file path in your notebook environment
@@ -182,9 +182,10 @@ job_tags = [
     {"Key": "Project", "Value": project},
     {"Key": "Purpose", "Value": purpose},
 ]
+print(f"Name: {name}, Project: {project}, Purpose: {purpose}")
 ```
 
-We'll also bring back the `job_cost_report()` helper from the previous episode, plus the hourly rates of the instances we're about to use. Estimate first: 1000 full-batch epochs took a few seconds locally, so expect roughly 1 minute of training plus ~3 minutes of startup, i.e. about $0.01 on `ml.m5.large`.
+We'll also bring back the `job_cost_report()` helper from the previous episode, plus the hourly rates of the instances we're about to use. Estimate first: 1000 full-batch epochs took a few seconds locally, so expect roughly 1 minute of training plus ~3 minutes of startup, i.e. about \$0.01 on `ml.m5.large`.
 
 ```python
 def job_cost_report(job_name: str, price_per_hour: float):
@@ -277,7 +278,7 @@ X_train, y_train = X_train.to(device), y_train.to(device)
 
 ### CPU or GPU: predict, then measure
 
-We're about to run the identical job on an `ml.g4dn.xlarge` (one NVIDIA T4 GPU, about $0.74/hour) instead of the `ml.m5.large` ($0.115/hour). Before you run the cell:
+We're about to run the identical job on an `ml.g4dn.xlarge` (one NVIDIA T4 GPU, about \$0.74/hour) instead of the `ml.m5.large` (\$0.115/hour). Before you run the cell:
 
 1. Predict which instance finishes first (total wall-clock, as `fit()` reports it).
 2. Predict which costs less for this job.
@@ -326,7 +327,7 @@ for label, d, rate in [("CPU ml.m5.large", desc_cpu, prices["ml.m5.large"]), ("G
 
 Typically the CPU run finishes about as fast or faster, and it is several times cheaper. Both jobs spend roughly the same few minutes on startup (provisioning, pulling the container, downloading data), and the GPU container is larger, so it often takes a little *longer* to start. The actual training is a few seconds on either instance: the network has about 2,600 parameters and the whole training set is 713 rows, so each full-batch step is tiny and the T4 sits almost idle, and the one-time CUDA initialization adds a few seconds of its own. Startup dominates both bills, and the GPU bill is about 6x higher per minute (0.74 / 0.115), so the GPU costs roughly 6x more for no speedup.
 
-A GPU pays off when the per-step work is large enough to keep it busy: bigger models, bigger batches, or datasets of hundreds of MB and up. If you ever do need more GPU than a `g4dn.xlarge`, the next sensible step is an `ml.g5.xlarge` (~$1.41/hour), not a multi-GPU box.
+A GPU pays off when the per-step work is large enough to keep it busy: bigger models, bigger batches, or datasets of hundreds of MB and up. If you ever do need more GPU than a `g4dn.xlarge`, the next sensible step is an `ml.g5.xlarge` (~\$1.41/hour), not a multi-GPU box.
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -361,7 +362,7 @@ Setting `instance_count=2` on an estimator makes SageMaker start two instances a
 - `train_nn.py` has no distributed code, so each instance trains its own independent copy of the model on all of the data for all 1000 epochs, and each saves a model.
 - SageMaker bills `BillableTimeInSeconds x InstanceCount`.
 
-So without a distribution strategy, two instances means the same job twice, in parallel, at double the cost. Estimate first: about the same 4 minutes of wall-clock as the single-instance run, but billed for two instances, so about $0.02 on `ml.m5.large`.
+So without a distribution strategy, two instances means the same job twice, in parallel, at double the cost. Estimate first: about the same 4 minutes of wall-clock as the single-instance run, but billed for two instances, so about \$0.02 on `ml.m5.large`.
 
 ```python
 instance_count = 2   # demonstration: NOT expected to be faster, and expected to cost double
