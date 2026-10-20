@@ -127,6 +127,19 @@ AWS allows tag values of up to 256 characters made of letters, digits, spaces an
 
 ![Example of Tags for an S3 Bucket](fig/bucket_tags2.png){alt="Screenshot showing required tags for an S3 bucket"}
 
+::::::::::::::::::::::::::::::::::::: callout
+
+#### Why these three keys, and why they must be spelled exactly
+
+Tags only show up in cost reports if the tag *key* has been activated as a cost allocation tag at the account level. On UW–Madison's AWS accounts that activation is done centrally by the Public Cloud team for a fixed list of approved keys, documented at [AWS - Tagging with an AWS Account (KB 72454)](https://kb.wisc.edu/72454). `Name`, `Project`, and `Purpose` are on that list; `ModelSize`, `Team`, `project` (lowercase) or any other spelling are not, and spend tagged with them is invisible in Cost Explorer. The KB page says it plainly: cut and paste, because any deviation stops the tag from reporting.
+
+Two more things to know now, because they come up in every later episode:
+
+- **Tags never propagate.** Tagging this bucket tags the bucket only. The notebook instance, every training job, processing job and Bedrock inference profile you create later needs its own copy of the same three tags.
+- **Outside UW**, you activate the keys yourself, once, under **Billing and Cost Management → Cost allocation tags**. Until you do, the tags exist on the resources but not on the bill.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
 **Default encryption**: leave SSE-S3 (the default). Objects are encrypted at rest with keys S3 manages; KMS keys only matter when you need to control the keys yourself.
 
 **Advanced settings**: leave closed.
