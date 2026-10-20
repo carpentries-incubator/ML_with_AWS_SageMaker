@@ -20,19 +20,21 @@ exercises: 0
 ::::::::::::::::::::::::::::::::::::::::::::::
 
 
-Amazon SageMaker is AWS's managed platform for training, tuning and running machine learning models. You bring your own scripts and data; AWS provides the machines, the containers with common ML frameworks installed, and the bookkeeping. This episode compares it with the compute researchers usually already have.
+This episode compares cloud compute with the compute researchers usually already have, then introduces SageMaker, the AWS service this lesson is built on.
 
 ### Cloud vs. the cluster down the hall
 
 Most researchers already have somewhere to run ML, such as a campus HPC cluster, a departmental GPU server, or a lab workstation. How the cloud compares:
 
 - **Buy once and maintain, or rent the latest.** A cluster or lab server is bought once, maintained by someone, and used for five or more years with whatever GPUs were current at purchase. Cloud providers offer each new generation soon after release (Blackwell B200 and GB200 today, Vera Rubin announced for cloud deployment in 2026), billed per second and only while a job runs. The largest systems (72-GPU GB200 racks) are liquid-cooled; most campus data centers are air-cooled and cannot host them without a facility upgrade. Owned hardware costs the same busy or idle, so for GPUs that stay busy owning is cheaper, and for bursty research work renting is.
-- **Energy efficiency.** Power usage effectiveness (PUE) is total facility power divided by IT power, so 1.0 is perfect. AWS reports a global average of 1.14 for 2025; the Uptime Institute's 2025 industry survey average is 1.54, and Amazon cites 1.63 for on-premises enterprise data centers. There is no comparable survey of university data centers, the cloud figures are self-reported, and PUE says nothing about whether the GPUs inside are busy. The direction is still clear: a hyperscale facility wastes less power on cooling and distribution than a typical campus machine room.
+- **Energy efficiency tracks facility scale.** Power usage effectiveness (PUE) is total facility power divided by IT power; 1.0 is perfect. Hyperscale and flagship HPC facilities are in the same range: AWS reports a global average of [1.14 for 2025](https://aws.amazon.com/sustainability/), and a [2025 survey of US research HPC](https://arxiv.org/html/2506.19019v1) puts TACC at about 1.15 and MGHPCC near 1.14. Smaller facilities do worse: the [Uptime Institute's 2025 survey](https://datacenter.uptimeinstitute.com/rs/711-RIA-145/images/2025.Annual.Survey.Report.pdf?version=0) puts enterprise and colocation data centers at 1.58-1.80, and a departmental server room is typically in that range or above. So the cloud is a large efficiency gain over a lab server, and roughly a wash against a campus HPC center. (Figures are self-reported, and PUE measures the building, not whether the GPUs in it are busy.)
 - **Control and data.** On-prem gives full control over the software stack, no quotas, no egress charges, and data that never leaves campus. In the cloud you work within quotas and account permissions, and data moved in or out crosses the network. An idle rented GPU costs the same as a busy one, so every job in this lesson has a runtime cap.
 
-### Why use SageMaker for machine learning?
+### What SageMaker is
 
-Renting a bare GPU instance from AWS (EC2) gets you the hardware above, but you still install the frameworks, move the data, and remember to shut the machine down. SageMaker wraps the same instances in a job model built for ML: you submit a script and an instance type, AWS provisions the machine with the framework container installed, runs the script, saves the outputs to S3, and terminates the instance. What that gives you:
+Amazon SageMaker is AWS's managed service for machine learning. It runs on the same instances as plain EC2, but adds a job model built for ML: you submit a script and an instance type, AWS provisions the machine with a framework container (PyTorch, scikit-learn, Hugging Face, ...) installed, runs the script, saves the outputs to S3, and terminates the instance. Renting a bare EC2 GPU gets you the hardware; with SageMaker you do not install the frameworks, move the data by hand, or remember to shut the machine down.
+
+### Why use SageMaker for machine learning?
 
 
 - **High-performance compute only when needed**: SageMaker lets you develop interactively in lightweight, inexpensive notebook environments (or your own laptop) and then launch training, tuning, or inference jobs on more powerful [instance types](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/reference.html#cloud-compute-essentials) only when necessary. You pay for expensive compute only while a job runs.
