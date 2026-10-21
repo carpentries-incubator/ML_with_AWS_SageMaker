@@ -23,7 +23,7 @@ exercises: 20
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/11_RAG-Bedrock.ipynb`. Select the **`conda_pytorch`** kernel.
-This is the first hands-on RAG episode, and it starts where the overview told you to start: **Amazon Bedrock**. We build a complete RAG pipeline for the [WattBot 2025](https://www.kaggle.com/competitions/WattBot2025/overview) challenge from a small, CPU-only SageMaker notebook. Nothing in this episode needs a GPU: the core model work — **both text embeddings and answer generation** — runs on Bedrock-hosted models that bill per token and leave nothing running between calls. We'll use:
+This is the first hands-on RAG episode, and it starts where the overview told you to start: **Amazon Bedrock**. We build a complete RAG pipeline for the [WattBot 2026](https://www.kaggle.com/competitions/WattBot2026) challenge from a small, CPU-only SageMaker notebook. Nothing in this episode needs a GPU: the core model work — **both text embeddings and answer generation** — runs on Bedrock-hosted models that bill per token and leave nothing running between calls. We'll use:
 
 - an **Amazon Titan Text Embeddings V2** model to turn WattBot chunks into vectors, and  
 - a **DeepSeek V3** model hosted on Bedrock to generate answers and explanations.
@@ -79,7 +79,7 @@ We’ll work with **Amazon Bedrock–hosted foundation models** for both embeddi
       - For multimodal embeddings, you call a Titan multimodal embedding model with an `inputImage` (and optionally `inputText`) payload to obtain a single vector that mixes visual and textual information.
   - This notebook stays with **text‑only** embeddings + generation to keep the workflow simple, but the same RAG pattern extends naturally to multimodal models once you add an image‑extraction step to your preprocessing pipeline.
 
-For a full catalog of available models (including Claude variants, Amazon models, and partner models), open the **Model catalog** in the Amazon Bedrock console. Each entry provides a model card with capabilities, typical use cases, and pricing details so learners can explore alternatives for their own RAG systems.
+For the full list of available models (Claude variants, Amazon models, and partner models), open the [Model catalog](https://us-east-2.console.aws.amazon.com/bedrock/home?region=us-east-2#/model-catalog) in the Amazon Bedrock console. Each entry has a model card with capabilities, typical use cases, and pricing, for exploring alternatives for your own RAG system.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
@@ -789,7 +789,7 @@ results_df.head()
 
 ## Step 12 – Score against the training answers
 
-WattBot scores each prediction with three components: 0.75 for `answer_value` (numeric within ±0.1% relative tolerance, categorical match after normalisation, and zero if you answer a question the corpus cannot answer), 0.20 for the F1 between your `ref_id` set and the ground-truth citations, and 0.05 for refusing cleanly, with every evidence field blank, when the answer is `is_blank`. The number comes from `Score.py`, the competition's own metric file, which `compute_wattbot_score` in `wattbot_rag.py` calls for the headline score so that what you see here is what the leaderboard would report. The wrapper adds a per-row score, joins on `id`, and prints the worst-scoring rows so you can see *why* the pipeline lost points. `train_QA.csv` has no separate "unanswerable" column, so `gt_is_na_col="is_blank"` tells the scorer to derive that flag from `answer_value == "is_blank"` on both sides.
+WattBot scores each prediction with three components: 0.75 for `answer_value` (numeric within ±0.1% relative tolerance, categorical match after normalisation, and zero if you answer a question the corpus cannot answer), 0.20 for the F1 between your `ref_id` set and the ground-truth citations, and 0.05 for refusing cleanly, with every evidence field blank, when the answer is `is_blank`. The number comes from `Score.py`, the competition's own metric file, which `compute_wattbot_score` in `wattbot_rag.py` calls for the headline score so that what you see here is what the leaderboard would report. It also prints the error rate by evidence type: whether each answer rests on a quoted sentence, a table, a figure, or a calculation. The competition's solution file carries those flags; the public `train_QA.csv` only notes them in its `explanation` column, so the wrapper derives them from there. A question can carry several. Read that table before changing anything: figure and table questions failing while quote questions pass points at text extraction, which loses figures and flattens tables, not at the model. The wrapper adds a per-row score, joins on `id`, and prints the worst-scoring rows so you can see *why* the pipeline lost points. `train_QA.csv` has no separate "unanswerable" column, so `gt_is_na_col="is_blank"` tells the scorer to derive that flag from `answer_value == "is_blank"` on both sides.
 
 ```python
 scored_df = compute_wattbot_score(

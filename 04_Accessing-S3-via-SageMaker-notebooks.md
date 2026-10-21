@@ -35,6 +35,13 @@ Starting with these initializations prepares our notebook environment to efficie
 
 Start with the role and the session, and print both. The role is the identity every call from this notebook uses. Check the region line against the bucket you made in the S3 episode: the two must match, or the training jobs in later episodes will fail to find their data and anything you do read will be billed as cross-region transfer. If they differ, the fix is a new bucket in this region, not a new notebook instance.
 
+Work from a project folder beside the lesson clone, so downloads and outputs stay out of the repository. The Titanic episodes all use this one; the fine-tuning and RAG episodes make their own.
+
+```python
+!mkdir -p /home/ec2-user/SageMaker/titanic   # a project folder beside the lesson clone, so downloads and outputs stay out of the repository
+%cd /home/ec2-user/SageMaker/titanic
+```
+
 ```python
 import sagemaker                      # SageMaker Python SDK: higher-level API for training jobs, tuning, deployment
 from sagemaker import get_execution_role
@@ -132,11 +139,11 @@ In some cases, downloading a local copy of the dataset may be useful, such as wh
 ```python
 # Define the S3 bucket and file location
 key = "titanic_train.csv"  # Path to your file in the S3 bucket
-local_file_path = "/home/ec2-user/SageMaker/titanic_train.csv"  # Local path to save the file
+local_file_path = "/home/ec2-user/SageMaker/titanic/titanic_train.csv"  # Local path to save the file
 
 # Copy the object to the instance's disk (unlike get_object above, which only read it into memory)
 s3.download_file(bucket_name, key, local_file_path)
-!ls "/home/ec2-user/SageMaker/"
+!ls "/home/ec2-user/SageMaker/titanic/"
 ```
 
 **Note**: You may need to hit refresh on the file explorer panel to the left to see this file. If you get any permission issues...
@@ -256,11 +263,11 @@ For detailed and up-to-date information on AWS S3 pricing, please refer to the [
 As your analysis generates new files or demands additional documentation, you can upload files to your bucket as demonstrated below. For this demo, we write a small `Notes.txt` file on the instance and check that it exists:
 
 ```python
-notes_file_path = "/home/ec2-user/SageMaker/Notes.txt"
+notes_file_path = "/home/ec2-user/SageMaker/titanic/Notes.txt"
 with open(notes_file_path, "w") as f:
     f.write("Workshop notes.\n")
 
-!ls -l "/home/ec2-user/SageMaker/Notes.txt"
+!ls -l "/home/ec2-user/SageMaker/titanic/Notes.txt"
 ```
 
 Then upload it. Here it goes under a `docs/` prefix; drop the `docs/` to put it in the bucket's root instead.

@@ -27,12 +27,13 @@ exercises: 20
 #### 1. Open prefilled .ipynb notebook
 Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/06_Training-models-in-SageMaker-notebooks.ipynb`. When asked for a kernel, pick **`conda_pytorch`**; we will use the same kernel for the next two episodes. The `conda_python3` kernel has no PyTorch, and on current instances no scikit-learn either.
 
-#### 2. CD to instance home directory
-So we all can reference the helper functions using the same path, CD to the instance's root directory and make the lesson repository's `scripts/` importable. The training scripts for this episode (`train_xgboost.py`) and the next (`train_nn.py`) are in that folder.
+#### 2. Move to the project folder and import the helpers
+Work from the Titanic project folder the S3 episode created, and make the lesson repository's `scripts/` importable. The training scripts for this episode (`train_xgboost.py`) and the next (`train_nn.py`) are in that folder.
 
 ```python
-# Work from the instance root: the %run, source_dir and download paths below are relative to it
-%cd /home/ec2-user/SageMaker/
+# The Titanic project folder from the S3 episode, beside the lesson clone: downloads and outputs land here, not in the repository
+!mkdir -p /home/ec2-user/SageMaker/titanic
+%cd /home/ec2-user/SageMaker/titanic
 import sys
 # Put the lesson's scripts/ folder on Python's import path
 sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
@@ -248,7 +249,7 @@ num_round = 100 # Sets the number of boosting rounds (trees) to 100. More rounds
 train_file = 'titanic_train.csv' #  Points to the location of the training data
 
 # %run executes the script in this kernel; IPython substitutes the Python variables in {braces} into the arguments
-%run ML_with_AWS_SageMaker/scripts/train_xgboost.py --max_depth {max_depth} --eta {eta} --subsample {subsample} --colsample_bytree {colsample_bytree} --num_round {num_round} --train {train_file}
+%run /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_xgboost.py --max_depth {max_depth} --eta {eta} --subsample {subsample} --colsample_bytree {colsample_bytree} --num_round {num_round} --train {train_file}
 
 # Measure and print the time taken
 print(f"Total local runtime: {t.time() - start_time:.2f} seconds, instance_type = {local_instance}")
@@ -459,7 +460,7 @@ xgboost_estimator = XGBoost(
     base_job_name=f"{notebook_instance_name}-xgboost",   # prefix of the job name: who + which model; SageMaker appends a timestamp to make it unique
     max_run=max_run, # in seconds; always include (max 48 hours)
     entry_point='train_xgboost.py',      # the script SageMaker runs inside the container on the training instance
-    source_dir='ML_with_AWS_SageMaker/scripts',  # Directory where your script is located (uploaded to the job with it)
+    source_dir='/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts',  # Directory where your script is located (uploaded to the job with it)
     role=role,                           # the job assumes this role to read its input and write its output in S3
     tags=job_tags,                       # the cost-tracking tags defined above
     instance_count=instance_count,

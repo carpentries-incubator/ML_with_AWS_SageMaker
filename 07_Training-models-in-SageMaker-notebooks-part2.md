@@ -60,8 +60,9 @@ print(f"region = {region}")
 We should also record our local instance information to report this information during testing. First, let's make sure we're starting in the same location to access helper functions
 
 ```python
-# Work from the instance root: the %run, source_dir and download paths below are relative to it
-%cd /home/ec2-user/SageMaker/
+# The Titanic project folder from the S3 episode, beside the lesson clone: downloads and outputs land here, not in the repository
+!mkdir -p /home/ec2-user/SageMaker/titanic
+%cd /home/ec2-user/SageMaker/titanic
 import sys
 sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
 import helpers
@@ -164,7 +165,7 @@ epochs = 100          # small smoke test
 learning_rate = 0.001
 
 start_time = t.time()
-%run ML_with_AWS_SageMaker/scripts/train_nn.py --train train_data.npz --val val_data.npz --epochs {epochs} --learning_rate {learning_rate}
+%run /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py --train train_data.npz --val val_data.npz --epochs {epochs} --learning_rate {learning_rate}
 print(f"Local training time: {t.time() - start_time:.2f} seconds, instance_type = {local_instance}")
 ```
 
@@ -290,7 +291,7 @@ max_run = 2*60*60 # 2 hours
 pytorch_estimator = PyTorch(
     base_job_name=f"{notebook_instance_name}-nn",   # who + which model; SageMaker appends a timestamp to make each job name unique
     max_run=max_run, # in seconds; always include (max 48 hours)
-    entry_point="ML_with_AWS_SageMaker/scripts/train_nn.py",  # copied into the container and run there
+    entry_point="/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py",  # copied into the container and run there
     role=role,
     tags=job_tags,  # per job; nothing is inherited from the notebook instance
     instance_type=instance_type, # with this small dataset, we don't necessarily need a GPU for fast training. 
@@ -367,7 +368,7 @@ instance_count = 1
 pytorch_estimator_gpu = PyTorch(
     base_job_name=f"{notebook_instance_name}-nn",
     max_run=max_run, # in seconds; always include (max 48 hours)
-    entry_point="ML_with_AWS_SageMaker/scripts/train_nn.py",
+    entry_point="/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py",
     role=role,
     tags=job_tags,
     instance_type=instance_type,
@@ -446,7 +447,7 @@ instance_type = "ml.m5.large"
 pytorch_estimator_2x = PyTorch(
     base_job_name=f"{notebook_instance_name}-nn",
     max_run=max_run, # in seconds; always include (max 48 hours)
-    entry_point="ML_with_AWS_SageMaker/scripts/train_nn.py",
+    entry_point="/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py",
     role=role,
     tags=job_tags,
     instance_type=instance_type,

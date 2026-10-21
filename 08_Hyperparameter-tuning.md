@@ -53,8 +53,9 @@ By managing these settings and configuring metrics properly, you can achieve a b
 Just to make sure we are all on the same directory starting point, let's cd to our instance's root directory
 
 ```python
-# Work from the instance root: the %run, source_dir and download paths below are relative to it
-%cd /home/ec2-user/SageMaker/
+# The Titanic project folder from the S3 episode, beside the lesson clone: downloads and outputs land here, not in the repository
+!mkdir -p /home/ec2-user/SageMaker/titanic
+%cd /home/ec2-user/SageMaker/titanic
 import sys
 sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
 import helpers
@@ -130,7 +131,7 @@ max_run = 2*60*60 # 2 hours
 pytorch_estimator = PyTorch(
     base_job_name=f"{notebook_instance_name}-nn",   # who + which model; the tuner appends its own suffix to each child job
     max_run=max_run, # in seconds; always include (max 48 hours)
-    entry_point="ML_with_AWS_SageMaker/scripts/train_nn.py",  # Your script for training
+    entry_point="/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py",  # Your script for training
     role=role,
     tags=job_tags,  # tags a plain .fit() on this estimator; the tuner below sets its own
     instance_count=instance_count,
