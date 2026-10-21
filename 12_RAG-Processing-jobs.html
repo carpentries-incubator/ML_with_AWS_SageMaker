@@ -627,11 +627,16 @@ batch job: loads the inputs, runs the generator, writes
 (retrieval, prompts, answer parsing, <code>run_single_qa</code>, the
 scorer) that the Bedrock episode imported too. The batch script imports
 it, so it ships with the job; the notebook imports it for scoring.</li>
-</ul><p>Each job gets its own source directory, because SageMaker uploads the
-whole directory into the container. <code>code_embed/</code> holds the
-embedding job, <code>code_rag/</code> the RAG job, and a copy of
-<code>wattbot_rag.py</code> sits next to the notebook for the scoring
-step at the end.</p>
+</ul><p>The cell below copies them out of the lesson clone into the project
+folder, one directory per job: <code>code_embed/</code> for the
+embedding job and <code>code_rag/</code> for the RAG job. The split
+follows from how a job gets its code. <code>run(source_dir=...)</code>
+uploads that whole directory into the container, the same way the
+training estimator’s <code>source_dir</code> did in the fine-tuning
+episode, so each directory holds exactly the files its job imports. The
+copies of <code>wattbot_rag.py</code> and <code>Score.py</code> next to
+the notebook are for the scoring step at the end, which runs in the
+notebook, not in a job.</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1133,7 +1138,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -1196,7 +1201,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still downloading or
