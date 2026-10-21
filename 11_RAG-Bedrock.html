@@ -1795,8 +1795,9 @@ DeepSeek V3 on the <a href="https://aws.amazon.com/bedrock/pricing/" class="exte
 (fill the two prices in below). Add the embedding step: ~9,000 chunks of
 1,200 characters at Titan Text Embeddings V2’s <code>$0.02</code> per
 million input tokens. How does the total compare with the overview’s
-estimate for “the whole WattBot pipeline on Bedrock”, and with one hour
-of the <code>ml.g6e.xlarge</code> the Processing Jobs episode rents?</p>
+estimate for “the whole WattBot pipeline on Bedrock”, and with the
+<code>ml.g5.xlarge</code> GPU the Processing Jobs episode rents for the
+same questions, <code>$1.41</code> an hour?</p>
 </div>
 </div>
 </div>
@@ -1826,14 +1827,16 @@ region you used. The rest sums the usage blocks and prints the cost.</p>
 <span id="cb32-11"><a href="#cb32-11" tabindex="-1" aria-label="code-block-32-11"></a></span>
 <span id="cb32-12"><a href="#cb32-12" tabindex="-1" aria-label="code-block-32-12"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(bedrock_usage)<span class="sc">}</span><span class="ss"> generation calls: </span><span class="sc">{</span>in_tokens<span class="sc">:,}</span><span class="ss"> input + </span><span class="sc">{</span>out_tokens<span class="sc">:,}</span><span class="ss"> output tokens -&gt; $</span><span class="sc">{</span>gen_cost<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
 <span id="cb32-13"><a href="#cb32-13" tabindex="-1" aria-label="code-block-32-13"></a><span class="bu">print</span>(<span class="ss">f"~</span><span class="sc">{</span>embed_tokens<span class="sc">:,.0f}</span><span class="ss"> embedding tokens -&gt; $</span><span class="sc">{</span>embed_cost<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
-<span id="cb32-14"><a href="#cb32-14" tabindex="-1" aria-label="code-block-32-14"></a><span class="bu">print</span>(<span class="ss">f"Total ~$</span><span class="sc">{</span>gen_cost <span class="op">+</span> embed_cost<span class="sc">:.2f}</span><span class="ss">; one hour of ml.g6e.xlarge is $2.61"</span>)</span></code></pre>
+<span id="cb32-14"><a href="#cb32-14" tabindex="-1" aria-label="code-block-32-14"></a><span class="bu">print</span>(<span class="ss">f"Total ~$</span><span class="sc">{</span>gen_cost <span class="op">+</span> embed_cost<span class="sc">:.2f}</span><span class="ss">; the Processing Jobs episode rents an ml.g5.xlarge at $1.41 an hour for the same questions"</span>)</span></code></pre>
 </div>
 <p>With 53 questions, two calls each and ~1,500-token prompts, the run
 was 140K input and 9K output tokens: ten cents at DeepSeek V3’s prices,
 plus five cents of embeddings for the 2.4 million tokens of corpus. All
 245 questions is about half a dollar, which is the overview’s estimate
-for the whole pipeline, and it is a small fraction of a single
-GPU-hour.</p>
+for the whole pipeline. The Processing Jobs episode answers the same 53
+questions on a rented <code>ml.g5.xlarge</code> and bills about
+<code>$0.60</code> of GPU time for them, four times this run, most of it
+loading a model that Bedrock already has loaded.</p>
 </div>
 </div>
 </div>
@@ -1883,30 +1886,36 @@ what moved the score.</p>
 </button>
 <div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
+<p>Both solution cells start with
+<code>%%script false --no-raise-error</code>, which makes Jupyter skip
+the cell, so a Run All of the episode does not spend ten minutes here;
+delete that line to run one.</p>
 <p><strong>Generator.</strong> <code>call_bedrock_chat</code> already
 takes a <code>model_id</code>, so the swap is a profile and a
 lambda:</p>
 <div class="codewrapper sourceCode" id="cb33">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" tabindex="-1" aria-label="code-block-33-1"></a>alt_generation_model_id <span class="op">=</span> <span class="st">"us.amazon.nova-2-lite-v1:0"</span>   <span class="co"># any chat model in the catalog with a converse API</span></span>
-<span id="cb33-2"><a href="#cb33-2" tabindex="-1" aria-label="code-block-33-2"></a>alt_model_arn <span class="op">=</span> tagged_profile_arn(bedrock, alt_generation_model_id, <span class="st">"wattbot-gen-alt"</span>, name, project)</span>
-<span id="cb33-3"><a href="#cb33-3" tabindex="-1" aria-label="code-block-33-3"></a></span>
-<span id="cb33-4"><a href="#cb33-4" tabindex="-1" aria-label="code-block-33-4"></a>usage_before <span class="op">=</span> <span class="bu">len</span>(bedrock_usage)</span>
-<span id="cb33-5"><a href="#cb33-5" tabindex="-1" aria-label="code-block-33-5"></a>alt_results <span class="op">=</span> []</span>
-<span id="cb33-6"><a href="#cb33-6" tabindex="-1" aria-label="code-block-33-6"></a><span class="cf">for</span> _, row <span class="kw">in</span> eval_df.iterrows():</span>
-<span id="cb33-7"><a href="#cb33-7" tabindex="-1" aria-label="code-block-33-7"></a>    alt_results.append(run_single_qa(</span>
-<span id="cb33-8"><a href="#cb33-8" tabindex="-1" aria-label="code-block-33-8"></a>        row<span class="op">=</span>row, embed_query<span class="op">=</span>embed_query,</span>
-<span id="cb33-9"><a href="#cb33-9" tabindex="-1" aria-label="code-block-33-9"></a>        generate<span class="op">=</span><span class="kw">lambda</span> s, u, max_new_tokens<span class="op">=</span><span class="dv">512</span>: call_bedrock_chat(s, u, max_new_tokens, model_id<span class="op">=</span>alt_model_arn),</span>
-<span id="cb33-10"><a href="#cb33-10" tabindex="-1" aria-label="code-block-33-10"></a>        chunk_embeddings<span class="op">=</span>chunk_embeddings, chunked_docs<span class="op">=</span>chunked_docs, docid_to_url<span class="op">=</span>docid_to_url,</span>
-<span id="cb33-11"><a href="#cb33-11" tabindex="-1" aria-label="code-block-33-11"></a>        top_k<span class="op">=</span><span class="dv">8</span>, retrieval_threshold<span class="op">=</span><span class="fl">0.25</span>,</span>
-<span id="cb33-12"><a href="#cb33-12" tabindex="-1" aria-label="code-block-33-12"></a>    ))</span>
-<span id="cb33-13"><a href="#cb33-13" tabindex="-1" aria-label="code-block-33-13"></a>alt_path <span class="op">=</span> os.path.join(output_dir, <span class="st">"wattbot_solutions_bedrock_alt.csv"</span>)</span>
-<span id="cb33-14"><a href="#cb33-14" tabindex="-1" aria-label="code-block-33-14"></a>pd.DataFrame(alt_results).to_csv(alt_path, index<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb33-15"><a href="#cb33-15" tabindex="-1" aria-label="code-block-33-15"></a></span>
-<span id="cb33-16"><a href="#cb33-16" tabindex="-1" aria-label="code-block-33-16"></a>alt_usage <span class="op">=</span> bedrock_usage[usage_before:]   <span class="co"># only this run's calls</span></span>
-<span id="cb33-17"><a href="#cb33-17" tabindex="-1" aria-label="code-block-33-17"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">sum</span>(u[<span class="st">'inputTokens'</span>] <span class="cf">for</span> u <span class="kw">in</span> alt_usage)<span class="sc">:,}</span><span class="ss"> input + </span><span class="sc">{</span><span class="bu">sum</span>(u[<span class="st">'outputTokens'</span>] <span class="cf">for</span> u <span class="kw">in</span> alt_usage)<span class="sc">:,}</span><span class="ss"> output tokens; price them from the pricing page"</span>)</span>
-<span id="cb33-18"><a href="#cb33-18" tabindex="-1" aria-label="code-block-33-18"></a>compute_wattbot_score(train_qa_path<span class="op">=</span>train_qa_path, preds_path<span class="op">=</span>alt_path, n_examples<span class="op">=</span><span class="dv">5</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" tabindex="-1" aria-label="code-block-33-1"></a><span class="op">%%</span>script false <span class="op">--</span>no<span class="op">-</span><span class="cf">raise</span><span class="op">-</span>error</span>
+<span id="cb33-2"><a href="#cb33-2" tabindex="-1" aria-label="code-block-33-2"></a><span class="co"># Challenge solution: delete the line above to run this cell. It is skipped on Run All so the episode's own cells are not delayed by it.</span></span>
+<span id="cb33-3"><a href="#cb33-3" tabindex="-1" aria-label="code-block-33-3"></a>alt_generation_model_id <span class="op">=</span> <span class="st">"us.amazon.nova-2-lite-v1:0"</span>   <span class="co"># any chat model in the catalog with a converse API</span></span>
+<span id="cb33-4"><a href="#cb33-4" tabindex="-1" aria-label="code-block-33-4"></a>alt_model_arn <span class="op">=</span> tagged_profile_arn(bedrock, alt_generation_model_id, <span class="st">"wattbot-gen-alt"</span>, name, project)</span>
+<span id="cb33-5"><a href="#cb33-5" tabindex="-1" aria-label="code-block-33-5"></a></span>
+<span id="cb33-6"><a href="#cb33-6" tabindex="-1" aria-label="code-block-33-6"></a>usage_before <span class="op">=</span> <span class="bu">len</span>(bedrock_usage)</span>
+<span id="cb33-7"><a href="#cb33-7" tabindex="-1" aria-label="code-block-33-7"></a>alt_results <span class="op">=</span> []</span>
+<span id="cb33-8"><a href="#cb33-8" tabindex="-1" aria-label="code-block-33-8"></a><span class="cf">for</span> _, row <span class="kw">in</span> eval_df.iterrows():</span>
+<span id="cb33-9"><a href="#cb33-9" tabindex="-1" aria-label="code-block-33-9"></a>    alt_results.append(run_single_qa(</span>
+<span id="cb33-10"><a href="#cb33-10" tabindex="-1" aria-label="code-block-33-10"></a>        row<span class="op">=</span>row, embed_query<span class="op">=</span>embed_query,</span>
+<span id="cb33-11"><a href="#cb33-11" tabindex="-1" aria-label="code-block-33-11"></a>        generate<span class="op">=</span><span class="kw">lambda</span> s, u, max_new_tokens<span class="op">=</span><span class="dv">512</span>: call_bedrock_chat(s, u, max_new_tokens, model_id<span class="op">=</span>alt_model_arn),</span>
+<span id="cb33-12"><a href="#cb33-12" tabindex="-1" aria-label="code-block-33-12"></a>        chunk_embeddings<span class="op">=</span>chunk_embeddings, chunked_docs<span class="op">=</span>chunked_docs, docid_to_url<span class="op">=</span>docid_to_url,</span>
+<span id="cb33-13"><a href="#cb33-13" tabindex="-1" aria-label="code-block-33-13"></a>        top_k<span class="op">=</span><span class="dv">8</span>, retrieval_threshold<span class="op">=</span><span class="fl">0.25</span>,</span>
+<span id="cb33-14"><a href="#cb33-14" tabindex="-1" aria-label="code-block-33-14"></a>    ))</span>
+<span id="cb33-15"><a href="#cb33-15" tabindex="-1" aria-label="code-block-33-15"></a>alt_path <span class="op">=</span> os.path.join(output_dir, <span class="st">"wattbot_solutions_bedrock_alt.csv"</span>)</span>
+<span id="cb33-16"><a href="#cb33-16" tabindex="-1" aria-label="code-block-33-16"></a>pd.DataFrame(alt_results).to_csv(alt_path, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb33-17"><a href="#cb33-17" tabindex="-1" aria-label="code-block-33-17"></a></span>
+<span id="cb33-18"><a href="#cb33-18" tabindex="-1" aria-label="code-block-33-18"></a>alt_usage <span class="op">=</span> bedrock_usage[usage_before:]   <span class="co"># only this run's calls</span></span>
+<span id="cb33-19"><a href="#cb33-19" tabindex="-1" aria-label="code-block-33-19"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">sum</span>(u[<span class="st">'inputTokens'</span>] <span class="cf">for</span> u <span class="kw">in</span> alt_usage)<span class="sc">:,}</span><span class="ss"> input + </span><span class="sc">{</span><span class="bu">sum</span>(u[<span class="st">'outputTokens'</span>] <span class="cf">for</span> u <span class="kw">in</span> alt_usage)<span class="sc">:,}</span><span class="ss"> output tokens; price them from the pricing page"</span>)</span>
+<span id="cb33-20"><a href="#cb33-20" tabindex="-1" aria-label="code-block-33-20"></a>compute_wattbot_score(train_qa_path<span class="op">=</span>train_qa_path, preds_path<span class="op">=</span>alt_path, n_examples<span class="op">=</span><span class="dv">5</span>)</span></code></pre>
 </div>
 <p>Read the per-type lines against the DeepSeek run. A cheaper model
 that holds its own on Quote questions and loses on Math and CrossPaper
@@ -1924,32 +1933,40 @@ identifier is invalid”:</p>
 </div>
 <p>Cohere’s request takes a list of texts and says whether they are
 documents or a query; its response is a list of vectors, nested under
-the number type asked for. Everything else is Step 8 again: a tagged
-profile, one call per chunk, a cached matrix, and a query function that
-uses the same model.</p>
+the number type asked for. One wrinkle: the catalog lists
+<code>cohere.embed-v4:0</code> for Ohio, but creating a profile on it
+fails with “does not support On Demand inference”, because in this
+region the model is served only through the US cross-region profile,
+<code>us.cohere.embed-v4:0</code>. <code>tagged_profile_arn</code>
+catches that error and switches to the <code>us.</code> ID itself, which
+is the same thing that happens for Llama 4 and several other models.
+Everything else is Step 8 again: a tagged profile, one call per chunk, a
+cached matrix, and a query function that uses the same model.</p>
 <div class="codewrapper sourceCode" id="cb35">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" tabindex="-1" aria-label="code-block-35-1"></a>cohere_model_id <span class="op">=</span> <span class="st">"cohere.embed-v4:0"</span></span>
-<span id="cb35-2"><a href="#cb35-2" tabindex="-1" aria-label="code-block-35-2"></a>cohere_arn <span class="op">=</span> tagged_profile_arn(bedrock, cohere_model_id, <span class="st">"wattbot-embed-cohere"</span>, name, project)</span>
-<span id="cb35-3"><a href="#cb35-3" tabindex="-1" aria-label="code-block-35-3"></a></span>
-<span id="cb35-4"><a href="#cb35-4" tabindex="-1" aria-label="code-block-35-4"></a><span class="kw">def</span> cohere_embed(text: <span class="bu">str</span>, input_type: <span class="bu">str</span> <span class="op">=</span> <span class="st">"search_document"</span>) <span class="op">-&gt;</span> np.ndarray:</span>
-<span id="cb35-5"><a href="#cb35-5" tabindex="-1" aria-label="code-block-35-5"></a>    <span class="co">"""One Cohere Embed v4 vector; input_type is search_document for the corpus, search_query for a question."""</span></span>
-<span id="cb35-6"><a href="#cb35-6" tabindex="-1" aria-label="code-block-35-6"></a>    body <span class="op">=</span> {<span class="st">"texts"</span>: [text[:<span class="dv">2000</span>]], <span class="st">"input_type"</span>: input_type, <span class="st">"embedding_types"</span>: [<span class="st">"float"</span>]}</span>
-<span id="cb35-7"><a href="#cb35-7" tabindex="-1" aria-label="code-block-35-7"></a>    response <span class="op">=</span> bedrock_runtime.invoke_model(modelId<span class="op">=</span>cohere_arn, contentType<span class="op">=</span><span class="st">"application/json"</span>, accept<span class="op">=</span><span class="st">"application/json"</span>, body<span class="op">=</span>json.dumps(body))</span>
-<span id="cb35-8"><a href="#cb35-8" tabindex="-1" aria-label="code-block-35-8"></a>    <span class="cf">return</span> np.asarray(json.loads(response[<span class="st">"body"</span>].read())[<span class="st">"embeddings"</span>][<span class="st">"float"</span>][<span class="dv">0</span>], dtype<span class="op">=</span><span class="st">"float32"</span>)</span>
-<span id="cb35-9"><a href="#cb35-9" tabindex="-1" aria-label="code-block-35-9"></a></span>
-<span id="cb35-10"><a href="#cb35-10" tabindex="-1" aria-label="code-block-35-10"></a>cohere_emb_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"embeddings_cohere.npy"</span>   <span class="co"># a new file: the Titan matrix stays</span></span>
-<span id="cb35-11"><a href="#cb35-11" tabindex="-1" aria-label="code-block-35-11"></a><span class="cf">if</span> cohere_emb_path.exists():</span>
-<span id="cb35-12"><a href="#cb35-12" tabindex="-1" aria-label="code-block-35-12"></a>    cohere_embeddings <span class="op">=</span> np.load(cohere_emb_path)</span>
-<span id="cb35-13"><a href="#cb35-13" tabindex="-1" aria-label="code-block-35-13"></a><span class="cf">else</span>:</span>
-<span id="cb35-14"><a href="#cb35-14" tabindex="-1" aria-label="code-block-35-14"></a>    t0 <span class="op">=</span> time.time()</span>
-<span id="cb35-15"><a href="#cb35-15" tabindex="-1" aria-label="code-block-35-15"></a>    cohere_embeddings <span class="op">=</span> np.vstack([cohere_embed(ch[<span class="st">"text"</span>]) <span class="cf">for</span> ch <span class="kw">in</span> chunked_docs])</span>
-<span id="cb35-16"><a href="#cb35-16" tabindex="-1" aria-label="code-block-35-16"></a>    np.save(cohere_emb_path, cohere_embeddings)</span>
-<span id="cb35-17"><a href="#cb35-17" tabindex="-1" aria-label="code-block-35-17"></a>    <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss"> chunks in </span><span class="sc">{</span>(time.time() <span class="op">-</span> t0) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
-<span id="cb35-18"><a href="#cb35-18" tabindex="-1" aria-label="code-block-35-18"></a></span>
-<span id="cb35-19"><a href="#cb35-19" tabindex="-1" aria-label="code-block-35-19"></a><span class="kw">def</span> embed_query_cohere(question: <span class="bu">str</span>) <span class="op">-&gt;</span> np.ndarray:</span>
-<span id="cb35-20"><a href="#cb35-20" tabindex="-1" aria-label="code-block-35-20"></a>    <span class="cf">return</span> cohere_embed(question, input_type<span class="op">=</span><span class="st">"search_query"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" tabindex="-1" aria-label="code-block-35-1"></a><span class="op">%%</span>script false <span class="op">--</span>no<span class="op">-</span><span class="cf">raise</span><span class="op">-</span>error</span>
+<span id="cb35-2"><a href="#cb35-2" tabindex="-1" aria-label="code-block-35-2"></a><span class="co"># Challenge solution: delete the line above to run this cell. Ten minutes of embedding, so not in class.</span></span>
+<span id="cb35-3"><a href="#cb35-3" tabindex="-1" aria-label="code-block-35-3"></a>cohere_model_id <span class="op">=</span> <span class="st">"cohere.embed-v4:0"</span>   <span class="co"># listed for Ohio but served only through the US cross-region profile; tagged_profile_arn switches to us.cohere.embed-v4:0 on its own</span></span>
+<span id="cb35-4"><a href="#cb35-4" tabindex="-1" aria-label="code-block-35-4"></a>cohere_arn <span class="op">=</span> tagged_profile_arn(bedrock, cohere_model_id, <span class="st">"wattbot-embed-cohere"</span>, name, project)</span>
+<span id="cb35-5"><a href="#cb35-5" tabindex="-1" aria-label="code-block-35-5"></a></span>
+<span id="cb35-6"><a href="#cb35-6" tabindex="-1" aria-label="code-block-35-6"></a><span class="kw">def</span> cohere_embed(text: <span class="bu">str</span>, input_type: <span class="bu">str</span> <span class="op">=</span> <span class="st">"search_document"</span>) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb35-7"><a href="#cb35-7" tabindex="-1" aria-label="code-block-35-7"></a>    <span class="co">"""One Cohere Embed v4 vector; input_type is search_document for the corpus, search_query for a question."""</span></span>
+<span id="cb35-8"><a href="#cb35-8" tabindex="-1" aria-label="code-block-35-8"></a>    body <span class="op">=</span> {<span class="st">"texts"</span>: [text[:<span class="dv">2000</span>]], <span class="st">"input_type"</span>: input_type, <span class="st">"embedding_types"</span>: [<span class="st">"float"</span>]}</span>
+<span id="cb35-9"><a href="#cb35-9" tabindex="-1" aria-label="code-block-35-9"></a>    response <span class="op">=</span> bedrock_runtime.invoke_model(modelId<span class="op">=</span>cohere_arn, contentType<span class="op">=</span><span class="st">"application/json"</span>, accept<span class="op">=</span><span class="st">"application/json"</span>, body<span class="op">=</span>json.dumps(body))</span>
+<span id="cb35-10"><a href="#cb35-10" tabindex="-1" aria-label="code-block-35-10"></a>    <span class="cf">return</span> np.asarray(json.loads(response[<span class="st">"body"</span>].read())[<span class="st">"embeddings"</span>][<span class="st">"float"</span>][<span class="dv">0</span>], dtype<span class="op">=</span><span class="st">"float32"</span>)</span>
+<span id="cb35-11"><a href="#cb35-11" tabindex="-1" aria-label="code-block-35-11"></a></span>
+<span id="cb35-12"><a href="#cb35-12" tabindex="-1" aria-label="code-block-35-12"></a>cohere_emb_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"embeddings_cohere.npy"</span>   <span class="co"># a new file: the Titan matrix stays</span></span>
+<span id="cb35-13"><a href="#cb35-13" tabindex="-1" aria-label="code-block-35-13"></a><span class="cf">if</span> cohere_emb_path.exists():</span>
+<span id="cb35-14"><a href="#cb35-14" tabindex="-1" aria-label="code-block-35-14"></a>    cohere_embeddings <span class="op">=</span> np.load(cohere_emb_path)</span>
+<span id="cb35-15"><a href="#cb35-15" tabindex="-1" aria-label="code-block-35-15"></a><span class="cf">else</span>:</span>
+<span id="cb35-16"><a href="#cb35-16" tabindex="-1" aria-label="code-block-35-16"></a>    t0 <span class="op">=</span> time.time()</span>
+<span id="cb35-17"><a href="#cb35-17" tabindex="-1" aria-label="code-block-35-17"></a>    cohere_embeddings <span class="op">=</span> np.vstack([cohere_embed(ch[<span class="st">"text"</span>]) <span class="cf">for</span> ch <span class="kw">in</span> chunked_docs])</span>
+<span id="cb35-18"><a href="#cb35-18" tabindex="-1" aria-label="code-block-35-18"></a>    np.save(cohere_emb_path, cohere_embeddings)</span>
+<span id="cb35-19"><a href="#cb35-19" tabindex="-1" aria-label="code-block-35-19"></a>    <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss"> chunks in </span><span class="sc">{</span>(time.time() <span class="op">-</span> t0) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
+<span id="cb35-20"><a href="#cb35-20" tabindex="-1" aria-label="code-block-35-20"></a></span>
+<span id="cb35-21"><a href="#cb35-21" tabindex="-1" aria-label="code-block-35-21"></a><span class="kw">def</span> embed_query_cohere(question: <span class="bu">str</span>) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb35-22"><a href="#cb35-22" tabindex="-1" aria-label="code-block-35-22"></a>    <span class="cf">return</span> cohere_embed(question, input_type<span class="op">=</span><span class="st">"search_query"</span>)</span></code></pre>
 </div>
 <p>Then the Step 11 loop with
 <code>embed_query=embed_query_cohere</code> and
