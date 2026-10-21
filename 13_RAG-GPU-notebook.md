@@ -30,7 +30,7 @@ exercises: 15
 
 ### Optional, self-study episode
 
-This episode is not taught in the workshop. **The Bedrock and Processing Jobs episodes are the default ways to run RAG; this one is for the case where you need to poke at a self-hosted model interactively, and only if you will remember to stop the instance.** It runs the same pipeline as the Processing Jobs episode on a GPU notebook instance, which is the right tool for prototyping alone at a keyboard and the wrong one for a room of a hundred people with meters running. Work through it on your own when you want to see model loading, GPU memory and generation as plain Python. Read the cost callout first.
+This episode is not taught in the workshop. **The Bedrock and Processing Jobs episodes are the default ways to run RAG; this one is for the case where you need to poke at a self-hosted model interactively, and only if you will remember to stop the instance.** **Do not run this notebook on the controller instance from the other episodes. Create a new GPU notebook instance for it (Setup below). On a CPU instance the vLLM install and the 27 GB model load will exhaust memory and freeze your JupyterLab.** It runs the same pipeline as the Processing Jobs episode on a GPU notebook instance, which is the right tool for prototyping alone at a keyboard and the wrong one for a room of a hundred people with meters running. Work through it on your own when you want to see model loading, GPU memory and generation as plain Python. Read the cost callout first.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -205,7 +205,7 @@ print("Local data dir:", local_data_dir)
 The retrieval, prompts, answer parsing, per-question orchestration and the scorer are the same code the Bedrock and Processing Jobs episodes used: `scripts/wattbot_rag.py` in the lesson repository. Copy the module next to this notebook. What this episode adds is the two model callables, `embed_query` and `generate`, running on the notebook's own GPU.
 
 ```python
-!cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/wattbot_rag.py /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/hf_embedder.py .
+!cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/wattbot_rag.py /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/hf_embedder.py /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/Score.py .
 ```
 
 Import the pieces of the shared RAG module we reuse: the prompts, the retrieval and scoring functions, and the per-question runner.
@@ -593,24 +593,12 @@ solutions_df.head(20)
 
 ### Compare answers to ground truth
 
-WattBot evaluates each prediction using a weighted score that combines three components. Most of the credit (0.75) comes from the `answer_value`, which must match the ground truth after normalization (numeric answers must be within ±0.1% relative tolerance; categorical values must match exactly). An additional 0.15 comes from `ref_id`, where partial credit is given based on the Jaccard overlap between your cited document IDs and the ground-truth set. The final 0.10 comes from correctly marking unanswerable questions: if a question is truly unanswerable, you must set `answer_value`, `ref_id`, and `supporting_materials` to `is_blank`. Any other combination scores zero for this component.
-
-| Component      | Weight | What counts as correct |
-|----------------|--------|------------------------|
-| answer_value   | 0.75   | Numeric within ±0.1% relative tolerance; categorical exact match; `is_blank` if unanswerable |
-| ref_id         | 0.15   | Jaccard overlap with the ground-truth reference set (case-insensitive) |
-| is_NA          | 0.10   | All required fields set to `is_blank` when the question is truly unanswerable |
-
-
-
-`compute_wattbot_score` from `wattbot_rag.py` implements that metric, joins predictions to `train_QA.csv` on `id`, and prints the worst-scoring rows. `train_QA.csv` has no separate "unanswerable" column, so `gt_is_na_col="is_blank"` derives that flag from `answer_value == "is_blank"` on both sides. The scorer accepts `ref_id` either as `;`-joined ids (what the pipeline writes) or as the Python-list strings in `train_QA.csv`.
+WattBot scores each prediction with the competition's own `Score.py`: 0.75 for `answer_value` (numeric within ±0.1% relative tolerance, categorical match after normalisation, zero if you answer a question the corpus cannot answer), 0.20 for citation F1 against the ground-truth `ref_id` set, and 0.05 for a clean refusal when the answer is `is_blank`. `compute_wattbot_score` from `wattbot_rag.py` calls it for the headline number, adds a per-row score, and prints the worst rows with the model's explanation.
 
 ```python
 results_df = compute_wattbot_score(
     train_qa_path=train_qa_path,
     preds_path=solutions_path,
-    gt_is_na_col="is_blank",
-    pred_is_na_col="is_blank",
     n_examples=10,
 )
 ```
