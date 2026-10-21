@@ -228,11 +228,30 @@ Open `scripts/embedding_inference.py` first; it is under fifty lines. It reads a
 
 A `HuggingFaceProcessor` is the Processing-job counterpart of the estimator: the same role, tags, instance type and container versions, plus a runtime cap. Its `run` call names the script, mounts the inputs, and says where the output goes. Once it is launched, the job appears on the [Processing jobs page](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs) of the SageMaker console (under **Data preparation** in the left menu), the Processing counterpart of the Training jobs page you used earlier.
 
-```python
-embedding_model_id = "thenlper/gte-large"
+In class the instructor has run this job already and staged its output. The switch below copies that matrix into your bucket, at the key the job would have written, and the launch cell then skips the job: the second job, which you do launch, has the same shape and is where the class spends its GPU minutes. On your own, set it to `False` and run the job; it is eight minutes.
 
+```python
+def _s3_object_exists(bucket: str, key: str) -> bool:
+    try:
+        s3_client.head_object(Bucket=bucket, Key=key)
+        return True
+    except s3_client.exceptions.ClientError:
+        return False
+
+embedding_model_id = "thenlper/gte-large"
 emb_output_prefix = "wattbot/embeddings"
 emb_output_path = f"s3://{bucket_name}/{emb_output_prefix}/"
+
+use_instructor_embeddings = True                       # True in class: copy the instructor's gte-large matrix and skip the job. False: run the job
+shared_gte_key = "wattbot/embeddings_gte_large.npy"    # where the instructor staged it in the shared bucket
+
+run_embedding_job = not (use_instructor_embeddings and _s3_object_exists(shared_bucket, shared_gte_key))
+if not run_embedding_job:
+    s3_client.copy({"Bucket": shared_bucket, "Key": shared_gte_key}, bucket_name, f"{emb_output_prefix}/embeddings.npy")
+    print(f"Copied the instructor's embeddings to s3://{bucket_name}/{emb_output_prefix}/embeddings.npy; the embedding job is skipped")
+```
+
+```python
 
 embedding_processor = HuggingFaceProcessor(
     base_job_name="WattBot-embed-gte-large",   # SageMaker appends a timestamp to make each job name unique
@@ -247,34 +266,35 @@ embedding_processor = HuggingFaceProcessor(
     max_runtime_in_seconds=2 * 60 * 60,   # 2 hours, in seconds (2 h x 60 min x 60 s); the estimate is ~8 minutes. SageMaker kills the job here, so a hang costs at most this
 )
 
-# run() uploads the code, starts the instance, streams the job's log here and returns when the script ends (wait=True is the default)
-start = time.time()
-embedding_processor.run(
-    code="embedding_inference.py",     # the script the container runs...
-    source_dir="code_embed/",          # ...uploaded with everything beside it (hf_embedder.py)
-    inputs=[
-        ProcessingInput(
-            source=chunks_s3_uri,                       # S3 object (or prefix) copied in before the script starts
-            destination="/opt/ml/processing/input",    # where it appears inside the container
-        )
-    ],
-    outputs=[
-        ProcessingOutput(
-            output_name="embeddings",
-            source="/opt/ml/processing/output",        # whatever the script writes here...
-            destination=emb_output_path,               # ...is copied to this S3 prefix when the script ends
-        )
-    ],
-    arguments=[                        # command-line flags, as the script's argparse expects them
-        "--model_id", embedding_model_id,
-        "--input_filename", "chunks.jsonl",
-        "--text_key", "text",
-        "--input_dir", "/opt/ml/processing/input",
-        "--output_dir", "/opt/ml/processing/output",
-    ],
-)
+if run_embedding_job:   # False in class when the instructor's matrix was copied in above
+    # run() uploads the code, starts the instance, streams the job's log here and returns when the script ends (wait=True is the default)
+    start = time.time()
+    embedding_processor.run(
+        code="embedding_inference.py",     # the script the container runs...
+        source_dir="code_embed/",          # ...uploaded with everything beside it (hf_embedder.py)
+        inputs=[
+            ProcessingInput(
+                source=chunks_s3_uri,                       # S3 object (or prefix) copied in before the script starts
+                destination="/opt/ml/processing/input",    # where it appears inside the container
+            )
+        ],
+        outputs=[
+            ProcessingOutput(
+                output_name="embeddings",
+                source="/opt/ml/processing/output",        # whatever the script writes here...
+                destination=emb_output_path,               # ...is copied to this S3 prefix when the script ends
+            )
+        ],
+        arguments=[                        # command-line flags, as the script's argparse expects them
+            "--model_id", embedding_model_id,
+            "--input_filename", "chunks.jsonl",
+            "--text_key", "text",
+            "--input_dir", "/opt/ml/processing/input",
+            "--output_dir", "/opt/ml/processing/output",
+        ],
+    )
 
-print(f"Embedding job complete: {(time.time() - start) / 60:.1f} min wall-clock, including instance startup")
+    print(f"Embedding job complete: {(time.time() - start) / 60:.1f} min wall-clock, including instance startup")
 ```
 
 ### Check on the running job in the AWS Console
@@ -448,7 +468,7 @@ def job_cost(job_name: str, price_per_hour: float):
     print(f"  output:                    {d['ProcessingOutputConfig']['Outputs'][0]['S3Output']['S3Uri']}")   # where the job's files went
     return cost
 
-total = job_cost(embedding_processor.latest_job.job_name, 1.41)
+total = job_cost(embedding_processor.latest_job.job_name, 1.41) if run_embedding_job else 0.0   # no job to price when the matrix was copied in
 total += job_cost(rag_processor.latest_job.job_name, 1.41)
 print(f"GPU total for the episode: ${total:.2f}")
 ```

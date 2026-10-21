@@ -891,6 +891,79 @@ With 53 questions, two calls each and ~1,500-token prompts, the run was 140K inp
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
+::::::::::::::::::::::::::::::::::::: challenge
+
+### Swap the models
+
+Everything above is two model IDs and two callables. The [model catalog](https://us-east-2.console.aws.amazon.com/bedrock/home?region=us-east-2#/model-catalog) has dozens of chat models and several embedding models, and "Choosing the two models" at the top of the episode said the leaderboards cannot tell you which one wins on your questions. Find out.
+
+1. **A different generator.** Pick another chat model from the catalog (for example `us.amazon.nova-2-lite-v1:0`, `us.meta.llama4-maverick-17b-instruct-v1:0`, or a Mistral or Claude model if your account has access), wrap it in a tagged profile as in Step 7, and rerun the Step 11 loop on the same 55-question sample with `call_bedrock_chat` pointed at it. Score it with `compute_wattbot_score` and price it from its `usage` blocks. Which evidence types moved, and what did a point of score cost?
+2. **A different embedder.** Retrieval is the other half. Either shrink Titan to 256 dimensions (`"dimensions": 256` in its request body) and see whether the hit rate and the score survive a four-times smaller index, or switch provider to Cohere Embed (`cohere.embed-english-v3`), whose request body is different from Titan's: a list of `texts` and an `input_type` that is `search_document` for the corpus and `search_query` for the question. Either way the matrix must be recomputed (ten minutes at the quota, so not in class), under a new file name so the Titan one is kept.
+
+Keep the rest fixed. One change per experiment, or you will not know what moved the score.
+
+:::::::::::::::::::::::: solution
+
+**Generator.** `call_bedrock_chat` already takes a `model_id`, so the swap is a profile and a lambda:
+
+```python
+alt_generation_model_id = "us.amazon.nova-2-lite-v1:0"   # any chat model in the catalog with a converse API
+alt_model_arn = tagged_profile_arn(bedrock, alt_generation_model_id, "wattbot-gen-alt", name, project)
+
+usage_before = len(bedrock_usage)
+alt_results = []
+for _, row in eval_df.iterrows():
+    alt_results.append(run_single_qa(
+        row=row, embed_query=embed_query,
+        generate=lambda s, u, max_new_tokens=512: call_bedrock_chat(s, u, max_new_tokens, model_id=alt_model_arn),
+        chunk_embeddings=chunk_embeddings, chunked_docs=chunked_docs, docid_to_url=docid_to_url,
+        top_k=8, retrieval_threshold=0.25,
+    ))
+alt_path = os.path.join(output_dir, "wattbot_solutions_bedrock_alt.csv")
+pd.DataFrame(alt_results).to_csv(alt_path, index=False)
+
+alt_usage = bedrock_usage[usage_before:]   # only this run's calls
+print(f"{sum(u['inputTokens'] for u in alt_usage):,} input + {sum(u['outputTokens'] for u in alt_usage):,} output tokens; price them from the pricing page")
+compute_wattbot_score(train_qa_path=train_qa_path, preds_path=alt_path, n_examples=5)
+```
+
+Read the per-type lines against the DeepSeek run. A cheaper model that holds its own on Quote questions and loses on Math and CrossPaper is the usual pattern; whether that trade is worth it depends on which questions you have.
+
+**Embedder.** Titan at 256 dimensions is the same call with one more key; Cohere needs its own request and response shape. Both go through a tagged profile for the new model, and both need `embed_query` to use the same model as the matrix, with Cohere's `input_type` switched for the question side.
+
+```python
+alt_embedding_model_id = "cohere.embed-english-v3"        # or keep base_embedding_model_id and add "dimensions": 256 to the Titan body
+alt_embed_arn = tagged_profile_arn(bedrock, alt_embedding_model_id, "wattbot-embed-alt", name, project)
+
+def alt_embed(text: str, for_query: bool = False) -> np.ndarray:
+    if "cohere" in alt_embedding_model_id:
+        body = {"texts": [text[:2000]], "input_type": "search_query" if for_query else "search_document", "truncate": "END"}
+    else:
+        body = {"inputText": text, "dimensions": 256, "normalize": True}   # Titan Text Embeddings V2 at a quarter of the size
+    out = json.loads(bedrock_runtime.invoke_model(modelId=alt_embed_arn, contentType="application/json",
+                                                  accept="application/json", body=json.dumps(body))["body"].read())
+    vec = out["embeddings"][0] if "embeddings" in out else out["embedding"]   # Cohere returns a list of vectors, Titan one vector
+    vec = vec["float"][0] if isinstance(vec, dict) else vec                   # newer Cohere versions nest by type
+    return np.asarray(vec, dtype="float32")
+
+alt_emb_path = data_dir / "embeddings_alt.npy"   # a new file: the Titan matrix stays
+if alt_emb_path.exists():
+    alt_embeddings = np.load(alt_emb_path)
+else:
+    t0 = time.time()
+    alt_embeddings = np.vstack([alt_embed(ch["text"]) for ch in chunked_docs])
+    np.save(alt_emb_path, alt_embeddings)
+    print(f"Embedded {len(chunked_docs)} chunks in {(time.time() - t0) / 60:.1f} min")
+
+alt_embed_query = lambda q: alt_embed(q, for_query=True)
+```
+
+Then the Step 11 loop with `embed_query=alt_embed_query` and `chunk_embeddings=alt_embeddings`, DeepSeek unchanged, and the scorer. The hit-rate cell from Step 13 is the sharper instrument here: compute it for the new matrix before scoring, because an embedder that finds the paper less often cannot be rescued by any generator.
+
+:::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
 ## Step 13 – Multimodal embeddings for the table and figure questions
 
 Look back at the evidence-type table in Step 12. The Table and Figure rows are usually the worst, and the reason is upstream of the model. `pypdf` gives us a page's *text*: a table comes out as a run of numbers with its column headers somewhere else on the page, and a figure comes out as its caption and nothing more. A question whose answer is a bar in a plot has nothing in the chunks to find, and a question whose answer is a cell in a table is being read from a flattened copy.
@@ -903,30 +976,41 @@ This step cuts the tables and figures out of the PDFs as images, builds a second
 
 Why cut them out at all, rather than hand the embedding model a whole page, or the PDF itself (Nova accepts documents as input)? For the same reason Step 6 cut the text into chunks instead of embedding each paper whole. An embedding is a fixed-length vector, a thousand numbers, whatever goes in; the more that goes in, the less of each thing survives in it. A page holding two tables, a figure and three paragraphs gets one vector that is a blur of all six, and a question about one of the tables has to match that blur. A crop of the table gets a vector that is about the table. The same holds at generation time: the vision model reads a crop at full resolution for a few hundred tokens, where a page costs a thousand tokens and shows the table at a quarter of the size. We tried whole pages first on this corpus; the callout at the end has the numbers, and they are the floor the crops should beat.
 
-A PDF does not know it contains a table. It contains text runs, raster images, and drawing commands (lines, fills, curves), and a plot is a few thousand of the last. [PyMuPDF](https://pymupdf.readthedocs.io/) ships three detectors that turn those back into boxes: `find_tables` finds tables from their rulings or their text alignment, `get_image_info` lists the embedded raster images, and `cluster_drawings` groups the drawing commands of a vector figure into one bounding box. `extract_figures_and_tables` in `wattbot_rag.py` runs the three on every page, drops page-sized background fills, rules and logos, pairs each box with the nearest caption line starting "Table N" or "Figure N" (tables are captioned above, figures below) and widens the crop to include that caption, so the image carries the identifier a question will use. A caption whose box no detector found falls back to the whole page, so nothing the text mentions is missed. Open the function; it is sixty lines and every rule in it is a line you can change.
+A PDF has no table or figure objects to pull out. It stores text runs, raster images, and drawing commands (lines, fills, curves), and a plot is a few thousand of the last. [PyMuPDF](https://pymupdf.readthedocs.io/) ships three detectors that turn those back into boxes: `find_tables` finds tables from their rulings or their text alignment, `get_image_info` lists the embedded raster images, and `cluster_drawings` groups the drawing commands of a vector figure into one bounding box. `extract_figures_and_tables` in `wattbot_rag.py` runs the three on every page, drops page-sized background fills, rules and logos, pairs each box with the nearest caption line starting "Table N" or "Figure N" (tables are captioned above, figures below) and widens the crop to include that caption, so the image carries the identifier a question will use. A caption whose box no detector found falls back to the whole page, so nothing the text mentions is missed. Open the function; it is sixty lines and every rule in it is a line you can change. The detectors are the slow part, a second or two per page on this instance, so the cell runs them only on the pages whose text carries a caption, under half of the corpus; in class, with `use_instructor_embeddings` set, it downloads the crops your instructor made instead.
 
 ```python
 %pip install -q pymupdf
 ```
 
 ```python
-from wattbot_rag import extract_figures_and_tables, embed_multimodal, image_blocks, hit_at_k
+from wattbot_rag import extract_figures_and_tables, find_caption_pages, embed_multimodal, image_blocks, hit_at_k
 
 crop_dir = data_dir / "crops"
 crops_path = data_dir / "crops.jsonl"
+shared_crops_key = "wattbot/crops.zip"   # the instructor's crops, staged like the embeddings
+
+if not crops_path.exists() and use_instructor_embeddings and _s3_object_exists(shared_bucket, shared_crops_key):
+    s3.download_file(shared_bucket, shared_crops_key, str(data_dir / "crops.zip"))
+    with zipfile.ZipFile(data_dir / "crops.zip") as zf:
+        zf.extractall(data_dir)
+    (data_dir / "crops.zip").unlink()
+    print("Downloaded the instructor's crops")
 
 if crops_path.exists():
     crops = [json.loads(line) for line in open(crops_path)]
 else:
+    caption_pages: Dict[str, Dict[int, set]] = {}   # per paper, the pages whose text carries a caption, and which kinds: the detectors run only there
+    for p in find_caption_pages(page_docs):
+        caption_pages.setdefault(p["doc_id"], {})[p["page_num"]] = {"table" if c.startswith("Table") else "figure" for c in p["captions"]}
     t0 = time.time()
     crops = []
-    for i, doc_id in enumerate(sorted({p["doc_id"] for p in page_docs})):
-        crops += extract_figures_and_tables(os.path.join(PDF_DIR, f"{doc_id}.pdf"), doc_id, crop_dir)
-        if (i + 1) % 20 == 0:
+    for i, (doc_id, page_nums) in enumerate(sorted(caption_pages.items())):
+        crops += extract_figures_and_tables(os.path.join(PDF_DIR, f"{doc_id}.pdf"), doc_id, crop_dir, pages=page_nums)
+        if (i + 1) % 10 == 0:
             print(f"{i + 1} papers, {len(crops)} crops so far ({time.time() - t0:.0f} s)")
     with open(crops_path, "w") as f:
         f.writelines(json.dumps(c) + "\n" for c in crops)
-    print(f"Extracted {len(crops)} crops from {i + 1} papers in {(time.time() - t0) / 60:.1f} min")
+    print(f"Extracted {len(crops)} crops from {len(caption_pages)} papers in {(time.time() - t0) / 60:.1f} min")
 
 n_tables = sum(c["kind"] == "table" for c in crops)
 n_pages = sum(c["whole_page"] for c in crops)
@@ -967,6 +1051,10 @@ crop_emb_key = "wattbot/embeddings/embeddings_crops_multimodal.npy"
 
 if crop_emb_path.exists():
     crop_embeddings = np.load(crop_emb_path)
+elif use_instructor_embeddings and _s3_object_exists(shared_bucket, "wattbot/embeddings_crops_multimodal.npy"):
+    s3.download_file(shared_bucket, "wattbot/embeddings_crops_multimodal.npy", str(crop_emb_path))
+    crop_embeddings = np.load(crop_emb_path)
+    print("Downloaded the instructor's crop embeddings")
 elif _s3_object_exists(bucket_name, crop_emb_key):
     s3.download_file(bucket_name, crop_emb_key, str(crop_emb_path))
     crop_embeddings = np.load(crop_emb_path)

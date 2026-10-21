@@ -14,7 +14,9 @@ s3://<shared-bucket>/
         corpus.zip          built once with scripts/build_wattbot_corpus.py
         pages.jsonl         page text extracted from corpus.zip by the same script
         embeddings_bedrock.npy   the Titan V2 vectors from your own Bedrock run; learners download it in class
-        embeddings_pages_multimodal.npy   optional: the Nova multimodal page-image vectors from the Bedrock episode's last step, if you want to stage those too
+        embeddings_gte_large.npy          the Processing-jobs episode's embedding-job output; learners copy it instead of running that job in class
+        crops.zip                         optional, for the Bedrock episode's multimodal step: the table and figure crops (crops/ plus crops.jsonl)
+        embeddings_crops_multimodal.npy   optional, with it: the Nova multimodal vectors of those crops
     badger-scribe/
         train.csv  test.csv  metadata.csv  metric.py
         sample_submission.csv  transcription_conventions.md
@@ -104,6 +106,22 @@ aws s3 cp wattbot/pages.jsonl s3://$BUCKET/wattbot/pages.jsonl
 ```
 
 Needed for class: the 2026 corpus is about 3 million tokens and the Titan Text Embeddings V2 quota is 300,000 tokens per minute and not adjustable, so one notebook needs ten minutes to embed it and a room of them would take hours. After you have run the episode once yourself with `use_instructor_embeddings = False`, copy its embedding matrix into the shared bucket; with the default `True`, the episode downloads it and skips the calls. The notebook checks that the matrix has one row per chunk and ignores it otherwise, so a copy from an older corpus falls through to computing rather than scoring against the wrong passages. The chunks are deterministic from `pages.jsonl`, so the vectors match. Learners working on their own embed the corpus themselves, which is the point of the step.
+
+The Processing-jobs episode's first job embeds the same chunks with `gte-large` on a GPU, eight minutes per learner. After your own run, copy its output into the shared bucket and the episode's `use_instructor_embeddings` switch copies it into each learner's bucket in place of the job; they still launch the second, larger job themselves:
+
+```bash
+aws s3 cp s3://<your-bucket>/wattbot/embeddings/embeddings.npy s3://ml-marathon-shared/wattbot/embeddings_gte_large.npy
+```
+
+The multimodal step at the end of the Bedrock episode has the same shape: cutting the tables and figures out of the PDFs is a few minutes of CPU per notebook, and embedding them is a thousand Bedrock calls. After your own run of that step, stage both from the notebook's `wattbot` folder, and the episode downloads them when `use_instructor_embeddings` is set:
+
+```bash
+cd /home/ec2-user/SageMaker/wattbot/data && zip -qr crops.zip crops crops.jsonl
+aws s3 cp crops.zip s3://ml-marathon-shared/wattbot/crops.zip
+aws s3 cp embeddings_crops_multimodal.npy s3://ml-marathon-shared/wattbot/embeddings_crops_multimodal.npy
+```
+
+The crop records carry paths relative to the notebook's working folder (`data/crops/...`), so the zip must be unpacked where the episode unpacks it; the cell does that.
 
 ```bash
 aws s3 cp s3://<your-bucket>/wattbot/embeddings/embeddings_bedrock.npy s3://$BUCKET/wattbot/embeddings_bedrock.npy
