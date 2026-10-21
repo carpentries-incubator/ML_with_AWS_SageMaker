@@ -80,10 +80,10 @@ Compare that to running the **entire WattBot pipeline** from this lesson on Bedr
 
 | Step | Rough volume | Cost |
 |---|---|---|
-| Embed ~3,000 chunks (~1M tokens) | 1M input tokens | ~`$0.02` |
-| Answer 100 questions (~3K‑token prompt + ~300‑token answer each) with DeepSeek V3 | 300K in / 30K out | cents |
-| Explanation pass over 100 answers with DeepSeek V3 | 300K in / 30K out | cents |
-| **Total** | | **well under `$1`** |
+| Embed ~10,000 chunks (~4M tokens) | 4M input tokens | ~`$0.08` |
+| Answer the 245 training questions (~3K‑token prompt + ~300‑token answer each) with DeepSeek V3 | 750K in / 75K out | ~`$0.60` |
+| Explanation pass over 245 answers with DeepSeek V3 | 750K in / 75K out | ~`$0.60` |
+| **Total** | | **about `$1.30`** |
 
 A single forgotten weekend on the *cheapest* GPU instance costs more than fifty full runs of the pipeline on Bedrock; a forgotten weekend on the `ml.g6e.xlarge` the optional GPU-notebook episode uses costs more than a hundred. That asymmetry is why Bedrock is the default, not just an alternative.
 

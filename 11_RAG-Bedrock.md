@@ -19,6 +19,7 @@ exercises: 20
 - Create tagged application inference profiles so that every Bedrock call is attributed to your project.
 - Embed chunks with Amazon Titan Text Embeddings and retrieve relevant context with cosine similarity.
 - Generate WattBot-format answers and explanations with a Bedrock-hosted model (DeepSeek V3) and score them against `train_QA.csv`.
+- Build a second index from page images with a multimodal embedding model and measure what it changes for the table and figure questions.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -619,13 +620,13 @@ def embed_query(question: str) -> np.ndarray:
     return np.asarray(bedrock_embed_text(question), dtype="float32")
 ```
 
-Embedding 3,000 chunks is a few minutes and a few cents, so do not do it twice. The cell after next looks for the finished matrix locally, then in your bucket, and only then computes it, saving progress every 500 chunks so an interrupted run picks up where it stopped.
+Embedding the corpus, about 10,000 chunks, is a quarter of an hour and a few cents, so do not do it twice. The cell after next looks for the finished matrix locally, then in your bucket, and only then computes it, saving progress every 500 chunks so an interrupted run picks up where it stopped.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
 ### In a class, use the instructor's copy
 
-Bedrock allows this account 300,000 Titan embedding tokens per minute, and the quota is not adjustable. One notebook embedding this corpus uses almost all of it; a room of them shares it, so everyone's loop slows to a crawl of retries. In class, uncomment and run the cell below first: it downloads the matrix your instructor computed with the same chunks and the same model, and the cell after it finds the file and skips the calls. Working on your own, leave it commented and let the loop run; that is the step to practise.
+Bedrock allows this account 300,000 Titan embedding tokens per minute, and the quota is not adjustable. This corpus is about 4 million tokens, so one notebook alone needs a quarter of an hour at the full quota; a room of them shares it, so everyone's loop slows to a crawl of retries. In class, uncomment and run the cell below first: it downloads the matrix your instructor computed with the same chunks and the same model, and the cell after it finds the file and skips the calls. Working on your own, leave it commented and let the loop run; that is the step to practise.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -742,18 +743,23 @@ A question is marked unanswerable (`is_blank` everywhere, as the competition req
 
 ## Step 11 – Run the WattBot evaluation with Bedrock
 
-Now we can loop over all questions in `train_QA.csv`, run retrieval + Bedrock
-generation, and write a `wattbot_solutions_bedrock.csv` file (locally and to your bucket).
+Now we can loop over the questions, run retrieval + Bedrock generation, and write a `wattbot_solutions_bedrock.csv` file (locally and to your bucket).
+
+`train_QA.csv` has 245 questions, and at two calls each that is about twenty minutes. For class we score a stratified sample instead: `sample_questions_by_type` draws ten questions from each evidence type (Quote, Table, Figure, Math, unanswerable, cross-paper, reconcile), 55 questions after overlaps, so every row of the breakdown in the next step has something in it. The first 55 rows of the file would be nearly all Quote questions. The seed fixes the draw, and the Processing Jobs episode uses the same one, so the two runs are compared on the same questions. Set `per_type=0` to run the whole file.
 
 The Processing Jobs episode reuses this same loop with self-hosted models; the only difference there is that the embedding, answer
 and explanation phases call local models instead of Bedrock-hosted ones.
 
 ```python
+from wattbot_rag import sample_questions_by_type
+
+eval_df = sample_questions_by_type(train_df, per_type=10, seed=0)   # per_type=0 for all 245
+print(f"Scoring {len(eval_df)} of {len(train_df)} questions")
+
 results = []
 run_start = time.time()
 
-# For quick smoke tests, slice train_df (e.g., train_df.head(5))
-for _, row in train_df.iterrows():
+for _, row in eval_df.iterrows():
     print("#" * 96)
     print(f"QUESTION: {row['question']}")
 
@@ -831,7 +837,7 @@ Read the two lines at the bottom of each block together. "Ground-truth paper ret
 
 ### What did that run cost?
 
-Every `converse` response carried a `usage` block, and `call_bedrock_chat` kept them all in `bedrock_usage`. Sum the input and output tokens over the evaluation run and price them at the current on-demand rates for DeepSeek V3 on the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/) (fill the two prices in below). Add the embedding step: ~3,000 chunks of 1,200 characters at Titan Text Embeddings V2's `$0.02` per million input tokens. How does the total compare with the overview's estimate for "the whole WattBot pipeline on Bedrock", and with one hour of the `ml.g6e.xlarge` the Processing Jobs episode rents?
+Every `converse` response carried a `usage` block, and `call_bedrock_chat` kept them all in `bedrock_usage`. Sum the input and output tokens over the evaluation run and price them at the current on-demand rates for DeepSeek V3 on the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/) (fill the two prices in below). Add the embedding step: ~10,000 chunks of 1,200 characters at Titan Text Embeddings V2's `$0.02` per million input tokens. How does the total compare with the overview's estimate for "the whole WattBot pipeline on Bedrock", and with one hour of the `ml.g6e.xlarge` the Processing Jobs episode rents?
 
 :::::::::::::::::::::::: solution
 
@@ -854,9 +860,189 @@ print(f"~{embed_tokens:,.0f} embedding tokens -> ${embed_cost:.3f}")
 print(f"Total ~${gen_cost + embed_cost:.2f}; one hour of ml.g6e.xlarge is $2.61")
 ```
 
-With ~40 questions, two calls each and ~3,000-token prompts, the run is on the order of 250K input and 20K output tokens: cents, not dollars, at any price in DeepSeek V3's class, plus about two cents of embeddings. That matches the overview's "well under `$1`" for the whole pipeline, and it is a small fraction of a single GPU-hour.
+With 55 questions, two calls each and ~3,000-token prompts, the run is on the order of 350K input and 30K output tokens: about a quarter of a dollar at DeepSeek V3's prices, plus about eight cents of embeddings for the 4 million tokens of corpus. All 245 questions is about a dollar, which is the overview's estimate for the whole pipeline, and it is a small fraction of a single GPU-hour.
 
 :::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+## Step 13 – Multimodal embeddings for the table and figure questions
+
+Look back at the evidence-type table in Step 12. The Table and Figure rows are usually the worst, and the reason is upstream of the model. `pypdf` gives us a page's *text*: a table comes out as a run of numbers with its column headers somewhere else on the page, and a figure comes out as its caption and nothing more. A question whose answer is a bar in a plot has nothing in the chunks to find, and a question whose answer is a cell in a table is being read from a flattened copy.
+
+A **multimodal embedding model** is one model that maps text *and* images into the same vector space, so a text question can be compared with an image directly: the picture of a table lands near a sentence about its contents. Bedrock has two: [Amazon Nova Multimodal Embeddings](https://aws.amazon.com/blogs/aws/amazon-nova-multimodal-embeddings-now-available-in-amazon-bedrock/) (text, images, documents, video and audio, released 2025) and the older Titan Multimodal Embeddings G1 (text and images). Both are per-call, like Titan Text, and billed per image plus per text token; the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/) has the rates, on the order of a hundredth of a cent per image. One catch: in October 2026 both are offered in `us-east-1` only (check the [model catalog](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/model-catalog) for that region). A Bedrock call is an HTTPS request and the region is a parameter, so from Ohio that is a second client pointed at Virginia; it also means the page images leave the region, which is the thing to check against your institution's data policy before doing this with documents that are not public papers.
+
+This step builds a second index next to the text one, measures whether it finds the right paper for table and figure questions more often, and then hands the retrieved page images to a model that can look at them. Each cell is short because the plumbing is in `wattbot_rag.py`.
+
+### Which pages, and why whole pages
+
+We do not try to cut the tables and figures out of the PDFs. Finding their boundaries needs a layout model, which is slow on a CPU notebook, and a page image already contains the table or figure *with* its caption and the sentences around it, which is what the embedding model needs to match a question. What we do instead is cheap: `pypdf` keeps caption lines even where it loses everything else, so a line starting with "Table 3" or "Figure 2" marks a page worth rendering. `find_caption_pages` scans the page records from Step 5 for them.
+
+```python
+from wattbot_rag import find_caption_pages, render_page_png, embed_multimodal, image_blocks, hit_at_k
+
+caption_pages = find_caption_pages(page_docs)
+n_tables = sum(any(c.startswith("Table") for c in p["captions"]) for p in caption_pages)
+n_figures = sum(any(c.startswith("Figure") for c in p["captions"]) for p in caption_pages)
+print(f"{len(caption_pages)} of {len(page_docs)} pages carry a caption: {n_tables} with tables, {n_figures} with figures")
+caption_pages[:3]
+```
+
+Rendering is `pypdfium2`, the Python binding of the PDF engine Chrome uses; `render_page_png` renders one page at 100 dpi, enough to read axis labels, and returns the PNG bytes. Expect a few minutes for the corpus.
+
+```python
+%pip install -q pypdfium2
+```
+
+```python
+page_image_dir = data_dir / "page_images"
+page_image_dir.mkdir(exist_ok=True)
+
+t0 = time.time()
+for i, p in enumerate(caption_pages):
+    png_path = page_image_dir / f"{p['doc_id']}_p{p['page_num']:03d}.png"
+    p["png_path"] = str(png_path)
+    if not png_path.exists():
+        png_path.write_bytes(render_page_png(os.path.join(PDF_DIR, f"{p['doc_id']}.pdf"), p["page_num"]))
+    if (i + 1) % 200 == 0:
+        print(f"Rendered {i + 1} / {len(caption_pages)} pages")
+print(f"{len(caption_pages)} page images in {page_image_dir} ({time.time() - t0:.0f} s)")
+```
+
+### Embed the page images
+
+The embedding model lives in `us-east-1`, so this is a second runtime client and a second control-plane client there, and a tagged profile created through the latter so these calls are attributed like the rest. `embed_multimodal` builds the model's request body (Nova's says whether a vector is for the index or for a query, and that the image is a document page rather than a photo) and returns a unit vector. Set `multimodal_model_id` to `amazon.titan-embed-image-v1` to try the older model; the function handles both.
+
+```python
+multimodal_region = "us-east-1"
+base_multimodal_model_id = "amazon.nova-2-multimodal-embeddings-v1:0"
+
+bedrock_runtime_mm = boto3.client("bedrock-runtime", region_name=multimodal_region,
+                                  config=Config(retries={"max_attempts": 10, "mode": "adaptive"}))
+bedrock_mm = boto3.client("bedrock", region_name=multimodal_region)
+multimodal_model_id = tagged_profile_arn(bedrock_mm, base_multimodal_model_id, "wattbot-embed-mm", name, project)
+
+v = embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png=Path(caption_pages[0]["png_path"]).read_bytes())
+print(f"{caption_pages[0]['doc_id']} page {caption_pages[0]['page_label']} -> vector of {v.shape[0]} dimensions")
+```
+
+One call per page, cached like the text matrix: locally, then in your bucket, then computed. The question side uses the same model with `purpose="query"`.
+
+```python
+page_emb_path = data_dir / "embeddings_pages_multimodal.npy"
+page_emb_key = "wattbot/embeddings/embeddings_pages_multimodal.npy"
+
+if page_emb_path.exists():
+    page_embeddings = np.load(page_emb_path)
+elif _s3_object_exists(bucket_name, page_emb_key):
+    s3.download_file(bucket_name, page_emb_key, str(page_emb_path))
+    page_embeddings = np.load(page_emb_path)
+else:
+    t0 = time.time()
+    rows = []
+    for i, p in enumerate(caption_pages):
+        rows.append(embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png=Path(p["png_path"]).read_bytes()))
+        if (i + 1) % 200 == 0:
+            print(f"Embedded {i + 1} / {len(caption_pages)} page images ({time.time() - t0:.0f} s)")
+    page_embeddings = np.vstack(rows)
+    np.save(page_emb_path, page_embeddings)
+    s3.upload_file(str(page_emb_path), bucket_name, page_emb_key)
+    print(f"Embedded {len(caption_pages)} page images in {(time.time() - t0) / 60:.1f} min")
+
+assert page_embeddings.shape[0] == len(caption_pages), "page embeddings and caption pages are out of step; delete the cached file and rerun"
+print("Page embeddings shape:", page_embeddings.shape)
+
+def embed_query_mm(question: str) -> np.ndarray:
+    return embed_multimodal(bedrock_runtime_mm, multimodal_model_id, text=question, purpose="query")
+```
+
+### Does the image index find the right paper more often?
+
+Retrieval is the same `retrieve_top_k` as Step 9, over the page matrix instead of the chunk matrix. `train_QA.csv` names the paper each answer comes from, so the cleanest measure is the **hit rate**: the fraction of questions for which a ground-truth paper is among the top-k results. We compute it for the text index and the image index on the Table questions, the Figure questions and, as a control, the Quote questions, where the image index should have no advantage.
+
+```python
+k = 8
+groups = {"Table": train_df[train_df["Table"] == 1], "Figure": train_df[train_df["Figure"] == 1],
+          "Quote only": train_df[(train_df["Quote"] == 1) & (train_df["Table"] == 0) & (train_df["Figure"] == 0)].head(40)}
+
+print(f"{'questions':<12}{'n':>4}{'text index':>14}{'image index':>14}")
+for label, qs in groups.items():
+    gt = [split_ref_ids(r) for r in qs["ref_id"]]
+    text_hits = [[c["doc_id"] for c in retrieve_top_k(embed_query(q), chunk_embeddings, chunked_docs, k=k)] for q in qs["question"]]
+    image_hits = [[c["doc_id"] for c in retrieve_top_k(embed_query_mm(q), page_embeddings, caption_pages, k=k)] for q in qs["question"]]
+    print(f"{label:<12}{len(qs):>4}{hit_at_k(text_hits, gt):>14.2f}{hit_at_k(image_hits, gt):>14.2f}")
+```
+
+Two numbers per row, and three readings. If the image index wins on Table and Figure and ties on Quote, the embedding model is doing what it was built for. If it loses everywhere, check what it was given: a page at 100 dpi with a dense table is readable, a page of nine small panels may not be. If both indexes already find the paper for nearly every question, retrieval was never the problem for this corpus and the loss is in the reading, which the next cell tests.
+
+### Let the model see the page
+
+Finding the page is half of it; DeepSeek V3 reads text only, so a figure retrieved as an image is no use to it. `converse` accepts image blocks in a user message for models that can see, and the swap is the model ID: Amazon Nova 2 Lite reads images and documents and is in the catalog for Ohio through the cross-region profile below (check the [model catalog](https://us-east-2.console.aws.amazon.com/bedrock/home?region=us-east-2#/model-catalog); `us.amazon.nova-lite-v1:0` is the cheaper, weaker alternative). `call_vision_chat` is `call_bedrock_chat` with an `images` argument: for each attached page it adds a text label naming the paper, then the image, so the model can cite what it reads.
+
+```python
+base_vision_model_id = "us.amazon.nova-2-lite-v1:0"
+vision_model_id = tagged_profile_arn(bedrock, base_vision_model_id, "wattbot-vision", name, project)
+vision_usage = []
+
+def call_vision_chat(system_prompt: str, user_prompt: str, max_new_tokens: int = 512, images=()) -> str:
+    """One system + user turn, with zero or more (label, png_bytes) page images attached to the user turn."""
+    content = [{"text": user_prompt}]
+    if images:
+        content.append({"text": "The page images below are from the same papers; read tables and figures from them where the text above is incomplete."})
+        content.extend(image_blocks(images))
+    response = bedrock_runtime.converse(
+        modelId=vision_model_id,
+        system=[{"text": system_prompt}],
+        messages=[{"role": "user", "content": content}],
+        inferenceConfig={"maxTokens": max_new_tokens, "temperature": 0},
+    )
+    vision_usage.append(response["usage"])
+    return "\n".join(b["text"] for b in response["output"]["message"]["content"] if "text" in b).strip()
+
+print(call_vision_chat("You are a concise assistant.", "What is in the attached page? One sentence.", 64,
+                       images=[(f"{caption_pages[0]['doc_id']}, page {caption_pages[0]['page_label']}", Path(caption_pages[0]["png_path"]).read_bytes())]))
+```
+
+Two runs over the Table and Figure questions, both through the vision model: one with the text chunks only, one with the top three retrieved page images attached as well. The first is the control. Without it, a better score with images could just be a different generation model, and the comparison would say nothing about the images.
+
+```python
+tf_df = train_df[(train_df["Table"] == 1) | (train_df["Figure"] == 1)]
+print(f"{len(tf_df)} table and figure questions, two runs, two calls each")
+
+def run_tf(with_images: bool) -> pd.DataFrame:
+    rows = []
+    for _, row in tf_df.iterrows():
+        images = []
+        if with_images:
+            for pg in retrieve_top_k(embed_query_mm(row["question"]), page_embeddings, caption_pages, k=3):
+                images.append((f"{pg['doc_id']}, page {pg['page_label']}", Path(pg["png_path"]).read_bytes()))
+        generate = lambda s, u, max_new_tokens=512, images=images: call_vision_chat(s, u, max_new_tokens, images=images)
+        rows.append(run_single_qa(row=row, embed_query=embed_query, generate=generate, chunk_embeddings=chunk_embeddings,
+                                  chunked_docs=chunked_docs, docid_to_url=docid_to_url, top_k=8, retrieval_threshold=0.25))
+    return pd.DataFrame(rows)
+
+t0 = time.time()
+tf_text_only = run_tf(with_images=False)
+tf_text_only.to_csv(os.path.join(output_dir, "wattbot_solutions_vision_text_only.csv"), index=False)
+tf_with_images = run_tf(with_images=True)
+tf_with_images.to_csv(os.path.join(output_dir, "wattbot_solutions_vision_with_images.csv"), index=False)
+print(f"Both runs in {(time.time() - t0) / 60:.1f} min")
+```
+
+Score both the same way as Step 12. The scorer compares the rows it finds, so the breakdown is over these questions only; the `Table` and `Figure` lines are the ones to read, against each other and against the DeepSeek run.
+
+```python
+for label, path in [("text chunks only", "wattbot_solutions_vision_text_only.csv"), ("text chunks + page images", "wattbot_solutions_vision_with_images.csv")]:
+    print("=" * 96)
+    print(f"Nova 2 Lite, {label}")
+    compute_wattbot_score(train_qa_path=train_qa_path, preds_path=os.path.join(output_dir, path), n_examples=3)
+```
+
+::::::::::::::::::::::::::::::::::::: callout
+
+### What to expect, and what it cost
+
+Figure questions should move the most: the text index had only a caption to match and the text model had nothing to read, and the image gives it both. Table questions move less, because a flattened table is still mostly readable, and some will get worse: three page images is a lot of tokens for a model to search, and a wrong page retrieved with confidence is a new way to misread. The hit-rate table tells you which of those happened. For the bill, every page image is roughly a thousand input tokens at Nova 2 Lite's rate on the [pricing page](https://aws.amazon.com/bedrock/pricing/), so the run with images is about three times the control; `vision_usage` holds both runs' usage blocks, and the embedding of the page images is the per-image rate times `len(caption_pages)`.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 

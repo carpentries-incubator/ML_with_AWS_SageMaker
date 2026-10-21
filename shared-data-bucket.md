@@ -13,7 +13,8 @@ s3://<shared-bucket>/
         train_QA.csv        from data/data.zip
         corpus.zip          built once with scripts/build_wattbot_corpus.py
         pages.jsonl         page text extracted from corpus.zip by the same script
-        embeddings_bedrock.npy   optional emergency copy of the Titan V2 vectors, from your own Bedrock run
+        embeddings_bedrock.npy   the Titan V2 vectors from your own Bedrock run; learners download it in class
+        embeddings_pages_multimodal.npy   optional: the Nova multimodal page-image vectors from the Bedrock episode's last step, if you want to stage those too
     badger-scribe/
         train.csv  test.csv  metadata.csv  metric.py
         sample_submission.csv  transcription_conventions.md
@@ -102,7 +103,7 @@ python3 lesson/scripts/build_wattbot_corpus.py --metadata wattbot/metadata.csv -
 aws s3 cp wattbot/pages.jsonl s3://$BUCKET/wattbot/pages.jsonl
 ```
 
-Optional, as an emergency switch: learners embed the corpus themselves in the Bedrock episode, which is the point of the step, but fifty notebooks sending 2,880 Titan calls each in the same ten minutes can be throttled hard enough to stall the room. After you have run the episode once yourself, copy its embedding matrix into the shared bucket so it is there if needed; the chunks are deterministic from `pages.jsonl`, so the vectors match.
+Needed for class: the 2026 corpus is about 4 million tokens and the Titan Text Embeddings V2 quota is 300,000 tokens per minute and not adjustable, so one notebook needs a quarter of an hour to embed it and a room of them would take hours. After you have run the episode once yourself, copy its embedding matrix into the shared bucket; the episode's in-class cell downloads it and skips the calls. The chunks are deterministic from `pages.jsonl`, so the vectors match. Learners working on their own embed the corpus themselves, which is the point of the step.
 
 ```bash
 aws s3 cp s3://<your-bucket>/wattbot/embeddings/embeddings_bedrock.npy s3://$BUCKET/wattbot/embeddings_bedrock.npy
