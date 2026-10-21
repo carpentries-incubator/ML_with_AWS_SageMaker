@@ -712,9 +712,9 @@ from Step 1: <code>role</code> printed there must end in
 <p>This episode reads from two buckets and you create neither of them
 here:</p>
 <ul><li>
-<strong>The shared bucket</strong> (your instructor gives you its
-name) holds the WattBot inputs under <code>wattbot/</code>:
-<code>metadata.csv</code> (the index of papers),
+<strong>The shared bucket</strong>, <code>ml-marathon-shared</code>,
+already set in the first cell below, holds the WattBot inputs under
+<code>wattbot/</code>: <code>metadata.csv</code> (the index of papers),
 <code>train_QA.csv</code> (labelled questions and answers),
 <code>corpus.zip</code> (the PDFs) and <code>pages.jsonl</code> (the
 text of every PDF page, extracted once). It is read-only and there is
@@ -1364,7 +1364,7 @@ month’s Bedrock spend by <code>Project</code>?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -1807,7 +1807,7 @@ of the <code>ml.g6e.xlarge</code> the Processing Jobs episode rents?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>The two prices are from the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
 for DeepSeek on-demand in October 2026; update them for the model and
@@ -1867,13 +1867,13 @@ point of score cost?</li>
 <strong>A different embedder.</strong> Retrieval is the other half.
 Either shrink Titan to 256 dimensions (<code>"dimensions": 256</code> in
 its request body) and see whether the hit rate and the score survive a
-four-times smaller index, or switch provider to Cohere Embed
-(<code>cohere.embed-english-v3</code>), whose request body is different
-from Titan’s: a list of <code>texts</code> and an
-<code>input_type</code> that is <code>search_document</code> for the
-corpus and <code>search_query</code> for the question. Either way the
-matrix must be recomputed (ten minutes at the quota, so not in class),
-under a new file name so the Titan one is kept.</li>
+four-times smaller index, or switch provider to Cohere Embed, if the
+region’s catalog offers it, whose request body is different from
+Titan’s: a list of <code>texts</code> and an <code>input_type</code>
+that is <code>search_document</code> for the corpus and
+<code>search_query</code> for the question. Either way the matrix must
+be recomputed (ten minutes at the quota, so not in class), under a new
+file name so the Titan one is kept.</li>
 </ol><p>Keep the rest fixed. One change per experiment, or you will not know
 what moved the score.</p>
 </div>
@@ -1884,7 +1884,7 @@ what moved the score.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <p><strong>Generator.</strong> <code>call_bedrock_chat</code> already
 takes a <code>model_id</code>, so the swap is a profile and a
@@ -1915,38 +1915,48 @@ lambda:</p>
 that holds its own on Quote questions and loses on Math and CrossPaper
 is the usual pattern; whether that trade is worth it depends on which
 questions you have.</p>
-<p><strong>Embedder.</strong> Titan at 256 dimensions is the same call
-with one more key; Cohere needs its own request and response shape. Both
-go through a tagged profile for the new model, and both need
-<code>embed_query</code> to use the same model as the matrix, with
-Cohere’s <code>input_type</code> switched for the question side.</p>
+<p><strong>Embedder.</strong> First list the embedding models the
+region’s catalog has, because model IDs come and go and an ID that is
+not in the list fails at the profile step with “The provided model
+identifier is invalid”:</p>
 <div class="codewrapper sourceCode" id="cb34">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" tabindex="-1" aria-label="code-block-34-1"></a>alt_embedding_model_id <span class="op">=</span> <span class="st">"cohere.embed-english-v3"</span>        <span class="co"># or keep base_embedding_model_id and add "dimensions": 256 to the Titan body</span></span>
-<span id="cb34-2"><a href="#cb34-2" tabindex="-1" aria-label="code-block-34-2"></a>alt_embed_arn <span class="op">=</span> tagged_profile_arn(bedrock, alt_embedding_model_id, <span class="st">"wattbot-embed-alt"</span>, name, project)</span>
-<span id="cb34-3"><a href="#cb34-3" tabindex="-1" aria-label="code-block-34-3"></a></span>
-<span id="cb34-4"><a href="#cb34-4" tabindex="-1" aria-label="code-block-34-4"></a><span class="kw">def</span> alt_embed(text: <span class="bu">str</span>, for_query: <span class="bu">bool</span> <span class="op">=</span> <span class="va">False</span>) <span class="op">-&gt;</span> np.ndarray:</span>
-<span id="cb34-5"><a href="#cb34-5" tabindex="-1" aria-label="code-block-34-5"></a>    <span class="cf">if</span> <span class="st">"cohere"</span> <span class="kw">in</span> alt_embedding_model_id:</span>
-<span id="cb34-6"><a href="#cb34-6" tabindex="-1" aria-label="code-block-34-6"></a>        body <span class="op">=</span> {<span class="st">"texts"</span>: [text[:<span class="dv">2000</span>]], <span class="st">"input_type"</span>: <span class="st">"search_query"</span> <span class="cf">if</span> for_query <span class="cf">else</span> <span class="st">"search_document"</span>, <span class="st">"truncate"</span>: <span class="st">"END"</span>}</span>
-<span id="cb34-7"><a href="#cb34-7" tabindex="-1" aria-label="code-block-34-7"></a>    <span class="cf">else</span>:</span>
-<span id="cb34-8"><a href="#cb34-8" tabindex="-1" aria-label="code-block-34-8"></a>        body <span class="op">=</span> {<span class="st">"inputText"</span>: text, <span class="st">"dimensions"</span>: <span class="dv">256</span>, <span class="st">"normalize"</span>: <span class="va">True</span>}   <span class="co"># Titan Text Embeddings V2 at a quarter of the size</span></span>
-<span id="cb34-9"><a href="#cb34-9" tabindex="-1" aria-label="code-block-34-9"></a>    out <span class="op">=</span> json.loads(bedrock_runtime.invoke_model(modelId<span class="op">=</span>alt_embed_arn, contentType<span class="op">=</span><span class="st">"application/json"</span>,</span>
-<span id="cb34-10"><a href="#cb34-10" tabindex="-1" aria-label="code-block-34-10"></a>                                                  accept<span class="op">=</span><span class="st">"application/json"</span>, body<span class="op">=</span>json.dumps(body))[<span class="st">"body"</span>].read())</span>
-<span id="cb34-11"><a href="#cb34-11" tabindex="-1" aria-label="code-block-34-11"></a>    vec <span class="op">=</span> out[<span class="st">"embeddings"</span>][<span class="dv">0</span>] <span class="cf">if</span> <span class="st">"embeddings"</span> <span class="kw">in</span> out <span class="cf">else</span> out[<span class="st">"embedding"</span>]   <span class="co"># Cohere returns a list of vectors, Titan one vector</span></span>
-<span id="cb34-12"><a href="#cb34-12" tabindex="-1" aria-label="code-block-34-12"></a>    vec <span class="op">=</span> vec[<span class="st">"float"</span>][<span class="dv">0</span>] <span class="cf">if</span> <span class="bu">isinstance</span>(vec, <span class="bu">dict</span>) <span class="cf">else</span> vec                   <span class="co"># newer Cohere versions nest by type</span></span>
-<span id="cb34-13"><a href="#cb34-13" tabindex="-1" aria-label="code-block-34-13"></a>    <span class="cf">return</span> np.asarray(vec, dtype<span class="op">=</span><span class="st">"float32"</span>)</span>
-<span id="cb34-14"><a href="#cb34-14" tabindex="-1" aria-label="code-block-34-14"></a></span>
-<span id="cb34-15"><a href="#cb34-15" tabindex="-1" aria-label="code-block-34-15"></a>alt_emb_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"embeddings_alt.npy"</span>   <span class="co"># a new file: the Titan matrix stays</span></span>
-<span id="cb34-16"><a href="#cb34-16" tabindex="-1" aria-label="code-block-34-16"></a><span class="cf">if</span> alt_emb_path.exists():</span>
-<span id="cb34-17"><a href="#cb34-17" tabindex="-1" aria-label="code-block-34-17"></a>    alt_embeddings <span class="op">=</span> np.load(alt_emb_path)</span>
-<span id="cb34-18"><a href="#cb34-18" tabindex="-1" aria-label="code-block-34-18"></a><span class="cf">else</span>:</span>
-<span id="cb34-19"><a href="#cb34-19" tabindex="-1" aria-label="code-block-34-19"></a>    t0 <span class="op">=</span> time.time()</span>
-<span id="cb34-20"><a href="#cb34-20" tabindex="-1" aria-label="code-block-34-20"></a>    alt_embeddings <span class="op">=</span> np.vstack([alt_embed(ch[<span class="st">"text"</span>]) <span class="cf">for</span> ch <span class="kw">in</span> chunked_docs])</span>
-<span id="cb34-21"><a href="#cb34-21" tabindex="-1" aria-label="code-block-34-21"></a>    np.save(alt_emb_path, alt_embeddings)</span>
-<span id="cb34-22"><a href="#cb34-22" tabindex="-1" aria-label="code-block-34-22"></a>    <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss"> chunks in </span><span class="sc">{</span>(time.time() <span class="op">-</span> t0) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
-<span id="cb34-23"><a href="#cb34-23" tabindex="-1" aria-label="code-block-34-23"></a></span>
-<span id="cb34-24"><a href="#cb34-24" tabindex="-1" aria-label="code-block-34-24"></a>alt_embed_query <span class="op">=</span> <span class="kw">lambda</span> q: alt_embed(q, for_query<span class="op">=</span><span class="va">True</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" tabindex="-1" aria-label="code-block-34-1"></a><span class="cf">for</span> m <span class="kw">in</span> bedrock.list_foundation_models(byOutputModality<span class="op">=</span><span class="st">"EMBEDDING"</span>)[<span class="st">"modelSummaries"</span>]:</span>
+<span id="cb34-2"><a href="#cb34-2" tabindex="-1" aria-label="code-block-34-2"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>m[<span class="st">'modelId'</span>]<span class="sc">:&lt;45}</span><span class="ss"> </span><span class="sc">{</span>m[<span class="st">'providerName'</span>]<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+</div>
+<p>Titan at 256 dimensions is the same call with one more key; Cohere
+needs its own request and response shape. Both go through a tagged
+profile for the new model, and both need <code>embed_query</code> to use
+the same model as the matrix, with Cohere’s <code>input_type</code>
+switched for the question side.</p>
+<div class="codewrapper sourceCode" id="cb35">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" tabindex="-1" aria-label="code-block-35-1"></a>alt_embedding_model_id <span class="op">=</span> base_embedding_model_id   <span class="co"># Titan at 256 dimensions; or a Cohere ID from the list above (cohere.embed-v4:0 where offered)</span></span>
+<span id="cb35-2"><a href="#cb35-2" tabindex="-1" aria-label="code-block-35-2"></a>alt_embed_arn <span class="op">=</span> tagged_profile_arn(bedrock, alt_embedding_model_id, <span class="st">"wattbot-embed-alt"</span>, name, project)</span>
+<span id="cb35-3"><a href="#cb35-3" tabindex="-1" aria-label="code-block-35-3"></a></span>
+<span id="cb35-4"><a href="#cb35-4" tabindex="-1" aria-label="code-block-35-4"></a><span class="kw">def</span> alt_embed(text: <span class="bu">str</span>, for_query: <span class="bu">bool</span> <span class="op">=</span> <span class="va">False</span>) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb35-5"><a href="#cb35-5" tabindex="-1" aria-label="code-block-35-5"></a>    <span class="cf">if</span> <span class="st">"cohere"</span> <span class="kw">in</span> alt_embedding_model_id:</span>
+<span id="cb35-6"><a href="#cb35-6" tabindex="-1" aria-label="code-block-35-6"></a>        body <span class="op">=</span> {<span class="st">"texts"</span>: [text[:<span class="dv">2000</span>]], <span class="st">"input_type"</span>: <span class="st">"search_query"</span> <span class="cf">if</span> for_query <span class="cf">else</span> <span class="st">"search_document"</span>, <span class="st">"embedding_types"</span>: [<span class="st">"float"</span>]}</span>
+<span id="cb35-7"><a href="#cb35-7" tabindex="-1" aria-label="code-block-35-7"></a>    <span class="cf">else</span>:</span>
+<span id="cb35-8"><a href="#cb35-8" tabindex="-1" aria-label="code-block-35-8"></a>        body <span class="op">=</span> {<span class="st">"inputText"</span>: text, <span class="st">"dimensions"</span>: <span class="dv">256</span>, <span class="st">"normalize"</span>: <span class="va">True</span>}   <span class="co"># Titan Text Embeddings V2 at a quarter of the size</span></span>
+<span id="cb35-9"><a href="#cb35-9" tabindex="-1" aria-label="code-block-35-9"></a>    out <span class="op">=</span> json.loads(bedrock_runtime.invoke_model(modelId<span class="op">=</span>alt_embed_arn, contentType<span class="op">=</span><span class="st">"application/json"</span>,</span>
+<span id="cb35-10"><a href="#cb35-10" tabindex="-1" aria-label="code-block-35-10"></a>                                                  accept<span class="op">=</span><span class="st">"application/json"</span>, body<span class="op">=</span>json.dumps(body))[<span class="st">"body"</span>].read())</span>
+<span id="cb35-11"><a href="#cb35-11" tabindex="-1" aria-label="code-block-35-11"></a>    vec <span class="op">=</span> out[<span class="st">"embeddings"</span>][<span class="dv">0</span>] <span class="cf">if</span> <span class="st">"embeddings"</span> <span class="kw">in</span> out <span class="cf">else</span> out[<span class="st">"embedding"</span>]   <span class="co"># Cohere returns a list of vectors, Titan one vector</span></span>
+<span id="cb35-12"><a href="#cb35-12" tabindex="-1" aria-label="code-block-35-12"></a>    vec <span class="op">=</span> vec[<span class="st">"float"</span>][<span class="dv">0</span>] <span class="cf">if</span> <span class="bu">isinstance</span>(vec, <span class="bu">dict</span>) <span class="cf">else</span> vec                   <span class="co"># newer Cohere versions nest by type</span></span>
+<span id="cb35-13"><a href="#cb35-13" tabindex="-1" aria-label="code-block-35-13"></a>    <span class="cf">return</span> np.asarray(vec, dtype<span class="op">=</span><span class="st">"float32"</span>)</span>
+<span id="cb35-14"><a href="#cb35-14" tabindex="-1" aria-label="code-block-35-14"></a></span>
+<span id="cb35-15"><a href="#cb35-15" tabindex="-1" aria-label="code-block-35-15"></a>alt_emb_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"embeddings_alt.npy"</span>   <span class="co"># a new file: the Titan matrix stays</span></span>
+<span id="cb35-16"><a href="#cb35-16" tabindex="-1" aria-label="code-block-35-16"></a><span class="cf">if</span> alt_emb_path.exists():</span>
+<span id="cb35-17"><a href="#cb35-17" tabindex="-1" aria-label="code-block-35-17"></a>    alt_embeddings <span class="op">=</span> np.load(alt_emb_path)</span>
+<span id="cb35-18"><a href="#cb35-18" tabindex="-1" aria-label="code-block-35-18"></a><span class="cf">else</span>:</span>
+<span id="cb35-19"><a href="#cb35-19" tabindex="-1" aria-label="code-block-35-19"></a>    t0 <span class="op">=</span> time.time()</span>
+<span id="cb35-20"><a href="#cb35-20" tabindex="-1" aria-label="code-block-35-20"></a>    alt_embeddings <span class="op">=</span> np.vstack([alt_embed(ch[<span class="st">"text"</span>]) <span class="cf">for</span> ch <span class="kw">in</span> chunked_docs])</span>
+<span id="cb35-21"><a href="#cb35-21" tabindex="-1" aria-label="code-block-35-21"></a>    np.save(alt_emb_path, alt_embeddings)</span>
+<span id="cb35-22"><a href="#cb35-22" tabindex="-1" aria-label="code-block-35-22"></a>    <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss"> chunks in </span><span class="sc">{</span>(time.time() <span class="op">-</span> t0) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
+<span id="cb35-23"><a href="#cb35-23" tabindex="-1" aria-label="code-block-35-23"></a></span>
+<span id="cb35-24"><a href="#cb35-24" tabindex="-1" aria-label="code-block-35-24"></a>alt_embed_query <span class="op">=</span> <span class="kw">lambda</span> q: alt_embed(q, for_query<span class="op">=</span><span class="va">True</span>)</span></code></pre>
 </div>
 <p>Then the Step 11 loop with <code>embed_query=alt_embed_query</code>
 and <code>chunk_embeddings=alt_embeddings</code>, DeepSeek unchanged,
@@ -2024,58 +2034,58 @@ this instance, so the cell runs them only on the pages whose text
 carries a caption, under half of the corpus; in class, with
 <code>use_instructor_embeddings</code> set, it downloads the crops your
 instructor made instead.</p>
-<div class="codewrapper sourceCode" id="cb35">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" tabindex="-1" aria-label="code-block-35-1"></a><span class="op">%</span>pip install <span class="op">-</span>q pymupdf</span></code></pre>
-</div>
 <div class="codewrapper sourceCode" id="cb36">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" tabindex="-1" aria-label="code-block-36-1"></a><span class="im">from</span> wattbot_rag <span class="im">import</span> extract_figures_and_tables, find_caption_pages, embed_multimodal, image_blocks, hit_at_k</span>
-<span id="cb36-2"><a href="#cb36-2" tabindex="-1" aria-label="code-block-36-2"></a></span>
-<span id="cb36-3"><a href="#cb36-3" tabindex="-1" aria-label="code-block-36-3"></a>crop_dir <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"crops"</span></span>
-<span id="cb36-4"><a href="#cb36-4" tabindex="-1" aria-label="code-block-36-4"></a>crops_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"crops.jsonl"</span></span>
-<span id="cb36-5"><a href="#cb36-5" tabindex="-1" aria-label="code-block-36-5"></a>shared_crops_key <span class="op">=</span> <span class="st">"wattbot/crops.zip"</span>   <span class="co"># the instructor's crops, staged like the embeddings</span></span>
-<span id="cb36-6"><a href="#cb36-6" tabindex="-1" aria-label="code-block-36-6"></a></span>
-<span id="cb36-7"><a href="#cb36-7" tabindex="-1" aria-label="code-block-36-7"></a><span class="cf">if</span> <span class="kw">not</span> crops_path.exists() <span class="kw">and</span> use_instructor_embeddings <span class="kw">and</span> _s3_object_exists(shared_bucket, shared_crops_key):</span>
-<span id="cb36-8"><a href="#cb36-8" tabindex="-1" aria-label="code-block-36-8"></a>    s3.download_file(shared_bucket, shared_crops_key, <span class="bu">str</span>(data_dir <span class="op">/</span> <span class="st">"crops.zip"</span>))</span>
-<span id="cb36-9"><a href="#cb36-9" tabindex="-1" aria-label="code-block-36-9"></a>    <span class="cf">with</span> zipfile.ZipFile(data_dir <span class="op">/</span> <span class="st">"crops.zip"</span>) <span class="im">as</span> zf:</span>
-<span id="cb36-10"><a href="#cb36-10" tabindex="-1" aria-label="code-block-36-10"></a>        zf.extractall(data_dir)</span>
-<span id="cb36-11"><a href="#cb36-11" tabindex="-1" aria-label="code-block-36-11"></a>    (data_dir <span class="op">/</span> <span class="st">"crops.zip"</span>).unlink()</span>
-<span id="cb36-12"><a href="#cb36-12" tabindex="-1" aria-label="code-block-36-12"></a>    <span class="bu">print</span>(<span class="st">"Downloaded the instructor's crops"</span>)</span>
-<span id="cb36-13"><a href="#cb36-13" tabindex="-1" aria-label="code-block-36-13"></a></span>
-<span id="cb36-14"><a href="#cb36-14" tabindex="-1" aria-label="code-block-36-14"></a><span class="cf">if</span> crops_path.exists():</span>
-<span id="cb36-15"><a href="#cb36-15" tabindex="-1" aria-label="code-block-36-15"></a>    crops <span class="op">=</span> [json.loads(line) <span class="cf">for</span> line <span class="kw">in</span> <span class="bu">open</span>(crops_path)]</span>
-<span id="cb36-16"><a href="#cb36-16" tabindex="-1" aria-label="code-block-36-16"></a><span class="cf">else</span>:</span>
-<span id="cb36-17"><a href="#cb36-17" tabindex="-1" aria-label="code-block-36-17"></a>    caption_pages: Dict[<span class="bu">str</span>, Dict[<span class="bu">int</span>, <span class="bu">set</span>]] <span class="op">=</span> {}   <span class="co"># per paper, the pages whose text carries a caption, and which kinds: the detectors run only there</span></span>
-<span id="cb36-18"><a href="#cb36-18" tabindex="-1" aria-label="code-block-36-18"></a>    <span class="cf">for</span> p <span class="kw">in</span> find_caption_pages(page_docs):</span>
-<span id="cb36-19"><a href="#cb36-19" tabindex="-1" aria-label="code-block-36-19"></a>        caption_pages.setdefault(p[<span class="st">"doc_id"</span>], {})[p[<span class="st">"page_num"</span>]] <span class="op">=</span> {<span class="st">"table"</span> <span class="cf">if</span> c.startswith(<span class="st">"Table"</span>) <span class="cf">else</span> <span class="st">"figure"</span> <span class="cf">for</span> c <span class="kw">in</span> p[<span class="st">"captions"</span>]}</span>
-<span id="cb36-20"><a href="#cb36-20" tabindex="-1" aria-label="code-block-36-20"></a>    t0 <span class="op">=</span> time.time()</span>
-<span id="cb36-21"><a href="#cb36-21" tabindex="-1" aria-label="code-block-36-21"></a>    crops <span class="op">=</span> []</span>
-<span id="cb36-22"><a href="#cb36-22" tabindex="-1" aria-label="code-block-36-22"></a>    <span class="cf">for</span> i, (doc_id, page_nums) <span class="kw">in</span> <span class="bu">enumerate</span>(<span class="bu">sorted</span>(caption_pages.items())):</span>
-<span id="cb36-23"><a href="#cb36-23" tabindex="-1" aria-label="code-block-36-23"></a>        crops <span class="op">+=</span> extract_figures_and_tables(os.path.join(PDF_DIR, <span class="ss">f"</span><span class="sc">{</span>doc_id<span class="sc">}</span><span class="ss">.pdf"</span>), doc_id, crop_dir, pages<span class="op">=</span>page_nums)</span>
-<span id="cb36-24"><a href="#cb36-24" tabindex="-1" aria-label="code-block-36-24"></a>        <span class="cf">if</span> (i <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> <span class="dv">10</span> <span class="op">==</span> <span class="dv">0</span>:</span>
-<span id="cb36-25"><a href="#cb36-25" tabindex="-1" aria-label="code-block-36-25"></a>            <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>i <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss"> papers, </span><span class="sc">{</span><span class="bu">len</span>(crops)<span class="sc">}</span><span class="ss"> crops so far (</span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.0f}</span><span class="ss"> s)"</span>)</span>
-<span id="cb36-26"><a href="#cb36-26" tabindex="-1" aria-label="code-block-36-26"></a>    <span class="cf">with</span> <span class="bu">open</span>(crops_path, <span class="st">"w"</span>) <span class="im">as</span> f:</span>
-<span id="cb36-27"><a href="#cb36-27" tabindex="-1" aria-label="code-block-36-27"></a>        f.writelines(json.dumps(c) <span class="op">+</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span> <span class="cf">for</span> c <span class="kw">in</span> crops)</span>
-<span id="cb36-28"><a href="#cb36-28" tabindex="-1" aria-label="code-block-36-28"></a>    <span class="bu">print</span>(<span class="ss">f"Extracted </span><span class="sc">{</span><span class="bu">len</span>(crops)<span class="sc">}</span><span class="ss"> crops from </span><span class="sc">{</span><span class="bu">len</span>(caption_pages)<span class="sc">}</span><span class="ss"> papers in </span><span class="sc">{</span>(time.time() <span class="op">-</span> t0) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
-<span id="cb36-29"><a href="#cb36-29" tabindex="-1" aria-label="code-block-36-29"></a></span>
-<span id="cb36-30"><a href="#cb36-30" tabindex="-1" aria-label="code-block-36-30"></a>n_tables <span class="op">=</span> <span class="bu">sum</span>(c[<span class="st">"kind"</span>] <span class="op">==</span> <span class="st">"table"</span> <span class="cf">for</span> c <span class="kw">in</span> crops)</span>
-<span id="cb36-31"><a href="#cb36-31" tabindex="-1" aria-label="code-block-36-31"></a>n_pages <span class="op">=</span> <span class="bu">sum</span>(c[<span class="st">"whole_page"</span>] <span class="cf">for</span> c <span class="kw">in</span> crops)</span>
-<span id="cb36-32"><a href="#cb36-32" tabindex="-1" aria-label="code-block-36-32"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>n_tables<span class="sc">}</span><span class="ss"> tables and </span><span class="sc">{</span><span class="bu">len</span>(crops) <span class="op">-</span> n_tables<span class="sc">}</span><span class="ss"> figures; </span><span class="sc">{</span>n_pages<span class="sc">}</span><span class="ss"> of them are whole-page fallbacks"</span>)</span>
-<span id="cb36-33"><a href="#cb36-33" tabindex="-1" aria-label="code-block-36-33"></a>crops[:<span class="dv">3</span>]</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" tabindex="-1" aria-label="code-block-36-1"></a><span class="op">%</span>pip install <span class="op">-</span>q pymupdf</span></code></pre>
 </div>
-<p>Look at a few before trusting them: a crop that is a logo, a page
-rule, or half a plot tells you which threshold to change.</p>
 <div class="codewrapper sourceCode" id="cb37">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" tabindex="-1" aria-label="code-block-37-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> Image, display</span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" tabindex="-1" aria-label="code-block-37-1"></a><span class="im">from</span> wattbot_rag <span class="im">import</span> extract_figures_and_tables, find_caption_pages, embed_multimodal, image_blocks, hit_at_k</span>
 <span id="cb37-2"><a href="#cb37-2" tabindex="-1" aria-label="code-block-37-2"></a></span>
-<span id="cb37-3"><a href="#cb37-3" tabindex="-1" aria-label="code-block-37-3"></a><span class="cf">for</span> c <span class="kw">in</span> [c <span class="cf">for</span> c <span class="kw">in</span> crops <span class="cf">if</span> c[<span class="st">"kind"</span>] <span class="op">==</span> <span class="st">"table"</span>][:<span class="dv">2</span>] <span class="op">+</span> [c <span class="cf">for</span> c <span class="kw">in</span> crops <span class="cf">if</span> c[<span class="st">"kind"</span>] <span class="op">==</span> <span class="st">"figure"</span>][:<span class="dv">2</span>]:</span>
-<span id="cb37-4"><a href="#cb37-4" tabindex="-1" aria-label="code-block-37-4"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>c[<span class="st">'doc_id'</span>]<span class="sc">}</span><span class="ss"> page </span><span class="sc">{</span>c[<span class="st">'page_label'</span>]<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>c[<span class="st">'caption'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb37-5"><a href="#cb37-5" tabindex="-1" aria-label="code-block-37-5"></a>    display(Image(filename<span class="op">=</span>c[<span class="st">"png_path"</span>], width<span class="op">=</span><span class="dv">500</span>))</span></code></pre>
+<span id="cb37-3"><a href="#cb37-3" tabindex="-1" aria-label="code-block-37-3"></a>crop_dir <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"crops"</span></span>
+<span id="cb37-4"><a href="#cb37-4" tabindex="-1" aria-label="code-block-37-4"></a>crops_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"crops.jsonl"</span></span>
+<span id="cb37-5"><a href="#cb37-5" tabindex="-1" aria-label="code-block-37-5"></a>shared_crops_key <span class="op">=</span> <span class="st">"wattbot/crops.zip"</span>   <span class="co"># the instructor's crops, staged like the embeddings</span></span>
+<span id="cb37-6"><a href="#cb37-6" tabindex="-1" aria-label="code-block-37-6"></a></span>
+<span id="cb37-7"><a href="#cb37-7" tabindex="-1" aria-label="code-block-37-7"></a><span class="cf">if</span> <span class="kw">not</span> crops_path.exists() <span class="kw">and</span> use_instructor_embeddings <span class="kw">and</span> _s3_object_exists(shared_bucket, shared_crops_key):</span>
+<span id="cb37-8"><a href="#cb37-8" tabindex="-1" aria-label="code-block-37-8"></a>    s3.download_file(shared_bucket, shared_crops_key, <span class="bu">str</span>(data_dir <span class="op">/</span> <span class="st">"crops.zip"</span>))</span>
+<span id="cb37-9"><a href="#cb37-9" tabindex="-1" aria-label="code-block-37-9"></a>    <span class="cf">with</span> zipfile.ZipFile(data_dir <span class="op">/</span> <span class="st">"crops.zip"</span>) <span class="im">as</span> zf:</span>
+<span id="cb37-10"><a href="#cb37-10" tabindex="-1" aria-label="code-block-37-10"></a>        zf.extractall(data_dir)</span>
+<span id="cb37-11"><a href="#cb37-11" tabindex="-1" aria-label="code-block-37-11"></a>    (data_dir <span class="op">/</span> <span class="st">"crops.zip"</span>).unlink()</span>
+<span id="cb37-12"><a href="#cb37-12" tabindex="-1" aria-label="code-block-37-12"></a>    <span class="bu">print</span>(<span class="st">"Downloaded the instructor's crops"</span>)</span>
+<span id="cb37-13"><a href="#cb37-13" tabindex="-1" aria-label="code-block-37-13"></a></span>
+<span id="cb37-14"><a href="#cb37-14" tabindex="-1" aria-label="code-block-37-14"></a><span class="cf">if</span> crops_path.exists():</span>
+<span id="cb37-15"><a href="#cb37-15" tabindex="-1" aria-label="code-block-37-15"></a>    crops <span class="op">=</span> [json.loads(line) <span class="cf">for</span> line <span class="kw">in</span> <span class="bu">open</span>(crops_path)]</span>
+<span id="cb37-16"><a href="#cb37-16" tabindex="-1" aria-label="code-block-37-16"></a><span class="cf">else</span>:</span>
+<span id="cb37-17"><a href="#cb37-17" tabindex="-1" aria-label="code-block-37-17"></a>    caption_pages: Dict[<span class="bu">str</span>, Dict[<span class="bu">int</span>, <span class="bu">set</span>]] <span class="op">=</span> {}   <span class="co"># per paper, the pages whose text carries a caption, and which kinds: the detectors run only there</span></span>
+<span id="cb37-18"><a href="#cb37-18" tabindex="-1" aria-label="code-block-37-18"></a>    <span class="cf">for</span> p <span class="kw">in</span> find_caption_pages(page_docs):</span>
+<span id="cb37-19"><a href="#cb37-19" tabindex="-1" aria-label="code-block-37-19"></a>        caption_pages.setdefault(p[<span class="st">"doc_id"</span>], {})[p[<span class="st">"page_num"</span>]] <span class="op">=</span> {<span class="st">"table"</span> <span class="cf">if</span> c.startswith(<span class="st">"Table"</span>) <span class="cf">else</span> <span class="st">"figure"</span> <span class="cf">for</span> c <span class="kw">in</span> p[<span class="st">"captions"</span>]}</span>
+<span id="cb37-20"><a href="#cb37-20" tabindex="-1" aria-label="code-block-37-20"></a>    t0 <span class="op">=</span> time.time()</span>
+<span id="cb37-21"><a href="#cb37-21" tabindex="-1" aria-label="code-block-37-21"></a>    crops <span class="op">=</span> []</span>
+<span id="cb37-22"><a href="#cb37-22" tabindex="-1" aria-label="code-block-37-22"></a>    <span class="cf">for</span> i, (doc_id, page_nums) <span class="kw">in</span> <span class="bu">enumerate</span>(<span class="bu">sorted</span>(caption_pages.items())):</span>
+<span id="cb37-23"><a href="#cb37-23" tabindex="-1" aria-label="code-block-37-23"></a>        crops <span class="op">+=</span> extract_figures_and_tables(os.path.join(PDF_DIR, <span class="ss">f"</span><span class="sc">{</span>doc_id<span class="sc">}</span><span class="ss">.pdf"</span>), doc_id, crop_dir, pages<span class="op">=</span>page_nums)</span>
+<span id="cb37-24"><a href="#cb37-24" tabindex="-1" aria-label="code-block-37-24"></a>        <span class="cf">if</span> (i <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> <span class="dv">10</span> <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb37-25"><a href="#cb37-25" tabindex="-1" aria-label="code-block-37-25"></a>            <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>i <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss"> papers, </span><span class="sc">{</span><span class="bu">len</span>(crops)<span class="sc">}</span><span class="ss"> crops so far (</span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.0f}</span><span class="ss"> s)"</span>)</span>
+<span id="cb37-26"><a href="#cb37-26" tabindex="-1" aria-label="code-block-37-26"></a>    <span class="cf">with</span> <span class="bu">open</span>(crops_path, <span class="st">"w"</span>) <span class="im">as</span> f:</span>
+<span id="cb37-27"><a href="#cb37-27" tabindex="-1" aria-label="code-block-37-27"></a>        f.writelines(json.dumps(c) <span class="op">+</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span> <span class="cf">for</span> c <span class="kw">in</span> crops)</span>
+<span id="cb37-28"><a href="#cb37-28" tabindex="-1" aria-label="code-block-37-28"></a>    <span class="bu">print</span>(<span class="ss">f"Extracted </span><span class="sc">{</span><span class="bu">len</span>(crops)<span class="sc">}</span><span class="ss"> crops from </span><span class="sc">{</span><span class="bu">len</span>(caption_pages)<span class="sc">}</span><span class="ss"> papers in </span><span class="sc">{</span>(time.time() <span class="op">-</span> t0) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
+<span id="cb37-29"><a href="#cb37-29" tabindex="-1" aria-label="code-block-37-29"></a></span>
+<span id="cb37-30"><a href="#cb37-30" tabindex="-1" aria-label="code-block-37-30"></a>n_tables <span class="op">=</span> <span class="bu">sum</span>(c[<span class="st">"kind"</span>] <span class="op">==</span> <span class="st">"table"</span> <span class="cf">for</span> c <span class="kw">in</span> crops)</span>
+<span id="cb37-31"><a href="#cb37-31" tabindex="-1" aria-label="code-block-37-31"></a>n_pages <span class="op">=</span> <span class="bu">sum</span>(c[<span class="st">"whole_page"</span>] <span class="cf">for</span> c <span class="kw">in</span> crops)</span>
+<span id="cb37-32"><a href="#cb37-32" tabindex="-1" aria-label="code-block-37-32"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>n_tables<span class="sc">}</span><span class="ss"> tables and </span><span class="sc">{</span><span class="bu">len</span>(crops) <span class="op">-</span> n_tables<span class="sc">}</span><span class="ss"> figures; </span><span class="sc">{</span>n_pages<span class="sc">}</span><span class="ss"> of them are whole-page fallbacks"</span>)</span>
+<span id="cb37-33"><a href="#cb37-33" tabindex="-1" aria-label="code-block-37-33"></a>crops[:<span class="dv">3</span>]</span></code></pre>
+</div>
+<p>Look at a few before trusting them: a crop that is a logo, a page
+rule, or half a plot tells you which threshold to change.</p>
+<div class="codewrapper sourceCode" id="cb38">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" tabindex="-1" aria-label="code-block-38-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> Image, display</span>
+<span id="cb38-2"><a href="#cb38-2" tabindex="-1" aria-label="code-block-38-2"></a></span>
+<span id="cb38-3"><a href="#cb38-3" tabindex="-1" aria-label="code-block-38-3"></a><span class="cf">for</span> c <span class="kw">in</span> [c <span class="cf">for</span> c <span class="kw">in</span> crops <span class="cf">if</span> c[<span class="st">"kind"</span>] <span class="op">==</span> <span class="st">"table"</span>][:<span class="dv">2</span>] <span class="op">+</span> [c <span class="cf">for</span> c <span class="kw">in</span> crops <span class="cf">if</span> c[<span class="st">"kind"</span>] <span class="op">==</span> <span class="st">"figure"</span>][:<span class="dv">2</span>]:</span>
+<span id="cb38-4"><a href="#cb38-4" tabindex="-1" aria-label="code-block-38-4"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>c[<span class="st">'doc_id'</span>]<span class="sc">}</span><span class="ss"> page </span><span class="sc">{</span>c[<span class="st">'page_label'</span>]<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>c[<span class="st">'caption'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb38-5"><a href="#cb38-5" tabindex="-1" aria-label="code-block-38-5"></a>    display(Image(filename<span class="op">=</span>c[<span class="st">"png_path"</span>], width<span class="op">=</span><span class="dv">500</span>))</span></code></pre>
 </div>
 </div>
 <div class="section level3">
@@ -2091,61 +2101,61 @@ that the image is a document rather than a photo) and returns a unit
 vector. Set <code>multimodal_model_id</code> to
 <code>amazon.titan-embed-image-v1</code> to try the older model; the
 function handles both.</p>
-<div class="codewrapper sourceCode" id="cb38">
+<div class="codewrapper sourceCode" id="cb39">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" tabindex="-1" aria-label="code-block-38-1"></a>multimodal_region <span class="op">=</span> <span class="st">"us-east-1"</span></span>
-<span id="cb38-2"><a href="#cb38-2" tabindex="-1" aria-label="code-block-38-2"></a>multimodal_model_id <span class="op">=</span> <span class="st">"amazon.nova-2-multimodal-embeddings-v1:0"</span>   <span class="co"># called by ID: this model does not accept calls through an inference profile</span></span>
-<span id="cb38-3"><a href="#cb38-3" tabindex="-1" aria-label="code-block-38-3"></a></span>
-<span id="cb38-4"><a href="#cb38-4" tabindex="-1" aria-label="code-block-38-4"></a>bedrock_runtime_mm <span class="op">=</span> boto3.client(<span class="st">"bedrock-runtime"</span>, region_name<span class="op">=</span>multimodal_region,</span>
-<span id="cb38-5"><a href="#cb38-5" tabindex="-1" aria-label="code-block-38-5"></a>                                  config<span class="op">=</span>Config(retries<span class="op">=</span>{<span class="st">"max_attempts"</span>: <span class="dv">10</span>, <span class="st">"mode"</span>: <span class="st">"adaptive"</span>}))</span>
-<span id="cb38-6"><a href="#cb38-6" tabindex="-1" aria-label="code-block-38-6"></a></span>
-<span id="cb38-7"><a href="#cb38-7" tabindex="-1" aria-label="code-block-38-7"></a>v <span class="op">=</span> embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png<span class="op">=</span>Path(crops[<span class="dv">0</span>][<span class="st">"png_path"</span>]).read_bytes())</span>
-<span id="cb38-8"><a href="#cb38-8" tabindex="-1" aria-label="code-block-38-8"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>crops[<span class="dv">0</span>][<span class="st">'doc_id'</span>]<span class="sc">}</span><span class="ss"> </span><span class="sc">{</span>crops[<span class="dv">0</span>][<span class="st">'caption'</span>][:<span class="dv">40</span>]<span class="sc">!r}</span><span class="ss"> -&gt; vector of </span><span class="sc">{</span>v<span class="sc">.</span>shape[<span class="dv">0</span>]<span class="sc">}</span><span class="ss"> dimensions"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" tabindex="-1" aria-label="code-block-39-1"></a>multimodal_region <span class="op">=</span> <span class="st">"us-east-1"</span></span>
+<span id="cb39-2"><a href="#cb39-2" tabindex="-1" aria-label="code-block-39-2"></a>multimodal_model_id <span class="op">=</span> <span class="st">"amazon.nova-2-multimodal-embeddings-v1:0"</span>   <span class="co"># called by ID: this model does not accept calls through an inference profile</span></span>
+<span id="cb39-3"><a href="#cb39-3" tabindex="-1" aria-label="code-block-39-3"></a></span>
+<span id="cb39-4"><a href="#cb39-4" tabindex="-1" aria-label="code-block-39-4"></a>bedrock_runtime_mm <span class="op">=</span> boto3.client(<span class="st">"bedrock-runtime"</span>, region_name<span class="op">=</span>multimodal_region,</span>
+<span id="cb39-5"><a href="#cb39-5" tabindex="-1" aria-label="code-block-39-5"></a>                                  config<span class="op">=</span>Config(retries<span class="op">=</span>{<span class="st">"max_attempts"</span>: <span class="dv">10</span>, <span class="st">"mode"</span>: <span class="st">"adaptive"</span>}))</span>
+<span id="cb39-6"><a href="#cb39-6" tabindex="-1" aria-label="code-block-39-6"></a></span>
+<span id="cb39-7"><a href="#cb39-7" tabindex="-1" aria-label="code-block-39-7"></a>v <span class="op">=</span> embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png<span class="op">=</span>Path(crops[<span class="dv">0</span>][<span class="st">"png_path"</span>]).read_bytes())</span>
+<span id="cb39-8"><a href="#cb39-8" tabindex="-1" aria-label="code-block-39-8"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>crops[<span class="dv">0</span>][<span class="st">'doc_id'</span>]<span class="sc">}</span><span class="ss"> </span><span class="sc">{</span>crops[<span class="dv">0</span>][<span class="st">'caption'</span>][:<span class="dv">40</span>]<span class="sc">!r}</span><span class="ss"> -&gt; vector of </span><span class="sc">{</span>v<span class="sc">.</span>shape[<span class="dv">0</span>]<span class="sc">}</span><span class="ss"> dimensions"</span>)</span></code></pre>
 </div>
 <p>One call per crop, cached like the text matrix: locally, then in your
 bucket, then computed. The loop runs six calls at a time through a
 thread pool and prints every fifty; a thousand images takes about two
 minutes. The question side uses the same model with
 <code>purpose="query"</code>.</p>
-<div class="codewrapper sourceCode" id="cb39">
+<div class="codewrapper sourceCode" id="cb40">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" tabindex="-1" aria-label="code-block-39-1"></a>crop_emb_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"embeddings_crops_multimodal.npy"</span></span>
-<span id="cb39-2"><a href="#cb39-2" tabindex="-1" aria-label="code-block-39-2"></a>crop_emb_key <span class="op">=</span> <span class="st">"wattbot/embeddings/embeddings_crops_multimodal.npy"</span></span>
-<span id="cb39-3"><a href="#cb39-3" tabindex="-1" aria-label="code-block-39-3"></a></span>
-<span id="cb39-4"><a href="#cb39-4" tabindex="-1" aria-label="code-block-39-4"></a><span class="cf">if</span> crop_emb_path.exists():</span>
-<span id="cb39-5"><a href="#cb39-5" tabindex="-1" aria-label="code-block-39-5"></a>    crop_embeddings <span class="op">=</span> np.load(crop_emb_path)</span>
-<span id="cb39-6"><a href="#cb39-6" tabindex="-1" aria-label="code-block-39-6"></a><span class="cf">elif</span> use_instructor_embeddings <span class="kw">and</span> _s3_object_exists(shared_bucket, <span class="st">"wattbot/embeddings_crops_multimodal.npy"</span>):</span>
-<span id="cb39-7"><a href="#cb39-7" tabindex="-1" aria-label="code-block-39-7"></a>    s3.download_file(shared_bucket, <span class="st">"wattbot/embeddings_crops_multimodal.npy"</span>, <span class="bu">str</span>(crop_emb_path))</span>
-<span id="cb39-8"><a href="#cb39-8" tabindex="-1" aria-label="code-block-39-8"></a>    crop_embeddings <span class="op">=</span> np.load(crop_emb_path)</span>
-<span id="cb39-9"><a href="#cb39-9" tabindex="-1" aria-label="code-block-39-9"></a>    <span class="bu">print</span>(<span class="st">"Downloaded the instructor's crop embeddings"</span>)</span>
-<span id="cb39-10"><a href="#cb39-10" tabindex="-1" aria-label="code-block-39-10"></a><span class="cf">elif</span> _s3_object_exists(bucket_name, crop_emb_key):</span>
-<span id="cb39-11"><a href="#cb39-11" tabindex="-1" aria-label="code-block-39-11"></a>    s3.download_file(bucket_name, crop_emb_key, <span class="bu">str</span>(crop_emb_path))</span>
-<span id="cb39-12"><a href="#cb39-12" tabindex="-1" aria-label="code-block-39-12"></a>    crop_embeddings <span class="op">=</span> np.load(crop_emb_path)</span>
-<span id="cb39-13"><a href="#cb39-13" tabindex="-1" aria-label="code-block-39-13"></a><span class="cf">else</span>:</span>
-<span id="cb39-14"><a href="#cb39-14" tabindex="-1" aria-label="code-block-39-14"></a>    <span class="im">from</span> concurrent.futures <span class="im">import</span> ThreadPoolExecutor</span>
-<span id="cb39-15"><a href="#cb39-15" tabindex="-1" aria-label="code-block-39-15"></a></span>
-<span id="cb39-16"><a href="#cb39-16" tabindex="-1" aria-label="code-block-39-16"></a>    <span class="kw">def</span> embed_crop(c):</span>
-<span id="cb39-17"><a href="#cb39-17" tabindex="-1" aria-label="code-block-39-17"></a>        <span class="cf">return</span> embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png<span class="op">=</span>Path(c[<span class="st">"png_path"</span>]).read_bytes())</span>
-<span id="cb39-18"><a href="#cb39-18" tabindex="-1" aria-label="code-block-39-18"></a></span>
-<span id="cb39-19"><a href="#cb39-19" tabindex="-1" aria-label="code-block-39-19"></a>    t0 <span class="op">=</span> time.time()</span>
-<span id="cb39-20"><a href="#cb39-20" tabindex="-1" aria-label="code-block-39-20"></a>    rows <span class="op">=</span> []</span>
-<span id="cb39-21"><a href="#cb39-21" tabindex="-1" aria-label="code-block-39-21"></a>    <span class="cf">with</span> ThreadPoolExecutor(max_workers<span class="op">=</span><span class="dv">6</span>) <span class="im">as</span> pool:   <span class="co"># one image per call: six in flight at a time</span></span>
-<span id="cb39-22"><a href="#cb39-22" tabindex="-1" aria-label="code-block-39-22"></a>        <span class="cf">for</span> i, vec <span class="kw">in</span> <span class="bu">enumerate</span>(pool.<span class="bu">map</span>(embed_crop, crops)):</span>
-<span id="cb39-23"><a href="#cb39-23" tabindex="-1" aria-label="code-block-39-23"></a>            rows.append(vec)</span>
-<span id="cb39-24"><a href="#cb39-24" tabindex="-1" aria-label="code-block-39-24"></a>            <span class="cf">if</span> (i <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> <span class="dv">50</span> <span class="op">==</span> <span class="dv">0</span>:</span>
-<span id="cb39-25"><a href="#cb39-25" tabindex="-1" aria-label="code-block-39-25"></a>                <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span>i <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss"> / </span><span class="sc">{</span><span class="bu">len</span>(crops)<span class="sc">}</span><span class="ss"> crops (</span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.0f}</span><span class="ss"> s, </span><span class="sc">{</span>(i <span class="op">+</span> <span class="dv">1</span>) <span class="op">/</span> (time.time() <span class="op">-</span> t0)<span class="sc">:.1f}</span><span class="ss"> per second)"</span>)</span>
-<span id="cb39-26"><a href="#cb39-26" tabindex="-1" aria-label="code-block-39-26"></a>    crop_embeddings <span class="op">=</span> np.vstack(rows)</span>
-<span id="cb39-27"><a href="#cb39-27" tabindex="-1" aria-label="code-block-39-27"></a>    np.save(crop_emb_path, crop_embeddings)</span>
-<span id="cb39-28"><a href="#cb39-28" tabindex="-1" aria-label="code-block-39-28"></a>    s3.upload_file(<span class="bu">str</span>(crop_emb_path), bucket_name, crop_emb_key)</span>
-<span id="cb39-29"><a href="#cb39-29" tabindex="-1" aria-label="code-block-39-29"></a>    <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span><span class="bu">len</span>(crops)<span class="sc">}</span><span class="ss"> crops in </span><span class="sc">{</span>(time.time() <span class="op">-</span> t0) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
-<span id="cb39-30"><a href="#cb39-30" tabindex="-1" aria-label="code-block-39-30"></a></span>
-<span id="cb39-31"><a href="#cb39-31" tabindex="-1" aria-label="code-block-39-31"></a><span class="cf">assert</span> crop_embeddings.shape[<span class="dv">0</span>] <span class="op">==</span> <span class="bu">len</span>(crops), <span class="st">"crop embeddings and crops are out of step; delete the cached file and rerun"</span></span>
-<span id="cb39-32"><a href="#cb39-32" tabindex="-1" aria-label="code-block-39-32"></a><span class="bu">print</span>(<span class="st">"Crop embeddings shape:"</span>, crop_embeddings.shape)</span>
-<span id="cb39-33"><a href="#cb39-33" tabindex="-1" aria-label="code-block-39-33"></a></span>
-<span id="cb39-34"><a href="#cb39-34" tabindex="-1" aria-label="code-block-39-34"></a><span class="kw">def</span> embed_query_mm(question: <span class="bu">str</span>) <span class="op">-&gt;</span> np.ndarray:</span>
-<span id="cb39-35"><a href="#cb39-35" tabindex="-1" aria-label="code-block-39-35"></a>    <span class="cf">return</span> embed_multimodal(bedrock_runtime_mm, multimodal_model_id, text<span class="op">=</span>question, purpose<span class="op">=</span><span class="st">"query"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" tabindex="-1" aria-label="code-block-40-1"></a>crop_emb_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"embeddings_crops_multimodal.npy"</span></span>
+<span id="cb40-2"><a href="#cb40-2" tabindex="-1" aria-label="code-block-40-2"></a>crop_emb_key <span class="op">=</span> <span class="st">"wattbot/embeddings/embeddings_crops_multimodal.npy"</span></span>
+<span id="cb40-3"><a href="#cb40-3" tabindex="-1" aria-label="code-block-40-3"></a></span>
+<span id="cb40-4"><a href="#cb40-4" tabindex="-1" aria-label="code-block-40-4"></a><span class="cf">if</span> crop_emb_path.exists():</span>
+<span id="cb40-5"><a href="#cb40-5" tabindex="-1" aria-label="code-block-40-5"></a>    crop_embeddings <span class="op">=</span> np.load(crop_emb_path)</span>
+<span id="cb40-6"><a href="#cb40-6" tabindex="-1" aria-label="code-block-40-6"></a><span class="cf">elif</span> use_instructor_embeddings <span class="kw">and</span> _s3_object_exists(shared_bucket, <span class="st">"wattbot/embeddings_crops_multimodal.npy"</span>):</span>
+<span id="cb40-7"><a href="#cb40-7" tabindex="-1" aria-label="code-block-40-7"></a>    s3.download_file(shared_bucket, <span class="st">"wattbot/embeddings_crops_multimodal.npy"</span>, <span class="bu">str</span>(crop_emb_path))</span>
+<span id="cb40-8"><a href="#cb40-8" tabindex="-1" aria-label="code-block-40-8"></a>    crop_embeddings <span class="op">=</span> np.load(crop_emb_path)</span>
+<span id="cb40-9"><a href="#cb40-9" tabindex="-1" aria-label="code-block-40-9"></a>    <span class="bu">print</span>(<span class="st">"Downloaded the instructor's crop embeddings"</span>)</span>
+<span id="cb40-10"><a href="#cb40-10" tabindex="-1" aria-label="code-block-40-10"></a><span class="cf">elif</span> _s3_object_exists(bucket_name, crop_emb_key):</span>
+<span id="cb40-11"><a href="#cb40-11" tabindex="-1" aria-label="code-block-40-11"></a>    s3.download_file(bucket_name, crop_emb_key, <span class="bu">str</span>(crop_emb_path))</span>
+<span id="cb40-12"><a href="#cb40-12" tabindex="-1" aria-label="code-block-40-12"></a>    crop_embeddings <span class="op">=</span> np.load(crop_emb_path)</span>
+<span id="cb40-13"><a href="#cb40-13" tabindex="-1" aria-label="code-block-40-13"></a><span class="cf">else</span>:</span>
+<span id="cb40-14"><a href="#cb40-14" tabindex="-1" aria-label="code-block-40-14"></a>    <span class="im">from</span> concurrent.futures <span class="im">import</span> ThreadPoolExecutor</span>
+<span id="cb40-15"><a href="#cb40-15" tabindex="-1" aria-label="code-block-40-15"></a></span>
+<span id="cb40-16"><a href="#cb40-16" tabindex="-1" aria-label="code-block-40-16"></a>    <span class="kw">def</span> embed_crop(c):</span>
+<span id="cb40-17"><a href="#cb40-17" tabindex="-1" aria-label="code-block-40-17"></a>        <span class="cf">return</span> embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png<span class="op">=</span>Path(c[<span class="st">"png_path"</span>]).read_bytes())</span>
+<span id="cb40-18"><a href="#cb40-18" tabindex="-1" aria-label="code-block-40-18"></a></span>
+<span id="cb40-19"><a href="#cb40-19" tabindex="-1" aria-label="code-block-40-19"></a>    t0 <span class="op">=</span> time.time()</span>
+<span id="cb40-20"><a href="#cb40-20" tabindex="-1" aria-label="code-block-40-20"></a>    rows <span class="op">=</span> []</span>
+<span id="cb40-21"><a href="#cb40-21" tabindex="-1" aria-label="code-block-40-21"></a>    <span class="cf">with</span> ThreadPoolExecutor(max_workers<span class="op">=</span><span class="dv">6</span>) <span class="im">as</span> pool:   <span class="co"># one image per call: six in flight at a time</span></span>
+<span id="cb40-22"><a href="#cb40-22" tabindex="-1" aria-label="code-block-40-22"></a>        <span class="cf">for</span> i, vec <span class="kw">in</span> <span class="bu">enumerate</span>(pool.<span class="bu">map</span>(embed_crop, crops)):</span>
+<span id="cb40-23"><a href="#cb40-23" tabindex="-1" aria-label="code-block-40-23"></a>            rows.append(vec)</span>
+<span id="cb40-24"><a href="#cb40-24" tabindex="-1" aria-label="code-block-40-24"></a>            <span class="cf">if</span> (i <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> <span class="dv">50</span> <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb40-25"><a href="#cb40-25" tabindex="-1" aria-label="code-block-40-25"></a>                <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span>i <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss"> / </span><span class="sc">{</span><span class="bu">len</span>(crops)<span class="sc">}</span><span class="ss"> crops (</span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.0f}</span><span class="ss"> s, </span><span class="sc">{</span>(i <span class="op">+</span> <span class="dv">1</span>) <span class="op">/</span> (time.time() <span class="op">-</span> t0)<span class="sc">:.1f}</span><span class="ss"> per second)"</span>)</span>
+<span id="cb40-26"><a href="#cb40-26" tabindex="-1" aria-label="code-block-40-26"></a>    crop_embeddings <span class="op">=</span> np.vstack(rows)</span>
+<span id="cb40-27"><a href="#cb40-27" tabindex="-1" aria-label="code-block-40-27"></a>    np.save(crop_emb_path, crop_embeddings)</span>
+<span id="cb40-28"><a href="#cb40-28" tabindex="-1" aria-label="code-block-40-28"></a>    s3.upload_file(<span class="bu">str</span>(crop_emb_path), bucket_name, crop_emb_key)</span>
+<span id="cb40-29"><a href="#cb40-29" tabindex="-1" aria-label="code-block-40-29"></a>    <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span><span class="bu">len</span>(crops)<span class="sc">}</span><span class="ss"> crops in </span><span class="sc">{</span>(time.time() <span class="op">-</span> t0) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
+<span id="cb40-30"><a href="#cb40-30" tabindex="-1" aria-label="code-block-40-30"></a></span>
+<span id="cb40-31"><a href="#cb40-31" tabindex="-1" aria-label="code-block-40-31"></a><span class="cf">assert</span> crop_embeddings.shape[<span class="dv">0</span>] <span class="op">==</span> <span class="bu">len</span>(crops), <span class="st">"crop embeddings and crops are out of step; delete the cached file and rerun"</span></span>
+<span id="cb40-32"><a href="#cb40-32" tabindex="-1" aria-label="code-block-40-32"></a><span class="bu">print</span>(<span class="st">"Crop embeddings shape:"</span>, crop_embeddings.shape)</span>
+<span id="cb40-33"><a href="#cb40-33" tabindex="-1" aria-label="code-block-40-33"></a></span>
+<span id="cb40-34"><a href="#cb40-34" tabindex="-1" aria-label="code-block-40-34"></a><span class="kw">def</span> embed_query_mm(question: <span class="bu">str</span>) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb40-35"><a href="#cb40-35" tabindex="-1" aria-label="code-block-40-35"></a>    <span class="cf">return</span> embed_multimodal(bedrock_runtime_mm, multimodal_model_id, text<span class="op">=</span>question, purpose<span class="op">=</span><span class="st">"query"</span>)</span></code></pre>
 </div>
 </div>
 <div class="section level3">
@@ -2159,20 +2169,20 @@ ground-truth paper is among the top-k results. Higher is better, and
 compute it for the text index and the image index on the Table
 questions, the Figure questions and, as a control, the Quote questions,
 where the image index should have no advantage.</p>
-<div class="codewrapper sourceCode" id="cb40">
+<div class="codewrapper sourceCode" id="cb41">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" tabindex="-1" aria-label="code-block-40-1"></a>k <span class="op">=</span> <span class="dv">8</span></span>
-<span id="cb40-2"><a href="#cb40-2" tabindex="-1" aria-label="code-block-40-2"></a>groups <span class="op">=</span> {<span class="st">"Table"</span>: train_df[train_df[<span class="st">"Table"</span>] <span class="op">==</span> <span class="dv">1</span>], <span class="st">"Figure"</span>: train_df[train_df[<span class="st">"Figure"</span>] <span class="op">==</span> <span class="dv">1</span>],</span>
-<span id="cb40-3"><a href="#cb40-3" tabindex="-1" aria-label="code-block-40-3"></a>          <span class="st">"Quote only"</span>: train_df[(train_df[<span class="st">"Quote"</span>] <span class="op">==</span> <span class="dv">1</span>) <span class="op">&amp;</span> (train_df[<span class="st">"Table"</span>] <span class="op">==</span> <span class="dv">0</span>) <span class="op">&amp;</span> (train_df[<span class="st">"Figure"</span>] <span class="op">==</span> <span class="dv">0</span>)].head(<span class="dv">40</span>)}</span>
-<span id="cb40-4"><a href="#cb40-4" tabindex="-1" aria-label="code-block-40-4"></a></span>
-<span id="cb40-5"><a href="#cb40-5" tabindex="-1" aria-label="code-block-40-5"></a><span class="bu">print</span>(<span class="st">"Hit rate at k=8 (higher is better): share of questions whose ground-truth paper is in the top 8 results</span><span class="ch">\n</span><span class="st">"</span>)</span>
-<span id="cb40-6"><a href="#cb40-6" tabindex="-1" aria-label="code-block-40-6"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="st">'questions'</span><span class="sc">:&lt;12}{</span><span class="st">'n'</span><span class="sc">:&gt;4}{</span><span class="st">'text index'</span><span class="sc">:&gt;14}{</span><span class="st">'image index'</span><span class="sc">:&gt;14}</span><span class="ss">"</span>)</span>
-<span id="cb40-7"><a href="#cb40-7" tabindex="-1" aria-label="code-block-40-7"></a><span class="cf">for</span> label, qs <span class="kw">in</span> groups.items():</span>
-<span id="cb40-8"><a href="#cb40-8" tabindex="-1" aria-label="code-block-40-8"></a>    gt <span class="op">=</span> [split_ref_ids(r) <span class="cf">for</span> r <span class="kw">in</span> qs[<span class="st">"ref_id"</span>]]</span>
-<span id="cb40-9"><a href="#cb40-9" tabindex="-1" aria-label="code-block-40-9"></a>    text_hits <span class="op">=</span> [[c[<span class="st">"doc_id"</span>] <span class="cf">for</span> c <span class="kw">in</span> retrieve_top_k(embed_query(q), chunk_embeddings, chunked_docs, k<span class="op">=</span>k)] <span class="cf">for</span> q <span class="kw">in</span> qs[<span class="st">"question"</span>]]</span>
-<span id="cb40-10"><a href="#cb40-10" tabindex="-1" aria-label="code-block-40-10"></a>    image_hits <span class="op">=</span> [[c[<span class="st">"doc_id"</span>] <span class="cf">for</span> c <span class="kw">in</span> retrieve_top_k(embed_query_mm(q), crop_embeddings, crops, k<span class="op">=</span>k)] <span class="cf">for</span> q <span class="kw">in</span> qs[<span class="st">"question"</span>]]</span>
-<span id="cb40-11"><a href="#cb40-11" tabindex="-1" aria-label="code-block-40-11"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">:&lt;12}{</span><span class="bu">len</span>(qs)<span class="sc">:&gt;4}{</span>hit_at_k(text_hits, gt)<span class="sc">:&gt;14.2f}{</span>hit_at_k(image_hits, gt)<span class="sc">:&gt;14.2f}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" tabindex="-1" aria-label="code-block-41-1"></a>k <span class="op">=</span> <span class="dv">8</span></span>
+<span id="cb41-2"><a href="#cb41-2" tabindex="-1" aria-label="code-block-41-2"></a>groups <span class="op">=</span> {<span class="st">"Table"</span>: train_df[train_df[<span class="st">"Table"</span>] <span class="op">==</span> <span class="dv">1</span>], <span class="st">"Figure"</span>: train_df[train_df[<span class="st">"Figure"</span>] <span class="op">==</span> <span class="dv">1</span>],</span>
+<span id="cb41-3"><a href="#cb41-3" tabindex="-1" aria-label="code-block-41-3"></a>          <span class="st">"Quote only"</span>: train_df[(train_df[<span class="st">"Quote"</span>] <span class="op">==</span> <span class="dv">1</span>) <span class="op">&amp;</span> (train_df[<span class="st">"Table"</span>] <span class="op">==</span> <span class="dv">0</span>) <span class="op">&amp;</span> (train_df[<span class="st">"Figure"</span>] <span class="op">==</span> <span class="dv">0</span>)].head(<span class="dv">40</span>)}</span>
+<span id="cb41-4"><a href="#cb41-4" tabindex="-1" aria-label="code-block-41-4"></a></span>
+<span id="cb41-5"><a href="#cb41-5" tabindex="-1" aria-label="code-block-41-5"></a><span class="bu">print</span>(<span class="st">"Hit rate at k=8 (higher is better): share of questions whose ground-truth paper is in the top 8 results</span><span class="ch">\n</span><span class="st">"</span>)</span>
+<span id="cb41-6"><a href="#cb41-6" tabindex="-1" aria-label="code-block-41-6"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="st">'questions'</span><span class="sc">:&lt;12}{</span><span class="st">'n'</span><span class="sc">:&gt;4}{</span><span class="st">'text index'</span><span class="sc">:&gt;14}{</span><span class="st">'image index'</span><span class="sc">:&gt;14}</span><span class="ss">"</span>)</span>
+<span id="cb41-7"><a href="#cb41-7" tabindex="-1" aria-label="code-block-41-7"></a><span class="cf">for</span> label, qs <span class="kw">in</span> groups.items():</span>
+<span id="cb41-8"><a href="#cb41-8" tabindex="-1" aria-label="code-block-41-8"></a>    gt <span class="op">=</span> [split_ref_ids(r) <span class="cf">for</span> r <span class="kw">in</span> qs[<span class="st">"ref_id"</span>]]</span>
+<span id="cb41-9"><a href="#cb41-9" tabindex="-1" aria-label="code-block-41-9"></a>    text_hits <span class="op">=</span> [[c[<span class="st">"doc_id"</span>] <span class="cf">for</span> c <span class="kw">in</span> retrieve_top_k(embed_query(q), chunk_embeddings, chunked_docs, k<span class="op">=</span>k)] <span class="cf">for</span> q <span class="kw">in</span> qs[<span class="st">"question"</span>]]</span>
+<span id="cb41-10"><a href="#cb41-10" tabindex="-1" aria-label="code-block-41-10"></a>    image_hits <span class="op">=</span> [[c[<span class="st">"doc_id"</span>] <span class="cf">for</span> c <span class="kw">in</span> retrieve_top_k(embed_query_mm(q), crop_embeddings, crops, k<span class="op">=</span>k)] <span class="cf">for</span> q <span class="kw">in</span> qs[<span class="st">"question"</span>]]</span>
+<span id="cb41-11"><a href="#cb41-11" tabindex="-1" aria-label="code-block-41-11"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">:&lt;12}{</span><span class="bu">len</span>(qs)<span class="sc">:&gt;4}{</span>hit_at_k(text_hits, gt)<span class="sc">:&gt;14.2f}{</span>hit_at_k(image_hits, gt)<span class="sc">:&gt;14.2f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <p>Two numbers per row, higher is better, and three readings. If the
 image index wins on Table and Figure and ties on Quote, the embedding
@@ -2196,33 +2206,33 @@ weaker alternative). <code>call_vision_chat</code> is
 <code>call_bedrock_chat</code> with an <code>images</code> argument: for
 each attached crop it adds a text label naming the paper and the
 caption, then the image, so the model can cite what it reads.</p>
-<div class="codewrapper sourceCode" id="cb41">
+<div class="codewrapper sourceCode" id="cb42">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" tabindex="-1" aria-label="code-block-41-1"></a>base_vision_model_id <span class="op">=</span> <span class="st">"us.amazon.nova-2-lite-v1:0"</span></span>
-<span id="cb41-2"><a href="#cb41-2" tabindex="-1" aria-label="code-block-41-2"></a>vision_model_id <span class="op">=</span> tagged_profile_arn(bedrock, base_vision_model_id, <span class="st">"wattbot-vision"</span>, name, project)</span>
-<span id="cb41-3"><a href="#cb41-3" tabindex="-1" aria-label="code-block-41-3"></a>vision_usage <span class="op">=</span> []</span>
-<span id="cb41-4"><a href="#cb41-4" tabindex="-1" aria-label="code-block-41-4"></a></span>
-<span id="cb41-5"><a href="#cb41-5" tabindex="-1" aria-label="code-block-41-5"></a><span class="kw">def</span> call_vision_chat(system_prompt: <span class="bu">str</span>, user_prompt: <span class="bu">str</span>, max_new_tokens: <span class="bu">int</span> <span class="op">=</span> <span class="dv">512</span>, images<span class="op">=</span>()) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
-<span id="cb41-6"><a href="#cb41-6" tabindex="-1" aria-label="code-block-41-6"></a>    <span class="co">"""One system + user turn, with zero or more (label, png_bytes) images attached to the user turn."""</span></span>
-<span id="cb41-7"><a href="#cb41-7" tabindex="-1" aria-label="code-block-41-7"></a>    content <span class="op">=</span> [{<span class="st">"text"</span>: user_prompt}]</span>
-<span id="cb41-8"><a href="#cb41-8" tabindex="-1" aria-label="code-block-41-8"></a>    <span class="cf">if</span> images:</span>
-<span id="cb41-9"><a href="#cb41-9" tabindex="-1" aria-label="code-block-41-9"></a>        content.append({<span class="st">"text"</span>: <span class="st">"The images below are tables and figures from the same papers; read values from them where the text above is incomplete."</span>})</span>
-<span id="cb41-10"><a href="#cb41-10" tabindex="-1" aria-label="code-block-41-10"></a>        content.extend(image_blocks(images))</span>
-<span id="cb41-11"><a href="#cb41-11" tabindex="-1" aria-label="code-block-41-11"></a>    response <span class="op">=</span> bedrock_runtime.converse(</span>
-<span id="cb41-12"><a href="#cb41-12" tabindex="-1" aria-label="code-block-41-12"></a>        modelId<span class="op">=</span>vision_model_id,</span>
-<span id="cb41-13"><a href="#cb41-13" tabindex="-1" aria-label="code-block-41-13"></a>        system<span class="op">=</span>[{<span class="st">"text"</span>: system_prompt}],</span>
-<span id="cb41-14"><a href="#cb41-14" tabindex="-1" aria-label="code-block-41-14"></a>        messages<span class="op">=</span>[{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: content}],</span>
-<span id="cb41-15"><a href="#cb41-15" tabindex="-1" aria-label="code-block-41-15"></a>        inferenceConfig<span class="op">=</span>{<span class="st">"maxTokens"</span>: max_new_tokens, <span class="st">"temperature"</span>: <span class="dv">0</span>},</span>
-<span id="cb41-16"><a href="#cb41-16" tabindex="-1" aria-label="code-block-41-16"></a>    )</span>
-<span id="cb41-17"><a href="#cb41-17" tabindex="-1" aria-label="code-block-41-17"></a>    vision_usage.append(response[<span class="st">"usage"</span>])</span>
-<span id="cb41-18"><a href="#cb41-18" tabindex="-1" aria-label="code-block-41-18"></a>    <span class="cf">return</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span>.join(b[<span class="st">"text"</span>] <span class="cf">for</span> b <span class="kw">in</span> response[<span class="st">"output"</span>][<span class="st">"message"</span>][<span class="st">"content"</span>] <span class="cf">if</span> <span class="st">"text"</span> <span class="kw">in</span> b).strip()</span>
-<span id="cb41-19"><a href="#cb41-19" tabindex="-1" aria-label="code-block-41-19"></a></span>
-<span id="cb41-20"><a href="#cb41-20" tabindex="-1" aria-label="code-block-41-20"></a><span class="kw">def</span> crop_label(c) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
-<span id="cb41-21"><a href="#cb41-21" tabindex="-1" aria-label="code-block-41-21"></a>    <span class="cf">return</span> <span class="ss">f"</span><span class="sc">{</span>c[<span class="st">'doc_id'</span>]<span class="sc">}</span><span class="ss">, page </span><span class="sc">{</span>c[<span class="st">'page_label'</span>]<span class="sc">}</span><span class="ss">, </span><span class="sc">{</span>c[<span class="st">'caption'</span>][:<span class="dv">60</span>]<span class="sc">}</span><span class="ss">"</span> <span class="cf">if</span> c[<span class="st">"caption"</span>] <span class="cf">else</span> <span class="ss">f"</span><span class="sc">{</span>c[<span class="st">'doc_id'</span>]<span class="sc">}</span><span class="ss">, page </span><span class="sc">{</span>c[<span class="st">'page_label'</span>]<span class="sc">}</span><span class="ss">"</span></span>
-<span id="cb41-22"><a href="#cb41-22" tabindex="-1" aria-label="code-block-41-22"></a></span>
-<span id="cb41-23"><a href="#cb41-23" tabindex="-1" aria-label="code-block-41-23"></a><span class="bu">print</span>(call_vision_chat(<span class="st">"You are a concise assistant."</span>, <span class="st">"What is in the attached image? One sentence."</span>, <span class="dv">64</span>,</span>
-<span id="cb41-24"><a href="#cb41-24" tabindex="-1" aria-label="code-block-41-24"></a>                       images<span class="op">=</span>[(crop_label(crops[<span class="dv">0</span>]), Path(crops[<span class="dv">0</span>][<span class="st">"png_path"</span>]).read_bytes())]))</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" tabindex="-1" aria-label="code-block-42-1"></a>base_vision_model_id <span class="op">=</span> <span class="st">"us.amazon.nova-2-lite-v1:0"</span></span>
+<span id="cb42-2"><a href="#cb42-2" tabindex="-1" aria-label="code-block-42-2"></a>vision_model_id <span class="op">=</span> tagged_profile_arn(bedrock, base_vision_model_id, <span class="st">"wattbot-vision"</span>, name, project)</span>
+<span id="cb42-3"><a href="#cb42-3" tabindex="-1" aria-label="code-block-42-3"></a>vision_usage <span class="op">=</span> []</span>
+<span id="cb42-4"><a href="#cb42-4" tabindex="-1" aria-label="code-block-42-4"></a></span>
+<span id="cb42-5"><a href="#cb42-5" tabindex="-1" aria-label="code-block-42-5"></a><span class="kw">def</span> call_vision_chat(system_prompt: <span class="bu">str</span>, user_prompt: <span class="bu">str</span>, max_new_tokens: <span class="bu">int</span> <span class="op">=</span> <span class="dv">512</span>, images<span class="op">=</span>()) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
+<span id="cb42-6"><a href="#cb42-6" tabindex="-1" aria-label="code-block-42-6"></a>    <span class="co">"""One system + user turn, with zero or more (label, png_bytes) images attached to the user turn."""</span></span>
+<span id="cb42-7"><a href="#cb42-7" tabindex="-1" aria-label="code-block-42-7"></a>    content <span class="op">=</span> [{<span class="st">"text"</span>: user_prompt}]</span>
+<span id="cb42-8"><a href="#cb42-8" tabindex="-1" aria-label="code-block-42-8"></a>    <span class="cf">if</span> images:</span>
+<span id="cb42-9"><a href="#cb42-9" tabindex="-1" aria-label="code-block-42-9"></a>        content.append({<span class="st">"text"</span>: <span class="st">"The images below are tables and figures from the same papers; read values from them where the text above is incomplete."</span>})</span>
+<span id="cb42-10"><a href="#cb42-10" tabindex="-1" aria-label="code-block-42-10"></a>        content.extend(image_blocks(images))</span>
+<span id="cb42-11"><a href="#cb42-11" tabindex="-1" aria-label="code-block-42-11"></a>    response <span class="op">=</span> bedrock_runtime.converse(</span>
+<span id="cb42-12"><a href="#cb42-12" tabindex="-1" aria-label="code-block-42-12"></a>        modelId<span class="op">=</span>vision_model_id,</span>
+<span id="cb42-13"><a href="#cb42-13" tabindex="-1" aria-label="code-block-42-13"></a>        system<span class="op">=</span>[{<span class="st">"text"</span>: system_prompt}],</span>
+<span id="cb42-14"><a href="#cb42-14" tabindex="-1" aria-label="code-block-42-14"></a>        messages<span class="op">=</span>[{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: content}],</span>
+<span id="cb42-15"><a href="#cb42-15" tabindex="-1" aria-label="code-block-42-15"></a>        inferenceConfig<span class="op">=</span>{<span class="st">"maxTokens"</span>: max_new_tokens, <span class="st">"temperature"</span>: <span class="dv">0</span>},</span>
+<span id="cb42-16"><a href="#cb42-16" tabindex="-1" aria-label="code-block-42-16"></a>    )</span>
+<span id="cb42-17"><a href="#cb42-17" tabindex="-1" aria-label="code-block-42-17"></a>    vision_usage.append(response[<span class="st">"usage"</span>])</span>
+<span id="cb42-18"><a href="#cb42-18" tabindex="-1" aria-label="code-block-42-18"></a>    <span class="cf">return</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span>.join(b[<span class="st">"text"</span>] <span class="cf">for</span> b <span class="kw">in</span> response[<span class="st">"output"</span>][<span class="st">"message"</span>][<span class="st">"content"</span>] <span class="cf">if</span> <span class="st">"text"</span> <span class="kw">in</span> b).strip()</span>
+<span id="cb42-19"><a href="#cb42-19" tabindex="-1" aria-label="code-block-42-19"></a></span>
+<span id="cb42-20"><a href="#cb42-20" tabindex="-1" aria-label="code-block-42-20"></a><span class="kw">def</span> crop_label(c) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
+<span id="cb42-21"><a href="#cb42-21" tabindex="-1" aria-label="code-block-42-21"></a>    <span class="cf">return</span> <span class="ss">f"</span><span class="sc">{</span>c[<span class="st">'doc_id'</span>]<span class="sc">}</span><span class="ss">, page </span><span class="sc">{</span>c[<span class="st">'page_label'</span>]<span class="sc">}</span><span class="ss">, </span><span class="sc">{</span>c[<span class="st">'caption'</span>][:<span class="dv">60</span>]<span class="sc">}</span><span class="ss">"</span> <span class="cf">if</span> c[<span class="st">"caption"</span>] <span class="cf">else</span> <span class="ss">f"</span><span class="sc">{</span>c[<span class="st">'doc_id'</span>]<span class="sc">}</span><span class="ss">, page </span><span class="sc">{</span>c[<span class="st">'page_label'</span>]<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb42-22"><a href="#cb42-22" tabindex="-1" aria-label="code-block-42-22"></a></span>
+<span id="cb42-23"><a href="#cb42-23" tabindex="-1" aria-label="code-block-42-23"></a><span class="bu">print</span>(call_vision_chat(<span class="st">"You are a concise assistant."</span>, <span class="st">"What is in the attached image? One sentence."</span>, <span class="dv">64</span>,</span>
+<span id="cb42-24"><a href="#cb42-24" tabindex="-1" aria-label="code-block-42-24"></a>                       images<span class="op">=</span>[(crop_label(crops[<span class="dv">0</span>]), Path(crops[<span class="dv">0</span>][<span class="st">"png_path"</span>]).read_bytes())]))</span></code></pre>
 </div>
 <p>Three runs over the Table and Figure questions, all through the
 vision model, so that the only thing changing between them is what the
@@ -2233,54 +2243,54 @@ table says the text index is the better finder, the question is whether
 finding with text and <em>reading</em> with the image is the better
 split. Each run is the same loop as Step 11, so every question costs an
 answer call and an explanation call.</p>
-<div class="codewrapper sourceCode" id="cb42">
+<div class="codewrapper sourceCode" id="cb43">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" tabindex="-1" aria-label="code-block-42-1"></a>tf_df <span class="op">=</span> train_df[(train_df[<span class="st">"Table"</span>] <span class="op">==</span> <span class="dv">1</span>) <span class="op">|</span> (train_df[<span class="st">"Figure"</span>] <span class="op">==</span> <span class="dv">1</span>)]</span>
-<span id="cb42-2"><a href="#cb42-2" tabindex="-1" aria-label="code-block-42-2"></a>crops_by_page: Dict[<span class="bu">tuple</span>, <span class="bu">list</span>] <span class="op">=</span> {}</span>
-<span id="cb42-3"><a href="#cb42-3" tabindex="-1" aria-label="code-block-42-3"></a><span class="cf">for</span> c <span class="kw">in</span> crops:</span>
-<span id="cb42-4"><a href="#cb42-4" tabindex="-1" aria-label="code-block-42-4"></a>    crops_by_page.setdefault((c[<span class="st">"doc_id"</span>], c[<span class="st">"page_num"</span>]), []).append(c)</span>
-<span id="cb42-5"><a href="#cb42-5" tabindex="-1" aria-label="code-block-42-5"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(tf_df)<span class="sc">}</span><span class="ss"> table and figure questions; each run makes an answer call and an explanation call per question, so about </span><span class="sc">{</span><span class="dv">6</span> <span class="op">*</span> <span class="bu">len</span>(tf_df)<span class="sc">}</span><span class="ss"> calls for three runs"</span>)</span>
-<span id="cb42-6"><a href="#cb42-6" tabindex="-1" aria-label="code-block-42-6"></a></span>
-<span id="cb42-7"><a href="#cb42-7" tabindex="-1" aria-label="code-block-42-7"></a><span class="kw">def</span> crops_for(question: <span class="bu">str</span>, images_from: <span class="bu">str</span>):</span>
-<span id="cb42-8"><a href="#cb42-8" tabindex="-1" aria-label="code-block-42-8"></a>    <span class="co">"""The crops to attach: none, the image index's top three, or those on the pages behind the top text chunks."""</span></span>
-<span id="cb42-9"><a href="#cb42-9" tabindex="-1" aria-label="code-block-42-9"></a>    <span class="cf">if</span> images_from <span class="op">==</span> <span class="st">"image_index"</span>:</span>
-<span id="cb42-10"><a href="#cb42-10" tabindex="-1" aria-label="code-block-42-10"></a>        <span class="cf">return</span> retrieve_top_k(embed_query_mm(question), crop_embeddings, crops, k<span class="op">=</span><span class="dv">3</span>)</span>
-<span id="cb42-11"><a href="#cb42-11" tabindex="-1" aria-label="code-block-42-11"></a>    <span class="cf">if</span> images_from <span class="op">==</span> <span class="st">"text_index"</span>:</span>
-<span id="cb42-12"><a href="#cb42-12" tabindex="-1" aria-label="code-block-42-12"></a>        found <span class="op">=</span> []</span>
-<span id="cb42-13"><a href="#cb42-13" tabindex="-1" aria-label="code-block-42-13"></a>        <span class="cf">for</span> ch <span class="kw">in</span> retrieve_top_k(embed_query(question), chunk_embeddings, chunked_docs, k<span class="op">=</span><span class="dv">8</span>):</span>
-<span id="cb42-14"><a href="#cb42-14" tabindex="-1" aria-label="code-block-42-14"></a>            <span class="cf">for</span> c <span class="kw">in</span> crops_by_page.get((ch[<span class="st">"doc_id"</span>], ch[<span class="st">"page_num"</span>]), []):</span>
-<span id="cb42-15"><a href="#cb42-15" tabindex="-1" aria-label="code-block-42-15"></a>                <span class="cf">if</span> c <span class="kw">not</span> <span class="kw">in</span> found:</span>
-<span id="cb42-16"><a href="#cb42-16" tabindex="-1" aria-label="code-block-42-16"></a>                    found.append(c)</span>
-<span id="cb42-17"><a href="#cb42-17" tabindex="-1" aria-label="code-block-42-17"></a>        <span class="cf">return</span> found[:<span class="dv">3</span>]</span>
-<span id="cb42-18"><a href="#cb42-18" tabindex="-1" aria-label="code-block-42-18"></a>    <span class="cf">return</span> []</span>
-<span id="cb42-19"><a href="#cb42-19" tabindex="-1" aria-label="code-block-42-19"></a></span>
-<span id="cb42-20"><a href="#cb42-20" tabindex="-1" aria-label="code-block-42-20"></a><span class="kw">def</span> run_tf(images_from: <span class="bu">str</span>) <span class="op">-&gt;</span> pd.DataFrame:</span>
-<span id="cb42-21"><a href="#cb42-21" tabindex="-1" aria-label="code-block-42-21"></a>    rows <span class="op">=</span> []</span>
-<span id="cb42-22"><a href="#cb42-22" tabindex="-1" aria-label="code-block-42-22"></a>    <span class="cf">for</span> _, row <span class="kw">in</span> tf_df.iterrows():</span>
-<span id="cb42-23"><a href="#cb42-23" tabindex="-1" aria-label="code-block-42-23"></a>        images <span class="op">=</span> [(crop_label(c), Path(c[<span class="st">"png_path"</span>]).read_bytes()) <span class="cf">for</span> c <span class="kw">in</span> crops_for(row[<span class="st">"question"</span>], images_from)]</span>
-<span id="cb42-24"><a href="#cb42-24" tabindex="-1" aria-label="code-block-42-24"></a>        generate <span class="op">=</span> <span class="kw">lambda</span> s, u, max_new_tokens<span class="op">=</span><span class="dv">512</span>, images<span class="op">=</span>images: call_vision_chat(s, u, max_new_tokens, images<span class="op">=</span>images)</span>
-<span id="cb42-25"><a href="#cb42-25" tabindex="-1" aria-label="code-block-42-25"></a>        rows.append(run_single_qa(row<span class="op">=</span>row, embed_query<span class="op">=</span>embed_query, generate<span class="op">=</span>generate, chunk_embeddings<span class="op">=</span>chunk_embeddings,</span>
-<span id="cb42-26"><a href="#cb42-26" tabindex="-1" aria-label="code-block-42-26"></a>                                  chunked_docs<span class="op">=</span>chunked_docs, docid_to_url<span class="op">=</span>docid_to_url, top_k<span class="op">=</span><span class="dv">8</span>, retrieval_threshold<span class="op">=</span><span class="fl">0.25</span>))</span>
-<span id="cb42-27"><a href="#cb42-27" tabindex="-1" aria-label="code-block-42-27"></a>    <span class="cf">return</span> pd.DataFrame(rows)</span>
-<span id="cb42-28"><a href="#cb42-28" tabindex="-1" aria-label="code-block-42-28"></a></span>
-<span id="cb42-29"><a href="#cb42-29" tabindex="-1" aria-label="code-block-42-29"></a>vision_runs <span class="op">=</span> {<span class="st">"text chunks only"</span>: <span class="st">"none"</span>, <span class="st">"chunks + crops from the image index"</span>: <span class="st">"image_index"</span>, <span class="st">"chunks + crops behind the text chunks"</span>: <span class="st">"text_index"</span>}</span>
-<span id="cb42-30"><a href="#cb42-30" tabindex="-1" aria-label="code-block-42-30"></a>t0 <span class="op">=</span> time.time()</span>
-<span id="cb42-31"><a href="#cb42-31" tabindex="-1" aria-label="code-block-42-31"></a><span class="cf">for</span> label, images_from <span class="kw">in</span> vision_runs.items():</span>
-<span id="cb42-32"><a href="#cb42-32" tabindex="-1" aria-label="code-block-42-32"></a>    run_tf(images_from).to_csv(os.path.join(output_dir, <span class="ss">f"wattbot_solutions_vision_</span><span class="sc">{</span>images_from<span class="sc">}</span><span class="ss">.csv"</span>), index<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb42-33"><a href="#cb42-33" tabindex="-1" aria-label="code-block-42-33"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">: done at </span><span class="sc">{</span>(time.time() <span class="op">-</span> t0) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" tabindex="-1" aria-label="code-block-43-1"></a>tf_df <span class="op">=</span> train_df[(train_df[<span class="st">"Table"</span>] <span class="op">==</span> <span class="dv">1</span>) <span class="op">|</span> (train_df[<span class="st">"Figure"</span>] <span class="op">==</span> <span class="dv">1</span>)]</span>
+<span id="cb43-2"><a href="#cb43-2" tabindex="-1" aria-label="code-block-43-2"></a>crops_by_page: Dict[<span class="bu">tuple</span>, <span class="bu">list</span>] <span class="op">=</span> {}</span>
+<span id="cb43-3"><a href="#cb43-3" tabindex="-1" aria-label="code-block-43-3"></a><span class="cf">for</span> c <span class="kw">in</span> crops:</span>
+<span id="cb43-4"><a href="#cb43-4" tabindex="-1" aria-label="code-block-43-4"></a>    crops_by_page.setdefault((c[<span class="st">"doc_id"</span>], c[<span class="st">"page_num"</span>]), []).append(c)</span>
+<span id="cb43-5"><a href="#cb43-5" tabindex="-1" aria-label="code-block-43-5"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(tf_df)<span class="sc">}</span><span class="ss"> table and figure questions; each run makes an answer call and an explanation call per question, so about </span><span class="sc">{</span><span class="dv">6</span> <span class="op">*</span> <span class="bu">len</span>(tf_df)<span class="sc">}</span><span class="ss"> calls for three runs"</span>)</span>
+<span id="cb43-6"><a href="#cb43-6" tabindex="-1" aria-label="code-block-43-6"></a></span>
+<span id="cb43-7"><a href="#cb43-7" tabindex="-1" aria-label="code-block-43-7"></a><span class="kw">def</span> crops_for(question: <span class="bu">str</span>, images_from: <span class="bu">str</span>):</span>
+<span id="cb43-8"><a href="#cb43-8" tabindex="-1" aria-label="code-block-43-8"></a>    <span class="co">"""The crops to attach: none, the image index's top three, or those on the pages behind the top text chunks."""</span></span>
+<span id="cb43-9"><a href="#cb43-9" tabindex="-1" aria-label="code-block-43-9"></a>    <span class="cf">if</span> images_from <span class="op">==</span> <span class="st">"image_index"</span>:</span>
+<span id="cb43-10"><a href="#cb43-10" tabindex="-1" aria-label="code-block-43-10"></a>        <span class="cf">return</span> retrieve_top_k(embed_query_mm(question), crop_embeddings, crops, k<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb43-11"><a href="#cb43-11" tabindex="-1" aria-label="code-block-43-11"></a>    <span class="cf">if</span> images_from <span class="op">==</span> <span class="st">"text_index"</span>:</span>
+<span id="cb43-12"><a href="#cb43-12" tabindex="-1" aria-label="code-block-43-12"></a>        found <span class="op">=</span> []</span>
+<span id="cb43-13"><a href="#cb43-13" tabindex="-1" aria-label="code-block-43-13"></a>        <span class="cf">for</span> ch <span class="kw">in</span> retrieve_top_k(embed_query(question), chunk_embeddings, chunked_docs, k<span class="op">=</span><span class="dv">8</span>):</span>
+<span id="cb43-14"><a href="#cb43-14" tabindex="-1" aria-label="code-block-43-14"></a>            <span class="cf">for</span> c <span class="kw">in</span> crops_by_page.get((ch[<span class="st">"doc_id"</span>], ch[<span class="st">"page_num"</span>]), []):</span>
+<span id="cb43-15"><a href="#cb43-15" tabindex="-1" aria-label="code-block-43-15"></a>                <span class="cf">if</span> c <span class="kw">not</span> <span class="kw">in</span> found:</span>
+<span id="cb43-16"><a href="#cb43-16" tabindex="-1" aria-label="code-block-43-16"></a>                    found.append(c)</span>
+<span id="cb43-17"><a href="#cb43-17" tabindex="-1" aria-label="code-block-43-17"></a>        <span class="cf">return</span> found[:<span class="dv">3</span>]</span>
+<span id="cb43-18"><a href="#cb43-18" tabindex="-1" aria-label="code-block-43-18"></a>    <span class="cf">return</span> []</span>
+<span id="cb43-19"><a href="#cb43-19" tabindex="-1" aria-label="code-block-43-19"></a></span>
+<span id="cb43-20"><a href="#cb43-20" tabindex="-1" aria-label="code-block-43-20"></a><span class="kw">def</span> run_tf(images_from: <span class="bu">str</span>) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb43-21"><a href="#cb43-21" tabindex="-1" aria-label="code-block-43-21"></a>    rows <span class="op">=</span> []</span>
+<span id="cb43-22"><a href="#cb43-22" tabindex="-1" aria-label="code-block-43-22"></a>    <span class="cf">for</span> _, row <span class="kw">in</span> tf_df.iterrows():</span>
+<span id="cb43-23"><a href="#cb43-23" tabindex="-1" aria-label="code-block-43-23"></a>        images <span class="op">=</span> [(crop_label(c), Path(c[<span class="st">"png_path"</span>]).read_bytes()) <span class="cf">for</span> c <span class="kw">in</span> crops_for(row[<span class="st">"question"</span>], images_from)]</span>
+<span id="cb43-24"><a href="#cb43-24" tabindex="-1" aria-label="code-block-43-24"></a>        generate <span class="op">=</span> <span class="kw">lambda</span> s, u, max_new_tokens<span class="op">=</span><span class="dv">512</span>, images<span class="op">=</span>images: call_vision_chat(s, u, max_new_tokens, images<span class="op">=</span>images)</span>
+<span id="cb43-25"><a href="#cb43-25" tabindex="-1" aria-label="code-block-43-25"></a>        rows.append(run_single_qa(row<span class="op">=</span>row, embed_query<span class="op">=</span>embed_query, generate<span class="op">=</span>generate, chunk_embeddings<span class="op">=</span>chunk_embeddings,</span>
+<span id="cb43-26"><a href="#cb43-26" tabindex="-1" aria-label="code-block-43-26"></a>                                  chunked_docs<span class="op">=</span>chunked_docs, docid_to_url<span class="op">=</span>docid_to_url, top_k<span class="op">=</span><span class="dv">8</span>, retrieval_threshold<span class="op">=</span><span class="fl">0.25</span>))</span>
+<span id="cb43-27"><a href="#cb43-27" tabindex="-1" aria-label="code-block-43-27"></a>    <span class="cf">return</span> pd.DataFrame(rows)</span>
+<span id="cb43-28"><a href="#cb43-28" tabindex="-1" aria-label="code-block-43-28"></a></span>
+<span id="cb43-29"><a href="#cb43-29" tabindex="-1" aria-label="code-block-43-29"></a>vision_runs <span class="op">=</span> {<span class="st">"text chunks only"</span>: <span class="st">"none"</span>, <span class="st">"chunks + crops from the image index"</span>: <span class="st">"image_index"</span>, <span class="st">"chunks + crops behind the text chunks"</span>: <span class="st">"text_index"</span>}</span>
+<span id="cb43-30"><a href="#cb43-30" tabindex="-1" aria-label="code-block-43-30"></a>t0 <span class="op">=</span> time.time()</span>
+<span id="cb43-31"><a href="#cb43-31" tabindex="-1" aria-label="code-block-43-31"></a><span class="cf">for</span> label, images_from <span class="kw">in</span> vision_runs.items():</span>
+<span id="cb43-32"><a href="#cb43-32" tabindex="-1" aria-label="code-block-43-32"></a>    run_tf(images_from).to_csv(os.path.join(output_dir, <span class="ss">f"wattbot_solutions_vision_</span><span class="sc">{</span>images_from<span class="sc">}</span><span class="ss">.csv"</span>), index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb43-33"><a href="#cb43-33" tabindex="-1" aria-label="code-block-43-33"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">: done at </span><span class="sc">{</span>(time.time() <span class="op">-</span> t0) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span></code></pre>
 </div>
 <p>Score all three the same way as Step 12. The scorer compares the rows
 it finds, so the breakdown is over these questions only; the
 <code>Table</code> and <code>Figure</code> lines are the ones to read,
 across the three runs and against the DeepSeek run.</p>
-<div class="codewrapper sourceCode" id="cb43">
+<div class="codewrapper sourceCode" id="cb44">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" tabindex="-1" aria-label="code-block-43-1"></a><span class="cf">for</span> label, images_from <span class="kw">in</span> vision_runs.items():</span>
-<span id="cb43-2"><a href="#cb43-2" tabindex="-1" aria-label="code-block-43-2"></a>    <span class="bu">print</span>(<span class="st">"="</span> <span class="op">*</span> <span class="dv">96</span>)</span>
-<span id="cb43-3"><a href="#cb43-3" tabindex="-1" aria-label="code-block-43-3"></a>    <span class="bu">print</span>(<span class="ss">f"Nova 2 Lite, </span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb43-4"><a href="#cb43-4" tabindex="-1" aria-label="code-block-43-4"></a>    compute_wattbot_score(train_qa_path<span class="op">=</span>train_qa_path, preds_path<span class="op">=</span>os.path.join(output_dir, <span class="ss">f"wattbot_solutions_vision_</span><span class="sc">{</span>images_from<span class="sc">}</span><span class="ss">.csv"</span>), n_examples<span class="op">=</span><span class="dv">3</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" tabindex="-1" aria-label="code-block-44-1"></a><span class="cf">for</span> label, images_from <span class="kw">in</span> vision_runs.items():</span>
+<span id="cb44-2"><a href="#cb44-2" tabindex="-1" aria-label="code-block-44-2"></a>    <span class="bu">print</span>(<span class="st">"="</span> <span class="op">*</span> <span class="dv">96</span>)</span>
+<span id="cb44-3"><a href="#cb44-3" tabindex="-1" aria-label="code-block-44-3"></a>    <span class="bu">print</span>(<span class="ss">f"Nova 2 Lite, </span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb44-4"><a href="#cb44-4" tabindex="-1" aria-label="code-block-44-4"></a>    compute_wattbot_score(train_qa_path<span class="op">=</span>train_qa_path, preds_path<span class="op">=</span>os.path.join(output_dir, <span class="ss">f"wattbot_solutions_vision_</span><span class="sc">{</span>images_from<span class="sc">}</span><span class="ss">.csv"</span>), n_examples<span class="op">=</span><span class="dv">3</span>)</span></code></pre>
 </div>
 <div id="what-to-expect-and-what-it-cost" class="callout">
 <div class="callout-square">
