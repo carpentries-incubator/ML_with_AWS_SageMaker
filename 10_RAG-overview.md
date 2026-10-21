@@ -85,7 +85,7 @@ Compare that to running the **entire WattBot pipeline** from this lesson on Bedr
 | Explanation pass over 100 answers with DeepSeek V3 | 300K in / 30K out | cents |
 | **Total** | | **well under `$1`** |
 
-A single forgotten weekend on the *cheapest* GPU instance costs more than fifty full runs of the pipeline on Bedrock; a forgotten weekend on the `ml.g6e.xlarge` the later episodes use costs more than a hundred. That asymmetry is why Bedrock is the default, not just an alternative.
+A single forgotten weekend on the *cheapest* GPU instance costs more than fifty full runs of the pipeline on Bedrock; a forgotten weekend on the `ml.g6e.xlarge` the optional GPU-notebook episode uses costs more than a hundred. That asymmetry is why Bedrock is the default, not just an alternative.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
@@ -160,7 +160,7 @@ Three things follow from this:
 
 1. **Each job gets its own tags.** A SageMaker job launched from a tagged notebook does not inherit the notebook's tags. Pass `tags=job_tags` on every estimator, tuner, and processor, exactly as the training, tuning, and Processing‑job episodes do. Vary `Purpose` per job so the bill tells you what the money went to.
 2. **Bedrock is tagged through a profile, not a call.** `invoke_model` and `converse` have no tags parameter. An application inference profile is a free, model‑specific wrapper that carries tags; usage routed through it is attributed to those tags. One profile per base model (so one for the embedding model and one for the generation model). Note that Bedrock's tag format is lowercase `key`/`value`, while SageMaker's is `Key`/`Value`; the tag *names* stay the same.
-3. **Tags only show up on the bill once the keys are activated.** An account administrator has to activate `Name`, `Project`, and `Purpose` as cost allocation tags in the Billing console, once per account. Until then the tags exist on the resources but are not available as filters in Cost Explorer. On UW–Madison accounts the keys are activated centrally from a fixed approved list ([KB 72454](https://kb.wisc.edu/72454)), which is why the three keys must be spelled exactly; on your own account, activate them before you start.
+3. **Only the three approved keys count.** `Name`, `Project` and `Purpose`, spelled exactly; any other key is ignored by the bill, for the reason the S3 episode gives.
 
 ## When Do You Use Which Approach?
 

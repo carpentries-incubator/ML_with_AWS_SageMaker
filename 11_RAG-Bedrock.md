@@ -498,96 +498,55 @@ print("Upload complete.")
 
 ## Step 7 – Cost tracking: Bedrock calls carry no tags unless you route them through a profile
 
-In the SageMaker episodes that follow, we tag every job at launch because tags never propagate from the notebook. Bedrock is stricter still: **an on-demand `invoke_model` or `converse` call has no tags parameter at all.** If you call `deepseek.v3-v1:0` or `amazon.titan-embed-text-v2:0` by its model ID, the usage lands in the account's Bedrock bill as anonymous per-token charges. The notebook's tags, the bucket's tags, and the tags you set on anything else are irrelevant to it. On a shared account that means nobody can tell which team spent what.
+Every SageMaker job in this lesson is tagged at launch, because tags never propagate from the notebook. Bedrock is stricter still: **an on-demand `invoke_model` or `converse` call has no tags parameter at all.** If you call `deepseek.v3-v1:0` or `amazon.titan-embed-text-v2:0` by its model ID, the usage lands in the account's Bedrock bill as anonymous per-token charges. The notebook's tags, the bucket's tags, and the tags you set on anything else are irrelevant to it. On a shared account that means nobody can tell which team spent what.
 
-The mechanism Bedrock provides for this is an **application inference profile**: a small, free resource that points at a base model and carries cost allocation tags. You create the profile once, then pass the **profile ARN** instead of the model ID as `modelId` in every call. Usage billed through the profile carries the profile's tags into Cost Explorer. Two details to get right:
+The fix is not a tag on the call; it is a different thing to call. An **application inference profile** is a small resource you create in your own account: an alias that points at one base model and carries your three tags. It has its own ARN, and that ARN goes wherever a model ID goes. Nothing else changes: same model, same price per token, same answers. The only difference is in the bill, where usage made through the alias shows up with the alias's tags.
 
-- You need **one profile per base model** (the profile is model‑specific), so we create one for the generation model and one for the embedding model.
-- Bedrock's tag format uses lowercase `key` / `value`, unlike SageMaker's `Key` / `Value`. The tag *names* (`Name`, `Project`, `Purpose`) stay the same so the Cost Explorer filters line up across services.
+Before and after, in the generation call:
 
-Four cells: the tags, two small helpers, the function that finds or creates a profile, and the two calls that produce the ARNs the rest of the episode uses.
+| | `modelId` you pass | Who it is billed to |
+|---|---|---|
+| Raw model ID | `deepseek.v3-v1:0` | nobody: anonymous DeepSeek spend on the account |
+| Your profile | `arn:aws:bedrock:us-east-2:<account-id>:application-inference-profile/adewnu8wqxpy` | `Name=DoeJohn, Project=SinkOrSwim, Purpose=Inference` |
 
-First the tags. Bedrock wants lowercase `key` and `value`; the three names are the same ones every SageMaker job in this lesson carries, so one Cost Explorer filter covers both services.
+So "cost tracking on Bedrock" is: create the alias once per model (one for DeepSeek, one for Titan, because an alias points at exactly one model), keep its ARN in a variable, and use that variable as `modelId` from then on. The profile is free; you pay only for tokens, as before.
+
+One call per model does all of it. `tagged_profile_arn` in `wattbot_rag.py` looks for a profile named after your project and user name, creates it with the three tags if it is not there, and returns its ARN. Open the file if you want to see the forty lines; nothing in them is worth memorising. What is worth remembering is the sentence above: one tagged profile per model, its ARN in place of the model ID.
 
 ```python
-import re
+from wattbot_rag import tagged_profile_arn
 
 name = "DoeJohn"         # replace with your name
 project = "SinkOrSwim"   # replace with your challenge name
-purpose = "Inference"
 
-# Bedrock tags are lowercase key/value (SageMaker jobs use Key/Value)
-profile_tags = [
-    {"key": "Name", "value": name},
-    {"key": "Project", "value": project},
-    {"key": "Purpose", "value": purpose},
-]
+# From here on, these ARNs are what we pass as modelId. The base IDs are never sent to the runtime again.
+bedrock_model_id = tagged_profile_arn(bedrock, base_generation_model_id, "wattbot-gen", name, project)
+embedding_model_id_bedrock = tagged_profile_arn(bedrock, base_embedding_model_id, "wattbot-embed", name, project)
 ```
 
-Two helpers. `_slug` turns a project or user name into something a profile name accepts (letters, digits and single hyphens, at most 64 characters). `_source_arn` returns what the profile points at: for a plain model ID that is the foundation model's ARN; for a cross-region ID such as `us.deepseek.v3-v1:0`, which is itself a system-defined inference profile, it is that profile's ARN.
+::::::::::::::::::::::::::::::::::::: callout
 
-```python
-def _slug(text: str) -> str:
-    # Profile names allow letters, digits, and single spaces/hyphens/underscores, max 64 chars
-    return re.sub(r"[^0-9a-zA-Z]+", "-", text).strip("-")[:30]
+### The same thing from a terminal
 
-def _source_arn(model_id: str) -> str:
-    """ARN that the profile should point at: the foundation model, or the system-defined profile for a cross-region ID."""
-    if model_id.split(".")[0] in {"us", "eu", "apac", "global", "jp", "au"}:
-        return bedrock.get_inference_profile(inferenceProfileIdentifier=model_id)["inferenceProfileArn"]
-    return bedrock.get_foundation_model(modelIdentifier=model_id)["modelDetails"]["modelArn"]
+Outside a notebook it is one CLI command per model, which is all the helper wraps:
+
+```bash
+aws bedrock create-inference-profile --inference-profile-name SinkOrSwim-DoeJohn-wattbot-gen \
+  --model-source copyFrom=arn:aws:bedrock:us-east-2::foundation-model/deepseek.v3-v1:0 \
+  --tags key=Name,value=DoeJohn key=Project,value=SinkOrSwim key=Purpose,value=Inference
 ```
 
-The function itself. It builds a profile name from your project and user name, lists the application profiles in the account and returns the ARN if one with that name exists, so rerunning the notebook never creates duplicates. Otherwise it creates the profile with the tags above. An `AccessDeniedException` on either call is turned into a message that says which role the notebook is running as and what to do about it.
+It prints the profile ARN; pass that as `modelId`. The helper adds only the reuse check, so rerunning does not create duplicates.
 
-```python
-def get_or_create_inference_profile(base_model_id: str, label: str) -> str:
-    """Return the ARN of a tagged application inference profile for base_model_id."""
-    profile_name = f"{_slug(project)}-{_slug(name)}-{label}"
+:::::::::::::::::::::::::::::::::::::::::::::::::
 
-    try:
-        # Reuse an existing profile with this name, if any
-        paginator = bedrock.get_paginator("list_inference_profiles")
-        for page in paginator.paginate(typeEquals="APPLICATION"):
-            for summary in page["inferenceProfileSummaries"]:
-                if summary["inferenceProfileName"] == profile_name:
-                    print(f"Reusing inference profile {profile_name}: {summary['inferenceProfileArn']}")
-                    return summary["inferenceProfileArn"]
-
-        resp = bedrock.create_inference_profile(
-            inferenceProfileName=profile_name,
-            description=f"{project} {name} WattBot RAG {label} on {base_model_id}",   # letters, digits, : and . only, single spaces or hyphens between
-            modelSource={"copyFrom": _source_arn(base_model_id)},   # the profile is an alias for one base model
-            tags=profile_tags,   # usage billed through the profile carries these tags; raw model-ID calls carry none
-        )
-    except ClientError as e:
-        if e.response["Error"]["Code"] == "AccessDeniedException":
-            role = boto3.client("sts").get_caller_identity()["Arn"]
-            raise PermissionError(
-                f"This notebook's role has no Bedrock permissions ({role}).\n"
-                "The Bedrock episode needs the Bedrock policy from the Account preparation instructor page attached to the "
-                "notebook's execution role. On the class account, the instance must use the ml-sagemaker-bedrock-use role: "
-                "stop it, Edit, change the IAM role, start it again. On your own account, attach the policy to your role. "
-                "Nothing to change in this notebook; rerun this cell afterwards."
-            ) from e
-        raise
-    print(f"Created inference profile {profile_name}: {resp['inferenceProfileArn']}")
-    return resp["inferenceProfileArn"]
-```
-
-Now call it twice, once per base model. The two ARNs it returns are what every later cell passes as `modelId`; the base model IDs are never sent to the runtime again.
-
-```python
-bedrock_model_id = get_or_create_inference_profile(base_generation_model_id, "wattbot-gen")
-embedding_model_id_bedrock = get_or_create_inference_profile(base_embedding_model_id, "wattbot-embed")
-```
 
 ::::::::::::::::::::::::::::::::::::: callout
 
 ### Checking the profiles
 
 - You can confirm the routing in the Bedrock console under **Inference and Assessment → Cross-region inference → Application inference profiles**, or with `bedrock.list_inference_profiles(typeEquals="APPLICATION")`.
-- Tags only become filters in Cost Explorer once the tag keys have been **activated as cost allocation tags** in the Billing console (an account‑admin, once‑per‑key action; on a shared workshop account the organizers do this). Until then the tags exist on the resource but do not show up on reports.
+- The keys must be the three approved ones, `Name`, `Project` and `Purpose`, spelled exactly; any other key is ignored by the bill (the S3 episode says why).
 - The profile itself has no hourly or storage charge. You only pay per token, exactly as before.
 
 :::::::::::::::::::::::::::::::::::::::::::::::::
