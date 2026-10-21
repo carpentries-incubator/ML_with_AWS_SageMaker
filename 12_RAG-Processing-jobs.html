@@ -560,31 +560,32 @@ evaluations.</p>
 <td>
 <code>ml.g5.xlarge</code> (A10G, 24 GB)</td>
 <td><code>$1.41</code></td>
-<td>~15 min incl. startup</td>
-<td>~<code>$0.35</code>
+<td>~10 min incl. startup</td>
+<td>~<code>$0.20</code>
 </td>
-</tr><tr><td>RAG over a 55-question sample with Qwen3-8B</td>
+</tr><tr><td>RAG over a 53-question sample with Qwen3-8B</td>
 <td>
 <code>ml.g5.xlarge</code> (A10G, 24 GB)</td>
 <td><code>$1.41</code></td>
-<td>~25 min: 5 startup, ~3 downloading 16 GB of weights, ~1 loading, ~15
-generating</td>
-<td>~<code>$0.60</code>
+<td>~20 min: 1 provisioning, ~4 downloading and loading 16 GB of
+weights, ~13 generating</td>
+<td>~<code>$0.40</code>
 </td>
 </tr><tr><td>Controller notebook</td>
 <td><code>ml.t3.medium</code></td>
 <td><code>$0.05</code></td>
 <td>2 h</td>
 <td><code>$0.10</code></td>
-</tr></tbody></table><p>About <code>$1.05</code> for the episode, and the GPUs are off the
+</tr></tbody></table><p>About <code>$0.70</code> for the episode, and the GPUs are off the
 moment each script ends. The RAG job answers the same stratified sample
-of questions as the Bedrock episode (ten per evidence type, 55
-questions); all 245 is about an hour of generation, so run that at home.
-Both jobs carry <code>max_runtime_in_seconds</code>, so a hung job costs
-at most the cap. Compare the same pipeline on a GPU notebook instance
-(the optional GPU-notebook episode at the end of the lesson): the meter
-runs until someone stops it, and a forgotten <code>ml.g5.xlarge</code>
-is <code>$34</code> a day.</p>
+of questions as the Bedrock episode (ten per evidence type, 53 questions
+once the two papers the corpus lacks are dropped); all 220 is about an
+hour of generation, so run that at home. Both jobs carry
+<code>max_runtime_in_seconds</code>, so a hung job costs at most the
+cap. Compare the same pipeline on a GPU notebook instance (the optional
+GPU-notebook episode at the end of the lesson): the meter runs until
+someone stops it, and a forgotten <code>ml.g5.xlarge</code> is
+<code>$34</code> a day.</p>
 <p>The trade-off is latency. A job takes minutes to start, so this
 pattern is for batch questions, not a chatbot. For interactive use,
 Bedrock answers in seconds; for interactive use of a model Bedrock does
@@ -756,8 +757,7 @@ field.</p>
 <code>transformers</code> and PyTorch, which is all the embedding
 wrapper and the generator need, so both jobs start as soon as the
 instance is up. A <code>requirements.txt</code> next to a script would
-be pip-installed before it runs; the 27B variant in the cost callout is
-the one case this episode needs it.</p>
+be pip-installed before it runs; neither job here has one.</p>
 <div id="why-not-vllm" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -770,10 +770,10 @@ the one case this episode needs it.</p>
 open-weight models with: you give it a model name, it loads the weights
 onto the GPU and answers chat requests, batching many at once so that
 throughput scales. That is what you want behind an API with users. This
-job sends about 120 prompts one at a time, so the batching would go
+job sends about 100 prompts one at a time, so the batching would go
 unused, and the install is several gigabytes of billed GPU time.
 <code>transformers.generate</code>, already in the container, does the
-same prompts in about fifteen minutes with nothing to install. The
+same prompts in about thirteen minutes with nothing to install. The
 GPU-notebook episode uses vLLM, where its 8-bit weights are needed to
 fit a larger model.</p>
 </div>
@@ -883,11 +883,11 @@ AI, and then find the “Data Preparation” dropdown menu on the left side
 panel. Click that to find “Processing jobs”, or open <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs" class="external-link">this
 link</a> in the class region (change <code>us-east-2</code> in it for
 another region).</p>
-<p>It takes about 15 minutes in total for the job to complete: five of
-provisioning the instance and downloading the embedding model, ten of
-embedding. This is the downside of launching jobs, but the good news is
-that we only need to launch one embedding job for our RAG pipeline. This
-strategy also ensures we’re only paying for the GPU while the job
+<p>It takes about 10 minutes in total for the job to complete: a couple
+of provisioning the instance and downloading the embedding model, eight
+of embedding. This is the downside of launching jobs, but the good news
+is that we only need to launch one embedding job for our RAG pipeline.
+This strategy also ensures we’re only paying for the GPU while the job
 runs.</p>
 </div>
 <div class="section level3">
@@ -920,8 +920,8 @@ bucket, written by Job 1)</li>
 (shared bucket)</li>
 </ul><p>The <code>--per_type 10</code> argument draws the same stratified
 sample the Bedrock episode scored, ten questions per evidence type with
-the same seed, so the two runs are compared on the same 55 questions;
-leave it out to answer all 245. Open
+the same seed, so the two runs are compared on the same questions; leave
+it out to answer them all. Open
 <code>scripts/wattbot_rag_batch.py</code> and read <code>main</code>
 before launching it. It is short, because the pipeline lives in
 <code>scripts/wattbot_rag.py</code>, the same module the Bedrock episode
@@ -985,7 +985,7 @@ cache at that volume, which is where the weights go.</p>
 <span id="cb9-15"><a href="#cb9-15" tabindex="-1" aria-label="code-block-9-15"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
 <span id="cb9-16"><a href="#cb9-16" tabindex="-1" aria-label="code-block-9-16"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
 <span id="cb9-17"><a href="#cb9-17" tabindex="-1" aria-label="code-block-9-17"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb9-18"><a href="#cb9-18" tabindex="-1" aria-label="code-block-9-18"></a>    max_runtime_in_seconds<span class="op">=</span><span class="dv">2</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span>,   <span class="co"># 2 hours, in seconds; the estimate is 25 minutes</span></span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1" aria-label="code-block-9-18"></a>    max_runtime_in_seconds<span class="op">=</span><span class="dv">2</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span>,   <span class="co"># 2 hours, in seconds; the estimate is 20 minutes</span></span>
 <span id="cb9-19"><a href="#cb9-19" tabindex="-1" aria-label="code-block-9-19"></a>)</span>
 <span id="cb9-20"><a href="#cb9-20" tabindex="-1" aria-label="code-block-9-20"></a></span>
 <span id="cb9-21"><a href="#cb9-21" tabindex="-1" aria-label="code-block-9-21"></a>start <span class="op">=</span> time.time()</span>
@@ -1038,7 +1038,7 @@ named after your job; click it. The text is the container’s stdout, kept
 after the job ends, updated while it runs (refresh). You will see, in
 order: the weight download (16 GB in shards),
 <code>Loading model with transformers</code>, then one line per
-question. The whole job is the 25 minutes in the cost callout; the
+question. The whole job is the 20 minutes in the cost callout; the
 generation is the second half of it.</p>
 </section><section><h2 class="section-heading" id="step-4-download-predictions-and-evaluate">Step 4 – Download predictions and evaluate<a class="anchor" aria-label="anchor" href="#step-4-download-predictions-and-evaluate"></a></h2>
 <hr class="half-width"><p>Finally, we download <code>wattbot_solutions.csv</code> from S3,
@@ -1072,9 +1072,12 @@ used, so the two runs compare directly.</p>
 <p>Compare the overall score with the Bedrock run. The retrieval logic,
 prompts and scoring are identical, so any difference is the two models:
 <code>gte-large</code> versus Titan for retrieval, Qwen3-8B versus
-DeepSeek V3 for generation. An 8B model against a 671B one is not a fair
-fight, and the gap is the price of a model you host yourself on one
-small GPU.</p>
+DeepSeek V3 for generation. In one run on the same 53 questions,
+Qwen3-8B scored 0.57 against DeepSeek V3’s 0.66: its citations were
+better (F1 0.70 against 0.57) and its answers worse (51% against 66%
+correct), with the cross-paper and calculation questions losing the
+most. An 8B model against a 671B one is not a fair fight, and the gap is
+the price of a model you host yourself on one small GPU.</p>
 <div id="what-did-the-two-jobs-cost" class="callout challenge">
 <div class="callout-square">
 <i class="callout-icon" data-feather="zap"></i>
@@ -1105,7 +1108,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -1131,17 +1134,16 @@ the billed run.</p>
 <span id="cb12-16"><a href="#cb12-16" tabindex="-1" aria-label="code-block-12-16"></a>total <span class="op">+=</span> job_cost(rag_processor.latest_job.job_name, <span class="fl">1.41</span>)</span>
 <span id="cb12-17"><a href="#cb12-17" tabindex="-1" aria-label="code-block-12-17"></a><span class="bu">print</span>(<span class="ss">f"GPU total for the episode: $</span><span class="sc">{</span>total<span class="sc">:.2f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<p>Expect the embedding job to bill about 10 minutes (about
-<code>$0.25</code>) and the RAG job about 20 minutes (about
-<code>$0.45</code>), so roughly <code>$0.70</code> of GPU time against
-the callout’s <code>$0.95</code>. In the RAG job’s log, the first 3-4
-minutes of the billed window are the download and the model load; the
-rest is the questions, two generation calls each. Setup is a third of
-what you paid for, which is the argument for keeping an
-<code>HF_HOME</code> cache on S3 (skip the download) once a job is run
-routinely. The Bedrock run of the same questions cost cents, and the
-self-hosted route is only justified here because the model is not in the
-catalog.</p>
+<p>Expect the embedding job to bill about 8 minutes (about
+<code>$0.20</code>) and the RAG job about 17 minutes (about
+<code>$0.40</code>), so about <code>$0.60</code> of GPU time, the
+callout’s figure. In the RAG job’s log, the first 4 minutes of the
+billed window are the download and the model load; the rest is the
+questions, two generation calls each. Setup is a third of what you paid
+for, which is the argument for keeping an <code>HF_HOME</code> cache on
+S3 (skip the download) once a job is run routinely. The Bedrock run of
+the same questions cost cents, and the self-hosted route is only
+justified here because the model is not in the catalog.</p>
 </div>
 </div>
 </div>
@@ -1169,7 +1171,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still downloading or
@@ -1179,7 +1181,7 @@ is empty because the script never reached the point of writing
 <code>wattbot_solutions.csv</code>, and the bill is the full 600
 seconds: 600 / 3600 × <code>$1.41</code> ≈ <code>$0.24</code> for
 nothing. A cap has to leave room for the setup that precedes the work,
-which is why ours is five times the 25-minute estimate rather than ten
+which is why ours is six times the 20-minute estimate rather than ten
 percent over it.</p>
 <p>Under the caps we set, the worst case for a job that hangs (a stuck
 download, a model that never finishes loading) is 2 h ×
