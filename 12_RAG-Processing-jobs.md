@@ -80,7 +80,7 @@ Jobs run in containers, so the code they execute has to be shipped with the job:
 - `scripts/wattbot_rag_batch.py`: the WattBot RAG loop as a batch job: loads the inputs, runs the generator, writes `wattbot_solutions.csv`.
 - `scripts/wattbot_rag.py`: the shared pipeline logic (retrieval, prompts, answer parsing, `run_single_qa`, the scorer) that the Bedrock episode imported too. The batch script imports it, so it ships with the job; the notebook imports it for scoring.
 
-Each job gets its own source directory, because SageMaker uploads the whole directory into the container. `code_embed/` holds the embedding job, `code_rag/` the RAG job, and a copy of `wattbot_rag.py` sits next to the notebook for the scoring step at the end.
+The cell below copies them out of the lesson clone into the project folder, one directory per job: `code_embed/` for the embedding job and `code_rag/` for the RAG job. The split follows from how a job gets its code. `run(source_dir=...)` uploads that whole directory into the container, the same way the training estimator's `source_dir` did in the fine-tuning episode, so each directory holds exactly the files its job imports. The copies of `wattbot_rag.py` and `Score.py` next to the notebook are for the scoring step at the end, which runs in the notebook, not in a job.
 
 ```python
 !mkdir -p /home/ec2-user/SageMaker/wattbot   # the same project folder the Bedrock episode used, beside the lesson clone
