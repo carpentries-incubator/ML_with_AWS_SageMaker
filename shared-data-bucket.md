@@ -51,7 +51,7 @@ If the bucket already exists (created in the console, or left from last term), `
 
 ## 2. Make it readable by the learner roles
 
-Learners reach the bucket through the execution role their notebook instance and jobs assume: `ml-sagemaker-bedrock-use`, which the episodes tell them to pick, or the older SageMaker-only `ml-sagemaker-use` if a notebook was created with it. This policy lets both read and list, and nothing else. `s3:ListBucket` is required because a training job's input channel lists the prefix before downloading it. No `PutObject`: learners never write here.
+Learners reach the bucket through the execution role their notebook instance and jobs assume: `ml-sagemaker-use`, which the episodes tell them to pick, or `ml-sagemaker-bedrock-use`, an equivalent role from an earlier term. This policy lets both read and list, and nothing else. `s3:ListBucket` is required because a training job's input channel lists the prefix before downloading it. No `PutObject`: learners never write here.
 
 ```bash
 cat > /tmp/policy.json <<JSON

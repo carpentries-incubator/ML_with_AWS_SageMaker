@@ -99,38 +99,9 @@ The habit is the same as for instances: pick the cheapest candidate that scores 
 
 ## Notebook + dataset setup
 
-For this episode you need a SageMaker notebook instance, but **not a GPU one**. A small CPU instance such as `ml.t3.medium` is enough, because the models run on Bedrock rather than in the notebook. The notebook's execution role must allow Bedrock access, which the default SageMaker role does not. On the class account that is the `ml-sagemaker-bedrock-use` role you picked when creating the notebook instance. If your instance was created with the older `ml-sagemaker-use` role, the first Bedrock call fails with an access-denied error: stop the instance, choose **Edit**, change the IAM role under *Permissions and encryption*, click **Update notebook instance**, and wait for the status to go from *Updating* back to *Stopped* (one to three minutes) before starting it. Reopening Edit during that wait shows the old role; the details page shows the new one once the update has landed. On your own account, attach the Bedrock policy from the *Account preparation checklist* instructor page to your role before starting.
+For this episode you need a SageMaker notebook instance, but **not a GPU one**. A small CPU instance such as `ml.t3.medium` is enough, because the models run on Bedrock rather than in the notebook. The notebook's execution role must allow Bedrock access, which a default SageMaker role does not. On the class account both roles the console offers carry it. On your own account, attach the Bedrock policy from the *Account preparation checklist* instructor page to your role before starting; the first Bedrock call fails with an access-denied error naming the role until it is there.
 
 See [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for further guidance on instance types.
-
-::::::::::::::::::::::::::::::::::::: callout
-
-### If the console will not take the role: fix it from CloudShell
-
-The create and edit forms sometimes show the role you picked and save the old one. If the first Bedrock call fails with `AccessDeniedException` naming `ml-sagemaker-use`, do the change from [CloudShell](https://us-east-2.console.aws.amazon.com/cloudshell/home?region=us-east-2) (the terminal icon in the console's top bar) instead, where the API reports what it did. First find your instance and see which role it has:
-
-```bash
-aws sagemaker list-notebook-instances --query 'NotebookInstances[].[NotebookInstanceName,NotebookInstanceStatus,RoleArn]' --output table
-```
-
-Then, with your instance's name, stop it, change the role, wait for the update to land, and start it again. The role change only applies to a stopped instance, and the status goes *Updating* for one to three minutes before it is *Stopped* again and can be started.
-
-```bash
-NB=<your-notebook-instance-name>
-ROLE=arn:aws:iam::$(aws sts get-caller-identity --query Account --output text):role/ml-sagemaker-bedrock-use
-
-aws sagemaker stop-notebook-instance --notebook-instance-name $NB
-aws sagemaker wait notebook-instance-stopped --notebook-instance-name $NB
-aws sagemaker update-notebook-instance --notebook-instance-name $NB --role-arn $ROLE
-until [ "$(aws sagemaker describe-notebook-instance --notebook-instance-name $NB --query NotebookInstanceStatus --output text)" = "Stopped" ]; do sleep 10; done
-aws sagemaker describe-notebook-instance --notebook-instance-name $NB --query RoleArn --output text   # should now end in ml-sagemaker-bedrock-use
-aws sagemaker start-notebook-instance --notebook-instance-name $NB
-```
-
-Reopen JupyterLab once the status is *InService*, and rerun from Step 1: `role` printed there must end in `ml-sagemaker-bedrock-use`.
-
-::::::::::::::::::::::::::::::::::::::::::::::::
-
 
 ### Two buckets, no uploads
 
@@ -151,7 +122,7 @@ If there is no instructor-staged bucket, stage the three input files in your own
 
 Three things are new here compared with the training episodes, so the setup is split into four cells.
 
-The session, region and S3 client are as before, plus the role, printed so you can see which one the instance really has.
+The session, region and S3 client are as before, plus the execution role, printed because the Bedrock calls below run as it.
 
 ```python
 import os
@@ -171,7 +142,7 @@ session = sagemaker.Session()
 region = session.boto_region_name
 s3 = boto3.client("s3", region_name=region)
 role = sagemaker.get_execution_role()
-print("Role:", role)   # must end in ml-sagemaker-bedrock-use on the class account; if not, see the CloudShell callout above
+print("Role:", role)   # the execution role: on the class account it carries the Bedrock permissions; on your own, it must
 ```
 
 **The models.** RAG needs two: an embedding model, which turns a piece of text into a vector so that similar passages land near each other, and a generation model, the chat model that writes the answer from the passages it is given. Both are catalog models on Bedrock, named by a model ID; the [model catalog](https://us-east-2.console.aws.amazon.com/bedrock/home?region=us-east-2#/model-catalog) in the console lists everything available in the region with its ID and price, and the [supported models page](https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html) in the documentation is the same list as a table. Prices are per million tokens on the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/): in October 2026, DeepSeek V3 on demand is `$0.62` in and `$1.85` out, and Titan Text Embeddings V2 is `$0.02` in, which is why the whole WattBot run below costs cents. We write the IDs down now but will not call them by these IDs directly: the cost-tracking step below wraps each one in a tagged inference profile first, because that is the only way Bedrock spend gets attributed to a project.
