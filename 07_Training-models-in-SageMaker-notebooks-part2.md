@@ -472,7 +472,7 @@ desc_2x = job_cost_report(pytorch_estimator_2x.latest_training_job.name, prices[
 print(f"Single-instance job billed {desc_cpu['BillableTimeInSeconds']/60:.1f} min; two-instance job billed {desc_2x['BillableTimeInSeconds']*2/60:.1f} min")
 ```
 
-Look at the job's log in CloudWatch, the AWS logging service introduced in the last episode ([Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training) in the SageMaker console, your job, **View logs**): there are two log streams, `algo-1` and `algo-2`, and each one prints all 1000 epochs. The wall-clock time is about the same as the single-instance run (slightly longer, if anything, because two instances have to be provisioned), and the billable minutes are double.
+Look at the job's log: open [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training), click the job's name, scroll to **Monitor**, click **View logs**. This time CloudWatch lists two streams, `algo-1` and `algo-2`, and each one prints all 1000 epochs. The wall-clock time is about the same as the single-instance run (slightly longer, if anything, because two instances have to be provisioned), and the billable minutes are double.
 
 ::::::::::::::::::::::::::::::::::::::: callout
 #### What distributed training needs

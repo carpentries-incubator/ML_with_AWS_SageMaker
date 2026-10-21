@@ -129,7 +129,7 @@ For small‑ to medium‑sized models (< 70 B), you *can* pick a GPU instance (e
 But it is the **most expensive way to run RAG and the easiest one to get wrong**. The GPU bills by the hour from the moment the instance starts until you stop it, including the long stretches while you download PDFs, chunk text, read results, or go to lunch. It is also the route most likely to be forgotten, because a notebook instance looks like a workspace rather than a running job. If you use this approach:
 
 - Treat it as a learning exercise, not a deployment pattern.
-- Stop the instance the moment you are done, and **verify** the status in the console.
+- Stop the instance the moment you are done, and **verify** the status on the [Notebook instances page](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/notebook-instances).
 - Set up an [AWS Budget](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html) alert and consider a [lifecycle configuration](https://docs.aws.amazon.com/sagemaker/latest/dg/notebook-lifecycle-config.html) that auto‑stops idle notebooks.
 - For larger models the hourly rate (e.g., `$25`/hour for a p4d.24xlarge) becomes a limiting factor very quickly.
 
