@@ -531,7 +531,8 @@ billed</strong>:</p>
 <code>$0</code> — nothing is running between calls</td>
 <td>Full hourly rate, 24/7, whether or not you use it</td>
 </tr><tr><td><strong>What you must remember to do</strong></td>
-<td>Nothing</td>
+<td>Know the per-token price before a big batch; route calls through a
+tagged profile</td>
 <td>Stop or delete the instance every time you finish</td>
 </tr><tr><td><strong>Model updates</strong></td>
 <td>Managed by AWS / the provider</td>
@@ -674,7 +675,12 @@ skipping it leaves the usage anonymous on the bill.</li>
 </section><section><h2 class="section-heading" id="approaches-to-running-rag-on-aws">Approaches to Running RAG on AWS<a class="anchor" aria-label="anchor" href="#approaches-to-running-rag-on-aws"></a></h2>
 <hr class="half-width"><p>With that framing, here are the main patterns, ordered from “reach
 for this first” to “only when you really need it.”</p>
-<div class="section level3">
+<figure><img src="fig/rag-approaches.svg" alt="Comparison table of four ways to run RAG on AWS: Bedrock API (default, pay per token, nothing to shut down), Processing job (batch with open models, bills per second while the job runs, terminates itself), GPU notebook (learning and debugging only, bills per hour until stopped, about $90 if forgotten over a weekend) and Inference endpoint (steady traffic only, bills 24/7, about $1,000 if idle for a month)." class="figure mx-auto d-block"><div class="figcaption">Four columns, Bedrock API, Processing job, GPU
+notebook and Inference endpoint, compared on where the model runs, what
+runs between calls, billing unit, latency, model choice, what you must
+remember, a cost example and which episode covers it; Bedrock is marked
+as the default and Processing jobs as the safe way to use a GPU</div>
+</figure><div class="section level3">
 <h3 id="amazon-bedrock-managed-embedding-and-generation-apis-default">1. Amazon Bedrock — managed embedding and generation APIs
 (default)<a class="anchor" aria-label="anchor" href="#amazon-bedrock-managed-embedding-and-generation-apis-default"></a></h3>
 <p>Call embedding and generation models via API from your RAG pipeline.

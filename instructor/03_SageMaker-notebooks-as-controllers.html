@@ -625,30 +625,30 @@ applies here too.</p>
 <div class="section level3">
 <h3 id="load-pre-filled-jupyter-notebooks">Load pre-filled Jupyter notebooks<a class="anchor" aria-label="anchor" href="#load-pre-filled-jupyter-notebooks"></a></h3>
 <p>The new instance appears in the list with status
-<code>Pending</code>; after a few minutes it changes to
-<code>InService</code>. Once it does, click <strong>Open
-JupyterLab</strong> next to it. In JupyterLab, create a new notebook
-with the <code>conda_python3</code> kernel (we aren’t training anything
-yet, so the plain Python environment is enough).</p>
+<code>Pending</code>. It takes three to five minutes to change to
+<code>InService</code>, and the <strong>Open JupyterLab</strong> link
+does not appear until it does; refreshing the page does not speed it up.
+Starting a stopped instance later takes about as long. Once it is
+<code>InService</code>, click <strong>Open JupyterLab</strong> next to
+it. In JupyterLab, create a new notebook with the
+<code>conda_python3</code> kernel (we aren’t training anything yet, so
+the plain Python environment is enough).</p>
 <p>In the new notebook, run:</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="ex">!pwd</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="ex">!ls</span> ..</span></code></pre>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="ex">!ls</span></span></code></pre>
 </div>
 <p>The first line prints <code>/home/ec2-user/SageMaker</code>: new
-notebooks start in that folder. The second lists its parent, the
-instance’s home directory, which holds AWS’s own setup: the
-<code>anaconda3</code> folder with the conda environments behind the
-kernel list, AWS’s <code>sample-notebooks</code>, and a pile of license
-files. <code>SageMaker/</code> is the one folder that is different. It
-is a separate disk, the volume whose size sits under <strong>Additional
-configuration</strong> on the create form (5 GB by default). Everything
-else in the home directory lives on the system disk and is reset when
-the instance stops; <code>SageMaker/</code> is the only place that
-survives a stop. JupyterLab’s file browser opens there for that reason,
-and it is where everything in this lesson goes.</p>
+notebooks start in that folder. The second lists it, and the notebook
+you just created is the only thing there. <code>SageMaker/</code> is a
+separate disk, the volume whose size sits under <strong>Additional
+configuration</strong> on the create form (5 GB by default). The rest of
+the instance lives on the system disk and is reset when the instance
+stops; <code>SageMaker/</code> is the only place that survives a stop.
+JupyterLab’s file browser opens there for that reason, and it is where
+everything in this lesson goes.</p>
 <p>Now clone the lesson repository into it:</p>
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>

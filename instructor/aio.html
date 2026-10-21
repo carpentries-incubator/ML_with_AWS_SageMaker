@@ -1432,7 +1432,7 @@ charge?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -1846,30 +1846,30 @@ applies here too.</p>
 <h3 id="load-pre-filled-jupyter-notebooks">Load pre-filled Jupyter notebooks<a class="anchor" aria-label="anchor" href="#load-pre-filled-jupyter-notebooks"></a>
 </h3>
 <p>The new instance appears in the list with status
-<code>Pending</code>; after a few minutes it changes to
-<code>InService</code>. Once it does, click <strong>Open
-JupyterLab</strong> next to it. In JupyterLab, create a new notebook
-with the <code>conda_python3</code> kernel (we aren’t training anything
-yet, so the plain Python environment is enough).</p>
+<code>Pending</code>. It takes three to five minutes to change to
+<code>InService</code>, and the <strong>Open JupyterLab</strong> link
+does not appear until it does; refreshing the page does not speed it up.
+Starting a stopped instance later takes about as long. Once it is
+<code>InService</code>, click <strong>Open JupyterLab</strong> next to
+it. In JupyterLab, create a new notebook with the
+<code>conda_python3</code> kernel (we aren’t training anything yet, so
+the plain Python environment is enough).</p>
 <p>In the new notebook, run:</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode sh" tabindex="0"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="ex">!pwd</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="ex">!ls</span> ..</span></code></pre>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="ex">!ls</span></span></code></pre>
 </div>
 <p>The first line prints <code>/home/ec2-user/SageMaker</code>: new
-notebooks start in that folder. The second lists its parent, the
-instance’s home directory, which holds AWS’s own setup: the
-<code>anaconda3</code> folder with the conda environments behind the
-kernel list, AWS’s <code>sample-notebooks</code>, and a pile of license
-files. <code>SageMaker/</code> is the one folder that is different. It
-is a separate disk, the volume whose size sits under <strong>Additional
-configuration</strong> on the create form (5 GB by default). Everything
-else in the home directory lives on the system disk and is reset when
-the instance stops; <code>SageMaker/</code> is the only place that
-survives a stop. JupyterLab’s file browser opens there for that reason,
-and it is where everything in this lesson goes.</p>
+notebooks start in that folder. The second lists it, and the notebook
+you just created is the only thing there. <code>SageMaker/</code> is a
+separate disk, the volume whose size sits under <strong>Additional
+configuration</strong> on the create form (5 GB by default). The rest of
+the instance lives on the system disk and is reset when the instance
+stops; <code>SageMaker/</code> is the only place that survives a stop.
+JupyterLab’s file browser opens there for that reason, and it is where
+everything in this lesson goes.</p>
 <p>Now clone the lesson repository into it:</p>
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -3155,7 +3155,7 @@ potential issues early. <strong>In your group, discuss:</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Which checks do you think are most critical before scaling up?</p>
 <ul>
@@ -3273,7 +3273,7 @@ group.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li><p><strong>Data Preprocessing</strong>: The script fills missing
@@ -3542,7 +3542,7 @@ data. Which instance would you pick for the training job, and why?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
 <p>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
 GB of data wants about 32 GB of memory: <code>ml.m5.2xlarge</code> (8
@@ -6255,7 +6255,7 @@ and the runtime print.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ul>
 <li>
@@ -6305,7 +6305,7 @@ in the notebook?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>The tuner can only vary what the script reads. Right now
 <code>train_nn.py</code> has no <code>--batch_size</code> argument and
@@ -6952,7 +6952,7 @@ realistic project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5: full fine-tuning a 7B model needs ~112 GB
 plus activations, and the g5 has 24 GB. On the p4d the 8 × 40 GB = 320
@@ -7258,7 +7258,7 @@ whole bill.</li>
 <button class="accordion-button instructor-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInstructor1" aria-expanded="false" aria-controls="collapseInstructor1">
   <h3 class="accordion-header" id="headingInstructor1">  <div class="note-square"><i aria-hidden="true" class="callout-icon" data-feather="edit-2"></i></div> Before class (instructor checklist) </h3>
 </button>
-<div id="collapseInstructor1" class="accordion-collapse collapse" aria-labelledby="headingInstructor1" data-bs-parent="#accordionInstructor1">
+<div id="collapseInstructor1" class="accordion-collapse collapse" data-bs-parent="#accordionInstructor1" aria-labelledby="headingInstructor1">
 <div class="accordion-body">
 <p>Students never download the data themselves; four things have to be
 in place before the session. Each is written out in the instructor
@@ -8059,7 +8059,7 @@ will compare it to the real bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Expect about 32 billed minutes. Scoring is the line most likely to
@@ -8436,7 +8436,7 @@ CER. Did the extra pixels help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -8476,7 +8476,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
 <div class="accordion-body">
 <p>Startup and upload (~6 min, <code>$0.26</code> at
 <code>$2.61</code>/h) do not speed up: the container pull and the S3
@@ -8667,7 +8667,8 @@ billed</strong>:</p>
 </tr>
 <tr>
 <td><strong>What you must remember to do</strong></td>
-<td>Nothing</td>
+<td>Know the per-token price before a big batch; route calls through a
+tagged profile</td>
 <td>Stop or delete the instance every time you finish</td>
 </tr>
 <tr>
@@ -8865,7 +8866,12 @@ skipping it leaves the usage anonymous on the bill.</li>
 <hr class="half-width">
 <p>With that framing, here are the main patterns, ordered from “reach
 for this first” to “only when you really need it.”</p>
-<div class="section level3">
+<figure><img src="../fig/rag-approaches.svg" alt="Comparison table of four ways to run RAG on AWS: Bedrock API (default, pay per token, nothing to shut down), Processing job (batch with open models, bills per second while the job runs, terminates itself), GPU notebook (learning and debugging only, bills per hour until stopped, about $90 if forgotten over a weekend) and Inference endpoint (steady traffic only, bills 24/7, about $1,000 if idle for a month)." class="figure mx-auto d-block"><div class="figcaption">Four columns, Bedrock API, Processing job, GPU
+notebook and Inference endpoint, compared on where the model runs, what
+runs between calls, billing unit, latency, model choice, what you must
+remember, a cost example and which episode covers it; Bedrock is marked
+as the default and Processing jobs as the safe way to use a GPU</div>
+</figure><div class="section level3">
 <h3 id="amazon-bedrock-managed-embedding-and-generation-apis-default">1. Amazon Bedrock — managed embedding and generation APIs
 (default)<a class="anchor" aria-label="anchor" href="#amazon-bedrock-managed-embedding-and-generation-apis-default"></a>
 </h3>
@@ -9330,6 +9336,45 @@ Amazon models, and partner models), open the <strong>Model
 catalog</strong> in the Amazon Bedrock console. Each entry provides a
 model card with capabilities, typical use cases, and pricing details so
 learners can explore alternatives for their own RAG systems.</p>
+<div id="choosing-the-two-models" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<span class="callout-header">Callout</span>
+<div id="choosing-the-two-models" class="callout-inner">
+<h3 class="callout-title">Choosing the two models</h3>
+<div class="callout-content">
+<p>The catalog tells you what exists and what it costs; it does not tell
+you what is good. Three places do, and all three are free to read:</p>
+<ul>
+<li>
+<strong>Embedding models</strong>: the <a href="https://huggingface.co/spaces/mteb/leaderboard" class="external-link">MTEB
+leaderboard</a> scores embedding models on retrieval benchmarks. Filter
+to the retrieval task and your language; the top of the table changes
+every few months, and Titan V2 is a sound middle-of-the-pack choice that
+Bedrock serves without setup.</li>
+<li>
+<strong>Generation models</strong>: <a href="https://lmarena.ai/" class="external-link">LMArena</a> ranks chat models by blind human
+preference, and <a href="https://artificialanalysis.ai/" class="external-link">Artificial
+Analysis</a> plots quality against price per million tokens, which is
+the chart that matters for RAG: the answer is written from retrieved
+text, so a mid-priced model often reads as well as a flagship at a tenth
+of the cost.</li>
+<li>
+<strong>Your own questions</strong>: the benchmarks rank models on
+other people’s data. <code>train_QA.csv</code> has labelled questions
+for this corpus, and the evaluation at the end of this episode scores a
+model on them and prices the run from its token counts. Changing
+<code>base_generation_model_id</code> and rerunning is the whole
+experiment. A model that wins on a leaderboard and loses on your
+questions has told you something the leaderboard cannot.</li>
+</ul>
+<p>The habit is the same as for instances: pick the cheapest candidate
+that scores well enough, measure it on your data, and move up only when
+the measurement says to.</p>
+</div>
+</div>
+</div>
 </div>
 </section><section><h2 class="section-heading" id="notebook-dataset-setup">Notebook + dataset setup<a class="anchor" aria-label="anchor" href="#notebook-dataset-setup"></a>
 </h2>
@@ -9343,9 +9388,14 @@ account that is the <code>ml-sagemaker-bedrock-use</code> role you
 picked when creating the notebook instance. If your instance was created
 with the older <code>ml-sagemaker-use</code> role, the first Bedrock
 call fails with an access-denied error: stop the instance, choose
-<strong>Edit</strong>, change the IAM role, and start it again. On your
-own account, attach the policy in the “Permissions and verification”
-callout below to your role before starting.</p>
+<strong>Edit</strong>, change the IAM role under <em>Permissions and
+encryption</em>, click <strong>Update notebook instance</strong>, and
+wait for the status to go from <em>Updating</em> back to
+<em>Stopped</em> (one to three minutes) before starting it. Reopening
+Edit during that wait shows the old role; the details page shows the new
+one once the update has landed. On your own account, attach the policy
+in the “Permissions and verification” callout below to your role before
+starting.</p>
 <p>See <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
 for ML</a> for further guidance on instance types.</p>
 <div class="section level3">
@@ -9425,17 +9475,25 @@ setup is split into four cells.</p>
 turns a piece of text into a vector so that similar passages land near
 each other, and a generation model, the chat model that writes the
 answer from the passages it is given. Both are catalog models on
-Bedrock, named by a model ID. We write the IDs down now but will not
-call them by these IDs directly: the cost-tracking step below wraps each
-one in a tagged inference profile first, because that is the only way
-Bedrock spend gets attributed to a project.</p>
+Bedrock, named by a model ID; the <a href="https://us-east-2.console.aws.amazon.com/bedrock/home?region=us-east-2#/model-catalog" class="external-link">model
+catalog</a> in the console lists everything available in the region with
+its ID and price, and the <a href="https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html" class="external-link">supported
+models page</a> in the documentation is the same list as a table. Prices
+are per million tokens on the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>:
+in October 2026, DeepSeek V3 on demand is <code>$0.62</code> in and
+<code>$1.85</code> out, and Titan Text Embeddings V2 is
+<code>$0.02</code> in, which is why the whole WattBot run below costs
+cents. We write the IDs down now but will not call them by these IDs
+directly: the cost-tracking step below wraps each one in a tagged
+inference profile first, because that is the only way Bedrock spend gets
+attributed to a project.</p>
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1" aria-label="code-block-2-1"></a><span class="co"># Base model IDs. Any chat model in the Bedrock catalog works as the generator (a Claude or Llama ID, say),</span></span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1" aria-label="code-block-2-2"></a><span class="co"># because we call it through the provider-neutral `converse` API.</span></span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a>base_generation_model_id <span class="op">=</span> <span class="st">"deepseek.v3-v1:0"</span>             <span class="co"># writes the answers</span></span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a>base_embedding_model_id <span class="op">=</span> <span class="st">"amazon.titan-embed-text-v2:0"</span>  <span class="co"># turns text into vectors for retrieval</span></span></code></pre>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a>base_generation_model_id <span class="op">=</span> <span class="st">"deepseek.v3-v1:0"</span>             <span class="co"># writes the answers; $0.62 in / $1.85 out per million tokens (Oct 2026)</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a>base_embedding_model_id <span class="op">=</span> <span class="st">"amazon.titan-embed-text-v2:0"</span>  <span class="co"># turns text into vectors for retrieval; $0.02 per million tokens</span></span></code></pre>
 </div>
 <p><strong>The files.</strong> The inputs live in the shared bucket: the
 paper list, the questions with their answers, and the zipped corpus of
@@ -9739,7 +9797,7 @@ records written once when the corpus was staged.</p>
 <span id="cb10-62"><a href="#cb10-62" tabindex="-1" aria-label="code-block-10-62"></a>page_docs[<span class="dv">0</span>] <span class="cf">if</span> page_docs <span class="cf">else</span> <span class="va">None</span></span></code></pre>
 </div>
 </div>
-</section><section><h2 class="section-heading" id="step-6-simple-explicit-text-chunking">Step 6 – Simple, explicit text chunking<a class="anchor" aria-label="anchor" href="#step-6-simple-explicit-text-chunking"></a>
+</section><section><h2 class="section-heading" id="step-6-text-chunking">Step 6 – Text chunking<a class="anchor" aria-label="anchor" href="#step-6-text-chunking"></a>
 </h2>
 <hr class="half-width">
 <p>RAG systems typically break documents into <strong>chunks</strong> so
@@ -9954,7 +10012,7 @@ exists, so re‑running the notebook does not create duplicates.</p>
 <span id="cb14-41"><a href="#cb14-41" tabindex="-1" aria-label="code-block-14-41"></a></span>
 <span id="cb14-42"><a href="#cb14-42" tabindex="-1" aria-label="code-block-14-42"></a>        resp <span class="op">=</span> bedrock.create_inference_profile(</span>
 <span id="cb14-43"><a href="#cb14-43" tabindex="-1" aria-label="code-block-14-43"></a>            inferenceProfileName<span class="op">=</span>profile_name,</span>
-<span id="cb14-44"><a href="#cb14-44" tabindex="-1" aria-label="code-block-14-44"></a>            description<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>project<span class="sc">}</span><span class="ss"> / </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss"> WattBot RAG (</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">) -&gt; </span><span class="sc">{</span>base_model_id<span class="sc">}</span><span class="ss">"</span>,</span>
+<span id="cb14-44"><a href="#cb14-44" tabindex="-1" aria-label="code-block-14-44"></a>            description<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>project<span class="sc">}</span><span class="ss"> </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss"> WattBot RAG </span><span class="sc">{</span>label<span class="sc">}</span><span class="ss"> on </span><span class="sc">{</span>base_model_id<span class="sc">}</span><span class="ss">"</span>,   <span class="co"># letters, digits, : and . only, single spaces or hyphens between</span></span>
 <span id="cb14-45"><a href="#cb14-45" tabindex="-1" aria-label="code-block-14-45"></a>            modelSource<span class="op">=</span>{<span class="st">"copyFrom"</span>: _source_arn(base_model_id)},   <span class="co"># the profile is an alias for one base model</span></span>
 <span id="cb14-46"><a href="#cb14-46" tabindex="-1" aria-label="code-block-14-46"></a>            tags<span class="op">=</span>profile_tags,   <span class="co"># usage billed through the profile carries these tags; raw model-ID calls carry none</span></span>
 <span id="cb14-47"><a href="#cb14-47" tabindex="-1" aria-label="code-block-14-47"></a>        )</span>
