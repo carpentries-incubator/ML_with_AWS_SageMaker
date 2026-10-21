@@ -1432,7 +1432,7 @@ charge?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -3155,7 +3155,7 @@ potential issues early. <strong>In your group, discuss:</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Which checks do you think are most critical before scaling up?</p>
 <ul>
@@ -3273,7 +3273,7 @@ group.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li><p><strong>Data Preprocessing</strong>: The script fills missing
@@ -3542,7 +3542,7 @@ data. Which instance would you pick for the training job, and why?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <p>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
 GB of data wants about 32 GB of memory: <code>ml.m5.2xlarge</code> (8
@@ -4916,7 +4916,7 @@ goes next to it.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>There is no single answer; the solution is the written estimate. One
 worked example for scale: a 7B language model fully fine-tuned on 50,000
@@ -5105,7 +5105,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -8822,9 +8822,9 @@ with DeepSeek V3</td>
 </table>
 <p>A single forgotten weekend on the <em>cheapest</em> GPU instance
 costs more than fifty full runs of the pipeline on Bedrock; a forgotten
-weekend on the <code>ml.g6e.xlarge</code> the later episodes use costs
-more than a hundred. That asymmetry is why Bedrock is the default, not
-just an alternative.</p>
+weekend on the <code>ml.g6e.xlarge</code> the optional GPU-notebook
+episode uses costs more than a hundred. That asymmetry is why Bedrock is
+the default, not just an alternative.</p>
 <div id="bedrock-trade-offs-to-know-about" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -9056,15 +9056,10 @@ lowercase <code>key</code>/<code>value</code>, while SageMaker’s is
 <code>Key</code>/<code>Value</code>; the tag <em>names</em> stay the
 same.</li>
 <li>
-<strong>Tags only show up on the bill once the keys are
-activated.</strong> An account administrator has to activate
-<code>Name</code>, <code>Project</code>, and <code>Purpose</code> as
-cost allocation tags in the Billing console, once per account. Until
-then the tags exist on the resources but are not available as filters in
-Cost Explorer. On UW–Madison accounts the keys are activated centrally
-from a fixed approved list (<a href="https://kb.wisc.edu/72454" class="external-link">KB
-72454</a>), which is why the three keys must be spelled exactly; on your
-own account, activate them before you start.</li>
+<strong>Only the three approved keys count.</strong>
+<code>Name</code>, <code>Project</code> and <code>Purpose</code>,
+spelled exactly; any other key is ignored by the bill, for the reason
+the S3 episode gives.</li>
 </ol></section><section><h2 class="section-heading" id="when-do-you-use-which-approach">When Do You Use Which Approach?<a class="anchor" aria-label="anchor" href="#when-do-you-use-which-approach"></a>
 </h2>
 <hr class="half-width">
@@ -9960,126 +9955,95 @@ every run. We save the chunks locally as <code>data/chunks.jsonl</code>
 them through a profile<a class="anchor" aria-label="anchor" href="#step-7-cost-tracking-bedrock-calls-carry-no-tags-unless-you-route-them-through-a-profile"></a>
 </h2>
 <hr class="half-width">
-<p>In the SageMaker episodes that follow, we tag every job at launch
-because tags never propagate from the notebook. Bedrock is stricter
-still: <strong>an on-demand <code>invoke_model</code> or
-<code>converse</code> call has no tags parameter at all.</strong> If you
-call <code>deepseek.v3-v1:0</code> or
+<p>Every SageMaker job in this lesson is tagged at launch, because tags
+never propagate from the notebook. Bedrock is stricter still: <strong>an
+on-demand <code>invoke_model</code> or <code>converse</code> call has no
+tags parameter at all.</strong> If you call
+<code>deepseek.v3-v1:0</code> or
 <code>amazon.titan-embed-text-v2:0</code> by its model ID, the usage
 lands in the account’s Bedrock bill as anonymous per-token charges. The
 notebook’s tags, the bucket’s tags, and the tags you set on anything
 else are irrelevant to it. On a shared account that means nobody can
 tell which team spent what.</p>
-<p>The mechanism Bedrock provides for this is an <strong>application
-inference profile</strong>: a small, free resource that points at a base
-model and carries cost allocation tags. You create the profile once,
-then pass the <strong>profile ARN</strong> instead of the model ID as
-<code>modelId</code> in every call. Usage billed through the profile
-carries the profile’s tags into Cost Explorer. Two details to get
-right:</p>
-<ul>
-<li>You need <strong>one profile per base model</strong> (the profile is
-model‑specific), so we create one for the generation model and one for
-the embedding model.</li>
-<li>Bedrock’s tag format uses lowercase <code>key</code> /
-<code>value</code>, unlike SageMaker’s <code>Key</code> /
-<code>Value</code>. The tag <em>names</em> (<code>Name</code>,
-<code>Project</code>, <code>Purpose</code>) stay the same so the Cost
-Explorer filters line up across services.</li>
-</ul>
-<p>Four cells: the tags, two small helpers, the function that finds or
-creates a profile, and the two calls that produce the ARNs the rest of
-the episode uses.</p>
-<p>First the tags. Bedrock wants lowercase <code>key</code> and
-<code>value</code>; the three names are the same ones every SageMaker
-job in this lesson carries, so one Cost Explorer filter covers both
-services.</p>
+<p>The fix is not a tag on the call; it is a different thing to call. An
+<strong>application inference profile</strong> is a small resource you
+create in your own account: an alias that points at one base model and
+carries your three tags. It has its own ARN, and that ARN goes wherever
+a model ID goes. Nothing else changes: same model, same price per token,
+same answers. The only difference is in the bill, where usage made
+through the alias shows up with the alias’s tags.</p>
+<p>Before and after, in the generation call:</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr>
+<th></th>
+<th>
+<code>modelId</code> you pass</th>
+<th>Who it is billed to</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>Raw model ID</td>
+<td><code>deepseek.v3-v1:0</code></td>
+<td>nobody: anonymous DeepSeek spend on the account</td>
+</tr>
+<tr>
+<td>Your profile</td>
+<td><code>arn:aws:bedrock:us-east-2:&lt;account-id&gt;:application-inference-profile/adewnu8wqxpy</code></td>
+<td><code>Name=DoeJohn, Project=SinkOrSwim, Purpose=Inference</code></td>
+</tr>
+</tbody>
+</table>
+<p>So “cost tracking on Bedrock” is: create the alias once per model
+(one for DeepSeek, one for Titan, because an alias points at exactly one
+model), keep its ARN in a variable, and use that variable as
+<code>modelId</code> from then on. The profile is free; you pay only for
+tokens, as before.</p>
+<p>One call per model does all of it. <code>tagged_profile_arn</code> in
+<code>wattbot_rag.py</code> looks for a profile named after your project
+and user name, creates it with the three tags if it is not there, and
+returns its ARN. Open the file if you want to see the forty lines;
+nothing in them is worth memorising. What is worth remembering is the
+sentence above: one tagged profile per model, its ARN in place of the
+model ID.</p>
 <div class="codewrapper sourceCode" id="cb15">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a><span class="im">import</span> re</span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a><span class="im">from</span> wattbot_rag <span class="im">import</span> tagged_profile_arn</span>
 <span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a></span>
 <span id="cb15-3"><a href="#cb15-3" tabindex="-1" aria-label="code-block-15-3"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span>         <span class="co"># replace with your name</span></span>
 <span id="cb15-4"><a href="#cb15-4" tabindex="-1" aria-label="code-block-15-4"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>   <span class="co"># replace with your challenge name</span></span>
-<span id="cb15-5"><a href="#cb15-5" tabindex="-1" aria-label="code-block-15-5"></a>purpose <span class="op">=</span> <span class="st">"Inference"</span></span>
-<span id="cb15-6"><a href="#cb15-6" tabindex="-1" aria-label="code-block-15-6"></a></span>
-<span id="cb15-7"><a href="#cb15-7" tabindex="-1" aria-label="code-block-15-7"></a><span class="co"># Bedrock tags are lowercase key/value (SageMaker jobs use Key/Value)</span></span>
-<span id="cb15-8"><a href="#cb15-8" tabindex="-1" aria-label="code-block-15-8"></a>profile_tags <span class="op">=</span> [</span>
-<span id="cb15-9"><a href="#cb15-9" tabindex="-1" aria-label="code-block-15-9"></a>    {<span class="st">"key"</span>: <span class="st">"Name"</span>, <span class="st">"value"</span>: name},</span>
-<span id="cb15-10"><a href="#cb15-10" tabindex="-1" aria-label="code-block-15-10"></a>    {<span class="st">"key"</span>: <span class="st">"Project"</span>, <span class="st">"value"</span>: project},</span>
-<span id="cb15-11"><a href="#cb15-11" tabindex="-1" aria-label="code-block-15-11"></a>    {<span class="st">"key"</span>: <span class="st">"Purpose"</span>, <span class="st">"value"</span>: purpose},</span>
-<span id="cb15-12"><a href="#cb15-12" tabindex="-1" aria-label="code-block-15-12"></a>]</span></code></pre>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1" aria-label="code-block-15-5"></a></span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1" aria-label="code-block-15-6"></a><span class="co"># From here on, these ARNs are what we pass as modelId. The base IDs are never sent to the runtime again.</span></span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1" aria-label="code-block-15-7"></a>bedrock_model_id <span class="op">=</span> tagged_profile_arn(bedrock, base_generation_model_id, <span class="st">"wattbot-gen"</span>, name, project)</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1" aria-label="code-block-15-8"></a>embedding_model_id_bedrock <span class="op">=</span> tagged_profile_arn(bedrock, base_embedding_model_id, <span class="st">"wattbot-embed"</span>, name, project)</span></code></pre>
 </div>
-<p>Two helpers. <code>_slug</code> turns a project or user name into
-something a profile name accepts (letters, digits and single hyphens, at
-most 64 characters). <code>_source_arn</code> returns what the profile
-points at: for a plain model ID that is the foundation model’s ARN; for
-a cross-region ID such as <code>us.deepseek.v3-v1:0</code>, which is
-itself a system-defined inference profile, it is that profile’s ARN.</p>
+<div id="the-same-thing-from-a-terminal" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<span class="callout-header">Callout</span>
+<div id="the-same-thing-from-a-terminal" class="callout-inner">
+<h3 class="callout-title">The same thing from a terminal</h3>
+<div class="callout-content">
+<p>Outside a notebook it is one CLI command per model, which is all the
+helper wraps:</p>
 <div class="codewrapper sourceCode" id="cb16">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+<h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a><span class="kw">def</span> _slug(text: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a>    <span class="co"># Profile names allow letters, digits, and single spaces/hyphens/underscores, max 64 chars</span></span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a>    <span class="cf">return</span> re.sub(<span class="vs">r"</span><span class="pp">[^0-9a-zA-Z]</span><span class="op">+</span><span class="vs">"</span>, <span class="st">"-"</span>, text).strip(<span class="st">"-"</span>)[:<span class="dv">30</span>]</span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a></span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a><span class="kw">def</span> _source_arn(model_id: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a>    <span class="co">"""ARN that the profile should point at: the foundation model, or the system-defined profile for a cross-region ID."""</span></span>
-<span id="cb16-7"><a href="#cb16-7" tabindex="-1" aria-label="code-block-16-7"></a>    <span class="cf">if</span> model_id.split(<span class="st">"."</span>)[<span class="dv">0</span>] <span class="kw">in</span> {<span class="st">"us"</span>, <span class="st">"eu"</span>, <span class="st">"apac"</span>, <span class="st">"global"</span>, <span class="st">"jp"</span>, <span class="st">"au"</span>}:</span>
-<span id="cb16-8"><a href="#cb16-8" tabindex="-1" aria-label="code-block-16-8"></a>        <span class="cf">return</span> bedrock.get_inference_profile(inferenceProfileIdentifier<span class="op">=</span>model_id)[<span class="st">"inferenceProfileArn"</span>]</span>
-<span id="cb16-9"><a href="#cb16-9" tabindex="-1" aria-label="code-block-16-9"></a>    <span class="cf">return</span> bedrock.get_foundation_model(modelIdentifier<span class="op">=</span>model_id)[<span class="st">"modelDetails"</span>][<span class="st">"modelArn"</span>]</span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a><span class="ex">aws</span> bedrock create-inference-profile <span class="at">--inference-profile-name</span> SinkOrSwim-DoeJohn-wattbot-gen <span class="dt">\</span></span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a>  <span class="at">--model-source</span> copyFrom=arn:aws:bedrock:us-east-2::foundation-model/deepseek.v3-v1:0 <span class="dt">\</span></span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a>  <span class="at">--tags</span> key=Name,value=DoeJohn key=Project,value=SinkOrSwim key=Purpose,value=Inference</span></code></pre>
 </div>
-<p>The function itself. It builds a profile name from your project and
-user name, lists the application profiles in the account and returns the
-ARN if one with that name exists, so rerunning the notebook never
-creates duplicates. Otherwise it creates the profile with the tags
-above. An <code>AccessDeniedException</code> on either call is turned
-into a message that says which role the notebook is running as and what
-to do about it.</p>
-<div class="codewrapper sourceCode" id="cb17">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1" aria-label="code-block-17-1"></a><span class="kw">def</span> get_or_create_inference_profile(base_model_id: <span class="bu">str</span>, label: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
-<span id="cb17-2"><a href="#cb17-2" tabindex="-1" aria-label="code-block-17-2"></a>    <span class="co">"""Return the ARN of a tagged application inference profile for base_model_id."""</span></span>
-<span id="cb17-3"><a href="#cb17-3" tabindex="-1" aria-label="code-block-17-3"></a>    profile_name <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>_slug(project)<span class="sc">}</span><span class="ss">-</span><span class="sc">{</span>_slug(name)<span class="sc">}</span><span class="ss">-</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">"</span></span>
-<span id="cb17-4"><a href="#cb17-4" tabindex="-1" aria-label="code-block-17-4"></a></span>
-<span id="cb17-5"><a href="#cb17-5" tabindex="-1" aria-label="code-block-17-5"></a>    <span class="cf">try</span>:</span>
-<span id="cb17-6"><a href="#cb17-6" tabindex="-1" aria-label="code-block-17-6"></a>        <span class="co"># Reuse an existing profile with this name, if any</span></span>
-<span id="cb17-7"><a href="#cb17-7" tabindex="-1" aria-label="code-block-17-7"></a>        paginator <span class="op">=</span> bedrock.get_paginator(<span class="st">"list_inference_profiles"</span>)</span>
-<span id="cb17-8"><a href="#cb17-8" tabindex="-1" aria-label="code-block-17-8"></a>        <span class="cf">for</span> page <span class="kw">in</span> paginator.paginate(typeEquals<span class="op">=</span><span class="st">"APPLICATION"</span>):</span>
-<span id="cb17-9"><a href="#cb17-9" tabindex="-1" aria-label="code-block-17-9"></a>            <span class="cf">for</span> summary <span class="kw">in</span> page[<span class="st">"inferenceProfileSummaries"</span>]:</span>
-<span id="cb17-10"><a href="#cb17-10" tabindex="-1" aria-label="code-block-17-10"></a>                <span class="cf">if</span> summary[<span class="st">"inferenceProfileName"</span>] <span class="op">==</span> profile_name:</span>
-<span id="cb17-11"><a href="#cb17-11" tabindex="-1" aria-label="code-block-17-11"></a>                    <span class="bu">print</span>(<span class="ss">f"Reusing inference profile </span><span class="sc">{</span>profile_name<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>summary[<span class="st">'inferenceProfileArn'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb17-12"><a href="#cb17-12" tabindex="-1" aria-label="code-block-17-12"></a>                    <span class="cf">return</span> summary[<span class="st">"inferenceProfileArn"</span>]</span>
-<span id="cb17-13"><a href="#cb17-13" tabindex="-1" aria-label="code-block-17-13"></a></span>
-<span id="cb17-14"><a href="#cb17-14" tabindex="-1" aria-label="code-block-17-14"></a>        resp <span class="op">=</span> bedrock.create_inference_profile(</span>
-<span id="cb17-15"><a href="#cb17-15" tabindex="-1" aria-label="code-block-17-15"></a>            inferenceProfileName<span class="op">=</span>profile_name,</span>
-<span id="cb17-16"><a href="#cb17-16" tabindex="-1" aria-label="code-block-17-16"></a>            description<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>project<span class="sc">}</span><span class="ss"> </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss"> WattBot RAG </span><span class="sc">{</span>label<span class="sc">}</span><span class="ss"> on </span><span class="sc">{</span>base_model_id<span class="sc">}</span><span class="ss">"</span>,   <span class="co"># letters, digits, : and . only, single spaces or hyphens between</span></span>
-<span id="cb17-17"><a href="#cb17-17" tabindex="-1" aria-label="code-block-17-17"></a>            modelSource<span class="op">=</span>{<span class="st">"copyFrom"</span>: _source_arn(base_model_id)},   <span class="co"># the profile is an alias for one base model</span></span>
-<span id="cb17-18"><a href="#cb17-18" tabindex="-1" aria-label="code-block-17-18"></a>            tags<span class="op">=</span>profile_tags,   <span class="co"># usage billed through the profile carries these tags; raw model-ID calls carry none</span></span>
-<span id="cb17-19"><a href="#cb17-19" tabindex="-1" aria-label="code-block-17-19"></a>        )</span>
-<span id="cb17-20"><a href="#cb17-20" tabindex="-1" aria-label="code-block-17-20"></a>    <span class="cf">except</span> ClientError <span class="im">as</span> e:</span>
-<span id="cb17-21"><a href="#cb17-21" tabindex="-1" aria-label="code-block-17-21"></a>        <span class="cf">if</span> e.response[<span class="st">"Error"</span>][<span class="st">"Code"</span>] <span class="op">==</span> <span class="st">"AccessDeniedException"</span>:</span>
-<span id="cb17-22"><a href="#cb17-22" tabindex="-1" aria-label="code-block-17-22"></a>            role <span class="op">=</span> boto3.client(<span class="st">"sts"</span>).get_caller_identity()[<span class="st">"Arn"</span>]</span>
-<span id="cb17-23"><a href="#cb17-23" tabindex="-1" aria-label="code-block-17-23"></a>            <span class="cf">raise</span> <span class="pp">PermissionError</span>(</span>
-<span id="cb17-24"><a href="#cb17-24" tabindex="-1" aria-label="code-block-17-24"></a>                <span class="ss">f"This notebook's role has no Bedrock permissions (</span><span class="sc">{</span>role<span class="sc">}</span><span class="ss">).</span><span class="ch">\n</span><span class="ss">"</span></span>
-<span id="cb17-25"><a href="#cb17-25" tabindex="-1" aria-label="code-block-17-25"></a>                <span class="st">"The Bedrock episode needs the Bedrock policy from the Account preparation instructor page attached to the "</span></span>
-<span id="cb17-26"><a href="#cb17-26" tabindex="-1" aria-label="code-block-17-26"></a>                <span class="st">"notebook's execution role. On the class account, the instance must use the ml-sagemaker-bedrock-use role: "</span></span>
-<span id="cb17-27"><a href="#cb17-27" tabindex="-1" aria-label="code-block-17-27"></a>                <span class="st">"stop it, Edit, change the IAM role, start it again. On your own account, attach the policy to your role. "</span></span>
-<span id="cb17-28"><a href="#cb17-28" tabindex="-1" aria-label="code-block-17-28"></a>                <span class="st">"Nothing to change in this notebook; rerun this cell afterwards."</span></span>
-<span id="cb17-29"><a href="#cb17-29" tabindex="-1" aria-label="code-block-17-29"></a>            ) <span class="im">from</span> e</span>
-<span id="cb17-30"><a href="#cb17-30" tabindex="-1" aria-label="code-block-17-30"></a>        <span class="cf">raise</span></span>
-<span id="cb17-31"><a href="#cb17-31" tabindex="-1" aria-label="code-block-17-31"></a>    <span class="bu">print</span>(<span class="ss">f"Created inference profile </span><span class="sc">{</span>profile_name<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>resp[<span class="st">'inferenceProfileArn'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb17-32"><a href="#cb17-32" tabindex="-1" aria-label="code-block-17-32"></a>    <span class="cf">return</span> resp[<span class="st">"inferenceProfileArn"</span>]</span></code></pre>
+<p>It prints the profile ARN; pass that as <code>modelId</code>. The
+helper adds only the reuse check, so rerunning does not create
+duplicates.</p>
 </div>
-<p>Now call it twice, once per base model. The two ARNs it returns are
-what every later cell passes as <code>modelId</code>; the base model IDs
-are never sent to the runtime again.</p>
-<div class="codewrapper sourceCode" id="cb18">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1" aria-label="code-block-18-1"></a>bedrock_model_id <span class="op">=</span> get_or_create_inference_profile(base_generation_model_id, <span class="st">"wattbot-gen"</span>)</span>
-<span id="cb18-2"><a href="#cb18-2" tabindex="-1" aria-label="code-block-18-2"></a>embedding_model_id_bedrock <span class="op">=</span> get_or_create_inference_profile(base_embedding_model_id, <span class="st">"wattbot-embed"</span>)</span></code></pre>
+</div>
 </div>
 <div id="checking-the-profiles" class="callout">
 <div class="callout-square">
@@ -10094,11 +10058,9 @@ are never sent to the runtime again.</p>
 <strong>Inference and Assessment → Cross-region inference → Application
 inference profiles</strong>, or with
 <code>bedrock.list_inference_profiles(typeEquals="APPLICATION")</code>.</li>
-<li>Tags only become filters in Cost Explorer once the tag keys have
-been <strong>activated as cost allocation tags</strong> in the Billing
-console (an account‑admin, once‑per‑key action; on a shared workshop
-account the organizers do this). Until then the tags exist on the
-resource but do not show up on reports.</li>
+<li>The keys must be the three approved ones, <code>Name</code>,
+<code>Project</code> and <code>Purpose</code>, spelled exactly; any
+other key is ignored by the bill (the S3 episode says why).</li>
 <li>The profile itself has no hourly or storage charge. You only pay per
 token, exactly as before.</li>
 </ul>
@@ -10130,16 +10092,16 @@ month’s Bedrock spend by <code>Project</code>?</p>
 </button>
 <div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
-<div class="codewrapper sourceCode" id="cb19">
+<div class="codewrapper sourceCode" id="cb17">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1" aria-label="code-block-19-1"></a>profiles <span class="op">=</span> bedrock.list_inference_profiles(typeEquals<span class="op">=</span><span class="st">"APPLICATION"</span>)[<span class="st">"inferenceProfileSummaries"</span>]</span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1" aria-label="code-block-19-2"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(profiles)<span class="sc">}</span><span class="ss"> application inference profiles in this account/region"</span>)</span>
-<span id="cb19-3"><a href="#cb19-3" tabindex="-1" aria-label="code-block-19-3"></a><span class="cf">for</span> p <span class="kw">in</span> profiles:</span>
-<span id="cb19-4"><a href="#cb19-4" tabindex="-1" aria-label="code-block-19-4"></a>    <span class="cf">if</span> p[<span class="st">"inferenceProfileArn"</span>] <span class="kw">in</span> {bedrock_model_id, embedding_model_id_bedrock}:</span>
-<span id="cb19-5"><a href="#cb19-5" tabindex="-1" aria-label="code-block-19-5"></a>        tags <span class="op">=</span> bedrock.list_tags_for_resource(resourceARN<span class="op">=</span>p[<span class="st">"inferenceProfileArn"</span>])[<span class="st">"tags"</span>]</span>
-<span id="cb19-6"><a href="#cb19-6" tabindex="-1" aria-label="code-block-19-6"></a>        <span class="bu">print</span>(p[<span class="st">"inferenceProfileName"</span>], <span class="st">"-&gt;"</span>, [m[<span class="st">"modelArn"</span>].split(<span class="st">"/"</span>)[<span class="op">-</span><span class="dv">1</span>] <span class="cf">for</span> m <span class="kw">in</span> p[<span class="st">"models"</span>]])</span>
-<span id="cb19-7"><a href="#cb19-7" tabindex="-1" aria-label="code-block-19-7"></a>        <span class="bu">print</span>(<span class="st">"   tags:"</span>, {t[<span class="st">"key"</span>]: t[<span class="st">"value"</span>] <span class="cf">for</span> t <span class="kw">in</span> tags})</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1" aria-label="code-block-17-1"></a>profiles <span class="op">=</span> bedrock.list_inference_profiles(typeEquals<span class="op">=</span><span class="st">"APPLICATION"</span>)[<span class="st">"inferenceProfileSummaries"</span>]</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1" aria-label="code-block-17-2"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(profiles)<span class="sc">}</span><span class="ss"> application inference profiles in this account/region"</span>)</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1" aria-label="code-block-17-3"></a><span class="cf">for</span> p <span class="kw">in</span> profiles:</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1" aria-label="code-block-17-4"></a>    <span class="cf">if</span> p[<span class="st">"inferenceProfileArn"</span>] <span class="kw">in</span> {bedrock_model_id, embedding_model_id_bedrock}:</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1" aria-label="code-block-17-5"></a>        tags <span class="op">=</span> bedrock.list_tags_for_resource(resourceARN<span class="op">=</span>p[<span class="st">"inferenceProfileArn"</span>])[<span class="st">"tags"</span>]</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1" aria-label="code-block-17-6"></a>        <span class="bu">print</span>(p[<span class="st">"inferenceProfileName"</span>], <span class="st">"-&gt;"</span>, [m[<span class="st">"modelArn"</span>].split(<span class="st">"/"</span>)[<span class="op">-</span><span class="dv">1</span>] <span class="cf">for</span> m <span class="kw">in</span> p[<span class="st">"models"</span>]])</span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1" aria-label="code-block-17-7"></a>        <span class="bu">print</span>(<span class="st">"   tags:"</span>, {t[<span class="st">"key"</span>]: t[<span class="st">"value"</span>] <span class="cf">for</span> t <span class="kw">in</span> tags})</span></code></pre>
 </div>
 <p>Filtering by <code>Project</code> shows <strong>only</strong> the
 usage that went through a tagged profile. The teammate’s calls are still
@@ -10161,15 +10123,15 @@ episode.</p>
 <p>Everything the RAG loop needs is now in memory: the chunks, the
 questions, and a way to resolve a document id to its URL for the
 <code>ref_url</code> column.</p>
-<div class="codewrapper sourceCode" id="cb20">
+<div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1" aria-label="code-block-20-1"></a><span class="bu">print</span>(<span class="ss">f"Chunks: </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb20-2"><a href="#cb20-2" tabindex="-1" aria-label="code-block-20-2"></a><span class="bu">print</span>(<span class="ss">f"Train QAs: </span><span class="sc">{</span><span class="bu">len</span>(train_df)<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb20-3"><a href="#cb20-3" tabindex="-1" aria-label="code-block-20-3"></a><span class="bu">print</span>(<span class="ss">f"Metadata rows: </span><span class="sc">{</span><span class="bu">len</span>(metadata_df)<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb20-4"><a href="#cb20-4" tabindex="-1" aria-label="code-block-20-4"></a></span>
-<span id="cb20-5"><a href="#cb20-5" tabindex="-1" aria-label="code-block-20-5"></a>docid_to_url <span class="op">=</span> build_docid_to_url(metadata_df)   <span class="co"># doc_id -&gt; url, for the ref_url column of the submission</span></span>
-<span id="cb20-6"><a href="#cb20-6" tabindex="-1" aria-label="code-block-20-6"></a><span class="bu">print</span>(<span class="ss">f"docid_to_url has </span><span class="sc">{</span><span class="bu">len</span>(docid_to_url)<span class="sc">}</span><span class="ss"> entries."</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1" aria-label="code-block-18-1"></a><span class="bu">print</span>(<span class="ss">f"Chunks: </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1" aria-label="code-block-18-2"></a><span class="bu">print</span>(<span class="ss">f"Train QAs: </span><span class="sc">{</span><span class="bu">len</span>(train_df)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a><span class="bu">print</span>(<span class="ss">f"Metadata rows: </span><span class="sc">{</span><span class="bu">len</span>(metadata_df)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1" aria-label="code-block-18-4"></a></span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1" aria-label="code-block-18-5"></a>docid_to_url <span class="op">=</span> build_docid_to_url(metadata_df)   <span class="co"># doc_id -&gt; url, for the ref_url column of the submission</span></span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1" aria-label="code-block-18-6"></a><span class="bu">print</span>(<span class="ss">f"docid_to_url has </span><span class="sc">{</span><span class="bu">len</span>(docid_to_url)<span class="sc">}</span><span class="ss"> entries."</span>)</span></code></pre>
 </div>
 <p>Titan Text Embeddings V2 takes one string per
 <code>invoke_model</code> call and returns a 1,024-dimensional
@@ -10179,39 +10141,39 @@ our tagged profile for it, so every call is attributed to our
 cells: where the result is saved, the call that embeds one string, and
 the loop that embeds every chunk once and caches the matrix. First the
 paths.</p>
-<div class="codewrapper sourceCode" id="cb21">
+<div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" tabindex="-1" aria-label="code-block-21-1"></a>data_dir <span class="op">=</span> Path(local_data_dir)</span>
-<span id="cb21-2"><a href="#cb21-2" tabindex="-1" aria-label="code-block-21-2"></a>emb_save_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"embeddings_bedrock.npy"</span>             <span class="co"># the finished matrix, one row per chunk</span></span>
-<span id="cb21-3"><a href="#cb21-3" tabindex="-1" aria-label="code-block-21-3"></a>emb_partial_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"embeddings_bedrock.partial.npy"</span>  <span class="co"># progress file, so an interrupted run resumes</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1" aria-label="code-block-19-1"></a>data_dir <span class="op">=</span> Path(local_data_dir)</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1" aria-label="code-block-19-2"></a>emb_save_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"embeddings_bedrock.npy"</span>             <span class="co"># the finished matrix, one row per chunk</span></span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1" aria-label="code-block-19-3"></a>emb_partial_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"embeddings_bedrock.partial.npy"</span>  <span class="co"># progress file, so an interrupted run resumes</span></span></code></pre>
 </div>
 <p>The call itself. <code>invoke_model</code> takes a provider-specific
 JSON body; Titan’s is <code>{"inputText": ...}</code>, and its response
 carries the vector under <code>embedding</code>.
 <code>embed_query</code> is the same call wrapped for retrieval time,
 when we embed one question at a time.</p>
-<div class="codewrapper sourceCode" id="cb22">
+<div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" tabindex="-1" aria-label="code-block-22-1"></a><span class="kw">def</span> bedrock_embed_text(text: <span class="bu">str</span>, model_id: <span class="bu">str</span> <span class="op">=</span> embedding_model_id_bedrock) <span class="op">-&gt;</span> List[<span class="bu">float</span>]:</span>
-<span id="cb22-2"><a href="#cb22-2" tabindex="-1" aria-label="code-block-22-2"></a>    <span class="co">"""Call the Titan embedding model (through our tagged profile) for one string."""</span></span>
-<span id="cb22-3"><a href="#cb22-3" tabindex="-1" aria-label="code-block-22-3"></a>    response <span class="op">=</span> bedrock_runtime.invoke_model(</span>
-<span id="cb22-4"><a href="#cb22-4" tabindex="-1" aria-label="code-block-22-4"></a>        modelId<span class="op">=</span>model_id,</span>
-<span id="cb22-5"><a href="#cb22-5" tabindex="-1" aria-label="code-block-22-5"></a>        contentType<span class="op">=</span><span class="st">"application/json"</span>,</span>
-<span id="cb22-6"><a href="#cb22-6" tabindex="-1" aria-label="code-block-22-6"></a>        accept<span class="op">=</span><span class="st">"application/json"</span>,</span>
-<span id="cb22-7"><a href="#cb22-7" tabindex="-1" aria-label="code-block-22-7"></a>        body<span class="op">=</span>json.dumps({<span class="st">"inputText"</span>: text}),   <span class="co"># Titan's own request shape; add "dimensions": 256 or 512 to shrink the 1,024 default</span></span>
-<span id="cb22-8"><a href="#cb22-8" tabindex="-1" aria-label="code-block-22-8"></a>    )</span>
-<span id="cb22-9"><a href="#cb22-9" tabindex="-1" aria-label="code-block-22-9"></a>    response_body <span class="op">=</span> json.loads(response[<span class="st">"body"</span>].read())</span>
-<span id="cb22-10"><a href="#cb22-10" tabindex="-1" aria-label="code-block-22-10"></a>    embedding <span class="op">=</span> response_body.get(<span class="st">"embedding"</span>)   <span class="co"># a list of floats, one per dimension</span></span>
-<span id="cb22-11"><a href="#cb22-11" tabindex="-1" aria-label="code-block-22-11"></a>    <span class="cf">if</span> embedding <span class="kw">is</span> <span class="va">None</span>:</span>
-<span id="cb22-12"><a href="#cb22-12" tabindex="-1" aria-label="code-block-22-12"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"No 'embedding' found in response: </span><span class="sc">{</span>response_body<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb22-13"><a href="#cb22-13" tabindex="-1" aria-label="code-block-22-13"></a>    <span class="cf">return</span> embedding</span>
-<span id="cb22-14"><a href="#cb22-14" tabindex="-1" aria-label="code-block-22-14"></a></span>
-<span id="cb22-15"><a href="#cb22-15" tabindex="-1" aria-label="code-block-22-15"></a></span>
-<span id="cb22-16"><a href="#cb22-16" tabindex="-1" aria-label="code-block-22-16"></a><span class="kw">def</span> embed_query(question: <span class="bu">str</span>) <span class="op">-&gt;</span> np.ndarray:</span>
-<span id="cb22-17"><a href="#cb22-17" tabindex="-1" aria-label="code-block-22-17"></a>    <span class="co">"""The retrieval-time half of the pipeline: the same model, one question at a time."""</span></span>
-<span id="cb22-18"><a href="#cb22-18" tabindex="-1" aria-label="code-block-22-18"></a>    <span class="cf">return</span> np.asarray(bedrock_embed_text(question), dtype<span class="op">=</span><span class="st">"float32"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1" aria-label="code-block-20-1"></a><span class="kw">def</span> bedrock_embed_text(text: <span class="bu">str</span>, model_id: <span class="bu">str</span> <span class="op">=</span> embedding_model_id_bedrock) <span class="op">-&gt;</span> List[<span class="bu">float</span>]:</span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1" aria-label="code-block-20-2"></a>    <span class="co">"""Call the Titan embedding model (through our tagged profile) for one string."""</span></span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1" aria-label="code-block-20-3"></a>    response <span class="op">=</span> bedrock_runtime.invoke_model(</span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1" aria-label="code-block-20-4"></a>        modelId<span class="op">=</span>model_id,</span>
+<span id="cb20-5"><a href="#cb20-5" tabindex="-1" aria-label="code-block-20-5"></a>        contentType<span class="op">=</span><span class="st">"application/json"</span>,</span>
+<span id="cb20-6"><a href="#cb20-6" tabindex="-1" aria-label="code-block-20-6"></a>        accept<span class="op">=</span><span class="st">"application/json"</span>,</span>
+<span id="cb20-7"><a href="#cb20-7" tabindex="-1" aria-label="code-block-20-7"></a>        body<span class="op">=</span>json.dumps({<span class="st">"inputText"</span>: text}),   <span class="co"># Titan's own request shape; add "dimensions": 256 or 512 to shrink the 1,024 default</span></span>
+<span id="cb20-8"><a href="#cb20-8" tabindex="-1" aria-label="code-block-20-8"></a>    )</span>
+<span id="cb20-9"><a href="#cb20-9" tabindex="-1" aria-label="code-block-20-9"></a>    response_body <span class="op">=</span> json.loads(response[<span class="st">"body"</span>].read())</span>
+<span id="cb20-10"><a href="#cb20-10" tabindex="-1" aria-label="code-block-20-10"></a>    embedding <span class="op">=</span> response_body.get(<span class="st">"embedding"</span>)   <span class="co"># a list of floats, one per dimension</span></span>
+<span id="cb20-11"><a href="#cb20-11" tabindex="-1" aria-label="code-block-20-11"></a>    <span class="cf">if</span> embedding <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb20-12"><a href="#cb20-12" tabindex="-1" aria-label="code-block-20-12"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"No 'embedding' found in response: </span><span class="sc">{</span>response_body<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb20-13"><a href="#cb20-13" tabindex="-1" aria-label="code-block-20-13"></a>    <span class="cf">return</span> embedding</span>
+<span id="cb20-14"><a href="#cb20-14" tabindex="-1" aria-label="code-block-20-14"></a></span>
+<span id="cb20-15"><a href="#cb20-15" tabindex="-1" aria-label="code-block-20-15"></a></span>
+<span id="cb20-16"><a href="#cb20-16" tabindex="-1" aria-label="code-block-20-16"></a><span class="kw">def</span> embed_query(question: <span class="bu">str</span>) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb20-17"><a href="#cb20-17" tabindex="-1" aria-label="code-block-20-17"></a>    <span class="co">"""The retrieval-time half of the pipeline: the same model, one question at a time."""</span></span>
+<span id="cb20-18"><a href="#cb20-18" tabindex="-1" aria-label="code-block-20-18"></a>    <span class="cf">return</span> np.asarray(bedrock_embed_text(question), dtype<span class="op">=</span><span class="st">"float32"</span>)</span></code></pre>
 </div>
 <p>Embedding 3,000 chunks is a few minutes and a few cents, so do not do
 it twice. The cell after next looks for the finished matrix locally,
@@ -10236,52 +10198,52 @@ loop run; that is the step to practise.</p>
 </div>
 </div>
 </div>
-<div class="codewrapper sourceCode" id="cb23">
+<div class="codewrapper sourceCode" id="cb21">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" tabindex="-1" aria-label="code-block-23-1"></a><span class="co"># In class only: the instructor's copy of the embeddings, same chunks, same model. Uncomment the next line, run, then run the cell below.</span></span>
-<span id="cb23-2"><a href="#cb23-2" tabindex="-1" aria-label="code-block-23-2"></a><span class="co"># s3.download_file(shared_bucket, "wattbot/embeddings_bedrock.npy", str(emb_save_path))</span></span>
-<span id="cb23-3"><a href="#cb23-3" tabindex="-1" aria-label="code-block-23-3"></a>``` One small helper asks S3 whether an <span class="bu">object</span> exists.</span>
-<span id="cb23-4"><a href="#cb23-4" tabindex="-1" aria-label="code-block-23-4"></a></span>
-<span id="cb23-5"><a href="#cb23-5" tabindex="-1" aria-label="code-block-23-5"></a>```python</span>
-<span id="cb23-6"><a href="#cb23-6" tabindex="-1" aria-label="code-block-23-6"></a><span class="kw">def</span> _s3_object_exists(bucket: <span class="bu">str</span>, key: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
-<span id="cb23-7"><a href="#cb23-7" tabindex="-1" aria-label="code-block-23-7"></a>    <span class="cf">try</span>:</span>
-<span id="cb23-8"><a href="#cb23-8" tabindex="-1" aria-label="code-block-23-8"></a>        s3.head_object(Bucket<span class="op">=</span>bucket, Key<span class="op">=</span>key)</span>
-<span id="cb23-9"><a href="#cb23-9" tabindex="-1" aria-label="code-block-23-9"></a>        <span class="cf">return</span> <span class="va">True</span></span>
-<span id="cb23-10"><a href="#cb23-10" tabindex="-1" aria-label="code-block-23-10"></a>    <span class="cf">except</span> ClientError:</span>
-<span id="cb23-11"><a href="#cb23-11" tabindex="-1" aria-label="code-block-23-11"></a>        <span class="cf">return</span> <span class="va">False</span></span>
-<span id="cb23-12"><a href="#cb23-12" tabindex="-1" aria-label="code-block-23-12"></a></span>
-<span id="cb23-13"><a href="#cb23-13" tabindex="-1" aria-label="code-block-23-13"></a></span>
-<span id="cb23-14"><a href="#cb23-14" tabindex="-1" aria-label="code-block-23-14"></a><span class="co"># Cache order: local .npy, then your bucket, then recompute (and upload for next time)</span></span>
-<span id="cb23-15"><a href="#cb23-15" tabindex="-1" aria-label="code-block-23-15"></a><span class="cf">if</span> emb_save_path.exists():</span>
-<span id="cb23-16"><a href="#cb23-16" tabindex="-1" aria-label="code-block-23-16"></a>    <span class="bu">print</span>(<span class="ss">f"Found existing embeddings at </span><span class="sc">{</span>emb_save_path<span class="sc">}</span><span class="ss">. Skipping re-computation."</span>)</span>
-<span id="cb23-17"><a href="#cb23-17" tabindex="-1" aria-label="code-block-23-17"></a>    chunk_embeddings <span class="op">=</span> np.load(emb_save_path)</span>
-<span id="cb23-18"><a href="#cb23-18" tabindex="-1" aria-label="code-block-23-18"></a><span class="cf">elif</span> _s3_object_exists(bucket_name, embeddings_key):</span>
-<span id="cb23-19"><a href="#cb23-19" tabindex="-1" aria-label="code-block-23-19"></a>    s3.download_file(bucket_name, embeddings_key, <span class="bu">str</span>(emb_save_path))</span>
-<span id="cb23-20"><a href="#cb23-20" tabindex="-1" aria-label="code-block-23-20"></a>    <span class="bu">print</span>(<span class="ss">f"Downloaded cached embeddings from s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>embeddings_key<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb23-21"><a href="#cb23-21" tabindex="-1" aria-label="code-block-23-21"></a>    chunk_embeddings <span class="op">=</span> np.load(emb_save_path)</span>
-<span id="cb23-22"><a href="#cb23-22" tabindex="-1" aria-label="code-block-23-22"></a><span class="cf">else</span>:</span>
-<span id="cb23-23"><a href="#cb23-23" tabindex="-1" aria-label="code-block-23-23"></a>    <span class="co"># Resume from a partial save if a previous run was interrupted</span></span>
-<span id="cb23-24"><a href="#cb23-24" tabindex="-1" aria-label="code-block-23-24"></a>    all_embeddings <span class="op">=</span> <span class="bu">list</span>(np.load(emb_partial_path)) <span class="cf">if</span> emb_partial_path.exists() <span class="cf">else</span> []</span>
-<span id="cb23-25"><a href="#cb23-25" tabindex="-1" aria-label="code-block-23-25"></a>    start <span class="op">=</span> <span class="bu">len</span>(all_embeddings)</span>
-<span id="cb23-26"><a href="#cb23-26" tabindex="-1" aria-label="code-block-23-26"></a>    <span class="bu">print</span>(<span class="ss">f"Computing embeddings via Bedrock from chunk </span><span class="sc">{</span>start<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss">..."</span>)</span>
-<span id="cb23-27"><a href="#cb23-27" tabindex="-1" aria-label="code-block-23-27"></a>    t0 <span class="op">=</span> time.time()</span>
-<span id="cb23-28"><a href="#cb23-28" tabindex="-1" aria-label="code-block-23-28"></a></span>
-<span id="cb23-29"><a href="#cb23-29" tabindex="-1" aria-label="code-block-23-29"></a>    <span class="cf">for</span> idx <span class="kw">in</span> <span class="bu">range</span>(start, <span class="bu">len</span>(chunked_docs)):</span>
-<span id="cb23-30"><a href="#cb23-30" tabindex="-1" aria-label="code-block-23-30"></a>        all_embeddings.append(bedrock_embed_text(chunked_docs[idx][<span class="st">"text"</span>]))</span>
-<span id="cb23-31"><a href="#cb23-31" tabindex="-1" aria-label="code-block-23-31"></a>        <span class="cf">if</span> (idx <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> <span class="dv">500</span> <span class="op">==</span> <span class="dv">0</span> <span class="kw">or</span> idx <span class="op">+</span> <span class="dv">1</span> <span class="op">==</span> <span class="bu">len</span>(chunked_docs):</span>
-<span id="cb23-32"><a href="#cb23-32" tabindex="-1" aria-label="code-block-23-32"></a>            np.save(emb_partial_path, np.array(all_embeddings, dtype<span class="op">=</span><span class="st">"float32"</span>))</span>
-<span id="cb23-33"><a href="#cb23-33" tabindex="-1" aria-label="code-block-23-33"></a>            <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span>idx <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss"> / </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss"> chunks (progress saved)"</span>)</span>
-<span id="cb23-34"><a href="#cb23-34" tabindex="-1" aria-label="code-block-23-34"></a></span>
-<span id="cb23-35"><a href="#cb23-35" tabindex="-1" aria-label="code-block-23-35"></a>    <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs) <span class="op">-</span> start<span class="sc">}</span><span class="ss"> chunks in </span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.1f}</span><span class="ss"> seconds"</span>)</span>
-<span id="cb23-36"><a href="#cb23-36" tabindex="-1" aria-label="code-block-23-36"></a>    chunk_embeddings <span class="op">=</span> np.array(all_embeddings, dtype<span class="op">=</span><span class="st">"float32"</span>)   <span class="co"># the embedding matrix: one row per chunk, one column per dimension</span></span>
-<span id="cb23-37"><a href="#cb23-37" tabindex="-1" aria-label="code-block-23-37"></a>    np.save(emb_save_path, chunk_embeddings)</span>
-<span id="cb23-38"><a href="#cb23-38" tabindex="-1" aria-label="code-block-23-38"></a>    emb_partial_path.unlink(missing_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb23-39"><a href="#cb23-39" tabindex="-1" aria-label="code-block-23-39"></a>    s3.upload_file(<span class="bu">str</span>(emb_save_path), bucket_name, embeddings_key)</span>
-<span id="cb23-40"><a href="#cb23-40" tabindex="-1" aria-label="code-block-23-40"></a>    <span class="bu">print</span>(<span class="ss">f"Saved embeddings to </span><span class="sc">{</span>emb_save_path<span class="sc">}</span><span class="ss"> and s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>embeddings_key<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb23-41"><a href="#cb23-41" tabindex="-1" aria-label="code-block-23-41"></a></span>
-<span id="cb23-42"><a href="#cb23-42" tabindex="-1" aria-label="code-block-23-42"></a><span class="cf">assert</span> chunk_embeddings.shape[<span class="dv">0</span>] <span class="op">==</span> <span class="bu">len</span>(chunked_docs), <span class="st">"embeddings and chunks are out of step; delete the cached files and rerun"</span></span>
-<span id="cb23-43"><a href="#cb23-43" tabindex="-1" aria-label="code-block-23-43"></a><span class="bu">print</span>(<span class="st">"Embeddings shape:"</span>, chunk_embeddings.shape)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" tabindex="-1" aria-label="code-block-21-1"></a><span class="co"># In class only: the instructor's copy of the embeddings, same chunks, same model. Uncomment the next line, run, then run the cell below.</span></span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1" aria-label="code-block-21-2"></a><span class="co"># s3.download_file(shared_bucket, "wattbot/embeddings_bedrock.npy", str(emb_save_path))</span></span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1" aria-label="code-block-21-3"></a>``` One small helper asks S3 whether an <span class="bu">object</span> exists.</span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1" aria-label="code-block-21-4"></a></span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1" aria-label="code-block-21-5"></a>```python</span>
+<span id="cb21-6"><a href="#cb21-6" tabindex="-1" aria-label="code-block-21-6"></a><span class="kw">def</span> _s3_object_exists(bucket: <span class="bu">str</span>, key: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb21-7"><a href="#cb21-7" tabindex="-1" aria-label="code-block-21-7"></a>    <span class="cf">try</span>:</span>
+<span id="cb21-8"><a href="#cb21-8" tabindex="-1" aria-label="code-block-21-8"></a>        s3.head_object(Bucket<span class="op">=</span>bucket, Key<span class="op">=</span>key)</span>
+<span id="cb21-9"><a href="#cb21-9" tabindex="-1" aria-label="code-block-21-9"></a>        <span class="cf">return</span> <span class="va">True</span></span>
+<span id="cb21-10"><a href="#cb21-10" tabindex="-1" aria-label="code-block-21-10"></a>    <span class="cf">except</span> ClientError:</span>
+<span id="cb21-11"><a href="#cb21-11" tabindex="-1" aria-label="code-block-21-11"></a>        <span class="cf">return</span> <span class="va">False</span></span>
+<span id="cb21-12"><a href="#cb21-12" tabindex="-1" aria-label="code-block-21-12"></a></span>
+<span id="cb21-13"><a href="#cb21-13" tabindex="-1" aria-label="code-block-21-13"></a></span>
+<span id="cb21-14"><a href="#cb21-14" tabindex="-1" aria-label="code-block-21-14"></a><span class="co"># Cache order: local .npy, then your bucket, then recompute (and upload for next time)</span></span>
+<span id="cb21-15"><a href="#cb21-15" tabindex="-1" aria-label="code-block-21-15"></a><span class="cf">if</span> emb_save_path.exists():</span>
+<span id="cb21-16"><a href="#cb21-16" tabindex="-1" aria-label="code-block-21-16"></a>    <span class="bu">print</span>(<span class="ss">f"Found existing embeddings at </span><span class="sc">{</span>emb_save_path<span class="sc">}</span><span class="ss">. Skipping re-computation."</span>)</span>
+<span id="cb21-17"><a href="#cb21-17" tabindex="-1" aria-label="code-block-21-17"></a>    chunk_embeddings <span class="op">=</span> np.load(emb_save_path)</span>
+<span id="cb21-18"><a href="#cb21-18" tabindex="-1" aria-label="code-block-21-18"></a><span class="cf">elif</span> _s3_object_exists(bucket_name, embeddings_key):</span>
+<span id="cb21-19"><a href="#cb21-19" tabindex="-1" aria-label="code-block-21-19"></a>    s3.download_file(bucket_name, embeddings_key, <span class="bu">str</span>(emb_save_path))</span>
+<span id="cb21-20"><a href="#cb21-20" tabindex="-1" aria-label="code-block-21-20"></a>    <span class="bu">print</span>(<span class="ss">f"Downloaded cached embeddings from s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>embeddings_key<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb21-21"><a href="#cb21-21" tabindex="-1" aria-label="code-block-21-21"></a>    chunk_embeddings <span class="op">=</span> np.load(emb_save_path)</span>
+<span id="cb21-22"><a href="#cb21-22" tabindex="-1" aria-label="code-block-21-22"></a><span class="cf">else</span>:</span>
+<span id="cb21-23"><a href="#cb21-23" tabindex="-1" aria-label="code-block-21-23"></a>    <span class="co"># Resume from a partial save if a previous run was interrupted</span></span>
+<span id="cb21-24"><a href="#cb21-24" tabindex="-1" aria-label="code-block-21-24"></a>    all_embeddings <span class="op">=</span> <span class="bu">list</span>(np.load(emb_partial_path)) <span class="cf">if</span> emb_partial_path.exists() <span class="cf">else</span> []</span>
+<span id="cb21-25"><a href="#cb21-25" tabindex="-1" aria-label="code-block-21-25"></a>    start <span class="op">=</span> <span class="bu">len</span>(all_embeddings)</span>
+<span id="cb21-26"><a href="#cb21-26" tabindex="-1" aria-label="code-block-21-26"></a>    <span class="bu">print</span>(<span class="ss">f"Computing embeddings via Bedrock from chunk </span><span class="sc">{</span>start<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss">..."</span>)</span>
+<span id="cb21-27"><a href="#cb21-27" tabindex="-1" aria-label="code-block-21-27"></a>    t0 <span class="op">=</span> time.time()</span>
+<span id="cb21-28"><a href="#cb21-28" tabindex="-1" aria-label="code-block-21-28"></a></span>
+<span id="cb21-29"><a href="#cb21-29" tabindex="-1" aria-label="code-block-21-29"></a>    <span class="cf">for</span> idx <span class="kw">in</span> <span class="bu">range</span>(start, <span class="bu">len</span>(chunked_docs)):</span>
+<span id="cb21-30"><a href="#cb21-30" tabindex="-1" aria-label="code-block-21-30"></a>        all_embeddings.append(bedrock_embed_text(chunked_docs[idx][<span class="st">"text"</span>]))</span>
+<span id="cb21-31"><a href="#cb21-31" tabindex="-1" aria-label="code-block-21-31"></a>        <span class="cf">if</span> (idx <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> <span class="dv">500</span> <span class="op">==</span> <span class="dv">0</span> <span class="kw">or</span> idx <span class="op">+</span> <span class="dv">1</span> <span class="op">==</span> <span class="bu">len</span>(chunked_docs):</span>
+<span id="cb21-32"><a href="#cb21-32" tabindex="-1" aria-label="code-block-21-32"></a>            np.save(emb_partial_path, np.array(all_embeddings, dtype<span class="op">=</span><span class="st">"float32"</span>))</span>
+<span id="cb21-33"><a href="#cb21-33" tabindex="-1" aria-label="code-block-21-33"></a>            <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span>idx <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss"> / </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss"> chunks (progress saved)"</span>)</span>
+<span id="cb21-34"><a href="#cb21-34" tabindex="-1" aria-label="code-block-21-34"></a></span>
+<span id="cb21-35"><a href="#cb21-35" tabindex="-1" aria-label="code-block-21-35"></a>    <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs) <span class="op">-</span> start<span class="sc">}</span><span class="ss"> chunks in </span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.1f}</span><span class="ss"> seconds"</span>)</span>
+<span id="cb21-36"><a href="#cb21-36" tabindex="-1" aria-label="code-block-21-36"></a>    chunk_embeddings <span class="op">=</span> np.array(all_embeddings, dtype<span class="op">=</span><span class="st">"float32"</span>)   <span class="co"># the embedding matrix: one row per chunk, one column per dimension</span></span>
+<span id="cb21-37"><a href="#cb21-37" tabindex="-1" aria-label="code-block-21-37"></a>    np.save(emb_save_path, chunk_embeddings)</span>
+<span id="cb21-38"><a href="#cb21-38" tabindex="-1" aria-label="code-block-21-38"></a>    emb_partial_path.unlink(missing_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb21-39"><a href="#cb21-39" tabindex="-1" aria-label="code-block-21-39"></a>    s3.upload_file(<span class="bu">str</span>(emb_save_path), bucket_name, embeddings_key)</span>
+<span id="cb21-40"><a href="#cb21-40" tabindex="-1" aria-label="code-block-21-40"></a>    <span class="bu">print</span>(<span class="ss">f"Saved embeddings to </span><span class="sc">{</span>emb_save_path<span class="sc">}</span><span class="ss"> and s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>embeddings_key<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb21-41"><a href="#cb21-41" tabindex="-1" aria-label="code-block-21-41"></a></span>
+<span id="cb21-42"><a href="#cb21-42" tabindex="-1" aria-label="code-block-21-42"></a><span class="cf">assert</span> chunk_embeddings.shape[<span class="dv">0</span>] <span class="op">==</span> <span class="bu">len</span>(chunked_docs), <span class="st">"embeddings and chunks are out of step; delete the cached files and rerun"</span></span>
+<span id="cb21-43"><a href="#cb21-43" tabindex="-1" aria-label="code-block-21-43"></a><span class="bu">print</span>(<span class="st">"Embeddings shape:"</span>, chunk_embeddings.shape)</span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="step-9-retrieve-cosine-similarity-over-the-embedding-matrix">Step 9 – Retrieve: cosine similarity over the embedding matrix<a class="anchor" aria-label="anchor" href="#step-9-retrieve-cosine-similarity-over-the-embedding-matrix"></a>
 </h2>
@@ -10292,17 +10254,17 @@ the cosine similarity against every chunk, and keep the top <em>k</em>.
 (open the file to see it: it is a normalize-and-matrix-multiply). No
 vector database is needed for a few thousand chunks; the optional
 GPU-notebook episode discusses when one becomes worth it.</p>
-<div class="codewrapper sourceCode" id="cb24">
+<div class="codewrapper sourceCode" id="cb22">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" tabindex="-1" aria-label="code-block-24-1"></a>first_row <span class="op">=</span> train_df.iloc[<span class="dv">0</span>]</span>
-<span id="cb24-2"><a href="#cb24-2" tabindex="-1" aria-label="code-block-24-2"></a><span class="bu">print</span>(<span class="st">"Sample question:"</span>, first_row[<span class="st">"question"</span>])</span>
-<span id="cb24-3"><a href="#cb24-3" tabindex="-1" aria-label="code-block-24-3"></a></span>
-<span id="cb24-4"><a href="#cb24-4" tabindex="-1" aria-label="code-block-24-4"></a><span class="co"># Cosine similarity of the question vector against every row of the matrix; keep the k best</span></span>
-<span id="cb24-5"><a href="#cb24-5" tabindex="-1" aria-label="code-block-24-5"></a>test_retrieved <span class="op">=</span> retrieve_top_k(embed_query(first_row[<span class="st">"question"</span>]), chunk_embeddings, chunked_docs, k<span class="op">=</span><span class="dv">3</span>)</span>
-<span id="cb24-6"><a href="#cb24-6" tabindex="-1" aria-label="code-block-24-6"></a><span class="cf">for</span> r <span class="kw">in</span> test_retrieved:   <span class="co"># score is the cosine similarity; 1.0 would be an identical vector</span></span>
-<span id="cb24-7"><a href="#cb24-7" tabindex="-1" aria-label="code-block-24-7"></a>    snippet <span class="op">=</span> r[<span class="st">"text"</span>].replace(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span>, <span class="st">" "</span>)[:<span class="dv">160</span>]</span>
-<span id="cb24-8"><a href="#cb24-8" tabindex="-1" aria-label="code-block-24-8"></a>    <span class="bu">print</span>(<span class="ss">f"- score=</span><span class="sc">{</span>r[<span class="st">'score'</span>]<span class="sc">:.3f}</span><span class="ss"> | doc_id=</span><span class="sc">{</span>r[<span class="st">'doc_id'</span>]<span class="sc">}</span><span class="ss"> | page=</span><span class="sc">{</span>r[<span class="st">'page_label'</span>]<span class="sc">}</span><span class="ss"> | </span><span class="sc">{</span>snippet<span class="sc">}</span><span class="ss">..."</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" tabindex="-1" aria-label="code-block-22-1"></a>first_row <span class="op">=</span> train_df.iloc[<span class="dv">0</span>]</span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1" aria-label="code-block-22-2"></a><span class="bu">print</span>(<span class="st">"Sample question:"</span>, first_row[<span class="st">"question"</span>])</span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1" aria-label="code-block-22-3"></a></span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1" aria-label="code-block-22-4"></a><span class="co"># Cosine similarity of the question vector against every row of the matrix; keep the k best</span></span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1" aria-label="code-block-22-5"></a>test_retrieved <span class="op">=</span> retrieve_top_k(embed_query(first_row[<span class="st">"question"</span>]), chunk_embeddings, chunked_docs, k<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1" aria-label="code-block-22-6"></a><span class="cf">for</span> r <span class="kw">in</span> test_retrieved:   <span class="co"># score is the cosine similarity; 1.0 would be an identical vector</span></span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1" aria-label="code-block-22-7"></a>    snippet <span class="op">=</span> r[<span class="st">"text"</span>].replace(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span>, <span class="st">" "</span>)[:<span class="dv">160</span>]</span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1" aria-label="code-block-22-8"></a>    <span class="bu">print</span>(<span class="ss">f"- score=</span><span class="sc">{</span>r[<span class="st">'score'</span>]<span class="sc">:.3f}</span><span class="ss"> | doc_id=</span><span class="sc">{</span>r[<span class="st">'doc_id'</span>]<span class="sc">}</span><span class="ss"> | page=</span><span class="sc">{</span>r[<span class="st">'page_label'</span>]<span class="sc">}</span><span class="ss"> | </span><span class="sc">{</span>snippet<span class="sc">}</span><span class="ss">..."</span>)</span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="step-10-generate-deepseek-v3-through-the-converse-api">Step 10 – Generate: DeepSeek V3 through the <code>converse</code>
 API<a class="anchor" aria-label="anchor" href="#step-10-generate-deepseek-v3-through-the-converse-api"></a>
@@ -10318,40 +10280,40 @@ model is a one-line swap. The response carries the generated text and a
 <code>usage</code> block with the input and output token counts, which
 is what Bedrock bills on; we keep every <code>usage</code> block so we
 can price the run at the end.</p>
-<div class="codewrapper sourceCode" id="cb25">
+<div class="codewrapper sourceCode" id="cb23">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" tabindex="-1" aria-label="code-block-25-1"></a>bedrock_usage <span class="op">=</span> []   <span class="co"># one {"inputTokens": ..., "outputTokens": ...} per call</span></span>
-<span id="cb25-2"><a href="#cb25-2" tabindex="-1" aria-label="code-block-25-2"></a></span>
-<span id="cb25-3"><a href="#cb25-3" tabindex="-1" aria-label="code-block-25-3"></a><span class="kw">def</span> call_bedrock_chat(</span>
-<span id="cb25-4"><a href="#cb25-4" tabindex="-1" aria-label="code-block-25-4"></a>    system_prompt: <span class="bu">str</span>,</span>
-<span id="cb25-5"><a href="#cb25-5" tabindex="-1" aria-label="code-block-25-5"></a>    user_prompt: <span class="bu">str</span>,</span>
-<span id="cb25-6"><a href="#cb25-6" tabindex="-1" aria-label="code-block-25-6"></a>    max_new_tokens: <span class="bu">int</span> <span class="op">=</span> <span class="dv">512</span>,</span>
-<span id="cb25-7"><a href="#cb25-7" tabindex="-1" aria-label="code-block-25-7"></a>    model_id: <span class="bu">str</span> <span class="op">=</span> bedrock_model_id,   <span class="co"># the tagged profile ARN, never the raw model ID</span></span>
-<span id="cb25-8"><a href="#cb25-8" tabindex="-1" aria-label="code-block-25-8"></a>) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
-<span id="cb25-9"><a href="#cb25-9" tabindex="-1" aria-label="code-block-25-9"></a>    <span class="co">"""Send one system + user turn to a Bedrock chat model and return the generated text."""</span></span>
-<span id="cb25-10"><a href="#cb25-10" tabindex="-1" aria-label="code-block-25-10"></a>    <span class="cf">try</span>:</span>
-<span id="cb25-11"><a href="#cb25-11" tabindex="-1" aria-label="code-block-25-11"></a>        response <span class="op">=</span> bedrock_runtime.converse(</span>
-<span id="cb25-12"><a href="#cb25-12" tabindex="-1" aria-label="code-block-25-12"></a>            modelId<span class="op">=</span>model_id,</span>
-<span id="cb25-13"><a href="#cb25-13" tabindex="-1" aria-label="code-block-25-13"></a>            <span class="co"># system: instructions that apply to the whole exchange</span></span>
-<span id="cb25-14"><a href="#cb25-14" tabindex="-1" aria-label="code-block-25-14"></a>            system<span class="op">=</span>[{<span class="st">"text"</span>: system_prompt}],</span>
-<span id="cb25-15"><a href="#cb25-15" tabindex="-1" aria-label="code-block-25-15"></a>            <span class="co"># messages: the conversation so far, here a single user turn</span></span>
-<span id="cb25-16"><a href="#cb25-16" tabindex="-1" aria-label="code-block-25-16"></a>            messages<span class="op">=</span>[{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: [{<span class="st">"text"</span>: user_prompt}]}],</span>
-<span id="cb25-17"><a href="#cb25-17" tabindex="-1" aria-label="code-block-25-17"></a>            <span class="co"># inferenceConfig: generation settings; temperature 0 makes the output repeatable</span></span>
-<span id="cb25-18"><a href="#cb25-18" tabindex="-1" aria-label="code-block-25-18"></a>            inferenceConfig<span class="op">=</span>{<span class="st">"maxTokens"</span>: max_new_tokens, <span class="st">"temperature"</span>: <span class="dv">0</span>},</span>
-<span id="cb25-19"><a href="#cb25-19" tabindex="-1" aria-label="code-block-25-19"></a>        )</span>
-<span id="cb25-20"><a href="#cb25-20" tabindex="-1" aria-label="code-block-25-20"></a>    <span class="cf">except</span> ClientError <span class="im">as</span> e:</span>
-<span id="cb25-21"><a href="#cb25-21" tabindex="-1" aria-label="code-block-25-21"></a>        <span class="bu">print</span>(<span class="ss">f"ERROR calling Bedrock model </span><span class="sc">{</span>model_id<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb25-22"><a href="#cb25-22" tabindex="-1" aria-label="code-block-25-22"></a>        <span class="cf">raise</span></span>
-<span id="cb25-23"><a href="#cb25-23" tabindex="-1" aria-label="code-block-25-23"></a></span>
-<span id="cb25-24"><a href="#cb25-24" tabindex="-1" aria-label="code-block-25-24"></a>    bedrock_usage.append(response[<span class="st">"usage"</span>])   <span class="co"># token counts for this call, kept so we can price the run later</span></span>
-<span id="cb25-25"><a href="#cb25-25" tabindex="-1" aria-label="code-block-25-25"></a>    <span class="co"># Some models return extra content blocks (e.g. reasoning); keep only the text ones.</span></span>
-<span id="cb25-26"><a href="#cb25-26" tabindex="-1" aria-label="code-block-25-26"></a>    text_blocks <span class="op">=</span> [block[<span class="st">"text"</span>] <span class="cf">for</span> block <span class="kw">in</span> response[<span class="st">"output"</span>][<span class="st">"message"</span>][<span class="st">"content"</span>] <span class="cf">if</span> <span class="st">"text"</span> <span class="kw">in</span> block]</span>
-<span id="cb25-27"><a href="#cb25-27" tabindex="-1" aria-label="code-block-25-27"></a>    <span class="cf">return</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span>.join(text_blocks).strip()</span>
-<span id="cb25-28"><a href="#cb25-28" tabindex="-1" aria-label="code-block-25-28"></a></span>
-<span id="cb25-29"><a href="#cb25-29" tabindex="-1" aria-label="code-block-25-29"></a></span>
-<span id="cb25-30"><a href="#cb25-30" tabindex="-1" aria-label="code-block-25-30"></a><span class="bu">print</span>(call_bedrock_chat(<span class="st">"You are a concise assistant."</span>, <span class="st">"What is 2 + 2? Answer in one short sentence."</span>, max_new_tokens<span class="op">=</span><span class="dv">32</span>))</span>
-<span id="cb25-31"><a href="#cb25-31" tabindex="-1" aria-label="code-block-25-31"></a><span class="bu">print</span>(<span class="st">"usage of that call:"</span>, bedrock_usage[<span class="op">-</span><span class="dv">1</span>])</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" tabindex="-1" aria-label="code-block-23-1"></a>bedrock_usage <span class="op">=</span> []   <span class="co"># one {"inputTokens": ..., "outputTokens": ...} per call</span></span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1" aria-label="code-block-23-2"></a></span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1" aria-label="code-block-23-3"></a><span class="kw">def</span> call_bedrock_chat(</span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1" aria-label="code-block-23-4"></a>    system_prompt: <span class="bu">str</span>,</span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1" aria-label="code-block-23-5"></a>    user_prompt: <span class="bu">str</span>,</span>
+<span id="cb23-6"><a href="#cb23-6" tabindex="-1" aria-label="code-block-23-6"></a>    max_new_tokens: <span class="bu">int</span> <span class="op">=</span> <span class="dv">512</span>,</span>
+<span id="cb23-7"><a href="#cb23-7" tabindex="-1" aria-label="code-block-23-7"></a>    model_id: <span class="bu">str</span> <span class="op">=</span> bedrock_model_id,   <span class="co"># the tagged profile ARN, never the raw model ID</span></span>
+<span id="cb23-8"><a href="#cb23-8" tabindex="-1" aria-label="code-block-23-8"></a>) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
+<span id="cb23-9"><a href="#cb23-9" tabindex="-1" aria-label="code-block-23-9"></a>    <span class="co">"""Send one system + user turn to a Bedrock chat model and return the generated text."""</span></span>
+<span id="cb23-10"><a href="#cb23-10" tabindex="-1" aria-label="code-block-23-10"></a>    <span class="cf">try</span>:</span>
+<span id="cb23-11"><a href="#cb23-11" tabindex="-1" aria-label="code-block-23-11"></a>        response <span class="op">=</span> bedrock_runtime.converse(</span>
+<span id="cb23-12"><a href="#cb23-12" tabindex="-1" aria-label="code-block-23-12"></a>            modelId<span class="op">=</span>model_id,</span>
+<span id="cb23-13"><a href="#cb23-13" tabindex="-1" aria-label="code-block-23-13"></a>            <span class="co"># system: instructions that apply to the whole exchange</span></span>
+<span id="cb23-14"><a href="#cb23-14" tabindex="-1" aria-label="code-block-23-14"></a>            system<span class="op">=</span>[{<span class="st">"text"</span>: system_prompt}],</span>
+<span id="cb23-15"><a href="#cb23-15" tabindex="-1" aria-label="code-block-23-15"></a>            <span class="co"># messages: the conversation so far, here a single user turn</span></span>
+<span id="cb23-16"><a href="#cb23-16" tabindex="-1" aria-label="code-block-23-16"></a>            messages<span class="op">=</span>[{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: [{<span class="st">"text"</span>: user_prompt}]}],</span>
+<span id="cb23-17"><a href="#cb23-17" tabindex="-1" aria-label="code-block-23-17"></a>            <span class="co"># inferenceConfig: generation settings; temperature 0 makes the output repeatable</span></span>
+<span id="cb23-18"><a href="#cb23-18" tabindex="-1" aria-label="code-block-23-18"></a>            inferenceConfig<span class="op">=</span>{<span class="st">"maxTokens"</span>: max_new_tokens, <span class="st">"temperature"</span>: <span class="dv">0</span>},</span>
+<span id="cb23-19"><a href="#cb23-19" tabindex="-1" aria-label="code-block-23-19"></a>        )</span>
+<span id="cb23-20"><a href="#cb23-20" tabindex="-1" aria-label="code-block-23-20"></a>    <span class="cf">except</span> ClientError <span class="im">as</span> e:</span>
+<span id="cb23-21"><a href="#cb23-21" tabindex="-1" aria-label="code-block-23-21"></a>        <span class="bu">print</span>(<span class="ss">f"ERROR calling Bedrock model </span><span class="sc">{</span>model_id<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb23-22"><a href="#cb23-22" tabindex="-1" aria-label="code-block-23-22"></a>        <span class="cf">raise</span></span>
+<span id="cb23-23"><a href="#cb23-23" tabindex="-1" aria-label="code-block-23-23"></a></span>
+<span id="cb23-24"><a href="#cb23-24" tabindex="-1" aria-label="code-block-23-24"></a>    bedrock_usage.append(response[<span class="st">"usage"</span>])   <span class="co"># token counts for this call, kept so we can price the run later</span></span>
+<span id="cb23-25"><a href="#cb23-25" tabindex="-1" aria-label="code-block-23-25"></a>    <span class="co"># Some models return extra content blocks (e.g. reasoning); keep only the text ones.</span></span>
+<span id="cb23-26"><a href="#cb23-26" tabindex="-1" aria-label="code-block-23-26"></a>    text_blocks <span class="op">=</span> [block[<span class="st">"text"</span>] <span class="cf">for</span> block <span class="kw">in</span> response[<span class="st">"output"</span>][<span class="st">"message"</span>][<span class="st">"content"</span>] <span class="cf">if</span> <span class="st">"text"</span> <span class="kw">in</span> block]</span>
+<span id="cb23-27"><a href="#cb23-27" tabindex="-1" aria-label="code-block-23-27"></a>    <span class="cf">return</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span>.join(text_blocks).strip()</span>
+<span id="cb23-28"><a href="#cb23-28" tabindex="-1" aria-label="code-block-23-28"></a></span>
+<span id="cb23-29"><a href="#cb23-29" tabindex="-1" aria-label="code-block-23-29"></a></span>
+<span id="cb23-30"><a href="#cb23-30" tabindex="-1" aria-label="code-block-23-30"></a><span class="bu">print</span>(call_bedrock_chat(<span class="st">"You are a concise assistant."</span>, <span class="st">"What is 2 + 2? Answer in one short sentence."</span>, max_new_tokens<span class="op">=</span><span class="dv">32</span>))</span>
+<span id="cb23-31"><a href="#cb23-31" tabindex="-1" aria-label="code-block-23-31"></a><span class="bu">print</span>(<span class="st">"usage of that call:"</span>, bedrock_usage[<span class="op">-</span><span class="dv">1</span>])</span></code></pre>
 </div>
 <p>That function has the signature the shared pipeline expects,
 <code>generate(system_prompt, user_prompt, max_new_tokens) -&gt; str</code>,
@@ -10368,10 +10330,10 @@ only when the first produced an answer, asks for a one-to-three-sentence
 explanation of how the cited material supports it. The system prompt of
 the first call is the contract that makes the output
 machine-readable:</p>
-<div class="codewrapper sourceCode" id="cb26">
+<div class="codewrapper sourceCode" id="cb24">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" tabindex="-1" aria-label="code-block-26-1"></a><span class="bu">print</span>(ANSWER_SYSTEM_PROMPT)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" tabindex="-1" aria-label="code-block-24-1"></a><span class="bu">print</span>(ANSWER_SYSTEM_PROMPT)</span></code></pre>
 </div>
 <p>A question is marked unanswerable (<code>is_blank</code> everywhere,
 as the competition requires) when the model says so <strong>or</strong>
@@ -10388,45 +10350,45 @@ bucket).</p>
 <p>The Processing Jobs episode reuses this same loop with self-hosted
 models; the only difference there is that the embedding, answer and
 explanation phases call local models instead of Bedrock-hosted ones.</p>
-<div class="codewrapper sourceCode" id="cb27">
+<div class="codewrapper sourceCode" id="cb25">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" tabindex="-1" aria-label="code-block-27-1"></a>results <span class="op">=</span> []</span>
-<span id="cb27-2"><a href="#cb27-2" tabindex="-1" aria-label="code-block-27-2"></a>run_start <span class="op">=</span> time.time()</span>
-<span id="cb27-3"><a href="#cb27-3" tabindex="-1" aria-label="code-block-27-3"></a></span>
-<span id="cb27-4"><a href="#cb27-4" tabindex="-1" aria-label="code-block-27-4"></a><span class="co"># For quick smoke tests, slice train_df (e.g., train_df.head(5))</span></span>
-<span id="cb27-5"><a href="#cb27-5" tabindex="-1" aria-label="code-block-27-5"></a><span class="cf">for</span> _, row <span class="kw">in</span> train_df.iterrows():</span>
-<span id="cb27-6"><a href="#cb27-6" tabindex="-1" aria-label="code-block-27-6"></a>    <span class="bu">print</span>(<span class="st">"#"</span> <span class="op">*</span> <span class="dv">96</span>)</span>
-<span id="cb27-7"><a href="#cb27-7" tabindex="-1" aria-label="code-block-27-7"></a>    <span class="bu">print</span>(<span class="ss">f"QUESTION: </span><span class="sc">{</span>row[<span class="st">'question'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb27-8"><a href="#cb27-8" tabindex="-1" aria-label="code-block-27-8"></a></span>
-<span id="cb27-9"><a href="#cb27-9" tabindex="-1" aria-label="code-block-27-9"></a>    out <span class="op">=</span> run_single_qa(</span>
-<span id="cb27-10"><a href="#cb27-10" tabindex="-1" aria-label="code-block-27-10"></a>        row<span class="op">=</span>row,                             <span class="co"># one train_QA.csv row: id, question, expected answer_unit</span></span>
-<span id="cb27-11"><a href="#cb27-11" tabindex="-1" aria-label="code-block-27-11"></a>        embed_query<span class="op">=</span>embed_query,             <span class="co"># the two model callables: the only episode-specific inputs</span></span>
-<span id="cb27-12"><a href="#cb27-12" tabindex="-1" aria-label="code-block-27-12"></a>        generate<span class="op">=</span>call_bedrock_chat,</span>
-<span id="cb27-13"><a href="#cb27-13" tabindex="-1" aria-label="code-block-27-13"></a>        chunk_embeddings<span class="op">=</span>chunk_embeddings,   <span class="co"># the index: the matrix plus the chunks it was built from</span></span>
-<span id="cb27-14"><a href="#cb27-14" tabindex="-1" aria-label="code-block-27-14"></a>        chunked_docs<span class="op">=</span>chunked_docs,</span>
-<span id="cb27-15"><a href="#cb27-15" tabindex="-1" aria-label="code-block-27-15"></a>        docid_to_url<span class="op">=</span>docid_to_url,           <span class="co"># for the ref_url column</span></span>
-<span id="cb27-16"><a href="#cb27-16" tabindex="-1" aria-label="code-block-27-16"></a>        top_k<span class="op">=</span><span class="dv">8</span>,                             <span class="co"># chunks handed to the model as context</span></span>
-<span id="cb27-17"><a href="#cb27-17" tabindex="-1" aria-label="code-block-27-17"></a>        retrieval_threshold<span class="op">=</span><span class="fl">0.25</span>,            <span class="co"># best cosine score below this =&gt; unanswerable (is_blank)</span></span>
-<span id="cb27-18"><a href="#cb27-18" tabindex="-1" aria-label="code-block-27-18"></a>        verbose<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb27-19"><a href="#cb27-19" tabindex="-1" aria-label="code-block-27-19"></a>    )</span>
-<span id="cb27-20"><a href="#cb27-20" tabindex="-1" aria-label="code-block-27-20"></a></span>
-<span id="cb27-21"><a href="#cb27-21" tabindex="-1" aria-label="code-block-27-21"></a>    <span class="bu">print</span>(<span class="ss">f"ANSWER: </span><span class="sc">{</span>out[<span class="st">'answer'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb27-22"><a href="#cb27-22" tabindex="-1" aria-label="code-block-27-22"></a>    <span class="bu">print</span>(<span class="ss">f"ref_ids: </span><span class="sc">{</span>out[<span class="st">'ref_id'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb27-23"><a href="#cb27-23" tabindex="-1" aria-label="code-block-27-23"></a>    <span class="bu">print</span>(<span class="ss">f"EXPLANATION: </span><span class="sc">{</span>out[<span class="st">'explanation'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb27-24"><a href="#cb27-24" tabindex="-1" aria-label="code-block-27-24"></a>    results.append(out)</span>
-<span id="cb27-25"><a href="#cb27-25" tabindex="-1" aria-label="code-block-27-25"></a></span>
-<span id="cb27-26"><a href="#cb27-26" tabindex="-1" aria-label="code-block-27-26"></a>results_df <span class="op">=</span> pd.DataFrame(results)</span>
-<span id="cb27-27"><a href="#cb27-27" tabindex="-1" aria-label="code-block-27-27"></a><span class="bu">print</span>(<span class="ss">f"Answered </span><span class="sc">{</span><span class="bu">len</span>(results_df)<span class="sc">}</span><span class="ss"> questions in </span><span class="sc">{</span>(time.time() <span class="op">-</span> run_start) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
-<span id="cb27-28"><a href="#cb27-28" tabindex="-1" aria-label="code-block-27-28"></a></span>
-<span id="cb27-29"><a href="#cb27-29" tabindex="-1" aria-label="code-block-27-29"></a>output_dir <span class="op">=</span> <span class="st">"outputs"</span></span>
-<span id="cb27-30"><a href="#cb27-30" tabindex="-1" aria-label="code-block-27-30"></a>os.makedirs(output_dir, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb27-31"><a href="#cb27-31" tabindex="-1" aria-label="code-block-27-31"></a>output_path <span class="op">=</span> os.path.join(output_dir, <span class="st">"wattbot_solutions_bedrock.csv"</span>)</span>
-<span id="cb27-32"><a href="#cb27-32" tabindex="-1" aria-label="code-block-27-32"></a>results_df.to_csv(output_path, index<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb27-33"><a href="#cb27-33" tabindex="-1" aria-label="code-block-27-33"></a>s3.upload_file(output_path, bucket_name, solutions_key)</span>
-<span id="cb27-34"><a href="#cb27-34" tabindex="-1" aria-label="code-block-27-34"></a><span class="bu">print</span>(<span class="ss">f"Wrote predictions to </span><span class="sc">{</span>output_path<span class="sc">}</span><span class="ss"> and s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>solutions_key<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb27-35"><a href="#cb27-35" tabindex="-1" aria-label="code-block-27-35"></a></span>
-<span id="cb27-36"><a href="#cb27-36" tabindex="-1" aria-label="code-block-27-36"></a>results_df.head()</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" tabindex="-1" aria-label="code-block-25-1"></a>results <span class="op">=</span> []</span>
+<span id="cb25-2"><a href="#cb25-2" tabindex="-1" aria-label="code-block-25-2"></a>run_start <span class="op">=</span> time.time()</span>
+<span id="cb25-3"><a href="#cb25-3" tabindex="-1" aria-label="code-block-25-3"></a></span>
+<span id="cb25-4"><a href="#cb25-4" tabindex="-1" aria-label="code-block-25-4"></a><span class="co"># For quick smoke tests, slice train_df (e.g., train_df.head(5))</span></span>
+<span id="cb25-5"><a href="#cb25-5" tabindex="-1" aria-label="code-block-25-5"></a><span class="cf">for</span> _, row <span class="kw">in</span> train_df.iterrows():</span>
+<span id="cb25-6"><a href="#cb25-6" tabindex="-1" aria-label="code-block-25-6"></a>    <span class="bu">print</span>(<span class="st">"#"</span> <span class="op">*</span> <span class="dv">96</span>)</span>
+<span id="cb25-7"><a href="#cb25-7" tabindex="-1" aria-label="code-block-25-7"></a>    <span class="bu">print</span>(<span class="ss">f"QUESTION: </span><span class="sc">{</span>row[<span class="st">'question'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb25-8"><a href="#cb25-8" tabindex="-1" aria-label="code-block-25-8"></a></span>
+<span id="cb25-9"><a href="#cb25-9" tabindex="-1" aria-label="code-block-25-9"></a>    out <span class="op">=</span> run_single_qa(</span>
+<span id="cb25-10"><a href="#cb25-10" tabindex="-1" aria-label="code-block-25-10"></a>        row<span class="op">=</span>row,                             <span class="co"># one train_QA.csv row: id, question, expected answer_unit</span></span>
+<span id="cb25-11"><a href="#cb25-11" tabindex="-1" aria-label="code-block-25-11"></a>        embed_query<span class="op">=</span>embed_query,             <span class="co"># the two model callables: the only episode-specific inputs</span></span>
+<span id="cb25-12"><a href="#cb25-12" tabindex="-1" aria-label="code-block-25-12"></a>        generate<span class="op">=</span>call_bedrock_chat,</span>
+<span id="cb25-13"><a href="#cb25-13" tabindex="-1" aria-label="code-block-25-13"></a>        chunk_embeddings<span class="op">=</span>chunk_embeddings,   <span class="co"># the index: the matrix plus the chunks it was built from</span></span>
+<span id="cb25-14"><a href="#cb25-14" tabindex="-1" aria-label="code-block-25-14"></a>        chunked_docs<span class="op">=</span>chunked_docs,</span>
+<span id="cb25-15"><a href="#cb25-15" tabindex="-1" aria-label="code-block-25-15"></a>        docid_to_url<span class="op">=</span>docid_to_url,           <span class="co"># for the ref_url column</span></span>
+<span id="cb25-16"><a href="#cb25-16" tabindex="-1" aria-label="code-block-25-16"></a>        top_k<span class="op">=</span><span class="dv">8</span>,                             <span class="co"># chunks handed to the model as context</span></span>
+<span id="cb25-17"><a href="#cb25-17" tabindex="-1" aria-label="code-block-25-17"></a>        retrieval_threshold<span class="op">=</span><span class="fl">0.25</span>,            <span class="co"># best cosine score below this =&gt; unanswerable (is_blank)</span></span>
+<span id="cb25-18"><a href="#cb25-18" tabindex="-1" aria-label="code-block-25-18"></a>        verbose<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb25-19"><a href="#cb25-19" tabindex="-1" aria-label="code-block-25-19"></a>    )</span>
+<span id="cb25-20"><a href="#cb25-20" tabindex="-1" aria-label="code-block-25-20"></a></span>
+<span id="cb25-21"><a href="#cb25-21" tabindex="-1" aria-label="code-block-25-21"></a>    <span class="bu">print</span>(<span class="ss">f"ANSWER: </span><span class="sc">{</span>out[<span class="st">'answer'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb25-22"><a href="#cb25-22" tabindex="-1" aria-label="code-block-25-22"></a>    <span class="bu">print</span>(<span class="ss">f"ref_ids: </span><span class="sc">{</span>out[<span class="st">'ref_id'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb25-23"><a href="#cb25-23" tabindex="-1" aria-label="code-block-25-23"></a>    <span class="bu">print</span>(<span class="ss">f"EXPLANATION: </span><span class="sc">{</span>out[<span class="st">'explanation'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb25-24"><a href="#cb25-24" tabindex="-1" aria-label="code-block-25-24"></a>    results.append(out)</span>
+<span id="cb25-25"><a href="#cb25-25" tabindex="-1" aria-label="code-block-25-25"></a></span>
+<span id="cb25-26"><a href="#cb25-26" tabindex="-1" aria-label="code-block-25-26"></a>results_df <span class="op">=</span> pd.DataFrame(results)</span>
+<span id="cb25-27"><a href="#cb25-27" tabindex="-1" aria-label="code-block-25-27"></a><span class="bu">print</span>(<span class="ss">f"Answered </span><span class="sc">{</span><span class="bu">len</span>(results_df)<span class="sc">}</span><span class="ss"> questions in </span><span class="sc">{</span>(time.time() <span class="op">-</span> run_start) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
+<span id="cb25-28"><a href="#cb25-28" tabindex="-1" aria-label="code-block-25-28"></a></span>
+<span id="cb25-29"><a href="#cb25-29" tabindex="-1" aria-label="code-block-25-29"></a>output_dir <span class="op">=</span> <span class="st">"outputs"</span></span>
+<span id="cb25-30"><a href="#cb25-30" tabindex="-1" aria-label="code-block-25-30"></a>os.makedirs(output_dir, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb25-31"><a href="#cb25-31" tabindex="-1" aria-label="code-block-25-31"></a>output_path <span class="op">=</span> os.path.join(output_dir, <span class="st">"wattbot_solutions_bedrock.csv"</span>)</span>
+<span id="cb25-32"><a href="#cb25-32" tabindex="-1" aria-label="code-block-25-32"></a>results_df.to_csv(output_path, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb25-33"><a href="#cb25-33" tabindex="-1" aria-label="code-block-25-33"></a>s3.upload_file(output_path, bucket_name, solutions_key)</span>
+<span id="cb25-34"><a href="#cb25-34" tabindex="-1" aria-label="code-block-25-34"></a><span class="bu">print</span>(<span class="ss">f"Wrote predictions to </span><span class="sc">{</span>output_path<span class="sc">}</span><span class="ss"> and s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>solutions_key<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb25-35"><a href="#cb25-35" tabindex="-1" aria-label="code-block-25-35"></a></span>
+<span id="cb25-36"><a href="#cb25-36" tabindex="-1" aria-label="code-block-25-36"></a>results_df.head()</span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="step-12-score-against-the-training-answers">Step 12 – Score against the training answers<a class="anchor" aria-label="anchor" href="#step-12-score-against-the-training-answers"></a>
 </h2>
@@ -10446,14 +10408,14 @@ rows so you can see <em>why</em> the pipeline lost points.
 <code>train_QA.csv</code> has no separate “unanswerable” column, so
 <code>gt_is_na_col="is_blank"</code> tells the scorer to derive that
 flag from <code>answer_value == "is_blank"</code> on both sides.</p>
-<div class="codewrapper sourceCode" id="cb28">
+<div class="codewrapper sourceCode" id="cb26">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" tabindex="-1" aria-label="code-block-28-1"></a>scored_df <span class="op">=</span> compute_wattbot_score(</span>
-<span id="cb28-2"><a href="#cb28-2" tabindex="-1" aria-label="code-block-28-2"></a>    train_qa_path<span class="op">=</span>train_qa_path,    <span class="co"># ground truth</span></span>
-<span id="cb28-3"><a href="#cb28-3" tabindex="-1" aria-label="code-block-28-3"></a>    preds_path<span class="op">=</span>output_path,         <span class="co"># our predictions, joined to it on id</span></span>
-<span id="cb28-4"><a href="#cb28-4" tabindex="-1" aria-label="code-block-28-4"></a>    n_examples<span class="op">=</span><span class="dv">20</span>,</span>
-<span id="cb28-5"><a href="#cb28-5" tabindex="-1" aria-label="code-block-28-5"></a>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" tabindex="-1" aria-label="code-block-26-1"></a>scored_df <span class="op">=</span> compute_wattbot_score(</span>
+<span id="cb26-2"><a href="#cb26-2" tabindex="-1" aria-label="code-block-26-2"></a>    train_qa_path<span class="op">=</span>train_qa_path,    <span class="co"># ground truth</span></span>
+<span id="cb26-3"><a href="#cb26-3" tabindex="-1" aria-label="code-block-26-3"></a>    preds_path<span class="op">=</span>output_path,         <span class="co"># our predictions, joined to it on id</span></span>
+<span id="cb26-4"><a href="#cb26-4" tabindex="-1" aria-label="code-block-26-4"></a>    n_examples<span class="op">=</span><span class="dv">20</span>,</span>
+<span id="cb26-5"><a href="#cb26-5" tabindex="-1" aria-label="code-block-26-5"></a>)</span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="why-were-the-wrong-ones-wrong">Why were the wrong ones wrong?<a class="anchor" aria-label="anchor" href="#why-were-the-wrong-ones-wrong"></a>
@@ -10467,28 +10429,28 @@ model’s own explanation and the passages it cited back onto the score,
 then reruns retrieval for the question (one embedding call) and reports
 whether the ground-truth paper was among the top-k chunks and what the
 best cosine score was.</p>
-<div class="codewrapper sourceCode" id="cb29">
+<div class="codewrapper sourceCode" id="cb27">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" tabindex="-1" aria-label="code-block-29-1"></a><span class="im">from</span> wattbot_rag <span class="im">import</span> retrieve_top_k, split_ref_ids</span>
-<span id="cb29-2"><a href="#cb29-2" tabindex="-1" aria-label="code-block-29-2"></a></span>
-<span id="cb29-3"><a href="#cb29-3" tabindex="-1" aria-label="code-block-29-3"></a>worst <span class="op">=</span> scored_df.sort_values(<span class="st">"wattbot_score"</span>).head(<span class="dv">8</span>)</span>
-<span id="cb29-4"><a href="#cb29-4" tabindex="-1" aria-label="code-block-29-4"></a>by_id <span class="op">=</span> results_df.set_index(<span class="st">"id"</span>)   <span class="co"># the model's answer, explanation and cited passages, keyed by question id</span></span>
-<span id="cb29-5"><a href="#cb29-5" tabindex="-1" aria-label="code-block-29-5"></a></span>
-<span id="cb29-6"><a href="#cb29-6" tabindex="-1" aria-label="code-block-29-6"></a><span class="cf">for</span> _, row <span class="kw">in</span> worst.iterrows():</span>
-<span id="cb29-7"><a href="#cb29-7" tabindex="-1" aria-label="code-block-29-7"></a>    qid <span class="op">=</span> row[<span class="st">"id"</span>]</span>
-<span id="cb29-8"><a href="#cb29-8" tabindex="-1" aria-label="code-block-29-8"></a>    gt_refs <span class="op">=</span> <span class="bu">set</span>(split_ref_ids(row[<span class="st">"ref_id_gt"</span>]))   <span class="co"># train_QA.csv stores the list as a string</span></span>
-<span id="cb29-9"><a href="#cb29-9" tabindex="-1" aria-label="code-block-29-9"></a>    retrieved <span class="op">=</span> retrieve_top_k(embed_query(row[<span class="st">"question_gt"</span>]), chunk_embeddings, chunked_docs, k<span class="op">=</span><span class="dv">8</span>)   <span class="co"># the merge suffixed both sides' columns</span></span>
-<span id="cb29-10"><a href="#cb29-10" tabindex="-1" aria-label="code-block-29-10"></a>    retrieved_docs <span class="op">=</span> [r[<span class="st">"doc_id"</span>] <span class="cf">for</span> r <span class="kw">in</span> retrieved]</span>
-<span id="cb29-11"><a href="#cb29-11" tabindex="-1" aria-label="code-block-29-11"></a>    <span class="bu">print</span>(<span class="st">"="</span> <span class="op">*</span> <span class="dv">96</span>)</span>
-<span id="cb29-12"><a href="#cb29-12" tabindex="-1" aria-label="code-block-29-12"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>qid<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>row[<span class="st">'question_gt'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb29-13"><a href="#cb29-13" tabindex="-1" aria-label="code-block-29-13"></a>    <span class="bu">print</span>(<span class="ss">f"  expected: </span><span class="sc">{</span>row[<span class="st">'answer_value_gt'</span>]<span class="sc">}</span><span class="ss">  from </span><span class="sc">{</span><span class="bu">sorted</span>(gt_refs)<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb29-14"><a href="#cb29-14" tabindex="-1" aria-label="code-block-29-14"></a>    <span class="bu">print</span>(<span class="ss">f"  predicted: </span><span class="sc">{</span>row[<span class="st">'answer_value_pred'</span>]<span class="sc">}</span><span class="ss">  citing </span><span class="sc">{</span>row[<span class="st">'ref_id_pred'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb29-15"><a href="#cb29-15" tabindex="-1" aria-label="code-block-29-15"></a>    <span class="bu">print</span>(<span class="ss">f"  retrieval: top cosine </span><span class="sc">{</span>retrieved[<span class="dv">0</span>][<span class="st">'score'</span>]<span class="sc">:.3f}</span><span class="ss">; top-8 papers </span><span class="sc">{</span>retrieved_docs<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb29-16"><a href="#cb29-16" tabindex="-1" aria-label="code-block-29-16"></a>    <span class="bu">print</span>(<span class="ss">f"  ground-truth paper retrieved: </span><span class="sc">{</span><span class="st">'yes'</span> <span class="cf">if</span> gt_refs <span class="op">&amp;</span> <span class="bu">set</span>(retrieved_docs) <span class="cf">else</span> <span class="st">'NO'</span><span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb29-17"><a href="#cb29-17" tabindex="-1" aria-label="code-block-29-17"></a>    <span class="cf">if</span> by_id.loc[qid, <span class="st">"explanation"</span>] <span class="op">!=</span> <span class="st">"is_blank"</span>:</span>
-<span id="cb29-18"><a href="#cb29-18" tabindex="-1" aria-label="code-block-29-18"></a>        <span class="bu">print</span>(<span class="ss">f"  model's explanation: </span><span class="sc">{</span>by_id<span class="sc">.</span>loc[qid, <span class="st">'explanation'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb29-19"><a href="#cb29-19" tabindex="-1" aria-label="code-block-29-19"></a>        <span class="bu">print</span>(<span class="ss">f"  passages it cited: </span><span class="sc">{</span><span class="bu">str</span>(by_id.loc[qid, <span class="st">'supporting_materials'</span>])[:<span class="dv">400</span>]<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" tabindex="-1" aria-label="code-block-27-1"></a><span class="im">from</span> wattbot_rag <span class="im">import</span> retrieve_top_k, split_ref_ids</span>
+<span id="cb27-2"><a href="#cb27-2" tabindex="-1" aria-label="code-block-27-2"></a></span>
+<span id="cb27-3"><a href="#cb27-3" tabindex="-1" aria-label="code-block-27-3"></a>worst <span class="op">=</span> scored_df.sort_values(<span class="st">"wattbot_score"</span>).head(<span class="dv">8</span>)</span>
+<span id="cb27-4"><a href="#cb27-4" tabindex="-1" aria-label="code-block-27-4"></a>by_id <span class="op">=</span> results_df.set_index(<span class="st">"id"</span>)   <span class="co"># the model's answer, explanation and cited passages, keyed by question id</span></span>
+<span id="cb27-5"><a href="#cb27-5" tabindex="-1" aria-label="code-block-27-5"></a></span>
+<span id="cb27-6"><a href="#cb27-6" tabindex="-1" aria-label="code-block-27-6"></a><span class="cf">for</span> _, row <span class="kw">in</span> worst.iterrows():</span>
+<span id="cb27-7"><a href="#cb27-7" tabindex="-1" aria-label="code-block-27-7"></a>    qid <span class="op">=</span> row[<span class="st">"id"</span>]</span>
+<span id="cb27-8"><a href="#cb27-8" tabindex="-1" aria-label="code-block-27-8"></a>    gt_refs <span class="op">=</span> <span class="bu">set</span>(split_ref_ids(row[<span class="st">"ref_id_gt"</span>]))   <span class="co"># train_QA.csv stores the list as a string</span></span>
+<span id="cb27-9"><a href="#cb27-9" tabindex="-1" aria-label="code-block-27-9"></a>    retrieved <span class="op">=</span> retrieve_top_k(embed_query(row[<span class="st">"question_gt"</span>]), chunk_embeddings, chunked_docs, k<span class="op">=</span><span class="dv">8</span>)   <span class="co"># the merge suffixed both sides' columns</span></span>
+<span id="cb27-10"><a href="#cb27-10" tabindex="-1" aria-label="code-block-27-10"></a>    retrieved_docs <span class="op">=</span> [r[<span class="st">"doc_id"</span>] <span class="cf">for</span> r <span class="kw">in</span> retrieved]</span>
+<span id="cb27-11"><a href="#cb27-11" tabindex="-1" aria-label="code-block-27-11"></a>    <span class="bu">print</span>(<span class="st">"="</span> <span class="op">*</span> <span class="dv">96</span>)</span>
+<span id="cb27-12"><a href="#cb27-12" tabindex="-1" aria-label="code-block-27-12"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>qid<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>row[<span class="st">'question_gt'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb27-13"><a href="#cb27-13" tabindex="-1" aria-label="code-block-27-13"></a>    <span class="bu">print</span>(<span class="ss">f"  expected: </span><span class="sc">{</span>row[<span class="st">'answer_value_gt'</span>]<span class="sc">}</span><span class="ss">  from </span><span class="sc">{</span><span class="bu">sorted</span>(gt_refs)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb27-14"><a href="#cb27-14" tabindex="-1" aria-label="code-block-27-14"></a>    <span class="bu">print</span>(<span class="ss">f"  predicted: </span><span class="sc">{</span>row[<span class="st">'answer_value_pred'</span>]<span class="sc">}</span><span class="ss">  citing </span><span class="sc">{</span>row[<span class="st">'ref_id_pred'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb27-15"><a href="#cb27-15" tabindex="-1" aria-label="code-block-27-15"></a>    <span class="bu">print</span>(<span class="ss">f"  retrieval: top cosine </span><span class="sc">{</span>retrieved[<span class="dv">0</span>][<span class="st">'score'</span>]<span class="sc">:.3f}</span><span class="ss">; top-8 papers </span><span class="sc">{</span>retrieved_docs<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb27-16"><a href="#cb27-16" tabindex="-1" aria-label="code-block-27-16"></a>    <span class="bu">print</span>(<span class="ss">f"  ground-truth paper retrieved: </span><span class="sc">{</span><span class="st">'yes'</span> <span class="cf">if</span> gt_refs <span class="op">&amp;</span> <span class="bu">set</span>(retrieved_docs) <span class="cf">else</span> <span class="st">'NO'</span><span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb27-17"><a href="#cb27-17" tabindex="-1" aria-label="code-block-27-17"></a>    <span class="cf">if</span> by_id.loc[qid, <span class="st">"explanation"</span>] <span class="op">!=</span> <span class="st">"is_blank"</span>:</span>
+<span id="cb27-18"><a href="#cb27-18" tabindex="-1" aria-label="code-block-27-18"></a>        <span class="bu">print</span>(<span class="ss">f"  model's explanation: </span><span class="sc">{</span>by_id<span class="sc">.</span>loc[qid, <span class="st">'explanation'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb27-19"><a href="#cb27-19" tabindex="-1" aria-label="code-block-27-19"></a>        <span class="bu">print</span>(<span class="ss">f"  passages it cited: </span><span class="sc">{</span><span class="bu">str</span>(by_id.loc[qid, <span class="st">'supporting_materials'</span>])[:<span class="dv">400</span>]<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <p>Read the two lines at the bottom of each block together.
 “Ground-truth paper retrieved: NO” is a retrieval problem: a different
@@ -10538,23 +10500,23 @@ of the <code>ml.g6e.xlarge</code> the Processing Jobs episode rents?</p>
 <p>The two prices are from the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
 for DeepSeek on-demand in October 2026; update them for the model and
 region you used. The rest sums the usage blocks and prints the cost.</p>
-<div class="codewrapper sourceCode" id="cb30">
+<div class="codewrapper sourceCode" id="cb28">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" tabindex="-1" aria-label="code-block-30-1"></a>price_in_per_m <span class="op">=</span> <span class="fl">0.62</span>    <span class="co"># $ per million input tokens: DeepSeek v3.2 on-demand in us-east-2, October 2026; check the pricing page for your model and region</span></span>
-<span id="cb30-2"><a href="#cb30-2" tabindex="-1" aria-label="code-block-30-2"></a>price_out_per_m <span class="op">=</span> <span class="fl">1.85</span>   <span class="co"># $ per million output tokens, same source</span></span>
-<span id="cb30-3"><a href="#cb30-3" tabindex="-1" aria-label="code-block-30-3"></a></span>
-<span id="cb30-4"><a href="#cb30-4" tabindex="-1" aria-label="code-block-30-4"></a>in_tokens <span class="op">=</span> <span class="bu">sum</span>(u[<span class="st">"inputTokens"</span>] <span class="cf">for</span> u <span class="kw">in</span> bedrock_usage)</span>
-<span id="cb30-5"><a href="#cb30-5" tabindex="-1" aria-label="code-block-30-5"></a>out_tokens <span class="op">=</span> <span class="bu">sum</span>(u[<span class="st">"outputTokens"</span>] <span class="cf">for</span> u <span class="kw">in</span> bedrock_usage)</span>
-<span id="cb30-6"><a href="#cb30-6" tabindex="-1" aria-label="code-block-30-6"></a>gen_cost <span class="op">=</span> in_tokens <span class="op">/</span> <span class="fl">1e6</span> <span class="op">*</span> price_in_per_m <span class="op">+</span> out_tokens <span class="op">/</span> <span class="fl">1e6</span> <span class="op">*</span> price_out_per_m</span>
-<span id="cb30-7"><a href="#cb30-7" tabindex="-1" aria-label="code-block-30-7"></a></span>
-<span id="cb30-8"><a href="#cb30-8" tabindex="-1" aria-label="code-block-30-8"></a><span class="co"># Titan bills per input token; ~4 characters per token is a fair estimate for English prose</span></span>
-<span id="cb30-9"><a href="#cb30-9" tabindex="-1" aria-label="code-block-30-9"></a>embed_tokens <span class="op">=</span> <span class="bu">sum</span>(<span class="bu">len</span>(ch[<span class="st">"text"</span>]) <span class="cf">for</span> ch <span class="kw">in</span> chunked_docs) <span class="op">/</span> <span class="dv">4</span></span>
-<span id="cb30-10"><a href="#cb30-10" tabindex="-1" aria-label="code-block-30-10"></a>embed_cost <span class="op">=</span> embed_tokens <span class="op">/</span> <span class="fl">1e6</span> <span class="op">*</span> <span class="fl">0.02</span></span>
-<span id="cb30-11"><a href="#cb30-11" tabindex="-1" aria-label="code-block-30-11"></a></span>
-<span id="cb30-12"><a href="#cb30-12" tabindex="-1" aria-label="code-block-30-12"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(bedrock_usage)<span class="sc">}</span><span class="ss"> generation calls: </span><span class="sc">{</span>in_tokens<span class="sc">:,}</span><span class="ss"> input + </span><span class="sc">{</span>out_tokens<span class="sc">:,}</span><span class="ss"> output tokens -&gt; $</span><span class="sc">{</span>gen_cost<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
-<span id="cb30-13"><a href="#cb30-13" tabindex="-1" aria-label="code-block-30-13"></a><span class="bu">print</span>(<span class="ss">f"~</span><span class="sc">{</span>embed_tokens<span class="sc">:,.0f}</span><span class="ss"> embedding tokens -&gt; $</span><span class="sc">{</span>embed_cost<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
-<span id="cb30-14"><a href="#cb30-14" tabindex="-1" aria-label="code-block-30-14"></a><span class="bu">print</span>(<span class="ss">f"Total ~$</span><span class="sc">{</span>gen_cost <span class="op">+</span> embed_cost<span class="sc">:.2f}</span><span class="ss">; one hour of ml.g6e.xlarge is $2.61"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" tabindex="-1" aria-label="code-block-28-1"></a>price_in_per_m <span class="op">=</span> <span class="fl">0.62</span>    <span class="co"># $ per million input tokens: DeepSeek v3.2 on-demand in us-east-2, October 2026; check the pricing page for your model and region</span></span>
+<span id="cb28-2"><a href="#cb28-2" tabindex="-1" aria-label="code-block-28-2"></a>price_out_per_m <span class="op">=</span> <span class="fl">1.85</span>   <span class="co"># $ per million output tokens, same source</span></span>
+<span id="cb28-3"><a href="#cb28-3" tabindex="-1" aria-label="code-block-28-3"></a></span>
+<span id="cb28-4"><a href="#cb28-4" tabindex="-1" aria-label="code-block-28-4"></a>in_tokens <span class="op">=</span> <span class="bu">sum</span>(u[<span class="st">"inputTokens"</span>] <span class="cf">for</span> u <span class="kw">in</span> bedrock_usage)</span>
+<span id="cb28-5"><a href="#cb28-5" tabindex="-1" aria-label="code-block-28-5"></a>out_tokens <span class="op">=</span> <span class="bu">sum</span>(u[<span class="st">"outputTokens"</span>] <span class="cf">for</span> u <span class="kw">in</span> bedrock_usage)</span>
+<span id="cb28-6"><a href="#cb28-6" tabindex="-1" aria-label="code-block-28-6"></a>gen_cost <span class="op">=</span> in_tokens <span class="op">/</span> <span class="fl">1e6</span> <span class="op">*</span> price_in_per_m <span class="op">+</span> out_tokens <span class="op">/</span> <span class="fl">1e6</span> <span class="op">*</span> price_out_per_m</span>
+<span id="cb28-7"><a href="#cb28-7" tabindex="-1" aria-label="code-block-28-7"></a></span>
+<span id="cb28-8"><a href="#cb28-8" tabindex="-1" aria-label="code-block-28-8"></a><span class="co"># Titan bills per input token; ~4 characters per token is a fair estimate for English prose</span></span>
+<span id="cb28-9"><a href="#cb28-9" tabindex="-1" aria-label="code-block-28-9"></a>embed_tokens <span class="op">=</span> <span class="bu">sum</span>(<span class="bu">len</span>(ch[<span class="st">"text"</span>]) <span class="cf">for</span> ch <span class="kw">in</span> chunked_docs) <span class="op">/</span> <span class="dv">4</span></span>
+<span id="cb28-10"><a href="#cb28-10" tabindex="-1" aria-label="code-block-28-10"></a>embed_cost <span class="op">=</span> embed_tokens <span class="op">/</span> <span class="fl">1e6</span> <span class="op">*</span> <span class="fl">0.02</span></span>
+<span id="cb28-11"><a href="#cb28-11" tabindex="-1" aria-label="code-block-28-11"></a></span>
+<span id="cb28-12"><a href="#cb28-12" tabindex="-1" aria-label="code-block-28-12"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(bedrock_usage)<span class="sc">}</span><span class="ss"> generation calls: </span><span class="sc">{</span>in_tokens<span class="sc">:,}</span><span class="ss"> input + </span><span class="sc">{</span>out_tokens<span class="sc">:,}</span><span class="ss"> output tokens -&gt; $</span><span class="sc">{</span>gen_cost<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb28-13"><a href="#cb28-13" tabindex="-1" aria-label="code-block-28-13"></a><span class="bu">print</span>(<span class="ss">f"~</span><span class="sc">{</span>embed_tokens<span class="sc">:,.0f}</span><span class="ss"> embedding tokens -&gt; $</span><span class="sc">{</span>embed_cost<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb28-14"><a href="#cb28-14" tabindex="-1" aria-label="code-block-28-14"></a><span class="bu">print</span>(<span class="ss">f"Total ~$</span><span class="sc">{</span>gen_cost <span class="op">+</span> embed_cost<span class="sc">:.2f}</span><span class="ss">; one hour of ml.g6e.xlarge is $2.61"</span>)</span></code></pre>
 </div>
 <p>With ~40 questions, two calls each and ~3,000-token prompts, the run
 is on the order of 250K input and 20K output tokens: cents, not dollars,
@@ -11780,10 +11742,11 @@ batch transform) build on the same idea.</p>
 <p>In this episode we rerun the <a href="https://www.kaggle.com/competitions/WattBot2025/overview" class="external-link">WattBot
 2025</a> RAG pipeline from the Bedrock episode, this time entirely from
 a single GPU-backed SageMaker notebook with self-hosted models. The
-generator is the same Qwen3.8-27B as in the Processing Jobs episode: an
-open-weight model that fits one GPU and sits within a few points of a
-frontier commercial model on agent tasks and science questions (see that
-episode’s chart), which is why it is worth the trouble of hosting.</p>
+generator is Qwen3.8-27B, the newer and larger relative of the Qwen3-8B
+the Processing Jobs episode ran: an open-weight model that fits one 48
+GB GPU in FP8 and sits within a few points of a frontier commercial
+model on agent tasks and science questions (see that episode’s chart),
+which is why it is worth the trouble of hosting.</p>
 <p>In this episode we will:</p>
 <ol style="list-style-type: decimal">
 <li>
@@ -12977,7 +12940,7 @@ finds something. Then run them against your own resources.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -13245,16 +13208,10 @@ tags never propagate between resources: your notebook instance, each S3
 bucket, each training/tuning/Processing job, and each Bedrock
 application inference profile carries its own tags, and anything you
 launched without tags is untraceable after the fact.</li>
-<li>Tags only appear as filters in Cost Explorer after the tag
-<em>keys</em> (<code>Name</code>, <code>Project</code>,
-<code>Purpose</code>) have been activated as cost allocation tags in the
-Billing console by an account administrator. On UW–Madison accounts this
-is done centrally for an approved list of keys (<a href="https://kb.wisc.edu/72454" class="external-link">KB 72454</a>); on your own account, do
-it once under <strong>Billing and Cost Management → Cost allocation
-tags</strong>. Activation applies only to usage recorded after that
-point, and new tags can take up to 24 hours to show up. A key that is
-not on the activated list (a typo, a lowercase <code>project</code>, an
-extra <code>ModelSize</code>) is silently ignored by the bill.</li>
+<li>Only the three approved keys count on the bill, <code>Name</code>,
+<code>Project</code> and <code>Purpose</code>, spelled exactly (the S3
+episode says why); a tag you just added can take up to 24 hours to
+appear in Cost Explorer.</li>
 <li>Bedrock application inference profiles cost nothing to keep, but you
 can delete the ones you created from the Bedrock console or with
 <code>bedrock.delete_inference_profile(...)</code> once a project is
@@ -13361,7 +13318,7 @@ stopped your notebook instance and walked away?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>A complete list for someone who did every episode, including the
 optional ones:</p>

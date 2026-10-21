@@ -616,16 +616,10 @@ tags never propagate between resources: your notebook instance, each S3
 bucket, each training/tuning/Processing job, and each Bedrock
 application inference profile carries its own tags, and anything you
 launched without tags is untraceable after the fact.</li>
-<li>Tags only appear as filters in Cost Explorer after the tag
-<em>keys</em> (<code>Name</code>, <code>Project</code>,
-<code>Purpose</code>) have been activated as cost allocation tags in the
-Billing console by an account administrator. On UW–Madison accounts this
-is done centrally for an approved list of keys (<a href="https://kb.wisc.edu/72454" class="external-link">KB 72454</a>); on your own account, do
-it once under <strong>Billing and Cost Management → Cost allocation
-tags</strong>. Activation applies only to usage recorded after that
-point, and new tags can take up to 24 hours to show up. A key that is
-not on the activated list (a typo, a lowercase <code>project</code>, an
-extra <code>ModelSize</code>) is silently ignored by the bill.</li>
+<li>Only the three approved keys count on the bill, <code>Name</code>,
+<code>Project</code> and <code>Purpose</code>, spelled exactly (the S3
+episode says why); a tag you just added can take up to 24 hours to
+appear in Cost Explorer.</li>
 <li>Bedrock application inference profiles cost nothing to keep, but you
 can delete the ones you created from the Bedrock console or with
 <code>bedrock.delete_inference_profile(...)</code> once a project is
@@ -723,7 +717,7 @@ stopped your notebook instance and walked away?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>A complete list for someone who did every episode, including the
 optional ones:</p>
