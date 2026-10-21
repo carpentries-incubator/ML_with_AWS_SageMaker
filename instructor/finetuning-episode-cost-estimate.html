@@ -404,7 +404,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Fine-tuning episode: cost, capacity and setup</h1>
-        <p>Last updated on 2026-10-20 |
+        <p>Last updated on 2026-10-21 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/instructors/finetuning-episode-cost-estimate.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -420,37 +420,32 @@
 
 <p>Planning notes for running the <em>Fine-tuning a Vision-Language
 Model with Training Jobs</em> episode (Badger Scribe, CHURRO-3B LoRA)
-with a class of about 50 in a 3-hour slot (quotas below are sized for
-100). Prices are on-demand SageMaker rates from the AWS price list
-published 2026-10-16 (<code>us-east-1</code> and the class account’s
-<code>us-east-2</code> are the same for these instance types); re-check
-them before the term, since <code>ml.g5.xlarge</code> has already moved
-from <code>$1.21</code> to <code>$1.41</code> since the RAG episodes
-were written.</p>
+with a class of about 50 in a 2-hour slot (3 with the bonus exercises)
+(quotas below are sized for 100). Prices are on-demand SageMaker rates
+from the AWS price list published 2026-10-16 (<code>us-east-1</code> and
+the class account’s <code>us-east-2</code> are the same for these
+instance types); re-check them before the term, since
+<code>ml.g5.xlarge</code> has already moved from <code>$1.21</code> to
+<code>$1.41</code> since the RAG episodes were written.</p>
 <section><h2 class="section-heading" id="the-in-class-design">The in-class design<a class="anchor" aria-label="anchor" href="#the-in-class-design"></a></h2>
-<hr class="half-width"><p>The full 295-page fine-tune takes about 45 minutes, which does not
-fit a 3-hour class once setup and discussion are added. In class, every
-student runs one ~25-minute job instead: it scores 15 held-out
-German-letter (<code>kade_letters</code>) pages with the base model,
-trains on 120 German-letter pages for 2 epochs, scores the same 15 pages
-again, and saves the adapter. The lesson ships only the German letters
-(295 train, 141 test pages) because every label is human-transcribed
-(the competition’s survey and account-book labels are mostly machine
-drafts), because they are most of the hidden test set, and because the
-scans are smaller. Before/after lives inside that one job, so there are
-no separate inference jobs during class. The full run, the Processing
-jobs over the test set and the optional Kaggle submission are
-homework.</p>
-<p>Students compare their mini adapter against a full run
-<strong>you</strong> ran before class (see “Before class” below). That
-is what makes the “powerful when done right” point without anyone
-waiting an hour.</p>
+<hr class="half-width"><p>In class, every student runs one LoRA fine-tuning job of about 33
+minutes: it scores 15 held-out German-letter (<code>kade_letters</code>)
+pages with the base model, trains on all 251 training pages (295 minus a
+44-page holdout) for 2 passes, scores 8 holdout pages after each pass
+for a curve, scores the same 15 pages again, and saves the adapter. The
+lesson ships only the German letters (295 train, 141 test pages) because
+every label is human-transcribed (the competition’s survey and
+account-book labels are mostly machine drafts), because they are most of
+the hidden test set, and because the scans are smaller. Before/after
+lives inside that one job, so there are no separate inference jobs
+during class. The full run, the Processing jobs over the test set and
+the optional Kaggle submission are homework.</p>
 <p>Launches use <code>wait=True</code> and an explicit
-<code>job_name=f"badger-{username}-mini-v1"</code>. The explicit name is
-the double-launch guard: SageMaker rejects a second job with the same
-name, so a queued Shift+Enter fails harmlessly. Interrupting the cell
-does not stop the job; the episode says so in a callout, and you should
-say it out loud.</p>
+<code>job_name=f"badger-{username}-churro-lora-2ep"</code>. The explicit
+name is the double-launch guard: SageMaker rejects a second job with the
+same name, so a queued Shift+Enter fails harmlessly. Interrupting the
+cell does not stop the job; the episode says so in a callout, and you
+should say it out loud.</p>
 </section><section><h2 class="section-heading" id="what-one-student-spends">What one student spends<a class="anchor" aria-label="anchor" href="#what-one-student-spends"></a></h2>
 <hr class="half-width"><table class="table"><colgroup><col width="25%"><col width="25%"><col width="25%"><col width="25%"></colgroup><thead><tr><th>Item</th>
 <th>Instance</th>
@@ -461,74 +456,75 @@ say it out loud.</p>
 <code>ml.t3.medium</code> (<code>$0.05</code>/h)</td>
 <td>3 h</td>
 <td><code>$0.15</code></td>
-</tr><tr><td>In-class mini fine-tune (120 German-letter pages × 2 epochs, 15
-pages scored before and after)</td>
+</tr><tr><td>In-class LoRA fine-tune (251 German-letter pages × 2 passes, 15
+pages scored before and after, 8-page curve)</td>
 <td>
 <code>ml.g5.xlarge</code> (<code>$1.41</code>/h)</td>
-<td>~25 min</td>
-<td><code>$0.60</code></td>
-</tr><tr><td>Exercise 1: same job at 2 megapixels</td>
-<td><code>ml.g5.xlarge</code></td>
-<td>~35 min</td>
-<td><code>$0.80</code></td>
+<td>~32 min</td>
+<td><code>$0.75</code></td>
 </tr><tr><td><strong>In class</strong></td>
 <td></td>
-<td><strong>~1 GPU-hour</strong></td>
-<td><strong>~<code>$1.55</code></strong></td>
-</tr><tr><td>Homework: full fine-tune (251 pages × 2 epochs, 40 pages scored
+<td><strong>~0.5 GPU-hours</strong></td>
+<td><strong>~<code>$0.90</code></strong></td>
+</tr><tr><td>Bonus Exercise 1, if anyone does it: the class job at 2
+megapixels</td>
+<td><code>ml.g5.xlarge</code></td>
+<td>~60 min</td>
+<td><code>$1.40</code></td>
+</tr><tr><td>Homework: four-pass LoRA run (251 pages × 4 passes, 40 pages scored
 before and after)</td>
 <td><code>ml.g5.xlarge</code></td>
-<td>~45 min</td>
-<td><code>$1.05</code></td>
-</tr><tr><td>Homework: base and fine-tuned over holdout + test (~185 pages, two
-Processing jobs)</td>
+<td>~65 min</td>
+<td><code>$1.50</code></td>
+</tr><tr><td>Homework: base and LoRA fine-tuned over holdout + test (~185 pages,
+two Processing jobs)</td>
 <td><code>ml.g5.xlarge</code></td>
 <td>~15 min each</td>
 <td><code>$0.70</code></td>
-</tr><tr><td><strong>In class + homework</strong></td>
+</tr><tr><td><strong>In class + bonus + homework</strong></td>
 <td></td>
-<td><strong>~2.3 GPU-hours</strong></td>
-<td><strong>~<code>$3.30</code></strong></td>
+<td><strong>~3.1 GPU-hours</strong></td>
+<td><strong>~<code>$4.50</code></strong></td>
 </tr></tbody></table><p>Assumptions behind the training lines: CHURRO-3B in bf16 with LoRA
 rank 16, gradient checkpointing, one page per step,
 <code>max_pixels</code> of 1280 × 28 × 28 (about one megapixel, ~1,300
-visual tokens plus ~300 text tokens per page), about 2.5 s per page-pass
-and ~10 s per page for greedy generation on an A10G, plus ~10 minutes of
-fixed startup (container pull, ~130 MB of images, 7.5 GB of weights
-copied from the shared bucket as a <code>model</code> channel, which
-adds ~1–2 minutes of S3 download per job instead of a Hugging Face
-pull). These are estimates, not measurements; a 2x miss either way would
-not be surprising until you have timed a run. Every job is capped
-(<code>max_run</code> of 45 min on the mini job, 90 min on the full run,
-45 min on each Processing job), so the worst case from the scripted
-steps is about <code>$6</code> per student.</p>
+visual tokens plus ~300 text tokens per page), and, measured on the
+class job on 2026-10-21, 1.45 s per page-pass of training, 17–21 s per
+page for greedy generation on an A10G, about 5 minutes of billed startup
+(container pull, ~130 MB of images, 7.5 GB of weights copied from the
+shared bucket as a <code>model</code> channel) and under a minute of
+unbilled provisioning. The 2-megapixel and homework rows are scaled from
+those rates. Every job is capped (<code>max_run</code> of 65 min on the
+class job, 130 min on the homework run, 45 min on each Processing job),
+so the worst case from the scripted steps is about <code>$7</code> per
+student.</p>
 </section><section><h2 class="section-heading" id="what-the-class-spends">What the class spends<a class="anchor" aria-label="anchor" href="#what-the-class-spends"></a></h2>
 <hr class="half-width"><table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>Scenario</th>
 <th>Per student</th>
 <th>50 students (double for 100)</th>
-</tr></thead><tbody><tr><td>In class, one clean pass each (mini job + Exercise 1)</td>
-<td><code>$1.55</code></td>
-<td><code>$80</code></td>
+</tr></thead><tbody><tr><td>In class, one clean pass each</td>
+<td><code>$0.90</code></td>
+<td><code>$45</code></td>
 </tr><tr><td>In class, realistic (one extra relaunch each)</td>
-<td>~<code>$2.20</code>
+<td>~<code>$1.65</code>
 </td>
-<td>~<code>$110</code>
+<td>~<code>$85</code>
 </td>
-</tr><tr><td>In class, everything hits its <code>max_run</code> cap</td>
+</tr><tr><td>In class, two launches each at the <code>max_run</code> cap</td>
 <td>~<code>$3.20</code>
 </td>
 <td>~<code>$160</code>
 </td>
 </tr><tr><td>Homework, if everyone does it</td>
-<td>~<code>$1.75</code>
+<td>~<code>$2.20</code>
 </td>
-<td>~<code>$90</code>
+<td>~<code>$110</code>
 </td>
 </tr><tr><td>
 <strong>Budget to request</strong> (realistic class + homework +
 50%)</td>
 <td></td>
-<td><strong><code>$400</code></strong></td>
+<td><strong><code>$300</code></strong></td>
 </tr></tbody></table><p>For comparison, teaching the same material on
 <code>ml.g5.xlarge</code> <em>notebook</em> instances costs about the
 same during class (<code>$1.41</code> × 3 h × 50 = <code>$212</code>)
@@ -540,25 +536,25 @@ worth saying out loud to the class.</p>
 </section><section><h2 class="section-heading" id="suggested-timeline-3-h">Suggested timeline (3 h)<a class="anchor" aria-label="anchor" href="#suggested-timeline-3-h"></a></h2>
 <hr class="half-width"><table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>Time</th>
 <th>What</th>
-</tr></thead><tbody><tr><td>0:00–0:25</td>
-<td>Why fine-tune; the cost-scaling table; setup cells (CSV download,
-scripts, tags)</td>
-</tr><tr><td>0:25–0:35</td>
-<td>Everyone launches the mini job (<code>wait=True</code>)</td>
-</tr><tr><td>0:35–1:00</td>
-<td>While it runs, in the console: job page, <code>max_run</code>, tags,
-CloudWatch log; forgotten-instance arithmetic; quotas</td>
-</tr><tr><td>1:00–1:25</td>
-<td>Step 2: bill vs. estimate, before/after CER, look at a page</td>
-</tr><tr><td>1:25–1:50</td>
-<td>Step 3: compare against your full run; holdout-optimism callout</td>
-</tr><tr><td>1:50–2:30</td>
-<td>Exercise 1 (relaunch at 2 MP; ~35 min, so launch first and discuss
-Exercises 2 and 3 while it runs)</td>
-</tr><tr><td>2:30–3:00</td>
-<td>Step 4 totals; walk through the homework section; cleanup</td>
-</tr></tbody></table><p>If the mini jobs are still queueing at 0:45 (capacity), move Step 3
-forward: the comparison against your full run needs no student job.</p>
+</tr></thead><tbody><tr><td>0:00–0:30</td>
+<td>Why fine-tune; the cost table; setup cells (CSV download, token
+counting, guard rails)</td>
+</tr><tr><td>0:30–0:40</td>
+<td>Everyone launches the class job (<code>wait=True</code>)</td>
+</tr><tr><td>0:40–1:15</td>
+<td>While it runs (~33 min), in the console: job page,
+<code>max_run</code>, tags, CloudWatch log, the checkpoint folder in S3;
+forgotten-instance arithmetic; quotas</td>
+</tr><tr><td>1:15–1:45</td>
+<td>Step 2: bill vs. estimate, before/after CER, the curves, a page side
+by side; the holdout callouts</td>
+</tr><tr><td>1:45–2:00</td>
+<td>Step 3 totals; walk through the homework section; cleanup</td>
+</tr></tbody></table><p>The bonus exercises are not scheduled. With a third hour, Exercise 1
+(the class job at 2 megapixels) is about an hour of GPU time, so launch
+it first and discuss Exercise 2 while it runs.</p>
+<p>If the jobs are still queueing at 0:50 (capacity), teach the console
+and the cost arithmetic from your own job’s page, run before class.</p>
 </section><section><h2 class="section-heading" id="things-that-will-go-wrong-unless-arranged-ahead-of-time">Things that will go wrong unless arranged ahead of time<a class="anchor" aria-label="anchor" href="#things-that-will-go-wrong-unless-arranged-ahead-of-time"></a></h2>
 <hr class="half-width"><p><strong>Service quotas.</strong> This is the item most likely to sink
 the session. In Service Quotas → Amazon SageMaker, per region:</p>
@@ -580,7 +576,7 @@ file them <strong>three to four weeks</strong> before class.</p>
 <p><strong>Capacity.</strong> Fifty <code>ml.g5.xlarge</code> launches
 within the same minute in one region can fail with
 <code>InsufficientCapacity</code> even when the quota allows it.
-Mitigations, in order: launch the mini jobs in waves (table by table),
+Mitigations, in order: launch the class jobs in waves (table by table),
 and have <code>ml.g6.xlarge</code> (L4, 24 GB, <code>$1.13</code>/h;
 somewhat slower on this workload, with half the memory bandwidth, but
 still well within <code>max_run</code>) ready as a documented fallback
@@ -606,9 +602,6 @@ overhead. It needs its own quota
 (<code>ml.g5.xlarge for training warm pool usage</code>) and it bills
 for the idle time at the full rate, so for a class it adds a way to
 leave meters running. Leave it off.</p>
-<p><strong>Spot.</strong> Managed spot training saves up to 70% but 50
-simultaneous spot requests will see interruptions and capacity waits,
-and the script does not checkpoint. Keep it as the exercise it is.</p>
 </section><section><h2 class="section-heading" id="before-class">Before class<a class="anchor" aria-label="anchor" href="#before-class"></a></h2>
 <hr class="half-width"><div class="section level3">
 <h3 id="stage-the-data-in-the-shared-read-only-bucket">1. Stage the data in the shared read-only bucket<a class="anchor" aria-label="anchor" href="#stage-the-data-in-the-shared-read-only-bucket"></a></h3>
@@ -623,27 +616,7 @@ layout and exact commands are on the <em>Shared data bucket: staging
 before each term</em> page.</p>
 </div>
 <div class="section level3">
-<h3 id="run-the-full-fine-tune-yourself-and-stage-its-output">2. Run the full fine-tune yourself and stage its output<a class="anchor" aria-label="anchor" href="#run-the-full-fine-tune-yourself-and-stage-its-output"></a></h3>
-<p>Run the episode’s homework estimator (all 251 training pages, 2
-epochs, <code>eval_pages</code> 40) under your own account a day or two
-before class. Then copy three files from its <code>model.tar.gz</code>
-into the shared bucket, where Step 3 of the episode expects them:</p>
-<ul><li><code>badger-scribe/instructor/full-run/train_summary.json</code></li>
-<li><code>badger-scribe/instructor/full-run/eval_before.csv</code></li>
-<li><code>badger-scribe/instructor/full-run/eval_after.csv</code></li>
-</ul><p>The holdout split is seeded and the evaluation sample is the first
-<em>n</em> of one seeded shuffle of the sorted page ids, so your 40
-evaluation pages include the students’ 15 pages by construction, as long
-as everyone keeps <code>seed</code> and <code>holdout_frac</code> at
-their defaults and trains from the same data release. While you are at
-it, note the job’s <code>BillableTimeInSeconds</code> and
-<code>seconds_per_page</code> and replace the time estimates in the
-episode’s Step 0 tables with measured ones. The episode tells students
-to compare their bill to the estimate; the estimate should be a real
-number.</p>
-</div>
-<div class="section level3">
-<h3 id="the-rest">3. The rest<a class="anchor" aria-label="anchor" href="#the-rest"></a></h3>
+<h3 id="the-rest">2. The rest<a class="anchor" aria-label="anchor" href="#the-rest"></a></h3>
 <ul><li>
 <p>Before anything launches, check that the container the episode
 asks for exists in the class region (a wrong version combination fails
@@ -725,7 +698,7 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/finetuning-episode-cost-estimate.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/finetuning-episode-cost-estimate.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-20",
+  "dateModified": "2026-10-21",
   "datePublished": "2026-10-21"
 }
 

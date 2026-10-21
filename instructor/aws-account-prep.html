@@ -404,7 +404,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Account preparation checklist (quotas, Bedrock, tags)</h1>
-        <p>Last updated on 2026-10-20 |
+        <p>Last updated on 2026-10-21 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/instructors/aws-account-prep.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -615,13 +615,14 @@ tuner’s tags propagated, so they pass.</li>
 </ul><p>Three cautions. Test the policy with one job of each kind (training,
 processing, tuning, notebook creation from the console) a week before
 class, from a learner-level sign-in, not an administrator one. Second,
-the role the notebook instance assumes (<code>ml-sagemaker-use</code>)
-is a separate identity from the permission set; what the SDK does from
-inside a notebook is governed by that role’s policy, so attach the same
-denies there, or the guard rail only covers the laptop. Third, set the
-permission set’s session duration to the length of a class day (8 hours)
-so a CLI login does not expire mid-episode; it is on the permission
-set’s <strong>General settings</strong>.</p>
+the role the notebook instance assumes
+(<code>ml-sagemaker-bedrock-use</code>) is a separate identity from the
+permission set; what the SDK does from inside a notebook is governed by
+that role’s policy, so attach the same denies there, or the guard rail
+only covers the laptop. Third, set the permission set’s session duration
+to the length of a class day (8 hours) so a CLI login does not expire
+mid-episode; it is on the permission set’s <strong>General
+settings</strong>.</p>
 </section><section><h2 class="section-heading" id="bedrock">Bedrock<a class="anchor" aria-label="anchor" href="#bedrock"></a></h2>
 <hr class="half-width"><p>Console: <strong>Service Quotas → Amazon Bedrock</strong>, and
 <strong>Bedrock → Model access</strong>.</p>
@@ -632,18 +633,58 @@ set’s <strong>General settings</strong>.</p>
 <strong>requests per minute</strong> quotas for both. Fifty notebooks
 each embedding ~3,000 chunks in a loop will exceed the default embedding
 RPM; ask for 5–10x whatever the console shows.</li>
-<li>The student execution role needs, in addition to
-<code>bedrock:InvokeModel</code>:
-<code>bedrock:CreateInferenceProfile</code>,
-<code>bedrock:GetInferenceProfile</code>,
-<code>bedrock:ListInferenceProfiles</code>,
-<code>bedrock:GetFoundationModel</code>,
-<code>bedrock:TagResource</code>. <code>InvokeModel</code> must be
-allowed on <strong>both</strong> the application inference profile ARN
-and the underlying model ARN. Without these, profile creation fails and
-students fall back to untagged calls, which is the usual reason Bedrock
-spend shows up untagged.</li>
-</ul></section><section><h2 class="section-heading" id="cost-allocation-tags">Cost allocation tags<a class="anchor" aria-label="anchor" href="#cost-allocation-tags"></a></h2>
+<li>
+<strong>The learner execution role needs Bedrock
+permissions</strong>, and the default SageMaker role has none: the
+Bedrock episode’s first Bedrock call fails with
+<code>AccessDeniedException ... bedrock:ListInferenceProfiles</code>
+until they are added. On the UW account the role
+<code>ml-sagemaker-bedrock-use</code> carries them and the
+controller-notebook episode tells learners to pick it; the older
+<code>ml-sagemaker-use</code> does not, and a notebook created with it
+has to be stopped and re-pointed at the right role. Elsewhere, attach
+the policy below as an inline policy on whatever role the notebooks run
+with, with <code>&lt;account-id&gt;</code> filled in.
+<code>InvokeModel</code> must be allowed on <strong>both</strong> the
+application inference profile ARN and the underlying foundation-model
+ARN, or calls through the profile are denied;
+<code>DeleteInferenceProfile</code> is for the cleanup episode.</li>
+</ul><div class="codewrapper sourceCode" id="cb2">
+<h3 class="code-label">JSON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode json" tabindex="0"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" tabindex="-1" aria-label="code-block-2-1"></a><span class="fu">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1" aria-label="code-block-2-2"></a>  <span class="dt">"Version"</span><span class="fu">:</span> <span class="st">"2012-10-17"</span><span class="fu">,</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a>  <span class="dt">"Statement"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a>    <span class="fu">{</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1" aria-label="code-block-2-5"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"BedrockCallModels"</span><span class="fu">,</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1" aria-label="code-block-2-6"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Allow"</span><span class="fu">,</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1" aria-label="code-block-2-7"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"bedrock:InvokeModel"</span><span class="ot">,</span> <span class="st">"bedrock:InvokeModelWithResponseStream"</span><span class="ot">,</span> <span class="st">"bedrock:Converse"</span><span class="ot">,</span> <span class="st">"bedrock:ConverseStream"</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1" aria-label="code-block-2-8"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1" aria-label="code-block-2-9"></a>        <span class="st">"arn:aws:bedrock:*::foundation-model/*"</span><span class="ot">,</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1" aria-label="code-block-2-10"></a>        <span class="st">"arn:aws:bedrock:*:&lt;account-id&gt;:application-inference-profile/*"</span><span class="ot">,</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1" aria-label="code-block-2-11"></a>        <span class="st">"arn:aws:bedrock:*:&lt;account-id&gt;:inference-profile/*"</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1" aria-label="code-block-2-12"></a>      <span class="ot">]</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1" aria-label="code-block-2-13"></a>    <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1" aria-label="code-block-2-14"></a>    <span class="fu">{</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1" aria-label="code-block-2-15"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"BedrockTaggedProfiles"</span><span class="fu">,</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1" aria-label="code-block-2-16"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Allow"</span><span class="fu">,</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1" aria-label="code-block-2-17"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"bedrock:CreateInferenceProfile"</span><span class="ot">,</span> <span class="st">"bedrock:GetInferenceProfile"</span><span class="ot">,</span> <span class="st">"bedrock:ListInferenceProfiles"</span><span class="ot">,</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1" aria-label="code-block-2-18"></a>                 <span class="st">"bedrock:DeleteInferenceProfile"</span><span class="ot">,</span> <span class="st">"bedrock:TagResource"</span><span class="ot">,</span> <span class="st">"bedrock:ListTagsForResource"</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1" aria-label="code-block-2-19"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1" aria-label="code-block-2-20"></a>        <span class="st">"arn:aws:bedrock:*:&lt;account-id&gt;:application-inference-profile/*"</span><span class="ot">,</span></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1" aria-label="code-block-2-21"></a>        <span class="st">"arn:aws:bedrock:*:&lt;account-id&gt;:inference-profile/*"</span></span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1" aria-label="code-block-2-22"></a>      <span class="ot">]</span></span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1" aria-label="code-block-2-23"></a>    <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1" aria-label="code-block-2-24"></a>    <span class="fu">{</span></span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1" aria-label="code-block-2-25"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"BedrockCatalog"</span><span class="fu">,</span></span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1" aria-label="code-block-2-26"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Allow"</span><span class="fu">,</span></span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1" aria-label="code-block-2-27"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"bedrock:GetFoundationModel"</span><span class="ot">,</span> <span class="st">"bedrock:ListFoundationModels"</span><span class="ot">,</span> <span class="st">"bedrock:ListInferenceProfiles"</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1" aria-label="code-block-2-28"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span></span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1" aria-label="code-block-2-29"></a>    <span class="fu">}</span></span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1" aria-label="code-block-2-30"></a>  <span class="ot">]</span></span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1" aria-label="code-block-2-31"></a><span class="fu">}</span></span></code></pre>
+</div>
+</section><section><h2 class="section-heading" id="cost-allocation-tags">Cost allocation tags<a class="anchor" aria-label="anchor" href="#cost-allocation-tags"></a></h2>
 <hr class="half-width"><ul><li>Confirm with the Public Cloud team that <code>Name</code>,
 <code>Project</code>, <code>Purpose</code> are active cost allocation
 keys on the account (<a href="https://kb.wisc.edu/72454" class="external-link">KB 72454</a>).
@@ -722,7 +763,7 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/aws-account-prep.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/aws-account-prep.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-20",
+  "dateModified": "2026-10-21",
   "datePublished": "2026-10-21"
 }
 

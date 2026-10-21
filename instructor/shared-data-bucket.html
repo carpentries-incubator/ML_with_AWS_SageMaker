@@ -434,8 +434,7 @@ layout below.</p>
         train.csv  test.csv  metadata.csv  metric.py
         sample_submission.csv  transcription_conventions.md
         images/&lt;page_id&gt;.jpg
-        model/churro-3B/       the CHURRO-3B weights, copied once from Hugging Face (~7.5 GB)
-        instructor/full-run/   train_summary.json, eval_before.csv, eval_after.csv</code></pre>
+        model/churro-3B/       the CHURRO-3B weights, copied once from Hugging Face (~7.5 GB)</code></pre>
 <p>The RAG and fine-tuning episodes have
 <code>shared_bucket = "ml-marathon-shared"</code> filled in. Stage under
 that name and there is nothing to tell learners; stage under another and
@@ -474,9 +473,10 @@ last term), <code>create-bucket</code> reports
 <code>BucketAlreadyOwnedByYou</code> and nothing else changes; the other
 two lines are safe to re-run.</p>
 </section><section><h2 class="section-heading" id="make-it-readable-by-the-learner-roles">2. Make it readable by the learner roles<a class="anchor" aria-label="anchor" href="#make-it-readable-by-the-learner-roles"></a></h2>
-<hr class="half-width"><p>Learners reach the bucket through two execution roles:
-<code>ml-sagemaker-use</code> on notebook instances and training jobs,
-and <code>ml-sagemaker-bedrock-use</code> in the Bedrock episode. This
+<hr class="half-width"><p>Learners reach the bucket through the execution role their notebook
+instance and jobs assume: <code>ml-sagemaker-bedrock-use</code>, which
+the episodes tell them to pick, or the older SageMaker-only
+<code>ml-sagemaker-use</code> if a notebook was created with it. This
 policy lets both read and list, and nothing else.
 <code>s3:ListBucket</code> is required because a training job’s input
 channel lists the prefix before downloading it. No
@@ -594,12 +594,7 @@ rebuilt.</p>
 <p>Expect three files under <code>wattbot/</code>, the CSVs plus
 <code>images/</code> under <code>badger-scribe/</code>, and the config,
 tokenizer and safetensors files under <code>model/churro-3B/</code>.</p>
-</section><section><h2 class="section-heading" id="the-instructors-full-run">7. The instructor’s full run<a class="anchor" aria-label="anchor" href="#the-instructors-full-run"></a></h2>
-<hr class="half-width"><p>Still by hand: run the fine-tuning episode’s homework estimator once
-and copy <code>train_summary.json</code>, <code>eval_before.csv</code>
-and <code>eval_after.csv</code> from its <code>model.tar.gz</code> to
-<code>s3://$BUCKET/badger-scribe/instructor/full-run/</code>.</p>
-</section><section><h2 class="section-heading" id="keep-it-or-rebuild-it">8. Keep it, or rebuild it<a class="anchor" aria-label="anchor" href="#keep-it-or-rebuild-it"></a></h2>
+</section><section><h2 class="section-heading" id="keep-it-or-rebuild-it">7. Keep it, or rebuild it<a class="anchor" aria-label="anchor" href="#keep-it-or-rebuild-it"></a></h2>
 <hr class="half-width"><p>The end-of-workshop cleanup
 (<code>instructors/instructor-notes.md</code>, aws-nuke) deletes every
 S3 bucket in the account unless excluded. The committed

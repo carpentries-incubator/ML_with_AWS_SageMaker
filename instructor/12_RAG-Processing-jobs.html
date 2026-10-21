@@ -865,8 +865,9 @@ script, mounts the inputs, and says where the output goes.</p>
 <h3 id="check-on-the-running-job-in-the-aws-console">Check on the running job in the AWS Console<a class="anchor" aria-label="anchor" href="#check-on-the-running-job-in-the-aws-console"></a></h3>
 <p>To view the job running from the AWS Console, you can visit SageMaker
 AI, and then find the “Data Preparation” dropdown menu on the left side
-panel. Click that to find “Processing jobs”. If you’re in us-east-1, the
-following link should bring you there: <a href="https://us-east-1.console.aws.amazon.com/sagemaker/home?region=us-east-1#/processing-jobs" class="external-link">https://us-east-1.console.aws.amazon.com/sagemaker/home?region=us-east-1#/processing-jobs</a></p>
+panel. Click that to find “Processing jobs”, or open <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs" class="external-link">this
+link</a> in the class region (change <code>us-east-2</code> in it for
+another region).</p>
 <p>It takes ~5-8 minutes in total for the job to complete, most of it
 provisioning the instance and installing the requirements. This is the
 downside of launching jobs, but the good news is that we only need to
@@ -1072,7 +1073,7 @@ total compare with the cost callout, and with the Bedrock run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -1091,11 +1092,12 @@ the billed run.</p>
 <span id="cb12-9"><a href="#cb12-9" tabindex="-1" aria-label="code-block-12-9"></a>    <span class="bu">print</span>(<span class="ss">f"  wall-clock:                </span><span class="sc">{</span>provisioning <span class="op">+</span> billed<span class="sc">:.1f}</span><span class="ss"> min from launch to end"</span>)</span>
 <span id="cb12-10"><a href="#cb12-10" tabindex="-1" aria-label="code-block-12-10"></a>    <span class="bu">print</span>(<span class="ss">f"  provisioning (not billed): </span><span class="sc">{</span>provisioning<span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
 <span id="cb12-11"><a href="#cb12-11" tabindex="-1" aria-label="code-block-12-11"></a>    <span class="bu">print</span>(<span class="ss">f"  billed window:             </span><span class="sc">{</span>billed<span class="sc">:.1f}</span><span class="ss"> min at $</span><span class="sc">{</span>price_per_hour<span class="sc">}</span><span class="ss">/h = $</span><span class="sc">{</span>cost<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
-<span id="cb12-12"><a href="#cb12-12" tabindex="-1" aria-label="code-block-12-12"></a>    <span class="cf">return</span> cost</span>
-<span id="cb12-13"><a href="#cb12-13" tabindex="-1" aria-label="code-block-12-13"></a></span>
-<span id="cb12-14"><a href="#cb12-14" tabindex="-1" aria-label="code-block-12-14"></a>total <span class="op">=</span> job_cost(embedding_processor.latest_job.job_name, <span class="fl">1.41</span>)</span>
-<span id="cb12-15"><a href="#cb12-15" tabindex="-1" aria-label="code-block-12-15"></a>total <span class="op">+=</span> job_cost(rag_processor.latest_job.job_name, <span class="fl">2.61</span>)</span>
-<span id="cb12-16"><a href="#cb12-16" tabindex="-1" aria-label="code-block-12-16"></a><span class="bu">print</span>(<span class="ss">f"GPU total for the episode: $</span><span class="sc">{</span>total<span class="sc">:.2f}</span><span class="ss">"</span>)</span></code></pre>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1" aria-label="code-block-12-12"></a>    <span class="bu">print</span>(<span class="ss">f"  output:                    </span><span class="sc">{</span>d[<span class="st">'ProcessingOutputConfig'</span>][<span class="st">'Outputs'</span>][<span class="dv">0</span>][<span class="st">'S3Output'</span>][<span class="st">'S3Uri'</span>]<span class="sc">}</span><span class="ss">"</span>)   <span class="co"># where the job's files went</span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1" aria-label="code-block-12-13"></a>    <span class="cf">return</span> cost</span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1" aria-label="code-block-12-14"></a></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1" aria-label="code-block-12-15"></a>total <span class="op">=</span> job_cost(embedding_processor.latest_job.job_name, <span class="fl">1.41</span>)</span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1" aria-label="code-block-12-16"></a>total <span class="op">+=</span> job_cost(rag_processor.latest_job.job_name, <span class="fl">2.61</span>)</span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1" aria-label="code-block-12-17"></a><span class="bu">print</span>(<span class="ss">f"GPU total for the episode: $</span><span class="sc">{</span>total<span class="sc">:.2f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <p>Typical numbers: the embedding job bills 5-6 minutes (about
 <code>$0.13</code>), the RAG job 22-28 minutes (about
@@ -1137,7 +1139,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still installing

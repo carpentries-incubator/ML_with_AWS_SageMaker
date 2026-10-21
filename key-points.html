@@ -585,10 +585,12 @@ framework-specific Estimator classes (e.g., XGBoost, PyTorch, SKLearn)
 to streamline training setups, each suited to different model types and
 workflows.</li>
 <li>
-<strong>Custom scripts vs. built-in images</strong>: Custom training
-scripts offer flexibility with preprocessing and custom logic, while
-built-in images are optimized for rapid deployment and simpler
-setups.</li>
+<strong>Your script vs. the built-in algorithm</strong>: both run in
+AWS’s XGBoost container. <code>XGBoost(entry_point=...)</code> runs your
+script in it and is the pattern every later episode uses;
+<code>Estimator(image_uri=...)</code> with no script runs AWS’s own
+training code, which needs the data pre-shaped and takes XGBoost’s own
+parameters.</li>
 <li>
 <strong>Training data channels</strong>: Using
 <code>TrainingInput</code> ensures SageMaker manages data
@@ -639,6 +641,13 @@ allows for performance optimization.</li>
 <strong>Testing locally first</strong>: Before deploying large-scale
 training in SageMaker, test locally with a smaller setup to ensure code
 correctness and efficient resource usage.</li>
+<li>
+<strong>Estimate before you launch</strong>: for small models, time
+a smoke test and scale it by epochs and rows, plus about three minutes
+of startup; for large ones, 6 FLOPs per parameter per example-token,
+divided by a quarter of the GPU’s peak.
+<code>helpers.estimate_training_cost</code> does the second; write the
+number down and compare it to the bill.</li>
 </ul></section><section id="08_Hyperparameter-tuning"><h2 class="section-heading"><a href="08_Hyperparameter-tuning.html">Hyperparameter Tuning in SageMaker: Neural Network Example</a></h2>
 <hr class="half-width">
 <ul>
