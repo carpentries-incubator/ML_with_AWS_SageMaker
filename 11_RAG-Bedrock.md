@@ -957,7 +957,7 @@ except ClientError as e:
 print(f"{caption_pages[0]['doc_id']} page {caption_pages[0]['page_label']} -> vector of {v.shape[0]} dimensions")
 ```
 
-One call per page, cached like the text matrix: locally, then in your bucket, then computed. The question side uses the same model with `purpose="query"`.
+One call per page, cached like the text matrix: locally, then in your bucket, then computed. A call takes a second or two, so the loop runs six at a time through a thread pool and prints every fifty pages; about a thousand pages is a few minutes. The question side uses the same model with `purpose="query"`.
 
 ```python
 page_emb_path = data_dir / "embeddings_pages_multimodal.npy"
@@ -969,12 +969,18 @@ elif _s3_object_exists(bucket_name, page_emb_key):
     s3.download_file(bucket_name, page_emb_key, str(page_emb_path))
     page_embeddings = np.load(page_emb_path)
 else:
+    from concurrent.futures import ThreadPoolExecutor
+
+    def embed_page(p):
+        return embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png=Path(p["png_path"]).read_bytes())
+
     t0 = time.time()
     rows = []
-    for i, p in enumerate(caption_pages):
-        rows.append(embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png=Path(p["png_path"]).read_bytes()))
-        if (i + 1) % 200 == 0:
-            print(f"Embedded {i + 1} / {len(caption_pages)} page images ({time.time() - t0:.0f} s)")
+    with ThreadPoolExecutor(max_workers=6) as pool:   # one image per call, a second or two each: six in flight at a time
+        for i, vec in enumerate(pool.map(embed_page, caption_pages)):
+            rows.append(vec)
+            if (i + 1) % 50 == 0:
+                print(f"Embedded {i + 1} / {len(caption_pages)} page images ({time.time() - t0:.0f} s, {(i + 1) / (time.time() - t0):.1f} per second)")
     page_embeddings = np.vstack(rows)
     np.save(page_emb_path, page_embeddings)
     s3.upload_file(str(page_emb_path), bucket_name, page_emb_key)
