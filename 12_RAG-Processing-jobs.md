@@ -16,7 +16,7 @@ exercises: 20
 
 - Explain why Bedrock's catalog is not enough when you need a specific open-weight model, and why a Processing job is the default way to self-host one for batch work.
 - Launch a GPU Processing job that embeds the cached WattBot chunks with a self-hosted embedding model and writes the vectors to S3.
-- Launch a second Processing job that serves Qwen3-8B (an open-weight model in a size Bedrock does not carry) with vLLM and runs the full RAG loop over the training questions.
+- Launch a second Processing job that runs Qwen3-8B (an open-weight model in a size Bedrock does not carry) with `transformers` and runs the full RAG loop over the training questions.
 - Read a job's inputs, outputs, arguments and runtime cap, and relate its duration to what it cost.
 - Score the batch predictions with the WattBot metric and compare against the Bedrock run.
 
@@ -37,7 +37,7 @@ When that happens you host the model yourself on a GPU you rent, and the questio
 
 For research RAG, almost all the work is batch: embed everything once, answer a list of questions, score them. That is a job, and a job is the one option that cannot be forgotten. This episode runs the WattBot pipeline that way. The notebook itself is a small CPU instance and never touches the model; it stages data, launches two GPU jobs, and reads the results back.
 
-The generator is **Qwen3-8B**, an 8-billion-parameter open-weight model (Apache 2.0). Bedrock serves the 32B and 235B members of that family but not this size, which is the usual situation: the size you want is the one missing. Inference needs no gradients, so the weights are the memory cost: 8B parameters at two bytes each in bf16 is about 16 GB, which fits the 24 GB GPU of an `ml.g5.xlarge` with room for the KV cache. (The fine-tuning episode has the full memory arithmetic; the short version is that inference needs only the weights and training needs eight times more per parameter.)
+The generator is **Qwen3-8B**, an 8-billion-parameter open-weight model (Apache 2.0). Bedrock serves the 32B and 235B members of that family but not this size, which is the usual situation: the size you want is the one missing. The job runs it with `transformers`, the same library the fine-tuning episode trained with: `from_pretrained` downloads the weights onto the GPU, and `generate` writes the answer to a chat prompt, the self-hosted counterpart of what Bedrock does behind `converse`. Inference needs no gradients, so the weights are the memory cost: 8B parameters at two bytes each in bf16 is about 16 GB, which fits the 24 GB GPU of an `ml.g5.xlarge` with room for the KV cache. (The fine-tuning episode has the full memory arithmetic; the short version is that inference needs only the weights and training needs eight times more per parameter.)
 
 Why bother serving a model yourself when Bedrock is a call away? Because open-weight models that fit one GPU are now close to the frontier on the kinds of tasks research code runs, on data that never leaves your account. The newest of this family, Qwen3.8-27B, runs on a single 48 GB GPU in 8-bit weights and lands within a few points of a frontier commercial model:
 
@@ -52,12 +52,12 @@ Qwen figures are from the Qwen3.8-27B model card and were not reproduced here; O
 | Job | Instance | `$`/h | Expected duration | Cost |
 |---|---|---|---|---|
 | Embed ~3,000 chunks | `ml.g5.xlarge` (A10G, 24 GB) | `$1.41` | ~8 min incl. startup | ~`$0.20` |
-| RAG over the training questions with Qwen3-8B | `ml.g5.xlarge` (A10G, 24 GB) | `$1.41` | ~20 min: 5 startup, ~5 installing vLLM, ~3 downloading 16 GB of weights, the rest generating | ~`$0.50` |
+| RAG over the training questions with Qwen3-8B | `ml.g5.xlarge` (A10G, 24 GB) | `$1.41` | ~20 min: 5 startup, ~3 downloading 16 GB of weights, ~1 loading, ~10 generating | ~`$0.45` |
 | Controller notebook | `ml.t3.medium` | `$0.05` | 2 h | `$0.10` |
 
-About `$0.80` for the episode, and the GPUs are off the moment each script ends. Both jobs carry `max_runtime_in_seconds`, so a hung job costs at most the cap. Compare the same pipeline on a GPU notebook instance (the optional GPU-notebook episode at the end of the lesson): the meter runs until someone stops it, and a forgotten `ml.g5.xlarge` is `$34` a day.
+About `$0.75` for the episode, and the GPUs are off the moment each script ends. Both jobs carry `max_runtime_in_seconds`, so a hung job costs at most the cap. Compare the same pipeline on a GPU notebook instance (the optional GPU-notebook episode at the end of the lesson): the meter runs until someone stops it, and a forgotten `ml.g5.xlarge` is `$34` a day.
 
-**The 27B version.** Swap `generation_model_id` to `Qwen/Qwen3.8-27B-FP8` and `instance_type` to `ml.g6e.xlarge` (one L40S, 48 GB, `$2.61`/h): the FP8 weights are 27 GB, the job takes about 30 minutes and costs about `$1.30`, and nothing else changes. It needs the `ml.g6e.xlarge for processing job usage` quota, whose default is zero and whose increase takes days; the class account did not have it when this was written.
+**The 27B version.** Swap `generation_model_id` to `Qwen/Qwen3.8-27B-FP8` and `instance_type` to `ml.g6e.xlarge` (one L40S, 48 GB, `$2.61`/h): the FP8 weights are 27 GB, the job takes about 30 minutes and costs about `$1.30`. FP8 needs vLLM: write a `code_rag/requirements.txt` with `vllm>=0.17` and `peft>=0.18` (that vLLM brings a newer `transformers`, and the container's `peft` must follow), add `"--engine", "vllm"` to the arguments, and expect five minutes of install; the script removes the container's `flash-attn` build, which no longer links against vLLM's PyTorch. It needs the `ml.g6e.xlarge for processing job usage` quota, whose default is zero and whose increase takes days; the class account did not have it when this was written.
 
 The trade-off is latency. A job takes minutes to start, so this pattern is for batch questions, not a chatbot. For interactive use, Bedrock answers in seconds; for interactive use of a model Bedrock does not have, an inference endpoint does, at an hourly rate you have to remember to turn off.
 
@@ -66,7 +66,7 @@ The trade-off is latency. A job takes minutes to start, so this pattern is for b
 In this episode we will:
 
 - Reuse the chunks cached in your bucket by the Bedrock episode and the inputs in the shared bucket.
-- Run two short-lived GPU Processing jobs: one computes embeddings for all chunks; the second serves Qwen3-8B with vLLM and runs the full RAG loop (retrieval + generation) over all training questions.
+- Run two short-lived GPU Processing jobs: one computes embeddings for all chunks; the second runs Qwen3-8B with `transformers` and the full RAG loop (retrieval + generation) over all training questions.
 - Score the result and compare it with the Bedrock run.
 
 
@@ -78,10 +78,10 @@ Jobs run in containers, so the code they execute has to be shipped with the job:
 
 - `scripts/embedding_inference.py`: generic embedding script (JSONL with a `text` field in, `embeddings.npy` out).
 - `scripts/hf_embedder.py`: the embedding model wrapper both jobs use, on plain `transformers` (mean pooling and normalisation, thirty lines), so neither job has to install anything for it.
-- `scripts/wattbot_rag_batch.py`: the WattBot RAG loop as a batch job: loads the inputs, serves Qwen with vLLM, writes `wattbot_solutions.csv`.
+- `scripts/wattbot_rag_batch.py`: the WattBot RAG loop as a batch job: loads the inputs, runs the generator, writes `wattbot_solutions.csv`.
 - `scripts/wattbot_rag.py`: the shared pipeline logic (retrieval, prompts, answer parsing, `run_single_qa`, the scorer) that the Bedrock episode imported too. The batch script imports it, so it ships with the job; the notebook imports it for scoring.
 
-Each job gets its own source directory, because SageMaker uploads the whole directory and installs whatever `requirements.txt` it finds next to the script, and only the RAG job needs extra packages. `code_embed/` holds the embedding job, `code_rag/` the RAG job, and a copy of `wattbot_rag.py` sits next to the notebook for the scoring step at the end.
+Each job gets its own source directory, because SageMaker uploads the whole directory into the container. `code_embed/` holds the embedding job, `code_rag/` the RAG job, and a copy of `wattbot_rag.py` sits next to the notebook for the scoring step at the end.
 
 ```python
 !mkdir -p /home/ec2-user/SageMaker/wattbot   # the same project folder the Bedrock episode used, beside the lesson clone
@@ -193,24 +193,15 @@ Now we launch a short-lived Hugging Face **Processing job** that:
 
 We use the same `embedding_inference.py` script across projects; here it expects a JSONL file with a `text` field.
 
-### Requirements
+### Nothing to install
 
-The embedding job needs nothing the Hugging Face container does not already have, so it has no `requirements.txt` and starts as soon as the instance is up. The RAG job needs vLLM, which the container does not ship. A `requirements.txt` in the job's `source_dir` is installed before the script runs. vLLM pins its own PyTorch and a newer `transformers`, so the container's `peft` has to move with it; the pin on `peft` is there because an older `peft` left behind imports a class the newer `transformers` removed, and the job dies on that import before it reaches the model.
-
-```python
-# A requirements.txt next to the script is pip-installed in the container before the script runs; only the RAG job has one
-with open("code_rag/requirements.txt", "w") as f:
-    f.write("\n".join(["vllm>=0.17", "peft>=0.18"]) + "\n")   # vLLM for the generator; peft upgraded to match the transformers vLLM installs
-
-print("code_embed:", os.listdir("code_embed"))
-print("code_rag:  ", os.listdir("code_rag"))
-```
+Neither job installs anything. The Hugging Face container ships `transformers` and PyTorch, which is all the embedding wrapper and the generator need, so both jobs start as soon as the instance is up. A `requirements.txt` next to a script would be pip-installed before it runs; the 27B variant in the cost callout is the one case this episode needs it.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
-### The RAG job's pip install is part of its bill
+### Why not vLLM?
 
-vLLM ships its own CUDA kernels and pins its own PyTorch, so `pip install vllm` in the RAG job pulls several gigabytes and replaces the container's `torch` and `transformers` with the versions it wants. That is normal (the container is thrown away when the job ends) but it takes about 5 of the job's ~30 minutes, on a GPU instance that is billing the whole time: roughly 20 cents per run. For a job you launch often, bake the install into a custom container image instead; for a job you launch twice in a workshop, paying for the install is cheaper than building the image.
+vLLM is the open-source inference engine most people serve open-weight models with: you give it a model name, it loads the weights onto the GPU and answers chat requests, batching many at once and managing GPU memory so that throughput scales. That is what you want behind an API with users. This job sends 82 prompts one at a time, so the batching is never used, and what vLLM would cost is a multi-gigabyte install that replaces the container's PyTorch, five minutes of billed GPU time per run, and a dependency that drifts: every vLLM release pins a PyTorch, and the container's own `flash-attn` binary stops loading when that PyTorch changes. `transformers.generate`, already in the container, does the same 82 prompts in about ten minutes with nothing to install. The batch script keeps vLLM behind `--engine vllm` for the two cases it earns its place: FP8 weights (the 27B variant) and serving many requests. The GPU-notebook episode uses it for the former.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -236,7 +227,7 @@ def make_job_tags(purpose: str):   # one of: Storage, Notebook, Training, Tuning
 
 Open `scripts/embedding_inference.py` first; it is under fifty lines. It reads a JSONL file of chunks from the job's input directory, embeds them with whatever Hugging Face model `--model_id` names, through the thirty-line wrapper in `hf_embedder.py`, normalises the vectors so a dot product is a cosine similarity, and saves one `embeddings.npy` to the output directory. Nothing in it knows about WattBot, which is the point of a Processing job script: inputs in, outputs out, no state.
 
-A `HuggingFaceProcessor` is the Processing-job counterpart of the estimator: the same role, tags, instance type and container versions, plus a runtime cap. Its `run` call names the script, mounts the inputs, and says where the output goes.
+A `HuggingFaceProcessor` is the Processing-job counterpart of the estimator: the same role, tags, instance type and container versions, plus a runtime cap. Its `run` call names the script, mounts the inputs, and says where the output goes. Once it is launched, the job appears on the [Processing jobs page](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs) of the SageMaker console (under **Data preparation** in the left menu), the Processing counterpart of the Training jobs page you used earlier.
 
 ```python
 embedding_model_id = "thenlper/gte-large"
@@ -291,7 +282,7 @@ print(f"Embedding job complete: {(time.time() - start) / 60:.1f} min wall-clock,
 
 To view the job running from the AWS Console, you can visit SageMaker AI, and then find the "Data Preparation" dropdown menu on the left side panel. Click that to find "Processing jobs", or open [this link](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs) in the class region (change `us-east-2` in it for another region).
 
-It takes ~5-8 minutes in total for the job to complete, most of it provisioning the instance and installing the requirements. This is the downside of launching jobs, but the good news is that we only need to launch one embedding job for our RAG pipeline. This strategy also ensures we're only paying for the GPU while the job runs.
+It takes ~5-8 minutes in total for the job to complete, most of it provisioning the instance and downloading the embedding model. This is the downside of launching jobs, but the good news is that we only need to launch one embedding job for our RAG pipeline. This strategy also ensures we're only paying for the GPU while the job runs.
 
 
 ### Sanity-check the embeddings locally
@@ -324,7 +315,7 @@ Open `scripts/wattbot_rag_batch.py` and read `main` before launching it. It is s
 - `run_single_qa`: retrieval, the answer call, the hybrid unanswerable rule (retrieval threshold OR the model's own `is_blank`), the explanation call
 - `compute_wattbot_score`: the metric we use at the end
 
-What the batch script adds is the two model callables: `embed_query` wraps the same `gte-large` model and pooling the embedding job used (`hf_embedder.py`) (the question has to be embedded with the same model as the chunks), and `generate` wraps a vLLM engine serving the generator (Qwen3-8B here) with thinking mode off. The job writes `wattbot_solutions.csv` in the WattBot submission format.
+What the batch script adds is the two model callables: `embed_query` wraps the same `gte-large` model and pooling the embedding job used (`hf_embedder.py`) (the question has to be embedded with the same model as the chunks), and `generate` wraps `transformers.generate` on the generator (Qwen3-8B here) with Qwen's thinking mode off. The job writes `wattbot_solutions.csv` in the WattBot submission format.
 
 ```python
 emb_output_s3 = f"s3://{bucket_name}/{emb_output_prefix}/embeddings.npy"
@@ -337,7 +328,7 @@ print("metadata:  ", metadata_s3)
 
 If the launch below fails at once with `ResourceLimitExceeded` naming an instance type, nothing in the notebook is wrong: the account's quota for that type is too low, and the increase is requested in [Service Quotas](https://us-east-2.console.aws.amazon.com/servicequotas/home/services/sagemaker/quotas) (days, for GPU types). On your own account, request `ml.g5.xlarge for processing job usage` before you start.
 
-Two settings on this processor matter more than on the embedding job. `volume_size_in_gb=60` attaches a 60 GB volume to the instance, mounted under `/opt/ml/processing`; the container's own root disk is small, so the 16 GB of model weights (and vLLM's install) must not land there. `env={"HF_HOME": ...}` points Hugging Face's download cache at that volume, which is where the weights go.
+Two settings on this processor matter more than on the embedding job. `volume_size_in_gb=60` attaches a 60 GB volume to the instance, mounted under `/opt/ml/processing`; the container's own root disk is small, so the 16 GB of model weights must not land there. `env={"HF_HOME": ...}` points Hugging Face's download cache at that volume, which is where the weights go.
 
 ```python
 rag_output_prefix = "wattbot/solutions"
@@ -351,19 +342,19 @@ rag_processor = HuggingFaceProcessor(
     tags=make_job_tags("Inference"),   # separate job, separate tags
     instance_type="ml.g5.xlarge",      # 1 x A10G, 24 GB: holds the bf16 8B model plus KV cache
     instance_count=1,
-    volume_size_in_gb=60,              # 16 GB of weights + vLLM install; mounted at /opt/ml/processing
+    volume_size_in_gb=60,              # 16 GB of weights; mounted at /opt/ml/processing
     env={"HF_HOME": "/opt/ml/processing/hf_cache"},   # put the weight download on that volume
     transformers_version="4.56",
     pytorch_version="2.8",
     py_version="py312",
     sagemaker_session=session,
-    max_runtime_in_seconds=2 * 60 * 60,   # 2 hours, in seconds; the estimate is 30 minutes
+    max_runtime_in_seconds=2 * 60 * 60,   # 2 hours, in seconds; the estimate is 20 minutes
 )
 
 start = time.time()
 rag_processor.run(
     code="wattbot_rag_batch.py",
-    source_dir="code_rag/",            # wattbot_rag_batch.py + wattbot_rag.py + hf_embedder.py + requirements.txt
+    source_dir="code_rag/",            # wattbot_rag_batch.py + wattbot_rag.py + hf_embedder.py
     inputs=[
         ProcessingInput(
             source=chunks_s3_uri,
@@ -399,10 +390,10 @@ rag_processor.run(
     ],
 )
 
-print(f"RAG batch job complete: {(time.time() - start) / 60:.1f} min wall-clock, including instance startup and the pip install")
+print(f"RAG batch job complete: {(time.time() - start) / 60:.1f} min wall-clock, including instance startup and the weight download")
 ```
 
-While it runs, open the job's CloudWatch log from the console page above. You will see, in order: pip installing vLLM, the weight download (16 GB in shards), vLLM loading the model and reporting how much GPU memory it reserved, then one line per question. The whole job is the 20 minutes in the cost callout; the generation is the last third of it.
+While it runs, read what the container is printing. Open the [Processing jobs page](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs), click the job's name, scroll to **Monitor** and click **View logs**. That opens CloudWatch, the AWS service that stores every job's printed output, at a list with one entry named after your job; click it. The text is the container's stdout, kept after the job ends, updated while it runs (refresh). You will see, in order: the weight download (16 GB in shards), `Loading model with transformers`, then one line per question. The whole job is the 20 minutes in the cost callout; the generation is the second half of it.
 
 
 ## Step 4 – Download predictions and evaluate
@@ -436,7 +427,7 @@ Compare the overall score with the Bedrock run. The retrieval logic, prompts and
 
 ### What did the two jobs cost?
 
-Ask SageMaker what it recorded for each job: `session.sagemaker_client.describe_processing_job(ProcessingJobName=...)` returns `CreationTime`, `ProcessingStartTime` and `ProcessingEndTime`. The job names are `embedding_processor.latest_job.job_name` and `rag_processor.latest_job.job_name`. For each job, compute the minutes between creation and start (provisioning, before the instance is billed) and between start and end (the billed window), and price the billed window at `$1.41`/h, the `ml.g5.xlarge` rate both jobs used. Then, from the RAG job's CloudWatch log timestamps, estimate how much of its billed window was setup (pip install and weight download) and how much was generation. How does the total compare with the cost callout, and with the Bedrock run?
+Ask SageMaker what it recorded for each job: `session.sagemaker_client.describe_processing_job(ProcessingJobName=...)` returns `CreationTime`, `ProcessingStartTime` and `ProcessingEndTime`. The job names are `embedding_processor.latest_job.job_name` and `rag_processor.latest_job.job_name`. For each job, compute the minutes between creation and start (provisioning, before the instance is billed) and between start and end (the billed window), and price the billed window at `$1.41`/h, the `ml.g5.xlarge` rate both jobs used. Then, from the RAG job's CloudWatch log timestamps, estimate how much of its billed window was setup (the weight download and model load) and how much was generation. How does the total compare with the cost callout, and with the Bedrock run?
 
 :::::::::::::::::::::::: solution
 
@@ -462,7 +453,7 @@ total += job_cost(rag_processor.latest_job.job_name, 1.41)
 print(f"GPU total for the episode: ${total:.2f}")
 ```
 
-Expect the embedding job to bill 5-6 minutes (about `$0.13`) and the RAG job 15-20 minutes (about `$0.35`-`$0.50`), so roughly `$0.50`-`$0.65` of GPU time against the callout's `$0.70`. In the RAG job's log, the first 8-10 minutes of the billed window are pip and the download; the model loads for another minute; the remaining minutes are the questions, two generation calls each. So well over half of what you paid for was setup, which is the argument for a custom container (skip the pip) and for keeping an `HF_HOME` cache on S3 (skip the download) once a job is run routinely. The Bedrock run of the same questions cost cents, and the self-hosted route is only justified here because the model is not in the catalog.
+Expect the embedding job to bill 5-6 minutes (about `$0.13`) and the RAG job about 15 minutes (about `$0.35`), so roughly `$0.50` of GPU time against the callout's `$0.65`. In the RAG job's log, the first 3-4 minutes of the billed window are the download and the model load; the rest is the questions, two generation calls each. Setup is a third of what you paid for, which is the argument for keeping an `HF_HOME` cache on S3 (skip the download) once a job is run routinely. The Bedrock run of the same questions cost cents, and the self-hosted route is only justified here because the model is not in the catalog.
 
 :::::::::::::::::::::::::::::::::
 
@@ -476,7 +467,7 @@ Both processors set `max_runtime_in_seconds=2 * 60 * 60`. Predict what would hap
 
 :::::::::::::::::::::::: solution
 
-With a 600-second cap the RAG job is killed by SageMaker ten minutes after `ProcessingStartTime`, while it is still installing vLLM or downloading the weights. The status becomes `Stopped` (the failure reason reads `MaxRuntimeExceeded`), the output prefix is empty because the script never reached the point of writing `wattbot_solutions.csv`, and the bill is the full 600 seconds: 600 / 3600 × `$1.41` ≈ `$0.24` for nothing. A cap has to leave room for the setup that precedes the work, which is why ours is six times the 20-minute estimate rather than ten percent over it.
+With a 600-second cap the RAG job is killed by SageMaker ten minutes after `ProcessingStartTime`, while it is still downloading or loading the weights. The status becomes `Stopped` (the failure reason reads `MaxRuntimeExceeded`), the output prefix is empty because the script never reached the point of writing `wattbot_solutions.csv`, and the bill is the full 600 seconds: 600 / 3600 × `$1.41` ≈ `$0.24` for nothing. A cap has to leave room for the setup that precedes the work, which is why ours is six times the 20-minute estimate rather than ten percent over it.
 
 Under the caps we set, the worst case for a job that hangs (a stuck download, a model that never finishes loading) is 2 h × `$1.41` = **`$2.82`** for either job. An `ml.g5.xlarge` notebook instance forgotten over a weekend is 64 h × `$1.41` = **`$90`**, and nothing caps it. That is the difference between a job and an instance: the job's worst case is a number you chose before you launched it.
 

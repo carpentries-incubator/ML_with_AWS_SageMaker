@@ -590,7 +590,7 @@ estimator = HuggingFace(
 Now launch. Two details in this one line matter:
 
 - `job_name` is the one defined with the guard rails. SageMaker requires training job names to be unique in the account, so running this cell a second time fails immediately with `ResourceInUse` and nothing is launched. To run again on purpose, add a suffix to `training_job_name` (`-2`, `-2mp`, whatever says what changed); `checkpoint_s3_uri` follows it automatically. To **resume** a job that was killed, keep the `checkpoint_s3_uri` and change only the job name.
-- `wait=True` (the default) blocks the notebook until the job ends and streams its log here. For a 25-minute job that is the right choice: you cannot accidentally queue a second launch while you wait, and everything worth doing in the meantime happens in the console, not in this notebook.
+- `wait=True` (the default) blocks the notebook until the job ends and streams its log here. For a 25-minute job that is the right choice: you cannot accidentally queue a second launch while you wait, and everything worth doing in the meantime happens on the job's page under [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training), not in this notebook.
 
 The second input channel, `model`, is the copy of CHURRO-3B your instructor staged in the shared bucket: SageMaker mounts it at `/opt/ml/input/data/model` and the script loads from there, so a hundred jobs starting in the same minute copy 7.5 GB from S3 instead of each pulling it from Hugging Face.
 
@@ -619,7 +619,7 @@ Billing stops within a minute or two. If you launched with the wrong instance, t
 
 ### While it runs
 
-Open a second browser tab on the SageMaker console: **SageMaker AI → Training → [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training)**. Find your job and watch its status move through `Starting`, `Downloading`, `Training`, `Uploading`, `Completed`. The job page shows the instance type, the `max_run` you set, the tags, and a link to the job's log in CloudWatch (the AWS logging service, where every `print()` from the script goes). The log is the same text the notebook cell is streaming, but it stays available after the kernel is gone, which is what you will use when a job you launched yesterday fails overnight.
+Open a second browser tab on the SageMaker console: **SageMaker AI → Training → [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training)**. Find your job and watch its status move through `Starting`, `Downloading`, `Training`, `Uploading`, `Completed`. Click the job's name. Its page shows the instance type, the `max_run` you set, the tags, and under **Monitor** a **View logs** button that opens CloudWatch, the AWS service that stores every job's printed output; click the one stream listed, named after the job. It is the same text the notebook cell is streaming, but it stays available after the kernel is gone, which is what you will use when a job you launched yesterday fails overnight.
 
 Things to find in the log while you wait:
 
@@ -1003,7 +1003,7 @@ Finally, rerun Step 3 and compare the total with the estimate you wrote down bef
 
 ## Cleanup
 
-- The training and processing jobs have already ended; there is nothing to stop. Check **Training jobs** and **Processing jobs** in the console anyway: nothing should say `InProgress`.
+- The training and processing jobs have already ended; there is nothing to stop. Check [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training) and [Processing jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs) anyway: nothing should say `InProgress`.
 - Delete what you no longer need from `s3://<your-bucket>/badger-scribe/` (the `models/` and `predictions/` prefixes). The adapter is small, but prediction outputs accumulate across runs.
 - **Stop your notebook instance.** It is a CPU instance at five cents an hour, which is exactly the kind of charge that goes unnoticed for a semester.
 
