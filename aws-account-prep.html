@@ -650,13 +650,17 @@ into a RAG track and a fine-tuning track halves the peak as well.</li>
 permissions</strong>, and the default SageMaker role has none: the
 Bedrock episode’s first Bedrock call fails with
 <code>AccessDeniedException ... bedrock:ListInferenceProfiles</code>
-until they are added. On the UW account the role
-<code>ml-sagemaker-bedrock-use</code> carries them and the
-controller-notebook episode tells learners to pick it; the older
-<code>ml-sagemaker-use</code> does not, and a notebook created with it
-has to be stopped and re-pointed at the right role. Elsewhere, attach
-the policy below as an inline policy on whatever role the notebooks run
-with, with <code>&lt;account-id&gt;</code> filled in.
+until they are added. On the UW account the policy below is attached as
+the inline policy <code>BedrockAccess</code> to
+<code>ml-sagemaker-use</code>, the role the controller-notebook episode
+tells learners to pick, and to <code>ml-sagemaker-bedrock-use</code>, so
+either works; it went onto the default role after the console’s role
+dropdown kept saving the default instead of the chosen one, which cost a
+class session. Elsewhere, attach the policy below as an inline policy on
+whatever role the notebooks run with, with
+<code>&lt;account-id&gt;</code> filled in;
+<code>aws iam put-role-policy --role-name &lt;role&gt; --policy-name BedrockAccess --policy-document file://bedrock-policy.json</code>
+does it, and a policy change reaches running instances within a minute.
 <code>InvokeModel</code> must be allowed on <strong>both</strong> the
 application inference profile ARN and the underlying foundation-model
 ARN, or calls through the profile are denied;

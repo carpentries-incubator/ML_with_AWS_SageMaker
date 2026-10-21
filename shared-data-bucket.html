@@ -478,12 +478,11 @@ last term), <code>create-bucket</code> reports
 two lines are safe to re-run.</p>
 </section><section><h2 class="section-heading" id="make-it-readable-by-the-learner-roles">2. Make it readable by the learner roles<a class="anchor" aria-label="anchor" href="#make-it-readable-by-the-learner-roles"></a></h2>
 <hr class="half-width"><p>Learners reach the bucket through the execution role their notebook
-instance and jobs assume: <code>ml-sagemaker-bedrock-use</code>, which
-the episodes tell them to pick, or the older SageMaker-only
-<code>ml-sagemaker-use</code> if a notebook was created with it. This
-policy lets both read and list, and nothing else.
-<code>s3:ListBucket</code> is required because a training job’s input
-channel lists the prefix before downloading it. No
+instance and jobs assume: <code>ml-sagemaker-use</code>, which the
+episodes tell them to pick, or <code>ml-sagemaker-bedrock-use</code>, an
+equivalent role from an earlier term. This policy lets both read and
+list, and nothing else. <code>s3:ListBucket</code> is required because a
+training job’s input channel lists the prefix before downloading it. No
 <code>PutObject</code>: learners never write here.</p>
 <div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
