@@ -479,8 +479,8 @@ second while it is running and not while it is stopped. The instance’s
 disk is separate: the files you keep under
 <code>/home/ec2-user/SageMaker/</code> survive a stop, and that storage
 volume keeps billing at about <code>$0.14</code> per GB-month (about
-<code>$0.70</code> a month for the default 5 GB) until the instance is
-deleted.</p>
+<code>$2.80</code> a month for the 20 GB this lesson asks for) until the
+instance is deleted.</p>
 </div>
 <div class="section level3">
 <h3 id="using-the-notebook-as-a-controller">Using the notebook as a controller<a class="anchor" aria-label="anchor" href="#using-the-notebook-as-a-controller"></a></h3>
@@ -564,9 +564,13 @@ setting related to the environment version and underlying platform. You
 can leave this as the default.</p></li>
 <li><p><strong>Additional configuration (leave collapsed)</strong>:
 holds the <strong>Volume size in GB</strong> of the instance’s
-persistent disk, default 5 GB. The default is enough for this lesson;
-the disk is the one thing a stopped instance keeps billing for, so do
-not make it larger than you need.</p></li>
+persistent disk, default 5 GB. Expand it and set <strong>20 GB</strong>:
+the RAG episodes unpack about a gigabyte of PDFs and page images, the
+fine-tuning episode keeps its data here, and 5 GB fills up on the second
+run. The disk is the one thing a stopped instance keeps billing for,
+<code>$0.14</code> per GB-month, so 20 GB is <code>$2.80</code> a month
+until the instance is deleted; do not go larger than that without a
+reason.</p></li>
 <li>
 <p><strong>Permissions and encryption</strong>:</p>
 <ul><li>
@@ -644,8 +648,8 @@ the plain Python environment is enough).</p>
 notebooks start in that folder. The second lists it, and the notebook
 you just created is the only thing there. <code>SageMaker/</code> is a
 separate disk, the volume whose size sits under <strong>Additional
-configuration</strong> on the create form (5 GB by default). The rest of
-the instance lives on the system disk and is reset when the instance
+configuration</strong> on the create form (the 20 GB you set). The rest
+of the instance lives on the system disk and is reset when the instance
 stops; <code>SageMaker/</code> is the only place that survives a stop.
 JupyterLab’s file browser opens there for that reason, and it is where
 everything in this lesson goes.</p>

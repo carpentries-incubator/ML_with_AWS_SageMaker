@@ -549,15 +549,19 @@ PDFs:</p>
 <span id="cb5-7"><a href="#cb5-7" tabindex="-1" aria-label="code-block-5-7"></a><span class="ex">python3</span> lesson/scripts/build_wattbot_corpus.py <span class="at">--metadata</span> wattbot/metadata.csv <span class="at">--from-zip</span> wattbot/corpus.zip</span>
 <span id="cb5-8"><a href="#cb5-8" tabindex="-1" aria-label="code-block-5-8"></a><span class="ex">aws</span> s3 cp wattbot/pages.jsonl s3://<span class="va">$BUCKET</span>/wattbot/pages.jsonl</span></code></pre>
 </div>
-<p>Needed for class: the 2026 corpus is about 4 million tokens and the
+<p>Needed for class: the 2026 corpus is about 3 million tokens and the
 Titan Text Embeddings V2 quota is 300,000 tokens per minute and not
-adjustable, so one notebook needs a quarter of an hour to embed it and a
-room of them would take hours. After you have run the episode once
-yourself, copy its embedding matrix into the shared bucket; the
-episode’s in-class cell downloads it and skips the calls. The chunks are
-deterministic from <code>pages.jsonl</code>, so the vectors match.
-Learners working on their own embed the corpus themselves, which is the
-point of the step.</p>
+adjustable, so one notebook needs ten minutes to embed it and a room of
+them would take hours. After you have run the episode once yourself with
+<code>use_instructor_embeddings = False</code>, copy its embedding
+matrix into the shared bucket; with the default <code>True</code>, the
+episode downloads it and skips the calls. The notebook checks that the
+matrix has one row per chunk and ignores it otherwise, so a copy from an
+older corpus falls through to computing rather than scoring against the
+wrong passages. The chunks are deterministic from
+<code>pages.jsonl</code>, so the vectors match. Learners working on
+their own embed the corpus themselves, which is the point of the
+step.</p>
 <div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>

@@ -634,17 +634,17 @@ episode in the same quarter hour: the generation step is about 120
 DeepSeek calls per learner (the class sample of 60 questions, two calls
 each) at ~3,000 input tokens each, so roughly 6,000 requests and 18
 million input tokens per minute at the peak; the embedding step is about
-10,000 Titan calls and 4 million tokens per learner, which one learner
-alone cannot finish inside a quarter of an hour at the 300,000
-tokens-per-minute quota, so in class everyone pulls the staged copy of
-the matrix instead (see the <em>Shared data bucket</em> page). Ask for
-what the console lets you (many Bedrock quotas adjust in place, some
-need a support case); the notebook’s client retries with backoff, so a
-quota below the peak slows the run rather than failing it. The
-cross-region profile <code>us.deepseek.v3-v1:0</code> usually carries a
-higher quota than the in-region ID and is a one-line swap in the
-episode. Splitting the room into a RAG track and a fine-tuning track
-halves the peak as well.</li>
+9,000 Titan calls and 3 million tokens per learner, ten minutes for one
+learner alone at the 300,000 tokens-per-minute quota, so in class
+everyone pulls the staged copy of the matrix instead
+(<code>use_instructor_embeddings = True</code>, the default; see the
+<em>Shared data bucket</em> page). Ask for what the console lets you
+(many Bedrock quotas adjust in place, some need a support case); the
+notebook’s client retries with backoff, so a quota below the peak slows
+the run rather than failing it. The cross-region profile
+<code>us.deepseek.v3-v1:0</code> usually carries a higher quota than the
+in-region ID and is a one-line swap in the episode. Splitting the room
+into a RAG track and a fine-tuning track halves the peak as well.</li>
 <li>
 <strong>The learner execution role needs Bedrock
 permissions</strong>, and the default SageMaker role has none: the

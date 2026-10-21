@@ -1669,8 +1669,8 @@ second while it is running and not while it is stopped. The instance’s
 disk is separate: the files you keep under
 <code>/home/ec2-user/SageMaker/</code> survive a stop, and that storage
 volume keeps billing at about <code>$0.14</code> per GB-month (about
-<code>$0.70</code> a month for the default 5 GB) until the instance is
-deleted.</p>
+<code>$2.80</code> a month for the 20 GB this lesson asks for) until the
+instance is deleted.</p>
 </div>
 <div class="section level3">
 <h3 id="using-the-notebook-as-a-controller">Using the notebook as a controller<a class="anchor" aria-label="anchor" href="#using-the-notebook-as-a-controller"></a>
@@ -1763,9 +1763,13 @@ setting related to the environment version and underlying platform. You
 can leave this as the default.</p></li>
 <li><p><strong>Additional configuration (leave collapsed)</strong>:
 holds the <strong>Volume size in GB</strong> of the instance’s
-persistent disk, default 5 GB. The default is enough for this lesson;
-the disk is the one thing a stopped instance keeps billing for, so do
-not make it larger than you need.</p></li>
+persistent disk, default 5 GB. Expand it and set <strong>20 GB</strong>:
+the RAG episodes unpack about a gigabyte of PDFs and page images, the
+fine-tuning episode keeps its data here, and 5 GB fills up on the second
+run. The disk is the one thing a stopped instance keeps billing for,
+<code>$0.14</code> per GB-month, so 20 GB is <code>$2.80</code> a month
+until the instance is deleted; do not go larger than that without a
+reason.</p></li>
 <li>
 <p><strong>Permissions and encryption</strong>:</p>
 <ul>
@@ -1865,8 +1869,8 @@ the plain Python environment is enough).</p>
 notebooks start in that folder. The second lists it, and the notebook
 you just created is the only thing there. <code>SageMaker/</code> is a
 separate disk, the volume whose size sits under <strong>Additional
-configuration</strong> on the create form (5 GB by default). The rest of
-the instance lives on the system disk and is reset when the instance
+configuration</strong> on the create form (the 20 GB you set). The rest
+of the instance lives on the system disk and is reset when the instance
 stops; <code>SageMaker/</code> is the only place that survives a stop.
 JupyterLab’s file browser opens there for that reason, and it is where
 everything in this lesson goes.</p>
@@ -2405,7 +2409,7 @@ bucket per task?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>One way to do it:</li>
@@ -2919,7 +2923,7 @@ change on GitHub.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Still inside
 <code>/home/ec2-user/SageMaker/sagemaker-work</code>:</p>
@@ -3164,7 +3168,7 @@ potential issues early. <strong>In your group, discuss:</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Which checks do you think are most critical before scaling up?</p>
 <ul>
@@ -3282,7 +3286,7 @@ group.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li><p><strong>Data Preprocessing</strong>: The script fills missing
@@ -3551,7 +3555,7 @@ data. Which instance would you pick for the training job, and why?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <p>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
 GB of data wants about 32 GB of memory: <code>ml.m5.2xlarge</code> (8
@@ -4926,7 +4930,7 @@ goes next to it.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>There is no single answer; the solution is the written estimate. One
 worked example for scale: a 7B language model fully fine-tuned on 50,000
@@ -5115,7 +5119,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -6267,7 +6271,7 @@ and the runtime print.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ul>
 <li>
@@ -6317,7 +6321,7 @@ in the notebook?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>The tuner can only vary what the script reads. Right now
 <code>train_nn.py</code> has no <code>--batch_size</code> argument and
@@ -8808,9 +8812,9 @@ for current per‑token prices) and Titan Text Embeddings V2
 </tr></thead>
 <tbody>
 <tr>
-<td>Embed ~10,000 chunks (~4M tokens)</td>
-<td>4M input tokens</td>
-<td>~<code>$0.08</code>
+<td>Embed ~9,000 chunks (~3M tokens)</td>
+<td>3M input tokens</td>
+<td>~<code>$0.06</code>
 </td>
 </tr>
 <tr>
@@ -9538,14 +9542,16 @@ embeddings, and the answers the pipeline produces.</p>
 <span id="cb3-8"><a href="#cb3-8" tabindex="-1" aria-label="code-block-3-8"></a>metadata_key <span class="op">=</span> <span class="st">"wattbot/metadata.csv"</span>      <span class="co"># one row per paper: id, title, url</span></span>
 <span id="cb3-9"><a href="#cb3-9" tabindex="-1" aria-label="code-block-3-9"></a>train_key <span class="op">=</span> <span class="st">"wattbot/train_QA.csv"</span>         <span class="co"># the questions, with reference answers for scoring</span></span>
 <span id="cb3-10"><a href="#cb3-10" tabindex="-1" aria-label="code-block-3-10"></a>corpus_key <span class="op">=</span> <span class="st">"wattbot/corpus.zip"</span>          <span class="co"># the PDFs, one per paper</span></span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1" aria-label="code-block-3-11"></a></span>
-<span id="cb3-12"><a href="#cb3-12" tabindex="-1" aria-label="code-block-3-12"></a><span class="co"># derived, written to YOUR bucket</span></span>
-<span id="cb3-13"><a href="#cb3-13" tabindex="-1" aria-label="code-block-3-13"></a>chunks_key <span class="op">=</span> <span class="st">"wattbot/chunks.jsonl"</span>                                <span class="co"># the corpus cut into passages (end of the chunking step)</span></span>
-<span id="cb3-14"><a href="#cb3-14" tabindex="-1" aria-label="code-block-3-14"></a>embeddings_key <span class="op">=</span> <span class="st">"wattbot/embeddings/embeddings_bedrock.npy"</span>       <span class="co"># one vector per chunk</span></span>
-<span id="cb3-15"><a href="#cb3-15" tabindex="-1" aria-label="code-block-3-15"></a>solutions_key <span class="op">=</span> <span class="st">"wattbot/solutions/wattbot_solutions_bedrock.csv"</span>  <span class="co"># the pipeline's answers, in the competition's format</span></span>
-<span id="cb3-16"><a href="#cb3-16" tabindex="-1" aria-label="code-block-3-16"></a></span>
-<span id="cb3-17"><a href="#cb3-17" tabindex="-1" aria-label="code-block-3-17"></a>local_data_dir <span class="op">=</span> <span class="st">"./data"</span>              <span class="co"># working copies on this notebook instance</span></span>
-<span id="cb3-18"><a href="#cb3-18" tabindex="-1" aria-label="code-block-3-18"></a>os.makedirs(local_data_dir, exist_ok<span class="op">=</span><span class="va">True</span>)</span></code></pre>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1" aria-label="code-block-3-11"></a>shared_embeddings_key <span class="op">=</span> <span class="st">"wattbot/embeddings_bedrock.npy"</span>   <span class="co"># the instructor's embedding matrix, used when use_instructor_embeddings is True</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1" aria-label="code-block-3-12"></a>use_instructor_embeddings <span class="op">=</span> <span class="va">True</span>   <span class="co"># True in class: download the instructor's matrix instead of embedding 9,000 chunks yourself (ten minutes at the quota). False to do it yourself</span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1" aria-label="code-block-3-13"></a></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1" aria-label="code-block-3-14"></a><span class="co"># derived, written to YOUR bucket</span></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1" aria-label="code-block-3-15"></a>chunks_key <span class="op">=</span> <span class="st">"wattbot/chunks.jsonl"</span>                                <span class="co"># the corpus cut into passages (end of the chunking step)</span></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1" aria-label="code-block-3-16"></a>embeddings_key <span class="op">=</span> <span class="st">"wattbot/embeddings/embeddings_bedrock.npy"</span>       <span class="co"># one vector per chunk</span></span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1" aria-label="code-block-3-17"></a>solutions_key <span class="op">=</span> <span class="st">"wattbot/solutions/wattbot_solutions_bedrock.csv"</span>  <span class="co"># the pipeline's answers, in the competition's format</span></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1" aria-label="code-block-3-18"></a></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1" aria-label="code-block-3-19"></a>local_data_dir <span class="op">=</span> <span class="st">"./data"</span>              <span class="co"># working copies on this notebook instance</span></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1" aria-label="code-block-3-20"></a>os.makedirs(local_data_dir, exist_ok<span class="op">=</span><span class="va">True</span>)</span></code></pre>
 </div>
 <p><strong>Two Bedrock clients.</strong> Bedrock has two APIs.
 <code>bedrock-runtime</code> is the one that calls models
@@ -9663,8 +9669,9 @@ one per paper, named <code>&lt;id&gt;.pdf</code>. Downloading them from
 the publishers’ sites is slow and unreliable when fifty notebooks do it
 at once, so the instructors did it once with
 <code>scripts/build_wattbot_corpus.py</code> and staged the result as
-<code>corpus.zip</code> in the shared bucket. We download that one file
-and unpack it.</p>
+<code>corpus.zip</code> in the shared bucket. We download that one file,
+unpack it, and delete the zip: the instance’s disk is 20 GB at most and
+the PDFs alone are 400 MB.</p>
 <div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -9674,9 +9681,10 @@ and unpack it.</p>
 <span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a>corpus_path <span class="op">=</span> download_from_s3(corpus_key, <span class="st">"corpus.zip"</span>)</span>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a><span class="cf">with</span> zipfile.ZipFile(corpus_path, <span class="st">"r"</span>) <span class="im">as</span> zf:</span>
 <span id="cb9-6"><a href="#cb9-6" tabindex="-1" aria-label="code-block-9-6"></a>    zf.extractall(PDF_DIR)</span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1" aria-label="code-block-9-7"></a></span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1" aria-label="code-block-9-8"></a>pdf_files <span class="op">=</span> <span class="bu">sorted</span>(f <span class="cf">for</span> f <span class="kw">in</span> os.listdir(PDF_DIR) <span class="cf">if</span> f.lower().endswith(<span class="st">".pdf"</span>))</span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1" aria-label="code-block-9-9"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(pdf_files)<span class="sc">}</span><span class="ss"> PDFs in </span><span class="sc">{</span>PDF_DIR<span class="sc">}</span><span class="ss">; metadata lists </span><span class="sc">{</span><span class="bu">len</span>(metadata_df)<span class="sc">}</span><span class="ss"> papers"</span>)</span></code></pre>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1" aria-label="code-block-9-7"></a>os.remove(corpus_path)   <span class="co"># the zip is 400 MB and the PDFs are now unpacked; the notebook disk is small</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1" aria-label="code-block-9-8"></a></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1" aria-label="code-block-9-9"></a>pdf_files <span class="op">=</span> <span class="bu">sorted</span>(f <span class="cf">for</span> f <span class="kw">in</span> os.listdir(PDF_DIR) <span class="cf">if</span> f.lower().endswith(<span class="st">".pdf"</span>))</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1" aria-label="code-block-9-10"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(pdf_files)<span class="sc">}</span><span class="ss"> PDFs in </span><span class="sc">{</span>PDF_DIR<span class="sc">}</span><span class="ss">; metadata lists </span><span class="sc">{</span><span class="bu">len</span>(metadata_df)<span class="sc">}</span><span class="ss"> papers"</span>)</span></code></pre>
 </div>
 <div id="where-the-corpus-came-from" class="callout">
 <div class="callout-square">
@@ -10204,11 +10212,12 @@ when we embed one question at a time.</p>
 <span id="cb21-17"><a href="#cb21-17" tabindex="-1" aria-label="code-block-21-17"></a>    <span class="co">"""The retrieval-time half of the pipeline: the same model, one question at a time."""</span></span>
 <span id="cb21-18"><a href="#cb21-18" tabindex="-1" aria-label="code-block-21-18"></a>    <span class="cf">return</span> np.asarray(bedrock_embed_text(question), dtype<span class="op">=</span><span class="st">"float32"</span>)</span></code></pre>
 </div>
-<p>Embedding the corpus, about 10,000 chunks, is a quarter of an hour
-and a few cents, so do not do it twice. The cell after next looks for
-the finished matrix locally, then in your bucket, and only then computes
-it, saving progress every 500 chunks so an interrupted run picks up
-where it stopped.</p>
+<p>Embedding the corpus, about 9,000 chunks, is ten minutes and a few
+cents, so do not do it twice. The cell after next looks for the finished
+matrix locally, then in the shared bucket if
+<code>use_instructor_embeddings</code> is set, then in your bucket, and
+only then computes it, saving progress every 500 chunks so an
+interrupted run picks up where it stopped.</p>
 <div id="in-a-class-use-the-instructors-copy" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -10218,63 +10227,75 @@ where it stopped.</p>
 <h3 class="callout-title">In a class, use the instructor’s copy</h3>
 <div class="callout-content">
 <p>Bedrock allows this account 300,000 Titan embedding tokens per
-minute, and the quota is not adjustable. This corpus is about 4 million
-tokens, so one notebook alone needs a quarter of an hour at the full
-quota; a room of them shares it, so everyone’s loop slows to a crawl of
-retries. In class, uncomment and run the cell below first: it downloads
-the matrix your instructor computed with the same chunks and the same
-model, and the cell after it finds the file and skips the calls. Working
-on your own, leave it commented and let the loop run; that is the step
-to practise.</p>
+minute, and the quota is not adjustable. This corpus is about 3 million
+tokens, so one notebook alone needs ten minutes at the full quota; a
+room of them shares it, so everyone’s loop slows to a crawl of retries.
+That is what <code>use_instructor_embeddings = True</code> in Step 1 is
+for: the cell below then downloads the matrix your instructor computed
+with the same chunks and the same model from the shared bucket and skips
+the calls. Working on your own, set it to <code>False</code> and let the
+loop run; that is the step to practise.</p>
 </div>
 </div>
 </div>
+<p>One small helper asks S3 whether an object exists, and one checks
+that a cached matrix belongs to these chunks: a matrix from an earlier
+corpus has a different number of rows, and using it would pair every
+question with the wrong passages.</p>
 <div class="codewrapper sourceCode" id="cb22">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" tabindex="-1" aria-label="code-block-22-1"></a><span class="co"># In class only: the instructor's copy of the embeddings, same chunks, same model. Uncomment the next line, run, then run the cell below.</span></span>
-<span id="cb22-2"><a href="#cb22-2" tabindex="-1" aria-label="code-block-22-2"></a><span class="co"># s3.download_file(shared_bucket, "wattbot/embeddings_bedrock.npy", str(emb_save_path))</span></span>
-<span id="cb22-3"><a href="#cb22-3" tabindex="-1" aria-label="code-block-22-3"></a>``` One small helper asks S3 whether an <span class="bu">object</span> exists.</span>
-<span id="cb22-4"><a href="#cb22-4" tabindex="-1" aria-label="code-block-22-4"></a></span>
-<span id="cb22-5"><a href="#cb22-5" tabindex="-1" aria-label="code-block-22-5"></a>```python</span>
-<span id="cb22-6"><a href="#cb22-6" tabindex="-1" aria-label="code-block-22-6"></a><span class="kw">def</span> _s3_object_exists(bucket: <span class="bu">str</span>, key: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
-<span id="cb22-7"><a href="#cb22-7" tabindex="-1" aria-label="code-block-22-7"></a>    <span class="cf">try</span>:</span>
-<span id="cb22-8"><a href="#cb22-8" tabindex="-1" aria-label="code-block-22-8"></a>        s3.head_object(Bucket<span class="op">=</span>bucket, Key<span class="op">=</span>key)</span>
-<span id="cb22-9"><a href="#cb22-9" tabindex="-1" aria-label="code-block-22-9"></a>        <span class="cf">return</span> <span class="va">True</span></span>
-<span id="cb22-10"><a href="#cb22-10" tabindex="-1" aria-label="code-block-22-10"></a>    <span class="cf">except</span> ClientError:</span>
-<span id="cb22-11"><a href="#cb22-11" tabindex="-1" aria-label="code-block-22-11"></a>        <span class="cf">return</span> <span class="va">False</span></span>
-<span id="cb22-12"><a href="#cb22-12" tabindex="-1" aria-label="code-block-22-12"></a></span>
-<span id="cb22-13"><a href="#cb22-13" tabindex="-1" aria-label="code-block-22-13"></a></span>
-<span id="cb22-14"><a href="#cb22-14" tabindex="-1" aria-label="code-block-22-14"></a><span class="co"># Cache order: local .npy, then your bucket, then recompute (and upload for next time)</span></span>
-<span id="cb22-15"><a href="#cb22-15" tabindex="-1" aria-label="code-block-22-15"></a><span class="cf">if</span> emb_save_path.exists():</span>
-<span id="cb22-16"><a href="#cb22-16" tabindex="-1" aria-label="code-block-22-16"></a>    <span class="bu">print</span>(<span class="ss">f"Found existing embeddings at </span><span class="sc">{</span>emb_save_path<span class="sc">}</span><span class="ss">. Skipping re-computation."</span>)</span>
-<span id="cb22-17"><a href="#cb22-17" tabindex="-1" aria-label="code-block-22-17"></a>    chunk_embeddings <span class="op">=</span> np.load(emb_save_path)</span>
-<span id="cb22-18"><a href="#cb22-18" tabindex="-1" aria-label="code-block-22-18"></a><span class="cf">elif</span> _s3_object_exists(bucket_name, embeddings_key):</span>
-<span id="cb22-19"><a href="#cb22-19" tabindex="-1" aria-label="code-block-22-19"></a>    s3.download_file(bucket_name, embeddings_key, <span class="bu">str</span>(emb_save_path))</span>
-<span id="cb22-20"><a href="#cb22-20" tabindex="-1" aria-label="code-block-22-20"></a>    <span class="bu">print</span>(<span class="ss">f"Downloaded cached embeddings from s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>embeddings_key<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb22-21"><a href="#cb22-21" tabindex="-1" aria-label="code-block-22-21"></a>    chunk_embeddings <span class="op">=</span> np.load(emb_save_path)</span>
-<span id="cb22-22"><a href="#cb22-22" tabindex="-1" aria-label="code-block-22-22"></a><span class="cf">else</span>:</span>
-<span id="cb22-23"><a href="#cb22-23" tabindex="-1" aria-label="code-block-22-23"></a>    <span class="co"># Resume from a partial save if a previous run was interrupted</span></span>
-<span id="cb22-24"><a href="#cb22-24" tabindex="-1" aria-label="code-block-22-24"></a>    all_embeddings <span class="op">=</span> <span class="bu">list</span>(np.load(emb_partial_path)) <span class="cf">if</span> emb_partial_path.exists() <span class="cf">else</span> []</span>
-<span id="cb22-25"><a href="#cb22-25" tabindex="-1" aria-label="code-block-22-25"></a>    start <span class="op">=</span> <span class="bu">len</span>(all_embeddings)</span>
-<span id="cb22-26"><a href="#cb22-26" tabindex="-1" aria-label="code-block-22-26"></a>    <span class="bu">print</span>(<span class="ss">f"Computing embeddings via Bedrock from chunk </span><span class="sc">{</span>start<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss">..."</span>)</span>
-<span id="cb22-27"><a href="#cb22-27" tabindex="-1" aria-label="code-block-22-27"></a>    t0 <span class="op">=</span> time.time()</span>
-<span id="cb22-28"><a href="#cb22-28" tabindex="-1" aria-label="code-block-22-28"></a></span>
-<span id="cb22-29"><a href="#cb22-29" tabindex="-1" aria-label="code-block-22-29"></a>    <span class="cf">for</span> idx <span class="kw">in</span> <span class="bu">range</span>(start, <span class="bu">len</span>(chunked_docs)):</span>
-<span id="cb22-30"><a href="#cb22-30" tabindex="-1" aria-label="code-block-22-30"></a>        all_embeddings.append(bedrock_embed_text(chunked_docs[idx][<span class="st">"text"</span>]))</span>
-<span id="cb22-31"><a href="#cb22-31" tabindex="-1" aria-label="code-block-22-31"></a>        <span class="cf">if</span> (idx <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> <span class="dv">500</span> <span class="op">==</span> <span class="dv">0</span> <span class="kw">or</span> idx <span class="op">+</span> <span class="dv">1</span> <span class="op">==</span> <span class="bu">len</span>(chunked_docs):</span>
-<span id="cb22-32"><a href="#cb22-32" tabindex="-1" aria-label="code-block-22-32"></a>            np.save(emb_partial_path, np.array(all_embeddings, dtype<span class="op">=</span><span class="st">"float32"</span>))</span>
-<span id="cb22-33"><a href="#cb22-33" tabindex="-1" aria-label="code-block-22-33"></a>            <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span>idx <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss"> / </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss"> chunks (progress saved)"</span>)</span>
-<span id="cb22-34"><a href="#cb22-34" tabindex="-1" aria-label="code-block-22-34"></a></span>
-<span id="cb22-35"><a href="#cb22-35" tabindex="-1" aria-label="code-block-22-35"></a>    <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs) <span class="op">-</span> start<span class="sc">}</span><span class="ss"> chunks in </span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.1f}</span><span class="ss"> seconds"</span>)</span>
-<span id="cb22-36"><a href="#cb22-36" tabindex="-1" aria-label="code-block-22-36"></a>    chunk_embeddings <span class="op">=</span> np.array(all_embeddings, dtype<span class="op">=</span><span class="st">"float32"</span>)   <span class="co"># the embedding matrix: one row per chunk, one column per dimension</span></span>
-<span id="cb22-37"><a href="#cb22-37" tabindex="-1" aria-label="code-block-22-37"></a>    np.save(emb_save_path, chunk_embeddings)</span>
-<span id="cb22-38"><a href="#cb22-38" tabindex="-1" aria-label="code-block-22-38"></a>    emb_partial_path.unlink(missing_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb22-39"><a href="#cb22-39" tabindex="-1" aria-label="code-block-22-39"></a>    s3.upload_file(<span class="bu">str</span>(emb_save_path), bucket_name, embeddings_key)</span>
-<span id="cb22-40"><a href="#cb22-40" tabindex="-1" aria-label="code-block-22-40"></a>    <span class="bu">print</span>(<span class="ss">f"Saved embeddings to </span><span class="sc">{</span>emb_save_path<span class="sc">}</span><span class="ss"> and s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>embeddings_key<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb22-41"><a href="#cb22-41" tabindex="-1" aria-label="code-block-22-41"></a></span>
-<span id="cb22-42"><a href="#cb22-42" tabindex="-1" aria-label="code-block-22-42"></a><span class="cf">assert</span> chunk_embeddings.shape[<span class="dv">0</span>] <span class="op">==</span> <span class="bu">len</span>(chunked_docs), <span class="st">"embeddings and chunks are out of step; delete the cached files and rerun"</span></span>
-<span id="cb22-43"><a href="#cb22-43" tabindex="-1" aria-label="code-block-22-43"></a><span class="bu">print</span>(<span class="st">"Embeddings shape:"</span>, chunk_embeddings.shape)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" tabindex="-1" aria-label="code-block-22-1"></a><span class="kw">def</span> _s3_object_exists(bucket: <span class="bu">str</span>, key: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1" aria-label="code-block-22-2"></a>    <span class="cf">try</span>:</span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1" aria-label="code-block-22-3"></a>        s3.head_object(Bucket<span class="op">=</span>bucket, Key<span class="op">=</span>key)</span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1" aria-label="code-block-22-4"></a>        <span class="cf">return</span> <span class="va">True</span></span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1" aria-label="code-block-22-5"></a>    <span class="cf">except</span> ClientError:</span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1" aria-label="code-block-22-6"></a>        <span class="cf">return</span> <span class="va">False</span></span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1" aria-label="code-block-22-7"></a></span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1" aria-label="code-block-22-8"></a></span>
+<span id="cb22-9"><a href="#cb22-9" tabindex="-1" aria-label="code-block-22-9"></a><span class="kw">def</span> load_embeddings_if_matching(path) <span class="op">-&gt;</span> Any:</span>
+<span id="cb22-10"><a href="#cb22-10" tabindex="-1" aria-label="code-block-22-10"></a>    <span class="co">"""The matrix at `path` if it has one row per chunk, else None (a matrix from a different corpus)."""</span></span>
+<span id="cb22-11"><a href="#cb22-11" tabindex="-1" aria-label="code-block-22-11"></a>    matrix <span class="op">=</span> np.load(path)</span>
+<span id="cb22-12"><a href="#cb22-12" tabindex="-1" aria-label="code-block-22-12"></a>    <span class="cf">if</span> matrix.shape[<span class="dv">0</span>] <span class="op">==</span> <span class="bu">len</span>(chunked_docs):</span>
+<span id="cb22-13"><a href="#cb22-13" tabindex="-1" aria-label="code-block-22-13"></a>        <span class="cf">return</span> matrix</span>
+<span id="cb22-14"><a href="#cb22-14" tabindex="-1" aria-label="code-block-22-14"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>path<span class="sc">}</span><span class="ss"> has </span><span class="sc">{</span>matrix<span class="sc">.</span>shape[<span class="dv">0</span>]<span class="sc">}</span><span class="ss"> rows but there are </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss"> chunks: a matrix from a different corpus, ignoring it"</span>)</span>
+<span id="cb22-15"><a href="#cb22-15" tabindex="-1" aria-label="code-block-22-15"></a>    <span class="cf">return</span> <span class="va">None</span></span>
+<span id="cb22-16"><a href="#cb22-16" tabindex="-1" aria-label="code-block-22-16"></a></span>
+<span id="cb22-17"><a href="#cb22-17" tabindex="-1" aria-label="code-block-22-17"></a></span>
+<span id="cb22-18"><a href="#cb22-18" tabindex="-1" aria-label="code-block-22-18"></a><span class="co"># Cache order: local file, the instructor's copy (in class), your bucket, then recompute (and upload for next time)</span></span>
+<span id="cb22-19"><a href="#cb22-19" tabindex="-1" aria-label="code-block-22-19"></a>chunk_embeddings <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb22-20"><a href="#cb22-20" tabindex="-1" aria-label="code-block-22-20"></a><span class="cf">if</span> emb_save_path.exists():</span>
+<span id="cb22-21"><a href="#cb22-21" tabindex="-1" aria-label="code-block-22-21"></a>    chunk_embeddings <span class="op">=</span> load_embeddings_if_matching(emb_save_path)</span>
+<span id="cb22-22"><a href="#cb22-22" tabindex="-1" aria-label="code-block-22-22"></a><span class="cf">if</span> chunk_embeddings <span class="kw">is</span> <span class="va">None</span> <span class="kw">and</span> use_instructor_embeddings <span class="kw">and</span> _s3_object_exists(shared_bucket, shared_embeddings_key):</span>
+<span id="cb22-23"><a href="#cb22-23" tabindex="-1" aria-label="code-block-22-23"></a>    s3.download_file(shared_bucket, shared_embeddings_key, <span class="bu">str</span>(emb_save_path))</span>
+<span id="cb22-24"><a href="#cb22-24" tabindex="-1" aria-label="code-block-22-24"></a>    <span class="bu">print</span>(<span class="ss">f"Downloaded the instructor's embeddings from s3://</span><span class="sc">{</span>shared_bucket<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>shared_embeddings_key<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb22-25"><a href="#cb22-25" tabindex="-1" aria-label="code-block-22-25"></a>    chunk_embeddings <span class="op">=</span> load_embeddings_if_matching(emb_save_path)</span>
+<span id="cb22-26"><a href="#cb22-26" tabindex="-1" aria-label="code-block-22-26"></a><span class="cf">if</span> chunk_embeddings <span class="kw">is</span> <span class="va">None</span> <span class="kw">and</span> _s3_object_exists(bucket_name, embeddings_key):</span>
+<span id="cb22-27"><a href="#cb22-27" tabindex="-1" aria-label="code-block-22-27"></a>    s3.download_file(bucket_name, embeddings_key, <span class="bu">str</span>(emb_save_path))</span>
+<span id="cb22-28"><a href="#cb22-28" tabindex="-1" aria-label="code-block-22-28"></a>    <span class="bu">print</span>(<span class="ss">f"Downloaded your cached embeddings from s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>embeddings_key<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb22-29"><a href="#cb22-29" tabindex="-1" aria-label="code-block-22-29"></a>    chunk_embeddings <span class="op">=</span> load_embeddings_if_matching(emb_save_path)</span>
+<span id="cb22-30"><a href="#cb22-30" tabindex="-1" aria-label="code-block-22-30"></a><span class="cf">if</span> chunk_embeddings <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb22-31"><a href="#cb22-31" tabindex="-1" aria-label="code-block-22-31"></a>    <span class="co"># Resume from a partial save if a previous run was interrupted</span></span>
+<span id="cb22-32"><a href="#cb22-32" tabindex="-1" aria-label="code-block-22-32"></a>    all_embeddings <span class="op">=</span> <span class="bu">list</span>(np.load(emb_partial_path)) <span class="cf">if</span> emb_partial_path.exists() <span class="cf">else</span> []</span>
+<span id="cb22-33"><a href="#cb22-33" tabindex="-1" aria-label="code-block-22-33"></a>    start <span class="op">=</span> <span class="bu">len</span>(all_embeddings)</span>
+<span id="cb22-34"><a href="#cb22-34" tabindex="-1" aria-label="code-block-22-34"></a>    <span class="bu">print</span>(<span class="ss">f"Computing embeddings via Bedrock from chunk </span><span class="sc">{</span>start<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss">..."</span>)</span>
+<span id="cb22-35"><a href="#cb22-35" tabindex="-1" aria-label="code-block-22-35"></a>    t0 <span class="op">=</span> time.time()</span>
+<span id="cb22-36"><a href="#cb22-36" tabindex="-1" aria-label="code-block-22-36"></a></span>
+<span id="cb22-37"><a href="#cb22-37" tabindex="-1" aria-label="code-block-22-37"></a>    <span class="cf">for</span> idx <span class="kw">in</span> <span class="bu">range</span>(start, <span class="bu">len</span>(chunked_docs)):</span>
+<span id="cb22-38"><a href="#cb22-38" tabindex="-1" aria-label="code-block-22-38"></a>        all_embeddings.append(bedrock_embed_text(chunked_docs[idx][<span class="st">"text"</span>]))</span>
+<span id="cb22-39"><a href="#cb22-39" tabindex="-1" aria-label="code-block-22-39"></a>        <span class="cf">if</span> (idx <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> <span class="dv">500</span> <span class="op">==</span> <span class="dv">0</span> <span class="kw">or</span> idx <span class="op">+</span> <span class="dv">1</span> <span class="op">==</span> <span class="bu">len</span>(chunked_docs):</span>
+<span id="cb22-40"><a href="#cb22-40" tabindex="-1" aria-label="code-block-22-40"></a>            np.save(emb_partial_path, np.array(all_embeddings, dtype<span class="op">=</span><span class="st">"float32"</span>))</span>
+<span id="cb22-41"><a href="#cb22-41" tabindex="-1" aria-label="code-block-22-41"></a>            <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span>idx <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss"> / </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss"> chunks (progress saved)"</span>)</span>
+<span id="cb22-42"><a href="#cb22-42" tabindex="-1" aria-label="code-block-22-42"></a></span>
+<span id="cb22-43"><a href="#cb22-43" tabindex="-1" aria-label="code-block-22-43"></a>    <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs) <span class="op">-</span> start<span class="sc">}</span><span class="ss"> chunks in </span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.1f}</span><span class="ss"> seconds"</span>)</span>
+<span id="cb22-44"><a href="#cb22-44" tabindex="-1" aria-label="code-block-22-44"></a>    chunk_embeddings <span class="op">=</span> np.array(all_embeddings, dtype<span class="op">=</span><span class="st">"float32"</span>)   <span class="co"># the embedding matrix: one row per chunk, one column per dimension</span></span>
+<span id="cb22-45"><a href="#cb22-45" tabindex="-1" aria-label="code-block-22-45"></a>    np.save(emb_save_path, chunk_embeddings)</span>
+<span id="cb22-46"><a href="#cb22-46" tabindex="-1" aria-label="code-block-22-46"></a>    emb_partial_path.unlink(missing_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb22-47"><a href="#cb22-47" tabindex="-1" aria-label="code-block-22-47"></a>    s3.upload_file(<span class="bu">str</span>(emb_save_path), bucket_name, embeddings_key)</span>
+<span id="cb22-48"><a href="#cb22-48" tabindex="-1" aria-label="code-block-22-48"></a>    <span class="bu">print</span>(<span class="ss">f"Saved embeddings to </span><span class="sc">{</span>emb_save_path<span class="sc">}</span><span class="ss"> and s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>embeddings_key<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb22-49"><a href="#cb22-49" tabindex="-1" aria-label="code-block-22-49"></a></span>
+<span id="cb22-50"><a href="#cb22-50" tabindex="-1" aria-label="code-block-22-50"></a><span class="cf">assert</span> chunk_embeddings.shape[<span class="dv">0</span>] <span class="op">==</span> <span class="bu">len</span>(chunked_docs), <span class="st">"embeddings and chunks are out of step; delete the cached files and rerun"</span></span>
+<span id="cb22-51"><a href="#cb22-51" tabindex="-1" aria-label="code-block-22-51"></a><span class="bu">print</span>(<span class="st">"Embeddings shape:"</span>, chunk_embeddings.shape)</span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="step-9-retrieve-cosine-similarity-over-the-embedding-matrix">Step 9 – Retrieve: cosine similarity over the embedding matrix<a class="anchor" aria-label="anchor" href="#step-9-retrieve-cosine-similarity-over-the-embedding-matrix"></a>
 </h2>
@@ -10534,8 +10555,8 @@ block, and <code>call_bedrock_chat</code> kept them all in
 <code>bedrock_usage</code>. Sum the input and output tokens over the
 evaluation run and price them at the current on-demand rates for
 DeepSeek V3 on the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
-(fill the two prices in below). Add the embedding step: ~10,000 chunks
-of 1,200 characters at Titan Text Embeddings V2’s <code>$0.02</code> per
+(fill the two prices in below). Add the embedding step: ~9,000 chunks of
+1,200 characters at Titan Text Embeddings V2’s <code>$0.02</code> per
 million input tokens. How does the total compare with the overview’s
 estimate for “the whole WattBot pipeline on Bedrock”, and with one hour
 of the <code>ml.g6e.xlarge</code> the Processing Jobs episode rents?</p>
@@ -10572,8 +10593,8 @@ region you used. The rest sums the usage blocks and prints the cost.</p>
 </div>
 <p>With 55 questions, two calls each and ~3,000-token prompts, the run
 is on the order of 350K input and 30K output tokens: about a quarter of
-a dollar at DeepSeek V3’s prices, plus about eight cents of embeddings
-for the 4 million tokens of corpus. All 245 questions is about a dollar,
+a dollar at DeepSeek V3’s prices, plus about six cents of embeddings for
+the 3 million tokens of corpus. All 245 questions is about a dollar,
 which is the overview’s estimate for the whole pipeline, and it is a
 small fraction of a single GPU-hour.</p>
 </div>
@@ -11141,7 +11162,7 @@ evaluations.</p>
 </tr></thead>
 <tbody>
 <tr>
-<td>Embed ~10,000 chunks</td>
+<td>Embed ~9,000 chunks</td>
 <td>
 <code>ml.g5.xlarge</code> (A10G, 24 GB)</td>
 <td><code>$1.41</code></td>
@@ -11723,7 +11744,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -11787,7 +11808,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still downloading or
@@ -13256,7 +13277,7 @@ finds something. Then run them against your own resources.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
