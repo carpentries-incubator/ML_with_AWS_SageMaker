@@ -430,7 +430,9 @@ layout below.</p>
         corpus.zip          built once with scripts/build_wattbot_corpus.py
         pages.jsonl         page text extracted from corpus.zip by the same script
         embeddings_bedrock.npy   the Titan V2 vectors from your own Bedrock run; learners download it in class
-        embeddings_pages_multimodal.npy   optional: the Nova multimodal page-image vectors from the Bedrock episode's last step, if you want to stage those too
+        embeddings_gte_large.npy          the Processing-jobs episode's embedding-job output; learners copy it instead of running that job in class
+        crops.zip                         optional, for the Bedrock episode's multimodal step: the table and figure crops (crops/ plus crops.jsonl)
+        embeddings_crops_multimodal.npy   optional, with it: the Nova multimodal vectors of those crops
     badger-scribe/
         train.csv  test.csv  metadata.csv  metric.py
         sample_submission.csv  transcription_conventions.md
@@ -562,18 +564,45 @@ wrong passages. The chunks are deterministic from
 <code>pages.jsonl</code>, so the vectors match. Learners working on
 their own embed the corpus themselves, which is the point of the
 step.</p>
+<p>The Processing-jobs episode’s first job embeds the same chunks with
+<code>gte-large</code> on a GPU, eight minutes per learner. After your
+own run, copy its output into the shared bucket and the episode’s
+<code>use_instructor_embeddings</code> switch copies it into each
+learner’s bucket in place of the job; they still launch the second,
+larger job themselves:</p>
 <div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="ex">aws</span> s3 cp s3://<span class="op">&lt;</span>your-bucket<span class="op">&gt;</span>/wattbot/embeddings/embeddings_bedrock.npy s3://<span class="va">$BUCKET</span>/wattbot/embeddings_bedrock.npy</span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="ex">aws</span> s3 cp s3://<span class="op">&lt;</span>your-bucket<span class="op">&gt;</span>/wattbot/embeddings/embeddings.npy s3://ml-marathon-shared/wattbot/embeddings_gte_large.npy</span></code></pre>
+</div>
+<p>The multimodal step at the end of the Bedrock episode has the same
+shape: cutting the tables and figures out of the PDFs is a few minutes
+of CPU per notebook, and embedding them is a thousand Bedrock calls.
+After your own run of that step, stage both from the notebook’s
+<code>wattbot</code> folder, and the episode downloads them when
+<code>use_instructor_embeddings</code> is set:</p>
+<div class="codewrapper sourceCode" id="cb7">
+<h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a><span class="bu">cd</span> /home/ec2-user/SageMaker/wattbot/data <span class="kw">&amp;&amp;</span> <span class="fu">zip</span> <span class="at">-qr</span> crops.zip crops crops.jsonl</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1" aria-label="code-block-7-2"></a><span class="ex">aws</span> s3 cp crops.zip s3://ml-marathon-shared/wattbot/crops.zip</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1" aria-label="code-block-7-3"></a><span class="ex">aws</span> s3 cp embeddings_crops_multimodal.npy s3://ml-marathon-shared/wattbot/embeddings_crops_multimodal.npy</span></code></pre>
+</div>
+<p>The crop records carry paths relative to the notebook’s working
+folder (<code>data/crops/...</code>), so the zip must be unpacked where
+the episode unpacks it; the cell does that.</p>
+<div class="codewrapper sourceCode" id="cb8">
+<h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1" aria-label="code-block-8-1"></a><span class="ex">aws</span> s3 cp s3://<span class="op">&lt;</span>your-bucket<span class="op">&gt;</span>/wattbot/embeddings/embeddings_bedrock.npy s3://<span class="va">$BUCKET</span>/wattbot/embeddings_bedrock.npy</span></code></pre>
 </div>
 <p>If the room stalls, have learners run this one line before the
 embedding cell; the cell then finds the file locally and skips the
 calls:</p>
-<div class="codewrapper sourceCode" id="cb7">
+<div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a>s3.download_file(shared_bucket, <span class="st">"wattbot/embeddings_bedrock.npy"</span>, <span class="bu">str</span>(emb_save_path))</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a>s3.download_file(shared_bucket, <span class="st">"wattbot/embeddings_bedrock.npy"</span>, <span class="bu">str</span>(emb_save_path))</span></code></pre>
 </div>
 <p>Redo the copy whenever <code>pages.jsonl</code> or the chunking
 settings change.</p>
@@ -582,18 +611,18 @@ settings change.</p>
 Scribe data: publishing a release</em> for how versions are published).
 The loop handles one asset at a time: download, unzip, sync, delete, so
 nothing larger than one zip is ever on disk.</p>
-<div class="codewrapper sourceCode" id="cb8">
+<div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1" aria-label="code-block-8-1"></a><span class="va">V</span><span class="op">=</span>1   <span class="co"># Badger Scribe data release version</span></span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1" aria-label="code-block-8-2"></a><span class="va">R</span><span class="op">=</span>https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/releases/download/badger-scribe-data-v<span class="va">$V</span></span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1" aria-label="code-block-8-3"></a><span class="cf">for</span> a <span class="kw">in</span> labels images-train images-test<span class="kw">;</span> <span class="cf">do</span></span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1" aria-label="code-block-8-4"></a>  <span class="fu">rm</span> <span class="at">-rf</span> /tmp/stage/bs <span class="kw">&amp;&amp;</span> <span class="fu">mkdir</span> <span class="at">-p</span> /tmp/stage/bs</span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1" aria-label="code-block-8-5"></a>  <span class="ex">curl</span> <span class="at">-sSL</span> <span class="at">-o</span> /tmp/stage/bs/<span class="va">$a</span>.zip <span class="va">$R</span>/badger-scribe-v<span class="va">$V</span>-<span class="va">$a</span>.zip</span>
-<span id="cb8-6"><a href="#cb8-6" tabindex="-1" aria-label="code-block-8-6"></a>  <span class="fu">unzip</span> <span class="at">-q</span> <span class="at">-o</span> /tmp/stage/bs/<span class="va">$a</span>.zip <span class="at">-d</span> /tmp/stage/bs/badger-scribe <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> /tmp/stage/bs/<span class="va">$a</span>.zip</span>
-<span id="cb8-7"><a href="#cb8-7" tabindex="-1" aria-label="code-block-8-7"></a>  <span class="ex">aws</span> s3 sync /tmp/stage/bs/badger-scribe/ s3://<span class="va">$BUCKET</span>/badger-scribe/</span>
-<span id="cb8-8"><a href="#cb8-8" tabindex="-1" aria-label="code-block-8-8"></a>  <span class="fu">rm</span> <span class="at">-rf</span> /tmp/stage/bs</span>
-<span id="cb8-9"><a href="#cb8-9" tabindex="-1" aria-label="code-block-8-9"></a><span class="cf">done</span></span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a><span class="va">V</span><span class="op">=</span>1   <span class="co"># Badger Scribe data release version</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a><span class="va">R</span><span class="op">=</span>https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/releases/download/badger-scribe-data-v<span class="va">$V</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1" aria-label="code-block-10-3"></a><span class="cf">for</span> a <span class="kw">in</span> labels images-train images-test<span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1" aria-label="code-block-10-4"></a>  <span class="fu">rm</span> <span class="at">-rf</span> /tmp/stage/bs <span class="kw">&amp;&amp;</span> <span class="fu">mkdir</span> <span class="at">-p</span> /tmp/stage/bs</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1" aria-label="code-block-10-5"></a>  <span class="ex">curl</span> <span class="at">-sSL</span> <span class="at">-o</span> /tmp/stage/bs/<span class="va">$a</span>.zip <span class="va">$R</span>/badger-scribe-v<span class="va">$V</span>-<span class="va">$a</span>.zip</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1" aria-label="code-block-10-6"></a>  <span class="fu">unzip</span> <span class="at">-q</span> <span class="at">-o</span> /tmp/stage/bs/<span class="va">$a</span>.zip <span class="at">-d</span> /tmp/stage/bs/badger-scribe <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> /tmp/stage/bs/<span class="va">$a</span>.zip</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1" aria-label="code-block-10-7"></a>  <span class="ex">aws</span> s3 sync /tmp/stage/bs/badger-scribe/ s3://<span class="va">$BUCKET</span>/badger-scribe/</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1" aria-label="code-block-10-8"></a>  <span class="fu">rm</span> <span class="at">-rf</span> /tmp/stage/bs</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1" aria-label="code-block-10-9"></a><span class="cf">done</span></span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="stage-the-churro-3b-weights-fine-tuning-episode">5. Stage the CHURRO-3B weights (fine-tuning episode)<a class="anchor" aria-label="anchor" href="#stage-the-churro-3b-weights-fine-tuning-episode"></a></h2>
 <hr class="half-width"><p>Every training and processing job in the episode reads the base model
@@ -602,40 +631,40 @@ starting in the same minute copy it from S3 instead of each pulling 7.5
 GB from Hugging Face. This streams each file from Hugging Face straight
 into S3, nothing written to disk: about 7.5 GB, which took under two
 minutes from CloudShell.</p>
-<div class="codewrapper sourceCode" id="cb9">
+<div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a><span class="ex">python3</span> <span class="at">-</span> <span class="op">&lt;&lt;EOF</span></span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a><span class="st">import boto3, requests</span></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1" aria-label="code-block-9-3"></a><span class="st">from huggingface_hub import HfApi, hf_hub_url</span></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a><span class="st">s3 = boto3.client("s3")</span></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a><span class="st">bucket, model_id, prefix = "</span><span class="va">$BUCKET</span><span class="st">", "stanford-oval/churro-3B", "badger-scribe/model/churro-3B"</span></span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1" aria-label="code-block-9-6"></a><span class="st">for f in [f for f in HfApi().list_repo_files(model_id) if not f.startswith(".")]:</span></span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1" aria-label="code-block-9-7"></a><span class="st">    with requests.get(hf_hub_url(model_id, f), stream=True, timeout=60) as r:</span></span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1" aria-label="code-block-9-8"></a><span class="st">        r.raise_for_status(); r.raw.decode_content = True</span></span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1" aria-label="code-block-9-9"></a><span class="st">        s3.upload_fileobj(r.raw, bucket, f"{prefix}/{f}")</span></span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1" aria-label="code-block-9-10"></a><span class="st">    print("uploaded", f)</span></span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1" aria-label="code-block-9-11"></a><span class="op">EOF</span></span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a><span class="ex">python3</span> <span class="at">-</span> <span class="op">&lt;&lt;EOF</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a><span class="st">import boto3, requests</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a><span class="st">from huggingface_hub import HfApi, hf_hub_url</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a><span class="st">s3 = boto3.client("s3")</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1" aria-label="code-block-11-5"></a><span class="st">bucket, model_id, prefix = "</span><span class="va">$BUCKET</span><span class="st">", "stanford-oval/churro-3B", "badger-scribe/model/churro-3B"</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1" aria-label="code-block-11-6"></a><span class="st">for f in [f for f in HfApi().list_repo_files(model_id) if not f.startswith(".")]:</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1" aria-label="code-block-11-7"></a><span class="st">    with requests.get(hf_hub_url(model_id, f), stream=True, timeout=60) as r:</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1" aria-label="code-block-11-8"></a><span class="st">        r.raise_for_status(); r.raw.decode_content = True</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1" aria-label="code-block-11-9"></a><span class="st">        s3.upload_fileobj(r.raw, bucket, f"{prefix}/{f}")</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1" aria-label="code-block-11-10"></a><span class="st">    print("uploaded", f)</span></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1" aria-label="code-block-11-11"></a><span class="op">EOF</span></span></code></pre>
 </div>
 <p>On a machine with 10 GB free, the plain download works too:</p>
-<div class="codewrapper sourceCode" id="cb10">
+<div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a><span class="ex">huggingface-cli</span> download stanford-oval/churro-3B <span class="at">--local-dir</span> churro-3B</span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a><span class="ex">aws</span> s3 sync churro-3B/ s3://<span class="va">$BUCKET</span>/badger-scribe/model/churro-3B/</span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1" aria-label="code-block-10-3"></a><span class="fu">rm</span> <span class="at">-rf</span> churro-3B</span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" tabindex="-1" aria-label="code-block-12-1"></a><span class="ex">huggingface-cli</span> download stanford-oval/churro-3B <span class="at">--local-dir</span> churro-3B</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1" aria-label="code-block-12-2"></a><span class="ex">aws</span> s3 sync churro-3B/ s3://<span class="va">$BUCKET</span>/badger-scribe/model/churro-3B/</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1" aria-label="code-block-12-3"></a><span class="fu">rm</span> <span class="at">-rf</span> churro-3B</span></code></pre>
 </div>
 <p>It only needs redoing if the Hub repository changes or the bucket is
 rebuilt.</p>
 </section><section><h2 class="section-heading" id="check-then-clean-up">6. Check, then clean up<a class="anchor" aria-label="anchor" href="#check-then-clean-up"></a></h2>
-<hr class="half-width"><div class="codewrapper sourceCode" id="cb11">
+<hr class="half-width"><div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a><span class="ex">aws</span> s3 ls s3://<span class="va">$BUCKET</span>/ <span class="at">--recursive</span> <span class="at">--summarize</span> <span class="kw">|</span> <span class="fu">tail</span> <span class="at">-2</span></span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a><span class="ex">aws</span> s3 ls s3://<span class="va">$BUCKET</span>/wattbot/</span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a><span class="ex">aws</span> s3 ls s3://<span class="va">$BUCKET</span>/badger-scribe/</span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a><span class="ex">aws</span> s3 ls s3://<span class="va">$BUCKET</span>/badger-scribe/model/churro-3B/</span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1" aria-label="code-block-11-5"></a><span class="bu">cd</span> / <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> <span class="at">-rf</span> /tmp/stage</span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" tabindex="-1" aria-label="code-block-13-1"></a><span class="ex">aws</span> s3 ls s3://<span class="va">$BUCKET</span>/ <span class="at">--recursive</span> <span class="at">--summarize</span> <span class="kw">|</span> <span class="fu">tail</span> <span class="at">-2</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1" aria-label="code-block-13-2"></a><span class="ex">aws</span> s3 ls s3://<span class="va">$BUCKET</span>/wattbot/</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a><span class="ex">aws</span> s3 ls s3://<span class="va">$BUCKET</span>/badger-scribe/</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1" aria-label="code-block-13-4"></a><span class="ex">aws</span> s3 ls s3://<span class="va">$BUCKET</span>/badger-scribe/model/churro-3B/</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1" aria-label="code-block-13-5"></a><span class="bu">cd</span> / <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> <span class="at">-rf</span> /tmp/stage</span></code></pre>
 </div>
 <p>Expect three files under <code>wattbot/</code>, the CSVs plus
 <code>images/</code> under <code>badger-scribe/</code>, and the config,
