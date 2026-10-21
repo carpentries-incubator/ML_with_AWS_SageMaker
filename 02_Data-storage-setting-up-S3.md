@@ -202,7 +202,7 @@ Either way, access comes from one of two places: the role's own IAM policy (what
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-Two buckets appear in this workshop, and this is the only one you create. Your bucket holds the data *you* bring (the Titanic files, uploaded below) and everything the later episodes produce. The larger datasets for the fine-tuning and RAG episodes (hundreds of scanned letters, a corpus of PDFs) live in a **shared, read-only bucket** that the instructors stage before class: one copy for everyone, instead of a hundred copies of the same files. You read from it and never upload to it; your instructor will give you its name.
+Two buckets appear in this workshop, and this is the only one you create. Your bucket holds the data *you* bring (the Titanic files, uploaded below) and everything the later episodes produce. The larger datasets for the fine-tuning and RAG episodes (hundreds of scanned letters, a corpus of PDFs) live in a **shared, read-only bucket** that the instructors stage before class: one copy for everyone, instead of a hundred copies of the same files. You read from it and never upload to it; in the workshop account it is `ml-marathon-shared`, and the episodes that use it have the name in their first cell.
 
 ##### 5. Upload files to the bucket
 - If you haven't downloaded these files yet (part of workshop setup), download the data for this workshop: [data.zip](https://raw.githubusercontent.com/carpentries-incubator/ML_with_AWS_SageMaker/main/data/data.zip)

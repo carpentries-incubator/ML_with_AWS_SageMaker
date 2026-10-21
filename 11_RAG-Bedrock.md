@@ -136,7 +136,7 @@ Reopen JupyterLab once the status is *InService*, and rerun from Step 1: `role` 
 
 This episode reads from two buckets and you create neither of them here:
 
-- **The shared bucket** (your instructor gives you its name) holds the WattBot inputs under `wattbot/`: `metadata.csv` (the index of papers), `train_QA.csv` (labelled questions and answers), `corpus.zip` (the PDFs) and `pages.jsonl` (the text of every PDF page, extracted once). It is read-only and there is one copy for the whole class.
+- **The shared bucket**, `ml-marathon-shared`, already set in the first cell below, holds the WattBot inputs under `wattbot/`: `metadata.csv` (the index of papers), `train_QA.csv` (labelled questions and answers), `corpus.zip` (the PDFs) and `pages.jsonl` (the text of every PDF page, extracted once). It is read-only and there is one copy for the whole class.
 - **Your bucket** from the S3 episode (`challenge-lastnamefirstname`) is where this episode writes what it derives, under a `wattbot/` prefix: the chunked text (`wattbot/chunks.jsonl`), the embeddings (`wattbot/embeddings/`) and the predictions (`wattbot/solutions/`). Its tags cover its storage cost; your notebook instance carries the tags you gave it when you created it, and in this episode those two resources plus the per-token Bedrock calls (tagged through an inference profile, see "Cost tracking" below) are the only things being billed.
 
 ::::::::::::::::::::::::::::::::::::: callout
@@ -928,7 +928,7 @@ With 53 questions, two calls each and ~1,500-token prompts, the run was 140K inp
 Everything above is two model IDs and two callables. The [model catalog](https://us-east-2.console.aws.amazon.com/bedrock/home?region=us-east-2#/model-catalog) has dozens of chat models and several embedding models, and "Choosing the two models" at the top of the episode said the leaderboards cannot tell you which one wins on your questions. Find out.
 
 1. **A different generator.** Pick another chat model from the catalog (for example `us.amazon.nova-2-lite-v1:0`, `us.meta.llama4-maverick-17b-instruct-v1:0`, or a Mistral or Claude model if your account has access), wrap it in a tagged profile as in Step 7, and rerun the Step 11 loop on the same 55-question sample with `call_bedrock_chat` pointed at it. Score it with `compute_wattbot_score` and price it from its `usage` blocks. Which evidence types moved, and what did a point of score cost?
-2. **A different embedder.** Retrieval is the other half. Either shrink Titan to 256 dimensions (`"dimensions": 256` in its request body) and see whether the hit rate and the score survive a four-times smaller index, or switch provider to Cohere Embed (`cohere.embed-english-v3`), whose request body is different from Titan's: a list of `texts` and an `input_type` that is `search_document` for the corpus and `search_query` for the question. Either way the matrix must be recomputed (ten minutes at the quota, so not in class), under a new file name so the Titan one is kept.
+2. **A different embedder.** Retrieval is the other half. Either shrink Titan to 256 dimensions (`"dimensions": 256` in its request body) and see whether the hit rate and the score survive a four-times smaller index, or switch provider to Cohere Embed, if the region's catalog offers it, whose request body is different from Titan's: a list of `texts` and an `input_type` that is `search_document` for the corpus and `search_query` for the question. Either way the matrix must be recomputed (ten minutes at the quota, so not in class), under a new file name so the Titan one is kept.
 
 Keep the rest fixed. One change per experiment, or you will not know what moved the score.
 
@@ -959,15 +959,22 @@ compute_wattbot_score(train_qa_path=train_qa_path, preds_path=alt_path, n_exampl
 
 Read the per-type lines against the DeepSeek run. A cheaper model that holds its own on Quote questions and loses on Math and CrossPaper is the usual pattern; whether that trade is worth it depends on which questions you have.
 
-**Embedder.** Titan at 256 dimensions is the same call with one more key; Cohere needs its own request and response shape. Both go through a tagged profile for the new model, and both need `embed_query` to use the same model as the matrix, with Cohere's `input_type` switched for the question side.
+**Embedder.** First list the embedding models the region's catalog has, because model IDs come and go and an ID that is not in the list fails at the profile step with "The provided model identifier is invalid":
 
 ```python
-alt_embedding_model_id = "cohere.embed-english-v3"        # or keep base_embedding_model_id and add "dimensions": 256 to the Titan body
+for m in bedrock.list_foundation_models(byOutputModality="EMBEDDING")["modelSummaries"]:
+    print(f"{m['modelId']:<45} {m['providerName']}")
+```
+
+Titan at 256 dimensions is the same call with one more key; Cohere needs its own request and response shape. Both go through a tagged profile for the new model, and both need `embed_query` to use the same model as the matrix, with Cohere's `input_type` switched for the question side.
+
+```python
+alt_embedding_model_id = base_embedding_model_id   # Titan at 256 dimensions; or a Cohere ID from the list above (cohere.embed-v4:0 where offered)
 alt_embed_arn = tagged_profile_arn(bedrock, alt_embedding_model_id, "wattbot-embed-alt", name, project)
 
 def alt_embed(text: str, for_query: bool = False) -> np.ndarray:
     if "cohere" in alt_embedding_model_id:
-        body = {"texts": [text[:2000]], "input_type": "search_query" if for_query else "search_document", "truncate": "END"}
+        body = {"texts": [text[:2000]], "input_type": "search_query" if for_query else "search_document", "embedding_types": ["float"]}
     else:
         body = {"inputText": text, "dimensions": 256, "normalize": True}   # Titan Text Embeddings V2 at a quarter of the size
     out = json.loads(bedrock_runtime.invoke_model(modelId=alt_embed_arn, contentType="application/json",
