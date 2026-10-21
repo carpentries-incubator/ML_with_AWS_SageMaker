@@ -632,11 +632,6 @@ finished.</li>
 <strong>Delete</strong> (SageMaker → Notebook instances). Includes the
 optional GPU notebook instance if you created one.</li>
 <li>
-<strong>Lifecycle configurations</strong>: if you created one (for
-example, a script that auto-stops an idle notebook instance), delete it
-(SageMaker → Notebook instances → Lifecycle configurations). It costs
-nothing but is yours to remove.</li>
-<li>
 <strong>S3 bucket</strong>: empty and delete your
 <code>challenge-lastnamefirstname</code> bucket (S3 → select bucket →
 Empty, then Delete). Download anything you want to keep first, once:
@@ -670,8 +665,8 @@ browser.</p>
 with <a href="https://github.com/ekristen/aws-nuke" class="external-link">aws-nuke</a> after
 the workshop. That sweep deletes notebook instances and the learner
 buckets only, so if you forget those, they will still go. It does not
-touch Bedrock application inference profiles or lifecycle
-configurations, so those are yours to remove.</p>
+touch Bedrock application inference profiles, so those are yours to
+remove.</p>
 </section><section><h2 class="section-heading" id="best-practices-for-resource-management">Best practices for resource management<a class="anchor" aria-label="anchor" href="#best-practices-for-resource-management"></a></h2>
 <hr class="half-width"><p>Efficient resource management can save significant costs and improve
 your workflows. Below are some best practices:</p>
@@ -717,7 +712,7 @@ stopped your notebook instance and walked away?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>A complete list for someone who did every episode, including the
 optional ones:</p>
@@ -763,11 +758,6 @@ volume)</td>
 <td>Yes: <code>$2.61</code>/h InService, <code>$14</code>/month for the
 volume when Stopped</td>
 <td>SageMaker → Notebook instances → Delete</td>
-</tr><tr><td>Lifecycle configuration (if you made one)</td>
-<td>Any notebook-instance episode</td>
-<td>No</td>
-<td>SageMaker → Notebook instances → Lifecycle configurations →
-Delete</td>
 </tr><tr><td>GitHub personal access token</td>
 <td>Optional PAT episode</td>
 <td>No, but it is a credential</td>
@@ -792,9 +782,8 @@ thing worth keeping; download them once, then delete the bucket.</p>
 charges.</p></li>
 <li><p>Stop any training, tuning or Processing job you no longer
 need.</p></li>
-<li><p>Lifecycle configurations and Bedrock application inference
-profiles are not swept by the instructors’ aws-nuke run; remove them
-yourself.</p></li>
+<li><p>Bedrock application inference profiles are not swept by the
+instructors’ aws-nuke run; remove them yourself.</p></li>
 <li><p>Regularly clean up unused S3 buckets and objects to save on
 storage costs.</p></li>
 <li><p>Monitor your expenses through the AWS Billing Dashboard and set
