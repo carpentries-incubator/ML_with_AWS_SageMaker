@@ -474,13 +474,13 @@ class</td>
 <td>account-level ceiling; 250 covers 100 students</td>
 </tr><tr><td><code>ml.g5.xlarge for processing job usage</code></td>
 <td>200</td>
-<td>Processing Jobs episode and fine-tuning homework (two jobs per
-student, possibly at once)</td>
+<td>Processing Jobs episode (both jobs) and fine-tuning homework (two
+jobs per student, possibly at once)</td>
 </tr><tr><td><code>ml.g6e.xlarge for processing job usage</code></td>
-<td>100</td>
-<td>Processing Jobs episode: the RAG job serves Qwen3.8-27B.
-<strong>Default is usually 0</strong>
-</td>
+<td>100 (optional)</td>
+<td>only the Processing Jobs episode’s 27B variant. <strong>Default is
+usually 0</strong> and the increase takes days; the episode runs
+Qwen3-8B on <code>ml.g5.xlarge</code> without it</td>
 </tr><tr><td><code>Number of instances across all processing jobs</code></td>
 <td>250 (already applied)</td>
 <td>account-level ceiling</td>
@@ -629,10 +629,24 @@ settings</strong>.</p>
 <ul><li>Enable model access for the two models the Bedrock episode uses:
 <code>deepseek.v3-v1:0</code> (generation) and
 <code>amazon.titan-embed-text-v2:0</code> (embeddings).</li>
-<li>Request increases to the <strong>tokens per minute</strong> and
-<strong>requests per minute</strong> quotas for both. Fifty notebooks
-each embedding ~3,000 chunks in a loop will exceed the default embedding
-RPM; ask for 5–10x whatever the console shows.</li>
+<li>Check the <strong>requests per minute</strong> and <strong>tokens
+per minute</strong> quotas for both (Service Quotas → Amazon Bedrock,
+search the model name). The class load, if fifty learners run the
+episode in the same quarter hour: the generation step is about 80
+DeepSeek calls per learner at ~3,000 input tokens each, so roughly 4,000
+requests and 12 million input tokens per minute at the peak; the
+embedding step is 2,880 Titan calls per learner in about four minutes,
+so roughly 700 requests and 250,000 tokens per minute per learner, or
+35,000 requests and 12 million tokens per minute for fifty at once. Ask
+for what the console lets you (many Bedrock quotas adjust in place, some
+need a support case); the notebook’s client retries with backoff, so a
+quota below the peak slows the run rather than failing it. The
+cross-region profile <code>us.deepseek.v3-v1:0</code> usually carries a
+higher quota than the in-region ID and is a one-line swap in the
+episode. If the embedding quota cannot be raised enough, the <em>Shared
+data bucket</em> page has an emergency copy of the embedding matrix
+learners can pull with one line; splitting the room into a RAG track and
+a fine-tuning track halves the peak as well.</li>
 <li>
 <strong>The learner execution role needs Bedrock
 permissions</strong>, and the default SageMaker role has none: the

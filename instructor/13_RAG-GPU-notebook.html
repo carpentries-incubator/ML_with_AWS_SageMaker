@@ -502,12 +502,15 @@ combination.</li>
 Processing Jobs episodes are the default ways to run RAG; this one is
 for the case where you need to poke at a self-hosted model
 interactively, and only if you will remember to stop the
-instance.</strong> It runs the same pipeline as the Processing Jobs
-episode on a GPU notebook instance, which is the right tool for
-prototyping alone at a keyboard and the wrong one for a room of a
-hundred people with meters running. Work through it on your own when you
-want to see model loading, GPU memory and generation as plain Python.
-Read the cost callout first.</p>
+instance.</strong> <strong>Do not run this notebook on the controller
+instance from the other episodes. Create a new GPU notebook instance for
+it (Setup below). On a CPU instance the vLLM install and the 27 GB model
+load will exhaust memory and freeze your JupyterLab.</strong> It runs
+the same pipeline as the Processing Jobs episode on a GPU notebook
+instance, which is the right tool for prototyping alone at a keyboard
+and the wrong one for a room of a hundred people with meters running.
+Work through it on your own when you want to see model loading, GPU
+memory and generation as plain Python. Read the cost callout first.</p>
 </div>
 </div>
 </div>
@@ -805,7 +808,7 @@ adds is the two model callables, <code>embed_query</code> and
 <div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a><span class="op">!</span>cp <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>wattbot_rag.py <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>hf_embedder.py .</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a><span class="op">!</span>cp <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>wattbot_rag.py <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>hf_embedder.py <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>Score.py .</span></code></pre>
 </div>
 <p>Import the pieces of the shared RAG module we reuse: the prompts, the
 retrieval and scoring functions, and the per-question runner.</p>
@@ -1273,52 +1276,23 @@ makes the explanation call.</li>
 </div>
 <div class="section level3">
 <h3 id="compare-answers-to-ground-truth">Compare answers to ground truth<a class="anchor" aria-label="anchor" href="#compare-answers-to-ground-truth"></a></h3>
-<p>WattBot evaluates each prediction using a weighted score that
-combines three components. Most of the credit (0.75) comes from the
-<code>answer_value</code>, which must match the ground truth after
-normalization (numeric answers must be within ±0.1% relative tolerance;
-categorical values must match exactly). An additional 0.15 comes from
-<code>ref_id</code>, where partial credit is given based on the Jaccard
-overlap between your cited document IDs and the ground-truth set. The
-final 0.10 comes from correctly marking unanswerable questions: if a
-question is truly unanswerable, you must set <code>answer_value</code>,
-<code>ref_id</code>, and <code>supporting_materials</code> to
-<code>is_blank</code>. Any other combination scores zero for this
-component.</p>
-<table class="table"><colgroup><col width="33%"><col width="16%"><col width="50%"></colgroup><thead><tr><th>Component</th>
-<th>Weight</th>
-<th>What counts as correct</th>
-</tr></thead><tbody><tr><td>answer_value</td>
-<td>0.75</td>
-<td>Numeric within ±0.1% relative tolerance; categorical exact match;
-<code>is_blank</code> if unanswerable</td>
-</tr><tr><td>ref_id</td>
-<td>0.15</td>
-<td>Jaccard overlap with the ground-truth reference set
-(case-insensitive)</td>
-</tr><tr><td>is_NA</td>
-<td>0.10</td>
-<td>All required fields set to <code>is_blank</code> when the question
-is truly unanswerable</td>
-</tr></tbody></table><p><code>compute_wattbot_score</code> from <code>wattbot_rag.py</code>
-implements that metric, joins predictions to <code>train_QA.csv</code>
-on <code>id</code>, and prints the worst-scoring rows.
-<code>train_QA.csv</code> has no separate “unanswerable” column, so
-<code>gt_is_na_col="is_blank"</code> derives that flag from
-<code>answer_value == "is_blank"</code> on both sides. The scorer
-accepts <code>ref_id</code> either as <code>;</code>-joined ids (what
-the pipeline writes) or as the Python-list strings in
-<code>train_QA.csv</code>.</p>
+<p>WattBot scores each prediction with the competition’s own
+<code>Score.py</code>: 0.75 for <code>answer_value</code> (numeric
+within ±0.1% relative tolerance, categorical match after normalisation,
+zero if you answer a question the corpus cannot answer), 0.20 for
+citation F1 against the ground-truth <code>ref_id</code> set, and 0.05
+for a clean refusal when the answer is <code>is_blank</code>.
+<code>compute_wattbot_score</code> from <code>wattbot_rag.py</code>
+calls it for the headline number, adds a per-row score, and prints the
+worst rows with the model’s explanation.</p>
 <div class="codewrapper sourceCode" id="cb23">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" tabindex="-1" aria-label="code-block-23-1"></a>results_df <span class="op">=</span> compute_wattbot_score(</span>
 <span id="cb23-2"><a href="#cb23-2" tabindex="-1" aria-label="code-block-23-2"></a>    train_qa_path<span class="op">=</span>train_qa_path,</span>
 <span id="cb23-3"><a href="#cb23-3" tabindex="-1" aria-label="code-block-23-3"></a>    preds_path<span class="op">=</span>solutions_path,</span>
-<span id="cb23-4"><a href="#cb23-4" tabindex="-1" aria-label="code-block-23-4"></a>    gt_is_na_col<span class="op">=</span><span class="st">"is_blank"</span>,</span>
-<span id="cb23-5"><a href="#cb23-5" tabindex="-1" aria-label="code-block-23-5"></a>    pred_is_na_col<span class="op">=</span><span class="st">"is_blank"</span>,</span>
-<span id="cb23-6"><a href="#cb23-6" tabindex="-1" aria-label="code-block-23-6"></a>    n_examples<span class="op">=</span><span class="dv">10</span>,</span>
-<span id="cb23-7"><a href="#cb23-7" tabindex="-1" aria-label="code-block-23-7"></a>)</span></code></pre>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1" aria-label="code-block-23-4"></a>    n_examples<span class="op">=</span><span class="dv">10</span>,</span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1" aria-label="code-block-23-5"></a>)</span></code></pre>
 </div>
 <p>Change <code>retrieval_threshold</code> or <code>top_k</code> in the
 loop above, rerun it, and rescore: with the model loaded, a full pass

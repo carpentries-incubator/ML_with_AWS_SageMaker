@@ -467,9 +467,9 @@ open-weight model, and why a Processing job is the default way to
 self-host one for batch work.</li>
 <li>Launch a GPU Processing job that embeds the cached WattBot chunks
 with a self-hosted embedding model and writes the vectors to S3.</li>
-<li>Launch a second Processing job that serves Qwen3.8-27B (an
-open-weight model Bedrock does not carry) with vLLM and runs the full
-RAG loop over the training questions.</li>
+<li>Launch a second Processing job that serves Qwen3-8B (an open-weight
+model in a size Bedrock does not carry) with vLLM and runs the full RAG
+loop over the training questions.</li>
 <li>Read a job’s inputs, outputs, arguments and runtime cap, and relate
 its duration to what it cost.</li>
 <li>Score the batch predictions with the WattBot metric and compare
@@ -519,26 +519,29 @@ is the one option that cannot be forgotten. This episode runs the
 WattBot pipeline that way. The notebook itself is a small CPU instance
 and never touches the model; it stages data, launches two GPU jobs, and
 reads the results back.</p>
-<p>The generator is <strong>Qwen3.8-27B</strong>, a 27-billion-parameter
-open-weight model (Apache 2.0, released August 2026) that is not on
-Bedrock. Its weights are served in FP8 through vLLM: inference needs no
-gradients, so the weights are the memory cost, and 27B parameters at one
-byte each is about 27 GB, which fits one 48 GB GPU
-(<code>ml.g6e.xlarge</code>) with room for the KV cache. In bf16 the
-same model is 54 GB and would need a multi-GPU instance for no gain in
-output quality. (The fine-tuning episode has the full memory arithmetic;
-the short version is that inference runs on reduced-precision weights
-and training cannot.)</p>
-<p>Why bother serving a 27B model yourself when Bedrock is a call away?
-Because an open-weight model of this size is now close to the frontier
-on the kinds of tasks research code runs, and it runs on one GPU, on
-data that never leaves your account.</p>
+<p>The generator is <strong>Qwen3-8B</strong>, an 8-billion-parameter
+open-weight model (Apache 2.0). Bedrock serves the 32B and 235B members
+of that family but not this size, which is the usual situation: the size
+you want is the one missing. Inference needs no gradients, so the
+weights are the memory cost: 8B parameters at two bytes each in bf16 is
+about 16 GB, which fits the 24 GB GPU of an <code>ml.g5.xlarge</code>
+with room for the KV cache. (The fine-tuning episode has the full memory
+arithmetic; the short version is that inference needs only the weights
+and training needs eight times more per parameter.)</p>
+<p>Why bother serving a model yourself when Bedrock is a call away?
+Because open-weight models that fit one GPU are now close to the
+frontier on the kinds of tasks research code runs, on data that never
+leaves your account. The newest of this family, Qwen3.8-27B, runs on a
+single 48 GB GPU in 8-bit weights and lands within a few points of a
+frontier commercial model:</p>
 <figure><img src="../fig/qwen27b-vs-opus.png" alt="Paired horizontal bars comparing a 27B open-weight model on one GPU with a frontier commercial model; within a few points on agent tasks and science questions, ahead on chart reasoning" class="figure mx-auto d-block"><div class="figcaption">Qwen3.8-27B against Claude Opus 4.8 on three
 benchmarks: 73.0 vs 74.6 on Terminal-Bench 2.1, 89.2 vs 93.6 on GPQA
 Diamond, 83.7 vs 80.5 on CharXiv reasoning</div>
 </figure><p>Qwen figures are from the Qwen3.8-27B model card and were not
-reproduced here; Opus 4.8 figures are from its published
-evaluations.</p>
+reproduced here; Opus 4.8 figures are from its published evaluations.
+This episode runs the 8B model on the cheaper GPU because that is what
+the class account’s quota allows; the callout below says what changes
+for the 27B.</p>
 <div id="what-this-episode-costs" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -560,26 +563,35 @@ evaluations.</p>
 <td>~8 min incl. startup</td>
 <td>~<code>$0.20</code>
 </td>
-</tr><tr><td>RAG over the training questions with Qwen3.8-27B</td>
+</tr><tr><td>RAG over the training questions with Qwen3-8B</td>
 <td>
-<code>ml.g6e.xlarge</code> (L40S, 48 GB)</td>
-<td><code>$2.61</code></td>
-<td>~30 min: 5 startup, ~5 installing vLLM, ~5 downloading 27 GB of
+<code>ml.g5.xlarge</code> (A10G, 24 GB)</td>
+<td><code>$1.41</code></td>
+<td>~20 min: 5 startup, ~5 installing vLLM, ~3 downloading 16 GB of
 weights, the rest generating</td>
-<td>~<code>$1.30</code>
+<td>~<code>$0.50</code>
 </td>
 </tr><tr><td>Controller notebook</td>
 <td><code>ml.t3.medium</code></td>
 <td><code>$0.05</code></td>
 <td>2 h</td>
 <td><code>$0.10</code></td>
-</tr></tbody></table><p>About <code>$1.60</code> for the episode, and the GPUs are off the
+</tr></tbody></table><p>About <code>$0.80</code> for the episode, and the GPUs are off the
 moment each script ends. Both jobs carry
 <code>max_runtime_in_seconds</code>, so a hung job costs at most the
 cap. Compare the same pipeline on a GPU notebook instance (the optional
-GPU-notebook episode at the end of the lesson): the hardware is the
-same, but the meter runs until someone stops it, and a forgotten
-<code>ml.g6e.xlarge</code> is <code>$63</code> a day.</p>
+GPU-notebook episode at the end of the lesson): the meter runs until
+someone stops it, and a forgotten <code>ml.g5.xlarge</code> is
+<code>$34</code> a day.</p>
+<p><strong>The 27B version.</strong> Swap
+<code>generation_model_id</code> to <code>Qwen/Qwen3.8-27B-FP8</code>
+and <code>instance_type</code> to <code>ml.g6e.xlarge</code> (one L40S,
+48 GB, <code>$2.61</code>/h): the FP8 weights are 27 GB, the job takes
+about 30 minutes and costs about <code>$1.30</code>, and nothing else
+changes. It needs the
+<code>ml.g6e.xlarge for processing job usage</code> quota, whose default
+is zero and whose increase takes days; the class account did not have it
+when this was written.</p>
 <p>The trade-off is latency. A job takes minutes to start, so this
 pattern is for batch questions, not a chatbot. For interactive use,
 Bedrock answers in seconds; for interactive use of a model Bedrock does
@@ -592,8 +604,8 @@ remember to turn off.</p>
 <ul><li>Reuse the chunks cached in your bucket by the Bedrock episode and
 the inputs in the shared bucket.</li>
 <li>Run two short-lived GPU Processing jobs: one computes embeddings for
-all chunks; the second serves Qwen3.8-27B with vLLM and runs the full
-RAG loop (retrieval + generation) over all training questions.</li>
+all chunks; the second serves Qwen3-8B with vLLM and runs the full RAG
+loop (retrieval + generation) over all training questions.</li>
 <li>Score the result and compare it with the Bedrock run.</li>
 </ul><section><h2 class="section-heading" id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a></h2>
 <hr class="half-width"><div class="section level3">
@@ -638,8 +650,8 @@ notebook for the scoring step at the end.</p>
 <span id="cb1-7"><a href="#cb1-7" tabindex="-1" aria-label="code-block-1-7"></a><span class="op">!</span>cp <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>embedding_inference.py <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>hf_embedder.py code_embed<span class="op">/</span></span>
 <span id="cb1-8"><a href="#cb1-8" tabindex="-1" aria-label="code-block-1-8"></a><span class="co"># The RAG job's script plus the shared module it imports (the container cannot see this notebook)</span></span>
 <span id="cb1-9"><a href="#cb1-9" tabindex="-1" aria-label="code-block-1-9"></a><span class="op">!</span>cp <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>wattbot_rag_batch.py <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>wattbot_rag.py <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>hf_embedder.py code_rag<span class="op">/</span></span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1" aria-label="code-block-1-10"></a><span class="co"># The notebook's own copy, for scoring at the end</span></span>
-<span id="cb1-11"><a href="#cb1-11" tabindex="-1" aria-label="code-block-1-11"></a><span class="op">!</span>cp <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>wattbot_rag.py .</span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1" aria-label="code-block-1-10"></a><span class="co"># The notebook's own copies, for scoring at the end: the pipeline module and the competition's metric file</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1" aria-label="code-block-1-11"></a><span class="op">!</span>cp <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>wattbot_rag.py <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>Score.py .</span>
 <span id="cb1-12"><a href="#cb1-12" tabindex="-1" aria-label="code-block-1-12"></a><span class="op">!</span>ls code_embed code_rag</span></code></pre>
 </div>
 <p>Next, set up the AWS SDK, SageMaker session, and bucket names.</p>
@@ -762,7 +774,7 @@ the job dies on that import before it reaches the model.</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="co"># A requirements.txt next to the script is pip-installed in the container before the script runs; only the RAG job has one</span></span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">"code_rag/requirements.txt"</span>, <span class="st">"w"</span>) <span class="im">as</span> f:</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a>    f.write(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span>.join([<span class="st">"vllm&gt;=0.17"</span>, <span class="st">"peft&gt;=0.18"</span>]) <span class="op">+</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span>)   <span class="co"># vLLM 0.17+ for Qwen3.8; peft upgraded to match the transformers vLLM installs</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a>    f.write(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span>.join([<span class="st">"vllm&gt;=0.17"</span>, <span class="st">"peft&gt;=0.18"</span>]) <span class="op">+</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span>)   <span class="co"># vLLM for the generator; peft upgraded to match the transformers vLLM installs</span></span>
 <span id="cb5-4"><a href="#cb5-4" tabindex="-1" aria-label="code-block-5-4"></a></span>
 <span id="cb5-5"><a href="#cb5-5" tabindex="-1" aria-label="code-block-5-5"></a><span class="bu">print</span>(<span class="st">"code_embed:"</span>, os.listdir(<span class="st">"code_embed"</span>))</span>
 <span id="cb5-6"><a href="#cb5-6" tabindex="-1" aria-label="code-block-5-6"></a><span class="bu">print</span>(<span class="st">"code_rag:  "</span>, os.listdir(<span class="st">"code_rag"</span>))</span></code></pre>
@@ -940,9 +952,9 @@ end</li>
 <code>embed_query</code> wraps the same <code>gte-large</code> model and
 pooling the embedding job used (<code>hf_embedder.py</code>) (the
 question has to be embedded with the same model as the chunks), and
-<code>generate</code> wraps a vLLM engine serving Qwen3.8-27B with
-thinking mode off. The job writes <code>wattbot_solutions.csv</code> in
-the WattBot submission format.</p>
+<code>generate</code> wraps a vLLM engine serving the generator
+(Qwen3-8B here) with thinking mode off. The job writes
+<code>wattbot_solutions.csv</code> in the WattBot submission format.</p>
 <div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -953,10 +965,16 @@ the WattBot submission format.</p>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a><span class="bu">print</span>(<span class="st">"train_QA:  "</span>, train_qa_s3)</span>
 <span id="cb9-6"><a href="#cb9-6" tabindex="-1" aria-label="code-block-9-6"></a><span class="bu">print</span>(<span class="st">"metadata:  "</span>, metadata_s3)</span></code></pre>
 </div>
+<p>If the launch below fails at once with
+<code>ResourceLimitExceeded</code> naming an instance type, nothing in
+the notebook is wrong: the account’s quota for that type is too low, and
+the increase is requested in <a href="https://us-east-2.console.aws.amazon.com/servicequotas/home/services/sagemaker/quotas" class="external-link">Service
+Quotas</a> (days, for GPU types). On your own account, request
+<code>ml.g5.xlarge for processing job usage</code> before you start.</p>
 <p>Two settings on this processor matter more than on the embedding job.
 <code>volume_size_in_gb=60</code> attaches a 60 GB volume to the
 instance, mounted under <code>/opt/ml/processing</code>; the container’s
-own root disk is small, so the 27 GB of model weights (and vLLM’s
+own root disk is small, so the 16 GB of model weights (and vLLM’s
 install) must not land there. <code>env={"HF_HOME": ...}</code> points
 Hugging Face’s download cache at that volume, which is where the weights
 go.</p>
@@ -966,15 +984,15 @@ go.</p>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a>rag_output_prefix <span class="op">=</span> <span class="st">"wattbot/solutions"</span></span>
 <span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a>rag_output_path <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>rag_output_prefix<span class="sc">}</span><span class="ss">/"</span></span>
 <span id="cb10-3"><a href="#cb10-3" tabindex="-1" aria-label="code-block-10-3"></a></span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1" aria-label="code-block-10-4"></a>generation_model_id <span class="op">=</span> <span class="st">"Qwen/Qwen3.8-27B-FP8"</span>   <span class="co"># open-weight, not on Bedrock; ~27 GB in FP8</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1" aria-label="code-block-10-4"></a>generation_model_id <span class="op">=</span> <span class="st">"Qwen/Qwen3-8B"</span>   <span class="co"># open-weight; Bedrock has the 32B and 235B, not this size. ~16 GB in bf16</span></span>
 <span id="cb10-5"><a href="#cb10-5" tabindex="-1" aria-label="code-block-10-5"></a></span>
 <span id="cb10-6"><a href="#cb10-6" tabindex="-1" aria-label="code-block-10-6"></a>rag_processor <span class="op">=</span> HuggingFaceProcessor(</span>
 <span id="cb10-7"><a href="#cb10-7" tabindex="-1" aria-label="code-block-10-7"></a>    base_job_name<span class="op">=</span><span class="st">"WattBot-rag-batch"</span>,</span>
 <span id="cb10-8"><a href="#cb10-8" tabindex="-1" aria-label="code-block-10-8"></a>    role<span class="op">=</span>role,</span>
 <span id="cb10-9"><a href="#cb10-9" tabindex="-1" aria-label="code-block-10-9"></a>    tags<span class="op">=</span>make_job_tags(<span class="st">"Inference"</span>),   <span class="co"># separate job, separate tags</span></span>
-<span id="cb10-10"><a href="#cb10-10" tabindex="-1" aria-label="code-block-10-10"></a>    instance_type<span class="op">=</span><span class="st">"ml.g6e.xlarge"</span>,     <span class="co"># 1 x L40S, 48 GB: holds the FP8 27B model plus KV cache</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1" aria-label="code-block-10-10"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>,      <span class="co"># 1 x A10G, 24 GB: holds the bf16 8B model plus KV cache</span></span>
 <span id="cb10-11"><a href="#cb10-11" tabindex="-1" aria-label="code-block-10-11"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb10-12"><a href="#cb10-12" tabindex="-1" aria-label="code-block-10-12"></a>    volume_size_in_gb<span class="op">=</span><span class="dv">60</span>,              <span class="co"># 27 GB of weights + vLLM install; mounted at /opt/ml/processing</span></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1" aria-label="code-block-10-12"></a>    volume_size_in_gb<span class="op">=</span><span class="dv">60</span>,              <span class="co"># 16 GB of weights + vLLM install; mounted at /opt/ml/processing</span></span>
 <span id="cb10-13"><a href="#cb10-13" tabindex="-1" aria-label="code-block-10-13"></a>    env<span class="op">=</span>{<span class="st">"HF_HOME"</span>: <span class="st">"/opt/ml/processing/hf_cache"</span>},   <span class="co"># put the weight download on that volume</span></span>
 <span id="cb10-14"><a href="#cb10-14" tabindex="-1" aria-label="code-block-10-14"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,</span>
 <span id="cb10-15"><a href="#cb10-15" tabindex="-1" aria-label="code-block-10-15"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
@@ -1026,8 +1044,8 @@ go.</p>
 </div>
 <p>While it runs, open the job’s CloudWatch log from the console page
 above. You will see, in order: pip installing vLLM, the weight download
-(27 GB in shards), vLLM loading the model and reporting how much GPU
-memory it reserved, then one line per question. The whole job is the 30
+(16 GB in shards), vLLM loading the model and reporting how much GPU
+memory it reserved, then one line per question. The whole job is the 20
 minutes in the cost callout; the generation is the last third of it.</p>
 </section><section><h2 class="section-heading" id="step-4-download-predictions-and-evaluate">Step 4 – Download predictions and evaluate<a class="anchor" aria-label="anchor" href="#step-4-download-predictions-and-evaluate"></a></h2>
 <hr class="half-width"><p>Finally, we download <code>wattbot_solutions.csv</code> from S3,
@@ -1044,8 +1062,9 @@ inspect a few rows, and compute the WattBot score against
 <span id="cb11-5"><a href="#cb11-5" tabindex="-1" aria-label="code-block-11-5"></a>solutions_df <span class="op">=</span> pd.read_csv(local_solutions_path)</span>
 <span id="cb11-6"><a href="#cb11-6" tabindex="-1" aria-label="code-block-11-6"></a>solutions_df.head()</span></code></pre>
 </div>
-<p>Score the predictions with the competition’s own metric, the same
-function the Bedrock episode used, so the two runs compare directly.</p>
+<p>Score the predictions with the competition’s own
+<code>Score.py</code>, through the same wrapper the Bedrock episode
+used, so the two runs compare directly.</p>
 <div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1054,15 +1073,15 @@ function the Bedrock episode used, so the two runs compare directly.</p>
 <span id="cb12-3"><a href="#cb12-3" tabindex="-1" aria-label="code-block-12-3"></a>results_df <span class="op">=</span> compute_wattbot_score(</span>
 <span id="cb12-4"><a href="#cb12-4" tabindex="-1" aria-label="code-block-12-4"></a>    train_qa_path<span class="op">=</span>train_qa_path,</span>
 <span id="cb12-5"><a href="#cb12-5" tabindex="-1" aria-label="code-block-12-5"></a>    preds_path<span class="op">=</span>local_solutions_path,</span>
-<span id="cb12-6"><a href="#cb12-6" tabindex="-1" aria-label="code-block-12-6"></a>    gt_is_na_col<span class="op">=</span><span class="st">"is_blank"</span>,</span>
-<span id="cb12-7"><a href="#cb12-7" tabindex="-1" aria-label="code-block-12-7"></a>    pred_is_na_col<span class="op">=</span><span class="st">"is_blank"</span>,</span>
-<span id="cb12-8"><a href="#cb12-8" tabindex="-1" aria-label="code-block-12-8"></a>    n_examples<span class="op">=</span><span class="dv">10</span>,</span>
-<span id="cb12-9"><a href="#cb12-9" tabindex="-1" aria-label="code-block-12-9"></a>)</span></code></pre>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1" aria-label="code-block-12-6"></a>    n_examples<span class="op">=</span><span class="dv">10</span>,</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1" aria-label="code-block-12-7"></a>)</span></code></pre>
 </div>
 <p>Compare the overall score with the Bedrock run. The retrieval logic,
 prompts and scoring are identical, so any difference is the two models:
-<code>gte-large</code> versus Titan for retrieval, Qwen3.8-27B versus
-DeepSeek V3 for generation.</p>
+<code>gte-large</code> versus Titan for retrieval, Qwen3-8B versus
+DeepSeek V3 for generation. An 8B model against a 671B one is not a fair
+fight, and the gap is the price of a model you host yourself on one
+small GPU.</p>
 <div id="what-did-the-two-jobs-cost" class="callout challenge">
 <div class="callout-square">
 <i class="callout-icon" data-feather="zap"></i>
@@ -1079,12 +1098,12 @@ returns <code>CreationTime</code>, <code>ProcessingStartTime</code> and
 <code>rag_processor.latest_job.job_name</code>. For each job, compute
 the minutes between creation and start (provisioning, before the
 instance is billed) and between start and end (the billed window), and
-price the billed window at <code>$1.41</code>/h for the
-<code>ml.g5.xlarge</code> and <code>$2.61</code>/h for the
-<code>ml.g6e.xlarge</code>. Then, from the RAG job’s CloudWatch log
-timestamps, estimate how much of its billed window was setup (pip
-install and weight download) and how much was generation. How does the
-total compare with the cost callout, and with the Bedrock run?</p>
+price the billed window at <code>$1.41</code>/h, the
+<code>ml.g5.xlarge</code> rate both jobs used. Then, from the RAG job’s
+CloudWatch log timestamps, estimate how much of its billed window was
+setup (pip install and weight download) and how much was generation. How
+does the total compare with the cost callout, and with the Bedrock
+run?</p>
 </div>
 </div>
 </div>
@@ -1093,7 +1112,7 @@ total compare with the cost callout, and with the Bedrock run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -1116,22 +1135,22 @@ the billed run.</p>
 <span id="cb13-13"><a href="#cb13-13" tabindex="-1" aria-label="code-block-13-13"></a>    <span class="cf">return</span> cost</span>
 <span id="cb13-14"><a href="#cb13-14" tabindex="-1" aria-label="code-block-13-14"></a></span>
 <span id="cb13-15"><a href="#cb13-15" tabindex="-1" aria-label="code-block-13-15"></a>total <span class="op">=</span> job_cost(embedding_processor.latest_job.job_name, <span class="fl">1.41</span>)</span>
-<span id="cb13-16"><a href="#cb13-16" tabindex="-1" aria-label="code-block-13-16"></a>total <span class="op">+=</span> job_cost(rag_processor.latest_job.job_name, <span class="fl">2.61</span>)</span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1" aria-label="code-block-13-16"></a>total <span class="op">+=</span> job_cost(rag_processor.latest_job.job_name, <span class="fl">1.41</span>)</span>
 <span id="cb13-17"><a href="#cb13-17" tabindex="-1" aria-label="code-block-13-17"></a><span class="bu">print</span>(<span class="ss">f"GPU total for the episode: $</span><span class="sc">{</span>total<span class="sc">:.2f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<p>Typical numbers: the embedding job bills 5-6 minutes (about
-<code>$0.13</code>), the RAG job 22-28 minutes (about
-<code>$1.00</code>-<code>$1.20</code>), so roughly
-<code>$1.20</code>-<code>$1.40</code> of GPU time against the callout’s
-<code>$1.50</code>. In the RAG job’s log, the first 10-12 minutes of the
+<p>Expect the embedding job to bill 5-6 minutes (about
+<code>$0.13</code>) and the RAG job 15-20 minutes (about
+<code>$0.35</code>-<code>$0.50</code>), so roughly
+<code>$0.50</code>-<code>$0.65</code> of GPU time against the callout’s
+<code>$0.70</code>. In the RAG job’s log, the first 8-10 minutes of the
 billed window are pip and the download; the model loads for another
-minute or two; the remaining ~10 minutes are the questions, about 15
-seconds each for two generation calls. So well over half of what you
-paid for was setup, which is the argument for a custom container (skip
-the pip) and for keeping an <code>HF_HOME</code> cache on S3 (skip the
-download) once a job is run routinely. The Bedrock run of the same
-questions cost cents, and the self-hosted route is only justified here
-because the model is not in the catalog.</p>
+minute; the remaining minutes are the questions, two generation calls
+each. So well over half of what you paid for was setup, which is the
+argument for a custom container (skip the pip) and for keeping an
+<code>HF_HOME</code> cache on S3 (skip the download) once a job is run
+routinely. The Bedrock run of the same questions cost cents, and the
+self-hosted route is only justified here because the model is not in the
+catalog.</p>
 </div>
 </div>
 </div>
@@ -1159,7 +1178,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still installing
@@ -1167,17 +1186,15 @@ vLLM or downloading the weights. The status becomes <code>Stopped</code>
 (the failure reason reads <code>MaxRuntimeExceeded</code>), the output
 prefix is empty because the script never reached the point of writing
 <code>wattbot_solutions.csv</code>, and the bill is the full 600
-seconds: 600 / 3600 × <code>$2.61</code> ≈ <code>$0.44</code> for
+seconds: 600 / 3600 × <code>$1.41</code> ≈ <code>$0.24</code> for
 nothing. A cap has to leave room for the setup that precedes the work,
-which is why ours is four times the 30-minute estimate rather than ten
+which is why ours is six times the 20-minute estimate rather than ten
 percent over it.</p>
 <p>Under the caps we set, the worst case for a job that hangs (a stuck
 download, a model that never finishes loading) is 2 h ×
-<code>$1.41</code> = <strong><code>$2.82</code></strong> for the
-embedding job and 2 h × <code>$2.61</code> =
-<strong><code>$5.22</code></strong> for the RAG job. A
-<code>ml.g6e.xlarge</code> notebook instance forgotten over a weekend is
-64 h × <code>$2.61</code> = <strong><code>$167</code></strong>, and
+<code>$1.41</code> = <strong><code>$2.82</code></strong> for either job.
+An <code>ml.g5.xlarge</code> notebook instance forgotten over a weekend
+is 64 h × <code>$1.41</code> = <strong><code>$90</code></strong>, and
 nothing caps it. That is the difference between a job and an instance:
 the job’s worst case is a number you chose before you launched it.</p>
 </div>
@@ -1197,8 +1214,9 @@ specific open-weight model you rent a GPU and serve it yourself.</li>
 be forgotten: it bills while the script runs and ends on its own, with
 <code>max_runtime_in_seconds</code> as the backstop. Use it for batch
 work; use Bedrock or an endpoint when you need answers in seconds.</li>
-<li>Inference runs on reduced-precision weights: Qwen3.8-27B in FP8 is
-~27 GB and fits one 48 GB GPU; bf16 would need two.</li>
+<li>Inference needs only the weights: Qwen3-8B in bf16 is ~16 GB and
+fits one 24 GB GPU; the 27B model in FP8 is ~27 GB and needs a 48 GB
+one.</li>
 <li>A job’s inputs and outputs are S3 prefixes mounted into the
 container; the notebook only stages files and reads results, so it stays
 a cheap CPU instance.</li>

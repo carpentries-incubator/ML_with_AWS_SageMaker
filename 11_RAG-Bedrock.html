@@ -811,7 +811,7 @@ jobs).</p>
 <div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="op">!</span>cp <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>wattbot_rag.py .</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="op">!</span>cp <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>wattbot_rag.py <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>Score.py .</span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -1424,51 +1424,74 @@ when we embed one question at a time.</p>
 <span id="cb22-18"><a href="#cb22-18" tabindex="-1" aria-label="code-block-22-18"></a>    <span class="cf">return</span> np.asarray(bedrock_embed_text(question), dtype<span class="op">=</span><span class="st">"float32"</span>)</span></code></pre>
 </div>
 <p>Embedding 3,000 chunks is a few minutes and a few cents, so do not do
-it twice. The cell below looks for the finished matrix locally, then in
-your bucket, and only then computes it, saving progress every 500 chunks
-so an interrupted run picks up where it stopped. One small helper asks
-S3 whether an object exists.</p>
+it twice. The cell after next looks for the finished matrix locally,
+then in your bucket, and only then computes it, saving progress every
+500 chunks so an interrupted run picks up where it stopped.</p>
+<div id="in-a-class-use-the-instructors-copy" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<span class="callout-header">Callout</span>
+<div id="in-a-class-use-the-instructors-copy" class="callout-inner">
+<h3 class="callout-title">In a class, use the instructor’s copy</h3>
+<div class="callout-content">
+<p>Bedrock allows this account 300,000 Titan embedding tokens per
+minute, and the quota is not adjustable. One notebook embedding this
+corpus uses almost all of it; a room of them shares it, so everyone’s
+loop slows to a crawl of retries. In class, uncomment and run the cell
+below first: it downloads the matrix your instructor computed with the
+same chunks and the same model, and the cell after it finds the file and
+skips the calls. Working on your own, leave it commented and let the
+loop run; that is the step to practise.</p>
+</div>
+</div>
+</div>
 <div class="codewrapper sourceCode" id="cb23">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" tabindex="-1" aria-label="code-block-23-1"></a><span class="kw">def</span> _s3_object_exists(bucket: <span class="bu">str</span>, key: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
-<span id="cb23-2"><a href="#cb23-2" tabindex="-1" aria-label="code-block-23-2"></a>    <span class="cf">try</span>:</span>
-<span id="cb23-3"><a href="#cb23-3" tabindex="-1" aria-label="code-block-23-3"></a>        s3.head_object(Bucket<span class="op">=</span>bucket, Key<span class="op">=</span>key)</span>
-<span id="cb23-4"><a href="#cb23-4" tabindex="-1" aria-label="code-block-23-4"></a>        <span class="cf">return</span> <span class="va">True</span></span>
-<span id="cb23-5"><a href="#cb23-5" tabindex="-1" aria-label="code-block-23-5"></a>    <span class="cf">except</span> ClientError:</span>
-<span id="cb23-6"><a href="#cb23-6" tabindex="-1" aria-label="code-block-23-6"></a>        <span class="cf">return</span> <span class="va">False</span></span>
-<span id="cb23-7"><a href="#cb23-7" tabindex="-1" aria-label="code-block-23-7"></a></span>
-<span id="cb23-8"><a href="#cb23-8" tabindex="-1" aria-label="code-block-23-8"></a></span>
-<span id="cb23-9"><a href="#cb23-9" tabindex="-1" aria-label="code-block-23-9"></a><span class="co"># Cache order: local .npy, then your bucket, then recompute (and upload for next time)</span></span>
-<span id="cb23-10"><a href="#cb23-10" tabindex="-1" aria-label="code-block-23-10"></a><span class="cf">if</span> emb_save_path.exists():</span>
-<span id="cb23-11"><a href="#cb23-11" tabindex="-1" aria-label="code-block-23-11"></a>    <span class="bu">print</span>(<span class="ss">f"Found existing embeddings at </span><span class="sc">{</span>emb_save_path<span class="sc">}</span><span class="ss">. Skipping re-computation."</span>)</span>
-<span id="cb23-12"><a href="#cb23-12" tabindex="-1" aria-label="code-block-23-12"></a>    chunk_embeddings <span class="op">=</span> np.load(emb_save_path)</span>
-<span id="cb23-13"><a href="#cb23-13" tabindex="-1" aria-label="code-block-23-13"></a><span class="cf">elif</span> _s3_object_exists(bucket_name, embeddings_key):</span>
-<span id="cb23-14"><a href="#cb23-14" tabindex="-1" aria-label="code-block-23-14"></a>    s3.download_file(bucket_name, embeddings_key, <span class="bu">str</span>(emb_save_path))</span>
-<span id="cb23-15"><a href="#cb23-15" tabindex="-1" aria-label="code-block-23-15"></a>    <span class="bu">print</span>(<span class="ss">f"Downloaded cached embeddings from s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>embeddings_key<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb23-16"><a href="#cb23-16" tabindex="-1" aria-label="code-block-23-16"></a>    chunk_embeddings <span class="op">=</span> np.load(emb_save_path)</span>
-<span id="cb23-17"><a href="#cb23-17" tabindex="-1" aria-label="code-block-23-17"></a><span class="cf">else</span>:</span>
-<span id="cb23-18"><a href="#cb23-18" tabindex="-1" aria-label="code-block-23-18"></a>    <span class="co"># Resume from a partial save if a previous run was interrupted</span></span>
-<span id="cb23-19"><a href="#cb23-19" tabindex="-1" aria-label="code-block-23-19"></a>    all_embeddings <span class="op">=</span> <span class="bu">list</span>(np.load(emb_partial_path)) <span class="cf">if</span> emb_partial_path.exists() <span class="cf">else</span> []</span>
-<span id="cb23-20"><a href="#cb23-20" tabindex="-1" aria-label="code-block-23-20"></a>    start <span class="op">=</span> <span class="bu">len</span>(all_embeddings)</span>
-<span id="cb23-21"><a href="#cb23-21" tabindex="-1" aria-label="code-block-23-21"></a>    <span class="bu">print</span>(<span class="ss">f"Computing embeddings via Bedrock from chunk </span><span class="sc">{</span>start<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss">..."</span>)</span>
-<span id="cb23-22"><a href="#cb23-22" tabindex="-1" aria-label="code-block-23-22"></a>    t0 <span class="op">=</span> time.time()</span>
-<span id="cb23-23"><a href="#cb23-23" tabindex="-1" aria-label="code-block-23-23"></a></span>
-<span id="cb23-24"><a href="#cb23-24" tabindex="-1" aria-label="code-block-23-24"></a>    <span class="cf">for</span> idx <span class="kw">in</span> <span class="bu">range</span>(start, <span class="bu">len</span>(chunked_docs)):</span>
-<span id="cb23-25"><a href="#cb23-25" tabindex="-1" aria-label="code-block-23-25"></a>        all_embeddings.append(bedrock_embed_text(chunked_docs[idx][<span class="st">"text"</span>]))</span>
-<span id="cb23-26"><a href="#cb23-26" tabindex="-1" aria-label="code-block-23-26"></a>        <span class="cf">if</span> (idx <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> <span class="dv">500</span> <span class="op">==</span> <span class="dv">0</span> <span class="kw">or</span> idx <span class="op">+</span> <span class="dv">1</span> <span class="op">==</span> <span class="bu">len</span>(chunked_docs):</span>
-<span id="cb23-27"><a href="#cb23-27" tabindex="-1" aria-label="code-block-23-27"></a>            np.save(emb_partial_path, np.array(all_embeddings, dtype<span class="op">=</span><span class="st">"float32"</span>))</span>
-<span id="cb23-28"><a href="#cb23-28" tabindex="-1" aria-label="code-block-23-28"></a>            <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span>idx <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss"> / </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss"> chunks (progress saved)"</span>)</span>
-<span id="cb23-29"><a href="#cb23-29" tabindex="-1" aria-label="code-block-23-29"></a></span>
-<span id="cb23-30"><a href="#cb23-30" tabindex="-1" aria-label="code-block-23-30"></a>    <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs) <span class="op">-</span> start<span class="sc">}</span><span class="ss"> chunks in </span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.1f}</span><span class="ss"> seconds"</span>)</span>
-<span id="cb23-31"><a href="#cb23-31" tabindex="-1" aria-label="code-block-23-31"></a>    chunk_embeddings <span class="op">=</span> np.array(all_embeddings, dtype<span class="op">=</span><span class="st">"float32"</span>)   <span class="co"># the embedding matrix: one row per chunk, one column per dimension</span></span>
-<span id="cb23-32"><a href="#cb23-32" tabindex="-1" aria-label="code-block-23-32"></a>    np.save(emb_save_path, chunk_embeddings)</span>
-<span id="cb23-33"><a href="#cb23-33" tabindex="-1" aria-label="code-block-23-33"></a>    emb_partial_path.unlink(missing_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb23-34"><a href="#cb23-34" tabindex="-1" aria-label="code-block-23-34"></a>    s3.upload_file(<span class="bu">str</span>(emb_save_path), bucket_name, embeddings_key)</span>
-<span id="cb23-35"><a href="#cb23-35" tabindex="-1" aria-label="code-block-23-35"></a>    <span class="bu">print</span>(<span class="ss">f"Saved embeddings to </span><span class="sc">{</span>emb_save_path<span class="sc">}</span><span class="ss"> and s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>embeddings_key<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb23-36"><a href="#cb23-36" tabindex="-1" aria-label="code-block-23-36"></a></span>
-<span id="cb23-37"><a href="#cb23-37" tabindex="-1" aria-label="code-block-23-37"></a><span class="cf">assert</span> chunk_embeddings.shape[<span class="dv">0</span>] <span class="op">==</span> <span class="bu">len</span>(chunked_docs), <span class="st">"embeddings and chunks are out of step; delete the cached files and rerun"</span></span>
-<span id="cb23-38"><a href="#cb23-38" tabindex="-1" aria-label="code-block-23-38"></a><span class="bu">print</span>(<span class="st">"Embeddings shape:"</span>, chunk_embeddings.shape)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" tabindex="-1" aria-label="code-block-23-1"></a><span class="co"># In class only: the instructor's copy of the embeddings, same chunks, same model. Uncomment the next line, run, then run the cell below.</span></span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1" aria-label="code-block-23-2"></a><span class="co"># s3.download_file(shared_bucket, "wattbot/embeddings_bedrock.npy", str(emb_save_path))</span></span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1" aria-label="code-block-23-3"></a>``` One small helper asks S3 whether an <span class="bu">object</span> exists.</span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1" aria-label="code-block-23-4"></a></span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1" aria-label="code-block-23-5"></a>```python</span>
+<span id="cb23-6"><a href="#cb23-6" tabindex="-1" aria-label="code-block-23-6"></a><span class="kw">def</span> _s3_object_exists(bucket: <span class="bu">str</span>, key: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb23-7"><a href="#cb23-7" tabindex="-1" aria-label="code-block-23-7"></a>    <span class="cf">try</span>:</span>
+<span id="cb23-8"><a href="#cb23-8" tabindex="-1" aria-label="code-block-23-8"></a>        s3.head_object(Bucket<span class="op">=</span>bucket, Key<span class="op">=</span>key)</span>
+<span id="cb23-9"><a href="#cb23-9" tabindex="-1" aria-label="code-block-23-9"></a>        <span class="cf">return</span> <span class="va">True</span></span>
+<span id="cb23-10"><a href="#cb23-10" tabindex="-1" aria-label="code-block-23-10"></a>    <span class="cf">except</span> ClientError:</span>
+<span id="cb23-11"><a href="#cb23-11" tabindex="-1" aria-label="code-block-23-11"></a>        <span class="cf">return</span> <span class="va">False</span></span>
+<span id="cb23-12"><a href="#cb23-12" tabindex="-1" aria-label="code-block-23-12"></a></span>
+<span id="cb23-13"><a href="#cb23-13" tabindex="-1" aria-label="code-block-23-13"></a></span>
+<span id="cb23-14"><a href="#cb23-14" tabindex="-1" aria-label="code-block-23-14"></a><span class="co"># Cache order: local .npy, then your bucket, then recompute (and upload for next time)</span></span>
+<span id="cb23-15"><a href="#cb23-15" tabindex="-1" aria-label="code-block-23-15"></a><span class="cf">if</span> emb_save_path.exists():</span>
+<span id="cb23-16"><a href="#cb23-16" tabindex="-1" aria-label="code-block-23-16"></a>    <span class="bu">print</span>(<span class="ss">f"Found existing embeddings at </span><span class="sc">{</span>emb_save_path<span class="sc">}</span><span class="ss">. Skipping re-computation."</span>)</span>
+<span id="cb23-17"><a href="#cb23-17" tabindex="-1" aria-label="code-block-23-17"></a>    chunk_embeddings <span class="op">=</span> np.load(emb_save_path)</span>
+<span id="cb23-18"><a href="#cb23-18" tabindex="-1" aria-label="code-block-23-18"></a><span class="cf">elif</span> _s3_object_exists(bucket_name, embeddings_key):</span>
+<span id="cb23-19"><a href="#cb23-19" tabindex="-1" aria-label="code-block-23-19"></a>    s3.download_file(bucket_name, embeddings_key, <span class="bu">str</span>(emb_save_path))</span>
+<span id="cb23-20"><a href="#cb23-20" tabindex="-1" aria-label="code-block-23-20"></a>    <span class="bu">print</span>(<span class="ss">f"Downloaded cached embeddings from s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>embeddings_key<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb23-21"><a href="#cb23-21" tabindex="-1" aria-label="code-block-23-21"></a>    chunk_embeddings <span class="op">=</span> np.load(emb_save_path)</span>
+<span id="cb23-22"><a href="#cb23-22" tabindex="-1" aria-label="code-block-23-22"></a><span class="cf">else</span>:</span>
+<span id="cb23-23"><a href="#cb23-23" tabindex="-1" aria-label="code-block-23-23"></a>    <span class="co"># Resume from a partial save if a previous run was interrupted</span></span>
+<span id="cb23-24"><a href="#cb23-24" tabindex="-1" aria-label="code-block-23-24"></a>    all_embeddings <span class="op">=</span> <span class="bu">list</span>(np.load(emb_partial_path)) <span class="cf">if</span> emb_partial_path.exists() <span class="cf">else</span> []</span>
+<span id="cb23-25"><a href="#cb23-25" tabindex="-1" aria-label="code-block-23-25"></a>    start <span class="op">=</span> <span class="bu">len</span>(all_embeddings)</span>
+<span id="cb23-26"><a href="#cb23-26" tabindex="-1" aria-label="code-block-23-26"></a>    <span class="bu">print</span>(<span class="ss">f"Computing embeddings via Bedrock from chunk </span><span class="sc">{</span>start<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss">..."</span>)</span>
+<span id="cb23-27"><a href="#cb23-27" tabindex="-1" aria-label="code-block-23-27"></a>    t0 <span class="op">=</span> time.time()</span>
+<span id="cb23-28"><a href="#cb23-28" tabindex="-1" aria-label="code-block-23-28"></a></span>
+<span id="cb23-29"><a href="#cb23-29" tabindex="-1" aria-label="code-block-23-29"></a>    <span class="cf">for</span> idx <span class="kw">in</span> <span class="bu">range</span>(start, <span class="bu">len</span>(chunked_docs)):</span>
+<span id="cb23-30"><a href="#cb23-30" tabindex="-1" aria-label="code-block-23-30"></a>        all_embeddings.append(bedrock_embed_text(chunked_docs[idx][<span class="st">"text"</span>]))</span>
+<span id="cb23-31"><a href="#cb23-31" tabindex="-1" aria-label="code-block-23-31"></a>        <span class="cf">if</span> (idx <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> <span class="dv">500</span> <span class="op">==</span> <span class="dv">0</span> <span class="kw">or</span> idx <span class="op">+</span> <span class="dv">1</span> <span class="op">==</span> <span class="bu">len</span>(chunked_docs):</span>
+<span id="cb23-32"><a href="#cb23-32" tabindex="-1" aria-label="code-block-23-32"></a>            np.save(emb_partial_path, np.array(all_embeddings, dtype<span class="op">=</span><span class="st">"float32"</span>))</span>
+<span id="cb23-33"><a href="#cb23-33" tabindex="-1" aria-label="code-block-23-33"></a>            <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span>idx <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss"> / </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss"> chunks (progress saved)"</span>)</span>
+<span id="cb23-34"><a href="#cb23-34" tabindex="-1" aria-label="code-block-23-34"></a></span>
+<span id="cb23-35"><a href="#cb23-35" tabindex="-1" aria-label="code-block-23-35"></a>    <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs) <span class="op">-</span> start<span class="sc">}</span><span class="ss"> chunks in </span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.1f}</span><span class="ss"> seconds"</span>)</span>
+<span id="cb23-36"><a href="#cb23-36" tabindex="-1" aria-label="code-block-23-36"></a>    chunk_embeddings <span class="op">=</span> np.array(all_embeddings, dtype<span class="op">=</span><span class="st">"float32"</span>)   <span class="co"># the embedding matrix: one row per chunk, one column per dimension</span></span>
+<span id="cb23-37"><a href="#cb23-37" tabindex="-1" aria-label="code-block-23-37"></a>    np.save(emb_save_path, chunk_embeddings)</span>
+<span id="cb23-38"><a href="#cb23-38" tabindex="-1" aria-label="code-block-23-38"></a>    emb_partial_path.unlink(missing_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb23-39"><a href="#cb23-39" tabindex="-1" aria-label="code-block-23-39"></a>    s3.upload_file(<span class="bu">str</span>(emb_save_path), bucket_name, embeddings_key)</span>
+<span id="cb23-40"><a href="#cb23-40" tabindex="-1" aria-label="code-block-23-40"></a>    <span class="bu">print</span>(<span class="ss">f"Saved embeddings to </span><span class="sc">{</span>emb_save_path<span class="sc">}</span><span class="ss"> and s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>embeddings_key<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb23-41"><a href="#cb23-41" tabindex="-1" aria-label="code-block-23-41"></a></span>
+<span id="cb23-42"><a href="#cb23-42" tabindex="-1" aria-label="code-block-23-42"></a><span class="cf">assert</span> chunk_embeddings.shape[<span class="dv">0</span>] <span class="op">==</span> <span class="bu">len</span>(chunked_docs), <span class="st">"embeddings and chunks are out of step; delete the cached files and rerun"</span></span>
+<span id="cb23-43"><a href="#cb23-43" tabindex="-1" aria-label="code-block-23-43"></a><span class="bu">print</span>(<span class="st">"Embeddings shape:"</span>, chunk_embeddings.shape)</span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="step-9-retrieve-cosine-similarity-over-the-embedding-matrix">Step 9 – Retrieve: cosine similarity over the embedding matrix<a class="anchor" aria-label="anchor" href="#step-9-retrieve-cosine-similarity-over-the-embedding-matrix"></a></h2>
 <hr class="half-width"><p>Retrieval is pure NumPy: embed the question with the same model, take
@@ -1611,25 +1634,27 @@ explanation phases call local models instead of Bedrock-hosted ones.</p>
 </section><section><h2 class="section-heading" id="step-12-score-against-the-training-answers">Step 12 – Score against the training answers<a class="anchor" aria-label="anchor" href="#step-12-score-against-the-training-answers"></a></h2>
 <hr class="half-width"><p>WattBot scores each prediction with three components: 0.75 for
 <code>answer_value</code> (numeric within ±0.1% relative tolerance,
-categorical exact match), 0.15 for the Jaccard overlap between predicted
-and ground-truth <code>ref_id</code> sets, and 0.10 for marking
-unanswerable questions correctly. <code>compute_wattbot_score</code>
-from <code>wattbot_rag.py</code> implements that, joins on
-<code>id</code>, and prints the worst-scoring rows so you can see
-<em>why</em> the pipeline lost points. <code>train_QA.csv</code> has no
-separate “unanswerable” column, so <code>gt_is_na_col="is_blank"</code>
-tells the scorer to derive that flag from
-<code>answer_value == "is_blank"</code> on both sides.</p>
+categorical match after normalisation, and zero if you answer a question
+the corpus cannot answer), 0.20 for the F1 between your
+<code>ref_id</code> set and the ground-truth citations, and 0.05 for
+refusing cleanly, with every evidence field blank, when the answer is
+<code>is_blank</code>. The number comes from <code>Score.py</code>, the
+competition’s own metric file, which <code>compute_wattbot_score</code>
+in <code>wattbot_rag.py</code> calls for the headline score so that what
+you see here is what the leaderboard would report. The wrapper adds a
+per-row score, joins on <code>id</code>, and prints the worst-scoring
+rows so you can see <em>why</em> the pipeline lost points.
+<code>train_QA.csv</code> has no separate “unanswerable” column, so
+<code>gt_is_na_col="is_blank"</code> tells the scorer to derive that
+flag from <code>answer_value == "is_blank"</code> on both sides.</p>
 <div class="codewrapper sourceCode" id="cb28">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" tabindex="-1" aria-label="code-block-28-1"></a>scored_df <span class="op">=</span> compute_wattbot_score(</span>
 <span id="cb28-2"><a href="#cb28-2" tabindex="-1" aria-label="code-block-28-2"></a>    train_qa_path<span class="op">=</span>train_qa_path,    <span class="co"># ground truth</span></span>
 <span id="cb28-3"><a href="#cb28-3" tabindex="-1" aria-label="code-block-28-3"></a>    preds_path<span class="op">=</span>output_path,         <span class="co"># our predictions, joined to it on id</span></span>
-<span id="cb28-4"><a href="#cb28-4" tabindex="-1" aria-label="code-block-28-4"></a>    gt_is_na_col<span class="op">=</span><span class="st">"is_blank"</span>,        <span class="co"># no separate column: "unanswerable" means answer_value == "is_blank"</span></span>
-<span id="cb28-5"><a href="#cb28-5" tabindex="-1" aria-label="code-block-28-5"></a>    pred_is_na_col<span class="op">=</span><span class="st">"is_blank"</span>,</span>
-<span id="cb28-6"><a href="#cb28-6" tabindex="-1" aria-label="code-block-28-6"></a>    n_examples<span class="op">=</span><span class="dv">20</span>,</span>
-<span id="cb28-7"><a href="#cb28-7" tabindex="-1" aria-label="code-block-28-7"></a>)</span></code></pre>
+<span id="cb28-4"><a href="#cb28-4" tabindex="-1" aria-label="code-block-28-4"></a>    n_examples<span class="op">=</span><span class="dv">20</span>,</span>
+<span id="cb28-5"><a href="#cb28-5" tabindex="-1" aria-label="code-block-28-5"></a>)</span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="why-were-the-wrong-ones-wrong">Why were the wrong ones wrong?<a class="anchor" aria-label="anchor" href="#why-were-the-wrong-ones-wrong"></a></h3>
@@ -1672,7 +1697,14 @@ generator will help. “Yes” with <code>is_blank</code> is the model
 declining on evidence it had, which the system prompt and the retrieval
 threshold control. “Yes” with a wrong value is a reading error, and the
 cited passage usually shows what it latched onto: a nearby number, a
-different unit, a different model in the same table. Each of those is a
+different unit, a different model in the same table. And sometimes the
+explanation shows the model read correctly and the label is the problem:
+a question asking what inference “can account for” labelled 90 where
+three papers in the corpus give 60, 70 and 80 to 90 percent, so a range
+is arguably the better answer, or a fact that appears in several papers
+with the label naming only one of them. Labels are written by people.
+When the explanation convinces you, the fix is to the label, and the
+competition organisers want to hear about it. Each of those is a
 different lever, and the score alone would have you pulling the wrong
 one.</p>
 <div id="what-did-that-run-cost" class="callout challenge">
