@@ -1415,12 +1415,14 @@ files from SageMaker’s built-in profiler, written for every training
 job. Ignore them; they can be turned off with
 <code>disable_profiler=True</code> on the estimator.</li>
 </ol><p>The job’s log is not in S3. It is in <strong>CloudWatch</strong>, the
-AWS service that collects logs and metrics from every other service:
-everything a training job prints goes to a CloudWatch log stream named
-after the job, and it stays there after the instance is gone. The
-quickest way to it is the <strong>View logs</strong> link on the job’s
-page in the SageMaker console: <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training" class="external-link">Training
-jobs</a>, then your job.</p>
+AWS service that stores the printed output of every job: everything the
+script prints goes to a CloudWatch <em>log stream</em> named after the
+job, and it stays there after the instance is gone. To read it: open <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training" class="external-link">Training
+jobs</a>, click the job’s name, scroll to <strong>Monitor</strong> and
+click <strong>View logs</strong>, then click the one stream listed. What
+you see is the same text <code>fit()</code> streamed into the notebook,
+which is useful the day a job you launched last night failed while the
+kernel was off.</p>
 <p>A <strong>second bucket</strong> also appeared,
 <code>sagemaker-&lt;region&gt;-&lt;account-id&gt;</code>. The SageMaker
 SDK creates this <em>default bucket</em> the first time it needs

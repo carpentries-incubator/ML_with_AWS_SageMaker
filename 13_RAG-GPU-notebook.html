@@ -589,8 +589,9 @@ have to reload”. That is the <code>$1,906</code>.</li>
 </ul><p>The habits that keep this safe:</p>
 <ol style="list-style-type: decimal"><li>
 <strong>Stop the instance when you stand up</strong>, every time,
-from the console (<strong>Notebook instances → select → Stop</strong>).
-Then look at the status column until it says <code>Stopped</code>.</li>
+from the <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/notebook-instances" class="external-link">Notebook
+instances page</a> (select it, <strong>Stop</strong>). Then look at the
+status column until it says <code>Stopped</code>.</li>
 <li>
 <strong>Set a reminder</strong> on your phone or calendar before you
 start the instance, for two hours from now.</li>
@@ -722,15 +723,18 @@ it now means nothing is lost by restarting.</p>
 <h3 class="callout-title">Installing vLLM takes a few minutes, and the
 meter is running</h3>
 <div class="callout-content">
-<p><code>pip install vllm</code> downloads several gigabytes (it brings
-its own CUDA kernels and may replace the kernel’s PyTorch build) and
-takes 5–10 minutes. Qwen3.8 needs vLLM 0.17 or newer. The 27 GB of model
-weights take another 4–6 minutes to download the first time. At
-<code>$2.61</code> an hour that is about 60 cents of waiting, which is
-fine; what is not fine is doing it twice because the instance was
-deleted and recreated. Keep the Hugging Face cache on the 100 GB volume
-(the <code>HF_HOME</code> line in the serving cell below does that) so
-the weights survive a stop/start.</p>
+<p>vLLM is the open-source inference engine that loads an open-weight
+model onto the GPU and answers chat requests from Python, the
+self-hosted counterpart of Bedrock’s runtime (the Processing Jobs
+episode introduces it). <code>pip install vllm</code> downloads several
+gigabytes (it brings its own CUDA kernels and may replace the kernel’s
+PyTorch build) and takes 5–10 minutes. Qwen3.8 needs vLLM 0.17 or newer.
+The 27 GB of model weights take another 4–6 minutes to download the
+first time. At <code>$2.61</code> an hour that is about 60 cents of
+waiting, which is fine; what is not fine is doing it twice because the
+instance was deleted and recreated. Keep the Hugging Face cache on the
+100 GB volume (the <code>HF_HOME</code> line in the serving cell below
+does that) so the weights survive a stop/start.</p>
 <p>If the install changes PyTorch, restart the kernel (<strong>Kernel →
 Restart</strong>) before continuing.</p>
 </div>
@@ -740,7 +744,7 @@ Restart</strong>) before continuing.</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a><span class="co"># Several GB; it may replace torch, so restart the kernel (Kernel -&gt; Restart) if the log says it did</span></span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a><span class="op">%</span>pip install <span class="op">-</span>q <span class="st">"vllm&gt;=0.17"</span> <span class="st">"peft&gt;=0.18"</span>   <span class="co"># peft upgraded to match the transformers vLLM installs</span></span></code></pre>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a><span class="op">%</span>pip install <span class="op">-</span>q <span class="st">"vllm&gt;=0.17"</span> <span class="st">"peft&gt;=0.18"</span>   <span class="co"># Qwen3.8 needs vLLM 0.17+, which brings its own PyTorch; peft upgraded to match the transformers it installs</span></span></code></pre>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="import-data-from-bucket-into-notebook">Import data from bucket into notebook<a class="anchor" aria-label="anchor" href="#import-data-from-bucket-into-notebook"></a></h2>

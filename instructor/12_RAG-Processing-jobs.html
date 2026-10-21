@@ -467,9 +467,9 @@ open-weight model, and why a Processing job is the default way to
 self-host one for batch work.</li>
 <li>Launch a GPU Processing job that embeds the cached WattBot chunks
 with a self-hosted embedding model and writes the vectors to S3.</li>
-<li>Launch a second Processing job that serves Qwen3-8B (an open-weight
-model in a size Bedrock does not carry) with vLLM and runs the full RAG
-loop over the training questions.</li>
+<li>Launch a second Processing job that runs Qwen3-8B (an open-weight
+model in a size Bedrock does not carry) with <code>transformers</code>
+and runs the full RAG loop over the training questions.</li>
 <li>Read a job’s inputs, outputs, arguments and runtime cap, and relate
 its duration to what it cost.</li>
 <li>Score the batch predictions with the WattBot metric and compare
@@ -522,12 +522,17 @@ reads the results back.</p>
 <p>The generator is <strong>Qwen3-8B</strong>, an 8-billion-parameter
 open-weight model (Apache 2.0). Bedrock serves the 32B and 235B members
 of that family but not this size, which is the usual situation: the size
-you want is the one missing. Inference needs no gradients, so the
-weights are the memory cost: 8B parameters at two bytes each in bf16 is
-about 16 GB, which fits the 24 GB GPU of an <code>ml.g5.xlarge</code>
-with room for the KV cache. (The fine-tuning episode has the full memory
-arithmetic; the short version is that inference needs only the weights
-and training needs eight times more per parameter.)</p>
+you want is the one missing. The job runs it with
+<code>transformers</code>, the same library the fine-tuning episode
+trained with: <code>from_pretrained</code> downloads the weights onto
+the GPU, and <code>generate</code> writes the answer to a chat prompt,
+the self-hosted counterpart of what Bedrock does behind
+<code>converse</code>. Inference needs no gradients, so the weights are
+the memory cost: 8B parameters at two bytes each in bf16 is about 16 GB,
+which fits the 24 GB GPU of an <code>ml.g5.xlarge</code> with room for
+the KV cache. (The fine-tuning episode has the full memory arithmetic;
+the short version is that inference needs only the weights and training
+needs eight times more per parameter.)</p>
 <p>Why bother serving a model yourself when Bedrock is a call away?
 Because open-weight models that fit one GPU are now close to the
 frontier on the kinds of tasks research code runs, on data that never
@@ -567,16 +572,16 @@ for the 27B.</p>
 <td>
 <code>ml.g5.xlarge</code> (A10G, 24 GB)</td>
 <td><code>$1.41</code></td>
-<td>~20 min: 5 startup, ~5 installing vLLM, ~3 downloading 16 GB of
-weights, the rest generating</td>
-<td>~<code>$0.50</code>
+<td>~20 min: 5 startup, ~3 downloading 16 GB of weights, ~1 loading, ~10
+generating</td>
+<td>~<code>$0.45</code>
 </td>
 </tr><tr><td>Controller notebook</td>
 <td><code>ml.t3.medium</code></td>
 <td><code>$0.05</code></td>
 <td>2 h</td>
 <td><code>$0.10</code></td>
-</tr></tbody></table><p>About <code>$0.80</code> for the episode, and the GPUs are off the
+</tr></tbody></table><p>About <code>$0.75</code> for the episode, and the GPUs are off the
 moment each script ends. Both jobs carry
 <code>max_runtime_in_seconds</code>, so a hung job costs at most the
 cap. Compare the same pipeline on a GPU notebook instance (the optional
@@ -587,8 +592,14 @@ someone stops it, and a forgotten <code>ml.g5.xlarge</code> is
 <code>generation_model_id</code> to <code>Qwen/Qwen3.8-27B-FP8</code>
 and <code>instance_type</code> to <code>ml.g6e.xlarge</code> (one L40S,
 48 GB, <code>$2.61</code>/h): the FP8 weights are 27 GB, the job takes
-about 30 minutes and costs about <code>$1.30</code>, and nothing else
-changes. It needs the
+about 30 minutes and costs about <code>$1.30</code>. FP8 needs vLLM:
+write a <code>code_rag/requirements.txt</code> with
+<code>vllm&gt;=0.17</code> and <code>peft&gt;=0.18</code> (that vLLM
+brings a newer <code>transformers</code>, and the container’s
+<code>peft</code> must follow), add <code>"--engine", "vllm"</code> to
+the arguments, and expect five minutes of install; the script removes
+the container’s <code>flash-attn</code> build, which no longer links
+against vLLM’s PyTorch. It needs the
 <code>ml.g6e.xlarge for processing job usage</code> quota, whose default
 is zero and whose increase takes days; the class account did not have it
 when this was written.</p>
@@ -604,8 +615,9 @@ remember to turn off.</p>
 <ul><li>Reuse the chunks cached in your bucket by the Bedrock episode and
 the inputs in the shared bucket.</li>
 <li>Run two short-lived GPU Processing jobs: one computes embeddings for
-all chunks; the second serves Qwen3-8B with vLLM and runs the full RAG
-loop (retrieval + generation) over all training questions.</li>
+all chunks; the second runs Qwen3-8B with <code>transformers</code> and
+the full RAG loop (retrieval + generation) over all training
+questions.</li>
 <li>Score the result and compare it with the Bedrock run.</li>
 </ul><section><h2 class="section-heading" id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a></h2>
 <hr class="half-width"><div class="section level3">
@@ -625,7 +637,7 @@ normalisation, thirty lines), so neither job has to install anything for
 it.</li>
 <li>
 <code>scripts/wattbot_rag_batch.py</code>: the WattBot RAG loop as a
-batch job: loads the inputs, serves Qwen with vLLM, writes
+batch job: loads the inputs, runs the generator, writes
 <code>wattbot_solutions.csv</code>.</li>
 <li>
 <code>scripts/wattbot_rag.py</code>: the shared pipeline logic
@@ -633,11 +645,10 @@ batch job: loads the inputs, serves Qwen with vLLM, writes
 scorer) that the Bedrock episode imported too. The batch script imports
 it, so it ships with the job; the notebook imports it for scoring.</li>
 </ul><p>Each job gets its own source directory, because SageMaker uploads the
-whole directory and installs whatever <code>requirements.txt</code> it
-finds next to the script, and only the RAG job needs extra packages.
-<code>code_embed/</code> holds the embedding job, <code>code_rag/</code>
-the RAG job, and a copy of <code>wattbot_rag.py</code> sits next to the
-notebook for the scoring step at the end.</p>
+whole directory into the container. <code>code_embed/</code> holds the
+embedding job, <code>code_rag/</code> the RAG job, and a copy of
+<code>wattbot_rag.py</code> sits next to the notebook for the scoring
+step at the end.</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -758,45 +769,36 @@ S3.</li>
 projects; here it expects a JSONL file with a <code>text</code>
 field.</p>
 <div class="section level3">
-<h3 id="requirements">Requirements<a class="anchor" aria-label="anchor" href="#requirements"></a></h3>
-<p>The embedding job needs nothing the Hugging Face container does not
-already have, so it has no <code>requirements.txt</code> and starts as
-soon as the instance is up. The RAG job needs vLLM, which the container
-does not ship. A <code>requirements.txt</code> in the job’s
-<code>source_dir</code> is installed before the script runs. vLLM pins
-its own PyTorch and a newer <code>transformers</code>, so the
-container’s <code>peft</code> has to move with it; the pin on
-<code>peft</code> is there because an older <code>peft</code> left
-behind imports a class the newer <code>transformers</code> removed, and
-the job dies on that import before it reaches the model.</p>
-<div class="codewrapper sourceCode" id="cb5">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="co"># A requirements.txt next to the script is pip-installed in the container before the script runs; only the RAG job has one</span></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">"code_rag/requirements.txt"</span>, <span class="st">"w"</span>) <span class="im">as</span> f:</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a>    f.write(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span>.join([<span class="st">"vllm&gt;=0.17"</span>, <span class="st">"peft&gt;=0.18"</span>]) <span class="op">+</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span>)   <span class="co"># vLLM for the generator; peft upgraded to match the transformers vLLM installs</span></span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1" aria-label="code-block-5-4"></a></span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1" aria-label="code-block-5-5"></a><span class="bu">print</span>(<span class="st">"code_embed:"</span>, os.listdir(<span class="st">"code_embed"</span>))</span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1" aria-label="code-block-5-6"></a><span class="bu">print</span>(<span class="st">"code_rag:  "</span>, os.listdir(<span class="st">"code_rag"</span>))</span></code></pre>
-</div>
-<div id="the-rag-jobs-pip-install-is-part-of-its-bill" class="callout">
+<h3 id="nothing-to-install">Nothing to install<a class="anchor" aria-label="anchor" href="#nothing-to-install"></a></h3>
+<p>Neither job installs anything. The Hugging Face container ships
+<code>transformers</code> and PyTorch, which is all the embedding
+wrapper and the generator need, so both jobs start as soon as the
+instance is up. A <code>requirements.txt</code> next to a script would
+be pip-installed before it runs; the 27B variant in the cost callout is
+the one case this episode needs it.</p>
+<div id="why-not-vllm" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
 </div>
 <span class="callout-header">Callout</span>
-<div id="the-rag-jobs-pip-install-is-part-of-its-bill" class="callout-inner">
-<h3 class="callout-title">The RAG job’s pip install is part of its
-bill</h3>
+<div id="why-not-vllm" class="callout-inner">
+<h3 class="callout-title">Why not vLLM?</h3>
 <div class="callout-content">
-<p>vLLM ships its own CUDA kernels and pins its own PyTorch, so
-<code>pip install vllm</code> in the RAG job pulls several gigabytes and
-replaces the container’s <code>torch</code> and
-<code>transformers</code> with the versions it wants. That is normal
-(the container is thrown away when the job ends) but it takes about 5 of
-the job’s ~30 minutes, on a GPU instance that is billing the whole time:
-roughly 20 cents per run. For a job you launch often, bake the install
-into a custom container image instead; for a job you launch twice in a
-workshop, paying for the install is cheaper than building the image.</p>
+<p>vLLM is the open-source inference engine most people serve
+open-weight models with: you give it a model name, it loads the weights
+onto the GPU and answers chat requests, batching many at once and
+managing GPU memory so that throughput scales. That is what you want
+behind an API with users. This job sends 82 prompts one at a time, so
+the batching is never used, and what vLLM would cost is a multi-gigabyte
+install that replaces the container’s PyTorch, five minutes of billed
+GPU time per run, and a dependency that drifts: every vLLM release pins
+a PyTorch, and the container’s own <code>flash-attn</code> binary stops
+loading when that PyTorch changes. <code>transformers.generate</code>,
+already in the container, does the same 82 prompts in about ten minutes
+with nothing to install. The batch script keeps vLLM behind
+<code>--engine vllm</code> for the two cases it earns its place: FP8
+weights (the 27B variant) and serving many requests. The GPU-notebook
+episode uses it for the former.</p>
 </div>
 </div>
 </div>
@@ -814,18 +816,18 @@ that nobody can attribute to a team.</p>
 <strong>every</strong> <code>HuggingFaceProcessor</code> you create. Use
 a distinct <code>Purpose</code> per job so you can tell the embedding
 job from the batch RAG job on the bill.</p>
-<div class="codewrapper sourceCode" id="cb6">
+<div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span>         <span class="co"># replace with your name</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>   <span class="co"># replace with your challenge name</span></span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a><span class="kw">def</span> make_job_tags(purpose: <span class="bu">str</span>):   <span class="co"># one of: Storage, Notebook, Training, Tuning, Inference</span></span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1" aria-label="code-block-6-5"></a>    <span class="cf">return</span> [</span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1" aria-label="code-block-6-6"></a>        {<span class="st">"Key"</span>: <span class="st">"Name"</span>, <span class="st">"Value"</span>: name},</span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1" aria-label="code-block-6-7"></a>        {<span class="st">"Key"</span>: <span class="st">"Project"</span>, <span class="st">"Value"</span>: project},</span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1" aria-label="code-block-6-8"></a>        {<span class="st">"Key"</span>: <span class="st">"Purpose"</span>, <span class="st">"Value"</span>: purpose},   <span class="co"># differs per job so the bill tells them apart</span></span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1" aria-label="code-block-6-9"></a>    ]</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span>         <span class="co"># replace with your name</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>   <span class="co"># replace with your challenge name</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1" aria-label="code-block-5-4"></a><span class="kw">def</span> make_job_tags(purpose: <span class="bu">str</span>):   <span class="co"># one of: Storage, Notebook, Training, Tuning, Inference</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1" aria-label="code-block-5-5"></a>    <span class="cf">return</span> [</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1" aria-label="code-block-5-6"></a>        {<span class="st">"Key"</span>: <span class="st">"Name"</span>, <span class="st">"Value"</span>: name},</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1" aria-label="code-block-5-7"></a>        {<span class="st">"Key"</span>: <span class="st">"Project"</span>, <span class="st">"Value"</span>: project},</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1" aria-label="code-block-5-8"></a>        {<span class="st">"Key"</span>: <span class="st">"Purpose"</span>, <span class="st">"Value"</span>: purpose},   <span class="co"># differs per job so the bill tells them apart</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1" aria-label="code-block-5-9"></a>    ]</span></code></pre>
 </div>
 </div>
 <div class="section level3">
@@ -841,56 +843,60 @@ of a Processing job script: inputs in, outputs out, no state.</p>
 <p>A <code>HuggingFaceProcessor</code> is the Processing-job counterpart
 of the estimator: the same role, tags, instance type and container
 versions, plus a runtime cap. Its <code>run</code> call names the
-script, mounts the inputs, and says where the output goes.</p>
-<div class="codewrapper sourceCode" id="cb7">
+script, mounts the inputs, and says where the output goes. Once it is
+launched, the job appears on the <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs" class="external-link">Processing
+jobs page</a> of the SageMaker console (under <strong>Data
+preparation</strong> in the left menu), the Processing counterpart of
+the Training jobs page you used earlier.</p>
+<div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a>embedding_model_id <span class="op">=</span> <span class="st">"thenlper/gte-large"</span></span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1" aria-label="code-block-7-2"></a></span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1" aria-label="code-block-7-3"></a>emb_output_prefix <span class="op">=</span> <span class="st">"wattbot/embeddings"</span></span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1" aria-label="code-block-7-4"></a>emb_output_path <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>emb_output_prefix<span class="sc">}</span><span class="ss">/"</span></span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1" aria-label="code-block-7-5"></a></span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1" aria-label="code-block-7-6"></a>embedding_processor <span class="op">=</span> HuggingFaceProcessor(</span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1" aria-label="code-block-7-7"></a>    base_job_name<span class="op">=</span><span class="st">"WattBot-embed-gte-large"</span>,   <span class="co"># SageMaker appends a timestamp to make each job name unique</span></span>
-<span id="cb7-8"><a href="#cb7-8" tabindex="-1" aria-label="code-block-7-8"></a>    role<span class="op">=</span>role,</span>
-<span id="cb7-9"><a href="#cb7-9" tabindex="-1" aria-label="code-block-7-9"></a>    tags<span class="op">=</span>make_job_tags(<span class="st">"Inference"</span>),   <span class="co"># tags are per job; nothing is inherited from the notebook</span></span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1" aria-label="code-block-7-10"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>,      <span class="co"># the GPU the job rents (A10G, 24 GB): plenty for a 335M-parameter embedder</span></span>
-<span id="cb7-11"><a href="#cb7-11" tabindex="-1" aria-label="code-block-7-11"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb7-12"><a href="#cb7-12" tabindex="-1" aria-label="code-block-7-12"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,       <span class="co"># these three pick the prebuilt container image</span></span>
-<span id="cb7-13"><a href="#cb7-13" tabindex="-1" aria-label="code-block-7-13"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
-<span id="cb7-14"><a href="#cb7-14" tabindex="-1" aria-label="code-block-7-14"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
-<span id="cb7-15"><a href="#cb7-15" tabindex="-1" aria-label="code-block-7-15"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb7-16"><a href="#cb7-16" tabindex="-1" aria-label="code-block-7-16"></a>    max_runtime_in_seconds<span class="op">=</span><span class="dv">2</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span>,   <span class="co"># 2 hours, in seconds (2 h x 60 min x 60 s); the estimate is ~8 minutes. SageMaker kills the job here, so a hang costs at most this</span></span>
-<span id="cb7-17"><a href="#cb7-17" tabindex="-1" aria-label="code-block-7-17"></a>)</span>
-<span id="cb7-18"><a href="#cb7-18" tabindex="-1" aria-label="code-block-7-18"></a></span>
-<span id="cb7-19"><a href="#cb7-19" tabindex="-1" aria-label="code-block-7-19"></a><span class="co"># run() uploads the code, starts the instance, streams the job's log here and returns when the script ends (wait=True is the default)</span></span>
-<span id="cb7-20"><a href="#cb7-20" tabindex="-1" aria-label="code-block-7-20"></a>start <span class="op">=</span> time.time()</span>
-<span id="cb7-21"><a href="#cb7-21" tabindex="-1" aria-label="code-block-7-21"></a>embedding_processor.run(</span>
-<span id="cb7-22"><a href="#cb7-22" tabindex="-1" aria-label="code-block-7-22"></a>    code<span class="op">=</span><span class="st">"embedding_inference.py"</span>,     <span class="co"># the script the container runs...</span></span>
-<span id="cb7-23"><a href="#cb7-23" tabindex="-1" aria-label="code-block-7-23"></a>    source_dir<span class="op">=</span><span class="st">"code_embed/"</span>,          <span class="co"># ...uploaded with everything beside it (hf_embedder.py)</span></span>
-<span id="cb7-24"><a href="#cb7-24" tabindex="-1" aria-label="code-block-7-24"></a>    inputs<span class="op">=</span>[</span>
-<span id="cb7-25"><a href="#cb7-25" tabindex="-1" aria-label="code-block-7-25"></a>        ProcessingInput(</span>
-<span id="cb7-26"><a href="#cb7-26" tabindex="-1" aria-label="code-block-7-26"></a>            source<span class="op">=</span>chunks_s3_uri,                       <span class="co"># S3 object (or prefix) copied in before the script starts</span></span>
-<span id="cb7-27"><a href="#cb7-27" tabindex="-1" aria-label="code-block-7-27"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input"</span>,    <span class="co"># where it appears inside the container</span></span>
-<span id="cb7-28"><a href="#cb7-28" tabindex="-1" aria-label="code-block-7-28"></a>        )</span>
-<span id="cb7-29"><a href="#cb7-29" tabindex="-1" aria-label="code-block-7-29"></a>    ],</span>
-<span id="cb7-30"><a href="#cb7-30" tabindex="-1" aria-label="code-block-7-30"></a>    outputs<span class="op">=</span>[</span>
-<span id="cb7-31"><a href="#cb7-31" tabindex="-1" aria-label="code-block-7-31"></a>        ProcessingOutput(</span>
-<span id="cb7-32"><a href="#cb7-32" tabindex="-1" aria-label="code-block-7-32"></a>            output_name<span class="op">=</span><span class="st">"embeddings"</span>,</span>
-<span id="cb7-33"><a href="#cb7-33" tabindex="-1" aria-label="code-block-7-33"></a>            source<span class="op">=</span><span class="st">"/opt/ml/processing/output"</span>,        <span class="co"># whatever the script writes here...</span></span>
-<span id="cb7-34"><a href="#cb7-34" tabindex="-1" aria-label="code-block-7-34"></a>            destination<span class="op">=</span>emb_output_path,               <span class="co"># ...is copied to this S3 prefix when the script ends</span></span>
-<span id="cb7-35"><a href="#cb7-35" tabindex="-1" aria-label="code-block-7-35"></a>        )</span>
-<span id="cb7-36"><a href="#cb7-36" tabindex="-1" aria-label="code-block-7-36"></a>    ],</span>
-<span id="cb7-37"><a href="#cb7-37" tabindex="-1" aria-label="code-block-7-37"></a>    arguments<span class="op">=</span>[                        <span class="co"># command-line flags, as the script's argparse expects them</span></span>
-<span id="cb7-38"><a href="#cb7-38" tabindex="-1" aria-label="code-block-7-38"></a>        <span class="st">"--model_id"</span>, embedding_model_id,</span>
-<span id="cb7-39"><a href="#cb7-39" tabindex="-1" aria-label="code-block-7-39"></a>        <span class="st">"--input_filename"</span>, <span class="st">"chunks.jsonl"</span>,</span>
-<span id="cb7-40"><a href="#cb7-40" tabindex="-1" aria-label="code-block-7-40"></a>        <span class="st">"--text_key"</span>, <span class="st">"text"</span>,</span>
-<span id="cb7-41"><a href="#cb7-41" tabindex="-1" aria-label="code-block-7-41"></a>        <span class="st">"--input_dir"</span>, <span class="st">"/opt/ml/processing/input"</span>,</span>
-<span id="cb7-42"><a href="#cb7-42" tabindex="-1" aria-label="code-block-7-42"></a>        <span class="st">"--output_dir"</span>, <span class="st">"/opt/ml/processing/output"</span>,</span>
-<span id="cb7-43"><a href="#cb7-43" tabindex="-1" aria-label="code-block-7-43"></a>    ],</span>
-<span id="cb7-44"><a href="#cb7-44" tabindex="-1" aria-label="code-block-7-44"></a>)</span>
-<span id="cb7-45"><a href="#cb7-45" tabindex="-1" aria-label="code-block-7-45"></a></span>
-<span id="cb7-46"><a href="#cb7-46" tabindex="-1" aria-label="code-block-7-46"></a><span class="bu">print</span>(<span class="ss">f"Embedding job complete: </span><span class="sc">{</span>(time.time() <span class="op">-</span> start) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min wall-clock, including instance startup"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a>embedding_model_id <span class="op">=</span> <span class="st">"thenlper/gte-large"</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a>emb_output_prefix <span class="op">=</span> <span class="st">"wattbot/embeddings"</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a>emb_output_path <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>emb_output_prefix<span class="sc">}</span><span class="ss">/"</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1" aria-label="code-block-6-5"></a></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1" aria-label="code-block-6-6"></a>embedding_processor <span class="op">=</span> HuggingFaceProcessor(</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1" aria-label="code-block-6-7"></a>    base_job_name<span class="op">=</span><span class="st">"WattBot-embed-gte-large"</span>,   <span class="co"># SageMaker appends a timestamp to make each job name unique</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1" aria-label="code-block-6-8"></a>    role<span class="op">=</span>role,</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1" aria-label="code-block-6-9"></a>    tags<span class="op">=</span>make_job_tags(<span class="st">"Inference"</span>),   <span class="co"># tags are per job; nothing is inherited from the notebook</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1" aria-label="code-block-6-10"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>,      <span class="co"># the GPU the job rents (A10G, 24 GB): plenty for a 335M-parameter embedder</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1" aria-label="code-block-6-11"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1" aria-label="code-block-6-12"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,       <span class="co"># these three pick the prebuilt container image</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1" aria-label="code-block-6-13"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1" aria-label="code-block-6-14"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1" aria-label="code-block-6-15"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1" aria-label="code-block-6-16"></a>    max_runtime_in_seconds<span class="op">=</span><span class="dv">2</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span>,   <span class="co"># 2 hours, in seconds (2 h x 60 min x 60 s); the estimate is ~8 minutes. SageMaker kills the job here, so a hang costs at most this</span></span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1" aria-label="code-block-6-17"></a>)</span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1" aria-label="code-block-6-18"></a></span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1" aria-label="code-block-6-19"></a><span class="co"># run() uploads the code, starts the instance, streams the job's log here and returns when the script ends (wait=True is the default)</span></span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1" aria-label="code-block-6-20"></a>start <span class="op">=</span> time.time()</span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1" aria-label="code-block-6-21"></a>embedding_processor.run(</span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1" aria-label="code-block-6-22"></a>    code<span class="op">=</span><span class="st">"embedding_inference.py"</span>,     <span class="co"># the script the container runs...</span></span>
+<span id="cb6-23"><a href="#cb6-23" tabindex="-1" aria-label="code-block-6-23"></a>    source_dir<span class="op">=</span><span class="st">"code_embed/"</span>,          <span class="co"># ...uploaded with everything beside it (hf_embedder.py)</span></span>
+<span id="cb6-24"><a href="#cb6-24" tabindex="-1" aria-label="code-block-6-24"></a>    inputs<span class="op">=</span>[</span>
+<span id="cb6-25"><a href="#cb6-25" tabindex="-1" aria-label="code-block-6-25"></a>        ProcessingInput(</span>
+<span id="cb6-26"><a href="#cb6-26" tabindex="-1" aria-label="code-block-6-26"></a>            source<span class="op">=</span>chunks_s3_uri,                       <span class="co"># S3 object (or prefix) copied in before the script starts</span></span>
+<span id="cb6-27"><a href="#cb6-27" tabindex="-1" aria-label="code-block-6-27"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input"</span>,    <span class="co"># where it appears inside the container</span></span>
+<span id="cb6-28"><a href="#cb6-28" tabindex="-1" aria-label="code-block-6-28"></a>        )</span>
+<span id="cb6-29"><a href="#cb6-29" tabindex="-1" aria-label="code-block-6-29"></a>    ],</span>
+<span id="cb6-30"><a href="#cb6-30" tabindex="-1" aria-label="code-block-6-30"></a>    outputs<span class="op">=</span>[</span>
+<span id="cb6-31"><a href="#cb6-31" tabindex="-1" aria-label="code-block-6-31"></a>        ProcessingOutput(</span>
+<span id="cb6-32"><a href="#cb6-32" tabindex="-1" aria-label="code-block-6-32"></a>            output_name<span class="op">=</span><span class="st">"embeddings"</span>,</span>
+<span id="cb6-33"><a href="#cb6-33" tabindex="-1" aria-label="code-block-6-33"></a>            source<span class="op">=</span><span class="st">"/opt/ml/processing/output"</span>,        <span class="co"># whatever the script writes here...</span></span>
+<span id="cb6-34"><a href="#cb6-34" tabindex="-1" aria-label="code-block-6-34"></a>            destination<span class="op">=</span>emb_output_path,               <span class="co"># ...is copied to this S3 prefix when the script ends</span></span>
+<span id="cb6-35"><a href="#cb6-35" tabindex="-1" aria-label="code-block-6-35"></a>        )</span>
+<span id="cb6-36"><a href="#cb6-36" tabindex="-1" aria-label="code-block-6-36"></a>    ],</span>
+<span id="cb6-37"><a href="#cb6-37" tabindex="-1" aria-label="code-block-6-37"></a>    arguments<span class="op">=</span>[                        <span class="co"># command-line flags, as the script's argparse expects them</span></span>
+<span id="cb6-38"><a href="#cb6-38" tabindex="-1" aria-label="code-block-6-38"></a>        <span class="st">"--model_id"</span>, embedding_model_id,</span>
+<span id="cb6-39"><a href="#cb6-39" tabindex="-1" aria-label="code-block-6-39"></a>        <span class="st">"--input_filename"</span>, <span class="st">"chunks.jsonl"</span>,</span>
+<span id="cb6-40"><a href="#cb6-40" tabindex="-1" aria-label="code-block-6-40"></a>        <span class="st">"--text_key"</span>, <span class="st">"text"</span>,</span>
+<span id="cb6-41"><a href="#cb6-41" tabindex="-1" aria-label="code-block-6-41"></a>        <span class="st">"--input_dir"</span>, <span class="st">"/opt/ml/processing/input"</span>,</span>
+<span id="cb6-42"><a href="#cb6-42" tabindex="-1" aria-label="code-block-6-42"></a>        <span class="st">"--output_dir"</span>, <span class="st">"/opt/ml/processing/output"</span>,</span>
+<span id="cb6-43"><a href="#cb6-43" tabindex="-1" aria-label="code-block-6-43"></a>    ],</span>
+<span id="cb6-44"><a href="#cb6-44" tabindex="-1" aria-label="code-block-6-44"></a>)</span>
+<span id="cb6-45"><a href="#cb6-45" tabindex="-1" aria-label="code-block-6-45"></a></span>
+<span id="cb6-46"><a href="#cb6-46" tabindex="-1" aria-label="code-block-6-46"></a><span class="bu">print</span>(<span class="ss">f"Embedding job complete: </span><span class="sc">{</span>(time.time() <span class="op">-</span> start) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min wall-clock, including instance startup"</span>)</span></code></pre>
 </div>
 </div>
 <div class="section level3">
@@ -901,25 +907,25 @@ panel. Click that to find “Processing jobs”, or open <a href="https://us-eas
 link</a> in the class region (change <code>us-east-2</code> in it for
 another region).</p>
 <p>It takes ~5-8 minutes in total for the job to complete, most of it
-provisioning the instance and installing the requirements. This is the
-downside of launching jobs, but the good news is that we only need to
-launch one embedding job for our RAG pipeline. This strategy also
+provisioning the instance and downloading the embedding model. This is
+the downside of launching jobs, but the good news is that we only need
+to launch one embedding job for our RAG pipeline. This strategy also
 ensures we’re only paying for the GPU while the job runs.</p>
 </div>
 <div class="section level3">
 <h3 id="sanity-check-the-embeddings-locally">Sanity-check the embeddings locally<a class="anchor" aria-label="anchor" href="#sanity-check-the-embeddings-locally"></a></h3>
 <p>We can download <code>embeddings.npy</code> back into the notebook
 and inspect its shape to confirm the job ran successfully.</p>
-<div class="codewrapper sourceCode" id="cb8">
+<div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" tabindex="-1" aria-label="code-block-8-1"></a>local_embeddings_path <span class="op">=</span> os.path.join(local_data_dir, <span class="st">"embeddings.npy"</span>)</span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1" aria-label="code-block-8-2"></a>embeddings_key <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>emb_output_prefix<span class="sc">}</span><span class="ss">/embeddings.npy"</span>   <span class="co"># the ProcessingOutput destination + the filename the script wrote</span></span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1" aria-label="code-block-8-3"></a></span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1" aria-label="code-block-8-4"></a>s3_client.download_file(bucket_name, embeddings_key, local_embeddings_path)</span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1" aria-label="code-block-8-5"></a>chunk_embeddings <span class="op">=</span> np.load(local_embeddings_path)</span>
-<span id="cb8-6"><a href="#cb8-6" tabindex="-1" aria-label="code-block-8-6"></a></span>
-<span id="cb8-7"><a href="#cb8-7" tabindex="-1" aria-label="code-block-8-7"></a><span class="bu">print</span>(<span class="st">"Embeddings shape:"</span>, chunk_embeddings.shape, <span class="st">"for"</span>, <span class="bu">len</span>(chunked_docs), <span class="st">"chunks"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a>local_embeddings_path <span class="op">=</span> os.path.join(local_data_dir, <span class="st">"embeddings.npy"</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1" aria-label="code-block-7-2"></a>embeddings_key <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>emb_output_prefix<span class="sc">}</span><span class="ss">/embeddings.npy"</span>   <span class="co"># the ProcessingOutput destination + the filename the script wrote</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1" aria-label="code-block-7-3"></a></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1" aria-label="code-block-7-4"></a>s3_client.download_file(bucket_name, embeddings_key, local_embeddings_path)</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1" aria-label="code-block-7-5"></a>chunk_embeddings <span class="op">=</span> np.load(local_embeddings_path)</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1" aria-label="code-block-7-6"></a></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1" aria-label="code-block-7-7"></a><span class="bu">print</span>(<span class="st">"Embeddings shape:"</span>, chunk_embeddings.shape, <span class="st">"for"</span>, <span class="bu">len</span>(chunked_docs), <span class="st">"chunks"</span>)</span></code></pre>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="step-3-processing-job-2-full-wattbot-rag-over-all-questions">Step 3 – Processing Job 2: full WattBot RAG over all questions<a class="anchor" aria-label="anchor" href="#step-3-processing-job-2-full-wattbot-rag-over-all-questions"></a></h2>
@@ -952,18 +958,18 @@ end</li>
 <code>embed_query</code> wraps the same <code>gte-large</code> model and
 pooling the embedding job used (<code>hf_embedder.py</code>) (the
 question has to be embedded with the same model as the chunks), and
-<code>generate</code> wraps a vLLM engine serving the generator
-(Qwen3-8B here) with thinking mode off. The job writes
+<code>generate</code> wraps <code>transformers.generate</code> on the
+generator (Qwen3-8B here) with Qwen’s thinking mode off. The job writes
 <code>wattbot_solutions.csv</code> in the WattBot submission format.</p>
-<div class="codewrapper sourceCode" id="cb9">
+<div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a>emb_output_s3 <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>emb_output_prefix<span class="sc">}</span><span class="ss">/embeddings.npy"</span></span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1" aria-label="code-block-9-3"></a><span class="bu">print</span>(<span class="st">"chunks:    "</span>, chunks_s3_uri)</span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a><span class="bu">print</span>(<span class="st">"embeddings:"</span>, emb_output_s3)</span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a><span class="bu">print</span>(<span class="st">"train_QA:  "</span>, train_qa_s3)</span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1" aria-label="code-block-9-6"></a><span class="bu">print</span>(<span class="st">"metadata:  "</span>, metadata_s3)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" tabindex="-1" aria-label="code-block-8-1"></a>emb_output_s3 <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>emb_output_prefix<span class="sc">}</span><span class="ss">/embeddings.npy"</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1" aria-label="code-block-8-2"></a></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1" aria-label="code-block-8-3"></a><span class="bu">print</span>(<span class="st">"chunks:    "</span>, chunks_s3_uri)</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1" aria-label="code-block-8-4"></a><span class="bu">print</span>(<span class="st">"embeddings:"</span>, emb_output_s3)</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1" aria-label="code-block-8-5"></a><span class="bu">print</span>(<span class="st">"train_QA:  "</span>, train_qa_s3)</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1" aria-label="code-block-8-6"></a><span class="bu">print</span>(<span class="st">"metadata:  "</span>, metadata_s3)</span></code></pre>
 </div>
 <p>If the launch below fails at once with
 <code>ResourceLimitExceeded</code> naming an instance type, nothing in
@@ -974,107 +980,111 @@ Quotas</a> (days, for GPU types). On your own account, request
 <p>Two settings on this processor matter more than on the embedding job.
 <code>volume_size_in_gb=60</code> attaches a 60 GB volume to the
 instance, mounted under <code>/opt/ml/processing</code>; the container’s
-own root disk is small, so the 16 GB of model weights (and vLLM’s
-install) must not land there. <code>env={"HF_HOME": ...}</code> points
-Hugging Face’s download cache at that volume, which is where the weights
-go.</p>
-<div class="codewrapper sourceCode" id="cb10">
+own root disk is small, so the 16 GB of model weights must not land
+there. <code>env={"HF_HOME": ...}</code> points Hugging Face’s download
+cache at that volume, which is where the weights go.</p>
+<div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a>rag_output_prefix <span class="op">=</span> <span class="st">"wattbot/solutions"</span></span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a>rag_output_path <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>rag_output_prefix<span class="sc">}</span><span class="ss">/"</span></span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1" aria-label="code-block-10-3"></a></span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1" aria-label="code-block-10-4"></a>generation_model_id <span class="op">=</span> <span class="st">"Qwen/Qwen3-8B"</span>   <span class="co"># open-weight; Bedrock has the 32B and 235B, not this size. ~16 GB in bf16</span></span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1" aria-label="code-block-10-5"></a></span>
-<span id="cb10-6"><a href="#cb10-6" tabindex="-1" aria-label="code-block-10-6"></a>rag_processor <span class="op">=</span> HuggingFaceProcessor(</span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1" aria-label="code-block-10-7"></a>    base_job_name<span class="op">=</span><span class="st">"WattBot-rag-batch"</span>,</span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1" aria-label="code-block-10-8"></a>    role<span class="op">=</span>role,</span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1" aria-label="code-block-10-9"></a>    tags<span class="op">=</span>make_job_tags(<span class="st">"Inference"</span>),   <span class="co"># separate job, separate tags</span></span>
-<span id="cb10-10"><a href="#cb10-10" tabindex="-1" aria-label="code-block-10-10"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>,      <span class="co"># 1 x A10G, 24 GB: holds the bf16 8B model plus KV cache</span></span>
-<span id="cb10-11"><a href="#cb10-11" tabindex="-1" aria-label="code-block-10-11"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb10-12"><a href="#cb10-12" tabindex="-1" aria-label="code-block-10-12"></a>    volume_size_in_gb<span class="op">=</span><span class="dv">60</span>,              <span class="co"># 16 GB of weights + vLLM install; mounted at /opt/ml/processing</span></span>
-<span id="cb10-13"><a href="#cb10-13" tabindex="-1" aria-label="code-block-10-13"></a>    env<span class="op">=</span>{<span class="st">"HF_HOME"</span>: <span class="st">"/opt/ml/processing/hf_cache"</span>},   <span class="co"># put the weight download on that volume</span></span>
-<span id="cb10-14"><a href="#cb10-14" tabindex="-1" aria-label="code-block-10-14"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,</span>
-<span id="cb10-15"><a href="#cb10-15" tabindex="-1" aria-label="code-block-10-15"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
-<span id="cb10-16"><a href="#cb10-16" tabindex="-1" aria-label="code-block-10-16"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
-<span id="cb10-17"><a href="#cb10-17" tabindex="-1" aria-label="code-block-10-17"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb10-18"><a href="#cb10-18" tabindex="-1" aria-label="code-block-10-18"></a>    max_runtime_in_seconds<span class="op">=</span><span class="dv">2</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span>,   <span class="co"># 2 hours, in seconds; the estimate is 30 minutes</span></span>
-<span id="cb10-19"><a href="#cb10-19" tabindex="-1" aria-label="code-block-10-19"></a>)</span>
-<span id="cb10-20"><a href="#cb10-20" tabindex="-1" aria-label="code-block-10-20"></a></span>
-<span id="cb10-21"><a href="#cb10-21" tabindex="-1" aria-label="code-block-10-21"></a>start <span class="op">=</span> time.time()</span>
-<span id="cb10-22"><a href="#cb10-22" tabindex="-1" aria-label="code-block-10-22"></a>rag_processor.run(</span>
-<span id="cb10-23"><a href="#cb10-23" tabindex="-1" aria-label="code-block-10-23"></a>    code<span class="op">=</span><span class="st">"wattbot_rag_batch.py"</span>,</span>
-<span id="cb10-24"><a href="#cb10-24" tabindex="-1" aria-label="code-block-10-24"></a>    source_dir<span class="op">=</span><span class="st">"code_rag/"</span>,            <span class="co"># wattbot_rag_batch.py + wattbot_rag.py + hf_embedder.py + requirements.txt</span></span>
-<span id="cb10-25"><a href="#cb10-25" tabindex="-1" aria-label="code-block-10-25"></a>    inputs<span class="op">=</span>[</span>
-<span id="cb10-26"><a href="#cb10-26" tabindex="-1" aria-label="code-block-10-26"></a>        ProcessingInput(</span>
-<span id="cb10-27"><a href="#cb10-27" tabindex="-1" aria-label="code-block-10-27"></a>            source<span class="op">=</span>chunks_s3_uri,</span>
-<span id="cb10-28"><a href="#cb10-28" tabindex="-1" aria-label="code-block-10-28"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/chunks"</span>,   <span class="co"># four inputs, each in its own subdirectory</span></span>
-<span id="cb10-29"><a href="#cb10-29" tabindex="-1" aria-label="code-block-10-29"></a>        ),</span>
-<span id="cb10-30"><a href="#cb10-30" tabindex="-1" aria-label="code-block-10-30"></a>        ProcessingInput(</span>
-<span id="cb10-31"><a href="#cb10-31" tabindex="-1" aria-label="code-block-10-31"></a>            source<span class="op">=</span>emb_output_s3,</span>
-<span id="cb10-32"><a href="#cb10-32" tabindex="-1" aria-label="code-block-10-32"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/embeddings"</span>,</span>
-<span id="cb10-33"><a href="#cb10-33" tabindex="-1" aria-label="code-block-10-33"></a>        ),</span>
-<span id="cb10-34"><a href="#cb10-34" tabindex="-1" aria-label="code-block-10-34"></a>        ProcessingInput(</span>
-<span id="cb10-35"><a href="#cb10-35" tabindex="-1" aria-label="code-block-10-35"></a>            source<span class="op">=</span>train_qa_s3,</span>
-<span id="cb10-36"><a href="#cb10-36" tabindex="-1" aria-label="code-block-10-36"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/train"</span>,</span>
-<span id="cb10-37"><a href="#cb10-37" tabindex="-1" aria-label="code-block-10-37"></a>        ),</span>
-<span id="cb10-38"><a href="#cb10-38" tabindex="-1" aria-label="code-block-10-38"></a>        ProcessingInput(</span>
-<span id="cb10-39"><a href="#cb10-39" tabindex="-1" aria-label="code-block-10-39"></a>            source<span class="op">=</span>metadata_s3,</span>
-<span id="cb10-40"><a href="#cb10-40" tabindex="-1" aria-label="code-block-10-40"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/metadata"</span>,</span>
-<span id="cb10-41"><a href="#cb10-41" tabindex="-1" aria-label="code-block-10-41"></a>        ),</span>
-<span id="cb10-42"><a href="#cb10-42" tabindex="-1" aria-label="code-block-10-42"></a>    ],</span>
-<span id="cb10-43"><a href="#cb10-43" tabindex="-1" aria-label="code-block-10-43"></a>    outputs<span class="op">=</span>[</span>
-<span id="cb10-44"><a href="#cb10-44" tabindex="-1" aria-label="code-block-10-44"></a>        ProcessingOutput(</span>
-<span id="cb10-45"><a href="#cb10-45" tabindex="-1" aria-label="code-block-10-45"></a>            output_name<span class="op">=</span><span class="st">"solutions"</span>,</span>
-<span id="cb10-46"><a href="#cb10-46" tabindex="-1" aria-label="code-block-10-46"></a>            source<span class="op">=</span><span class="st">"/opt/ml/processing/output"</span>,</span>
-<span id="cb10-47"><a href="#cb10-47" tabindex="-1" aria-label="code-block-10-47"></a>            destination<span class="op">=</span>rag_output_path,</span>
-<span id="cb10-48"><a href="#cb10-48" tabindex="-1" aria-label="code-block-10-48"></a>        )</span>
-<span id="cb10-49"><a href="#cb10-49" tabindex="-1" aria-label="code-block-10-49"></a>    ],</span>
-<span id="cb10-50"><a href="#cb10-50" tabindex="-1" aria-label="code-block-10-50"></a>    arguments<span class="op">=</span>[</span>
-<span id="cb10-51"><a href="#cb10-51" tabindex="-1" aria-label="code-block-10-51"></a>        <span class="st">"--input_dir"</span>, <span class="st">"/opt/ml/processing/input"</span>,</span>
-<span id="cb10-52"><a href="#cb10-52" tabindex="-1" aria-label="code-block-10-52"></a>        <span class="st">"--output_dir"</span>, <span class="st">"/opt/ml/processing/output"</span>,</span>
-<span id="cb10-53"><a href="#cb10-53" tabindex="-1" aria-label="code-block-10-53"></a>        <span class="st">"--embedding_model_id"</span>, embedding_model_id,</span>
-<span id="cb10-54"><a href="#cb10-54" tabindex="-1" aria-label="code-block-10-54"></a>        <span class="st">"--qwen_model_id"</span>, generation_model_id,</span>
-<span id="cb10-55"><a href="#cb10-55" tabindex="-1" aria-label="code-block-10-55"></a>        <span class="st">"--top_k"</span>, <span class="st">"8"</span>,</span>
-<span id="cb10-56"><a href="#cb10-56" tabindex="-1" aria-label="code-block-10-56"></a>        <span class="st">"--retrieval_threshold"</span>, <span class="st">"0.25"</span>,</span>
-<span id="cb10-57"><a href="#cb10-57" tabindex="-1" aria-label="code-block-10-57"></a>    ],</span>
-<span id="cb10-58"><a href="#cb10-58" tabindex="-1" aria-label="code-block-10-58"></a>)</span>
-<span id="cb10-59"><a href="#cb10-59" tabindex="-1" aria-label="code-block-10-59"></a></span>
-<span id="cb10-60"><a href="#cb10-60" tabindex="-1" aria-label="code-block-10-60"></a><span class="bu">print</span>(<span class="ss">f"RAG batch job complete: </span><span class="sc">{</span>(time.time() <span class="op">-</span> start) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min wall-clock, including instance startup and the pip install"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a>rag_output_prefix <span class="op">=</span> <span class="st">"wattbot/solutions"</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a>rag_output_path <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>rag_output_prefix<span class="sc">}</span><span class="ss">/"</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1" aria-label="code-block-9-3"></a></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a>generation_model_id <span class="op">=</span> <span class="st">"Qwen/Qwen3-8B"</span>   <span class="co"># open-weight; Bedrock has the 32B and 235B, not this size. ~16 GB in bf16</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1" aria-label="code-block-9-6"></a>rag_processor <span class="op">=</span> HuggingFaceProcessor(</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1" aria-label="code-block-9-7"></a>    base_job_name<span class="op">=</span><span class="st">"WattBot-rag-batch"</span>,</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1" aria-label="code-block-9-8"></a>    role<span class="op">=</span>role,</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1" aria-label="code-block-9-9"></a>    tags<span class="op">=</span>make_job_tags(<span class="st">"Inference"</span>),   <span class="co"># separate job, separate tags</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1" aria-label="code-block-9-10"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>,      <span class="co"># 1 x A10G, 24 GB: holds the bf16 8B model plus KV cache</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1" aria-label="code-block-9-11"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1" aria-label="code-block-9-12"></a>    volume_size_in_gb<span class="op">=</span><span class="dv">60</span>,              <span class="co"># 16 GB of weights; mounted at /opt/ml/processing</span></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1" aria-label="code-block-9-13"></a>    env<span class="op">=</span>{<span class="st">"HF_HOME"</span>: <span class="st">"/opt/ml/processing/hf_cache"</span>},   <span class="co"># put the weight download on that volume</span></span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1" aria-label="code-block-9-14"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,</span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1" aria-label="code-block-9-15"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1" aria-label="code-block-9-16"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1" aria-label="code-block-9-17"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1" aria-label="code-block-9-18"></a>    max_runtime_in_seconds<span class="op">=</span><span class="dv">2</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span>,   <span class="co"># 2 hours, in seconds; the estimate is 20 minutes</span></span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1" aria-label="code-block-9-19"></a>)</span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1" aria-label="code-block-9-20"></a></span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1" aria-label="code-block-9-21"></a>start <span class="op">=</span> time.time()</span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1" aria-label="code-block-9-22"></a>rag_processor.run(</span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1" aria-label="code-block-9-23"></a>    code<span class="op">=</span><span class="st">"wattbot_rag_batch.py"</span>,</span>
+<span id="cb9-24"><a href="#cb9-24" tabindex="-1" aria-label="code-block-9-24"></a>    source_dir<span class="op">=</span><span class="st">"code_rag/"</span>,            <span class="co"># wattbot_rag_batch.py + wattbot_rag.py + hf_embedder.py</span></span>
+<span id="cb9-25"><a href="#cb9-25" tabindex="-1" aria-label="code-block-9-25"></a>    inputs<span class="op">=</span>[</span>
+<span id="cb9-26"><a href="#cb9-26" tabindex="-1" aria-label="code-block-9-26"></a>        ProcessingInput(</span>
+<span id="cb9-27"><a href="#cb9-27" tabindex="-1" aria-label="code-block-9-27"></a>            source<span class="op">=</span>chunks_s3_uri,</span>
+<span id="cb9-28"><a href="#cb9-28" tabindex="-1" aria-label="code-block-9-28"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/chunks"</span>,   <span class="co"># four inputs, each in its own subdirectory</span></span>
+<span id="cb9-29"><a href="#cb9-29" tabindex="-1" aria-label="code-block-9-29"></a>        ),</span>
+<span id="cb9-30"><a href="#cb9-30" tabindex="-1" aria-label="code-block-9-30"></a>        ProcessingInput(</span>
+<span id="cb9-31"><a href="#cb9-31" tabindex="-1" aria-label="code-block-9-31"></a>            source<span class="op">=</span>emb_output_s3,</span>
+<span id="cb9-32"><a href="#cb9-32" tabindex="-1" aria-label="code-block-9-32"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/embeddings"</span>,</span>
+<span id="cb9-33"><a href="#cb9-33" tabindex="-1" aria-label="code-block-9-33"></a>        ),</span>
+<span id="cb9-34"><a href="#cb9-34" tabindex="-1" aria-label="code-block-9-34"></a>        ProcessingInput(</span>
+<span id="cb9-35"><a href="#cb9-35" tabindex="-1" aria-label="code-block-9-35"></a>            source<span class="op">=</span>train_qa_s3,</span>
+<span id="cb9-36"><a href="#cb9-36" tabindex="-1" aria-label="code-block-9-36"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/train"</span>,</span>
+<span id="cb9-37"><a href="#cb9-37" tabindex="-1" aria-label="code-block-9-37"></a>        ),</span>
+<span id="cb9-38"><a href="#cb9-38" tabindex="-1" aria-label="code-block-9-38"></a>        ProcessingInput(</span>
+<span id="cb9-39"><a href="#cb9-39" tabindex="-1" aria-label="code-block-9-39"></a>            source<span class="op">=</span>metadata_s3,</span>
+<span id="cb9-40"><a href="#cb9-40" tabindex="-1" aria-label="code-block-9-40"></a>            destination<span class="op">=</span><span class="st">"/opt/ml/processing/input/metadata"</span>,</span>
+<span id="cb9-41"><a href="#cb9-41" tabindex="-1" aria-label="code-block-9-41"></a>        ),</span>
+<span id="cb9-42"><a href="#cb9-42" tabindex="-1" aria-label="code-block-9-42"></a>    ],</span>
+<span id="cb9-43"><a href="#cb9-43" tabindex="-1" aria-label="code-block-9-43"></a>    outputs<span class="op">=</span>[</span>
+<span id="cb9-44"><a href="#cb9-44" tabindex="-1" aria-label="code-block-9-44"></a>        ProcessingOutput(</span>
+<span id="cb9-45"><a href="#cb9-45" tabindex="-1" aria-label="code-block-9-45"></a>            output_name<span class="op">=</span><span class="st">"solutions"</span>,</span>
+<span id="cb9-46"><a href="#cb9-46" tabindex="-1" aria-label="code-block-9-46"></a>            source<span class="op">=</span><span class="st">"/opt/ml/processing/output"</span>,</span>
+<span id="cb9-47"><a href="#cb9-47" tabindex="-1" aria-label="code-block-9-47"></a>            destination<span class="op">=</span>rag_output_path,</span>
+<span id="cb9-48"><a href="#cb9-48" tabindex="-1" aria-label="code-block-9-48"></a>        )</span>
+<span id="cb9-49"><a href="#cb9-49" tabindex="-1" aria-label="code-block-9-49"></a>    ],</span>
+<span id="cb9-50"><a href="#cb9-50" tabindex="-1" aria-label="code-block-9-50"></a>    arguments<span class="op">=</span>[</span>
+<span id="cb9-51"><a href="#cb9-51" tabindex="-1" aria-label="code-block-9-51"></a>        <span class="st">"--input_dir"</span>, <span class="st">"/opt/ml/processing/input"</span>,</span>
+<span id="cb9-52"><a href="#cb9-52" tabindex="-1" aria-label="code-block-9-52"></a>        <span class="st">"--output_dir"</span>, <span class="st">"/opt/ml/processing/output"</span>,</span>
+<span id="cb9-53"><a href="#cb9-53" tabindex="-1" aria-label="code-block-9-53"></a>        <span class="st">"--embedding_model_id"</span>, embedding_model_id,</span>
+<span id="cb9-54"><a href="#cb9-54" tabindex="-1" aria-label="code-block-9-54"></a>        <span class="st">"--qwen_model_id"</span>, generation_model_id,</span>
+<span id="cb9-55"><a href="#cb9-55" tabindex="-1" aria-label="code-block-9-55"></a>        <span class="st">"--top_k"</span>, <span class="st">"8"</span>,</span>
+<span id="cb9-56"><a href="#cb9-56" tabindex="-1" aria-label="code-block-9-56"></a>        <span class="st">"--retrieval_threshold"</span>, <span class="st">"0.25"</span>,</span>
+<span id="cb9-57"><a href="#cb9-57" tabindex="-1" aria-label="code-block-9-57"></a>    ],</span>
+<span id="cb9-58"><a href="#cb9-58" tabindex="-1" aria-label="code-block-9-58"></a>)</span>
+<span id="cb9-59"><a href="#cb9-59" tabindex="-1" aria-label="code-block-9-59"></a></span>
+<span id="cb9-60"><a href="#cb9-60" tabindex="-1" aria-label="code-block-9-60"></a><span class="bu">print</span>(<span class="ss">f"RAG batch job complete: </span><span class="sc">{</span>(time.time() <span class="op">-</span> start) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min wall-clock, including instance startup and the weight download"</span>)</span></code></pre>
 </div>
-<p>While it runs, open the job’s CloudWatch log from the console page
-above. You will see, in order: pip installing vLLM, the weight download
-(16 GB in shards), vLLM loading the model and reporting how much GPU
-memory it reserved, then one line per question. The whole job is the 20
-minutes in the cost callout; the generation is the last third of it.</p>
+<p>While it runs, read what the container is printing. Open the <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs" class="external-link">Processing
+jobs page</a>, click the job’s name, scroll to <strong>Monitor</strong>
+and click <strong>View logs</strong>. That opens CloudWatch, the AWS
+service that stores every job’s printed output, at a list with one entry
+named after your job; click it. The text is the container’s stdout, kept
+after the job ends, updated while it runs (refresh). You will see, in
+order: the weight download (16 GB in shards),
+<code>Loading model with transformers</code>, then one line per
+question. The whole job is the 20 minutes in the cost callout; the
+generation is the second half of it.</p>
 </section><section><h2 class="section-heading" id="step-4-download-predictions-and-evaluate">Step 4 – Download predictions and evaluate<a class="anchor" aria-label="anchor" href="#step-4-download-predictions-and-evaluate"></a></h2>
 <hr class="half-width"><p>Finally, we download <code>wattbot_solutions.csv</code> from S3,
 inspect a few rows, and compute the WattBot score against
 <code>train_QA.csv</code> with the same
 <code>compute_wattbot_score</code> the Bedrock episode used.</p>
-<div class="codewrapper sourceCode" id="cb11">
+<div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a>solutions_key <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>rag_output_prefix<span class="sc">}</span><span class="ss">/wattbot_solutions.csv"</span></span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a>local_solutions_path <span class="op">=</span> os.path.join(local_data_dir, <span class="st">"wattbot_solutions.csv"</span>)</span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a></span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a>s3_client.download_file(bucket_name, solutions_key, local_solutions_path)</span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1" aria-label="code-block-11-5"></a>solutions_df <span class="op">=</span> pd.read_csv(local_solutions_path)</span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1" aria-label="code-block-11-6"></a>solutions_df.head()</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a>solutions_key <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>rag_output_prefix<span class="sc">}</span><span class="ss">/wattbot_solutions.csv"</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a>local_solutions_path <span class="op">=</span> os.path.join(local_data_dir, <span class="st">"wattbot_solutions.csv"</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1" aria-label="code-block-10-3"></a></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1" aria-label="code-block-10-4"></a>s3_client.download_file(bucket_name, solutions_key, local_solutions_path)</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1" aria-label="code-block-10-5"></a>solutions_df <span class="op">=</span> pd.read_csv(local_solutions_path)</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1" aria-label="code-block-10-6"></a>solutions_df.head()</span></code></pre>
 </div>
 <p>Score the predictions with the competition’s own
 <code>Score.py</code>, through the same wrapper the Bedrock episode
 used, so the two runs compare directly.</p>
-<div class="codewrapper sourceCode" id="cb12">
+<div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1" aria-label="code-block-12-1"></a><span class="im">from</span> wattbot_rag <span class="im">import</span> compute_wattbot_score</span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1" aria-label="code-block-12-2"></a></span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1" aria-label="code-block-12-3"></a>results_df <span class="op">=</span> compute_wattbot_score(</span>
-<span id="cb12-4"><a href="#cb12-4" tabindex="-1" aria-label="code-block-12-4"></a>    train_qa_path<span class="op">=</span>train_qa_path,</span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1" aria-label="code-block-12-5"></a>    preds_path<span class="op">=</span>local_solutions_path,</span>
-<span id="cb12-6"><a href="#cb12-6" tabindex="-1" aria-label="code-block-12-6"></a>    n_examples<span class="op">=</span><span class="dv">10</span>,</span>
-<span id="cb12-7"><a href="#cb12-7" tabindex="-1" aria-label="code-block-12-7"></a>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a><span class="im">from</span> wattbot_rag <span class="im">import</span> compute_wattbot_score</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a>results_df <span class="op">=</span> compute_wattbot_score(</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a>    train_qa_path<span class="op">=</span>train_qa_path,</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1" aria-label="code-block-11-5"></a>    preds_path<span class="op">=</span>local_solutions_path,</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1" aria-label="code-block-11-6"></a>    n_examples<span class="op">=</span><span class="dv">10</span>,</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1" aria-label="code-block-11-7"></a>)</span></code></pre>
 </div>
 <p>Compare the overall score with the Bedrock run. The retrieval logic,
 prompts and scoring are identical, so any difference is the two models:
@@ -1101,8 +1111,8 @@ instance is billed) and between start and end (the billed window), and
 price the billed window at <code>$1.41</code>/h, the
 <code>ml.g5.xlarge</code> rate both jobs used. Then, from the RAG job’s
 CloudWatch log timestamps, estimate how much of its billed window was
-setup (pip install and weight download) and how much was generation. How
-does the total compare with the cost callout, and with the Bedrock
+setup (the weight download and model load) and how much was generation.
+How does the total compare with the cost callout, and with the Bedrock
 run?</p>
 </div>
 </div>
@@ -1117,36 +1127,34 @@ run?</p>
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
 the billed run.</p>
-<div class="codewrapper sourceCode" id="cb13">
+<div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1" aria-label="code-block-13-1"></a><span class="kw">def</span> job_cost(job_name: <span class="bu">str</span>, price_per_hour: <span class="bu">float</span>):</span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1" aria-label="code-block-13-2"></a>    d <span class="op">=</span> session.sagemaker_client.describe_processing_job(ProcessingJobName<span class="op">=</span>job_name)   <span class="co"># the record SageMaker keeps for the job</span></span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a>    <span class="co"># CreationTime -&gt; ProcessingStartTime: provisioning the instance, not billed</span></span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1" aria-label="code-block-13-4"></a>    provisioning <span class="op">=</span> (d[<span class="st">"ProcessingStartTime"</span>] <span class="op">-</span> d[<span class="st">"CreationTime"</span>]).total_seconds() <span class="op">/</span> <span class="dv">60</span></span>
-<span id="cb13-5"><a href="#cb13-5" tabindex="-1" aria-label="code-block-13-5"></a>    <span class="co"># ProcessingStartTime -&gt; ProcessingEndTime: the script running, billed by the second</span></span>
-<span id="cb13-6"><a href="#cb13-6" tabindex="-1" aria-label="code-block-13-6"></a>    billed <span class="op">=</span> (d[<span class="st">"ProcessingEndTime"</span>] <span class="op">-</span> d[<span class="st">"ProcessingStartTime"</span>]).total_seconds() <span class="op">/</span> <span class="dv">60</span></span>
-<span id="cb13-7"><a href="#cb13-7" tabindex="-1" aria-label="code-block-13-7"></a>    cost <span class="op">=</span> billed <span class="op">/</span> <span class="dv">60</span> <span class="op">*</span> price_per_hour</span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1" aria-label="code-block-13-8"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>job_name<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>d[<span class="st">'ProcessingJobStatus'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb13-9"><a href="#cb13-9" tabindex="-1" aria-label="code-block-13-9"></a>    <span class="bu">print</span>(<span class="ss">f"  wall-clock:                </span><span class="sc">{</span>provisioning <span class="op">+</span> billed<span class="sc">:.1f}</span><span class="ss"> min from launch to end"</span>)</span>
-<span id="cb13-10"><a href="#cb13-10" tabindex="-1" aria-label="code-block-13-10"></a>    <span class="bu">print</span>(<span class="ss">f"  provisioning (not billed): </span><span class="sc">{</span>provisioning<span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
-<span id="cb13-11"><a href="#cb13-11" tabindex="-1" aria-label="code-block-13-11"></a>    <span class="bu">print</span>(<span class="ss">f"  billed window:             </span><span class="sc">{</span>billed<span class="sc">:.1f}</span><span class="ss"> min at $</span><span class="sc">{</span>price_per_hour<span class="sc">}</span><span class="ss">/h = $</span><span class="sc">{</span>cost<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
-<span id="cb13-12"><a href="#cb13-12" tabindex="-1" aria-label="code-block-13-12"></a>    <span class="bu">print</span>(<span class="ss">f"  output:                    </span><span class="sc">{</span>d[<span class="st">'ProcessingOutputConfig'</span>][<span class="st">'Outputs'</span>][<span class="dv">0</span>][<span class="st">'S3Output'</span>][<span class="st">'S3Uri'</span>]<span class="sc">}</span><span class="ss">"</span>)   <span class="co"># where the job's files went</span></span>
-<span id="cb13-13"><a href="#cb13-13" tabindex="-1" aria-label="code-block-13-13"></a>    <span class="cf">return</span> cost</span>
-<span id="cb13-14"><a href="#cb13-14" tabindex="-1" aria-label="code-block-13-14"></a></span>
-<span id="cb13-15"><a href="#cb13-15" tabindex="-1" aria-label="code-block-13-15"></a>total <span class="op">=</span> job_cost(embedding_processor.latest_job.job_name, <span class="fl">1.41</span>)</span>
-<span id="cb13-16"><a href="#cb13-16" tabindex="-1" aria-label="code-block-13-16"></a>total <span class="op">+=</span> job_cost(rag_processor.latest_job.job_name, <span class="fl">1.41</span>)</span>
-<span id="cb13-17"><a href="#cb13-17" tabindex="-1" aria-label="code-block-13-17"></a><span class="bu">print</span>(<span class="ss">f"GPU total for the episode: $</span><span class="sc">{</span>total<span class="sc">:.2f}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1" aria-label="code-block-12-1"></a><span class="kw">def</span> job_cost(job_name: <span class="bu">str</span>, price_per_hour: <span class="bu">float</span>):</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1" aria-label="code-block-12-2"></a>    d <span class="op">=</span> session.sagemaker_client.describe_processing_job(ProcessingJobName<span class="op">=</span>job_name)   <span class="co"># the record SageMaker keeps for the job</span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1" aria-label="code-block-12-3"></a>    <span class="co"># CreationTime -&gt; ProcessingStartTime: provisioning the instance, not billed</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1" aria-label="code-block-12-4"></a>    provisioning <span class="op">=</span> (d[<span class="st">"ProcessingStartTime"</span>] <span class="op">-</span> d[<span class="st">"CreationTime"</span>]).total_seconds() <span class="op">/</span> <span class="dv">60</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1" aria-label="code-block-12-5"></a>    <span class="co"># ProcessingStartTime -&gt; ProcessingEndTime: the script running, billed by the second</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1" aria-label="code-block-12-6"></a>    billed <span class="op">=</span> (d[<span class="st">"ProcessingEndTime"</span>] <span class="op">-</span> d[<span class="st">"ProcessingStartTime"</span>]).total_seconds() <span class="op">/</span> <span class="dv">60</span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1" aria-label="code-block-12-7"></a>    cost <span class="op">=</span> billed <span class="op">/</span> <span class="dv">60</span> <span class="op">*</span> price_per_hour</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1" aria-label="code-block-12-8"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>job_name<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>d[<span class="st">'ProcessingJobStatus'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1" aria-label="code-block-12-9"></a>    <span class="bu">print</span>(<span class="ss">f"  wall-clock:                </span><span class="sc">{</span>provisioning <span class="op">+</span> billed<span class="sc">:.1f}</span><span class="ss"> min from launch to end"</span>)</span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1" aria-label="code-block-12-10"></a>    <span class="bu">print</span>(<span class="ss">f"  provisioning (not billed): </span><span class="sc">{</span>provisioning<span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1" aria-label="code-block-12-11"></a>    <span class="bu">print</span>(<span class="ss">f"  billed window:             </span><span class="sc">{</span>billed<span class="sc">:.1f}</span><span class="ss"> min at $</span><span class="sc">{</span>price_per_hour<span class="sc">}</span><span class="ss">/h = $</span><span class="sc">{</span>cost<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1" aria-label="code-block-12-12"></a>    <span class="bu">print</span>(<span class="ss">f"  output:                    </span><span class="sc">{</span>d[<span class="st">'ProcessingOutputConfig'</span>][<span class="st">'Outputs'</span>][<span class="dv">0</span>][<span class="st">'S3Output'</span>][<span class="st">'S3Uri'</span>]<span class="sc">}</span><span class="ss">"</span>)   <span class="co"># where the job's files went</span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1" aria-label="code-block-12-13"></a>    <span class="cf">return</span> cost</span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1" aria-label="code-block-12-14"></a></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1" aria-label="code-block-12-15"></a>total <span class="op">=</span> job_cost(embedding_processor.latest_job.job_name, <span class="fl">1.41</span>)</span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1" aria-label="code-block-12-16"></a>total <span class="op">+=</span> job_cost(rag_processor.latest_job.job_name, <span class="fl">1.41</span>)</span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1" aria-label="code-block-12-17"></a><span class="bu">print</span>(<span class="ss">f"GPU total for the episode: $</span><span class="sc">{</span>total<span class="sc">:.2f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <p>Expect the embedding job to bill 5-6 minutes (about
-<code>$0.13</code>) and the RAG job 15-20 minutes (about
-<code>$0.35</code>-<code>$0.50</code>), so roughly
-<code>$0.50</code>-<code>$0.65</code> of GPU time against the callout’s
-<code>$0.70</code>. In the RAG job’s log, the first 8-10 minutes of the
-billed window are pip and the download; the model loads for another
-minute; the remaining minutes are the questions, two generation calls
-each. So well over half of what you paid for was setup, which is the
-argument for a custom container (skip the pip) and for keeping an
+<code>$0.13</code>) and the RAG job about 15 minutes (about
+<code>$0.35</code>), so roughly <code>$0.50</code> of GPU time against
+the callout’s <code>$0.65</code>. In the RAG job’s log, the first 3-4
+minutes of the billed window are the download and the model load; the
+rest is the questions, two generation calls each. Setup is a third of
+what you paid for, which is the argument for keeping an
 <code>HF_HOME</code> cache on S3 (skip the download) once a job is run
 routinely. The Bedrock run of the same questions cost cents, and the
 self-hosted route is only justified here because the model is not in the
@@ -1181,10 +1189,10 @@ instance left running over a weekend (64 hours).</p>
 <div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
-after <code>ProcessingStartTime</code>, while it is still installing
-vLLM or downloading the weights. The status becomes <code>Stopped</code>
-(the failure reason reads <code>MaxRuntimeExceeded</code>), the output
-prefix is empty because the script never reached the point of writing
+after <code>ProcessingStartTime</code>, while it is still downloading or
+loading the weights. The status becomes <code>Stopped</code> (the
+failure reason reads <code>MaxRuntimeExceeded</code>), the output prefix
+is empty because the script never reached the point of writing
 <code>wattbot_solutions.csv</code>, and the bill is the full 600
 seconds: 600 / 3600 × <code>$1.41</code> ≈ <code>$0.24</code> for
 nothing. A cap has to leave room for the setup that precedes the work,

@@ -1138,14 +1138,13 @@ instances, <code>$0.010</code>).</p>
 <span id="cb20-29"><a href="#cb20-29" tabindex="-1" aria-label="code-block-20-29"></a>desc_2x <span class="op">=</span> job_cost_report(pytorch_estimator_2x.latest_training_job.name, prices[instance_type])</span>
 <span id="cb20-30"><a href="#cb20-30" tabindex="-1" aria-label="code-block-20-30"></a><span class="bu">print</span>(<span class="ss">f"Single-instance job billed </span><span class="sc">{</span>desc_cpu[<span class="st">'BillableTimeInSeconds'</span>]<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min; two-instance job billed </span><span class="sc">{</span>desc_2x[<span class="st">'BillableTimeInSeconds'</span>]<span class="op">*</span><span class="dv">2</span><span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span></code></pre>
 </div>
-<p>Look at the job’s log in CloudWatch, the AWS logging service
-introduced in the last episode (<a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training" class="external-link">Training
-jobs</a> in the SageMaker console, your job, <strong>View
-logs</strong>): there are two log streams, <code>algo-1</code> and
-<code>algo-2</code>, and each one prints all 1000 epochs. The wall-clock
-time is about the same as the single-instance run (slightly longer, if
-anything, because two instances have to be provisioned), and the
-billable minutes are double.</p>
+<p>Look at the job’s log: open <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training" class="external-link">Training
+jobs</a>, click the job’s name, scroll to <strong>Monitor</strong>,
+click <strong>View logs</strong>. This time CloudWatch lists two
+streams, <code>algo-1</code> and <code>algo-2</code>, and each one
+prints all 1000 epochs. The wall-clock time is about the same as the
+single-instance run (slightly longer, if anything, because two instances
+have to be provisioned), and the billable minutes are double.</p>
 <div id="what-distributed-training-needs" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>

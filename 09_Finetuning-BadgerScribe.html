@@ -1589,8 +1589,9 @@ purpose, add a suffix to <code>training_job_name</code>
 <code>wait=True</code> (the default) blocks the notebook until the
 job ends and streams its log here. For a 25-minute job that is the right
 choice: you cannot accidentally queue a second launch while you wait,
-and everything worth doing in the meantime happens in the console, not
-in this notebook.</li>
+and everything worth doing in the meantime happens on the job’s page
+under <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training" class="external-link">Training
+jobs</a>, not in this notebook.</li>
 </ul><p>The second input channel, <code>model</code>, is the copy of
 CHURRO-3B your instructor staged in the shared bucket: SageMaker mounts
 it at <code>/opt/ml/input/data/model</code> and the script loads from
@@ -1637,13 +1638,14 @@ immediately; the cents already spent are not a reason to let it run.</p>
 AI → Training → <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training" class="external-link">Training
 jobs</a></strong>. Find your job and watch its status move through
 <code>Starting</code>, <code>Downloading</code>, <code>Training</code>,
-<code>Uploading</code>, <code>Completed</code>. The job page shows the
-instance type, the <code>max_run</code> you set, the tags, and a link to
-the job’s log in CloudWatch (the AWS logging service, where every
-<code>print()</code> from the script goes). The log is the same text the
-notebook cell is streaming, but it stays available after the kernel is
-gone, which is what you will use when a job you launched yesterday fails
-overnight.</p>
+<code>Uploading</code>, <code>Completed</code>. Click the job’s name.
+Its page shows the instance type, the <code>max_run</code> you set, the
+tags, and under <strong>Monitor</strong> a <strong>View logs</strong>
+button that opens CloudWatch, the AWS service that stores every job’s
+printed output; click the one stream listed, named after the job. It is
+the same text the notebook cell is streaming, but it stays available
+after the kernel is gone, which is what you will use when a job you
+launched yesterday fails overnight.</p>
 <p>Things to find in the log while you wait:</p>
 <ul><li>
 <code>pages: 295 total -&gt; 251 train / 44 holdout</code>: the
@@ -2196,9 +2198,9 @@ wrote down before the four-pass run.</p>
 </div>
 </section><section><h2 class="section-heading" id="cleanup">Cleanup<a class="anchor" aria-label="anchor" href="#cleanup"></a></h2>
 <hr class="half-width"><ul><li>The training and processing jobs have already ended; there is
-nothing to stop. Check <strong>Training jobs</strong> and
-<strong>Processing jobs</strong> in the console anyway: nothing should
-say <code>InProgress</code>.</li>
+nothing to stop. Check <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training" class="external-link">Training
+jobs</a> and <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs" class="external-link">Processing
+jobs</a> anyway: nothing should say <code>InProgress</code>.</li>
 <li>Delete what you no longer need from
 <code>s3://&lt;your-bucket&gt;/badger-scribe/</code> (the
 <code>models/</code> and <code>predictions/</code> prefixes). The
