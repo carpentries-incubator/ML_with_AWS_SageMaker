@@ -26,7 +26,7 @@ Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/05_Interacting-with-co
 This episode is **optional self-study**: it is not needed to run the rest of the lesson, but it is the workflow you will want once you start writing code of your own in SageMaker. It also doubles as a short git refresher. You need a GitHub account for it; nothing else in the lesson does.
 
 ## Step 0: What we are versioning, and where
-So far every notebook you have run came from the lesson repository, which you cloned read-only in the Accessing S3 episode. You cannot push to that repository. This episode sets up the usual situation instead: **your own work in your own repository**. We will create an empty repository on GitHub, make a matching folder on the notebook instance, copy a notebook into it, and push.
+So far every notebook you have run came from the lesson repository, which you cloned read-only in the notebooks-as-controllers episode. You cannot push to that repository. This episode sets up the usual situation instead: **your own work in your own repository**. We will create an empty repository on GitHub, make a matching folder on the notebook instance, copy a notebook into it, and push.
 
 1. On GitHub, click **New repository** (the **+** in the top-right corner). Name it `sagemaker-work` (any name is fine; the cells below use this one). Leave it **Public** or make it **Private**, as you prefer. Tick **Add a README file** so the repository is not empty, which gives Step 6 a pull with something in it. Click **Create repository**.
 2. Back in JupyterLab, make the folder on the instance and turn it into a git repository. We put it under `/home/ec2-user/SageMaker/`, the one directory that survives stopping the instance.

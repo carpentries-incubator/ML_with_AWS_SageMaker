@@ -84,7 +84,7 @@ For a full catalog of available models (including Claude variants, Amazon models
 
 ## Notebook + dataset setup
 
-For this episode you need a SageMaker notebook instance, but **not a GPU one**. A small CPU instance such as `ml.t3.medium` is enough, because the models run on Bedrock rather than in the notebook. The notebook's execution role must allow Bedrock access; the exact permissions are listed in the "Permissions and verification" callout below.
+For this episode you need a SageMaker notebook instance, but **not a GPU one**. A small CPU instance such as `ml.t3.medium` is enough, because the models run on Bedrock rather than in the notebook. The notebook's execution role must allow Bedrock access, which the default SageMaker role does not. On the class account that is the `ml-sagemaker-bedrock-use` role you picked when creating the notebook instance. If your instance was created with the older `ml-sagemaker-use` role, the first Bedrock call fails with an access-denied error: stop the instance, choose **Edit**, change the IAM role, and start it again. On your own account, attach the policy in the "Permissions and verification" callout below to your role before starting.
 
 See [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for further guidance on instance types.
 
@@ -106,60 +106,67 @@ If there is no instructor-staged bucket, stage the three input files in your own
 
 ### Step 1 – Configure the notebook
 
-Imports, then a SageMaker session, the region and role, an S3 client and a Bedrock client, then the bucket names and the local folder the data is cached in.
+Three things are new here compared with the training episodes, so the setup is split into four cells.
+
+The session, region and S3 client are as before.
 
 ```python
 import os
 import json
+import time
 from typing import Dict, Any, List
 from pathlib import Path
 
 import boto3
-import time
 from botocore.config import Config
 from botocore.exceptions import ClientError
 import pandas as pd
 import numpy as np
-
-# ---- AWS configuration ----
 import sagemaker
 
 session = sagemaker.Session()
 region = session.boto_region_name
+s3 = boto3.client("s3", region_name=region)
+```
 
-# Base model IDs. These are the models we want to call, but we will NOT pass
-# them to the runtime directly -- see "Cost tracking" below for why.
-# Any chat model in the Bedrock catalog works here (e.g. a Claude or Llama model ID)
+**The models.** RAG needs two: an embedding model, which turns a piece of text into a vector so that similar passages land near each other, and a generation model, the chat model that writes the answer from the passages it is given. Both are catalog models on Bedrock, named by a model ID. We write the IDs down now but will not call them by these IDs directly: the cost-tracking step below wraps each one in a tagged inference profile first, because that is the only way Bedrock spend gets attributed to a project.
+
+```python
+# Base model IDs. Any chat model in the Bedrock catalog works as the generator (a Claude or Llama ID, say),
 # because we call it through the provider-neutral `converse` API.
-base_generation_model_id = "deepseek.v3-v1:0"
-base_embedding_model_id = "amazon.titan-embed-text-v2:0"
+base_generation_model_id = "deepseek.v3-v1:0"             # writes the answers
+base_embedding_model_id = "amazon.titan-embed-text-v2:0"  # turns text into vectors for retrieval
+```
 
-# Buckets: the shared one is read-only (inputs); yours receives everything derived.
+**The files.** The inputs live in the shared bucket: the paper list, the questions with their answers, and the zipped corpus of PDFs. Everything this episode derives from them goes to your own bucket, under the same `wattbot/` prefix: the chunked text, the chunk embeddings, and the answers the pipeline produces.
+
+```python
 shared_bucket = "ml-marathon-shared"   # the instructor-staged, read-only bucket with the data and model weights; change only on your own account
 bucket_name = "sinkorswim-doejohn"     # <-- EDIT ME: your own bucket from the S3 episode
 
-# Keys in the shared bucket (inputs) and in your bucket (derived artifacts)
-metadata_key = "wattbot/metadata.csv"
-train_key = "wattbot/train_QA.csv"
-corpus_key = "wattbot/corpus.zip"
-chunks_key = "wattbot/chunks.jsonl"                         # written to YOUR bucket at the end of chunking
-embeddings_key = "wattbot/embeddings/embeddings_bedrock.npy"  # YOUR bucket
-solutions_key = "wattbot/solutions/wattbot_solutions_bedrock.csv"  # YOUR bucket
+# inputs, in the shared bucket
+metadata_key = "wattbot/metadata.csv"      # one row per paper: id, title, url
+train_key = "wattbot/train_QA.csv"         # the questions, with reference answers for scoring
+corpus_key = "wattbot/corpus.zip"          # the PDFs, one per paper
 
-# Local working directory in the notebook instance
-local_data_dir = "./data"
+# derived, written to YOUR bucket
+chunks_key = "wattbot/chunks.jsonl"                                # the corpus cut into passages (end of the chunking step)
+embeddings_key = "wattbot/embeddings/embeddings_bedrock.npy"       # one vector per chunk
+solutions_key = "wattbot/solutions/wattbot_solutions_bedrock.csv"  # the pipeline's answers, in the competition's format
+
+local_data_dir = "./data"              # working copies on this notebook instance
 os.makedirs(local_data_dir, exist_ok=True)
+```
 
-# AWS clients. On-demand Bedrock throughput is rate-limited per model, so a long loop of
-# calls will occasionally be throttled; the adaptive retry mode backs off and retries
-# instead of raising, which is what we want for a few thousand embedding calls.
-s3 = boto3.client("s3", region_name=region)
+**Two Bedrock clients.** Bedrock has two APIs. `bedrock-runtime` is the one that calls models (`converse` for chat, `invoke_model` for embeddings); it is what every answer and every embedding in this episode goes through. `bedrock` is the control plane: listing models, creating the inference profiles that carry our tags. The runtime client gets a retry setting because on-demand Bedrock throughput is rate-limited per model: a loop of a few thousand embedding calls will occasionally be throttled, and the adaptive mode backs off and retries instead of raising.
+
+```python
 bedrock_runtime = boto3.client(
     "bedrock-runtime",
     region_name=region,
-    config=Config(retries={"max_attempts": 10, "mode": "adaptive"}),
-)                                                                      # the client that calls models (invoke_model, converse)
-bedrock = boto3.client("bedrock", region_name=region)                  # the control-plane client (list models, inference profiles)
+    config=Config(retries={"max_attempts": 10, "mode": "adaptive"}),   # back off and retry when throttled
+)
+bedrock = boto3.client("bedrock", region_name=region)                  # control plane: list models, create inference profiles
 ```
 
 ### Step 2 – Get the shared WattBot helpers
@@ -512,20 +519,32 @@ def get_or_create_inference_profile(base_model_id: str, label: str) -> str:
     """Return the ARN of a tagged application inference profile for base_model_id."""
     profile_name = f"{_slug(project)}-{_slug(name)}-{label}"
 
-    # Reuse an existing profile with this name, if any
-    paginator = bedrock.get_paginator("list_inference_profiles")
-    for page in paginator.paginate(typeEquals="APPLICATION"):
-        for summary in page["inferenceProfileSummaries"]:
-            if summary["inferenceProfileName"] == profile_name:
-                print(f"Reusing inference profile {profile_name}: {summary['inferenceProfileArn']}")
-                return summary["inferenceProfileArn"]
+    try:
+        # Reuse an existing profile with this name, if any
+        paginator = bedrock.get_paginator("list_inference_profiles")
+        for page in paginator.paginate(typeEquals="APPLICATION"):
+            for summary in page["inferenceProfileSummaries"]:
+                if summary["inferenceProfileName"] == profile_name:
+                    print(f"Reusing inference profile {profile_name}: {summary['inferenceProfileArn']}")
+                    return summary["inferenceProfileArn"]
 
-    resp = bedrock.create_inference_profile(
-        inferenceProfileName=profile_name,
-        description=f"{project} / {name} WattBot RAG ({label}) -> {base_model_id}",
-        modelSource={"copyFrom": _source_arn(base_model_id)},   # the profile is an alias for one base model
-        tags=profile_tags,   # usage billed through the profile carries these tags; raw model-ID calls carry none
-    )
+        resp = bedrock.create_inference_profile(
+            inferenceProfileName=profile_name,
+            description=f"{project} / {name} WattBot RAG ({label}) -> {base_model_id}",
+            modelSource={"copyFrom": _source_arn(base_model_id)},   # the profile is an alias for one base model
+            tags=profile_tags,   # usage billed through the profile carries these tags; raw model-ID calls carry none
+        )
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "AccessDeniedException":
+            role = boto3.client("sts").get_caller_identity()["Arn"]
+            raise PermissionError(
+                f"This notebook's role has no Bedrock permissions ({role}).\n"
+                "The Bedrock episode needs the policy in the 'Permissions and verification' callout attached to the "
+                "notebook's execution role. On the class account, the instance must use the ml-sagemaker-bedrock-use role: "
+                "stop it, Edit, change the IAM role, start it again. On your own account, attach the policy to your role. "
+                "Nothing to change in this notebook; rerun this cell afterwards."
+            ) from e
+        raise
     print(f"Created inference profile {profile_name}: {resp['inferenceProfileArn']}")
     return resp["inferenceProfileArn"]
 
@@ -539,7 +558,41 @@ embedding_model_id_bedrock = get_or_create_inference_profile(base_embedding_mode
 
 ### Permissions and verification
 
-- The notebook's execution role needs `bedrock:CreateInferenceProfile`, `bedrock:GetInferenceProfile`, `bedrock:ListInferenceProfiles`, `bedrock:GetFoundationModel`, and `bedrock:TagResource` in addition to `bedrock:InvokeModel`. The `InvokeModel` permission must cover **both** the profile ARN and the underlying model ARN, or calls through the profile are denied. If `create_inference_profile` raises `AccessDeniedException`, ask the account administrator for these permissions rather than falling back to the raw model ID.
+- The notebook's execution role needs the policy below (fill in `<account-id>`): calling models, managing tagged inference profiles, and reading the catalog. The `InvokeModel` permission must cover **both** the profile ARN and the underlying model ARN, or calls through the profile are denied. If the cell above stops with an `AccessDeniedException`, ask the account administrator to attach this policy to the role rather than falling back to the raw model ID.
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "BedrockCallModels",
+      "Effect": "Allow",
+      "Action": ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream", "bedrock:Converse", "bedrock:ConverseStream"],
+      "Resource": [
+        "arn:aws:bedrock:*::foundation-model/*",
+        "arn:aws:bedrock:*:<account-id>:application-inference-profile/*",
+        "arn:aws:bedrock:*:<account-id>:inference-profile/*"
+      ]
+    },
+    {
+      "Sid": "BedrockTaggedProfiles",
+      "Effect": "Allow",
+      "Action": ["bedrock:CreateInferenceProfile", "bedrock:GetInferenceProfile", "bedrock:ListInferenceProfiles",
+                 "bedrock:DeleteInferenceProfile", "bedrock:TagResource", "bedrock:ListTagsForResource"],
+      "Resource": [
+        "arn:aws:bedrock:*:<account-id>:application-inference-profile/*",
+        "arn:aws:bedrock:*:<account-id>:inference-profile/*"
+      ]
+    },
+    {
+      "Sid": "BedrockCatalog",
+      "Effect": "Allow",
+      "Action": ["bedrock:GetFoundationModel", "bedrock:ListFoundationModels", "bedrock:ListInferenceProfiles"],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
 - You can confirm the routing in the Bedrock console under **Inference and Assessment → Cross-region inference → Application inference profiles**, or with `bedrock.list_inference_profiles(typeEquals="APPLICATION")`.
 - Tags only become filters in Cost Explorer once the tag keys have been **activated as cost allocation tags** in the Billing console (an account‑admin, once‑per‑key action; on a shared workshop account the organizers do this). Until then the tags exist on the resource but do not show up on reports.
 - The profile itself has no hourly or storage charge. You only pay per token, exactly as before.

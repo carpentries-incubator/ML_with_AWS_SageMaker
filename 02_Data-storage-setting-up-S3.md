@@ -182,7 +182,7 @@ Once the bucket is created, the console opens the new bucket's page (a green "Su
 
 What the policy says, line by line:
 
-- **Principal** is *who* gets access. SageMaker never acts as you; it acts as an IAM **role** attached to your notebook instance and to every job you launch (the *execution role*). In the workshop account there are two: `ml-sagemaker-use`, which the notebook and jobs use, and `ml-sagemaker-bedrock-use`, used in the Bedrock episode. The `<account-id>` is the 12-digit number shown next to the account name at the top right of the console.
+- **Principal** is *who* gets access. SageMaker never acts as you; it acts as an IAM **role** attached to your notebook instance and to every job you launch (the *execution role*). In the workshop account there are two: `ml-sagemaker-bedrock-use`, which you will pick when you create your notebook instance in the next episode and which every job inherits, and the older SageMaker-only `ml-sagemaker-use`, listed so that a notebook created with it still reads the bucket. The `<account-id>` is the 12-digit number shown next to the account name at the top right of the console.
 - **Action** is *what* they may do: read objects, write objects, delete objects, list the bucket's contents, and list the parts of a large upload in progress.
 - **Resource** is *where*: the bucket itself (for listing) and everything in it (`/*`, for the object actions).
 

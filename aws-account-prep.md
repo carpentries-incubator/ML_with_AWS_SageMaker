@@ -120,7 +120,7 @@ What each statement does, and what it costs you:
 - **OnlyLessonInstanceTypes** refuses any job or notebook whose instance type is not on the list. The list must match the quota table above exactly, including the capacity fallbacks; a type you forget here fails for every learner at once, from the console too. Keep `ml.g6e.xlarge` on the list only if you want the optional GPU-notebook episode to be possible.
 - **The three tag statements** refuse a job or notebook created without each of the cost-allocation keys. Every estimator, processor and tuner in the lesson passes all three, and the console's notebook-instance form has the tags field the S3 and controllers episodes fill in, so nothing in the lesson is affected; a learner who deletes the `tags=` line gets an `AccessDeniedException` instead of an unattributed bill. Tuning-job child jobs are created by the SageMaker service with the tuner's tags propagated, so they pass.
 
-Three cautions. Test the policy with one job of each kind (training, processing, tuning, notebook creation from the console) a week before class, from a learner-level sign-in, not an administrator one. Second, the role the notebook instance assumes (`ml-sagemaker-use`) is a separate identity from the permission set; what the SDK does from inside a notebook is governed by that role's policy, so attach the same denies there, or the guard rail only covers the laptop. Third, set the permission set's session duration to the length of a class day (8 hours) so a CLI login does not expire mid-episode; it is on the permission set's **General settings**.
+Three cautions. Test the policy with one job of each kind (training, processing, tuning, notebook creation from the console) a week before class, from a learner-level sign-in, not an administrator one. Second, the role the notebook instance assumes (`ml-sagemaker-bedrock-use`) is a separate identity from the permission set; what the SDK does from inside a notebook is governed by that role's policy, so attach the same denies there, or the guard rail only covers the laptop. Third, set the permission set's session duration to the length of a class day (8 hours) so a CLI login does not expire mid-episode; it is on the permission set's **General settings**.
 
 ## Bedrock
 
@@ -128,7 +128,41 @@ Console: **Service Quotas → Amazon Bedrock**, and **Bedrock → Model access**
 
 - Enable model access for the two models the Bedrock episode uses: `deepseek.v3-v1:0` (generation) and `amazon.titan-embed-text-v2:0` (embeddings).
 - Request increases to the **tokens per minute** and **requests per minute** quotas for both. Fifty notebooks each embedding ~3,000 chunks in a loop will exceed the default embedding RPM; ask for 5–10x whatever the console shows.
-- The student execution role needs, in addition to `bedrock:InvokeModel`: `bedrock:CreateInferenceProfile`, `bedrock:GetInferenceProfile`, `bedrock:ListInferenceProfiles`, `bedrock:GetFoundationModel`, `bedrock:TagResource`. `InvokeModel` must be allowed on **both** the application inference profile ARN and the underlying model ARN. Without these, profile creation fails and students fall back to untagged calls, which is the usual reason Bedrock spend shows up untagged.
+- **The learner execution role needs Bedrock permissions**, and the default SageMaker role has none: the Bedrock episode's first Bedrock call fails with `AccessDeniedException ... bedrock:ListInferenceProfiles` until they are added. On the UW account the role `ml-sagemaker-bedrock-use` carries them and the controller-notebook episode tells learners to pick it; the older `ml-sagemaker-use` does not, and a notebook created with it has to be stopped and re-pointed at the right role. Elsewhere, attach the policy below as an inline policy on whatever role the notebooks run with, with `<account-id>` filled in. `InvokeModel` must be allowed on **both** the application inference profile ARN and the underlying foundation-model ARN, or calls through the profile are denied; `DeleteInferenceProfile` is for the cleanup episode.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "BedrockCallModels",
+      "Effect": "Allow",
+      "Action": ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream", "bedrock:Converse", "bedrock:ConverseStream"],
+      "Resource": [
+        "arn:aws:bedrock:*::foundation-model/*",
+        "arn:aws:bedrock:*:<account-id>:application-inference-profile/*",
+        "arn:aws:bedrock:*:<account-id>:inference-profile/*"
+      ]
+    },
+    {
+      "Sid": "BedrockTaggedProfiles",
+      "Effect": "Allow",
+      "Action": ["bedrock:CreateInferenceProfile", "bedrock:GetInferenceProfile", "bedrock:ListInferenceProfiles",
+                 "bedrock:DeleteInferenceProfile", "bedrock:TagResource", "bedrock:ListTagsForResource"],
+      "Resource": [
+        "arn:aws:bedrock:*:<account-id>:application-inference-profile/*",
+        "arn:aws:bedrock:*:<account-id>:inference-profile/*"
+      ]
+    },
+    {
+      "Sid": "BedrockCatalog",
+      "Effect": "Allow",
+      "Action": ["bedrock:GetFoundationModel", "bedrock:ListFoundationModels", "bedrock:ListInferenceProfiles"],
+      "Resource": "*"
+    }
+  ]
+}
+```
 
 ## Cost allocation tags
 

@@ -17,7 +17,6 @@ s3://<shared-bucket>/
         sample_submission.csv  transcription_conventions.md
         images/<page_id>.jpg
         model/churro-3B/       the CHURRO-3B weights, copied once from Hugging Face (~7.5 GB)
-        instructor/full-run/   train_summary.json, eval_before.csv, eval_after.csv
 ```
 
 The RAG and fine-tuning episodes have `shared_bucket = "ml-marathon-shared"` filled in. Stage under that name and there is nothing to tell learners; stage under another and they change that line in the first cell.
@@ -46,7 +45,7 @@ If the bucket already exists (created in the console, or left from last term), `
 
 ## 2. Make it readable by the learner roles
 
-Learners reach the bucket through two execution roles: `ml-sagemaker-use` on notebook instances and training jobs, and `ml-sagemaker-bedrock-use` in the Bedrock episode. This policy lets both read and list, and nothing else. `s3:ListBucket` is required because a training job's input channel lists the prefix before downloading it. No `PutObject`: learners never write here.
+Learners reach the bucket through the execution role their notebook instance and jobs assume: `ml-sagemaker-bedrock-use`, which the episodes tell them to pick, or the older SageMaker-only `ml-sagemaker-use` if a notebook was created with it. This policy lets both read and list, and nothing else. `s3:ListBucket` is required because a training job's input channel lists the prefix before downloading it. No `PutObject`: learners never write here.
 
 ```bash
 cat > /tmp/policy.json <<JSON
@@ -146,11 +145,7 @@ cd / && rm -rf /tmp/stage
 
 Expect three files under `wattbot/`, the CSVs plus `images/` under `badger-scribe/`, and the config, tokenizer and safetensors files under `model/churro-3B/`.
 
-## 7. The instructor's full run
-
-Still by hand: run the fine-tuning episode's homework estimator once and copy `train_summary.json`, `eval_before.csv` and `eval_after.csv` from its `model.tar.gz` to `s3://$BUCKET/badger-scribe/instructor/full-run/`.
-
-## 8. Keep it, or rebuild it
+## 7. Keep it, or rebuild it
 
 The end-of-workshop cleanup (`instructors/instructor-notes.md`, aws-nuke) deletes every S3 bucket in the account unless excluded. The committed `nuke-config.yml` excludes `ml-marathon-shared`; if you named the bucket differently, change the filter there or accept that it goes and redo steps 1 to 6 next term. Storage is ~130 MB for Badger Scribe plus the WattBot corpus, and ~7.5 GB for the model copy: well under a dollar a month.
 
