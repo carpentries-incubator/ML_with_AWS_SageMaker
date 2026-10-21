@@ -42,6 +42,7 @@ sm = session.sagemaker_client
 region = session.boto_region_name
 
 name = "DoeJohn"                              # replace with your name, as used in job names and tags
+project = "SinkOrSwim"                        # replace with your challenge name, as used in the Bedrock profile names
 bucket_name = "sinkorswim-doejohn"            # replace with your bucket
 ```
 
@@ -77,10 +78,26 @@ And the Bedrock inference profiles, which cost nothing to keep but are yours to 
 
 ```python
 bedrock = boto3.client("bedrock", region_name=region)
-profiles = [p for p in bedrock.list_inference_profiles(typeEquals="APPLICATION")["inferenceProfileSummaries"] if name in p["inferenceProfileName"]]
+mine = f"{project}-{name}-"   # the Bedrock episode named every profile <project>-<name>-<label>, so this prefix is yours and nobody else's
+profiles = [p for p in bedrock.list_inference_profiles(typeEquals="APPLICATION")["inferenceProfileSummaries"]
+            if p["inferenceProfileName"].startswith(mine)]
 for p in profiles:
     print(p["inferenceProfileName"], p["inferenceProfileArn"])
-print("none" if not profiles else f"{len(profiles)} profile(s); delete with bedrock.delete_inference_profile(inferenceProfileIdentifier=<arn>)")
+print("none" if not profiles else f"{len(profiles)} profile(s) with your prefix; the next cell deletes them")
+```
+
+Deleting them is one call per profile. The cell deletes only the profiles the cell above listed, the ones whose name starts with your project and your name, so nobody else's are touched even though the account's policy would allow it; read the list before you set the flag. The notebook instance needs the Bedrock role from the RAG episodes for this call; on the old role it fails with an access-denied error, and the Bedrock console does the same job by hand (Inference and Assessment → Cross-region inference → Application inference profiles → select → Delete).
+
+```python
+confirm_delete = False   # set to True after reading the list above
+
+if confirm_delete:
+    for p in profiles:
+        bedrock.delete_inference_profile(inferenceProfileIdentifier=p["inferenceProfileArn"])
+        print("deleted", p["inferenceProfileName"])
+    profiles = []
+else:
+    print("nothing deleted; set confirm_delete = True and rerun to delete the profiles listed above")
 ```
 
 Now the console steps. Rerun the cells above when you are done; every list should be empty or Stopped.
@@ -132,7 +149,7 @@ Managing your AWS expenses is vital to staying within budget. Follow these steps
 3. **Use tags for cost tracking:**
    - Refer to the tags you set up earlier in the workshop. Remember that tags never propagate between resources: your notebook instance, each S3 bucket, each training/tuning/Processing job, and each Bedrock application inference profile carries its own tags, and anything you launched without tags is untraceable after the fact.
    - Only the three approved keys count on the bill, `Name`, `Project` and `Purpose`, spelled exactly (the S3 episode says why); a tag you just added can take up to 24 hours to appear in Cost Explorer.
-   - Bedrock application inference profiles cost nothing to keep, but you can delete the ones you created from the Bedrock console or with `bedrock.delete_inference_profile(...)` once a project is finished.
+   - Bedrock application inference profiles cost nothing to keep, but delete the ones you created once a project is finished; the cells at the top of this episode do it for the ones carrying your name.
 
 ## End-of-workshop checklist
 
@@ -142,7 +159,7 @@ Work through this list before you sign off for the last time.
 - **S3 bucket**: empty and delete your `challenge-lastnamefirstname` bucket (S3 → select bucket → Empty, then Delete). Download anything you want to keep first, once: egress is `$0.09`/GB. Leave the shared data bucket alone; it is the instructors'.
 - **Default SDK bucket** `sagemaker-<region>-<account-id>`: created automatically the first time a job staged its code. In the shared account the instructors delete it; on your own account, empty and delete it with the rest.
 - **Training, tuning and Processing jobs**: confirm none are still running (SageMaker → each job list, filter by status *InProgress*). Completed jobs hold no billable resource; their artifacts are in your bucket and go with it.
-- **Bedrock application inference profiles**: delete the ones you created (from the Bedrock console, or with `bedrock.delete_inference_profile(...)` as shown in the RAG on Bedrock episode).
+- **Bedrock application inference profiles**: delete the ones you created, with the two cells at the top of this episode (they list and delete only the profiles named with your project and your name) or from the Bedrock console.
 - **GitHub personal access token**: revoke it on GitHub (Settings → Developer settings → Personal access tokens) if you made one for the optional PAT episode.
 
 Every stop and delete in this list has a one-line CLI equivalent; the optional episode *The Same Jobs from the Terminal* collects them, for the day you need to stop something from a machine with no browser.
@@ -180,7 +197,7 @@ A complete list for someone who did every episode, including the optional ones:
 | The SDK's default bucket `sagemaker-<region>-<account-id>` (code tarballs staged by every `fit()` and `run()`) | Training episode, automatically | Yes, a little: storage per GB-month, shared by the whole account | Instructors delete it at the end of term; on your own account, empty and delete it like any other bucket |
 | Controller notebook instance (`ml.t3.medium`) | Notebooks as controllers | Yes while InService; its volume bills while Stopped | SageMaker → Notebook instances → Stop → Delete |
 | Training jobs (XGBoost, PyTorch), tuning jobs, Processing jobs | Training, tuning, RAG and fine-tuning episodes | Only while running; all capped by `max_run` / `max_runtime_in_seconds` | SageMaker → job lists → Stop if InProgress; nothing to delete afterwards |
-| Bedrock application inference profiles | RAG on Bedrock | No (the calls billed per token when made) | Bedrock console or `bedrock.delete_inference_profile(...)` |
+| Bedrock application inference profiles | RAG on Bedrock | No (the calls billed per token when made) | The delete cell at the top of this episode, or the Bedrock console |
 | GPU notebook instance (`ml.g6e.xlarge`, 100 GB volume) | Optional GPU-notebook episode | Yes: `$2.61`/h InService, `$14`/month for the volume when Stopped | SageMaker → Notebook instances → Delete |
 | GitHub personal access token | Optional PAT episode | No, but it is a credential | GitHub → Settings → Developer settings → revoke |
 
