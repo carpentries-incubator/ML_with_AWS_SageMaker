@@ -58,7 +58,7 @@ The reason this is the default comes down to **how you are billed**:
 |---|---|---|
 | **Billing unit** | Per token processed | Per hour the instance exists |
 | **Cost while idle** | `$0` — nothing is running between calls | Full hourly rate, 24/7, whether or not you use it |
-| **What you must remember to do** | Nothing | Stop or delete the instance every time you finish |
+| **What you must remember to do** | Know the per-token price before a big batch; route calls through a tagged profile | Stop or delete the instance every time you finish |
 | **Model updates** | Managed by AWS / the provider | Your problem (containers, CUDA, VRAM) |
 | **Model choice** | Curated catalog (incl. proprietary models) | Any open‑weight model you can load |
 
@@ -105,6 +105,8 @@ Bedrock is not free of downsides; it's just that none of them are "you forgot an
 ## Approaches to Running RAG on AWS
 
 With that framing, here are the main patterns, ordered from "reach for this first" to "only when you really need it."
+
+![Four columns, Bedrock API, Processing job, GPU notebook and Inference endpoint, compared on where the model runs, what runs between calls, billing unit, latency, model choice, what you must remember, a cost example and which episode covers it; Bedrock is marked as the default and Processing jobs as the safe way to use a GPU](fig/rag-approaches.svg){alt="Comparison table of four ways to run RAG on AWS: Bedrock API (default, pay per token, nothing to shut down), Processing job (batch with open models, bills per second while the job runs, terminates itself), GPU notebook (learning and debugging only, bills per hour until stopped, about $90 if forgotten over a weekend) and Inference endpoint (steady traffic only, bills 24/7, about $1,000 if idle for a month)."}
 
 ### 1. Amazon Bedrock — managed embedding and generation APIs (default)
 

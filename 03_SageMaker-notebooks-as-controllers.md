@@ -71,16 +71,16 @@ We'll follow these steps to create our first "SageMaker notebook instance".
 - Click **Create notebook instance**.
 
 ### Load pre-filled Jupyter notebooks
-The new instance appears in the list with status `Pending`; after a few minutes it changes to `InService`. Once it does, click **Open JupyterLab** next to it. In JupyterLab, create a new notebook with the `conda_python3` kernel (we aren't training anything yet, so the plain Python environment is enough).
+The new instance appears in the list with status `Pending`. It takes three to five minutes to change to `InService`, and the **Open JupyterLab** link does not appear until it does; refreshing the page does not speed it up. Starting a stopped instance later takes about as long. Once it is `InService`, click **Open JupyterLab** next to it. In JupyterLab, create a new notebook with the `conda_python3` kernel (we aren't training anything yet, so the plain Python environment is enough).
 
 In the new notebook, run:
 
 ```sh
 !pwd
-!ls ..
+!ls
 ```
 
-The first line prints `/home/ec2-user/SageMaker`: new notebooks start in that folder. The second lists its parent, the instance's home directory, which holds AWS's own setup: the `anaconda3` folder with the conda environments behind the kernel list, AWS's `sample-notebooks`, and a pile of license files. `SageMaker/` is the one folder that is different. It is a separate disk, the volume whose size sits under **Additional configuration** on the create form (5 GB by default). Everything else in the home directory lives on the system disk and is reset when the instance stops; `SageMaker/` is the only place that survives a stop. JupyterLab's file browser opens there for that reason, and it is where everything in this lesson goes.
+The first line prints `/home/ec2-user/SageMaker`: new notebooks start in that folder. The second lists it, and the notebook you just created is the only thing there. `SageMaker/` is a separate disk, the volume whose size sits under **Additional configuration** on the create form (5 GB by default). The rest of the instance lives on the system disk and is reset when the instance stops; `SageMaker/` is the only place that survives a stop. JupyterLab's file browser opens there for that reason, and it is where everything in this lesson goes.
 
 Now clone the lesson repository into it:
 

@@ -81,10 +81,24 @@ We’ll work with **Amazon Bedrock–hosted foundation models** for both embeddi
 
 For a full catalog of available models (including Claude variants, Amazon models, and partner models), open the **Model catalog** in the Amazon Bedrock console. Each entry provides a model card with capabilities, typical use cases, and pricing details so learners can explore alternatives for their own RAG systems.
 
+::::::::::::::::::::::::::::::::::::: callout
+
+### Choosing the two models
+
+The catalog tells you what exists and what it costs; it does not tell you what is good. Three places do, and all three are free to read:
+
+- **Embedding models**: the [MTEB leaderboard](https://huggingface.co/spaces/mteb/leaderboard) scores embedding models on retrieval benchmarks. Filter to the retrieval task and your language; the top of the table changes every few months, and Titan V2 is a sound middle-of-the-pack choice that Bedrock serves without setup.
+- **Generation models**: [LMArena](https://lmarena.ai/) ranks chat models by blind human preference, and [Artificial Analysis](https://artificialanalysis.ai/) plots quality against price per million tokens, which is the chart that matters for RAG: the answer is written from retrieved text, so a mid-priced model often reads as well as a flagship at a tenth of the cost.
+- **Your own questions**: the benchmarks rank models on other people's data. `train_QA.csv` has labelled questions for this corpus, and the evaluation at the end of this episode scores a model on them and prices the run from its token counts. Changing `base_generation_model_id` and rerunning is the whole experiment. A model that wins on a leaderboard and loses on your questions has told you something the leaderboard cannot.
+
+The habit is the same as for instances: pick the cheapest candidate that scores well enough, measure it on your data, and move up only when the measurement says to.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
 
 ## Notebook + dataset setup
 
-For this episode you need a SageMaker notebook instance, but **not a GPU one**. A small CPU instance such as `ml.t3.medium` is enough, because the models run on Bedrock rather than in the notebook. The notebook's execution role must allow Bedrock access, which the default SageMaker role does not. On the class account that is the `ml-sagemaker-bedrock-use` role you picked when creating the notebook instance. If your instance was created with the older `ml-sagemaker-use` role, the first Bedrock call fails with an access-denied error: stop the instance, choose **Edit**, change the IAM role, and start it again. On your own account, attach the policy in the "Permissions and verification" callout below to your role before starting.
+For this episode you need a SageMaker notebook instance, but **not a GPU one**. A small CPU instance such as `ml.t3.medium` is enough, because the models run on Bedrock rather than in the notebook. The notebook's execution role must allow Bedrock access, which the default SageMaker role does not. On the class account that is the `ml-sagemaker-bedrock-use` role you picked when creating the notebook instance. If your instance was created with the older `ml-sagemaker-use` role, the first Bedrock call fails with an access-denied error: stop the instance, choose **Edit**, change the IAM role under *Permissions and encryption*, click **Update notebook instance**, and wait for the status to go from *Updating* back to *Stopped* (one to three minutes) before starting it. Reopening Edit during that wait shows the old role; the details page shows the new one once the update has landed. On your own account, attach the policy in the "Permissions and verification" callout below to your role before starting.
 
 See [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for further guidance on instance types.
 
@@ -129,13 +143,13 @@ region = session.boto_region_name
 s3 = boto3.client("s3", region_name=region)
 ```
 
-**The models.** RAG needs two: an embedding model, which turns a piece of text into a vector so that similar passages land near each other, and a generation model, the chat model that writes the answer from the passages it is given. Both are catalog models on Bedrock, named by a model ID. We write the IDs down now but will not call them by these IDs directly: the cost-tracking step below wraps each one in a tagged inference profile first, because that is the only way Bedrock spend gets attributed to a project.
+**The models.** RAG needs two: an embedding model, which turns a piece of text into a vector so that similar passages land near each other, and a generation model, the chat model that writes the answer from the passages it is given. Both are catalog models on Bedrock, named by a model ID; the [model catalog](https://us-east-2.console.aws.amazon.com/bedrock/home?region=us-east-2#/model-catalog) in the console lists everything available in the region with its ID and price, and the [supported models page](https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html) in the documentation is the same list as a table. Prices are per million tokens on the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/): in October 2026, DeepSeek V3 on demand is `$0.62` in and `$1.85` out, and Titan Text Embeddings V2 is `$0.02` in, which is why the whole WattBot run below costs cents. We write the IDs down now but will not call them by these IDs directly: the cost-tracking step below wraps each one in a tagged inference profile first, because that is the only way Bedrock spend gets attributed to a project.
 
 ```python
 # Base model IDs. Any chat model in the Bedrock catalog works as the generator (a Claude or Llama ID, say),
 # because we call it through the provider-neutral `converse` API.
-base_generation_model_id = "deepseek.v3-v1:0"             # writes the answers
-base_embedding_model_id = "amazon.titan-embed-text-v2:0"  # turns text into vectors for retrieval
+base_generation_model_id = "deepseek.v3-v1:0"             # writes the answers; $0.62 in / $1.85 out per million tokens (Oct 2026)
+base_embedding_model_id = "amazon.titan-embed-text-v2:0"  # turns text into vectors for retrieval; $0.02 per million tokens
 ```
 
 **The files.** The inputs live in the shared bucket: the paper list, the questions with their answers, and the zipped corpus of PDFs. Everything this episode derives from them goes to your own bucket, under the same `wattbot/` prefix: the chunked text, the chunk embeddings, and the answers the pipeline produces.
@@ -358,7 +372,7 @@ except ClientError:
 page_docs[0] if page_docs else None
 ```
 
-## Step 6 – Simple, explicit text chunking
+## Step 6 – Text chunking
 
 RAG systems typically break documents into **chunks** so that:
 
@@ -536,7 +550,7 @@ def get_or_create_inference_profile(base_model_id: str, label: str) -> str:
 
         resp = bedrock.create_inference_profile(
             inferenceProfileName=profile_name,
-            description=f"{project} / {name} WattBot RAG ({label}) -> {base_model_id}",
+            description=f"{project} {name} WattBot RAG {label} on {base_model_id}",   # letters, digits, : and . only, single spaces or hyphens between
             modelSource={"copyFrom": _source_arn(base_model_id)},   # the profile is an alias for one base model
             tags=profile_tags,   # usage billed through the profile carries these tags; raw model-ID calls carry none
         )
