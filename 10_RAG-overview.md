@@ -80,7 +80,7 @@ Compare that to running the **entire WattBot pipeline** from this lesson on Bedr
 
 | Step | Rough volume | Cost |
 |---|---|---|
-| Embed ~10,000 chunks (~4M tokens) | 4M input tokens | ~`$0.08` |
+| Embed ~9,000 chunks (~3M tokens) | 3M input tokens | ~`$0.06` |
 | Answer the 245 training questions (~3K‑token prompt + ~300‑token answer each) with DeepSeek V3 | 750K in / 75K out | ~`$0.60` |
 | Explanation pass over 245 answers with DeepSeek V3 | 750K in / 75K out | ~`$0.60` |
 | **Total** | | **about `$1.30`** |

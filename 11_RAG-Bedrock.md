@@ -166,6 +166,8 @@ bucket_name = "sinkorswim-doejohn"     # <-- EDIT ME: your own bucket from the S
 metadata_key = "wattbot/metadata.csv"      # one row per paper: id, title, url
 train_key = "wattbot/train_QA.csv"         # the questions, with reference answers for scoring
 corpus_key = "wattbot/corpus.zip"          # the PDFs, one per paper
+shared_embeddings_key = "wattbot/embeddings_bedrock.npy"   # the instructor's embedding matrix, used when use_instructor_embeddings is True
+use_instructor_embeddings = True   # True in class: download the instructor's matrix instead of embedding 9,000 chunks yourself (ten minutes at the quota). False to do it yourself
 
 # derived, written to YOUR bucket
 chunks_key = "wattbot/chunks.jsonl"                                # the corpus cut into passages (end of the chunking step)
@@ -256,7 +258,7 @@ train_df.head(15)
 
 ## Step 4 – Get the PDF corpus
 
-The corpus is the set of PDFs listed in `metadata.csv`, one per paper, named `<id>.pdf`. Downloading them from the publishers' sites is slow and unreliable when fifty notebooks do it at once, so the instructors did it once with `scripts/build_wattbot_corpus.py` and staged the result as `corpus.zip` in the shared bucket. We download that one file and unpack it.
+The corpus is the set of PDFs listed in `metadata.csv`, one per paper, named `<id>.pdf`. Downloading them from the publishers' sites is slow and unreliable when fifty notebooks do it at once, so the instructors did it once with `scripts/build_wattbot_corpus.py` and staged the result as `corpus.zip` in the shared bucket. We download that one file, unpack it, and delete the zip: the instance's disk is 20 GB at most and the PDFs alone are 400 MB.
 
 ```python
 PDF_DIR = os.path.join(local_data_dir, "pdfs")
@@ -265,6 +267,7 @@ os.makedirs(PDF_DIR, exist_ok=True)
 corpus_path = download_from_s3(corpus_key, "corpus.zip")
 with zipfile.ZipFile(corpus_path, "r") as zf:
     zf.extractall(PDF_DIR)
+os.remove(corpus_path)   # the zip is 400 MB and the PDFs are now unpacked; the notebook disk is small
 
 pdf_files = sorted(f for f in os.listdir(PDF_DIR) if f.lower().endswith(".pdf"))
 print(f"{len(pdf_files)} PDFs in {PDF_DIR}; metadata lists {len(metadata_df)} papers")
@@ -629,20 +632,17 @@ def embed_query(question: str) -> np.ndarray:
     return np.asarray(bedrock_embed_text(question), dtype="float32")
 ```
 
-Embedding the corpus, about 10,000 chunks, is a quarter of an hour and a few cents, so do not do it twice. The cell after next looks for the finished matrix locally, then in your bucket, and only then computes it, saving progress every 500 chunks so an interrupted run picks up where it stopped.
+Embedding the corpus, about 9,000 chunks, is ten minutes and a few cents, so do not do it twice. The cell after next looks for the finished matrix locally, then in the shared bucket if `use_instructor_embeddings` is set, then in your bucket, and only then computes it, saving progress every 500 chunks so an interrupted run picks up where it stopped.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
 ### In a class, use the instructor's copy
 
-Bedrock allows this account 300,000 Titan embedding tokens per minute, and the quota is not adjustable. This corpus is about 4 million tokens, so one notebook alone needs a quarter of an hour at the full quota; a room of them shares it, so everyone's loop slows to a crawl of retries. In class, uncomment and run the cell below first: it downloads the matrix your instructor computed with the same chunks and the same model, and the cell after it finds the file and skips the calls. Working on your own, leave it commented and let the loop run; that is the step to practise.
+Bedrock allows this account 300,000 Titan embedding tokens per minute, and the quota is not adjustable. This corpus is about 3 million tokens, so one notebook alone needs ten minutes at the full quota; a room of them shares it, so everyone's loop slows to a crawl of retries. That is what `use_instructor_embeddings = True` in Step 1 is for: the cell below then downloads the matrix your instructor computed with the same chunks and the same model from the shared bucket and skips the calls. Working on your own, set it to `False` and let the loop run; that is the step to practise.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-```python
-# In class only: the instructor's copy of the embeddings, same chunks, same model. Uncomment the next line, run, then run the cell below.
-# s3.download_file(shared_bucket, "wattbot/embeddings_bedrock.npy", str(emb_save_path))
-``` One small helper asks S3 whether an object exists.
+One small helper asks S3 whether an object exists, and one checks that a cached matrix belongs to these chunks: a matrix from an earlier corpus has a different number of rows, and using it would pair every question with the wrong passages.
 
 ```python
 def _s3_object_exists(bucket: str, key: str) -> bool:
@@ -653,15 +653,28 @@ def _s3_object_exists(bucket: str, key: str) -> bool:
         return False
 
 
-# Cache order: local .npy, then your bucket, then recompute (and upload for next time)
+def load_embeddings_if_matching(path) -> Any:
+    """The matrix at `path` if it has one row per chunk, else None (a matrix from a different corpus)."""
+    matrix = np.load(path)
+    if matrix.shape[0] == len(chunked_docs):
+        return matrix
+    print(f"{path} has {matrix.shape[0]} rows but there are {len(chunked_docs)} chunks: a matrix from a different corpus, ignoring it")
+    return None
+
+
+# Cache order: local file, the instructor's copy (in class), your bucket, then recompute (and upload for next time)
+chunk_embeddings = None
 if emb_save_path.exists():
-    print(f"Found existing embeddings at {emb_save_path}. Skipping re-computation.")
-    chunk_embeddings = np.load(emb_save_path)
-elif _s3_object_exists(bucket_name, embeddings_key):
+    chunk_embeddings = load_embeddings_if_matching(emb_save_path)
+if chunk_embeddings is None and use_instructor_embeddings and _s3_object_exists(shared_bucket, shared_embeddings_key):
+    s3.download_file(shared_bucket, shared_embeddings_key, str(emb_save_path))
+    print(f"Downloaded the instructor's embeddings from s3://{shared_bucket}/{shared_embeddings_key}")
+    chunk_embeddings = load_embeddings_if_matching(emb_save_path)
+if chunk_embeddings is None and _s3_object_exists(bucket_name, embeddings_key):
     s3.download_file(bucket_name, embeddings_key, str(emb_save_path))
-    print(f"Downloaded cached embeddings from s3://{bucket_name}/{embeddings_key}")
-    chunk_embeddings = np.load(emb_save_path)
-else:
+    print(f"Downloaded your cached embeddings from s3://{bucket_name}/{embeddings_key}")
+    chunk_embeddings = load_embeddings_if_matching(emb_save_path)
+if chunk_embeddings is None:
     # Resume from a partial save if a previous run was interrupted
     all_embeddings = list(np.load(emb_partial_path)) if emb_partial_path.exists() else []
     start = len(all_embeddings)
@@ -846,7 +859,7 @@ Read the two lines at the bottom of each block together. "Ground-truth paper ret
 
 ### What did that run cost?
 
-Every `converse` response carried a `usage` block, and `call_bedrock_chat` kept them all in `bedrock_usage`. Sum the input and output tokens over the evaluation run and price them at the current on-demand rates for DeepSeek V3 on the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/) (fill the two prices in below). Add the embedding step: ~10,000 chunks of 1,200 characters at Titan Text Embeddings V2's `$0.02` per million input tokens. How does the total compare with the overview's estimate for "the whole WattBot pipeline on Bedrock", and with one hour of the `ml.g6e.xlarge` the Processing Jobs episode rents?
+Every `converse` response carried a `usage` block, and `call_bedrock_chat` kept them all in `bedrock_usage`. Sum the input and output tokens over the evaluation run and price them at the current on-demand rates for DeepSeek V3 on the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/) (fill the two prices in below). Add the embedding step: ~9,000 chunks of 1,200 characters at Titan Text Embeddings V2's `$0.02` per million input tokens. How does the total compare with the overview's estimate for "the whole WattBot pipeline on Bedrock", and with one hour of the `ml.g6e.xlarge` the Processing Jobs episode rents?
 
 :::::::::::::::::::::::: solution
 
@@ -869,7 +882,7 @@ print(f"~{embed_tokens:,.0f} embedding tokens -> ${embed_cost:.3f}")
 print(f"Total ~${gen_cost + embed_cost:.2f}; one hour of ml.g6e.xlarge is $2.61")
 ```
 
-With 55 questions, two calls each and ~3,000-token prompts, the run is on the order of 350K input and 30K output tokens: about a quarter of a dollar at DeepSeek V3's prices, plus about eight cents of embeddings for the 4 million tokens of corpus. All 245 questions is about a dollar, which is the overview's estimate for the whole pipeline, and it is a small fraction of a single GPU-hour.
+With 55 questions, two calls each and ~3,000-token prompts, the run is on the order of 350K input and 30K output tokens: about a quarter of a dollar at DeepSeek V3's prices, plus about six cents of embeddings for the 3 million tokens of corpus. All 245 questions is about a dollar, which is the overview's estimate for the whole pipeline, and it is a small fraction of a single GPU-hour.
 
 :::::::::::::::::::::::::::::::::
 

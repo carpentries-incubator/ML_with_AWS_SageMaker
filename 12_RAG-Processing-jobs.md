@@ -51,7 +51,7 @@ Qwen figures are from the Qwen3.8-27B model card and were not reproduced here; O
 
 | Job | Instance | `$`/h | Expected duration | Cost |
 |---|---|---|---|---|
-| Embed ~10,000 chunks | `ml.g5.xlarge` (A10G, 24 GB) | `$1.41` | ~15 min incl. startup | ~`$0.35` |
+| Embed ~9,000 chunks | `ml.g5.xlarge` (A10G, 24 GB) | `$1.41` | ~15 min incl. startup | ~`$0.35` |
 | RAG over a 55-question sample with Qwen3-8B | `ml.g5.xlarge` (A10G, 24 GB) | `$1.41` | ~25 min: 5 startup, ~3 downloading 16 GB of weights, ~1 loading, ~15 generating | ~`$0.60` |
 | Controller notebook | `ml.t3.medium` | `$0.05` | 2 h | `$0.10` |
 
