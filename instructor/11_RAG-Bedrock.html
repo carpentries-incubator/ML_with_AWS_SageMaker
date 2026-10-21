@@ -622,9 +622,10 @@ here:</p>
 <strong>The shared bucket</strong> (your instructor gives you its
 name) holds the WattBot inputs under <code>wattbot/</code>:
 <code>metadata.csv</code> (the index of papers),
-<code>train_QA.csv</code> (labelled questions and answers), and
-<code>corpus.zip</code> (the PDFs). It is read-only and there is one
-copy for the whole class.</li>
+<code>train_QA.csv</code> (labelled questions and answers),
+<code>corpus.zip</code> (the PDFs) and <code>pages.jsonl</code> (the
+text of every PDF page, extracted once). It is read-only and there is
+one copy for the whole class.</li>
 <li>
 <strong>Your bucket</strong> from the S3 episode
 (<code>challenge-lastnamefirstname</code>) is where this episode writes
@@ -853,10 +854,11 @@ and unpack it.</p>
 <div class="callout-content">
 <p><code>metadata.csv</code> has a <code>url</code> column pointing at
 each paper. <code>scripts/build_wattbot_corpus.py</code> in the lesson
-repository walks that column, downloads every PDF, and zips them; it
+repository walks that column, downloads every PDF, zips them, and then
+extracts the text of every page into <code>pages.jsonl</code>; it
 reports any URL that failed so the instructor can decide what to do
-about it. If you are working on your own, run it once and upload the zip
-to your bucket under <code>wattbot/corpus.zip</code> (with
+about it. If you are working on your own, run it once and upload both
+files to your bucket under <code>wattbot/</code> (with
 <code>shared_bucket = bucket_name</code>, as in the callout above). That
 is the whole difference between “the data” and “a copy of the data”: the
 corpus is built once and read many times.</p>
@@ -864,8 +866,11 @@ corpus is built once and read many times.</p>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="step-5-turn-pdfs-into-page-level-documents">Step 5 – Turn PDFs into page-level “documents”<a class="anchor" aria-label="anchor" href="#step-5-turn-pdfs-into-page-level-documents"></a></h2>
-<hr class="half-width"><p>Next, we convert each PDF into a list of <strong>page-level
-records</strong>. Each record stores:</p>
+<hr class="half-width"><p>The next unit of work is a list of <strong>page-level
+records</strong>, one per PDF page. The instructor’s staging script
+already built it for this corpus (<code>pages.jsonl</code> in the shared
+bucket), so below we define the function that does the extraction, then
+load the staged result rather than rerun it. Each record stores:</p>
 <ul><li>
 <code>text</code>: page text (as extracted by
 <code>pypdf</code>).</li>
