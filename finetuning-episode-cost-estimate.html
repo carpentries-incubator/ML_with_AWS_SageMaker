@@ -438,12 +438,14 @@ the hidden test set, and because the scans are smaller. Before/after
 lives inside that one job, so there are no separate inference jobs
 during class. The full run, the Processing jobs over the test set and
 the optional Kaggle submission are homework.</p>
-<p>Launches use <code>wait=True</code> and an explicit
-<code>job_name=f"badger-{username}-churro-lora-2ep"</code>. The explicit
-name is the double-launch guard: SageMaker rejects a second job with the
-same name, so a queued Shift+Enter fails harmlessly. Interrupting the
-cell does not stop the job; the episode says so in a callout, and you
-should say it out loud.</p>
+<p>Launches use <code>wait=True</code> and an explicit job name with the
+launch time in it
+(<code>badger-&lt;user&gt;-churro-lora-2ep-&lt;MMDD-HHMM&gt;</code>), so
+a rerun gets a new name instead of failing with
+<code>ResourceInUse</code>; <code>wait=True</code> is the double-launch
+guard, since the cell blocks until the job ends. Interrupting the cell
+does not stop the job; the episode says so in a callout, and you should
+say it out loud.</p>
 </section><section><h2 class="section-heading" id="what-one-student-spends">What one student spends<a class="anchor" aria-label="anchor" href="#what-one-student-spends"></a></h2>
 <hr class="half-width"><table class="table"><colgroup><col width="25%"><col width="25%"><col width="25%"><col width="25%"></colgroup><thead><tr><th>Item</th>
 <th>Instance</th>
