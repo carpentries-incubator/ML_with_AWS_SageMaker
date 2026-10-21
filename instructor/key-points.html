@@ -641,7 +641,12 @@ capacity.</li>
 <strong><code>instance_count</code> alone is not distributed
 training</strong>: Without <code>distribution=</code> on the estimator
 and distributed code in the script, <code>instance_count=2</code> runs
-the full script on the full data on each instance and bills twice.</li>
+the full script on the full data on each instance and bills twice. Data
+parallelism is three additions to the script (join the process group,
+shard the rows, wrap the model in <code>DistributedDataParallel</code>)
+and one argument on the estimator; <code>train_nn_ddp.py</code> has
+them, and reaches the single-instance run’s loss on half the rows per
+instance.</li>
 <li>
 <strong>SageMaker configuration</strong>: By adjusting instance
 counts and types, SageMaker supports scalable training setups. Starting

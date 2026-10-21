@@ -644,9 +644,14 @@ the plain Python environment is enough).</p>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="ex">!ls</span></span></code></pre>
 </div>
 <p>The first line prints <code>/home/ec2-user/SageMaker</code>: new
-notebooks start in that folder. The second lists it, and the notebook
-you just created is the only thing there. <code>SageMaker/</code> is a
-separate disk, the volume whose size sits under <strong>Additional
+notebooks start in that folder. The second lists it: the notebook you
+just created, and a folder called <code>lost+found</code>. That folder
+is not yours and holds nothing. Linux creates one at the top of every
+formatted disk, as the place its repair tool would put file fragments
+after a crash; it appears here because <code>SageMaker/</code> is its
+own disk, and it is the sign that you are looking at that disk and not
+the instance’s system drive. Leave it alone. <code>SageMaker/</code> is
+a separate disk, the volume whose size sits under <strong>Additional
 configuration</strong> on the create form (the 20 GB you set). The rest
 of the instance lives on the system disk and is reset when the instance
 stops; <code>SageMaker/</code> is the only place that survives a stop.

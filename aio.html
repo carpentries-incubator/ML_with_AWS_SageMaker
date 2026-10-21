@@ -1422,7 +1422,7 @@ charge?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -1854,9 +1854,14 @@ the plain Python environment is enough).</p>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="ex">!ls</span></span></code></pre>
 </div>
 <p>The first line prints <code>/home/ec2-user/SageMaker</code>: new
-notebooks start in that folder. The second lists it, and the notebook
-you just created is the only thing there. <code>SageMaker/</code> is a
-separate disk, the volume whose size sits under <strong>Additional
+notebooks start in that folder. The second lists it: the notebook you
+just created, and a folder called <code>lost+found</code>. That folder
+is not yours and holds nothing. Linux creates one at the top of every
+formatted disk, as the place its repair tool would put file fragments
+after a crash; it appears here because <code>SageMaker/</code> is its
+own disk, and it is the sign that you are looking at that disk and not
+the instance’s system drive. Leave it alone. <code>SageMaker/</code> is
+a separate disk, the volume whose size sits under <strong>Additional
 configuration</strong> on the create form (the 20 GB you set). The rest
 of the instance lives on the system disk and is reset when the instance
 stops; <code>SageMaker/</code> is the only place that survives a stop.
@@ -2909,7 +2914,7 @@ change on GitHub.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Still inside
 <code>/home/ec2-user/SageMaker/sagemaker-work</code>:</p>
@@ -5246,35 +5251,94 @@ streams, <code>algo-1</code> and <code>algo-2</code>, and each one
 prints all 1000 epochs. The wall-clock time is about the same as the
 single-instance run (slightly longer, if anything, because two instances
 have to be provisioned), and the billable minutes are double.</p>
-<div id="what-distributed-training-needs" class="callout">
-<div class="callout-square">
-<i class="callout-icon" data-feather="bell"></i>
 </div>
-<span class="callout-header">Callout</span>
-<div id="what-distributed-training-needs" class="callout-inner">
-<h3 class="callout-title">What distributed training needs</h3>
-<div class="callout-content">
-<p>To split the work across instances you need two things the demo above
-did not have:</p>
-<ul>
+<div class="section level3">
+<h3 id="data-parallelism-done-properly">Data parallelism, done properly<a class="anchor" aria-label="anchor" href="#data-parallelism-done-properly"></a>
+</h3>
+<p>To split one training run across two instances instead of running it
+twice, the script needs three things the demo above did not have, and
+the estimator needs one. <code>scripts/train_nn_ddp.py</code> is
+<code>train_nn.py</code> with those three added; open the two side by
+side, the differences are marked 1, 2 and 3 in the comments.</p>
+<ol style="list-style-type: decimal">
 <li>
-<strong>Data parallelism</strong> (the common case; each instance
-holds a full copy of the model and trains on a different slice of the
-data, exchanging gradients after every step). For PyTorch, pass
-<code>distribution={"torch_distributed": {"enabled": True}}</code> to
-the estimator <em>and</em> write the script for it: initialise a process
-group, wrap the model in <code>DistributedDataParallel</code>, and give
-each rank a different shard of the data (e.g. a
-<code>DistributedSampler</code>). SageMaker’s own data-parallel library
-(<code>smdistributed.dataparallel</code>) is the same idea with a faster
-all-reduce on supported GPU instances.</li>
+<strong>Join the process group.</strong> The launcher starts one
+process per instance and tells each its rank (0 or 1) and the world size
+(2) through environment variables; <code>setup_distributed</code> reads
+them and calls <code>init_process_group</code>, after which the
+processes can talk. With no launcher the function returns rank 0 of 1
+and the script trains like <code>train_nn.py</code>.</li>
 <li>
-<strong>Model parallelism</strong> (for models too large for one
-device’s memory; the layers themselves are spread across devices). This
-is for large language models and the like, needs
-<code>smdistributed.modelparallel</code> or an equivalent library, and
-is well beyond what a tabular network needs.</li>
-</ul>
+<strong>Shard the data.</strong> Each process keeps the rows
+<code>rank, rank + world_size, rank + 2 * world_size, ...</code>: half
+the training set each, no row seen twice.</li>
+<li>
+<strong>Wrap the model in
+<code>DistributedDataParallel</code>.</strong> After every
+<code>loss.backward()</code>, DDP averages the gradients across the
+processes before <code>optimizer.step()</code>, so both copies of the
+model take the same step and stay identical. That averaged gradient over
+two half-shards is the gradient over the whole set, which is why the
+result is one training run and not two. Only rank 0 prints the metrics
+and saves the model; every process holds the same weights.</li>
+</ol>
+<p>On the estimator,
+<code>distribution={"mpi": {"enabled": True, "processes_per_host": 1}}</code>
+is what starts the processes: SageMaker launches the script on every
+instance through MPI, which sets the rank and world-size variables the
+script reads and lets the instances find each other by name.
+(<code>torch_distributed</code>, the <code>torchrun</code> launcher, is
+the same idea for GPU instances; the script handles either.) Everything
+else is the two-instance estimator from the demo.</p>
+<div class="codewrapper sourceCode" id="cb21">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" tabindex="-1" aria-label="code-block-21-1"></a>pytorch_estimator_ddp <span class="op">=</span> PyTorch(</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1" aria-label="code-block-21-2"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn-ddp"</span>,</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1" aria-label="code-block-21-3"></a>    max_run<span class="op">=</span>max_run,</span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1" aria-label="code-block-21-4"></a>    entry_point<span class="op">=</span><span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn_ddp.py"</span>,   <span class="co"># the three additions, marked in the script</span></span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1" aria-label="code-block-21-5"></a>    role<span class="op">=</span>role,</span>
+<span id="cb21-6"><a href="#cb21-6" tabindex="-1" aria-label="code-block-21-6"></a>    tags<span class="op">=</span>job_tags,</span>
+<span id="cb21-7"><a href="#cb21-7" tabindex="-1" aria-label="code-block-21-7"></a>    instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span>,</span>
+<span id="cb21-8"><a href="#cb21-8" tabindex="-1" aria-label="code-block-21-8"></a>    instance_count<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb21-9"><a href="#cb21-9" tabindex="-1" aria-label="code-block-21-9"></a>    distribution<span class="op">=</span>{<span class="st">"mpi"</span>: {<span class="st">"enabled"</span>: <span class="va">True</span>, <span class="st">"processes_per_host"</span>: <span class="dv">1</span>}},   <span class="co"># start one process per instance and connect them; without this, two copies again</span></span>
+<span id="cb21-10"><a href="#cb21-10" tabindex="-1" aria-label="code-block-21-10"></a>    framework_version<span class="op">=</span><span class="st">"2.3"</span>,</span>
+<span id="cb21-11"><a href="#cb21-11" tabindex="-1" aria-label="code-block-21-11"></a>    py_version<span class="op">=</span><span class="st">"py311"</span>,</span>
+<span id="cb21-12"><a href="#cb21-12" tabindex="-1" aria-label="code-block-21-12"></a>    output_path<span class="op">=</span>output_path,</span>
+<span id="cb21-13"><a href="#cb21-13" tabindex="-1" aria-label="code-block-21-13"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb21-14"><a href="#cb21-14" tabindex="-1" aria-label="code-block-21-14"></a>    hyperparameters<span class="op">=</span>{</span>
+<span id="cb21-15"><a href="#cb21-15" tabindex="-1" aria-label="code-block-21-15"></a>        <span class="st">"train"</span>: <span class="st">"/opt/ml/input/data/train/train_data.npz"</span>,</span>
+<span id="cb21-16"><a href="#cb21-16" tabindex="-1" aria-label="code-block-21-16"></a>        <span class="st">"val"</span>: <span class="st">"/opt/ml/input/data/val/val_data.npz"</span>,</span>
+<span id="cb21-17"><a href="#cb21-17" tabindex="-1" aria-label="code-block-21-17"></a>        <span class="st">"epochs"</span>: epochs,</span>
+<span id="cb21-18"><a href="#cb21-18" tabindex="-1" aria-label="code-block-21-18"></a>        <span class="st">"learning_rate"</span>: learning_rate,</span>
+<span id="cb21-19"><a href="#cb21-19" tabindex="-1" aria-label="code-block-21-19"></a>    },</span>
+<span id="cb21-20"><a href="#cb21-20" tabindex="-1" aria-label="code-block-21-20"></a>)</span>
+<span id="cb21-21"><a href="#cb21-21" tabindex="-1" aria-label="code-block-21-21"></a></span>
+<span id="cb21-22"><a href="#cb21-22" tabindex="-1" aria-label="code-block-21-22"></a>start <span class="op">=</span> t.time()</span>
+<span id="cb21-23"><a href="#cb21-23" tabindex="-1" aria-label="code-block-21-23"></a>pytorch_estimator_ddp.fit({<span class="st">"train"</span>: train_input, <span class="st">"val"</span>: val_input})</span>
+<span id="cb21-24"><a href="#cb21-24" tabindex="-1" aria-label="code-block-21-24"></a><span class="bu">print</span>(<span class="ss">f"Data-parallel run: </span><span class="sc">{</span>(t.time() <span class="op">-</span> start) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min wall-clock on 2 x ml.m5.large"</span>)</span>
+<span id="cb21-25"><a href="#cb21-25" tabindex="-1" aria-label="code-block-21-25"></a>desc_ddp <span class="op">=</span> job_cost_report(pytorch_estimator_ddp.latest_training_job.name, prices[<span class="st">"ml.m5.large"</span>])</span></code></pre>
+</div>
+<p>Read the log before the bill. The two CloudWatch streams now say
+different things: each prints <code>training on 446 of 891 rows</code>
+(or 445), and only <code>algo-1</code> prints the epochs and saves the
+model. The final validation loss matches the single-instance run to the
+third decimal, because the averaged gradient is the same gradient; that
+match is the proof that the work was split rather than copied. The
+wall-clock is not shorter. Each step now costs a round of gradient
+exchange between two machines, which takes longer than the 445 rows it
+saves, and the bill is still two instances’ worth. That is the rule of
+thumb again, measured: data parallelism pays when the step is big enough
+that the exchange is a small part of it, which on tabular data of 891
+rows it never is.</p>
+<p><strong>Model parallelism</strong> is the other kind, for a model too
+large for one device’s memory, where the layers themselves are spread
+across devices (<code>smdistributed.modelparallel</code>, or PyTorch’s
+FSDP). There is no example here because no model in this lesson needs
+it: the fine-tuning episode’s memory arithmetic shows what does, a model
+whose weights plus their gradients and optimizer state exceed one GPU,
+and the usual answer at this scale is a LoRA fine-tune, which shrinks
+the problem instead of spreading it.</p>
 <p>For the <strong>built-in XGBoost</strong> image from the previous
 episode the recipe is simpler, because the algorithm already knows how
 to train across instances: split the training CSV into several S3
@@ -5285,9 +5349,6 @@ dataset of 891 rows will only show overhead.</p>
 <p>Either way, the rule of thumb stands: a bigger single instance first,
 and multiple instances only once data no longer fits in memory or a run
 exceeds ~10 hours.</p>
-</div>
-</div>
-</div>
 <div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
 <i class="callout-icon" data-feather="key"></i>
@@ -5320,7 +5381,12 @@ capacity.</li>
 <strong><code>instance_count</code> alone is not distributed
 training</strong>: Without <code>distribution=</code> on the estimator
 and distributed code in the script, <code>instance_count=2</code> runs
-the full script on the full data on each instance and bills twice.</li>
+the full script on the full data on each instance and bills twice. Data
+parallelism is three additions to the script (join the process group,
+shard the rows, wrap the model in <code>DistributedDataParallel</code>)
+and one argument on the estimator; <code>train_nn_ddp.py</code> has
+them, and reaches the single-instance run’s loss on half the rows per
+instance.</li>
 <li>
 <strong>SageMaker configuration</strong>: By adjusting instance
 counts and types, SageMaker supports scalable training setups. Starting
@@ -12034,7 +12100,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -12097,7 +12163,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still downloading or
@@ -13564,7 +13630,7 @@ finds something. Then run them against your own resources.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
