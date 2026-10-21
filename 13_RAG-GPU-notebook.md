@@ -16,7 +16,7 @@ exercises: 15
 
 - Verify that our SageMaker notebook instance has a working GPU and compatible Python environment.
 - Reuse the WattBot metadata and questions from the shared bucket, and the `chunks.jsonl` the Bedrock episode cached in your own bucket.
-- Implement a simple, explicit “from scratch” embedding pipeline with a self-hosted sentence-transformer, without relying on FAISS or production vector DBs.
+- Implement a simple, explicit “from scratch” embedding pipeline with a self-hosted embedding model, without relying on FAISS or production vector DBs.
 - Build a small retrieval helper that finds the most relevant chunks for a question using cosine similarity in embedding space.
 - Serve a 27B open-weight generator (Qwen3.8-27B in FP8, via vLLM) on the notebook's GPU and wire it to the retriever to produce WattBot-format answers (including `answer`, `ref_id`, `ref_url`, and `supporting_materials`).
 - Explain why inference uses quantized weights rather than bf16, and what a self-hosted GPU costs per hour, per forgotten weekend, and per forgotten month.
@@ -30,7 +30,7 @@ exercises: 15
 
 ### Optional, self-study episode
 
-This episode is not taught in the workshop. It runs the same self-hosted pipeline as the Processing Jobs episode, but interactively on a GPU notebook instance, which is the right tool for prototyping alone at a keyboard and the wrong one for a room of a hundred people with meters running. Work through it on your own when you want to see model loading, GPU memory and generation as plain Python you can poke at. Read the cost callout first.
+This episode is not taught in the workshop. **The Bedrock and Processing Jobs episodes are the default ways to run RAG; this one is for the case where you need to poke at a self-hosted model interactively, and only if you will remember to stop the instance.** It runs the same pipeline as the Processing Jobs episode on a GPU notebook instance, which is the right tool for prototyping alone at a keyboard and the wrong one for a room of a hundred people with meters running. Work through it on your own when you want to see model loading, GPU memory and generation as plain Python. Read the cost callout first.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -87,7 +87,7 @@ In this episode we will:
 1. **Reuse the WattBot data you prepared in the Bedrock episode.**
    - Pull `train_QA.csv` and `metadata.csv` from the shared bucket and the cached `chunks.jsonl` from your own.
 2. **Implement the model steps explicitly in code.**
-   - Embed chunks with a sentence-transformer (`thenlper/gte-large`) running on the notebook's GPU.
+   - Embed chunks with an open embedding model (`thenlper/gte-large`) running on the notebook's GPU.
    - Implement cosine-similarity search over the embedding matrix.
 3. **Serve an open-weight generator that Bedrock does not offer.**
    - Load Qwen3.8-27B with FP8 weights through vLLM on a single `ml.g6e.xlarge` GPU.
@@ -144,7 +144,7 @@ If the install changes PyTorch, restart the kernel (**Kernel → Restart**) befo
 
 ```python
 # Several GB; it may replace torch, so restart the kernel (Kernel -> Restart) if the log says it did
-%pip install -q "vllm>=0.17" sentence-transformers
+%pip install -q "vllm>=0.17" "peft>=0.18"   # peft upgraded to match the transformers vLLM installs
 ```
 
 
@@ -186,6 +186,9 @@ def download_s3_object(bucket: str, key: str, local_path: str) -> None:
 
 
 ```python
+!mkdir -p /home/ec2-user/SageMaker/wattbot   # a project folder beside the lesson clone (this is a new instance, so it starts empty)
+%cd /home/ec2-user/SageMaker/wattbot
+
 shared_bucket = "ml-marathon-shared"   # the instructor-staged, read-only bucket with the data and model weights; change only on your own account
 bucket_name = "sinkorswim-doejohn"     # <-- EDIT ME: your own bucket (chunks live here)
 
@@ -202,7 +205,7 @@ print("Local data dir:", local_data_dir)
 The retrieval, prompts, answer parsing, per-question orchestration and the scorer are the same code the Bedrock and Processing Jobs episodes used: `scripts/wattbot_rag.py` in the lesson repository. Copy the module next to this notebook. What this episode adds is the two model callables, `embed_query` and `generate`, running on the notebook's own GPU.
 
 ```python
-!cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/wattbot_rag.py .
+!cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/wattbot_rag.py /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/hf_embedder.py .
 ```
 
 Import the pieces of the shared RAG module we reuse: the prompts, the retrieval and scoring functions, and the per-question runner.
@@ -241,7 +244,7 @@ download_s3_object(shared_bucket, train_qa_key, train_qa_path)
 
 ```python
 import torch
-from sentence_transformers import SentenceTransformer   # embedding-model wrapper: encode(list of strings) -> matrix
+from hf_embedder import HFEmbedder   # thirty lines on plain transformers: encode(list of strings) -> unit-length matrix; the Processing jobs use the same file
 ```
 
 A CSV reader that tries a few encodings, because some metadata files are not valid UTF-8.
@@ -303,7 +306,7 @@ Each chunk keeps a pointer back to its document and page metadata (`doc_id`, `ti
 
 ## Step 3 – Build an embedding matrix
 
-Now we embed each chunk into a vector using a **sentence-transformer** model. For WattBot, a strong and relatively efficient choice is:
+Now we embed each chunk into a vector using an open **embedding model**. For WattBot, a strong and relatively efficient choice is:
 
 ### `thenlper/gte-large` (Recommended baseline embedder)
 
@@ -334,14 +337,10 @@ Later, we’ll implement a small retrieval helper that does cosine-similarity se
 # but is still reasonable to run on a single 24 GB GPU.
 embedding_model_id = "thenlper/gte-large"
 
-use_cuda_for_embeddings = torch.cuda.is_available()
-print("CUDA available for embeddings:", use_cuda_for_embeddings)
+print("CUDA available for embeddings:", torch.cuda.is_available())
 
-# Single shared embedder object that we can pass around.
-embedder = SentenceTransformer(
-    embedding_model_id,
-    device="cuda" if use_cuda_for_embeddings else "cpu"   # on the GPU; CPU works too, but much more slowly
-)
+# Single shared embedder object that we can pass around; it uses the GPU when one is available
+embedder = HFEmbedder(embedding_model_id)
 
 
 ```
@@ -568,7 +567,7 @@ for idx, row in train_df.iterrows():
 
     res = run_single_qa(
         row=row,
-        embed_query=embed_query,             # the sentence-transformer on this GPU
+        embed_query=embed_query,             # the embedding model on this GPU
         generate=call_qwen_chat,             # the vLLM engine on this GPU; the Bedrock episode passed its converse wrapper here
         chunk_embeddings=chunk_embeddings,
         chunked_docs=chunked_docs,

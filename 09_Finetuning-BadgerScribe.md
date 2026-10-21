@@ -311,9 +311,12 @@ print("Region:", region)
 print("Role:", role)
 ```
 
-Now the names. Two buckets: the shared one the jobs read from, and your own, where everything they write lands. Your username goes into job names, which SageMaker requires to be unique in the account. The two S3 prefixes at the end are what the estimator mounts into the job as its `train` and `model` input channels.
+Now the names, after moving into a project folder of our own under the instance root. Everything this episode downloads or stages (`data/`, `code/`) goes there, beside the lesson clone rather than inside it. Two buckets: the shared one the jobs read from, and your own, where everything they write lands. Your username goes into job names, which SageMaker requires to be unique in the account. The two S3 prefixes at the end are what the estimator mounts into the job as its `train` and `model` input channels.
 
 ```python
+!mkdir -p /home/ec2-user/SageMaker/badger-scribe   # a project folder beside the lesson clone, so data and job code stay out of the repository
+%cd /home/ec2-user/SageMaker/badger-scribe
+
 shared_bucket = "ml-marathon-shared"   # the instructor-staged, read-only bucket with the data and model weights; change only on your own account
 bucket_name = "sinkorswim-doejohn"     # <-- EDIT ME: your own bucket from the S3 episode; everything the jobs write goes here
 username = "doejohn"                   # <-- EDIT ME: lowercase letters/digits only; used in job names

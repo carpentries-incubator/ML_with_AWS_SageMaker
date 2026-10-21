@@ -68,7 +68,7 @@ We’ll work with **Amazon Bedrock–hosted foundation models** for both embeddi
 
   - An open‑weight mixture‑of‑experts model (671B parameters in total, about 37B active per token) that Bedrock serves on‑demand, so there is no GPU to manage.
   - Particularly useful when you want many calls (e.g., one per question) and care about low latency and lower per‑token pricing compared to flagship models (check the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/) for current rates).
-  - The same code works for any chat model in the catalog, because we call it through the provider-neutral `converse` API: switch `base_generation_model_id` to a Claude, Llama, or Mistral model ID and nothing else changes.
+  - The same code works for any chat model in the catalog. Bedrock has one chat call, `converse`, that takes the same input for every provider (a system prompt and a list of user and assistant messages) and returns the reply in the same shape, so switching `base_generation_model_id` to a Claude, Llama, or Mistral model ID changes nothing else.
 
 - **(Optional) Multimodal models for tables and figures**
 
@@ -98,7 +98,7 @@ The habit is the same as for instances: pick the cheapest candidate that scores 
 
 ## Notebook + dataset setup
 
-For this episode you need a SageMaker notebook instance, but **not a GPU one**. A small CPU instance such as `ml.t3.medium` is enough, because the models run on Bedrock rather than in the notebook. The notebook's execution role must allow Bedrock access, which the default SageMaker role does not. On the class account that is the `ml-sagemaker-bedrock-use` role you picked when creating the notebook instance. If your instance was created with the older `ml-sagemaker-use` role, the first Bedrock call fails with an access-denied error: stop the instance, choose **Edit**, change the IAM role under *Permissions and encryption*, click **Update notebook instance**, and wait for the status to go from *Updating* back to *Stopped* (one to three minutes) before starting it. Reopening Edit during that wait shows the old role; the details page shows the new one once the update has landed. On your own account, attach the policy in the "Permissions and verification" callout below to your role before starting.
+For this episode you need a SageMaker notebook instance, but **not a GPU one**. A small CPU instance such as `ml.t3.medium` is enough, because the models run on Bedrock rather than in the notebook. The notebook's execution role must allow Bedrock access, which the default SageMaker role does not. On the class account that is the `ml-sagemaker-bedrock-use` role you picked when creating the notebook instance. If your instance was created with the older `ml-sagemaker-use` role, the first Bedrock call fails with an access-denied error: stop the instance, choose **Edit**, change the IAM role under *Permissions and encryption*, click **Update notebook instance**, and wait for the status to go from *Updating* back to *Stopped* (one to three minutes) before starting it. Reopening Edit during that wait shows the old role; the details page shows the new one once the update has landed. On your own account, attach the Bedrock policy from the *Account preparation checklist* instructor page to your role before starting.
 
 See [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for further guidance on instance types.
 
@@ -147,7 +147,7 @@ s3 = boto3.client("s3", region_name=region)
 
 ```python
 # Base model IDs. Any chat model in the Bedrock catalog works as the generator (a Claude or Llama ID, say),
-# because we call it through the provider-neutral `converse` API.
+# because converse, Bedrock's chat call, takes the same messages and returns the same shape for every provider.
 base_generation_model_id = "deepseek.v3-v1:0"             # writes the answers; $0.62 in / $1.85 out per million tokens (Oct 2026)
 base_embedding_model_id = "amazon.titan-embed-text-v2:0"  # turns text into vectors for retrieval; $0.02 per million tokens
 ```
@@ -155,6 +155,9 @@ base_embedding_model_id = "amazon.titan-embed-text-v2:0"  # turns text into vect
 **The files.** The inputs live in the shared bucket: the paper list, the questions with their answers, and the zipped corpus of PDFs. Everything this episode derives from them goes to your own bucket, under the same `wattbot/` prefix: the chunked text, the chunk embeddings, and the answers the pipeline produces.
 
 ```python
+!mkdir -p /home/ec2-user/SageMaker/wattbot   # a project folder beside the lesson clone, so data and outputs stay out of the repository
+%cd /home/ec2-user/SageMaker/wattbot
+
 shared_bucket = "ml-marathon-shared"   # the instructor-staged, read-only bucket with the data and model weights; change only on your own account
 bucket_name = "sinkorswim-doejohn"     # <-- EDIT ME: your own bucket from the S3 episode
 
@@ -172,7 +175,7 @@ local_data_dir = "./data"              # working copies on this notebook instanc
 os.makedirs(local_data_dir, exist_ok=True)
 ```
 
-**Two Bedrock clients.** Bedrock has two APIs. `bedrock-runtime` is the one that calls models (`converse` for chat, `invoke_model` for embeddings); it is what every answer and every embedding in this episode goes through. `bedrock` is the control plane: listing models, creating the inference profiles that carry our tags. The runtime client gets a retry setting because on-demand Bedrock throughput is rate-limited per model: a loop of a few thousand embedding calls will occasionally be throttled, and the adaptive mode backs off and retries instead of raising.
+**Two Bedrock clients.** Bedrock has two APIs. `bedrock-runtime` is the one that calls models (`converse`, the chat call, for answers; `invoke_model`, the raw call with a provider-specific body, for embeddings); it is what every answer and every embedding in this episode goes through. `bedrock` is the control plane: listing models, creating the inference profiles that carry our tags. The runtime client gets a retry setting because on-demand Bedrock throughput is rate-limited per model: a loop of a few thousand embedding calls will occasionally be throttled, and the adaptive mode backs off and retries instead of raising.
 
 ```python
 bedrock_runtime = boto3.client(
@@ -205,7 +208,7 @@ Open `wattbot_rag.py` in the Jupyter file browser as you go: each helper is shor
 
 ## Step 3 – Load the metadata and training questions
 
-Pull the two CSV files from the shared bucket into the notebook and inspect them.
+Pull the two CSV files from the shared bucket into the notebook and inspect them. Two helpers first: `download_from_s3` copies one object from the shared bucket (or any bucket you name) into the local data folder, and `smart_read_csv` reads a CSV by trying a few encodings in turn, because author names and titles in `metadata.csv` are not always valid UTF-8.
 
 ```python
 import zipfile
@@ -220,12 +223,7 @@ def download_from_s3(key: str, local_name: str, bucket: str = shared_bucket) -> 
 
 
 def smart_read_csv(path: str) -> pd.DataFrame:
-    """Try several encodings when reading a CSV file.
-
-    Some CSVs (especially those with special characters in author names or titles)
-    may not be valid UTF-8. This helper rotates through common encodings and raises
-    the last error only if all fail.
-    """
+    """Read a CSV, trying utf-8 and then the common Windows and Latin encodings."""
     encodings = ["utf-8", "latin1", "ISO-8859-1", "cp1252"]
     last_error = None
     for enc in encodings:
@@ -236,8 +234,11 @@ def smart_read_csv(path: str) -> pd.DataFrame:
     if last_error is not None:
         raise last_error
     raise RuntimeError(f"Unable to read CSV at {path}")
+```
 
+Now the two files: `train_QA.csv` is the labelled questions and answers we score against, `metadata.csv` is one row per paper with its id, title and URL.
 
+```python
 train_qa_path = download_from_s3(train_key, "train_QA.csv")      # labelled questions + answers: what we score against
 metadata_path = download_from_s3(metadata_key, "metadata.csv")   # one row per paper (id, title, url): the corpus index
 
@@ -504,7 +505,9 @@ The mechanism Bedrock provides for this is an **application inference profile**:
 - You need **one profile per base model** (the profile is model‑specific), so we create one for the generation model and one for the embedding model.
 - Bedrock's tag format uses lowercase `key` / `value`, unlike SageMaker's `Key` / `Value`. The tag *names* (`Name`, `Project`, `Purpose`) stay the same so the Cost Explorer filters line up across services.
 
-The helper below reuses a profile if one with the same name already exists, so re‑running the notebook does not create duplicates.
+Four cells: the tags, two small helpers, the function that finds or creates a profile, and the two calls that produce the ARNs the rest of the episode uses.
+
+First the tags. Bedrock wants lowercase `key` and `value`; the three names are the same ones every SageMaker job in this lesson carries, so one Cost Explorer filter covers both services.
 
 ```python
 import re
@@ -519,22 +522,25 @@ profile_tags = [
     {"key": "Project", "value": project},
     {"key": "Purpose", "value": purpose},
 ]
+```
 
+Two helpers. `_slug` turns a project or user name into something a profile name accepts (letters, digits and single hyphens, at most 64 characters). `_source_arn` returns what the profile points at: for a plain model ID that is the foundation model's ARN; for a cross-region ID such as `us.deepseek.v3-v1:0`, which is itself a system-defined inference profile, it is that profile's ARN.
+
+```python
 def _slug(text: str) -> str:
     # Profile names allow letters, digits, and single spaces/hyphens/underscores, max 64 chars
     return re.sub(r"[^0-9a-zA-Z]+", "-", text).strip("-")[:30]
 
 def _source_arn(model_id: str) -> str:
-    """ARN that the profile should point at.
-
-    Plain model IDs (e.g. 'amazon.titan-embed-text-v2:0') map to a foundation-model ARN.
-    Cross-region IDs (e.g. 'us.deepseek.v3-v1:0') are system-defined
-    inference profiles, so we copy from that profile's ARN instead.
-    """
+    """ARN that the profile should point at: the foundation model, or the system-defined profile for a cross-region ID."""
     if model_id.split(".")[0] in {"us", "eu", "apac", "global", "jp", "au"}:
         return bedrock.get_inference_profile(inferenceProfileIdentifier=model_id)["inferenceProfileArn"]
     return bedrock.get_foundation_model(modelIdentifier=model_id)["modelDetails"]["modelArn"]
+```
 
+The function itself. It builds a profile name from your project and user name, lists the application profiles in the account and returns the ARN if one with that name exists, so rerunning the notebook never creates duplicates. Otherwise it creates the profile with the tags above. An `AccessDeniedException` on either call is turned into a message that says which role the notebook is running as and what to do about it.
+
+```python
 def get_or_create_inference_profile(base_model_id: str, label: str) -> str:
     """Return the ARN of a tagged application inference profile for base_model_id."""
     profile_name = f"{_slug(project)}-{_slug(name)}-{label}"
@@ -559,7 +565,7 @@ def get_or_create_inference_profile(base_model_id: str, label: str) -> str:
             role = boto3.client("sts").get_caller_identity()["Arn"]
             raise PermissionError(
                 f"This notebook's role has no Bedrock permissions ({role}).\n"
-                "The Bedrock episode needs the policy in the 'Permissions and verification' callout attached to the "
+                "The Bedrock episode needs the Bedrock policy from the Account preparation instructor page attached to the "
                 "notebook's execution role. On the class account, the instance must use the ml-sagemaker-bedrock-use role: "
                 "stop it, Edit, change the IAM role, start it again. On your own account, attach the policy to your role. "
                 "Nothing to change in this notebook; rerun this cell afterwards."
@@ -567,51 +573,18 @@ def get_or_create_inference_profile(base_model_id: str, label: str) -> str:
         raise
     print(f"Created inference profile {profile_name}: {resp['inferenceProfileArn']}")
     return resp["inferenceProfileArn"]
+```
 
-# From here on, these ARNs are what we pass as modelId. The base IDs are never sent to
-# the runtime again.
+Now call it twice, once per base model. The two ARNs it returns are what every later cell passes as `modelId`; the base model IDs are never sent to the runtime again.
+
+```python
 bedrock_model_id = get_or_create_inference_profile(base_generation_model_id, "wattbot-gen")
 embedding_model_id_bedrock = get_or_create_inference_profile(base_embedding_model_id, "wattbot-embed")
 ```
 
 ::::::::::::::::::::::::::::::::::::: callout
 
-### Permissions and verification
-
-- The notebook's execution role needs the policy below (fill in `<account-id>`): calling models, managing tagged inference profiles, and reading the catalog. The `InvokeModel` permission must cover **both** the profile ARN and the underlying model ARN, or calls through the profile are denied. If the cell above stops with an `AccessDeniedException`, ask the account administrator to attach this policy to the role rather than falling back to the raw model ID.
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "BedrockCallModels",
-      "Effect": "Allow",
-      "Action": ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream", "bedrock:Converse", "bedrock:ConverseStream"],
-      "Resource": [
-        "arn:aws:bedrock:*::foundation-model/*",
-        "arn:aws:bedrock:*:<account-id>:application-inference-profile/*",
-        "arn:aws:bedrock:*:<account-id>:inference-profile/*"
-      ]
-    },
-    {
-      "Sid": "BedrockTaggedProfiles",
-      "Effect": "Allow",
-      "Action": ["bedrock:CreateInferenceProfile", "bedrock:GetInferenceProfile", "bedrock:ListInferenceProfiles",
-                 "bedrock:DeleteInferenceProfile", "bedrock:TagResource", "bedrock:ListTagsForResource"],
-      "Resource": [
-        "arn:aws:bedrock:*:<account-id>:application-inference-profile/*",
-        "arn:aws:bedrock:*:<account-id>:inference-profile/*"
-      ]
-    },
-    {
-      "Sid": "BedrockCatalog",
-      "Effect": "Allow",
-      "Action": ["bedrock:GetFoundationModel", "bedrock:ListFoundationModels", "bedrock:ListInferenceProfiles"],
-      "Resource": "*"
-    }
-  ]
-}
-```
+### Checking the profiles
 
 - You can confirm the routing in the Bedrock console under **Inference and Assessment → Cross-region inference → Application inference profiles**, or with `bedrock.list_inference_profiles(typeEquals="APPLICATION")`.
 - Tags only become filters in Cost Explorer once the tag keys have been **activated as cost allocation tags** in the Billing console (an account‑admin, once‑per‑key action; on a shared workshop account the organizers do this). Until then the tags exist on the resource but do not show up on reports.
@@ -656,13 +629,17 @@ docid_to_url = build_docid_to_url(metadata_df)   # doc_id -> url, for the ref_ur
 print(f"docid_to_url has {len(docid_to_url)} entries.")
 ```
 
-Titan Text Embeddings V2 takes one string per `invoke_model` call and returns a 1,024-dimensional normalized vector. `embedding_model_id_bedrock` is the ARN of our tagged profile for it, so every call is attributed to our `Project`/`Name`/`Purpose` tags. The embedding loop takes a few minutes for ~3,000 chunks (one HTTPS round trip each); it saves its progress every 500 chunks so an interrupted run resumes where it stopped, and uploads the finished matrix to your bucket.
+Titan Text Embeddings V2 takes one string per `invoke_model` call and returns a 1,024-dimensional normalized vector. `embedding_model_id_bedrock` is the ARN of our tagged profile for it, so every call is attributed to our `Project`/`Name`/`Purpose` tags. Three cells: where the result is saved, the call that embeds one string, and the loop that embeds every chunk once and caches the matrix. First the paths.
 
 ```python
 data_dir = Path(local_data_dir)
-emb_save_path = data_dir / "embeddings_bedrock.npy"
-emb_partial_path = data_dir / "embeddings_bedrock.partial.npy"
+emb_save_path = data_dir / "embeddings_bedrock.npy"             # the finished matrix, one row per chunk
+emb_partial_path = data_dir / "embeddings_bedrock.partial.npy"  # progress file, so an interrupted run resumes
+```
 
+The call itself. `invoke_model` takes a provider-specific JSON body; Titan's is `{"inputText": ...}`, and its response carries the vector under `embedding`. `embed_query` is the same call wrapped for retrieval time, when we embed one question at a time.
+
+```python
 def bedrock_embed_text(text: str, model_id: str = embedding_model_id_bedrock) -> List[float]:
     """Call the Titan embedding model (through our tagged profile) for one string."""
     response = bedrock_runtime.invoke_model(
@@ -681,8 +658,11 @@ def bedrock_embed_text(text: str, model_id: str = embedding_model_id_bedrock) ->
 def embed_query(question: str) -> np.ndarray:
     """The retrieval-time half of the pipeline: the same model, one question at a time."""
     return np.asarray(bedrock_embed_text(question), dtype="float32")
+```
 
+Embedding 3,000 chunks is a few minutes and a few cents, so do not do it twice. The cell below looks for the finished matrix locally, then in your bucket, and only then computes it, saving progress every 500 chunks so an interrupted run picks up where it stopped. One small helper asks S3 whether an object exists.
 
+```python
 def _s3_object_exists(bucket: str, key: str) -> bool:
     try:
         s3.head_object(Bucket=bucket, Key=key)
@@ -848,6 +828,34 @@ scored_df = compute_wattbot_score(
     n_examples=20,
 )
 ```
+
+### Why were the wrong ones wrong?
+
+The score tells you *which* questions failed, not why. Two different failures look the same in that table. Either retrieval never surfaced the right paper, so the model had nothing to work with, or the right passage was in front of it and it still declined or misread it. The cell below separates them for the lowest-scoring rows: it joins the model's own explanation and the passages it cited back onto the score, then reruns retrieval for the question (one embedding call) and reports whether the ground-truth paper was among the top-k chunks and what the best cosine score was.
+
+```python
+from wattbot_rag import retrieve_top_k, split_ref_ids
+
+worst = scored_df.sort_values("wattbot_score").head(8)
+by_id = results_df.set_index("id")   # the model's answer, explanation and cited passages, keyed by question id
+
+for _, row in worst.iterrows():
+    qid = row["id"]
+    gt_refs = set(split_ref_ids(row["ref_id_gt"]))   # train_QA.csv stores the list as a string
+    retrieved = retrieve_top_k(embed_query(row["question_gt"]), chunk_embeddings, chunked_docs, k=8)   # the merge suffixed both sides' columns
+    retrieved_docs = [r["doc_id"] for r in retrieved]
+    print("=" * 96)
+    print(f"{qid}: {row['question_gt']}")
+    print(f"  expected: {row['answer_value_gt']}  from {sorted(gt_refs)}")
+    print(f"  predicted: {row['answer_value_pred']}  citing {row['ref_id_pred']}")
+    print(f"  retrieval: top cosine {retrieved[0]['score']:.3f}; top-8 papers {retrieved_docs}")
+    print(f"  ground-truth paper retrieved: {'yes' if gt_refs & set(retrieved_docs) else 'NO'}")
+    if by_id.loc[qid, "explanation"] != "is_blank":
+        print(f"  model's explanation: {by_id.loc[qid, 'explanation']}")
+        print(f"  passages it cited: {str(by_id.loc[qid, 'supporting_materials'])[:400]}")
+```
+
+Read the two lines at the bottom of each block together. "Ground-truth paper retrieved: NO" is a retrieval problem: a different chunk size, a reranker, or a better embedding model is the fix, and no generator will help. "Yes" with `is_blank` is the model declining on evidence it had, which the system prompt and the retrieval threshold control. "Yes" with a wrong value is a reading error, and the cited passage usually shows what it latched onto: a nearby number, a different unit, a different model in the same table. Each of those is a different lever, and the score alone would have you pulling the wrong one.
 
 ::::::::::::::::::::::::::::::::::::: challenge
 

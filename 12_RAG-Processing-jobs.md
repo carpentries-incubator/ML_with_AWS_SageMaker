@@ -75,18 +75,22 @@ In this episode we will:
 Jobs run in containers, so the code they execute has to be shipped with the job: a Processing job cannot import functions defined in this notebook. The lesson repository has the three files we need as standalone scripts. Clone it:
 
 - `scripts/embedding_inference.py`: generic embedding script (JSONL with a `text` field in, `embeddings.npy` out).
+- `scripts/hf_embedder.py`: the embedding model wrapper both jobs use, on plain `transformers` (mean pooling and normalisation, thirty lines), so neither job has to install anything for it.
 - `scripts/wattbot_rag_batch.py`: the WattBot RAG loop as a batch job: loads the inputs, serves Qwen with vLLM, writes `wattbot_solutions.csv`.
 - `scripts/wattbot_rag.py`: the shared pipeline logic (retrieval, prompts, answer parsing, `run_single_qa`, the scorer) that the Bedrock episode imported too. The batch script imports it, so it ships with the job; the notebook imports it for scoring.
 
-Each job gets its own source directory, because the two jobs need different Python packages and SageMaker installs whatever `requirements.txt` it finds next to the script. `code_embed/` holds the embedding job, `code_rag/` the RAG job, and a copy of `wattbot_rag.py` sits next to the notebook for the scoring step at the end.
+Each job gets its own source directory, because SageMaker uploads the whole directory and installs whatever `requirements.txt` it finds next to the script, and only the RAG job needs extra packages. `code_embed/` holds the embedding job, `code_rag/` the RAG job, and a copy of `wattbot_rag.py` sits next to the notebook for the scoring step at the end.
 
 ```python
+!mkdir -p /home/ec2-user/SageMaker/wattbot   # the same project folder the Bedrock episode used, beside the lesson clone
+%cd /home/ec2-user/SageMaker/wattbot
+
 # One source directory per job: SageMaker uploads the whole directory into the container
 !mkdir -p code_embed code_rag
 # The embedding job's script
-!cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/embedding_inference.py code_embed/
+!cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/embedding_inference.py /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/hf_embedder.py code_embed/
 # The RAG job's script plus the shared module it imports (the container cannot see this notebook)
-!cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/wattbot_rag_batch.py /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/wattbot_rag.py code_rag/
+!cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/wattbot_rag_batch.py /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/wattbot_rag.py /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/hf_embedder.py code_rag/
 # The notebook's own copy, for scoring at the end
 !cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/wattbot_rag.py .
 !ls code_embed code_rag
@@ -128,6 +132,8 @@ print("Bucket:", bucket_name)
 
 The jobs read three files from S3: `train_QA.csv` and `metadata.csv` from the shared bucket, and `chunks.jsonl` from your bucket, where the Bedrock episode cached it. The PDFs themselves are not needed again: chunking was done once, and the jobs work from the chunks. We download the three files to the notebook only to confirm they exist and to look at them; the jobs fetch their own copies from S3.
 
+First the keys and the full S3 URIs. The URIs are the form a `ProcessingInput` takes, so they are built here once and reused when the jobs are launched.
+
 ```python
 train_qa_key = "wattbot/train_QA.csv"
 metadata_key = "wattbot/metadata.csv"
@@ -139,11 +145,16 @@ metadata_s3 = f"s3://{shared_bucket}/{metadata_key}"
 chunks_s3_uri = f"s3://{bucket_name}/{chunks_s3_key}"
 
 def smart_read_csv(path: str) -> pd.DataFrame:
+    """Read a CSV as utf-8, falling back to latin-1 for the odd accented author name."""
     try:
         return pd.read_csv(path)
     except UnicodeDecodeError:
         return pd.read_csv(path, encoding="latin-1")
+```
 
+Then download the three files, skipping any already on disk, and load them so we can check the counts before spending GPU time on them.
+
+```python
 train_qa_path = os.path.join(local_data_dir, "train_QA.csv")
 metadata_path = os.path.join(local_data_dir, "metadata.csv")
 local_chunks_path = os.path.join(local_data_dir, "chunks.jsonl")
@@ -174,7 +185,7 @@ If the last download fails with `NoSuchKey`, go back to the Bedrock episode and 
 Now we launch a short-lived Hugging Face **Processing job** that:
 
 1. Downloads `chunks.jsonl` from S3.
-2. Loads `thenlper/gte-large` from Hugging Face.
+2. Loads `thenlper/gte-large` from Hugging Face with the container's own `transformers`.
 3. Encodes each chunk into an embedding vector.
 4. Saves the full matrix as `embeddings.npy` back to S3.
 
@@ -182,15 +193,12 @@ We use the same `embedding_inference.py` script across projects; here it expects
 
 ### Requirements
 
-The Hugging Face container has `transformers` and PyTorch but not `sentence-transformers`. A `requirements.txt` in the job's `source_dir` is installed before the script runs. The RAG job's requirements are different (vLLM, plus `sentence-transformers` for the query embedder), which is why it has its own directory.
+The embedding job needs nothing the Hugging Face container does not already have, so it has no `requirements.txt` and starts as soon as the instance is up. The RAG job needs vLLM, which the container does not ship. A `requirements.txt` in the job's `source_dir` is installed before the script runs. vLLM pins its own PyTorch and a newer `transformers`, so the container's `peft` has to move with it; the pin on `peft` is there because an older `peft` left behind imports a class the newer `transformers` removed, and the job dies on that import before it reaches the model.
 
 ```python
-# A requirements.txt next to the script is pip-installed in the container before the script runs
-with open("code_embed/requirements.txt", "w") as f:
-    f.write("sentence-transformers\n")
-
+# A requirements.txt next to the script is pip-installed in the container before the script runs; only the RAG job has one
 with open("code_rag/requirements.txt", "w") as f:
-    f.write("\n".join(["vllm>=0.17", "sentence-transformers"]) + "\n")   # 0.17+ is needed for Qwen3.8
+    f.write("\n".join(["vllm>=0.17", "peft>=0.18"]) + "\n")   # vLLM 0.17+ for Qwen3.8; peft upgraded to match the transformers vLLM installs
 
 print("code_embed:", os.listdir("code_embed"))
 print("code_rag:  ", os.listdir("code_rag"))
@@ -224,7 +232,7 @@ def make_job_tags(purpose: str):   # one of: Storage, Notebook, Training, Tuning
 
 ### Launch the embedding job
 
-Open `scripts/embedding_inference.py` first; it is under fifty lines. It reads a JSONL file of chunks from the job's input directory, embeds them with whatever sentence-transformer `--model_id` names, normalises the vectors so a dot product is a cosine similarity, and saves one `embeddings.npy` to the output directory. Nothing in it knows about WattBot, which is the point of a Processing job script: inputs in, outputs out, no state.
+Open `scripts/embedding_inference.py` first; it is under fifty lines. It reads a JSONL file of chunks from the job's input directory, embeds them with whatever Hugging Face model `--model_id` names, through the thirty-line wrapper in `hf_embedder.py`, normalises the vectors so a dot product is a cosine similarity, and saves one `embeddings.npy` to the output directory. Nothing in it knows about WattBot, which is the point of a Processing job script: inputs in, outputs out, no state.
 
 A `HuggingFaceProcessor` is the Processing-job counterpart of the estimator: the same role, tags, instance type and container versions, plus a runtime cap. Its `run` call names the script, mounts the inputs, and says where the output goes.
 
@@ -251,7 +259,7 @@ embedding_processor = HuggingFaceProcessor(
 start = time.time()
 embedding_processor.run(
     code="embedding_inference.py",     # the script the container runs...
-    source_dir="code_embed/",          # ...uploaded with everything beside it, requirements.txt included
+    source_dir="code_embed/",          # ...uploaded with everything beside it (hf_embedder.py)
     inputs=[
         ProcessingInput(
             source=chunks_s3_uri,                       # S3 object (or prefix) copied in before the script starts
@@ -314,7 +322,7 @@ Open `scripts/wattbot_rag_batch.py` and read `main` before launching it. It is s
 - `run_single_qa`: retrieval, the answer call, the hybrid unanswerable rule (retrieval threshold OR the model's own `is_blank`), the explanation call
 - `compute_wattbot_score`: the metric we use at the end
 
-What the batch script adds is the two model callables: `embed_query` wraps the same `gte-large` sentence-transformer the embedding job used (the question has to be embedded with the same model as the chunks), and `generate` wraps a vLLM engine serving Qwen3.8-27B with thinking mode off. The job writes `wattbot_solutions.csv` in the WattBot submission format.
+What the batch script adds is the two model callables: `embed_query` wraps the same `gte-large` model and pooling the embedding job used (`hf_embedder.py`) (the question has to be embedded with the same model as the chunks), and `generate` wraps a vLLM engine serving Qwen3.8-27B with thinking mode off. The job writes `wattbot_solutions.csv` in the WattBot submission format.
 
 ```python
 emb_output_s3 = f"s3://{bucket_name}/{emb_output_prefix}/embeddings.npy"
@@ -351,7 +359,7 @@ rag_processor = HuggingFaceProcessor(
 start = time.time()
 rag_processor.run(
     code="wattbot_rag_batch.py",
-    source_dir="code_rag/",            # wattbot_rag_batch.py + wattbot_rag.py + requirements.txt
+    source_dir="code_rag/",            # wattbot_rag_batch.py + wattbot_rag.py + hf_embedder.py + requirements.txt
     inputs=[
         ProcessingInput(
             source=chunks_s3_uri,

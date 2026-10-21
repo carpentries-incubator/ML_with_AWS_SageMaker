@@ -25,6 +25,66 @@ exercises: 10
 
 
 
+## Initial setup
+
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/15_Resource-management-cleanup.ipynb`. Any kernel works; **`conda_python3`** is fine. This episode is mostly console steps, but the cells below ask AWS what is still running or stored under your name, so you can check the list against reality before and after you clean up.
+
+```python
+import boto3
+import sagemaker
+import sys
+
+sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
+import helpers
+
+session = sagemaker.Session()
+sm = session.sagemaker_client
+region = session.boto_region_name
+
+name = "DoeJohn"                              # replace with your name, as used in job names and tags
+bucket_name = "sinkorswim-doejohn"            # replace with your bucket
+```
+
+## What is still running under your name?
+
+Everything this lesson launched carries your name in its job name or its tags, so one pass over the job lists shows what is still billing. A completed job holds nothing; an InProgress one bills until it ends or hits its cap.
+
+```python
+print("Notebook instances (bill while InService; volume bills while Stopped):")
+for nb in sm.list_notebook_instances()["NotebookInstances"]:
+    print(f"  {nb['NotebookInstanceName']:<40} {nb['NotebookInstanceStatus']:<12} {nb['InstanceType']}")
+
+print("\nJobs still InProgress with your name in them:")
+running = 0
+for kind, lister, key, name_key in [
+    ("training",   sm.list_training_jobs,              "TrainingJobSummaries",            "TrainingJobName"),
+    ("tuning",     sm.list_hyper_parameter_tuning_jobs, "HyperParameterTuningJobSummaries", "HyperParameterTuningJobName"),
+    ("processing", sm.list_processing_jobs,            "ProcessingJobSummaries",          "ProcessingJobName"),
+]:
+    for job in lister(StatusEquals="InProgress", NameContains=name, MaxResults=50)[key]:
+        print(f"  {kind:<11} {job[name_key]}")
+        running += 1
+print("  none" if running == 0 else f"  {running} job(s) still billing: stop them from the console if you no longer need them")
+```
+
+Then storage, which bills whether or not anything runs:
+
+```python
+helpers.get_s3_bucket_size(bucket_name)
+```
+
+And the Bedrock inference profiles, which cost nothing to keep but are yours to remove (the instructors' cleanup does not touch them):
+
+```python
+bedrock = boto3.client("bedrock", region_name=region)
+profiles = [p for p in bedrock.list_inference_profiles(typeEquals="APPLICATION")["inferenceProfileSummaries"] if name in p["inferenceProfileName"]]
+for p in profiles:
+    print(p["inferenceProfileName"], p["inferenceProfileArn"])
+print("none" if not profiles else f"{len(profiles)} profile(s); delete with bedrock.delete_inference_profile(inferenceProfileIdentifier=<arn>)")
+```
+
+Now the console steps. Rerun the cells above when you are done; every list should be empty or Stopped.
+
 ## Shutting down notebook instances
 
 Notebook instances in SageMaker are billed per second, so it’s essential to stop or delete them when they are no longer needed. Earlier in the **Notebooks as controllers** episode, we discussed using lower-cost instance types like `ml.t3.medium` (approximately `$0.05`/hour) for controlling workflows. While this makes open notebooks less costly than larger instances, it’s still a good habit to stop or delete notebooks to avoid unnecessary spending, especially if left idle for long periods.
