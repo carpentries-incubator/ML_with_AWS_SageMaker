@@ -1013,7 +1013,7 @@ This step cuts the tables and figures out of the PDFs as images, builds a second
 
 ### Extract the tables and figures
 
-Why cut them out at all, rather than hand the embedding model a whole page, or the PDF itself (Nova accepts documents as input)? For the same reason Step 6 cut the text into chunks instead of embedding each paper whole. An embedding is a fixed-length vector, a thousand numbers, whatever goes in; the more that goes in, the less of each thing survives in it. A page holding two tables, a figure and three paragraphs gets one vector that is a blur of all six, and a question about one of the tables has to match that blur. A crop of the table gets a vector that is about the table. The same holds at generation time: the vision model reads a crop at full resolution for a few hundred tokens, where a page costs a thousand tokens and shows the table at a quarter of the size. We tried whole pages first on this corpus; the callout at the end has the numbers, and they are the floor the crops should beat.
+Why cut them out at all, rather than hand the embedding model a whole page, or the PDF itself (Nova accepts documents as input)? For the same reason Step 6 cut the text into chunks instead of embedding each paper whole. An embedding is a fixed-length vector, a thousand numbers, whatever goes in; the more that goes in, the less of each thing survives in it. A page holding two tables, a figure and three paragraphs gets one vector that is a blur of all six, and a question about one of the tables has to match that blur. A crop of the table gets a vector that is about the table. The same holds at generation time: the vision model reads a crop at full resolution for a few hundred tokens, where a page costs a thousand tokens and shows the table at a quarter of the size. We tried whole pages first on this corpus: they helped figure questions a little and tables not at all. The crops, as the callout at the end shows, help both.
 
 A PDF has no table or figure objects to pull out. It stores text runs, raster images, and drawing commands (lines, fills, curves), and a plot is a few thousand of the last. [PyMuPDF](https://pymupdf.readthedocs.io/) ships three detectors that turn those back into boxes: `find_tables` finds tables from their rulings or their text alignment, `get_image_info` lists the embedded raster images, and `cluster_drawings` groups the drawing commands of a vector figure into one bounding box. `extract_figures_and_tables` in `wattbot_rag.py` runs the three on every page, drops page-sized background fills, rules and logos, pairs each box with the nearest caption line starting "Table N" or "Figure N" (tables are captioned above, figures below) and widens the crop to include that caption, so the image carries the identifier a question will use. A caption whose box no detector found falls back to the whole page, so nothing the text mentions is missed. Open the function; it is sixty lines and every rule in it is a line you can change. The detectors are the slow part, a second or two per page on this instance, so the cell runs them only on the pages whose text carries a caption, under half of the corpus; in class, with `use_instructor_embeddings` set, it downloads the crops your instructor made instead.
 
@@ -1122,25 +1122,46 @@ def embed_query_mm(question: str) -> np.ndarray:
     return embed_multimodal(bedrock_runtime_mm, multimodal_model_id, text=question, purpose="query")
 ```
 
-### Does the image index find the right paper more often?
+### Does the image index find the right table or figure?
 
-Retrieval is the same `retrieve_top_k` as Step 9, over the crop matrix instead of the chunk matrix. `train_QA.csv` names the paper each answer comes from, so the cleanest measure is the **hit rate**: the fraction of questions for which a ground-truth paper is among the top-k results. Higher is better, and 1.00 means every question had the right paper in front of the model. We compute it for the text index and the image index on the Table questions, the Figure questions and, as a control, the Quote questions, where the image index should have no advantage.
+Retrieval is the same `retrieve_top_k` as Step 9, over the crop matrix instead of the chunk matrix. Two measures, both **hit rates**, higher is better, 1.00 meaning every question had it. The first is coarse: is a ground-truth *paper* among the top results? `train_QA.csv` names the paper for every question. The second is the one that matters for this step: is the *table or figure the answer sits in* among the crops the model would be shown? Most table and figure questions name it in `supporting_materials` ("Table 3", "Fig. 5, upper panel"), and `cited_captions` pulls that identifier out; `crop_matches` checks a crop's caption against it. For the text index, the crops it "shows" are those on the pages its top chunks came from, which is what the third vision run below attaches. Quote-only questions are the control for the paper measure, where the image index should have no advantage.
 
 ```python
+from wattbot_rag import cited_captions, crop_matches
+
 k = 8
 groups = {"Table": train_df[train_df["Table"] == 1], "Figure": train_df[train_df["Figure"] == 1],
           "Quote only": train_df[(train_df["Quote"] == 1) & (train_df["Table"] == 0) & (train_df["Figure"] == 0)].head(40)}
+crops_by_page: Dict[tuple, list] = {}
+for c in crops:
+    crops_by_page.setdefault((c["doc_id"], c["page_num"]), []).append(c)
 
-print("Hit rate at k=8 (higher is better): share of questions whose ground-truth paper is in the top 8 results\n")
-print(f"{'questions':<12}{'n':>4}{'text index':>14}{'image index':>14}")
+def crops_behind(chunks):   # the crops on the pages the retrieved chunks came from
+    return [c for ch in chunks for c in crops_by_page.get((ch["doc_id"], ch["page_num"]), [])]
+
+print("Hit rate (higher is better). Paper: a ground-truth paper is in the top 8 results. Table/figure: the one the answer")
+print("sits in is among the crops shown (the image index's top 3; for the text index, the crops on its top chunks' pages)\n")
+print(f"{'questions':<12}{'n':>4}{'paper, text':>14}{'paper, image':>14}{'crop, text':>14}{'crop, image':>14}")
 for label, qs in groups.items():
     gt = [split_ref_ids(r) for r in qs["ref_id"]]
-    text_hits = [[c["doc_id"] for c in retrieve_top_k(embed_query(q), chunk_embeddings, chunked_docs, k=k)] for q in qs["question"]]
-    image_hits = [[c["doc_id"] for c in retrieve_top_k(embed_query_mm(q), crop_embeddings, crops, k=k)] for q in qs["question"]]
-    print(f"{label:<12}{len(qs):>4}{hit_at_k(text_hits, gt):>14.2f}{hit_at_k(image_hits, gt):>14.2f}")
+    text_chunks = [retrieve_top_k(embed_query(q), chunk_embeddings, chunked_docs, k=k) for q in qs["question"]]
+    image_crops = [retrieve_top_k(embed_query_mm(q), crop_embeddings, crops, k=3) for q in qs["question"]]
+    paper_text = hit_at_k([[c["doc_id"] for c in r] for r in text_chunks], gt)
+    paper_image = hit_at_k([[c["doc_id"] for c in r] for r in image_crops], gt)
+    # the crop measure, over the questions that name their table or figure
+    targets = [(refs, cited_captions(sm)) for refs, sm in zip(gt, qs["supporting_materials"])]
+    crop_text, crop_image, n_named = [], [], 0
+    for (refs, labels), chunks_i, crops_i in zip(targets, text_chunks, image_crops):
+        if not labels:
+            continue
+        n_named += 1
+        crop_text.append(any(crop_matches(c, d, l) for c in crops_behind(chunks_i) for d in refs for l in labels))
+        crop_image.append(any(crop_matches(c, d, l) for c in crops_i for d in refs for l in labels))
+    crop_cols = f"{np.mean(crop_text):>14.2f}{np.mean(crop_image):>14.2f}  (of {n_named} that name one)" if n_named else f"{'':>14}{'':>14}"
+    print(f"{label:<12}{len(qs):>4}{paper_text:>14.2f}{paper_image:>14.2f}{crop_cols}")
 ```
 
-Two numbers per row, higher is better, and three readings. If the image index wins on Table and Figure and ties on Quote, the embedding model is doing what it was built for. If it loses everywhere, look at what it was given: a crop of a dense table at 150 dpi is readable, a cropped panel of a nine-panel figure may not be, and a whole-page fallback is a weak key. If both indexes already find the paper for nearly every question, retrieval was never the problem for this corpus and the loss is in the reading, which the next cells test.
+Read the paper columns first: both indexes find the paper for nearly every table and figure question, so at that level there is nothing to win, and the image index is behind. The crop columns are the real comparison. They say whether the text route, chunks and the crops on their pages, or the image route, the crops themselves, more often puts the exact table or figure in front of the model. If the image column is higher there while the paper column is lower, the image index is doing a different job than the text index, finding the object rather than the document, and the next cells show whether the model can use it. If both crop columns are low, the fix is upstream, in the extraction: a table the detector missed became a whole-page fallback, and a page is a weak key.
 
 ### Let the model see the table or figure
 
@@ -1177,9 +1198,6 @@ Three runs over the Table and Figure questions, all through the vision model, so
 
 ```python
 tf_df = train_df[(train_df["Table"] == 1) | (train_df["Figure"] == 1)]
-crops_by_page: Dict[tuple, list] = {}
-for c in crops:
-    crops_by_page.setdefault((c["doc_id"], c["page_num"]), []).append(c)
 print(f"{len(tf_df)} table and figure questions; each run makes an answer call and an explanation call per question, so about {6 * len(tf_df)} calls for three runs")
 
 def crops_for(question: str, images_from: str):
@@ -1188,10 +1206,9 @@ def crops_for(question: str, images_from: str):
         return retrieve_top_k(embed_query_mm(question), crop_embeddings, crops, k=3)
     if images_from == "text_index":
         found = []
-        for ch in retrieve_top_k(embed_query(question), chunk_embeddings, chunked_docs, k=8):
-            for c in crops_by_page.get((ch["doc_id"], ch["page_num"]), []):
-                if c not in found:
-                    found.append(c)
+        for c in crops_behind(retrieve_top_k(embed_query(question), chunk_embeddings, chunked_docs, k=8)):
+            if c not in found:
+                found.append(c)
         return found[:3]
     return []
 
@@ -1236,7 +1253,7 @@ for label, images_from in vision_runs.items():
 
 ### What to expect, and what it cost
 
-Measured once on this corpus with whole page images rather than crops, on 50 table and figure questions, before the extraction step above was written; the crops should do better, and the numbers here are the floor. Retrieval first: the text index found a ground-truth paper in its top eight for 94% of the table questions and 94% of the figure questions; the page-image index managed 91% and 82%. A whole page is a weaker key than the caption and surrounding sentences that the text chunks already carry. Then reading: with the image index's top three pages attached, Nova 2 Lite went from 0.64 to 0.67 overall, from 59% to 71% of figure questions correct, and from 0.85 to 0.93 on citation F1, while the table questions did not move (57% to 54% correct). Seventeen figure questions is two questions of difference, so read the direction, not the decimals. For the bill, every image is a few hundred to a thousand input tokens at Nova 2 Lite's rate on the [pricing page](https://aws.amazon.com/bedrock/pricing/), so a run with images costs two to three times the control; `vision_usage` holds all three runs' usage blocks, and the embedding of the crops is the per-image rate times `len(crops)`, a few cents. The three runs together take about eight minutes.
+Measured once on this corpus, 50 table and figure questions, Nova 2 Lite throughout. Retrieval at the paper level was a tie that the text index won: 0.94 against 0.89 on table questions, 0.94 against 0.88 on figures, and 0.82 against 0.65 on quote-only questions, where a picture has nothing to offer. Then reading. Text chunks alone scored 0.64, with 57% of table answers and 59% of figure answers correct. Chunks plus the image index's top three crops scored 0.75, with 69% of tables and 71% of figures correct and citation F1 up from 0.85 to 0.93. Chunks plus the crops on the pages behind the top text chunks, the route the paper-level hit rate seemed to favour, scored 0.67. Two readings. Showing the model the table or figure is worth about ten points on the questions that depend on one, tables included, which whole pages at 100 dpi had not managed. And finding the paper is not finding the table: the image index chose better crops than the text route did, because a question about a table matches the picture of that table better than it matches the prose on the same page. Fifty questions is a small sample, so read the direction, not the decimals. For the bill, every crop is a few hundred input tokens at Nova 2 Lite's rate on the [pricing page](https://aws.amazon.com/bedrock/pricing/), so a run with images costs two to three times the control and takes three to four times as long: 1.6, 4.0 and 3.0 minutes for the three runs here. `vision_usage` holds all three runs' usage blocks, and the embedding of the 2,213 crops is the per-image rate times that count, a few cents.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 

@@ -326,13 +326,13 @@ The `--per_type 10` argument draws the same stratified sample the Bedrock episod
 - `run_single_qa`: retrieval, the answer call, the hybrid unanswerable rule (retrieval threshold OR the model's own `is_blank`), the explanation call
 - `compute_wattbot_score`: the metric we use at the end
 
-What the batch script adds is the two model callables: `embed_query` wraps the same `gte-large` model and pooling the embedding job used (`hf_embedder.py`) (the question has to be embedded with the same model as the chunks), and `generate` wraps `transformers.generate` on the generator (Qwen3-8B here) with Qwen's thinking mode off. The job writes `wattbot_solutions.csv` in the WattBot submission format.
+What the batch script adds is the two model callables: `embed_query` wraps the same `gte-large` model and pooling the embedding job used (`hf_embedder.py`) (the question has to be embedded with the same model as the chunks), and `generate_batch` wraps `transformers.generate` on the generator (Qwen3-8B here) with Qwen's thinking mode off, taking several prompts at once. The loop itself is `run_batch_qa`, the batched twin of the `run_single_qa` the Bedrock episode used: the same retrieval, prompts and unanswerable rule, with the model calls grouped eight at a time because a GPU decoding one prompt is idle most of the time. The job writes `wattbot_solutions.csv` in the WattBot submission format.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
 ### Why not vLLM?
 
-vLLM is the open-source inference engine most people serve open-weight models with: you give it a model name, it loads the weights onto the GPU and answers chat requests, batching many at once so that throughput scales. That is what you want behind an API with users. This job sends about 100 prompts one at a time, so the batching would go unused, and the install is several gigabytes of billed GPU time. `transformers.generate`, already in the container, does the same prompts in about thirteen minutes with nothing to install. The GPU-notebook episode uses vLLM, where its 8-bit weights are needed to fit a larger model.
+vLLM is the open-source inference engine most people serve open-weight models with: you give it a model name, it loads the weights onto the GPU and answers chat requests, batching many at once so that throughput scales. That is what you want behind an API with users. This job has about 100 prompts and no users waiting, and `transformers.generate`, already in the container, can decode several prompts at once too: `run_batch_qa` in `wattbot_rag.py` hands them to the model eight at a time (`--batch_size`), which is where most of vLLM's speed on a batch like this comes from, with nothing to install. vLLM's install is several gigabytes of billed GPU time before the first answer. The GPU-notebook episode uses vLLM, where its 8-bit weights are needed to fit a larger model.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -415,13 +415,14 @@ rag_processor.run(
         "--top_k", "8",                                        # chunks handed to the model per question
         "--retrieval_threshold", "0.25",                       # best cosine below this => unanswerable
         "--per_type", "10",                                    # the same stratified sample the Bedrock episode scored (seed 0); drop it for all the questions
+        "--batch_size", "8",                                   # prompts decoded together; 1 would be one at a time, several times slower
     ],
 )
 
 print(f"RAG batch job complete: {(time.time() - start) / 60:.1f} min wall-clock, including instance startup and the weight download")
 ```
 
-While it runs, read what the container is printing. Open the [Processing jobs page](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs), click the job's name, scroll to **Monitor** and click **View logs**. That opens CloudWatch, the AWS service that stores every job's printed output, at a list with one entry named after your job; click it. The text is the container's stdout, kept after the job ends, updated while it runs (refresh). You will see, in order: the weight download (16 GB in shards), `Loading model with transformers`, then one line per question. The whole job is the 20 minutes in the cost callout; the generation is the second half of it.
+While it runs, read what the container is printing. Open the [Processing jobs page](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs), click the job's name, scroll to **Monitor** and click **View logs**. That opens CloudWatch, the AWS service that stores every job's printed output, at a list with one entry named after your job; click it. The text is the container's stdout, kept after the job ends, updated while it runs (refresh). You will see, in order: the weight download (16 GB in shards), `Loading model with transformers`, a line per batch of answers and of explanations, then one line per question. The whole job is the 20 minutes in the cost callout; the generation is the second half of it.
 
 
 ## Step 4 – Download predictions and evaluate
