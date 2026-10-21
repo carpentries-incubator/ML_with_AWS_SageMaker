@@ -495,7 +495,8 @@ against reality before and after you clean up.</p>
 <span id="cb1-10"><a href="#cb1-10" tabindex="-1" aria-label="code-block-1-10"></a>region <span class="op">=</span> session.boto_region_name</span>
 <span id="cb1-11"><a href="#cb1-11" tabindex="-1" aria-label="code-block-1-11"></a></span>
 <span id="cb1-12"><a href="#cb1-12" tabindex="-1" aria-label="code-block-1-12"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span>                              <span class="co"># replace with your name, as used in job names and tags</span></span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1" aria-label="code-block-1-13"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>            <span class="co"># replace with your bucket</span></span></code></pre>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1" aria-label="code-block-1-13"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>                        <span class="co"># replace with your challenge name, as used in the Bedrock profile names</span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1" aria-label="code-block-1-14"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>            <span class="co"># replace with your bucket</span></span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="what-is-still-running-under-your-name">What is still running under your name?<a class="anchor" aria-label="anchor" href="#what-is-still-running-under-your-name"></a></h2>
 <hr class="half-width"><p>Everything this lesson launched carries your name in its job name or
@@ -533,10 +534,34 @@ are yours to remove (the instructors’ cleanup does not touch them):</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a>bedrock <span class="op">=</span> boto3.client(<span class="st">"bedrock"</span>, region_name<span class="op">=</span>region)</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a>profiles <span class="op">=</span> [p <span class="cf">for</span> p <span class="kw">in</span> bedrock.list_inference_profiles(typeEquals<span class="op">=</span><span class="st">"APPLICATION"</span>)[<span class="st">"inferenceProfileSummaries"</span>] <span class="cf">if</span> name <span class="kw">in</span> p[<span class="st">"inferenceProfileName"</span>]]</span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a><span class="cf">for</span> p <span class="kw">in</span> profiles:</span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a>    <span class="bu">print</span>(p[<span class="st">"inferenceProfileName"</span>], p[<span class="st">"inferenceProfileArn"</span>])</span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1" aria-label="code-block-4-5"></a><span class="bu">print</span>(<span class="st">"none"</span> <span class="cf">if</span> <span class="kw">not</span> profiles <span class="cf">else</span> <span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(profiles)<span class="sc">}</span><span class="ss"> profile(s); delete with bedrock.delete_inference_profile(inferenceProfileIdentifier=&lt;arn&gt;)"</span>)</span></code></pre>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a>mine <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>project<span class="sc">}</span><span class="ss">-</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">-"</span>   <span class="co"># the Bedrock episode named every profile &lt;project&gt;-&lt;name&gt;-&lt;label&gt;, so this prefix is yours and nobody else's</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a>profiles <span class="op">=</span> [p <span class="cf">for</span> p <span class="kw">in</span> bedrock.list_inference_profiles(typeEquals<span class="op">=</span><span class="st">"APPLICATION"</span>)[<span class="st">"inferenceProfileSummaries"</span>]</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a>            <span class="cf">if</span> p[<span class="st">"inferenceProfileName"</span>].startswith(mine)]</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1" aria-label="code-block-4-5"></a><span class="cf">for</span> p <span class="kw">in</span> profiles:</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1" aria-label="code-block-4-6"></a>    <span class="bu">print</span>(p[<span class="st">"inferenceProfileName"</span>], p[<span class="st">"inferenceProfileArn"</span>])</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1" aria-label="code-block-4-7"></a><span class="bu">print</span>(<span class="st">"none"</span> <span class="cf">if</span> <span class="kw">not</span> profiles <span class="cf">else</span> <span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(profiles)<span class="sc">}</span><span class="ss"> profile(s) with your prefix; the next cell deletes them"</span>)</span></code></pre>
+</div>
+<p>Deleting them is one call per profile. The cell deletes only the
+profiles the cell above listed, the ones whose name starts with your
+project and your name, so nobody else’s are touched even though the
+account’s policy would allow it; read the list before you set the flag.
+The notebook instance needs the Bedrock role from the RAG episodes for
+this call; on the old role it fails with an access-denied error, and the
+Bedrock console does the same job by hand (Inference and Assessment →
+Cross-region inference → Application inference profiles → select →
+Delete).</p>
+<div class="codewrapper sourceCode" id="cb5">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a>confirm_delete <span class="op">=</span> <span class="va">False</span>   <span class="co"># set to True after reading the list above</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a><span class="cf">if</span> confirm_delete:</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1" aria-label="code-block-5-4"></a>    <span class="cf">for</span> p <span class="kw">in</span> profiles:</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1" aria-label="code-block-5-5"></a>        bedrock.delete_inference_profile(inferenceProfileIdentifier<span class="op">=</span>p[<span class="st">"inferenceProfileArn"</span>])</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1" aria-label="code-block-5-6"></a>        <span class="bu">print</span>(<span class="st">"deleted"</span>, p[<span class="st">"inferenceProfileName"</span>])</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1" aria-label="code-block-5-7"></a>    profiles <span class="op">=</span> []</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1" aria-label="code-block-5-8"></a><span class="cf">else</span>:</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1" aria-label="code-block-5-9"></a>    <span class="bu">print</span>(<span class="st">"nothing deleted; set confirm_delete = True and rerun to delete the profiles listed above"</span>)</span></code></pre>
 </div>
 <p>Now the console steps. Rerun the cells above when you are done; every
 list should be empty or Stopped.</p>
@@ -620,10 +645,9 @@ launched without tags is untraceable after the fact.</li>
 <code>Project</code> and <code>Purpose</code>, spelled exactly (the S3
 episode says why); a tag you just added can take up to 24 hours to
 appear in Cost Explorer.</li>
-<li>Bedrock application inference profiles cost nothing to keep, but you
-can delete the ones you created from the Bedrock console or with
-<code>bedrock.delete_inference_profile(...)</code> once a project is
-finished.</li>
+<li>Bedrock application inference profiles cost nothing to keep, but
+delete the ones you created once a project is finished; the cells at the
+top of this episode do it for the ones carrying your name.</li>
 </ul></li>
 </ol></section><section><h2 class="section-heading" id="end-of-workshop-checklist">End-of-workshop checklist<a class="anchor" aria-label="anchor" href="#end-of-workshop-checklist"></a></h2>
 <hr class="half-width"><p>Work through this list before you sign off for the last time.</p>
@@ -650,9 +674,9 @@ are still running (SageMaker → each job list, filter by status
 artifacts are in your bucket and go with it.</li>
 <li>
 <strong>Bedrock application inference profiles</strong>: delete the
-ones you created (from the Bedrock console, or with
-<code>bedrock.delete_inference_profile(...)</code> as shown in the RAG
-on Bedrock episode).</li>
+ones you created, with the two cells at the top of this episode (they
+list and delete only the profiles named with your project and your name)
+or from the Bedrock console.</li>
 <li>
 <strong>GitHub personal access token</strong>: revoke it on GitHub
 (Settings → Developer settings → Personal access tokens) if you made one
@@ -749,9 +773,8 @@ afterwards</td>
 </tr><tr><td>Bedrock application inference profiles</td>
 <td>RAG on Bedrock</td>
 <td>No (the calls billed per token when made)</td>
-<td>Bedrock console or
-<code>bedrock.delete_inference_profile(...)</code>
-</td>
+<td>The delete cell at the top of this episode, or the Bedrock
+console</td>
 </tr><tr><td>GPU notebook instance (<code>ml.g6e.xlarge</code>, 100 GB
 volume)</td>
 <td>Optional GPU-notebook episode</td>
