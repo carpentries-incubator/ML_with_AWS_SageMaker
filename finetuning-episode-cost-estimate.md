@@ -8,7 +8,7 @@ Planning notes for running the *Fine-tuning a Vision-Language Model with Trainin
 
 In class, every student runs one LoRA fine-tuning job of about 33 minutes: it scores 15 held-out German-letter (`kade_letters`) pages with the base model, trains on all 251 training pages (295 minus a 44-page holdout) for 2 passes, scores 8 holdout pages after each pass for a curve, scores the same 15 pages again, and saves the adapter. The lesson ships only the German letters (295 train, 141 test pages) because every label is human-transcribed (the competition's survey and account-book labels are mostly machine drafts), because they are most of the hidden test set, and because the scans are smaller. Before/after lives inside that one job, so there are no separate inference jobs during class. The full run, the Processing jobs over the test set and the optional Kaggle submission are homework.
 
-Launches use `wait=True` and an explicit `job_name=f"badger-{username}-churro-lora-2ep"`. The explicit name is the double-launch guard: SageMaker rejects a second job with the same name, so a queued Shift+Enter fails harmlessly. Interrupting the cell does not stop the job; the episode says so in a callout, and you should say it out loud.
+Launches use `wait=True` and an explicit job name with the launch time in it (`badger-<user>-churro-lora-2ep-<MMDD-HHMM>`), so a rerun gets a new name instead of failing with `ResourceInUse`; `wait=True` is the double-launch guard, since the cell blocks until the job ends. Interrupting the cell does not stop the job; the episode says so in a callout, and you should say it out loud.
 
 ## What one student spends
 

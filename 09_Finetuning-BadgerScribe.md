@@ -520,7 +520,8 @@ instance_type = "ml.g5.xlarge"            # one A10G GPU, 24 GB; the GPU lives i
 g5_price = 1.41                           # $/hour, us-east-1 on-demand
 estimated_minutes = 32                    # the Step 0 estimate
 max_run_minutes = 65                      # about twice the estimate; SageMaker kills the job at this cap, whatever it is doing
-training_job_name = f"badger-{username}-churro-lora-2ep"   # must be unique in the account: a rerun fails instead of launching a second job
+run_id = time.strftime("%m%d-%H%M")                                   # launch time, so every run gets a new name: job names must be unique in the account
+training_job_name = f"badger-{username}-churro-lora-2ep-{run_id}"   # who, which model, which recipe, when; "lora" in the name because it is a LoRA fine-tune
 checkpoint_s3_uri = f"s3://{bucket_name}/{data_prefix}/checkpoints/{training_job_name}/"   # the script saves the adapter here at the end of every epoch
 
 print(f"job name:     {training_job_name}")
@@ -589,7 +590,7 @@ estimator = HuggingFace(
 
 Now launch. Two details in this one line matter:
 
-- `job_name` is the one defined with the guard rails. SageMaker requires training job names to be unique in the account, so running this cell a second time fails immediately with `ResourceInUse` and nothing is launched. To run again on purpose, add a suffix to `training_job_name` (`-2`, `-2mp`, whatever says what changed); `checkpoint_s3_uri` follows it automatically. To **resume** a job that was killed, keep the `checkpoint_s3_uri` and change only the job name.
+- `job_name` is the one defined with the guard rails, with the launch time in it: SageMaker requires training job names to be unique in the account, and a name that is fixed fails with `ResourceInUse` the second time the cell runs. Rerunning the guard-rail cell gives a new name and a new checkpoint prefix. To **resume** a job that was killed, keep the old `checkpoint_s3_uri` and launch under the new name.
 - `wait=True` (the default) blocks the notebook until the job ends and streams its log here. For a 25-minute job that is the right choice: you cannot accidentally queue a second launch while you wait, and everything worth doing in the meantime happens on the job's page under [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training), not in this notebook.
 
 The second input channel, `model`, is the copy of CHURRO-3B your instructor staged in the shared bucket: SageMaker mounts it at `/opt/ml/input/data/model` and the script loads from there, so a hundred jobs starting in the same minute copy 7.5 GB from S3 instead of each pulling it from Hugging Face.
@@ -804,7 +805,7 @@ Same estimator and the same 251 pages, four passes instead of two, 40 evaluation
 The same guard rails first: a new job name, its own checkpoint folder, and the cap written down with its worst case.
 
 ```python
-homework_job_name = f"badger-{username}-churro-lora-4ep"
+homework_job_name = f"badger-{username}-churro-lora-4ep-{time.strftime('%m%d-%H%M')}"   # a new name per launch, as above
 homework_checkpoint_s3_uri = f"s3://{bucket_name}/{data_prefix}/checkpoints/{homework_job_name}/"
 print(f"max_run cap: 130 min -> worst case ${g5_price * 130 / 60:.2f}; checkpoints -> {homework_checkpoint_s3_uri}")
 ```
@@ -941,7 +942,7 @@ def run_transcription_job(label: str, adapter_uri: str = None):
         # ProcessingOutput: whatever the script writes under source is copied to destination when the job ends
         outputs=[ProcessingOutput(output_name="predictions", source="/opt/ml/processing/output", destination=output_uri)],
         arguments=arguments,
-        job_name=f"badger-{username}-churro-transcribe-{label}",   # unique, like the training jobs
+        job_name=f"badger-{username}-churro-transcribe-{label}-{time.strftime('%m%d-%H%M')}",   # unique per launch, like the training jobs
         wait=False, logs=False,           # launch and return, so the two jobs run at the same time
     )
     return output_uri
