@@ -17,6 +17,7 @@ s3://<shared-bucket>/
         embeddings_gte_large.npy          the Processing-jobs episode's embedding-job output; learners copy it instead of running that job in class
         crops.zip                         optional, for the Bedrock episode's multimodal step: the table and figure crops (crops/ plus crops.jsonl)
         embeddings_crops_multimodal.npy   optional, with it: the Nova multimodal vectors of those crops
+        solutions/wattbot_solutions_vision_{none,image_index,text_index}.csv   optional: the three vision runs' predictions, so the class scores them instead of spending twelve minutes of calls
     badger-scribe/
         train.csv  test.csv  metadata.csv  metric.py
         sample_submission.csv  transcription_conventions.md
@@ -122,6 +123,12 @@ aws s3 cp embeddings_crops_multimodal.npy s3://ml-marathon-shared/wattbot/embedd
 ```
 
 The crop records carry paths relative to the notebook's working folder (`data/crops/...`), so the zip must be unpacked where the episode unpacks it; the cell does that.
+
+The three vision runs at the end of that step are twelve minutes of Bedrock calls. The cell uploads its three result files to your bucket under `wattbot/solutions/`; copy them across and the class downloads and scores them:
+
+```bash
+aws s3 cp s3://<your-bucket>/wattbot/solutions/ s3://ml-marathon-shared/wattbot/solutions/ --recursive --exclude "*" --include "wattbot_solutions_vision_*.csv"
+```
 
 ```bash
 aws s3 cp s3://<your-bucket>/wattbot/embeddings/embeddings_bedrock.npy s3://$BUCKET/wattbot/embeddings_bedrock.npy

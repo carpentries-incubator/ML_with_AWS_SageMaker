@@ -1173,7 +1173,7 @@ print(call_vision_chat("You are a concise assistant.", "What is in the attached 
                        images=[(crop_label(crops[0]), Path(crops[0]["png_path"]).read_bytes())]))
 ```
 
-Three runs over the Table and Figure questions, all through the vision model, so that the only thing changing between them is what the model is shown. The first is the control: text chunks only. The second attaches the top three crops from the image index. The third attaches the crops from the pages the top text chunks came from: if the hit-rate table says the text index is the better finder, the question is whether finding with text and *reading* with the image is the better split. Each run is the same loop as Step 11, so every question costs an answer call and an explanation call.
+Three runs over the Table and Figure questions, all through the vision model, so that the only thing changing between them is what the model is shown. The first is the control: text chunks only. The second attaches the top three crops from the image index. The third attaches the crops from the pages the top text chunks came from: if the hit-rate table says the text index is the better finder, the question is whether finding with text and *reading* with the image is the better split. Each run is the same loop as Step 11, so every question costs an answer call and an explanation call; the runs with images take about five minutes each, because every attached crop is hundreds of input tokens. In class, with `use_instructor_embeddings` set, the cell downloads the three result files from your instructor's run of it instead and the next cell scores them; running the loops yourself is for after class.
 
 ```python
 tf_df = train_df[(train_df["Table"] == 1) | (train_df["Figure"] == 1)]
@@ -1197,17 +1197,29 @@ def crops_for(question: str, images_from: str):
 
 def run_tf(images_from: str) -> pd.DataFrame:
     rows = []
-    for _, row in tf_df.iterrows():
+    for i, (_, row) in enumerate(tf_df.iterrows(), start=1):
         images = [(crop_label(c), Path(c["png_path"]).read_bytes()) for c in crops_for(row["question"], images_from)]
         generate = lambda s, u, max_new_tokens=512, images=images: call_vision_chat(s, u, max_new_tokens, images=images)
         rows.append(run_single_qa(row=row, embed_query=embed_query, generate=generate, chunk_embeddings=chunk_embeddings,
                                   chunked_docs=chunked_docs, docid_to_url=docid_to_url, top_k=8, retrieval_threshold=0.25))
+        if i % 10 == 0:
+            print(f"  {i} / {len(tf_df)} questions ({time.time() - t0:.0f} s)")
     return pd.DataFrame(rows)
 
 vision_runs = {"text chunks only": "none", "chunks + crops from the image index": "image_index", "chunks + crops behind the text chunks": "text_index"}
+vision_files = {images_from: f"wattbot_solutions_vision_{images_from}.csv" for images_from in vision_runs.values()}
+
 t0 = time.time()
 for label, images_from in vision_runs.items():
-    run_tf(images_from).to_csv(os.path.join(output_dir, f"wattbot_solutions_vision_{images_from}.csv"), index=False)
+    local_path = os.path.join(output_dir, vision_files[images_from])
+    shared_key = f"wattbot/solutions/{vision_files[images_from]}"
+    if use_instructor_embeddings and _s3_object_exists(shared_bucket, shared_key):   # in class: the instructor's run of this cell, scored in the next
+        s3.download_file(shared_bucket, shared_key, local_path)
+        print(f"{label}: downloaded the instructor's results")
+        continue
+    print(f"{label}: running")
+    run_tf(images_from).to_csv(local_path, index=False)
+    s3.upload_file(local_path, bucket_name, shared_key)   # kept in your bucket too, next to the Step 11 predictions
     print(f"{label}: done at {(time.time() - t0) / 60:.1f} min")
 ```
 
