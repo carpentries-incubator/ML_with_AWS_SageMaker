@@ -166,8 +166,6 @@ bucket_name = "sinkorswim-doejohn"     # <-- EDIT ME: your own bucket from the S
 metadata_key = "wattbot/metadata.csv"      # one row per paper: id, title, url
 train_key = "wattbot/train_QA.csv"         # the questions, with reference answers for scoring
 corpus_key = "wattbot/corpus.zip"          # the PDFs, one per paper
-shared_embeddings_key = "wattbot/embeddings_bedrock.npy"   # the instructor's embedding matrix, used when use_instructor_embeddings is True
-use_instructor_embeddings = True   # True in class: download the instructor's matrix instead of embedding 9,000 chunks yourself (ten minutes at the quota). False to do it yourself
 
 # derived, written to YOUR bucket
 chunks_key = "wattbot/chunks.jsonl"                                # the corpus cut into passages (end of the chunking step)
@@ -632,15 +630,20 @@ def embed_query(question: str) -> np.ndarray:
     return np.asarray(bedrock_embed_text(question), dtype="float32")
 ```
 
-Embedding the corpus, about 9,000 chunks, is ten minutes and a few cents, so do not do it twice. The cell after next looks for the finished matrix locally, then in the shared bucket if `use_instructor_embeddings` is set, then in your bucket, and only then computes it, saving progress every 500 chunks so an interrupted run picks up where it stopped.
+Embedding the corpus, about 9,000 chunks, is ten minutes and a few cents, so do not do it twice. The cell after next looks for the finished matrix locally, then in the shared bucket if `use_instructor_embeddings` is `True`, then in your bucket, and only then computes it, saving progress every 500 chunks so an interrupted run picks up where it stopped.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
 ### In a class, use the instructor's copy
 
-Bedrock allows this account 300,000 Titan embedding tokens per minute, and the quota is not adjustable. This corpus is about 3 million tokens, so one notebook alone needs ten minutes at the full quota; a room of them shares it, so everyone's loop slows to a crawl of retries. That is what `use_instructor_embeddings = True` in Step 1 is for: the cell below then downloads the matrix your instructor computed with the same chunks and the same model from the shared bucket and skips the calls. Working on your own, set it to `False` and let the loop run; that is the step to practise.
+Bedrock allows this account 300,000 Titan embedding tokens per minute, and the quota is not adjustable. This corpus is about 3 million tokens, so one notebook alone needs ten minutes at the full quota; a room of them shares it, so everyone's loop slows to a crawl of retries. In class, leave `use_instructor_embeddings` in the next cell at `True`: the cache cell then downloads the matrix your instructor computed with the same chunks and the same model from the shared bucket and skips the calls. Working on your own, set it to `False` and let the loop run; that is the step to practise.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
+
+```python
+use_instructor_embeddings = True                            # True in class: download the instructor's matrix. False: embed the 9,000 chunks yourself, ten minutes at the quota
+shared_embeddings_key = "wattbot/embeddings_bedrock.npy"   # where the instructor staged it in the shared bucket
+```
 
 One small helper asks S3 whether an object exists, and one checks that a cached matrix belongs to these chunks: a matrix from an earlier corpus has a different number of rows, and using it would pair every question with the wrong passages.
 
@@ -767,7 +770,7 @@ A question is marked unanswerable (`is_blank` everywhere, as the competition req
 
 Now we can loop over the questions, run retrieval + Bedrock generation, and write a `wattbot_solutions_bedrock.csv` file (locally and to your bucket).
 
-`train_QA.csv` has 245 questions, and at two calls each that is about twenty minutes. For class we score a stratified sample instead: `sample_questions_by_type` draws ten questions from each evidence type (Quote, Table, Figure, Math, unanswerable, cross-paper, reconcile), 55 questions after overlaps, so every row of the breakdown in the next step has something in it. The first 55 rows of the file would be nearly all Quote questions. The seed fixes the draw, and the Processing Jobs episode uses the same one, so the two runs are compared on the same questions. Set `per_type=0` to run the whole file.
+`train_QA.csv` has 245 questions, and at two calls each that is about twenty minutes. For class we score a stratified sample instead: `sample_questions_by_type` draws ten questions from each evidence type (Quote, Table, Figure, Math, unanswerable, cross-paper, reconcile), about 55 questions after overlaps, so every row of the breakdown in the next step has something in it. The first 55 rows of the file would be nearly all Quote questions. The seed fixes the draw, and the Processing Jobs episode uses the same one, so the two runs are compared on the same questions. Set `per_type=0` to run the whole file.
 
 The Processing Jobs episode reuses this same loop with self-hosted models; the only difference there is that the embedding, answer
 and explanation phases call local models instead of Bedrock-hosted ones.
@@ -882,7 +885,7 @@ print(f"~{embed_tokens:,.0f} embedding tokens -> ${embed_cost:.3f}")
 print(f"Total ~${gen_cost + embed_cost:.2f}; one hour of ml.g6e.xlarge is $2.61")
 ```
 
-With 55 questions, two calls each and ~3,000-token prompts, the run is on the order of 350K input and 30K output tokens: about a quarter of a dollar at DeepSeek V3's prices, plus about six cents of embeddings for the 3 million tokens of corpus. All 245 questions is about a dollar, which is the overview's estimate for the whole pipeline, and it is a small fraction of a single GPU-hour.
+With 53 questions, two calls each and ~1,500-token prompts, the run was 140K input and 9K output tokens: ten cents at DeepSeek V3's prices, plus five cents of embeddings for the 2.4 million tokens of corpus. All 245 questions is about half a dollar, which is the overview's estimate for the whole pipeline, and it is a small fraction of a single GPU-hour.
 
 :::::::::::::::::::::::::::::::::
 
@@ -910,7 +913,7 @@ print(f"{len(caption_pages)} of {len(page_docs)} pages carry a caption: {n_table
 caption_pages[:3]
 ```
 
-Rendering is `pypdfium2`, the Python binding of the PDF engine Chrome uses; `render_page_png` renders one page at 100 dpi, enough to read axis labels, and returns the PNG bytes. Expect a few minutes for the corpus.
+Rendering is `pypdfium2`, the Python binding of the PDF engine Chrome uses; `render_page_png` renders one page at 100 dpi, enough to read axis labels, and returns the PNG bytes. The corpus has about a thousand pages with a caption, a minute and a half to render.
 
 ```python
 %pip install -q pypdfium2
@@ -944,7 +947,13 @@ bedrock_runtime_mm = boto3.client("bedrock-runtime", region_name=multimodal_regi
 bedrock_mm = boto3.client("bedrock", region_name=multimodal_region)
 multimodal_model_id = tagged_profile_arn(bedrock_mm, base_multimodal_model_id, "wattbot-embed-mm", name, project)
 
-v = embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png=Path(caption_pages[0]["png_path"]).read_bytes())
+first_png = Path(caption_pages[0]["png_path"]).read_bytes()
+try:
+    v = embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png=first_png)
+except ClientError as e:
+    print(f"Through the tagged profile: {e.response['Error']['Message']}\nCalling the model ID directly instead; these calls will not carry the project tags")
+    multimodal_model_id = base_multimodal_model_id
+    v = embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png=first_png)
 print(f"{caption_pages[0]['doc_id']} page {caption_pages[0]['page_label']} -> vector of {v.shape[0]} dimensions")
 ```
 
