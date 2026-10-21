@@ -93,7 +93,7 @@ See [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageM
 
 This episode reads from two buckets and you create neither of them here:
 
-- **The shared bucket** (your instructor gives you its name) holds the WattBot inputs under `wattbot/`: `metadata.csv` (the index of papers), `train_QA.csv` (labelled questions and answers), and `corpus.zip` (the PDFs). It is read-only and there is one copy for the whole class.
+- **The shared bucket** (your instructor gives you its name) holds the WattBot inputs under `wattbot/`: `metadata.csv` (the index of papers), `train_QA.csv` (labelled questions and answers), `corpus.zip` (the PDFs) and `pages.jsonl` (the text of every PDF page, extracted once). It is read-only and there is one copy for the whole class.
 - **Your bucket** from the S3 episode (`challenge-lastnamefirstname`) is where this episode writes what it derives, under a `wattbot/` prefix: the chunked text (`wattbot/chunks.jsonl`), the embeddings (`wattbot/embeddings/`) and the predictions (`wattbot/solutions/`). Its tags cover its storage cost; your notebook instance carries the tags you gave it when you created it, and in this episode those two resources plus the per-token Bedrock calls (tagged through an inference profile, see "Cost tracking" below) are the only things being billed.
 
 ::::::::::::::::::::::::::::::::::::: callout
@@ -258,13 +258,13 @@ print(f"{len(pdf_files)} PDFs in {PDF_DIR}; metadata lists {len(metadata_df)} pa
 
 ### Where the corpus came from
 
-`metadata.csv` has a `url` column pointing at each paper. `scripts/build_wattbot_corpus.py` in the lesson repository walks that column, downloads every PDF, and zips them; it reports any URL that failed so the instructor can decide what to do about it. If you are working on your own, run it once and upload the zip to your bucket under `wattbot/corpus.zip` (with `shared_bucket = bucket_name`, as in the callout above). That is the whole difference between "the data" and "a copy of the data": the corpus is built once and read many times.
+`metadata.csv` has a `url` column pointing at each paper. `scripts/build_wattbot_corpus.py` in the lesson repository walks that column, downloads every PDF, zips them, and then extracts the text of every page into `pages.jsonl`; it reports any URL that failed so the instructor can decide what to do about it. If you are working on your own, run it once and upload both files to your bucket under `wattbot/` (with `shared_bucket = bucket_name`, as in the callout above). That is the whole difference between "the data" and "a copy of the data": the corpus is built once and read many times.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## Step 5 – Turn PDFs into page-level “documents”
 
-Next, we convert each PDF into a list of **page-level records**. Each record stores:
+The next unit of work is a list of **page-level records**, one per PDF page. The instructor's staging script already built it for this corpus (`pages.jsonl` in the shared bucket), so below we define the function that does the extraction, then load the staged result rather than rerun it. Each record stores:
 
 - `text`: page text (as extracted by `pypdf`).
 - `doc_id`: short ID from `metadata.csv` (e.g., `strubell2019`).
