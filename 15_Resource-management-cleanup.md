@@ -139,7 +139,6 @@ Managing your AWS expenses is vital to staying within budget. Follow these steps
 Work through this list before you sign off for the last time.
 
 - **Notebook instances**: Stop, then **Delete** (SageMaker → Notebook instances). Includes the optional GPU notebook instance if you created one.
-- **Lifecycle configurations**: if you created one (for example, a script that auto-stops an idle notebook instance), delete it (SageMaker → Notebook instances → Lifecycle configurations). It costs nothing but is yours to remove.
 - **S3 bucket**: empty and delete your `challenge-lastnamefirstname` bucket (S3 → select bucket → Empty, then Delete). Download anything you want to keep first, once: egress is `$0.09`/GB. Leave the shared data bucket alone; it is the instructors'.
 - **Default SDK bucket** `sagemaker-<region>-<account-id>`: created automatically the first time a job staged its code. In the shared account the instructors delete it; on your own account, empty and delete it with the rest.
 - **Training, tuning and Processing jobs**: confirm none are still running (SageMaker → each job list, filter by status *InProgress*). Completed jobs hold no billable resource; their artifacts are in your bucket and go with it.
@@ -148,7 +147,7 @@ Work through this list before you sign off for the last time.
 
 Every stop and delete in this list has a one-line CLI equivalent; the optional episode *The Same Jobs from the Terminal* collects them, for the day you need to stop something from a machine with no browser.
 
-In the shared workshop account, the instructors sweep the account with [aws-nuke](https://github.com/ekristen/aws-nuke) after the workshop. That sweep deletes notebook instances and the learner buckets only, so if you forget those, they will still go. It does not touch Bedrock application inference profiles or lifecycle configurations, so those are yours to remove.
+In the shared workshop account, the instructors sweep the account with [aws-nuke](https://github.com/ekristen/aws-nuke) after the workshop. That sweep deletes notebook instances and the learner buckets only, so if you forget those, they will still go. It does not touch Bedrock application inference profiles, so those are yours to remove.
 
 ## Best practices for resource management
 
@@ -183,7 +182,6 @@ A complete list for someone who did every episode, including the optional ones:
 | Training jobs (XGBoost, PyTorch), tuning jobs, Processing jobs | Training, tuning, RAG and fine-tuning episodes | Only while running; all capped by `max_run` / `max_runtime_in_seconds` | SageMaker → job lists → Stop if InProgress; nothing to delete afterwards |
 | Bedrock application inference profiles | RAG on Bedrock | No (the calls billed per token when made) | Bedrock console or `bedrock.delete_inference_profile(...)` |
 | GPU notebook instance (`ml.g6e.xlarge`, 100 GB volume) | Optional GPU-notebook episode | Yes: `$2.61`/h InService, `$14`/month for the volume when Stopped | SageMaker → Notebook instances → Delete |
-| Lifecycle configuration (if you made one) | Any notebook-instance episode | No | SageMaker → Notebook instances → Lifecycle configurations → Delete |
 | GitHub personal access token | Optional PAT episode | No, but it is a credential | GitHub → Settings → Developer settings → revoke |
 
 Stopping the controller and walking away leaves the bucket billing for storage, a stopped GPU instance's volume billing at `$0.14`/GB-month, and any Processing job that had not hit its `max_run` yet. Model artifacts in your bucket are the only thing worth keeping; download them once, then delete the bucket.
@@ -198,7 +196,7 @@ Stopping the controller and walking away leaves the bucket billing for storage, 
 - Always stop or delete notebook instances when not in use to avoid charges.
 - Stop any training, tuning or Processing job you no longer need.
 
-- Lifecycle configurations and Bedrock application inference profiles are not swept by the instructors' aws-nuke run; remove them yourself.
+- Bedrock application inference profiles are not swept by the instructors' aws-nuke run; remove them yourself.
 - Regularly clean up unused S3 buckets and objects to save on storage costs.
 - Monitor your expenses through the AWS Billing Dashboard and set up alerts.
 - Use tags (set up earlier in the workshop) to track and monitor costs by resource.

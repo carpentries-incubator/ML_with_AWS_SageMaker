@@ -895,48 +895,58 @@ With 53 questions, two calls each and ~1,500-token prompts, the run was 140K inp
 
 Look back at the evidence-type table in Step 12. The Table and Figure rows are usually the worst, and the reason is upstream of the model. `pypdf` gives us a page's *text*: a table comes out as a run of numbers with its column headers somewhere else on the page, and a figure comes out as its caption and nothing more. A question whose answer is a bar in a plot has nothing in the chunks to find, and a question whose answer is a cell in a table is being read from a flattened copy.
 
-A **multimodal embedding model** is one model that maps text *and* images into the same vector space, so a text question can be compared with an image directly: the picture of a table lands near a sentence about its contents. Bedrock has two: [Amazon Nova Multimodal Embeddings](https://aws.amazon.com/blogs/aws/amazon-nova-multimodal-embeddings-now-available-in-amazon-bedrock/) (text, images, documents, video and audio, released 2025) and the older Titan Multimodal Embeddings G1 (text and images). Both are per-call, like Titan Text, and billed per image plus per text token; the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/) has the rates, on the order of a hundredth of a cent per image. One catch: in October 2026 both are offered in `us-east-1` only (check the [model catalog](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/model-catalog) for that region). A Bedrock call is an HTTPS request and the region is a parameter, so from Ohio that is a second client pointed at Virginia; it also means the page images leave the region, which is the thing to check against your institution's data policy before doing this with documents that are not public papers.
+A **multimodal embedding model** is one model that maps text *and* images into the same vector space, so a text question can be compared with an image directly: the picture of a table lands near a sentence about its contents. Bedrock has two: [Amazon Nova Multimodal Embeddings](https://aws.amazon.com/blogs/aws/amazon-nova-multimodal-embeddings-now-available-in-amazon-bedrock/) (text, images, documents, video and audio, released 2025) and the older Titan Multimodal Embeddings G1 (text and images). Both are per-call, like Titan Text, and billed per image plus per text token; the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/) has the rates, on the order of a hundredth of a cent per image. One catch: in October 2026 both are offered in `us-east-1` only (check the [model catalog](https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/model-catalog) for that region). A Bedrock call is an HTTPS request and the region is a parameter, so from Ohio that is a second client pointed at Virginia; it also means the images leave the region, which is the thing to check against your institution's data policy before doing this with documents that are not public papers.
 
-This step builds a second index next to the text one, measures whether it finds the right paper for table and figure questions more often, and then hands the retrieved page images to a model that can look at them. Each cell is short because the plumbing is in `wattbot_rag.py`.
+This step cuts the tables and figures out of the PDFs as images, builds a second index from them next to the text one, measures whether it finds the right paper for table and figure questions more often, and then hands the images to a model that can look at them. Each cell is short because the plumbing is in `wattbot_rag.py`.
 
-### Which pages, and why whole pages
+### Extract the tables and figures
 
-We do not try to cut the tables and figures out of the PDFs. Finding their boundaries needs a layout model, which is slow on a CPU notebook, and a page image already contains the table or figure *with* its caption and the sentences around it, which is what the embedding model needs to match a question. What we do instead is cheap: `pypdf` keeps caption lines even where it loses everything else, so a line starting with "Table 3" or "Figure 2" marks a page worth rendering. `find_caption_pages` scans the page records from Step 5 for them.
+Why cut them out at all, rather than hand the embedding model a whole page, or the PDF itself (Nova accepts documents as input)? For the same reason Step 6 cut the text into chunks instead of embedding each paper whole. An embedding is a fixed-length vector, a thousand numbers, whatever goes in; the more that goes in, the less of each thing survives in it. A page holding two tables, a figure and three paragraphs gets one vector that is a blur of all six, and a question about one of the tables has to match that blur. A crop of the table gets a vector that is about the table. The same holds at generation time: the vision model reads a crop at full resolution for a few hundred tokens, where a page costs a thousand tokens and shows the table at a quarter of the size. We tried whole pages first on this corpus; the callout at the end has the numbers, and they are the floor the crops should beat.
 
-```python
-from wattbot_rag import find_caption_pages, render_page_png, embed_multimodal, image_blocks, hit_at_k
-
-caption_pages = find_caption_pages(page_docs)
-n_tables = sum(any(c.startswith("Table") for c in p["captions"]) for p in caption_pages)
-n_figures = sum(any(c.startswith("Figure") for c in p["captions"]) for p in caption_pages)
-print(f"{len(caption_pages)} of {len(page_docs)} pages carry a caption: {n_tables} with tables, {n_figures} with figures")
-caption_pages[:3]
-```
-
-Rendering is `pypdfium2`, the Python binding of the PDF engine Chrome uses; `render_page_png` renders one page at 100 dpi, enough to read axis labels, and returns the PNG bytes. The corpus has about a thousand pages with a caption, a minute and a half to render.
+A PDF does not know it contains a table. It contains text runs, raster images, and drawing commands (lines, fills, curves), and a plot is a few thousand of the last. [PyMuPDF](https://pymupdf.readthedocs.io/) ships three detectors that turn those back into boxes: `find_tables` finds tables from their rulings or their text alignment, `get_image_info` lists the embedded raster images, and `cluster_drawings` groups the drawing commands of a vector figure into one bounding box. `extract_figures_and_tables` in `wattbot_rag.py` runs the three on every page, drops page-sized background fills, rules and logos, pairs each box with the nearest caption line starting "Table N" or "Figure N" (tables are captioned above, figures below) and widens the crop to include that caption, so the image carries the identifier a question will use. A caption whose box no detector found falls back to the whole page, so nothing the text mentions is missed. Open the function; it is sixty lines and every rule in it is a line you can change.
 
 ```python
-%pip install -q pypdfium2
+%pip install -q pymupdf
 ```
 
 ```python
-page_image_dir = data_dir / "page_images"
-page_image_dir.mkdir(exist_ok=True)
+from wattbot_rag import extract_figures_and_tables, embed_multimodal, image_blocks, hit_at_k
 
-t0 = time.time()
-for i, p in enumerate(caption_pages):
-    png_path = page_image_dir / f"{p['doc_id']}_p{p['page_num']:03d}.png"
-    p["png_path"] = str(png_path)
-    if not png_path.exists():
-        png_path.write_bytes(render_page_png(os.path.join(PDF_DIR, f"{p['doc_id']}.pdf"), p["page_num"]))
-    if (i + 1) % 200 == 0:
-        print(f"Rendered {i + 1} / {len(caption_pages)} pages")
-print(f"{len(caption_pages)} page images in {page_image_dir} ({time.time() - t0:.0f} s)")
+crop_dir = data_dir / "crops"
+crops_path = data_dir / "crops.jsonl"
+
+if crops_path.exists():
+    crops = [json.loads(line) for line in open(crops_path)]
+else:
+    t0 = time.time()
+    crops = []
+    for i, doc_id in enumerate(sorted({p["doc_id"] for p in page_docs})):
+        crops += extract_figures_and_tables(os.path.join(PDF_DIR, f"{doc_id}.pdf"), doc_id, crop_dir)
+        if (i + 1) % 20 == 0:
+            print(f"{i + 1} papers, {len(crops)} crops so far ({time.time() - t0:.0f} s)")
+    with open(crops_path, "w") as f:
+        f.writelines(json.dumps(c) + "\n" for c in crops)
+    print(f"Extracted {len(crops)} crops from {i + 1} papers in {(time.time() - t0) / 60:.1f} min")
+
+n_tables = sum(c["kind"] == "table" for c in crops)
+n_pages = sum(c["whole_page"] for c in crops)
+print(f"{n_tables} tables and {len(crops) - n_tables} figures; {n_pages} of them are whole-page fallbacks")
+crops[:3]
 ```
 
-### Embed the page images
+Look at a few before trusting them: a crop that is a logo, a page rule, or half a plot tells you which threshold to change.
 
-The embedding model lives in `us-east-1`, so this is a second runtime client pointed there. One difference from the text models: Bedrock rejects this model's request body when it arrives through an application inference profile, so these calls use the model ID directly and are the one Bedrock spend in this lesson that carries no project tags. `embed_multimodal` builds the model's request body (Nova's says whether a vector is for the index or for a query, and that the image is a document page rather than a photo) and returns a unit vector. Set `multimodal_model_id` to `amazon.titan-embed-image-v1` to try the older model; the function handles both.
+```python
+from IPython.display import Image, display
+
+for c in [c for c in crops if c["kind"] == "table"][:2] + [c for c in crops if c["kind"] == "figure"][:2]:
+    print(f"{c['doc_id']} page {c['page_label']}: {c['caption']}")
+    display(Image(filename=c["png_path"], width=500))
+```
+
+### Embed the crops
+
+The embedding model lives in `us-east-1`, so this is a second runtime client pointed there. One difference from the text models: Bedrock rejects this model's request body when it arrives through an application inference profile, so these calls use the model ID directly and are the one Bedrock spend in this lesson that carries no project tags. `embed_multimodal` builds the model's request body (Nova's says whether a vector is for the index or for a query, and that the image is a document rather than a photo) and returns a unit vector. Set `multimodal_model_id` to `amazon.titan-embed-image-v1` to try the older model; the function handles both.
 
 ```python
 multimodal_region = "us-east-1"
@@ -945,41 +955,41 @@ multimodal_model_id = "amazon.nova-2-multimodal-embeddings-v1:0"   # called by I
 bedrock_runtime_mm = boto3.client("bedrock-runtime", region_name=multimodal_region,
                                   config=Config(retries={"max_attempts": 10, "mode": "adaptive"}))
 
-v = embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png=Path(caption_pages[0]["png_path"]).read_bytes())
-print(f"{caption_pages[0]['doc_id']} page {caption_pages[0]['page_label']} -> vector of {v.shape[0]} dimensions")
+v = embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png=Path(crops[0]["png_path"]).read_bytes())
+print(f"{crops[0]['doc_id']} {crops[0]['caption'][:40]!r} -> vector of {v.shape[0]} dimensions")
 ```
 
-One call per page, cached like the text matrix: locally, then in your bucket, then computed. The loop runs six calls at a time through a thread pool and prints every fifty pages; about a thousand pages takes two minutes. The question side uses the same model with `purpose="query"`.
+One call per crop, cached like the text matrix: locally, then in your bucket, then computed. The loop runs six calls at a time through a thread pool and prints every fifty; a thousand images takes about two minutes. The question side uses the same model with `purpose="query"`.
 
 ```python
-page_emb_path = data_dir / "embeddings_pages_multimodal.npy"
-page_emb_key = "wattbot/embeddings/embeddings_pages_multimodal.npy"
+crop_emb_path = data_dir / "embeddings_crops_multimodal.npy"
+crop_emb_key = "wattbot/embeddings/embeddings_crops_multimodal.npy"
 
-if page_emb_path.exists():
-    page_embeddings = np.load(page_emb_path)
-elif _s3_object_exists(bucket_name, page_emb_key):
-    s3.download_file(bucket_name, page_emb_key, str(page_emb_path))
-    page_embeddings = np.load(page_emb_path)
+if crop_emb_path.exists():
+    crop_embeddings = np.load(crop_emb_path)
+elif _s3_object_exists(bucket_name, crop_emb_key):
+    s3.download_file(bucket_name, crop_emb_key, str(crop_emb_path))
+    crop_embeddings = np.load(crop_emb_path)
 else:
     from concurrent.futures import ThreadPoolExecutor
 
-    def embed_page(p):
-        return embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png=Path(p["png_path"]).read_bytes())
+    def embed_crop(c):
+        return embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png=Path(c["png_path"]).read_bytes())
 
     t0 = time.time()
     rows = []
-    with ThreadPoolExecutor(max_workers=6) as pool:   # one image per call, a second or two each: six in flight at a time
-        for i, vec in enumerate(pool.map(embed_page, caption_pages)):
+    with ThreadPoolExecutor(max_workers=6) as pool:   # one image per call: six in flight at a time
+        for i, vec in enumerate(pool.map(embed_crop, crops)):
             rows.append(vec)
             if (i + 1) % 50 == 0:
-                print(f"Embedded {i + 1} / {len(caption_pages)} page images ({time.time() - t0:.0f} s, {(i + 1) / (time.time() - t0):.1f} per second)")
-    page_embeddings = np.vstack(rows)
-    np.save(page_emb_path, page_embeddings)
-    s3.upload_file(str(page_emb_path), bucket_name, page_emb_key)
-    print(f"Embedded {len(caption_pages)} page images in {(time.time() - t0) / 60:.1f} min")
+                print(f"Embedded {i + 1} / {len(crops)} crops ({time.time() - t0:.0f} s, {(i + 1) / (time.time() - t0):.1f} per second)")
+    crop_embeddings = np.vstack(rows)
+    np.save(crop_emb_path, crop_embeddings)
+    s3.upload_file(str(crop_emb_path), bucket_name, crop_emb_key)
+    print(f"Embedded {len(crops)} crops in {(time.time() - t0) / 60:.1f} min")
 
-assert page_embeddings.shape[0] == len(caption_pages), "page embeddings and caption pages are out of step; delete the cached file and rerun"
-print("Page embeddings shape:", page_embeddings.shape)
+assert crop_embeddings.shape[0] == len(crops), "crop embeddings and crops are out of step; delete the cached file and rerun"
+print("Crop embeddings shape:", crop_embeddings.shape)
 
 def embed_query_mm(question: str) -> np.ndarray:
     return embed_multimodal(bedrock_runtime_mm, multimodal_model_id, text=question, purpose="query")
@@ -987,26 +997,27 @@ def embed_query_mm(question: str) -> np.ndarray:
 
 ### Does the image index find the right paper more often?
 
-Retrieval is the same `retrieve_top_k` as Step 9, over the page matrix instead of the chunk matrix. `train_QA.csv` names the paper each answer comes from, so the cleanest measure is the **hit rate**: the fraction of questions for which a ground-truth paper is among the top-k results. We compute it for the text index and the image index on the Table questions, the Figure questions and, as a control, the Quote questions, where the image index should have no advantage.
+Retrieval is the same `retrieve_top_k` as Step 9, over the crop matrix instead of the chunk matrix. `train_QA.csv` names the paper each answer comes from, so the cleanest measure is the **hit rate**: the fraction of questions for which a ground-truth paper is among the top-k results. Higher is better, and 1.00 means every question had the right paper in front of the model. We compute it for the text index and the image index on the Table questions, the Figure questions and, as a control, the Quote questions, where the image index should have no advantage.
 
 ```python
 k = 8
 groups = {"Table": train_df[train_df["Table"] == 1], "Figure": train_df[train_df["Figure"] == 1],
           "Quote only": train_df[(train_df["Quote"] == 1) & (train_df["Table"] == 0) & (train_df["Figure"] == 0)].head(40)}
 
+print("Hit rate at k=8 (higher is better): share of questions whose ground-truth paper is in the top 8 results\n")
 print(f"{'questions':<12}{'n':>4}{'text index':>14}{'image index':>14}")
 for label, qs in groups.items():
     gt = [split_ref_ids(r) for r in qs["ref_id"]]
     text_hits = [[c["doc_id"] for c in retrieve_top_k(embed_query(q), chunk_embeddings, chunked_docs, k=k)] for q in qs["question"]]
-    image_hits = [[c["doc_id"] for c in retrieve_top_k(embed_query_mm(q), page_embeddings, caption_pages, k=k)] for q in qs["question"]]
+    image_hits = [[c["doc_id"] for c in retrieve_top_k(embed_query_mm(q), crop_embeddings, crops, k=k)] for q in qs["question"]]
     print(f"{label:<12}{len(qs):>4}{hit_at_k(text_hits, gt):>14.2f}{hit_at_k(image_hits, gt):>14.2f}")
 ```
 
-Two numbers per row, and three readings. If the image index wins on Table and Figure and ties on Quote, the embedding model is doing what it was built for. If it loses everywhere, check what it was given: a page at 100 dpi with a dense table is readable, a page of nine small panels may not be. If both indexes already find the paper for nearly every question, retrieval was never the problem for this corpus and the loss is in the reading, which the next cell tests.
+Two numbers per row, higher is better, and three readings. If the image index wins on Table and Figure and ties on Quote, the embedding model is doing what it was built for. If it loses everywhere, look at what it was given: a crop of a dense table at 150 dpi is readable, a cropped panel of a nine-panel figure may not be, and a whole-page fallback is a weak key. If both indexes already find the paper for nearly every question, retrieval was never the problem for this corpus and the loss is in the reading, which the next cells test.
 
-### Let the model see the page
+### Let the model see the table or figure
 
-Finding the page is half of it; DeepSeek V3 reads text only, so a figure retrieved as an image is no use to it. `converse` accepts image blocks in a user message for models that can see, and the swap is the model ID: Amazon Nova 2 Lite reads images and documents and is in the catalog for Ohio through the cross-region profile below (check the [model catalog](https://us-east-2.console.aws.amazon.com/bedrock/home?region=us-east-2#/model-catalog); `us.amazon.nova-lite-v1:0` is the cheaper, weaker alternative). `call_vision_chat` is `call_bedrock_chat` with an `images` argument: for each attached page it adds a text label naming the paper, then the image, so the model can cite what it reads.
+Finding the table is half of it; DeepSeek V3 reads text only, so a figure retrieved as an image is no use to it. `converse` accepts image blocks in a user message for models that can see, and the swap is the model ID: Amazon Nova 2 Lite reads images and documents and is in the catalog for Ohio through the cross-region profile below (check the [model catalog](https://us-east-2.console.aws.amazon.com/bedrock/home?region=us-east-2#/model-catalog); `us.amazon.nova-lite-v1:0` is the cheaper, weaker alternative). `call_vision_chat` is `call_bedrock_chat` with an `images` argument: for each attached crop it adds a text label naming the paper and the caption, then the image, so the model can cite what it reads.
 
 ```python
 base_vision_model_id = "us.amazon.nova-2-lite-v1:0"
@@ -1014,10 +1025,10 @@ vision_model_id = tagged_profile_arn(bedrock, base_vision_model_id, "wattbot-vis
 vision_usage = []
 
 def call_vision_chat(system_prompt: str, user_prompt: str, max_new_tokens: int = 512, images=()) -> str:
-    """One system + user turn, with zero or more (label, png_bytes) page images attached to the user turn."""
+    """One system + user turn, with zero or more (label, png_bytes) images attached to the user turn."""
     content = [{"text": user_prompt}]
     if images:
-        content.append({"text": "The page images below are from the same papers; read tables and figures from them where the text above is incomplete."})
+        content.append({"text": "The images below are tables and figures from the same papers; read values from them where the text above is incomplete."})
         content.extend(image_blocks(images))
     response = bedrock_runtime.converse(
         modelId=vision_model_id,
@@ -1028,52 +1039,68 @@ def call_vision_chat(system_prompt: str, user_prompt: str, max_new_tokens: int =
     vision_usage.append(response["usage"])
     return "\n".join(b["text"] for b in response["output"]["message"]["content"] if "text" in b).strip()
 
-print(call_vision_chat("You are a concise assistant.", "What is in the attached page? One sentence.", 64,
-                       images=[(f"{caption_pages[0]['doc_id']}, page {caption_pages[0]['page_label']}", Path(caption_pages[0]["png_path"]).read_bytes())]))
+def crop_label(c) -> str:
+    return f"{c['doc_id']}, page {c['page_label']}, {c['caption'][:60]}" if c["caption"] else f"{c['doc_id']}, page {c['page_label']}"
+
+print(call_vision_chat("You are a concise assistant.", "What is in the attached image? One sentence.", 64,
+                       images=[(crop_label(crops[0]), Path(crops[0]["png_path"]).read_bytes())]))
 ```
 
-Two runs over the Table and Figure questions, both through the vision model: one with the text chunks only, one with the top three retrieved page images attached as well. The first is the control. Without it, a better score with images could just be a different generation model, and the comparison would say nothing about the images.
+Three runs over the Table and Figure questions, all through the vision model, so that the only thing changing between them is what the model is shown. The first is the control: text chunks only. The second attaches the top three crops from the image index. The third attaches the crops from the pages the top text chunks came from: if the hit-rate table says the text index is the better finder, the question is whether finding with text and *reading* with the image is the better split. Each run is the same loop as Step 11, so every question costs an answer call and an explanation call.
 
 ```python
 tf_df = train_df[(train_df["Table"] == 1) | (train_df["Figure"] == 1)]
-print(f"{len(tf_df)} table and figure questions, two runs, two calls each")
+crops_by_page: Dict[tuple, list] = {}
+for c in crops:
+    crops_by_page.setdefault((c["doc_id"], c["page_num"]), []).append(c)
+print(f"{len(tf_df)} table and figure questions; each run makes an answer call and an explanation call per question, so about {6 * len(tf_df)} calls for three runs")
 
-def run_tf(with_images: bool) -> pd.DataFrame:
+def crops_for(question: str, images_from: str):
+    """The crops to attach: none, the image index's top three, or those on the pages behind the top text chunks."""
+    if images_from == "image_index":
+        return retrieve_top_k(embed_query_mm(question), crop_embeddings, crops, k=3)
+    if images_from == "text_index":
+        found = []
+        for ch in retrieve_top_k(embed_query(question), chunk_embeddings, chunked_docs, k=8):
+            for c in crops_by_page.get((ch["doc_id"], ch["page_num"]), []):
+                if c not in found:
+                    found.append(c)
+        return found[:3]
+    return []
+
+def run_tf(images_from: str) -> pd.DataFrame:
     rows = []
     for _, row in tf_df.iterrows():
-        images = []
-        if with_images:
-            for pg in retrieve_top_k(embed_query_mm(row["question"]), page_embeddings, caption_pages, k=3):
-                images.append((f"{pg['doc_id']}, page {pg['page_label']}", Path(pg["png_path"]).read_bytes()))
+        images = [(crop_label(c), Path(c["png_path"]).read_bytes()) for c in crops_for(row["question"], images_from)]
         generate = lambda s, u, max_new_tokens=512, images=images: call_vision_chat(s, u, max_new_tokens, images=images)
         rows.append(run_single_qa(row=row, embed_query=embed_query, generate=generate, chunk_embeddings=chunk_embeddings,
                                   chunked_docs=chunked_docs, docid_to_url=docid_to_url, top_k=8, retrieval_threshold=0.25))
     return pd.DataFrame(rows)
 
+vision_runs = {"text chunks only": "none", "chunks + crops from the image index": "image_index", "chunks + crops behind the text chunks": "text_index"}
 t0 = time.time()
-tf_text_only = run_tf(with_images=False)
-tf_text_only.to_csv(os.path.join(output_dir, "wattbot_solutions_vision_text_only.csv"), index=False)
-tf_with_images = run_tf(with_images=True)
-tf_with_images.to_csv(os.path.join(output_dir, "wattbot_solutions_vision_with_images.csv"), index=False)
-print(f"Both runs in {(time.time() - t0) / 60:.1f} min")
+for label, images_from in vision_runs.items():
+    run_tf(images_from).to_csv(os.path.join(output_dir, f"wattbot_solutions_vision_{images_from}.csv"), index=False)
+    print(f"{label}: done at {(time.time() - t0) / 60:.1f} min")
 ```
 
-Score both the same way as Step 12. The scorer compares the rows it finds, so the breakdown is over these questions only; the `Table` and `Figure` lines are the ones to read, against each other and against the DeepSeek run.
+Score all three the same way as Step 12. The scorer compares the rows it finds, so the breakdown is over these questions only; the `Table` and `Figure` lines are the ones to read, across the three runs and against the DeepSeek run.
 
 ```python
-for label, path in [("text chunks only", "wattbot_solutions_vision_text_only.csv"), ("text chunks + page images", "wattbot_solutions_vision_with_images.csv")]:
+for label, images_from in vision_runs.items():
     print("=" * 96)
     print(f"Nova 2 Lite, {label}")
-    compute_wattbot_score(train_qa_path=train_qa_path, preds_path=os.path.join(output_dir, path), n_examples=3)
+    compute_wattbot_score(train_qa_path=train_qa_path, preds_path=os.path.join(output_dir, f"wattbot_solutions_vision_{images_from}.csv"), n_examples=3)
 ```
 
 ::::::::::::::::::::::::::::::::::::: callout
 
 ### What to expect, and what it cost
 
-Figure questions should move the most: the text index had only a caption to match and the text model had nothing to read, and the image gives it both. Table questions move less, because a flattened table is still mostly readable, and some will get worse: three page images is a lot of tokens for a model to search, and a wrong page retrieved with confidence is a new way to misread. The hit-rate table tells you which of those happened. For the bill, every page image is roughly a thousand input tokens at Nova 2 Lite's rate on the [pricing page](https://aws.amazon.com/bedrock/pricing/), so the run with images is about three times the control; `vision_usage` holds both runs' usage blocks, and the embedding of the page images is the per-image rate times `len(caption_pages)`.
+Measured once on this corpus with whole page images rather than crops, on 50 table and figure questions, before the extraction step above was written; the crops should do better, and the numbers here are the floor. Retrieval first: the text index found a ground-truth paper in its top eight for 94% of the table questions and 94% of the figure questions; the page-image index managed 91% and 82%. A whole page is a weaker key than the caption and surrounding sentences that the text chunks already carry. Then reading: with the image index's top three pages attached, Nova 2 Lite went from 0.64 to 0.67 overall, from 41% to 29% of figure questions wrong, and from 0.85 to 0.93 on citation F1, while the table questions did not move (43% to 46% wrong). Seventeen figure questions is two questions of difference, so read the direction, not the decimals. For the bill, every image is a few hundred to a thousand input tokens at Nova 2 Lite's rate on the [pricing page](https://aws.amazon.com/bedrock/pricing/), so a run with images costs two to three times the control; `vision_usage` holds all three runs' usage blocks, and the embedding of the crops is the per-image rate times `len(crops)`, a few cents. The three runs together take about eight minutes.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
+
 
 ## Wrap‑up: Bedrock versus GPU‑based runs
 
