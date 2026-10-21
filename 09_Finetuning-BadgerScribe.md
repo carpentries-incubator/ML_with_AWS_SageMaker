@@ -212,7 +212,7 @@ Nothing in this episode is specific to small runs. The training script uses Hugg
 ```text
 instance_type="ml.p4d.24xlarge",                        # 8 x A100, or ml.g5.12xlarge for 4 x A10G
 distribution={"torch_distributed": {"enabled": True}},  # one process per GPU, each on a different slice of the data
-max_run=6 * 60 * 60,                                     # from the Step 0 estimate, with margin
+max_run=6 * 60 * 60,                                     # 6 hours, in seconds: from the Step 0 estimate, with margin
 ```
 
 Each GPU holds a full copy of the model, so the effective batch becomes `batch_size x grad_accum x number of GPUs`, and the learning rate usually needs a modest increase. Two lines in the script should be wrapped in `if trainer.is_world_process_zero():` so that evaluation and saving run once rather than on every process. When the model, its optimizer state and a batch do not fit on one GPU (a full fine-tune of 7B or more; see the bytes-per-parameter table), data parallelism is not enough: pass `fsdp="full_shard"` in `TrainingArguments` (or a DeepSpeed ZeRO config) so the model is sharded across the GPUs, and use `instance_count=2` or more for multi-node runs.
@@ -834,7 +834,7 @@ homework_estimator = HuggingFace(
     instance_type=instance_type,
     instance_count=1,
     volume_size=50,
-    max_run=130 * 60,                     # 130 minutes: twice the estimate
+    max_run=130 * 60,                     # 130 minutes, in seconds: twice the estimate
     checkpoint_s3_uri=homework_checkpoint_s3_uri,
     checkpoint_local_path="/opt/ml/checkpoints",
     transformers_version="4.56",
@@ -929,7 +929,7 @@ def run_transcription_job(label: str, adapter_uri: str = None):
         pytorch_version="2.8",
         py_version="py312",
         sagemaker_session=session,
-        max_runtime_in_seconds=45 * 60,   # the processor's name for max_run: 45 minute cap; the estimate is 15 minutes
+        max_runtime_in_seconds=45 * 60,   # the processor's name for max_run: 45 minutes, in seconds; the estimate is 15 minutes
     )
     processor.run(
         code="churro_transcribe_batch.py",
