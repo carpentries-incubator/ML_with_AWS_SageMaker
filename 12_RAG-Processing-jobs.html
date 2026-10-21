@@ -763,27 +763,6 @@ field.</p>
 wrapper and the generator need, so both jobs start as soon as the
 instance is up. A <code>requirements.txt</code> next to a script would
 be pip-installed before it runs; neither job here has one.</p>
-<div id="why-not-vllm" class="callout">
-<div class="callout-square">
-<i class="callout-icon" data-feather="bell"></i>
-</div>
-<span class="callout-header">Callout</span>
-<div id="why-not-vllm" class="callout-inner">
-<h3 class="callout-title">Why not vLLM?</h3>
-<div class="callout-content">
-<p>vLLM is the open-source inference engine most people serve
-open-weight models with: you give it a model name, it loads the weights
-onto the GPU and answers chat requests, batching many at once so that
-throughput scales. That is what you want behind an API with users. This
-job sends about 100 prompts one at a time, so the batching would go
-unused, and the install is several gigabytes of billed GPU time.
-<code>transformers.generate</code>, already in the container, does the
-same prompts in about thirteen minutes with nothing to install. The
-GPU-notebook episode uses vLLM, where its 8-bit weights are needed to
-fit a larger model.</p>
-</div>
-</div>
-</div>
 </div>
 <div class="section level3">
 <h3 id="cost-tracking-tag-every-job">Cost tracking: tag every job<a class="anchor" aria-label="anchor" href="#cost-tracking-tag-every-job"></a></h3>
@@ -973,6 +952,27 @@ question has to be embedded with the same model as the chunks), and
 <code>generate</code> wraps <code>transformers.generate</code> on the
 generator (Qwen3-8B here) with Qwen’s thinking mode off. The job writes
 <code>wattbot_solutions.csv</code> in the WattBot submission format.</p>
+<div id="why-not-vllm" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<span class="callout-header">Callout</span>
+<div id="why-not-vllm" class="callout-inner">
+<h3 class="callout-title">Why not vLLM?</h3>
+<div class="callout-content">
+<p>vLLM is the open-source inference engine most people serve
+open-weight models with: you give it a model name, it loads the weights
+onto the GPU and answers chat requests, batching many at once so that
+throughput scales. That is what you want behind an API with users. This
+job sends about 100 prompts one at a time, so the batching would go
+unused, and the install is several gigabytes of billed GPU time.
+<code>transformers.generate</code>, already in the container, does the
+same prompts in about thirteen minutes with nothing to install. The
+GPU-notebook episode uses vLLM, where its 8-bit weights are needed to
+fit a larger model.</p>
+</div>
+</div>
+</div>
 <div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1138,7 +1138,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -1201,7 +1201,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still downloading or

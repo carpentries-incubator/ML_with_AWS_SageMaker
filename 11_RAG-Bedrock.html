@@ -940,8 +940,8 @@ the publishers’ sites is slow and unreliable when fifty notebooks do it
 at once, so the instructors did it once with
 <code>scripts/build_wattbot_corpus.py</code> and staged the result as
 <code>corpus.zip</code> in the shared bucket. We download that one file,
-unpack it, and delete the zip: the instance’s disk is 20 GB at most and
-the PDFs alone are 400 MB.</p>
+unpack it, and delete the zip: the instance’s disk is 20 GB at most, and
+the zip plus the unpacked PDFs are close to 700 MB.</p>
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -951,7 +951,7 @@ the PDFs alone are 400 MB.</p>
 <span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a>corpus_path <span class="op">=</span> download_from_s3(corpus_key, <span class="st">"corpus.zip"</span>)</span>
 <span id="cb11-5"><a href="#cb11-5" tabindex="-1" aria-label="code-block-11-5"></a><span class="cf">with</span> zipfile.ZipFile(corpus_path, <span class="st">"r"</span>) <span class="im">as</span> zf:</span>
 <span id="cb11-6"><a href="#cb11-6" tabindex="-1" aria-label="code-block-11-6"></a>    zf.extractall(PDF_DIR)</span>
-<span id="cb11-7"><a href="#cb11-7" tabindex="-1" aria-label="code-block-11-7"></a>os.remove(corpus_path)   <span class="co"># the zip is 400 MB and the PDFs are now unpacked; the notebook disk is small</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1" aria-label="code-block-11-7"></a>os.remove(corpus_path)   <span class="co"># the zip is 270 MB and the unpacked PDFs are 400 MB; the notebook disk is small</span></span>
 <span id="cb11-8"><a href="#cb11-8" tabindex="-1" aria-label="code-block-11-8"></a></span>
 <span id="cb11-9"><a href="#cb11-9" tabindex="-1" aria-label="code-block-11-9"></a>pdf_files <span class="op">=</span> <span class="bu">sorted</span>(f <span class="cf">for</span> f <span class="kw">in</span> os.listdir(PDF_DIR) <span class="cf">if</span> f.lower().endswith(<span class="st">".pdf"</span>))</span>
 <span id="cb11-10"><a href="#cb11-10" tabindex="-1" aria-label="code-block-11-10"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(pdf_files)<span class="sc">}</span><span class="ss"> PDFs in </span><span class="sc">{</span>PDF_DIR<span class="sc">}</span><span class="ss">; metadata lists </span><span class="sc">{</span><span class="bu">len</span>(metadata_df)<span class="sc">}</span><span class="ss"> papers"</span>)</span></code></pre>
@@ -1362,7 +1362,7 @@ month’s Bedrock spend by <code>Project</code>?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -1699,7 +1699,7 @@ refusing cleanly, with every evidence field blank, when the answer is
 competition’s own metric file, which <code>compute_wattbot_score</code>
 in <code>wattbot_rag.py</code> calls for the headline score so that what
 you see here is what the leaderboard would report. It also prints the
-error rate by evidence type, the seven flag columns of
+share of correct answers by evidence type, the seven flag columns of
 <code>train_QA.csv</code>: <strong>Quote</strong> (the answer is a
 sentence in a paper), <strong>Table</strong>, <strong>Figure</strong>,
 <strong>Math</strong> (a calculation from numbers in the text),
@@ -1805,7 +1805,7 @@ of the <code>ml.g6e.xlarge</code> the Processing Jobs episode rents?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>The two prices are from the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
 for DeepSeek on-demand in October 2026; update them for the model and
@@ -1863,15 +1863,14 @@ with <code>call_bedrock_chat</code> pointed at it. Score it with
 point of score cost?</li>
 <li>
 <strong>A different embedder.</strong> Retrieval is the other half.
-Either shrink Titan to 256 dimensions (<code>"dimensions": 256</code> in
-its request body) and see whether the hit rate and the score survive a
-four-times smaller index, or switch provider to Cohere Embed, if the
-region’s catalog offers it, whose request body is different from
+The Ohio catalog has one other embedding model, Cohere Embed v4
+(<code>cohere.embed-v4:0</code>), and its request body is different from
 Titan’s: a list of <code>texts</code> and an <code>input_type</code>
 that is <code>search_document</code> for the corpus and
-<code>search_query</code> for the question. Either way the matrix must
-be recomputed (ten minutes at the quota, so not in class), under a new
-file name so the Titan one is kept.</li>
+<code>search_query</code> for the question. Embed the chunks with it
+under a new file name so the Titan matrix is kept (ten minutes at the
+quota, so not in class), rerun Step 11 with DeepSeek unchanged, and
+score.</li>
 </ol><p>Keep the rest fixed. One change per experiment, or you will not know
 what moved the score.</p>
 </div>
@@ -1882,7 +1881,7 @@ what moved the score.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
 <p><strong>Generator.</strong> <code>call_bedrock_chat</code> already
 takes a <code>model_id</code>, so the swap is a profile and a
@@ -1923,44 +1922,44 @@ identifier is invalid”:</p>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" tabindex="-1" aria-label="code-block-34-1"></a><span class="cf">for</span> m <span class="kw">in</span> bedrock.list_foundation_models(byOutputModality<span class="op">=</span><span class="st">"EMBEDDING"</span>)[<span class="st">"modelSummaries"</span>]:</span>
 <span id="cb34-2"><a href="#cb34-2" tabindex="-1" aria-label="code-block-34-2"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>m[<span class="st">'modelId'</span>]<span class="sc">:&lt;45}</span><span class="ss"> </span><span class="sc">{</span>m[<span class="st">'providerName'</span>]<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<p>Titan at 256 dimensions is the same call with one more key; Cohere
-needs its own request and response shape. Both go through a tagged
-profile for the new model, and both need <code>embed_query</code> to use
-the same model as the matrix, with Cohere’s <code>input_type</code>
-switched for the question side.</p>
+<p>Cohere’s request takes a list of texts and says whether they are
+documents or a query; its response is a list of vectors, nested under
+the number type asked for. Everything else is Step 8 again: a tagged
+profile, one call per chunk, a cached matrix, and a query function that
+uses the same model.</p>
 <div class="codewrapper sourceCode" id="cb35">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" tabindex="-1" aria-label="code-block-35-1"></a>alt_embedding_model_id <span class="op">=</span> base_embedding_model_id   <span class="co"># Titan at 256 dimensions; or a Cohere ID from the list above (cohere.embed-v4:0 where offered)</span></span>
-<span id="cb35-2"><a href="#cb35-2" tabindex="-1" aria-label="code-block-35-2"></a>alt_embed_arn <span class="op">=</span> tagged_profile_arn(bedrock, alt_embedding_model_id, <span class="st">"wattbot-embed-alt"</span>, name, project)</span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" tabindex="-1" aria-label="code-block-35-1"></a>cohere_model_id <span class="op">=</span> <span class="st">"cohere.embed-v4:0"</span></span>
+<span id="cb35-2"><a href="#cb35-2" tabindex="-1" aria-label="code-block-35-2"></a>cohere_arn <span class="op">=</span> tagged_profile_arn(bedrock, cohere_model_id, <span class="st">"wattbot-embed-cohere"</span>, name, project)</span>
 <span id="cb35-3"><a href="#cb35-3" tabindex="-1" aria-label="code-block-35-3"></a></span>
-<span id="cb35-4"><a href="#cb35-4" tabindex="-1" aria-label="code-block-35-4"></a><span class="kw">def</span> alt_embed(text: <span class="bu">str</span>, for_query: <span class="bu">bool</span> <span class="op">=</span> <span class="va">False</span>) <span class="op">-&gt;</span> np.ndarray:</span>
-<span id="cb35-5"><a href="#cb35-5" tabindex="-1" aria-label="code-block-35-5"></a>    <span class="cf">if</span> <span class="st">"cohere"</span> <span class="kw">in</span> alt_embedding_model_id:</span>
-<span id="cb35-6"><a href="#cb35-6" tabindex="-1" aria-label="code-block-35-6"></a>        body <span class="op">=</span> {<span class="st">"texts"</span>: [text[:<span class="dv">2000</span>]], <span class="st">"input_type"</span>: <span class="st">"search_query"</span> <span class="cf">if</span> for_query <span class="cf">else</span> <span class="st">"search_document"</span>, <span class="st">"embedding_types"</span>: [<span class="st">"float"</span>]}</span>
-<span id="cb35-7"><a href="#cb35-7" tabindex="-1" aria-label="code-block-35-7"></a>    <span class="cf">else</span>:</span>
-<span id="cb35-8"><a href="#cb35-8" tabindex="-1" aria-label="code-block-35-8"></a>        body <span class="op">=</span> {<span class="st">"inputText"</span>: text, <span class="st">"dimensions"</span>: <span class="dv">256</span>, <span class="st">"normalize"</span>: <span class="va">True</span>}   <span class="co"># Titan Text Embeddings V2 at a quarter of the size</span></span>
-<span id="cb35-9"><a href="#cb35-9" tabindex="-1" aria-label="code-block-35-9"></a>    out <span class="op">=</span> json.loads(bedrock_runtime.invoke_model(modelId<span class="op">=</span>alt_embed_arn, contentType<span class="op">=</span><span class="st">"application/json"</span>,</span>
-<span id="cb35-10"><a href="#cb35-10" tabindex="-1" aria-label="code-block-35-10"></a>                                                  accept<span class="op">=</span><span class="st">"application/json"</span>, body<span class="op">=</span>json.dumps(body))[<span class="st">"body"</span>].read())</span>
-<span id="cb35-11"><a href="#cb35-11" tabindex="-1" aria-label="code-block-35-11"></a>    vec <span class="op">=</span> out[<span class="st">"embeddings"</span>][<span class="dv">0</span>] <span class="cf">if</span> <span class="st">"embeddings"</span> <span class="kw">in</span> out <span class="cf">else</span> out[<span class="st">"embedding"</span>]   <span class="co"># Cohere returns a list of vectors, Titan one vector</span></span>
-<span id="cb35-12"><a href="#cb35-12" tabindex="-1" aria-label="code-block-35-12"></a>    vec <span class="op">=</span> vec[<span class="st">"float"</span>][<span class="dv">0</span>] <span class="cf">if</span> <span class="bu">isinstance</span>(vec, <span class="bu">dict</span>) <span class="cf">else</span> vec                   <span class="co"># newer Cohere versions nest by type</span></span>
-<span id="cb35-13"><a href="#cb35-13" tabindex="-1" aria-label="code-block-35-13"></a>    <span class="cf">return</span> np.asarray(vec, dtype<span class="op">=</span><span class="st">"float32"</span>)</span>
-<span id="cb35-14"><a href="#cb35-14" tabindex="-1" aria-label="code-block-35-14"></a></span>
-<span id="cb35-15"><a href="#cb35-15" tabindex="-1" aria-label="code-block-35-15"></a>alt_emb_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"embeddings_alt.npy"</span>   <span class="co"># a new file: the Titan matrix stays</span></span>
-<span id="cb35-16"><a href="#cb35-16" tabindex="-1" aria-label="code-block-35-16"></a><span class="cf">if</span> alt_emb_path.exists():</span>
-<span id="cb35-17"><a href="#cb35-17" tabindex="-1" aria-label="code-block-35-17"></a>    alt_embeddings <span class="op">=</span> np.load(alt_emb_path)</span>
-<span id="cb35-18"><a href="#cb35-18" tabindex="-1" aria-label="code-block-35-18"></a><span class="cf">else</span>:</span>
-<span id="cb35-19"><a href="#cb35-19" tabindex="-1" aria-label="code-block-35-19"></a>    t0 <span class="op">=</span> time.time()</span>
-<span id="cb35-20"><a href="#cb35-20" tabindex="-1" aria-label="code-block-35-20"></a>    alt_embeddings <span class="op">=</span> np.vstack([alt_embed(ch[<span class="st">"text"</span>]) <span class="cf">for</span> ch <span class="kw">in</span> chunked_docs])</span>
-<span id="cb35-21"><a href="#cb35-21" tabindex="-1" aria-label="code-block-35-21"></a>    np.save(alt_emb_path, alt_embeddings)</span>
-<span id="cb35-22"><a href="#cb35-22" tabindex="-1" aria-label="code-block-35-22"></a>    <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss"> chunks in </span><span class="sc">{</span>(time.time() <span class="op">-</span> t0) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
-<span id="cb35-23"><a href="#cb35-23" tabindex="-1" aria-label="code-block-35-23"></a></span>
-<span id="cb35-24"><a href="#cb35-24" tabindex="-1" aria-label="code-block-35-24"></a>alt_embed_query <span class="op">=</span> <span class="kw">lambda</span> q: alt_embed(q, for_query<span class="op">=</span><span class="va">True</span>)</span></code></pre>
+<span id="cb35-4"><a href="#cb35-4" tabindex="-1" aria-label="code-block-35-4"></a><span class="kw">def</span> cohere_embed(text: <span class="bu">str</span>, input_type: <span class="bu">str</span> <span class="op">=</span> <span class="st">"search_document"</span>) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb35-5"><a href="#cb35-5" tabindex="-1" aria-label="code-block-35-5"></a>    <span class="co">"""One Cohere Embed v4 vector; input_type is search_document for the corpus, search_query for a question."""</span></span>
+<span id="cb35-6"><a href="#cb35-6" tabindex="-1" aria-label="code-block-35-6"></a>    body <span class="op">=</span> {<span class="st">"texts"</span>: [text[:<span class="dv">2000</span>]], <span class="st">"input_type"</span>: input_type, <span class="st">"embedding_types"</span>: [<span class="st">"float"</span>]}</span>
+<span id="cb35-7"><a href="#cb35-7" tabindex="-1" aria-label="code-block-35-7"></a>    response <span class="op">=</span> bedrock_runtime.invoke_model(modelId<span class="op">=</span>cohere_arn, contentType<span class="op">=</span><span class="st">"application/json"</span>, accept<span class="op">=</span><span class="st">"application/json"</span>, body<span class="op">=</span>json.dumps(body))</span>
+<span id="cb35-8"><a href="#cb35-8" tabindex="-1" aria-label="code-block-35-8"></a>    <span class="cf">return</span> np.asarray(json.loads(response[<span class="st">"body"</span>].read())[<span class="st">"embeddings"</span>][<span class="st">"float"</span>][<span class="dv">0</span>], dtype<span class="op">=</span><span class="st">"float32"</span>)</span>
+<span id="cb35-9"><a href="#cb35-9" tabindex="-1" aria-label="code-block-35-9"></a></span>
+<span id="cb35-10"><a href="#cb35-10" tabindex="-1" aria-label="code-block-35-10"></a>cohere_emb_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"embeddings_cohere.npy"</span>   <span class="co"># a new file: the Titan matrix stays</span></span>
+<span id="cb35-11"><a href="#cb35-11" tabindex="-1" aria-label="code-block-35-11"></a><span class="cf">if</span> cohere_emb_path.exists():</span>
+<span id="cb35-12"><a href="#cb35-12" tabindex="-1" aria-label="code-block-35-12"></a>    cohere_embeddings <span class="op">=</span> np.load(cohere_emb_path)</span>
+<span id="cb35-13"><a href="#cb35-13" tabindex="-1" aria-label="code-block-35-13"></a><span class="cf">else</span>:</span>
+<span id="cb35-14"><a href="#cb35-14" tabindex="-1" aria-label="code-block-35-14"></a>    t0 <span class="op">=</span> time.time()</span>
+<span id="cb35-15"><a href="#cb35-15" tabindex="-1" aria-label="code-block-35-15"></a>    cohere_embeddings <span class="op">=</span> np.vstack([cohere_embed(ch[<span class="st">"text"</span>]) <span class="cf">for</span> ch <span class="kw">in</span> chunked_docs])</span>
+<span id="cb35-16"><a href="#cb35-16" tabindex="-1" aria-label="code-block-35-16"></a>    np.save(cohere_emb_path, cohere_embeddings)</span>
+<span id="cb35-17"><a href="#cb35-17" tabindex="-1" aria-label="code-block-35-17"></a>    <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span><span class="bu">len</span>(chunked_docs)<span class="sc">}</span><span class="ss"> chunks in </span><span class="sc">{</span>(time.time() <span class="op">-</span> t0) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
+<span id="cb35-18"><a href="#cb35-18" tabindex="-1" aria-label="code-block-35-18"></a></span>
+<span id="cb35-19"><a href="#cb35-19" tabindex="-1" aria-label="code-block-35-19"></a><span class="kw">def</span> embed_query_cohere(question: <span class="bu">str</span>) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb35-20"><a href="#cb35-20" tabindex="-1" aria-label="code-block-35-20"></a>    <span class="cf">return</span> cohere_embed(question, input_type<span class="op">=</span><span class="st">"search_query"</span>)</span></code></pre>
 </div>
-<p>Then the Step 11 loop with <code>embed_query=alt_embed_query</code>
-and <code>chunk_embeddings=alt_embeddings</code>, DeepSeek unchanged,
-and the scorer. The hit-rate cell from Step 13 is the sharper instrument
+<p>Then the Step 11 loop with
+<code>embed_query=embed_query_cohere</code> and
+<code>chunk_embeddings=cohere_embeddings</code>, DeepSeek unchanged, and
+the scorer. The hit-rate cell from Step 13 is the sharper instrument
 here: compute it for the new matrix before scoring, because an embedder
-that finds the paper less often cannot be rescued by any generator.</p>
+that finds the paper less often cannot be rescued by any generator. A
+cheaper variant of the same experiment keeps Titan and adds
+<code>"dimensions": 256</code> to its request body in Step 8, which asks
+whether a four-times smaller index retrieves as well.</p>
 </div>
 </div>
 </div>
@@ -2306,9 +2305,9 @@ its top eight for 94% of the table questions and 94% of the figure
 questions; the page-image index managed 91% and 82%. A whole page is a
 weaker key than the caption and surrounding sentences that the text
 chunks already carry. Then reading: with the image index’s top three
-pages attached, Nova 2 Lite went from 0.64 to 0.67 overall, from 41% to
-29% of figure questions wrong, and from 0.85 to 0.93 on citation F1,
-while the table questions did not move (43% to 46% wrong). Seventeen
+pages attached, Nova 2 Lite went from 0.64 to 0.67 overall, from 59% to
+71% of figure questions correct, and from 0.85 to 0.93 on citation F1,
+while the table questions did not move (57% to 54% correct). Seventeen
 figure questions is two questions of difference, so read the direction,
 not the decimals. For the bill, every image is a few hundred to a
 thousand input tokens at Nova 2 Lite’s rate on the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">pricing page</a>, so a
