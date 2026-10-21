@@ -1420,7 +1420,7 @@ charge?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -3152,7 +3152,7 @@ potential issues early. <strong>In your group, discuss:</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Which checks do you think are most critical before scaling up?</p>
 <ul>
@@ -3270,7 +3270,7 @@ group.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li><p><strong>Data Preprocessing</strong>: The script fills missing
@@ -3539,7 +3539,7 @@ data. Which instance would you pick for the training job, and why?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <p>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
 GB of data wants about 32 GB of memory: <code>ml.m5.2xlarge</code> (8
@@ -4913,7 +4913,7 @@ goes next to it.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>There is no single answer; the solution is the written estimate. One
 worked example for scale: a 7B language model fully fine-tuned on 50,000
@@ -5102,7 +5102,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -10403,19 +10403,26 @@ refusing cleanly, with every evidence field blank, when the answer is
 competition’s own metric file, which <code>compute_wattbot_score</code>
 in <code>wattbot_rag.py</code> calls for the headline score so that what
 you see here is what the leaderboard would report. It also prints the
-error rate by evidence type: whether each answer rests on a quoted
-sentence, a table, a figure, or a calculation. The competition’s
-solution file carries those flags; the public <code>train_QA.csv</code>
-only notes them in its <code>explanation</code> column, so the wrapper
-derives them from there. A question can carry several. Read that table
-before changing anything: figure and table questions failing while quote
-questions pass points at text extraction, which loses figures and
-flattens tables, not at the model. The wrapper adds a per-row score,
-joins on <code>id</code>, and prints the worst-scoring rows so you can
-see <em>why</em> the pipeline lost points. <code>train_QA.csv</code> has
-no separate “unanswerable” column, so
-<code>gt_is_na_col="is_blank"</code> tells the scorer to derive that
-flag from <code>answer_value == "is_blank"</code> on both sides.</p>
+error rate by evidence type, the seven flag columns of
+<code>train_QA.csv</code>: <strong>Quote</strong> (the answer is a
+sentence in a paper), <strong>Table</strong>, <strong>Figure</strong>,
+<strong>Math</strong> (a calculation from numbers in the text),
+<strong>is_NA</strong> (the corpus cannot answer it, and the right
+response is <code>is_blank</code>), <strong>CrossPaper</strong> (numbers
+from two papers have to be combined) and <strong>Reconcile</strong> (two
+figures that sound alike but measure different things, such as water
+withdrawn against water consumed, or a popular claim against a measured
+value, and the answer is the ratio or the distinction between them;
+quoting either figure alone is the wrong answer the question is built to
+catch). A question can carry several. Read that table before changing
+anything: figure and table questions failing while quote questions pass
+points at text extraction, which loses figures and flattens tables, not
+at the model. The wrapper adds a per-row score, joins on
+<code>id</code>, and prints the worst-scoring rows so you can see
+<em>why</em> the pipeline lost points. <code>train_QA.csv</code> has no
+separate “unanswerable” column, so <code>gt_is_na_col="is_blank"</code>
+tells the scorer to derive that flag from
+<code>answer_value == "is_blank"</code> on both sides.</p>
 <div class="codewrapper sourceCode" id="cb28">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -10624,9 +10631,11 @@ render.</p>
 <h3 id="embed-the-page-images">Embed the page images<a class="anchor" aria-label="anchor" href="#embed-the-page-images"></a>
 </h3>
 <p>The embedding model lives in <code>us-east-1</code>, so this is a
-second runtime client and a second control-plane client there, and a
-tagged profile created through the latter so these calls are attributed
-like the rest. <code>embed_multimodal</code> builds the model’s request
+second runtime client pointed there. One difference from the text
+models: Bedrock rejects this model’s request body when it arrives
+through an application inference profile, so these calls use the model
+ID directly and are the one Bedrock spend in this lesson that carries no
+project tags. <code>embed_multimodal</code> builds the model’s request
 body (Nova’s says whether a vector is for the index or for a query, and
 that the image is a document page rather than a photo) and returns a
 unit vector. Set <code>multimodal_model_id</code> to
@@ -10636,27 +10645,19 @@ function handles both.</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" tabindex="-1" aria-label="code-block-34-1"></a>multimodal_region <span class="op">=</span> <span class="st">"us-east-1"</span></span>
-<span id="cb34-2"><a href="#cb34-2" tabindex="-1" aria-label="code-block-34-2"></a>base_multimodal_model_id <span class="op">=</span> <span class="st">"amazon.nova-2-multimodal-embeddings-v1:0"</span></span>
+<span id="cb34-2"><a href="#cb34-2" tabindex="-1" aria-label="code-block-34-2"></a>multimodal_model_id <span class="op">=</span> <span class="st">"amazon.nova-2-multimodal-embeddings-v1:0"</span>   <span class="co"># called by ID: this model does not accept calls through an inference profile</span></span>
 <span id="cb34-3"><a href="#cb34-3" tabindex="-1" aria-label="code-block-34-3"></a></span>
 <span id="cb34-4"><a href="#cb34-4" tabindex="-1" aria-label="code-block-34-4"></a>bedrock_runtime_mm <span class="op">=</span> boto3.client(<span class="st">"bedrock-runtime"</span>, region_name<span class="op">=</span>multimodal_region,</span>
 <span id="cb34-5"><a href="#cb34-5" tabindex="-1" aria-label="code-block-34-5"></a>                                  config<span class="op">=</span>Config(retries<span class="op">=</span>{<span class="st">"max_attempts"</span>: <span class="dv">10</span>, <span class="st">"mode"</span>: <span class="st">"adaptive"</span>}))</span>
-<span id="cb34-6"><a href="#cb34-6" tabindex="-1" aria-label="code-block-34-6"></a>bedrock_mm <span class="op">=</span> boto3.client(<span class="st">"bedrock"</span>, region_name<span class="op">=</span>multimodal_region)</span>
-<span id="cb34-7"><a href="#cb34-7" tabindex="-1" aria-label="code-block-34-7"></a>multimodal_model_id <span class="op">=</span> tagged_profile_arn(bedrock_mm, base_multimodal_model_id, <span class="st">"wattbot-embed-mm"</span>, name, project)</span>
-<span id="cb34-8"><a href="#cb34-8" tabindex="-1" aria-label="code-block-34-8"></a></span>
-<span id="cb34-9"><a href="#cb34-9" tabindex="-1" aria-label="code-block-34-9"></a>first_png <span class="op">=</span> Path(caption_pages[<span class="dv">0</span>][<span class="st">"png_path"</span>]).read_bytes()</span>
-<span id="cb34-10"><a href="#cb34-10" tabindex="-1" aria-label="code-block-34-10"></a><span class="cf">try</span>:</span>
-<span id="cb34-11"><a href="#cb34-11" tabindex="-1" aria-label="code-block-34-11"></a>    v <span class="op">=</span> embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png<span class="op">=</span>first_png)</span>
-<span id="cb34-12"><a href="#cb34-12" tabindex="-1" aria-label="code-block-34-12"></a><span class="cf">except</span> ClientError <span class="im">as</span> e:</span>
-<span id="cb34-13"><a href="#cb34-13" tabindex="-1" aria-label="code-block-34-13"></a>    <span class="bu">print</span>(<span class="ss">f"Through the tagged profile: </span><span class="sc">{</span>e<span class="sc">.</span>response[<span class="st">'Error'</span>][<span class="st">'Message'</span>]<span class="sc">}</span><span class="ch">\n</span><span class="ss">Calling the model ID directly instead; these calls will not carry the project tags"</span>)</span>
-<span id="cb34-14"><a href="#cb34-14" tabindex="-1" aria-label="code-block-34-14"></a>    multimodal_model_id <span class="op">=</span> base_multimodal_model_id</span>
-<span id="cb34-15"><a href="#cb34-15" tabindex="-1" aria-label="code-block-34-15"></a>    v <span class="op">=</span> embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png<span class="op">=</span>first_png)</span>
-<span id="cb34-16"><a href="#cb34-16" tabindex="-1" aria-label="code-block-34-16"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>caption_pages[<span class="dv">0</span>][<span class="st">'doc_id'</span>]<span class="sc">}</span><span class="ss"> page </span><span class="sc">{</span>caption_pages[<span class="dv">0</span>][<span class="st">'page_label'</span>]<span class="sc">}</span><span class="ss"> -&gt; vector of </span><span class="sc">{</span>v<span class="sc">.</span>shape[<span class="dv">0</span>]<span class="sc">}</span><span class="ss"> dimensions"</span>)</span></code></pre>
+<span id="cb34-6"><a href="#cb34-6" tabindex="-1" aria-label="code-block-34-6"></a></span>
+<span id="cb34-7"><a href="#cb34-7" tabindex="-1" aria-label="code-block-34-7"></a>v <span class="op">=</span> embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png<span class="op">=</span>Path(caption_pages[<span class="dv">0</span>][<span class="st">"png_path"</span>]).read_bytes())</span>
+<span id="cb34-8"><a href="#cb34-8" tabindex="-1" aria-label="code-block-34-8"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>caption_pages[<span class="dv">0</span>][<span class="st">'doc_id'</span>]<span class="sc">}</span><span class="ss"> page </span><span class="sc">{</span>caption_pages[<span class="dv">0</span>][<span class="st">'page_label'</span>]<span class="sc">}</span><span class="ss"> -&gt; vector of </span><span class="sc">{</span>v<span class="sc">.</span>shape[<span class="dv">0</span>]<span class="sc">}</span><span class="ss"> dimensions"</span>)</span></code></pre>
 </div>
 <p>One call per page, cached like the text matrix: locally, then in your
-bucket, then computed. A call takes a second or two, so the loop runs
-six at a time through a thread pool and prints every fifty pages; about
-a thousand pages is a few minutes. The question side uses the same model
-with <code>purpose="query"</code>.</p>
+bucket, then computed. The loop runs six calls at a time through a
+thread pool and prints every fifty pages; about a thousand pages takes
+two minutes. The question side uses the same model with
+<code>purpose="query"</code>.</p>
 <div class="codewrapper sourceCode" id="cb35">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -11696,7 +11697,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -11759,7 +11760,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still downloading or
@@ -13226,7 +13227,7 @@ finds something. Then run them against your own resources.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -13603,7 +13604,7 @@ stopped your notebook instance and walked away?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>A complete list for someone who did every episode, including the
 optional ones:</p>
