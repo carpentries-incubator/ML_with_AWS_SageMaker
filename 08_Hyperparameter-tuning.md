@@ -203,7 +203,7 @@ Before running the full search, let's test our setup by setting max_jobs = 1. Th
 ```python
 # Tuner configuration
 tuner = HyperparameterTuner(
-    base_tuning_job_name=f"{notebook_instance_name}-nn-tune",
+    base_tuning_job_name=f"{name}-nn-tune"[:20],   # tuning job names are capped at 32 characters and the SDK appends a 12-character timestamp, so the base gets at most 20; child jobs are named <tuning job>-001-<hash>
     estimator=pytorch_estimator,  # the blueprint: every child training job is this estimator with different hyperparameters
     # same regex as the estimator; the value it captures is what the tuner compares across child jobs
     metric_definitions=[{"Name": "validation:accuracy", "Regex": "validation:accuracy = ([0-9\\.]+)"}],
@@ -292,7 +292,7 @@ max_parallel_jobs = 2
 
 # Define the Tuner configuration
 tuner = HyperparameterTuner(
-    base_tuning_job_name=f"{notebook_instance_name}-nn-tune",
+    base_tuning_job_name=f"{name}-nn-tune"[:20],   # tuning job names are capped at 32 characters and the SDK appends a 12-character timestamp, so the base gets at most 20; child jobs are named <tuning job>-001-<hash>
     estimator=pytorch_estimator,
     metric_definitions=[{"Name": "validation:accuracy", "Regex": "validation:accuracy = ([0-9\\.]+)"}],
     objective_metric_name="validation:accuracy",  # Ensure this matches the metric name exactly
@@ -486,7 +486,7 @@ Rerun the 10-job search with `max_parallel_jobs=10` (equal to `max_jobs`). Befor
 
 ```python
 tuner_parallel = HyperparameterTuner(
-    base_tuning_job_name=f"{notebook_instance_name}-nn-tune",
+    base_tuning_job_name=f"{name}-nn-tune"[:20],   # tuning job names are capped at 32 characters and the SDK appends a 12-character timestamp, so the base gets at most 20; child jobs are named <tuning job>-001-<hash>
     estimator=pytorch_estimator,
     metric_definitions=[{"Name": "validation:accuracy", "Regex": "validation:accuracy = ([0-9\\.]+)"}],
     objective_metric_name="validation:accuracy",
