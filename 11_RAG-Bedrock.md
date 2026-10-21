@@ -291,7 +291,7 @@ In short: **pages first → then chunks** keeps the workflow cleaner and easier 
 %pip install -q pypdf
 ```
 
-Open each PDF listed in the metadata with `pypdf` and turn every page into one record: its text, the document id, title and URL, and the page number.
+Open each PDF listed in the metadata with `pypdf` and turn every page into one record: its text, the document id, title and URL, and the page number. The function is the reference for what a page record is; on a CPU notebook it takes several minutes over this corpus, so the cell after it first looks for `pages.jsonl`, the same records written once when the corpus was staged.
 
 ```python
 from pypdf import PdfReader
@@ -347,8 +347,14 @@ def pdfs_to_page_docs(metadata: pd.DataFrame, pdf_dir: str) -> List[Dict[str, An
     return page_docs
 
 
-page_docs = pdfs_to_page_docs(metadata_df, PDF_DIR)
-print(f"Loaded {len(page_docs)} page-level records from {len(metadata_df)} PDFs.")
+start = time.time()
+try:
+    pages_path = download_from_s3("wattbot/pages.jsonl", "pages.jsonl")   # staged next to corpus.zip by the corpus build script
+    page_docs = [json.loads(line) for line in open(pages_path)]
+    print(f"Loaded {len(page_docs)} pre-extracted page records in {time.time() - start:.1f} s")
+except ClientError:
+    page_docs = pdfs_to_page_docs(metadata_df, PDF_DIR)
+    print(f"Extracted {len(page_docs)} page-level records from {len(metadata_df)} PDFs in {(time.time() - start) / 60:.1f} min")
 page_docs[0] if page_docs else None
 ```
 

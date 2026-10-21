@@ -244,7 +244,7 @@ embedding_processor = HuggingFaceProcessor(
     pytorch_version="2.8",
     py_version="py312",
     sagemaker_session=session,
-    max_runtime_in_seconds=2 * 60 * 60,   # backstop: SageMaker kills the job at this point, so a hang costs at most this
+    max_runtime_in_seconds=2 * 60 * 60,   # 2 hours, in seconds (2 h x 60 min x 60 s); the estimate is ~8 minutes. SageMaker kills the job here, so a hang costs at most this
 )
 
 # run() uploads the code, starts the instance, streams the job's log here and returns when the script ends (wait=True is the default)
@@ -345,7 +345,7 @@ rag_processor = HuggingFaceProcessor(
     pytorch_version="2.8",
     py_version="py312",
     sagemaker_session=session,
-    max_runtime_in_seconds=2 * 60 * 60,   # cap: the estimate is 30 minutes
+    max_runtime_in_seconds=2 * 60 * 60,   # 2 hours, in seconds; the estimate is 30 minutes
 )
 
 start = time.time()
