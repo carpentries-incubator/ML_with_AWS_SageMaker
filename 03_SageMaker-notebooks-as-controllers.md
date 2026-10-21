@@ -80,7 +80,7 @@ In the new notebook, run:
 !ls
 ```
 
-The first line prints `/home/ec2-user/SageMaker`: new notebooks start in that folder. The second lists it, and the notebook you just created is the only thing there. `SageMaker/` is a separate disk, the volume whose size sits under **Additional configuration** on the create form (the 20 GB you set). The rest of the instance lives on the system disk and is reset when the instance stops; `SageMaker/` is the only place that survives a stop. JupyterLab's file browser opens there for that reason, and it is where everything in this lesson goes.
+The first line prints `/home/ec2-user/SageMaker`: new notebooks start in that folder. The second lists it: the notebook you just created, and a folder called `lost+found`. That folder is not yours and holds nothing. Linux creates one at the top of every formatted disk, as the place its repair tool would put file fragments after a crash; it appears here because `SageMaker/` is its own disk, and it is the sign that you are looking at that disk and not the instance's system drive. Leave it alone. `SageMaker/` is a separate disk, the volume whose size sits under **Additional configuration** on the create form (the 20 GB you set). The rest of the instance lives on the system disk and is reset when the instance stops; `SageMaker/` is the only place that survives a stop. JupyterLab's file browser opens there for that reason, and it is where everything in this lesson goes.
 
 Now clone the lesson repository into it:
 

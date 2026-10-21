@@ -475,18 +475,51 @@ print(f"Single-instance job billed {desc_cpu['BillableTimeInSeconds']/60:.1f} mi
 
 Look at the job's log: open [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training), click the job's name, scroll to **Monitor**, click **View logs**. This time CloudWatch lists two streams, `algo-1` and `algo-2`, and each one prints all 1000 epochs. The wall-clock time is about the same as the single-instance run (slightly longer, if anything, because two instances have to be provisioned), and the billable minutes are double.
 
-::::::::::::::::::::::::::::::::::::::: callout
-#### What distributed training needs
+### Data parallelism, done properly
 
-To split the work across instances you need two things the demo above did not have:
+To split one training run across two instances instead of running it twice, the script needs three things the demo above did not have, and the estimator needs one. `scripts/train_nn_ddp.py` is `train_nn.py` with those three added; open the two side by side, the differences are marked 1, 2 and 3 in the comments.
 
-- **Data parallelism** (the common case; each instance holds a full copy of the model and trains on a different slice of the data, exchanging gradients after every step). For PyTorch, pass `distribution={"torch_distributed": {"enabled": True}}` to the estimator *and* write the script for it: initialise a process group, wrap the model in `DistributedDataParallel`, and give each rank a different shard of the data (e.g. a `DistributedSampler`). SageMaker's own data-parallel library (`smdistributed.dataparallel`) is the same idea with a faster all-reduce on supported GPU instances.
-- **Model parallelism** (for models too large for one device's memory; the layers themselves are spread across devices). This is for large language models and the like, needs `smdistributed.modelparallel` or an equivalent library, and is well beyond what a tabular network needs.
+1. **Join the process group.** The launcher starts one process per instance and tells each its rank (0 or 1) and the world size (2) through environment variables; `setup_distributed` reads them and calls `init_process_group`, after which the processes can talk. With no launcher the function returns rank 0 of 1 and the script trains like `train_nn.py`.
+2. **Shard the data.** Each process keeps the rows `rank, rank + world_size, rank + 2 * world_size, ...`: half the training set each, no row seen twice.
+3. **Wrap the model in `DistributedDataParallel`.** After every `loss.backward()`, DDP averages the gradients across the processes before `optimizer.step()`, so both copies of the model take the same step and stay identical. That averaged gradient over two half-shards is the gradient over the whole set, which is why the result is one training run and not two. Only rank 0 prints the metrics and saves the model; every process holds the same weights.
+
+On the estimator, `distribution={"mpi": {"enabled": True, "processes_per_host": 1}}` is what starts the processes: SageMaker launches the script on every instance through MPI, which sets the rank and world-size variables the script reads and lets the instances find each other by name. (`torch_distributed`, the `torchrun` launcher, is the same idea for GPU instances; the script handles either.) Everything else is the two-instance estimator from the demo.
+
+```python
+pytorch_estimator_ddp = PyTorch(
+    base_job_name=f"{notebook_instance_name}-nn-ddp",
+    max_run=max_run,
+    entry_point="/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn_ddp.py",   # the three additions, marked in the script
+    role=role,
+    tags=job_tags,
+    instance_type="ml.m5.large",
+    instance_count=2,
+    distribution={"mpi": {"enabled": True, "processes_per_host": 1}},   # start one process per instance and connect them; without this, two copies again
+    framework_version="2.3",
+    py_version="py311",
+    output_path=output_path,
+    sagemaker_session=session,
+    hyperparameters={
+        "train": "/opt/ml/input/data/train/train_data.npz",
+        "val": "/opt/ml/input/data/val/val_data.npz",
+        "epochs": epochs,
+        "learning_rate": learning_rate,
+    },
+)
+
+start = t.time()
+pytorch_estimator_ddp.fit({"train": train_input, "val": val_input})
+print(f"Data-parallel run: {(t.time() - start) / 60:.1f} min wall-clock on 2 x ml.m5.large")
+desc_ddp = job_cost_report(pytorch_estimator_ddp.latest_training_job.name, prices["ml.m5.large"])
+```
+
+Read the log before the bill. The two CloudWatch streams now say different things: each prints `training on 446 of 891 rows` (or 445), and only `algo-1` prints the epochs and saves the model. The final validation loss matches the single-instance run to the third decimal, because the averaged gradient is the same gradient; that match is the proof that the work was split rather than copied. The wall-clock is not shorter. Each step now costs a round of gradient exchange between two machines, which takes longer than the 445 rows it saves, and the bill is still two instances' worth. That is the rule of thumb again, measured: data parallelism pays when the step is big enough that the exchange is a small part of it, which on tabular data of 891 rows it never is.
+
+**Model parallelism** is the other kind, for a model too large for one device's memory, where the layers themselves are spread across devices (`smdistributed.modelparallel`, or PyTorch's FSDP). There is no example here because no model in this lesson needs it: the fine-tuning episode's memory arithmetic shows what does, a model whose weights plus their gradients and optimizer state exceed one GPU, and the usual answer at this scale is a LoRA fine-tune, which shrinks the problem instead of spreading it.
 
 For the **built-in XGBoost** image from the previous episode the recipe is simpler, because the algorithm already knows how to train across instances: split the training CSV into several S3 objects under one prefix and pass `TrainingInput(prefix, content_type="text/csv", distribution="ShardedByS3Key")`, so each instance receives a different subset of the files. Even then, a dataset of 891 rows will only show overhead.
 
 Either way, the rule of thumb stands: a bigger single instance first, and multiple instances only once data no longer fits in memory or a run exceeds ~10 hours.
-:::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 ::::::::::::::::::::::::::::::::::::: keypoints
 
@@ -494,7 +527,7 @@ Either way, the rule of thumb stands: a bigger single instance first, and multip
 - **Startup dominates small jobs**: Every SageMaker training job waits a minute or so for an instance (not billed), then spends one to three minutes on container pull and data download (billed) before the script runs; for a job whose script finishes in seconds, that overhead is the whole bill.
 - **GPU training**: While beneficial for larger models or datasets, GPUs may introduce overhead for smaller tasks; selecting the right instance type is critical for cost-efficiency.
 - **Data parallelism vs. model parallelism**: Data parallelism splits data across instances and synchronizes model weights, suitable for typical neural network tasks. Model parallelism, which divides model layers, is ideal for very large models that exceed memory capacity.
-- **`instance_count` alone is not distributed training**: Without `distribution=` on the estimator and distributed code in the script, `instance_count=2` runs the full script on the full data on each instance and bills twice.
+- **`instance_count` alone is not distributed training**: Without `distribution=` on the estimator and distributed code in the script, `instance_count=2` runs the full script on the full data on each instance and bills twice. Data parallelism is three additions to the script (join the process group, shard the rows, wrap the model in `DistributedDataParallel`) and one argument on the estimator; `train_nn_ddp.py` has them, and reaches the single-instance run's loss on half the rows per instance.
 - **SageMaker configuration**: By adjusting instance counts and types, SageMaker supports scalable training setups. Starting with CPU training and scaling as needed with GPUs or distributed setups allows for performance optimization.
 - **Testing locally first**: Before deploying large-scale training in SageMaker, test locally with a smaller setup to ensure code correctness and efficient resource usage.
 - **Estimate before you launch**: for small models, time a smoke test and scale it by epochs and rows, plus about three minutes of startup; for large ones, 6 FLOPs per parameter per example-token, divided by a quarter of the GPU's peak. `helpers.estimate_training_cost` does the second; write the number down and compare it to the bill.
