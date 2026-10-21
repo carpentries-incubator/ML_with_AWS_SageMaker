@@ -904,7 +904,7 @@ realistic project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5: full fine-tuning a 7B model needs ~112 GB
 plus activations, and the g5 has 24 GB. On the p4d the 8 × 40 GB = 320
@@ -1183,24 +1183,31 @@ input channels.</p>
 <span id="cb6-16"><a href="#cb6-16" tabindex="-1" aria-label="code-block-6-16"></a><span class="bu">print</span>(<span class="st">"Region:"</span>, region)</span>
 <span id="cb6-17"><a href="#cb6-17" tabindex="-1" aria-label="code-block-6-17"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)</span></code></pre>
 </div>
-<p>Now the names. Two buckets: the shared one the jobs read from, and
-your own, where everything they write lands. Your username goes into job
-names, which SageMaker requires to be unique in the account. The two S3
-prefixes at the end are what the estimator mounts into the job as its
-<code>train</code> and <code>model</code> input channels.</p>
+<p>Now the names, after moving into a project folder of our own under
+the instance root. Everything this episode downloads or stages
+(<code>data/</code>, <code>code/</code>) goes there, beside the lesson
+clone rather than inside it. Two buckets: the shared one the jobs read
+from, and your own, where everything they write lands. Your username
+goes into job names, which SageMaker requires to be unique in the
+account. The two S3 prefixes at the end are what the estimator mounts
+into the job as its <code>train</code> and <code>model</code> input
+channels.</p>
 <div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a>shared_bucket <span class="op">=</span> <span class="st">"ml-marathon-shared"</span>   <span class="co"># the instructor-staged, read-only bucket with the data and model weights; change only on your own account</span></span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1" aria-label="code-block-7-2"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>     <span class="co"># &lt;-- EDIT ME: your own bucket from the S3 episode; everything the jobs write goes here</span></span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1" aria-label="code-block-7-3"></a>username <span class="op">=</span> <span class="st">"doejohn"</span>                   <span class="co"># &lt;-- EDIT ME: lowercase letters/digits only; used in job names</span></span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1" aria-label="code-block-7-4"></a></span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1" aria-label="code-block-7-5"></a>data_prefix <span class="op">=</span> <span class="st">"badger-scribe"</span></span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1" aria-label="code-block-7-6"></a>train_s3_uri <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>shared_bucket<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>data_prefix<span class="sc">}</span><span class="ss">/"</span>                  <span class="co"># training channel: csvs + images/</span></span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1" aria-label="code-block-7-7"></a>model_s3_uri <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>shared_bucket<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>data_prefix<span class="sc">}</span><span class="ss">/model/churro-3B/"</span>  <span class="co"># model channel: staged CHURRO-3B weights</span></span>
-<span id="cb7-8"><a href="#cb7-8" tabindex="-1" aria-label="code-block-7-8"></a></span>
-<span id="cb7-9"><a href="#cb7-9" tabindex="-1" aria-label="code-block-7-9"></a>local_data_dir <span class="op">=</span> <span class="st">"./data"</span></span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1" aria-label="code-block-7-10"></a>os.makedirs(local_data_dir, exist_ok<span class="op">=</span><span class="va">True</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a><span class="op">!</span>mkdir <span class="op">-</span>p <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>badger<span class="op">-</span>scribe   <span class="co"># a project folder beside the lesson clone, so data and job code stay out of the repository</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1" aria-label="code-block-7-2"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>badger<span class="op">-</span>scribe</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1" aria-label="code-block-7-3"></a></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1" aria-label="code-block-7-4"></a>shared_bucket <span class="op">=</span> <span class="st">"ml-marathon-shared"</span>   <span class="co"># the instructor-staged, read-only bucket with the data and model weights; change only on your own account</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1" aria-label="code-block-7-5"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>     <span class="co"># &lt;-- EDIT ME: your own bucket from the S3 episode; everything the jobs write goes here</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1" aria-label="code-block-7-6"></a>username <span class="op">=</span> <span class="st">"doejohn"</span>                   <span class="co"># &lt;-- EDIT ME: lowercase letters/digits only; used in job names</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1" aria-label="code-block-7-7"></a></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1" aria-label="code-block-7-8"></a>data_prefix <span class="op">=</span> <span class="st">"badger-scribe"</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1" aria-label="code-block-7-9"></a>train_s3_uri <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>shared_bucket<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>data_prefix<span class="sc">}</span><span class="ss">/"</span>                  <span class="co"># training channel: csvs + images/</span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1" aria-label="code-block-7-10"></a>model_s3_uri <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>shared_bucket<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>data_prefix<span class="sc">}</span><span class="ss">/model/churro-3B/"</span>  <span class="co"># model channel: staged CHURRO-3B weights</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1" aria-label="code-block-7-11"></a></span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1" aria-label="code-block-7-12"></a>local_data_dir <span class="op">=</span> <span class="st">"./data"</span></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1" aria-label="code-block-7-13"></a>os.makedirs(local_data_dir, exist_ok<span class="op">=</span><span class="va">True</span>)</span></code></pre>
 </div>
 <p>Download the four small files (the two page lists, the metadata and
 the competition’s scoring script) and look at how the training pages
@@ -1867,7 +1874,7 @@ will compare it to the real bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>Expect about 32 billed minutes. Scoring is the line most likely to
 surprise: at 17 to 21 seconds a page, the two 15-page evaluations and
@@ -2228,7 +2235,7 @@ CER. Did the extra pixels help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -2268,7 +2275,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
 <div class="accordion-body">
 <p>Startup and upload (~6 min, <code>$0.26</code> at
 <code>$2.61</code>/h) do not speed up: the container pull and the S3

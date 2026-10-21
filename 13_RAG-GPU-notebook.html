@@ -468,8 +468,8 @@ compatible Python environment.</li>
 the <code>chunks.jsonl</code> the Bedrock episode cached in your own
 bucket.</li>
 <li>Implement a simple, explicit “from scratch” embedding pipeline with
-a self-hosted sentence-transformer, without relying on FAISS or
-production vector DBs.</li>
+a self-hosted embedding model, without relying on FAISS or production
+vector DBs.</li>
 <li>Build a small retrieval helper that finds the most relevant chunks
 for a question using cosine similarity in embedding space.</li>
 <li>Serve a 27B open-weight generator (Qwen3.8-27B in FP8, via vLLM) on
@@ -496,13 +496,16 @@ combination.</li>
 <div id="optional-self-study-episode" class="callout-inner">
 <h3 class="callout-title">Optional, self-study episode</h3>
 <div class="callout-content">
-<p>This episode is not taught in the workshop. It runs the same
-self-hosted pipeline as the Processing Jobs episode, but interactively
-on a GPU notebook instance, which is the right tool for prototyping
-alone at a keyboard and the wrong one for a room of a hundred people
-with meters running. Work through it on your own when you want to see
-model loading, GPU memory and generation as plain Python you can poke
-at. Read the cost callout first.</p>
+<p>This episode is not taught in the workshop. <strong>The Bedrock and
+Processing Jobs episodes are the default ways to run RAG; this one is
+for the case where you need to poke at a self-hosted model
+interactively, and only if you will remember to stop the
+instance.</strong> It runs the same pipeline as the Processing Jobs
+episode on a GPU notebook instance, which is the right tool for
+prototyping alone at a keyboard and the wrong one for a room of a
+hundred people with meters running. Work through it on your own when you
+want to see model loading, GPU memory and generation as plain Python.
+Read the cost callout first.</p>
 </div>
 </div>
 </div>
@@ -626,7 +629,7 @@ own.</li>
 </ul></li>
 <li>
 <strong>Implement the model steps explicitly in code.</strong>
-<ul><li>Embed chunks with a sentence-transformer
+<ul><li>Embed chunks with an open embedding model
 (<code>thenlper/gte-large</code>) running on the notebook’s GPU.</li>
 <li>Implement cosine-similarity search over the embedding matrix.</li>
 </ul></li>
@@ -734,7 +737,7 @@ Restart</strong>) before continuing.</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a><span class="co"># Several GB; it may replace torch, so restart the kernel (Kernel -&gt; Restart) if the log says it did</span></span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a><span class="op">%</span>pip install <span class="op">-</span>q <span class="st">"vllm&gt;=0.17"</span> sentence<span class="op">-</span>transformers</span></code></pre>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a><span class="op">%</span>pip install <span class="op">-</span>q <span class="st">"vllm&gt;=0.17"</span> <span class="st">"peft&gt;=0.18"</span>   <span class="co"># peft upgraded to match the transformers vLLM installs</span></span></code></pre>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="import-data-from-bucket-into-notebook">Import data from bucket into notebook<a class="anchor" aria-label="anchor" href="#import-data-from-bucket-into-notebook"></a></h2>
@@ -776,15 +779,18 @@ download helper.</p>
 <div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a>shared_bucket <span class="op">=</span> <span class="st">"ml-marathon-shared"</span>   <span class="co"># the instructor-staged, read-only bucket with the data and model weights; change only on your own account</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>     <span class="co"># &lt;-- EDIT ME: your own bucket (chunks live here)</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="op">!</span>mkdir <span class="op">-</span>p <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>wattbot   <span class="co"># a project folder beside the lesson clone (this is a new instance, so it starts empty)</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>wattbot</span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a><span class="co"># Local working directory in the notebook instance</span></span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1" aria-label="code-block-6-5"></a>local_data_dir <span class="op">=</span> <span class="st">"./data"</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a>shared_bucket <span class="op">=</span> <span class="st">"ml-marathon-shared"</span>   <span class="co"># the instructor-staged, read-only bucket with the data and model weights; change only on your own account</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1" aria-label="code-block-6-5"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>     <span class="co"># &lt;-- EDIT ME: your own bucket (chunks live here)</span></span>
 <span id="cb6-6"><a href="#cb6-6" tabindex="-1" aria-label="code-block-6-6"></a></span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1" aria-label="code-block-6-7"></a>session_start <span class="op">=</span> time.time()   <span class="co"># the meter on this GPU instance started when it booted; this marks where the episode's work began</span></span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1" aria-label="code-block-6-8"></a></span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1" aria-label="code-block-6-9"></a><span class="bu">print</span>(<span class="st">"Local data dir:"</span>, local_data_dir)</span></code></pre>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1" aria-label="code-block-6-7"></a><span class="co"># Local working directory in the notebook instance</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1" aria-label="code-block-6-8"></a>local_data_dir <span class="op">=</span> <span class="st">"./data"</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1" aria-label="code-block-6-9"></a></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1" aria-label="code-block-6-10"></a>session_start <span class="op">=</span> time.time()   <span class="co"># the meter on this GPU instance started when it booted; this marks where the episode's work began</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1" aria-label="code-block-6-11"></a></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1" aria-label="code-block-6-12"></a><span class="bu">print</span>(<span class="st">"Local data dir:"</span>, local_data_dir)</span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="get-the-shared-wattbot-helpers">Get the shared WattBot helpers<a class="anchor" aria-label="anchor" href="#get-the-shared-wattbot-helpers"></a></h3>
@@ -797,7 +803,7 @@ adds is the two model callables, <code>embed_query</code> and
 <div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a><span class="op">!</span>cp <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>wattbot_rag.py .</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a><span class="op">!</span>cp <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>wattbot_rag.py <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>hf_embedder.py .</span></code></pre>
 </div>
 <p>Import the pieces of the shared RAG module we reuse: the prompts, the
 retrieval and scoring functions, and the per-question runner.</p>
@@ -836,7 +842,7 @@ retrieval and scoring functions, and the per-question runner.</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a><span class="im">import</span> torch</span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a><span class="im">from</span> sentence_transformers <span class="im">import</span> SentenceTransformer   <span class="co"># embedding-model wrapper: encode(list of strings) -&gt; matrix</span></span></code></pre>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a><span class="im">from</span> hf_embedder <span class="im">import</span> HFEmbedder   <span class="co"># thirty lines on plain transformers: encode(list of strings) -&gt; unit-length matrix; the Processing jobs use the same file</span></span></code></pre>
 </div>
 <p>A CSV reader that tries a few encodings, because some metadata files
 are not valid UTF-8.</p>
@@ -900,9 +906,9 @@ and load it.</p>
 <code>page_num</code>, <code>page_label</code>,
 <code>chunk_idx_in_page</code>), which we use later to cite sources.</p>
 </section><section><h2 class="section-heading" id="step-3-build-an-embedding-matrix">Step 3 – Build an embedding matrix<a class="anchor" aria-label="anchor" href="#step-3-build-an-embedding-matrix"></a></h2>
-<hr class="half-width"><p>Now we embed each chunk into a vector using a
-<strong>sentence-transformer</strong> model. For WattBot, a strong and
-relatively efficient choice is:</p>
+<hr class="half-width"><p>Now we embed each chunk into a vector using an open <strong>embedding
+model</strong>. For WattBot, a strong and relatively efficient choice
+is:</p>
 <div class="section level3">
 <h3 id="thenlpergte-large-recommended-baseline-embedder">
 <code>thenlper/gte-large</code> (Recommended baseline embedder)<a class="anchor" aria-label="anchor" href="#thenlpergte-large-recommended-baseline-embedder"></a></h3>
@@ -944,15 +950,11 @@ required.</p>
 <span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a><span class="co"># but is still reasonable to run on a single 24 GB GPU.</span></span>
 <span id="cb13-4"><a href="#cb13-4" tabindex="-1" aria-label="code-block-13-4"></a>embedding_model_id <span class="op">=</span> <span class="st">"thenlper/gte-large"</span></span>
 <span id="cb13-5"><a href="#cb13-5" tabindex="-1" aria-label="code-block-13-5"></a></span>
-<span id="cb13-6"><a href="#cb13-6" tabindex="-1" aria-label="code-block-13-6"></a>use_cuda_for_embeddings <span class="op">=</span> torch.cuda.is_available()</span>
-<span id="cb13-7"><a href="#cb13-7" tabindex="-1" aria-label="code-block-13-7"></a><span class="bu">print</span>(<span class="st">"CUDA available for embeddings:"</span>, use_cuda_for_embeddings)</span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1" aria-label="code-block-13-8"></a></span>
-<span id="cb13-9"><a href="#cb13-9" tabindex="-1" aria-label="code-block-13-9"></a><span class="co"># Single shared embedder object that we can pass around.</span></span>
-<span id="cb13-10"><a href="#cb13-10" tabindex="-1" aria-label="code-block-13-10"></a>embedder <span class="op">=</span> SentenceTransformer(</span>
-<span id="cb13-11"><a href="#cb13-11" tabindex="-1" aria-label="code-block-13-11"></a>    embedding_model_id,</span>
-<span id="cb13-12"><a href="#cb13-12" tabindex="-1" aria-label="code-block-13-12"></a>    device<span class="op">=</span><span class="st">"cuda"</span> <span class="cf">if</span> use_cuda_for_embeddings <span class="cf">else</span> <span class="st">"cpu"</span>   <span class="co"># on the GPU; CPU works too, but much more slowly</span></span>
-<span id="cb13-13"><a href="#cb13-13" tabindex="-1" aria-label="code-block-13-13"></a>)</span>
-<span id="cb13-14"><a href="#cb13-14" tabindex="-1" aria-label="code-block-13-14"></a></span></code></pre>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1" aria-label="code-block-13-6"></a><span class="bu">print</span>(<span class="st">"CUDA available for embeddings:"</span>, torch.cuda.is_available())</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1" aria-label="code-block-13-7"></a></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1" aria-label="code-block-13-8"></a><span class="co"># Single shared embedder object that we can pass around; it uses the GPU when one is available</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1" aria-label="code-block-13-9"></a>embedder <span class="op">=</span> HFEmbedder(embedding_model_id)</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1" aria-label="code-block-13-10"></a></span></code></pre>
 </div>
 <p>Embed every chunk in batches on the GPU and stack the results into
 one matrix, one row per chunk.</p>
@@ -1243,7 +1245,7 @@ makes the explanation call.</li>
 <span id="cb22-12"><a href="#cb22-12" tabindex="-1" aria-label="code-block-22-12"></a></span>
 <span id="cb22-13"><a href="#cb22-13" tabindex="-1" aria-label="code-block-22-13"></a>    res <span class="op">=</span> run_single_qa(</span>
 <span id="cb22-14"><a href="#cb22-14" tabindex="-1" aria-label="code-block-22-14"></a>        row<span class="op">=</span>row,</span>
-<span id="cb22-15"><a href="#cb22-15" tabindex="-1" aria-label="code-block-22-15"></a>        embed_query<span class="op">=</span>embed_query,             <span class="co"># the sentence-transformer on this GPU</span></span>
+<span id="cb22-15"><a href="#cb22-15" tabindex="-1" aria-label="code-block-22-15"></a>        embed_query<span class="op">=</span>embed_query,             <span class="co"># the embedding model on this GPU</span></span>
 <span id="cb22-16"><a href="#cb22-16" tabindex="-1" aria-label="code-block-22-16"></a>        generate<span class="op">=</span>call_qwen_chat,             <span class="co"># the vLLM engine on this GPU; the Bedrock episode passed its converse wrapper here</span></span>
 <span id="cb22-17"><a href="#cb22-17" tabindex="-1" aria-label="code-block-22-17"></a>        chunk_embeddings<span class="op">=</span>chunk_embeddings,</span>
 <span id="cb22-18"><a href="#cb22-18" tabindex="-1" aria-label="code-block-22-18"></a>        chunked_docs<span class="op">=</span>chunked_docs,</span>
