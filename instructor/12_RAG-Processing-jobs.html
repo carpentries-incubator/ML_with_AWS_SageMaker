@@ -951,9 +951,14 @@ end</li>
 <code>embed_query</code> wraps the same <code>gte-large</code> model and
 pooling the embedding job used (<code>hf_embedder.py</code>) (the
 question has to be embedded with the same model as the chunks), and
-<code>generate</code> wraps <code>transformers.generate</code> on the
-generator (Qwen3-8B here) with Qwen’s thinking mode off. The job writes
-<code>wattbot_solutions.csv</code> in the WattBot submission format.</p>
+<code>generate_batch</code> wraps <code>transformers.generate</code> on
+the generator (Qwen3-8B here) with Qwen’s thinking mode off, taking
+several prompts at once. The loop itself is <code>run_batch_qa</code>,
+the batched twin of the <code>run_single_qa</code> the Bedrock episode
+used: the same retrieval, prompts and unanswerable rule, with the model
+calls grouped eight at a time because a GPU decoding one prompt is idle
+most of the time. The job writes <code>wattbot_solutions.csv</code> in
+the WattBot submission format.</p>
 <div id="why-not-vllm" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -966,10 +971,13 @@ generator (Qwen3-8B here) with Qwen’s thinking mode off. The job writes
 open-weight models with: you give it a model name, it loads the weights
 onto the GPU and answers chat requests, batching many at once so that
 throughput scales. That is what you want behind an API with users. This
-job sends about 100 prompts one at a time, so the batching would go
-unused, and the install is several gigabytes of billed GPU time.
-<code>transformers.generate</code>, already in the container, does the
-same prompts in about thirteen minutes with nothing to install. The
+job has about 100 prompts and no users waiting, and
+<code>transformers.generate</code>, already in the container, can decode
+several prompts at once too: <code>run_batch_qa</code> in
+<code>wattbot_rag.py</code> hands them to the model eight at a time
+(<code>--batch_size</code>), which is where most of vLLM’s speed on a
+batch like this comes from, with nothing to install. vLLM’s install is
+several gigabytes of billed GPU time before the first answer. The
 GPU-notebook episode uses vLLM, where its 8-bit weights are needed to
 fit a larger model.</p>
 </div>
@@ -1088,10 +1096,11 @@ the form its <code>argparse</code> expects.</p>
 <span id="cb11-35"><a href="#cb11-35" tabindex="-1" aria-label="code-block-11-35"></a>        <span class="st">"--top_k"</span>, <span class="st">"8"</span>,                                        <span class="co"># chunks handed to the model per question</span></span>
 <span id="cb11-36"><a href="#cb11-36" tabindex="-1" aria-label="code-block-11-36"></a>        <span class="st">"--retrieval_threshold"</span>, <span class="st">"0.25"</span>,                       <span class="co"># best cosine below this =&gt; unanswerable</span></span>
 <span id="cb11-37"><a href="#cb11-37" tabindex="-1" aria-label="code-block-11-37"></a>        <span class="st">"--per_type"</span>, <span class="st">"10"</span>,                                    <span class="co"># the same stratified sample the Bedrock episode scored (seed 0); drop it for all the questions</span></span>
-<span id="cb11-38"><a href="#cb11-38" tabindex="-1" aria-label="code-block-11-38"></a>    ],</span>
-<span id="cb11-39"><a href="#cb11-39" tabindex="-1" aria-label="code-block-11-39"></a>)</span>
-<span id="cb11-40"><a href="#cb11-40" tabindex="-1" aria-label="code-block-11-40"></a></span>
-<span id="cb11-41"><a href="#cb11-41" tabindex="-1" aria-label="code-block-11-41"></a><span class="bu">print</span>(<span class="ss">f"RAG batch job complete: </span><span class="sc">{</span>(time.time() <span class="op">-</span> start) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min wall-clock, including instance startup and the weight download"</span>)</span></code></pre>
+<span id="cb11-38"><a href="#cb11-38" tabindex="-1" aria-label="code-block-11-38"></a>        <span class="st">"--batch_size"</span>, <span class="st">"8"</span>,                                   <span class="co"># prompts decoded together; 1 would be one at a time, several times slower</span></span>
+<span id="cb11-39"><a href="#cb11-39" tabindex="-1" aria-label="code-block-11-39"></a>    ],</span>
+<span id="cb11-40"><a href="#cb11-40" tabindex="-1" aria-label="code-block-11-40"></a>)</span>
+<span id="cb11-41"><a href="#cb11-41" tabindex="-1" aria-label="code-block-11-41"></a></span>
+<span id="cb11-42"><a href="#cb11-42" tabindex="-1" aria-label="code-block-11-42"></a><span class="bu">print</span>(<span class="ss">f"RAG batch job complete: </span><span class="sc">{</span>(time.time() <span class="op">-</span> start) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min wall-clock, including instance startup and the weight download"</span>)</span></code></pre>
 </div>
 <p>While it runs, read what the container is printing. Open the <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs" class="external-link">Processing
 jobs page</a>, click the job’s name, scroll to <strong>Monitor</strong>
@@ -1100,9 +1109,10 @@ service that stores every job’s printed output, at a list with one entry
 named after your job; click it. The text is the container’s stdout, kept
 after the job ends, updated while it runs (refresh). You will see, in
 order: the weight download (16 GB in shards),
-<code>Loading model with transformers</code>, then one line per
-question. The whole job is the 20 minutes in the cost callout; the
-generation is the second half of it.</p>
+<code>Loading model with transformers</code>, a line per batch of
+answers and of explanations, then one line per question. The whole job
+is the 20 minutes in the cost callout; the generation is the second half
+of it.</p>
 </div>
 </section><section><h2 class="section-heading" id="step-4-download-predictions-and-evaluate">Step 4 – Download predictions and evaluate<a class="anchor" aria-label="anchor" href="#step-4-download-predictions-and-evaluate"></a></h2>
 <hr class="half-width"><p>Finally, we download <code>wattbot_solutions.csv</code> from S3,
@@ -1172,7 +1182,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -1235,7 +1245,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still downloading or
