@@ -534,17 +534,14 @@ needs eight times more per parameter.)</p>
 <p>Why bother serving a model yourself when Bedrock is a call away?
 Because open-weight models that fit one GPU are now close to the
 frontier on the kinds of tasks research code runs, on data that never
-leaves your account. The newest of this family, Qwen3.8-27B, runs on a
-single 48 GB GPU in 8-bit weights and lands within a few points of a
-frontier commercial model:</p>
+leaves your account. The newest of this family, Qwen3.8-27B, fits one
+GPU and lands within a few points of a frontier commercial model:</p>
 <figure><img src="fig/qwen27b-vs-opus.png" alt="Paired horizontal bars comparing a 27B open-weight model on one GPU with a frontier commercial model; within a few points on agent tasks and science questions, ahead on chart reasoning" class="figure mx-auto d-block"><div class="figcaption">Qwen3.8-27B against Claude Opus 4.8 on three
 benchmarks: 73.0 vs 74.6 on Terminal-Bench 2.1, 89.2 vs 93.6 on GPQA
 Diamond, 83.7 vs 80.5 on CharXiv reasoning</div>
 </figure><p>Qwen figures are from the Qwen3.8-27B model card and were not
-reproduced here; Opus 4.8 figures are from its published evaluations.
-This episode runs the 8B model on the cheaper GPU because that is what
-the class account’s quota allows; the callout below says what changes
-for the 27B.</p>
+reproduced here; Opus 4.8 figures are from its published
+evaluations.</p>
 <div id="what-this-episode-costs" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -559,48 +556,35 @@ for the 27B.</p>
 <code>$</code>/h</th>
 <th>Expected duration</th>
 <th>Cost</th>
-</tr></thead><tbody><tr><td>Embed ~3,000 chunks</td>
+</tr></thead><tbody><tr><td>Embed ~10,000 chunks</td>
 <td>
 <code>ml.g5.xlarge</code> (A10G, 24 GB)</td>
 <td><code>$1.41</code></td>
-<td>~8 min incl. startup</td>
-<td>~<code>$0.20</code>
+<td>~15 min incl. startup</td>
+<td>~<code>$0.35</code>
 </td>
-</tr><tr><td>RAG over the training questions with Qwen3-8B</td>
+</tr><tr><td>RAG over a 55-question sample with Qwen3-8B</td>
 <td>
 <code>ml.g5.xlarge</code> (A10G, 24 GB)</td>
 <td><code>$1.41</code></td>
-<td>~20 min: 5 startup, ~3 downloading 16 GB of weights, ~1 loading, ~10
+<td>~25 min: 5 startup, ~3 downloading 16 GB of weights, ~1 loading, ~15
 generating</td>
-<td>~<code>$0.45</code>
+<td>~<code>$0.60</code>
 </td>
 </tr><tr><td>Controller notebook</td>
 <td><code>ml.t3.medium</code></td>
 <td><code>$0.05</code></td>
 <td>2 h</td>
 <td><code>$0.10</code></td>
-</tr></tbody></table><p>About <code>$0.75</code> for the episode, and the GPUs are off the
-moment each script ends. Both jobs carry
-<code>max_runtime_in_seconds</code>, so a hung job costs at most the
-cap. Compare the same pipeline on a GPU notebook instance (the optional
-GPU-notebook episode at the end of the lesson): the meter runs until
-someone stops it, and a forgotten <code>ml.g5.xlarge</code> is
-<code>$34</code> a day.</p>
-<p><strong>The 27B version.</strong> Swap
-<code>generation_model_id</code> to <code>Qwen/Qwen3.8-27B-FP8</code>
-and <code>instance_type</code> to <code>ml.g6e.xlarge</code> (one L40S,
-48 GB, <code>$2.61</code>/h): the FP8 weights are 27 GB, the job takes
-about 30 minutes and costs about <code>$1.30</code>. FP8 needs vLLM:
-write a <code>code_rag/requirements.txt</code> with
-<code>vllm&gt;=0.17</code> and <code>peft&gt;=0.18</code> (that vLLM
-brings a newer <code>transformers</code>, and the container’s
-<code>peft</code> must follow), add <code>"--engine", "vllm"</code> to
-the arguments, and expect five minutes of install; the script removes
-the container’s <code>flash-attn</code> build, which no longer links
-against vLLM’s PyTorch. It needs the
-<code>ml.g6e.xlarge for processing job usage</code> quota, whose default
-is zero and whose increase takes days; the class account did not have it
-when this was written.</p>
+</tr></tbody></table><p>About <code>$1.05</code> for the episode, and the GPUs are off the
+moment each script ends. The RAG job answers the same stratified sample
+of questions as the Bedrock episode (ten per evidence type, 55
+questions); all 245 is about an hour of generation, so run that at home.
+Both jobs carry <code>max_runtime_in_seconds</code>, so a hung job costs
+at most the cap. Compare the same pipeline on a GPU notebook instance
+(the optional GPU-notebook episode at the end of the lesson): the meter
+runs until someone stops it, and a forgotten <code>ml.g5.xlarge</code>
+is <code>$34</code> a day.</p>
 <p>The trade-off is latency. A job takes minutes to start, so this
 pattern is for batch questions, not a chatbot. For interactive use,
 Bedrock answers in seconds; for interactive use of a model Bedrock does
@@ -784,19 +768,14 @@ the one case this episode needs it.</p>
 <div class="callout-content">
 <p>vLLM is the open-source inference engine most people serve
 open-weight models with: you give it a model name, it loads the weights
-onto the GPU and answers chat requests, batching many at once and
-managing GPU memory so that throughput scales. That is what you want
-behind an API with users. This job sends 82 prompts one at a time, so
-the batching is never used, and what vLLM would cost is a multi-gigabyte
-install that replaces the container’s PyTorch, five minutes of billed
-GPU time per run, and a dependency that drifts: every vLLM release pins
-a PyTorch, and the container’s own <code>flash-attn</code> binary stops
-loading when that PyTorch changes. <code>transformers.generate</code>,
-already in the container, does the same 82 prompts in about ten minutes
-with nothing to install. The batch script keeps vLLM behind
-<code>--engine vllm</code> for the two cases it earns its place: FP8
-weights (the 27B variant) and serving many requests. The GPU-notebook
-episode uses it for the former.</p>
+onto the GPU and answers chat requests, batching many at once so that
+throughput scales. That is what you want behind an API with users. This
+job sends about 120 prompts one at a time, so the batching would go
+unused, and the install is several gigabytes of billed GPU time.
+<code>transformers.generate</code>, already in the container, does the
+same prompts in about fifteen minutes with nothing to install. The
+GPU-notebook episode uses vLLM, where its 8-bit weights are needed to
+fit a larger model.</p>
 </div>
 </div>
 </div>
@@ -904,11 +883,12 @@ AI, and then find the “Data Preparation” dropdown menu on the left side
 panel. Click that to find “Processing jobs”, or open <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs" class="external-link">this
 link</a> in the class region (change <code>us-east-2</code> in it for
 another region).</p>
-<p>It takes ~5-8 minutes in total for the job to complete, most of it
-provisioning the instance and downloading the embedding model. This is
-the downside of launching jobs, but the good news is that we only need
-to launch one embedding job for our RAG pipeline. This strategy also
-ensures we’re only paying for the GPU while the job runs.</p>
+<p>It takes about 15 minutes in total for the job to complete: five of
+provisioning the instance and downloading the embedding model, ten of
+embedding. This is the downside of launching jobs, but the good news is
+that we only need to launch one embedding job for our RAG pipeline. This
+strategy also ensures we’re only paying for the GPU while the job
+runs.</p>
 </div>
 <div class="section level3">
 <h3 id="sanity-check-the-embeddings-locally">Sanity-check the embeddings locally<a class="anchor" aria-label="anchor" href="#sanity-check-the-embeddings-locally"></a></h3>
@@ -938,10 +918,14 @@ bucket, written by Job 1)</li>
 <li>
 <code>metadata.csv</code> – to resolve <code>ref_id</code> → URL
 (shared bucket)</li>
-</ul><p>Open <code>scripts/wattbot_rag_batch.py</code> and read
-<code>main</code> before launching it. It is short, because the pipeline
-lives in <code>scripts/wattbot_rag.py</code>, the same module the
-Bedrock episode imported:</p>
+</ul><p>The <code>--per_type 10</code> argument draws the same stratified
+sample the Bedrock episode scored, ten questions per evidence type with
+the same seed, so the two runs are compared on the same 55 questions;
+leave it out to answer all 245. Open
+<code>scripts/wattbot_rag_batch.py</code> and read <code>main</code>
+before launching it. It is short, because the pipeline lives in
+<code>scripts/wattbot_rag.py</code>, the same module the Bedrock episode
+imported:</p>
 <ul><li>
 <code>retrieve_top_k</code>: cosine similarity over the embedding
 matrix</li>
@@ -1001,7 +985,7 @@ cache at that volume, which is where the weights go.</p>
 <span id="cb9-15"><a href="#cb9-15" tabindex="-1" aria-label="code-block-9-15"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
 <span id="cb9-16"><a href="#cb9-16" tabindex="-1" aria-label="code-block-9-16"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
 <span id="cb9-17"><a href="#cb9-17" tabindex="-1" aria-label="code-block-9-17"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb9-18"><a href="#cb9-18" tabindex="-1" aria-label="code-block-9-18"></a>    max_runtime_in_seconds<span class="op">=</span><span class="dv">2</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span>,   <span class="co"># 2 hours, in seconds; the estimate is 20 minutes</span></span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1" aria-label="code-block-9-18"></a>    max_runtime_in_seconds<span class="op">=</span><span class="dv">2</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span>,   <span class="co"># 2 hours, in seconds; the estimate is 25 minutes</span></span>
 <span id="cb9-19"><a href="#cb9-19" tabindex="-1" aria-label="code-block-9-19"></a>)</span>
 <span id="cb9-20"><a href="#cb9-20" tabindex="-1" aria-label="code-block-9-20"></a></span>
 <span id="cb9-21"><a href="#cb9-21" tabindex="-1" aria-label="code-block-9-21"></a>start <span class="op">=</span> time.time()</span>
@@ -1040,10 +1024,11 @@ cache at that volume, which is where the weights go.</p>
 <span id="cb9-54"><a href="#cb9-54" tabindex="-1" aria-label="code-block-9-54"></a>        <span class="st">"--qwen_model_id"</span>, generation_model_id,</span>
 <span id="cb9-55"><a href="#cb9-55" tabindex="-1" aria-label="code-block-9-55"></a>        <span class="st">"--top_k"</span>, <span class="st">"8"</span>,</span>
 <span id="cb9-56"><a href="#cb9-56" tabindex="-1" aria-label="code-block-9-56"></a>        <span class="st">"--retrieval_threshold"</span>, <span class="st">"0.25"</span>,</span>
-<span id="cb9-57"><a href="#cb9-57" tabindex="-1" aria-label="code-block-9-57"></a>    ],</span>
-<span id="cb9-58"><a href="#cb9-58" tabindex="-1" aria-label="code-block-9-58"></a>)</span>
-<span id="cb9-59"><a href="#cb9-59" tabindex="-1" aria-label="code-block-9-59"></a></span>
-<span id="cb9-60"><a href="#cb9-60" tabindex="-1" aria-label="code-block-9-60"></a><span class="bu">print</span>(<span class="ss">f"RAG batch job complete: </span><span class="sc">{</span>(time.time() <span class="op">-</span> start) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min wall-clock, including instance startup and the weight download"</span>)</span></code></pre>
+<span id="cb9-57"><a href="#cb9-57" tabindex="-1" aria-label="code-block-9-57"></a>        <span class="st">"--per_type"</span>, <span class="st">"10"</span>,            <span class="co"># the same stratified sample the Bedrock episode scored (seed 0); drop it for all 245 questions</span></span>
+<span id="cb9-58"><a href="#cb9-58" tabindex="-1" aria-label="code-block-9-58"></a>    ],</span>
+<span id="cb9-59"><a href="#cb9-59" tabindex="-1" aria-label="code-block-9-59"></a>)</span>
+<span id="cb9-60"><a href="#cb9-60" tabindex="-1" aria-label="code-block-9-60"></a></span>
+<span id="cb9-61"><a href="#cb9-61" tabindex="-1" aria-label="code-block-9-61"></a><span class="bu">print</span>(<span class="ss">f"RAG batch job complete: </span><span class="sc">{</span>(time.time() <span class="op">-</span> start) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min wall-clock, including instance startup and the weight download"</span>)</span></code></pre>
 </div>
 <p>While it runs, read what the container is printing. Open the <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs" class="external-link">Processing
 jobs page</a>, click the job’s name, scroll to <strong>Monitor</strong>
@@ -1053,7 +1038,7 @@ named after your job; click it. The text is the container’s stdout, kept
 after the job ends, updated while it runs (refresh). You will see, in
 order: the weight download (16 GB in shards),
 <code>Loading model with transformers</code>, then one line per
-question. The whole job is the 20 minutes in the cost callout; the
+question. The whole job is the 25 minutes in the cost callout; the
 generation is the second half of it.</p>
 </section><section><h2 class="section-heading" id="step-4-download-predictions-and-evaluate">Step 4 – Download predictions and evaluate<a class="anchor" aria-label="anchor" href="#step-4-download-predictions-and-evaluate"></a></h2>
 <hr class="half-width"><p>Finally, we download <code>wattbot_solutions.csv</code> from S3,
@@ -1120,7 +1105,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -1146,10 +1131,10 @@ the billed run.</p>
 <span id="cb12-16"><a href="#cb12-16" tabindex="-1" aria-label="code-block-12-16"></a>total <span class="op">+=</span> job_cost(rag_processor.latest_job.job_name, <span class="fl">1.41</span>)</span>
 <span id="cb12-17"><a href="#cb12-17" tabindex="-1" aria-label="code-block-12-17"></a><span class="bu">print</span>(<span class="ss">f"GPU total for the episode: $</span><span class="sc">{</span>total<span class="sc">:.2f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<p>Expect the embedding job to bill 5-6 minutes (about
-<code>$0.13</code>) and the RAG job about 15 minutes (about
-<code>$0.35</code>), so roughly <code>$0.50</code> of GPU time against
-the callout’s <code>$0.65</code>. In the RAG job’s log, the first 3-4
+<p>Expect the embedding job to bill about 10 minutes (about
+<code>$0.25</code>) and the RAG job about 20 minutes (about
+<code>$0.45</code>), so roughly <code>$0.70</code> of GPU time against
+the callout’s <code>$0.95</code>. In the RAG job’s log, the first 3-4
 minutes of the billed window are the download and the model load; the
 rest is the questions, two generation calls each. Setup is a third of
 what you paid for, which is the argument for keeping an
@@ -1184,7 +1169,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still downloading or
@@ -1194,7 +1179,7 @@ is empty because the script never reached the point of writing
 <code>wattbot_solutions.csv</code>, and the bill is the full 600
 seconds: 600 / 3600 × <code>$1.41</code> ≈ <code>$0.24</code> for
 nothing. A cap has to leave room for the setup that precedes the work,
-which is why ours is six times the 20-minute estimate rather than ten
+which is why ours is five times the 25-minute estimate rather than ten
 percent over it.</p>
 <p>Under the caps we set, the worst case for a job that hangs (a stuck
 download, a model that never finishes loading) is 2 h ×
@@ -1221,8 +1206,7 @@ be forgotten: it bills while the script runs and ends on its own, with
 <code>max_runtime_in_seconds</code> as the backstop. Use it for batch
 work; use Bedrock or an endpoint when you need answers in seconds.</li>
 <li>Inference needs only the weights: Qwen3-8B in bf16 is ~16 GB and
-fits one 24 GB GPU; the 27B model in FP8 is ~27 GB and needs a 48 GB
-one.</li>
+fits one 24 GB GPU.</li>
 <li>A job’s inputs and outputs are S3 prefixes mounted into the
 container; the notebook only stages files and reads results, so it stays
 a cheap CPU instance.</li>

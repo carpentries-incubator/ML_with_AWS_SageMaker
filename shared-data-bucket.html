@@ -429,7 +429,8 @@ layout below.</p>
         train_QA.csv        from data/data.zip
         corpus.zip          built once with scripts/build_wattbot_corpus.py
         pages.jsonl         page text extracted from corpus.zip by the same script
-        embeddings_bedrock.npy   optional emergency copy of the Titan V2 vectors, from your own Bedrock run
+        embeddings_bedrock.npy   the Titan V2 vectors from your own Bedrock run; learners download it in class
+        embeddings_pages_multimodal.npy   optional: the Nova multimodal page-image vectors from the Bedrock episode's last step, if you want to stage those too
     badger-scribe/
         train.csv  test.csv  metadata.csv  metric.py
         sample_submission.csv  transcription_conventions.md
@@ -548,13 +549,15 @@ PDFs:</p>
 <span id="cb5-7"><a href="#cb5-7" tabindex="-1" aria-label="code-block-5-7"></a><span class="ex">python3</span> lesson/scripts/build_wattbot_corpus.py <span class="at">--metadata</span> wattbot/metadata.csv <span class="at">--from-zip</span> wattbot/corpus.zip</span>
 <span id="cb5-8"><a href="#cb5-8" tabindex="-1" aria-label="code-block-5-8"></a><span class="ex">aws</span> s3 cp wattbot/pages.jsonl s3://<span class="va">$BUCKET</span>/wattbot/pages.jsonl</span></code></pre>
 </div>
-<p>Optional, as an emergency switch: learners embed the corpus
-themselves in the Bedrock episode, which is the point of the step, but
-fifty notebooks sending 2,880 Titan calls each in the same ten minutes
-can be throttled hard enough to stall the room. After you have run the
-episode once yourself, copy its embedding matrix into the shared bucket
-so it is there if needed; the chunks are deterministic from
-<code>pages.jsonl</code>, so the vectors match.</p>
+<p>Needed for class: the 2026 corpus is about 4 million tokens and the
+Titan Text Embeddings V2 quota is 300,000 tokens per minute and not
+adjustable, so one notebook needs a quarter of an hour to embed it and a
+room of them would take hours. After you have run the episode once
+yourself, copy its embedding matrix into the shared bucket; the
+episode’s in-class cell downloads it and skips the calls. The chunks are
+deterministic from <code>pages.jsonl</code>, so the vectors match.
+Learners working on their own embed the corpus themselves, which is the
+point of the step.</p>
 <div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>

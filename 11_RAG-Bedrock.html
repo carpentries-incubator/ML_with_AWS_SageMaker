@@ -322,6 +322,8 @@ them through a profile</a></li>
 API</a></li>
 <li><a href="#step-11-run-the-wattbot-evaluation-with-bedrock">Step 11 – Run the WattBot evaluation with Bedrock</a></li>
 <li><a href="#step-12-score-against-the-training-answers">Step 12 – Score against the training answers</a></li>
+<li><a href="#step-13-multimodal-embeddings-for-the-table-and-figure-questions">Step 13 – Multimodal embeddings for the table and figure
+questions</a></li>
 <li><a href="#wrapup-bedrock-versus-gpubased-runs">Wrap‑up: Bedrock versus GPU‑based runs</a></li>
 <li><a href="#concluding-remarks-bedrock-models-are-one-piece-of-the-rag-puzzle">Concluding remarks: Bedrock models are one piece of the RAG
 puzzle</a></li>
@@ -483,6 +485,9 @@ context with cosine similarity.</li>
 <li>Generate WattBot-format answers and explanations with a
 Bedrock-hosted model (DeepSeek V3) and score them against
 <code>train_QA.csv</code>.</li>
+<li>Build a second index from page images with a multimodal embedding
+model and measure what it changes for the table and figure
+questions.</li>
 </ul></div>
 </div>
 </div>
@@ -1293,7 +1298,7 @@ month’s Bedrock spend by <code>Project</code>?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb17">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -1376,10 +1381,11 @@ when we embed one question at a time.</p>
 <span id="cb20-17"><a href="#cb20-17" tabindex="-1" aria-label="code-block-20-17"></a>    <span class="co">"""The retrieval-time half of the pipeline: the same model, one question at a time."""</span></span>
 <span id="cb20-18"><a href="#cb20-18" tabindex="-1" aria-label="code-block-20-18"></a>    <span class="cf">return</span> np.asarray(bedrock_embed_text(question), dtype<span class="op">=</span><span class="st">"float32"</span>)</span></code></pre>
 </div>
-<p>Embedding 3,000 chunks is a few minutes and a few cents, so do not do
-it twice. The cell after next looks for the finished matrix locally,
-then in your bucket, and only then computes it, saving progress every
-500 chunks so an interrupted run picks up where it stopped.</p>
+<p>Embedding the corpus, about 10,000 chunks, is a quarter of an hour
+and a few cents, so do not do it twice. The cell after next looks for
+the finished matrix locally, then in your bucket, and only then computes
+it, saving progress every 500 chunks so an interrupted run picks up
+where it stopped.</p>
 <div id="in-a-class-use-the-instructors-copy" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -1389,13 +1395,14 @@ then in your bucket, and only then computes it, saving progress every
 <h3 class="callout-title">In a class, use the instructor’s copy</h3>
 <div class="callout-content">
 <p>Bedrock allows this account 300,000 Titan embedding tokens per
-minute, and the quota is not adjustable. One notebook embedding this
-corpus uses almost all of it; a room of them shares it, so everyone’s
-loop slows to a crawl of retries. In class, uncomment and run the cell
-below first: it downloads the matrix your instructor computed with the
-same chunks and the same model, and the cell after it finds the file and
-skips the calls. Working on your own, leave it commented and let the
-loop run; that is the step to practise.</p>
+minute, and the quota is not adjustable. This corpus is about 4 million
+tokens, so one notebook alone needs a quarter of an hour at the full
+quota; a room of them shares it, so everyone’s loop slows to a crawl of
+retries. In class, uncomment and run the cell below first: it downloads
+the matrix your instructor computed with the same chunks and the same
+model, and the cell after it finds the file and skips the calls. Working
+on your own, leave it commented and let the loop run; that is the step
+to practise.</p>
 </div>
 </div>
 </div>
@@ -1537,52 +1544,65 @@ when the best retrieval score is below
 <code>retrieval_threshold</code>.</p>
 </div>
 </section><section><h2 class="section-heading" id="step-11-run-the-wattbot-evaluation-with-bedrock">Step 11 – Run the WattBot evaluation with Bedrock<a class="anchor" aria-label="anchor" href="#step-11-run-the-wattbot-evaluation-with-bedrock"></a></h2>
-<hr class="half-width"><p>Now we can loop over all questions in <code>train_QA.csv</code>, run
-retrieval + Bedrock generation, and write a
-<code>wattbot_solutions_bedrock.csv</code> file (locally and to your
-bucket).</p>
+<hr class="half-width"><p>Now we can loop over the questions, run retrieval + Bedrock
+generation, and write a <code>wattbot_solutions_bedrock.csv</code> file
+(locally and to your bucket).</p>
+<p><code>train_QA.csv</code> has 245 questions, and at two calls each
+that is about twenty minutes. For class we score a stratified sample
+instead: <code>sample_questions_by_type</code> draws ten questions from
+each evidence type (Quote, Table, Figure, Math, unanswerable,
+cross-paper, reconcile), 55 questions after overlaps, so every row of
+the breakdown in the next step has something in it. The first 55 rows of
+the file would be nearly all Quote questions. The seed fixes the draw,
+and the Processing Jobs episode uses the same one, so the two runs are
+compared on the same questions. Set <code>per_type=0</code> to run the
+whole file.</p>
 <p>The Processing Jobs episode reuses this same loop with self-hosted
 models; the only difference there is that the embedding, answer and
 explanation phases call local models instead of Bedrock-hosted ones.</p>
 <div class="codewrapper sourceCode" id="cb25">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" tabindex="-1" aria-label="code-block-25-1"></a>results <span class="op">=</span> []</span>
-<span id="cb25-2"><a href="#cb25-2" tabindex="-1" aria-label="code-block-25-2"></a>run_start <span class="op">=</span> time.time()</span>
-<span id="cb25-3"><a href="#cb25-3" tabindex="-1" aria-label="code-block-25-3"></a></span>
-<span id="cb25-4"><a href="#cb25-4" tabindex="-1" aria-label="code-block-25-4"></a><span class="co"># For quick smoke tests, slice train_df (e.g., train_df.head(5))</span></span>
-<span id="cb25-5"><a href="#cb25-5" tabindex="-1" aria-label="code-block-25-5"></a><span class="cf">for</span> _, row <span class="kw">in</span> train_df.iterrows():</span>
-<span id="cb25-6"><a href="#cb25-6" tabindex="-1" aria-label="code-block-25-6"></a>    <span class="bu">print</span>(<span class="st">"#"</span> <span class="op">*</span> <span class="dv">96</span>)</span>
-<span id="cb25-7"><a href="#cb25-7" tabindex="-1" aria-label="code-block-25-7"></a>    <span class="bu">print</span>(<span class="ss">f"QUESTION: </span><span class="sc">{</span>row[<span class="st">'question'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" tabindex="-1" aria-label="code-block-25-1"></a><span class="im">from</span> wattbot_rag <span class="im">import</span> sample_questions_by_type</span>
+<span id="cb25-2"><a href="#cb25-2" tabindex="-1" aria-label="code-block-25-2"></a></span>
+<span id="cb25-3"><a href="#cb25-3" tabindex="-1" aria-label="code-block-25-3"></a>eval_df <span class="op">=</span> sample_questions_by_type(train_df, per_type<span class="op">=</span><span class="dv">10</span>, seed<span class="op">=</span><span class="dv">0</span>)   <span class="co"># per_type=0 for all 245</span></span>
+<span id="cb25-4"><a href="#cb25-4" tabindex="-1" aria-label="code-block-25-4"></a><span class="bu">print</span>(<span class="ss">f"Scoring </span><span class="sc">{</span><span class="bu">len</span>(eval_df)<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span><span class="bu">len</span>(train_df)<span class="sc">}</span><span class="ss"> questions"</span>)</span>
+<span id="cb25-5"><a href="#cb25-5" tabindex="-1" aria-label="code-block-25-5"></a></span>
+<span id="cb25-6"><a href="#cb25-6" tabindex="-1" aria-label="code-block-25-6"></a>results <span class="op">=</span> []</span>
+<span id="cb25-7"><a href="#cb25-7" tabindex="-1" aria-label="code-block-25-7"></a>run_start <span class="op">=</span> time.time()</span>
 <span id="cb25-8"><a href="#cb25-8" tabindex="-1" aria-label="code-block-25-8"></a></span>
-<span id="cb25-9"><a href="#cb25-9" tabindex="-1" aria-label="code-block-25-9"></a>    out <span class="op">=</span> run_single_qa(</span>
-<span id="cb25-10"><a href="#cb25-10" tabindex="-1" aria-label="code-block-25-10"></a>        row<span class="op">=</span>row,                             <span class="co"># one train_QA.csv row: id, question, expected answer_unit</span></span>
-<span id="cb25-11"><a href="#cb25-11" tabindex="-1" aria-label="code-block-25-11"></a>        embed_query<span class="op">=</span>embed_query,             <span class="co"># the two model callables: the only episode-specific inputs</span></span>
-<span id="cb25-12"><a href="#cb25-12" tabindex="-1" aria-label="code-block-25-12"></a>        generate<span class="op">=</span>call_bedrock_chat,</span>
-<span id="cb25-13"><a href="#cb25-13" tabindex="-1" aria-label="code-block-25-13"></a>        chunk_embeddings<span class="op">=</span>chunk_embeddings,   <span class="co"># the index: the matrix plus the chunks it was built from</span></span>
-<span id="cb25-14"><a href="#cb25-14" tabindex="-1" aria-label="code-block-25-14"></a>        chunked_docs<span class="op">=</span>chunked_docs,</span>
-<span id="cb25-15"><a href="#cb25-15" tabindex="-1" aria-label="code-block-25-15"></a>        docid_to_url<span class="op">=</span>docid_to_url,           <span class="co"># for the ref_url column</span></span>
-<span id="cb25-16"><a href="#cb25-16" tabindex="-1" aria-label="code-block-25-16"></a>        top_k<span class="op">=</span><span class="dv">8</span>,                             <span class="co"># chunks handed to the model as context</span></span>
-<span id="cb25-17"><a href="#cb25-17" tabindex="-1" aria-label="code-block-25-17"></a>        retrieval_threshold<span class="op">=</span><span class="fl">0.25</span>,            <span class="co"># best cosine score below this =&gt; unanswerable (is_blank)</span></span>
-<span id="cb25-18"><a href="#cb25-18" tabindex="-1" aria-label="code-block-25-18"></a>        verbose<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb25-19"><a href="#cb25-19" tabindex="-1" aria-label="code-block-25-19"></a>    )</span>
-<span id="cb25-20"><a href="#cb25-20" tabindex="-1" aria-label="code-block-25-20"></a></span>
-<span id="cb25-21"><a href="#cb25-21" tabindex="-1" aria-label="code-block-25-21"></a>    <span class="bu">print</span>(<span class="ss">f"ANSWER: </span><span class="sc">{</span>out[<span class="st">'answer'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb25-22"><a href="#cb25-22" tabindex="-1" aria-label="code-block-25-22"></a>    <span class="bu">print</span>(<span class="ss">f"ref_ids: </span><span class="sc">{</span>out[<span class="st">'ref_id'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb25-23"><a href="#cb25-23" tabindex="-1" aria-label="code-block-25-23"></a>    <span class="bu">print</span>(<span class="ss">f"EXPLANATION: </span><span class="sc">{</span>out[<span class="st">'explanation'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb25-24"><a href="#cb25-24" tabindex="-1" aria-label="code-block-25-24"></a>    results.append(out)</span>
-<span id="cb25-25"><a href="#cb25-25" tabindex="-1" aria-label="code-block-25-25"></a></span>
-<span id="cb25-26"><a href="#cb25-26" tabindex="-1" aria-label="code-block-25-26"></a>results_df <span class="op">=</span> pd.DataFrame(results)</span>
-<span id="cb25-27"><a href="#cb25-27" tabindex="-1" aria-label="code-block-25-27"></a><span class="bu">print</span>(<span class="ss">f"Answered </span><span class="sc">{</span><span class="bu">len</span>(results_df)<span class="sc">}</span><span class="ss"> questions in </span><span class="sc">{</span>(time.time() <span class="op">-</span> run_start) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
-<span id="cb25-28"><a href="#cb25-28" tabindex="-1" aria-label="code-block-25-28"></a></span>
-<span id="cb25-29"><a href="#cb25-29" tabindex="-1" aria-label="code-block-25-29"></a>output_dir <span class="op">=</span> <span class="st">"outputs"</span></span>
-<span id="cb25-30"><a href="#cb25-30" tabindex="-1" aria-label="code-block-25-30"></a>os.makedirs(output_dir, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb25-31"><a href="#cb25-31" tabindex="-1" aria-label="code-block-25-31"></a>output_path <span class="op">=</span> os.path.join(output_dir, <span class="st">"wattbot_solutions_bedrock.csv"</span>)</span>
-<span id="cb25-32"><a href="#cb25-32" tabindex="-1" aria-label="code-block-25-32"></a>results_df.to_csv(output_path, index<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb25-33"><a href="#cb25-33" tabindex="-1" aria-label="code-block-25-33"></a>s3.upload_file(output_path, bucket_name, solutions_key)</span>
-<span id="cb25-34"><a href="#cb25-34" tabindex="-1" aria-label="code-block-25-34"></a><span class="bu">print</span>(<span class="ss">f"Wrote predictions to </span><span class="sc">{</span>output_path<span class="sc">}</span><span class="ss"> and s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>solutions_key<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb25-35"><a href="#cb25-35" tabindex="-1" aria-label="code-block-25-35"></a></span>
-<span id="cb25-36"><a href="#cb25-36" tabindex="-1" aria-label="code-block-25-36"></a>results_df.head()</span></code></pre>
+<span id="cb25-9"><a href="#cb25-9" tabindex="-1" aria-label="code-block-25-9"></a><span class="cf">for</span> _, row <span class="kw">in</span> eval_df.iterrows():</span>
+<span id="cb25-10"><a href="#cb25-10" tabindex="-1" aria-label="code-block-25-10"></a>    <span class="bu">print</span>(<span class="st">"#"</span> <span class="op">*</span> <span class="dv">96</span>)</span>
+<span id="cb25-11"><a href="#cb25-11" tabindex="-1" aria-label="code-block-25-11"></a>    <span class="bu">print</span>(<span class="ss">f"QUESTION: </span><span class="sc">{</span>row[<span class="st">'question'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb25-12"><a href="#cb25-12" tabindex="-1" aria-label="code-block-25-12"></a></span>
+<span id="cb25-13"><a href="#cb25-13" tabindex="-1" aria-label="code-block-25-13"></a>    out <span class="op">=</span> run_single_qa(</span>
+<span id="cb25-14"><a href="#cb25-14" tabindex="-1" aria-label="code-block-25-14"></a>        row<span class="op">=</span>row,                             <span class="co"># one train_QA.csv row: id, question, expected answer_unit</span></span>
+<span id="cb25-15"><a href="#cb25-15" tabindex="-1" aria-label="code-block-25-15"></a>        embed_query<span class="op">=</span>embed_query,             <span class="co"># the two model callables: the only episode-specific inputs</span></span>
+<span id="cb25-16"><a href="#cb25-16" tabindex="-1" aria-label="code-block-25-16"></a>        generate<span class="op">=</span>call_bedrock_chat,</span>
+<span id="cb25-17"><a href="#cb25-17" tabindex="-1" aria-label="code-block-25-17"></a>        chunk_embeddings<span class="op">=</span>chunk_embeddings,   <span class="co"># the index: the matrix plus the chunks it was built from</span></span>
+<span id="cb25-18"><a href="#cb25-18" tabindex="-1" aria-label="code-block-25-18"></a>        chunked_docs<span class="op">=</span>chunked_docs,</span>
+<span id="cb25-19"><a href="#cb25-19" tabindex="-1" aria-label="code-block-25-19"></a>        docid_to_url<span class="op">=</span>docid_to_url,           <span class="co"># for the ref_url column</span></span>
+<span id="cb25-20"><a href="#cb25-20" tabindex="-1" aria-label="code-block-25-20"></a>        top_k<span class="op">=</span><span class="dv">8</span>,                             <span class="co"># chunks handed to the model as context</span></span>
+<span id="cb25-21"><a href="#cb25-21" tabindex="-1" aria-label="code-block-25-21"></a>        retrieval_threshold<span class="op">=</span><span class="fl">0.25</span>,            <span class="co"># best cosine score below this =&gt; unanswerable (is_blank)</span></span>
+<span id="cb25-22"><a href="#cb25-22" tabindex="-1" aria-label="code-block-25-22"></a>        verbose<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb25-23"><a href="#cb25-23" tabindex="-1" aria-label="code-block-25-23"></a>    )</span>
+<span id="cb25-24"><a href="#cb25-24" tabindex="-1" aria-label="code-block-25-24"></a></span>
+<span id="cb25-25"><a href="#cb25-25" tabindex="-1" aria-label="code-block-25-25"></a>    <span class="bu">print</span>(<span class="ss">f"ANSWER: </span><span class="sc">{</span>out[<span class="st">'answer'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb25-26"><a href="#cb25-26" tabindex="-1" aria-label="code-block-25-26"></a>    <span class="bu">print</span>(<span class="ss">f"ref_ids: </span><span class="sc">{</span>out[<span class="st">'ref_id'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb25-27"><a href="#cb25-27" tabindex="-1" aria-label="code-block-25-27"></a>    <span class="bu">print</span>(<span class="ss">f"EXPLANATION: </span><span class="sc">{</span>out[<span class="st">'explanation'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb25-28"><a href="#cb25-28" tabindex="-1" aria-label="code-block-25-28"></a>    results.append(out)</span>
+<span id="cb25-29"><a href="#cb25-29" tabindex="-1" aria-label="code-block-25-29"></a></span>
+<span id="cb25-30"><a href="#cb25-30" tabindex="-1" aria-label="code-block-25-30"></a>results_df <span class="op">=</span> pd.DataFrame(results)</span>
+<span id="cb25-31"><a href="#cb25-31" tabindex="-1" aria-label="code-block-25-31"></a><span class="bu">print</span>(<span class="ss">f"Answered </span><span class="sc">{</span><span class="bu">len</span>(results_df)<span class="sc">}</span><span class="ss"> questions in </span><span class="sc">{</span>(time.time() <span class="op">-</span> run_start) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
+<span id="cb25-32"><a href="#cb25-32" tabindex="-1" aria-label="code-block-25-32"></a></span>
+<span id="cb25-33"><a href="#cb25-33" tabindex="-1" aria-label="code-block-25-33"></a>output_dir <span class="op">=</span> <span class="st">"outputs"</span></span>
+<span id="cb25-34"><a href="#cb25-34" tabindex="-1" aria-label="code-block-25-34"></a>os.makedirs(output_dir, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb25-35"><a href="#cb25-35" tabindex="-1" aria-label="code-block-25-35"></a>output_path <span class="op">=</span> os.path.join(output_dir, <span class="st">"wattbot_solutions_bedrock.csv"</span>)</span>
+<span id="cb25-36"><a href="#cb25-36" tabindex="-1" aria-label="code-block-25-36"></a>results_df.to_csv(output_path, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb25-37"><a href="#cb25-37" tabindex="-1" aria-label="code-block-25-37"></a>s3.upload_file(output_path, bucket_name, solutions_key)</span>
+<span id="cb25-38"><a href="#cb25-38" tabindex="-1" aria-label="code-block-25-38"></a><span class="bu">print</span>(<span class="ss">f"Wrote predictions to </span><span class="sc">{</span>output_path<span class="sc">}</span><span class="ss"> and s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>solutions_key<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb25-39"><a href="#cb25-39" tabindex="-1" aria-label="code-block-25-39"></a></span>
+<span id="cb25-40"><a href="#cb25-40" tabindex="-1" aria-label="code-block-25-40"></a>results_df.head()</span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="step-12-score-against-the-training-answers">Step 12 – Score against the training answers<a class="anchor" aria-label="anchor" href="#step-12-score-against-the-training-answers"></a></h2>
 <hr class="half-width"><p>WattBot scores each prediction with three components: 0.75 for
@@ -1681,8 +1701,8 @@ block, and <code>call_bedrock_chat</code> kept them all in
 <code>bedrock_usage</code>. Sum the input and output tokens over the
 evaluation run and price them at the current on-demand rates for
 DeepSeek V3 on the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
-(fill the two prices in below). Add the embedding step: ~3,000 chunks of
-1,200 characters at Titan Text Embeddings V2’s <code>$0.02</code> per
+(fill the two prices in below). Add the embedding step: ~10,000 chunks
+of 1,200 characters at Titan Text Embeddings V2’s <code>$0.02</code> per
 million input tokens. How does the total compare with the overview’s
 estimate for “the whole WattBot pipeline on Bedrock”, and with one hour
 of the <code>ml.g6e.xlarge</code> the Processing Jobs episode rents?</p>
@@ -1694,7 +1714,7 @@ of the <code>ml.g6e.xlarge</code> the Processing Jobs episode rents?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>The two prices are from the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
 for DeepSeek on-demand in October 2026; update them for the model and
@@ -1717,12 +1737,286 @@ region you used. The rest sums the usage blocks and prints the cost.</p>
 <span id="cb28-13"><a href="#cb28-13" tabindex="-1" aria-label="code-block-28-13"></a><span class="bu">print</span>(<span class="ss">f"~</span><span class="sc">{</span>embed_tokens<span class="sc">:,.0f}</span><span class="ss"> embedding tokens -&gt; $</span><span class="sc">{</span>embed_cost<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
 <span id="cb28-14"><a href="#cb28-14" tabindex="-1" aria-label="code-block-28-14"></a><span class="bu">print</span>(<span class="ss">f"Total ~$</span><span class="sc">{</span>gen_cost <span class="op">+</span> embed_cost<span class="sc">:.2f}</span><span class="ss">; one hour of ml.g6e.xlarge is $2.61"</span>)</span></code></pre>
 </div>
-<p>With ~40 questions, two calls each and ~3,000-token prompts, the run
-is on the order of 250K input and 20K output tokens: cents, not dollars,
-at any price in DeepSeek V3’s class, plus about two cents of embeddings.
-That matches the overview’s “well under <code>$1</code>” for the whole
-pipeline, and it is a small fraction of a single GPU-hour.</p>
+<p>With 55 questions, two calls each and ~3,000-token prompts, the run
+is on the order of 350K input and 30K output tokens: about a quarter of
+a dollar at DeepSeek V3’s prices, plus about eight cents of embeddings
+for the 4 million tokens of corpus. All 245 questions is about a dollar,
+which is the overview’s estimate for the whole pipeline, and it is a
+small fraction of a single GPU-hour.</p>
 </div>
+</div>
+</div>
+</div>
+</div>
+</section><section><h2 class="section-heading" id="step-13-multimodal-embeddings-for-the-table-and-figure-questions">Step 13 – Multimodal embeddings for the table and figure
+questions<a class="anchor" aria-label="anchor" href="#step-13-multimodal-embeddings-for-the-table-and-figure-questions"></a></h2>
+<hr class="half-width"><p>Look back at the evidence-type table in Step 12. The Table and Figure
+rows are usually the worst, and the reason is upstream of the model.
+<code>pypdf</code> gives us a page’s <em>text</em>: a table comes out as
+a run of numbers with its column headers somewhere else on the page, and
+a figure comes out as its caption and nothing more. A question whose
+answer is a bar in a plot has nothing in the chunks to find, and a
+question whose answer is a cell in a table is being read from a
+flattened copy.</p>
+<p>A <strong>multimodal embedding model</strong> is one model that maps
+text <em>and</em> images into the same vector space, so a text question
+can be compared with an image directly: the picture of a table lands
+near a sentence about its contents. Bedrock has two: <a href="https://aws.amazon.com/blogs/aws/amazon-nova-multimodal-embeddings-now-available-in-amazon-bedrock/" class="external-link">Amazon
+Nova Multimodal Embeddings</a> (text, images, documents, video and
+audio, released 2025) and the older Titan Multimodal Embeddings G1 (text
+and images). Both are per-call, like Titan Text, and billed per image
+plus per text token; the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
+has the rates, on the order of a hundredth of a cent per image. One
+catch: in October 2026 both are offered in <code>us-east-1</code> only
+(check the <a href="https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/model-catalog" class="external-link">model
+catalog</a> for that region). A Bedrock call is an HTTPS request and the
+region is a parameter, so from Ohio that is a second client pointed at
+Virginia; it also means the page images leave the region, which is the
+thing to check against your institution’s data policy before doing this
+with documents that are not public papers.</p>
+<p>This step builds a second index next to the text one, measures
+whether it finds the right paper for table and figure questions more
+often, and then hands the retrieved page images to a model that can look
+at them. Each cell is short because the plumbing is in
+<code>wattbot_rag.py</code>.</p>
+<div class="section level3">
+<h3 id="which-pages-and-why-whole-pages">Which pages, and why whole pages<a class="anchor" aria-label="anchor" href="#which-pages-and-why-whole-pages"></a></h3>
+<p>We do not try to cut the tables and figures out of the PDFs. Finding
+their boundaries needs a layout model, which is slow on a CPU notebook,
+and a page image already contains the table or figure <em>with</em> its
+caption and the sentences around it, which is what the embedding model
+needs to match a question. What we do instead is cheap:
+<code>pypdf</code> keeps caption lines even where it loses everything
+else, so a line starting with “Table 3” or “Figure 2” marks a page worth
+rendering. <code>find_caption_pages</code> scans the page records from
+Step 5 for them.</p>
+<div class="codewrapper sourceCode" id="cb29">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" tabindex="-1" aria-label="code-block-29-1"></a><span class="im">from</span> wattbot_rag <span class="im">import</span> find_caption_pages, render_page_png, embed_multimodal, image_blocks, hit_at_k</span>
+<span id="cb29-2"><a href="#cb29-2" tabindex="-1" aria-label="code-block-29-2"></a></span>
+<span id="cb29-3"><a href="#cb29-3" tabindex="-1" aria-label="code-block-29-3"></a>caption_pages <span class="op">=</span> find_caption_pages(page_docs)</span>
+<span id="cb29-4"><a href="#cb29-4" tabindex="-1" aria-label="code-block-29-4"></a>n_tables <span class="op">=</span> <span class="bu">sum</span>(<span class="bu">any</span>(c.startswith(<span class="st">"Table"</span>) <span class="cf">for</span> c <span class="kw">in</span> p[<span class="st">"captions"</span>]) <span class="cf">for</span> p <span class="kw">in</span> caption_pages)</span>
+<span id="cb29-5"><a href="#cb29-5" tabindex="-1" aria-label="code-block-29-5"></a>n_figures <span class="op">=</span> <span class="bu">sum</span>(<span class="bu">any</span>(c.startswith(<span class="st">"Figure"</span>) <span class="cf">for</span> c <span class="kw">in</span> p[<span class="st">"captions"</span>]) <span class="cf">for</span> p <span class="kw">in</span> caption_pages)</span>
+<span id="cb29-6"><a href="#cb29-6" tabindex="-1" aria-label="code-block-29-6"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(caption_pages)<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span><span class="bu">len</span>(page_docs)<span class="sc">}</span><span class="ss"> pages carry a caption: </span><span class="sc">{</span>n_tables<span class="sc">}</span><span class="ss"> with tables, </span><span class="sc">{</span>n_figures<span class="sc">}</span><span class="ss"> with figures"</span>)</span>
+<span id="cb29-7"><a href="#cb29-7" tabindex="-1" aria-label="code-block-29-7"></a>caption_pages[:<span class="dv">3</span>]</span></code></pre>
+</div>
+<p>Rendering is <code>pypdfium2</code>, the Python binding of the PDF
+engine Chrome uses; <code>render_page_png</code> renders one page at 100
+dpi, enough to read axis labels, and returns the PNG bytes. Expect a few
+minutes for the corpus.</p>
+<div class="codewrapper sourceCode" id="cb30">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" tabindex="-1" aria-label="code-block-30-1"></a><span class="op">%</span>pip install <span class="op">-</span>q pypdfium2</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb31">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" tabindex="-1" aria-label="code-block-31-1"></a>page_image_dir <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"page_images"</span></span>
+<span id="cb31-2"><a href="#cb31-2" tabindex="-1" aria-label="code-block-31-2"></a>page_image_dir.mkdir(exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb31-3"><a href="#cb31-3" tabindex="-1" aria-label="code-block-31-3"></a></span>
+<span id="cb31-4"><a href="#cb31-4" tabindex="-1" aria-label="code-block-31-4"></a>t0 <span class="op">=</span> time.time()</span>
+<span id="cb31-5"><a href="#cb31-5" tabindex="-1" aria-label="code-block-31-5"></a><span class="cf">for</span> i, p <span class="kw">in</span> <span class="bu">enumerate</span>(caption_pages):</span>
+<span id="cb31-6"><a href="#cb31-6" tabindex="-1" aria-label="code-block-31-6"></a>    png_path <span class="op">=</span> page_image_dir <span class="op">/</span> <span class="ss">f"</span><span class="sc">{</span>p[<span class="st">'doc_id'</span>]<span class="sc">}</span><span class="ss">_p</span><span class="sc">{</span>p[<span class="st">'page_num'</span>]<span class="sc">:03d}</span><span class="ss">.png"</span></span>
+<span id="cb31-7"><a href="#cb31-7" tabindex="-1" aria-label="code-block-31-7"></a>    p[<span class="st">"png_path"</span>] <span class="op">=</span> <span class="bu">str</span>(png_path)</span>
+<span id="cb31-8"><a href="#cb31-8" tabindex="-1" aria-label="code-block-31-8"></a>    <span class="cf">if</span> <span class="kw">not</span> png_path.exists():</span>
+<span id="cb31-9"><a href="#cb31-9" tabindex="-1" aria-label="code-block-31-9"></a>        png_path.write_bytes(render_page_png(os.path.join(PDF_DIR, <span class="ss">f"</span><span class="sc">{</span>p[<span class="st">'doc_id'</span>]<span class="sc">}</span><span class="ss">.pdf"</span>), p[<span class="st">"page_num"</span>]))</span>
+<span id="cb31-10"><a href="#cb31-10" tabindex="-1" aria-label="code-block-31-10"></a>    <span class="cf">if</span> (i <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> <span class="dv">200</span> <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb31-11"><a href="#cb31-11" tabindex="-1" aria-label="code-block-31-11"></a>        <span class="bu">print</span>(<span class="ss">f"Rendered </span><span class="sc">{</span>i <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss"> / </span><span class="sc">{</span><span class="bu">len</span>(caption_pages)<span class="sc">}</span><span class="ss"> pages"</span>)</span>
+<span id="cb31-12"><a href="#cb31-12" tabindex="-1" aria-label="code-block-31-12"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(caption_pages)<span class="sc">}</span><span class="ss"> page images in </span><span class="sc">{</span>page_image_dir<span class="sc">}</span><span class="ss"> (</span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.0f}</span><span class="ss"> s)"</span>)</span></code></pre>
+</div>
+</div>
+<div class="section level3">
+<h3 id="embed-the-page-images">Embed the page images<a class="anchor" aria-label="anchor" href="#embed-the-page-images"></a></h3>
+<p>The embedding model lives in <code>us-east-1</code>, so this is a
+second runtime client and a second control-plane client there, and a
+tagged profile created through the latter so these calls are attributed
+like the rest. <code>embed_multimodal</code> builds the model’s request
+body (Nova’s says whether a vector is for the index or for a query, and
+that the image is a document page rather than a photo) and returns a
+unit vector. Set <code>multimodal_model_id</code> to
+<code>amazon.titan-embed-image-v1</code> to try the older model; the
+function handles both.</p>
+<div class="codewrapper sourceCode" id="cb32">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" tabindex="-1" aria-label="code-block-32-1"></a>multimodal_region <span class="op">=</span> <span class="st">"us-east-1"</span></span>
+<span id="cb32-2"><a href="#cb32-2" tabindex="-1" aria-label="code-block-32-2"></a>base_multimodal_model_id <span class="op">=</span> <span class="st">"amazon.nova-2-multimodal-embeddings-v1:0"</span></span>
+<span id="cb32-3"><a href="#cb32-3" tabindex="-1" aria-label="code-block-32-3"></a></span>
+<span id="cb32-4"><a href="#cb32-4" tabindex="-1" aria-label="code-block-32-4"></a>bedrock_runtime_mm <span class="op">=</span> boto3.client(<span class="st">"bedrock-runtime"</span>, region_name<span class="op">=</span>multimodal_region,</span>
+<span id="cb32-5"><a href="#cb32-5" tabindex="-1" aria-label="code-block-32-5"></a>                                  config<span class="op">=</span>Config(retries<span class="op">=</span>{<span class="st">"max_attempts"</span>: <span class="dv">10</span>, <span class="st">"mode"</span>: <span class="st">"adaptive"</span>}))</span>
+<span id="cb32-6"><a href="#cb32-6" tabindex="-1" aria-label="code-block-32-6"></a>bedrock_mm <span class="op">=</span> boto3.client(<span class="st">"bedrock"</span>, region_name<span class="op">=</span>multimodal_region)</span>
+<span id="cb32-7"><a href="#cb32-7" tabindex="-1" aria-label="code-block-32-7"></a>multimodal_model_id <span class="op">=</span> tagged_profile_arn(bedrock_mm, base_multimodal_model_id, <span class="st">"wattbot-embed-mm"</span>, name, project)</span>
+<span id="cb32-8"><a href="#cb32-8" tabindex="-1" aria-label="code-block-32-8"></a></span>
+<span id="cb32-9"><a href="#cb32-9" tabindex="-1" aria-label="code-block-32-9"></a>v <span class="op">=</span> embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png<span class="op">=</span>Path(caption_pages[<span class="dv">0</span>][<span class="st">"png_path"</span>]).read_bytes())</span>
+<span id="cb32-10"><a href="#cb32-10" tabindex="-1" aria-label="code-block-32-10"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>caption_pages[<span class="dv">0</span>][<span class="st">'doc_id'</span>]<span class="sc">}</span><span class="ss"> page </span><span class="sc">{</span>caption_pages[<span class="dv">0</span>][<span class="st">'page_label'</span>]<span class="sc">}</span><span class="ss"> -&gt; vector of </span><span class="sc">{</span>v<span class="sc">.</span>shape[<span class="dv">0</span>]<span class="sc">}</span><span class="ss"> dimensions"</span>)</span></code></pre>
+</div>
+<p>One call per page, cached like the text matrix: locally, then in your
+bucket, then computed. The question side uses the same model with
+<code>purpose="query"</code>.</p>
+<div class="codewrapper sourceCode" id="cb33">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" tabindex="-1" aria-label="code-block-33-1"></a>page_emb_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"embeddings_pages_multimodal.npy"</span></span>
+<span id="cb33-2"><a href="#cb33-2" tabindex="-1" aria-label="code-block-33-2"></a>page_emb_key <span class="op">=</span> <span class="st">"wattbot/embeddings/embeddings_pages_multimodal.npy"</span></span>
+<span id="cb33-3"><a href="#cb33-3" tabindex="-1" aria-label="code-block-33-3"></a></span>
+<span id="cb33-4"><a href="#cb33-4" tabindex="-1" aria-label="code-block-33-4"></a><span class="cf">if</span> page_emb_path.exists():</span>
+<span id="cb33-5"><a href="#cb33-5" tabindex="-1" aria-label="code-block-33-5"></a>    page_embeddings <span class="op">=</span> np.load(page_emb_path)</span>
+<span id="cb33-6"><a href="#cb33-6" tabindex="-1" aria-label="code-block-33-6"></a><span class="cf">elif</span> _s3_object_exists(bucket_name, page_emb_key):</span>
+<span id="cb33-7"><a href="#cb33-7" tabindex="-1" aria-label="code-block-33-7"></a>    s3.download_file(bucket_name, page_emb_key, <span class="bu">str</span>(page_emb_path))</span>
+<span id="cb33-8"><a href="#cb33-8" tabindex="-1" aria-label="code-block-33-8"></a>    page_embeddings <span class="op">=</span> np.load(page_emb_path)</span>
+<span id="cb33-9"><a href="#cb33-9" tabindex="-1" aria-label="code-block-33-9"></a><span class="cf">else</span>:</span>
+<span id="cb33-10"><a href="#cb33-10" tabindex="-1" aria-label="code-block-33-10"></a>    t0 <span class="op">=</span> time.time()</span>
+<span id="cb33-11"><a href="#cb33-11" tabindex="-1" aria-label="code-block-33-11"></a>    rows <span class="op">=</span> []</span>
+<span id="cb33-12"><a href="#cb33-12" tabindex="-1" aria-label="code-block-33-12"></a>    <span class="cf">for</span> i, p <span class="kw">in</span> <span class="bu">enumerate</span>(caption_pages):</span>
+<span id="cb33-13"><a href="#cb33-13" tabindex="-1" aria-label="code-block-33-13"></a>        rows.append(embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png<span class="op">=</span>Path(p[<span class="st">"png_path"</span>]).read_bytes()))</span>
+<span id="cb33-14"><a href="#cb33-14" tabindex="-1" aria-label="code-block-33-14"></a>        <span class="cf">if</span> (i <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> <span class="dv">200</span> <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb33-15"><a href="#cb33-15" tabindex="-1" aria-label="code-block-33-15"></a>            <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span>i <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss"> / </span><span class="sc">{</span><span class="bu">len</span>(caption_pages)<span class="sc">}</span><span class="ss"> page images (</span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.0f}</span><span class="ss"> s)"</span>)</span>
+<span id="cb33-16"><a href="#cb33-16" tabindex="-1" aria-label="code-block-33-16"></a>    page_embeddings <span class="op">=</span> np.vstack(rows)</span>
+<span id="cb33-17"><a href="#cb33-17" tabindex="-1" aria-label="code-block-33-17"></a>    np.save(page_emb_path, page_embeddings)</span>
+<span id="cb33-18"><a href="#cb33-18" tabindex="-1" aria-label="code-block-33-18"></a>    s3.upload_file(<span class="bu">str</span>(page_emb_path), bucket_name, page_emb_key)</span>
+<span id="cb33-19"><a href="#cb33-19" tabindex="-1" aria-label="code-block-33-19"></a>    <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span><span class="bu">len</span>(caption_pages)<span class="sc">}</span><span class="ss"> page images in </span><span class="sc">{</span>(time.time() <span class="op">-</span> t0) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
+<span id="cb33-20"><a href="#cb33-20" tabindex="-1" aria-label="code-block-33-20"></a></span>
+<span id="cb33-21"><a href="#cb33-21" tabindex="-1" aria-label="code-block-33-21"></a><span class="cf">assert</span> page_embeddings.shape[<span class="dv">0</span>] <span class="op">==</span> <span class="bu">len</span>(caption_pages), <span class="st">"page embeddings and caption pages are out of step; delete the cached file and rerun"</span></span>
+<span id="cb33-22"><a href="#cb33-22" tabindex="-1" aria-label="code-block-33-22"></a><span class="bu">print</span>(<span class="st">"Page embeddings shape:"</span>, page_embeddings.shape)</span>
+<span id="cb33-23"><a href="#cb33-23" tabindex="-1" aria-label="code-block-33-23"></a></span>
+<span id="cb33-24"><a href="#cb33-24" tabindex="-1" aria-label="code-block-33-24"></a><span class="kw">def</span> embed_query_mm(question: <span class="bu">str</span>) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb33-25"><a href="#cb33-25" tabindex="-1" aria-label="code-block-33-25"></a>    <span class="cf">return</span> embed_multimodal(bedrock_runtime_mm, multimodal_model_id, text<span class="op">=</span>question, purpose<span class="op">=</span><span class="st">"query"</span>)</span></code></pre>
+</div>
+</div>
+<div class="section level3">
+<h3 id="does-the-image-index-find-the-right-paper-more-often">Does the image index find the right paper more often?<a class="anchor" aria-label="anchor" href="#does-the-image-index-find-the-right-paper-more-often"></a></h3>
+<p>Retrieval is the same <code>retrieve_top_k</code> as Step 9, over the
+page matrix instead of the chunk matrix. <code>train_QA.csv</code> names
+the paper each answer comes from, so the cleanest measure is the
+<strong>hit rate</strong>: the fraction of questions for which a
+ground-truth paper is among the top-k results. We compute it for the
+text index and the image index on the Table questions, the Figure
+questions and, as a control, the Quote questions, where the image index
+should have no advantage.</p>
+<div class="codewrapper sourceCode" id="cb34">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" tabindex="-1" aria-label="code-block-34-1"></a>k <span class="op">=</span> <span class="dv">8</span></span>
+<span id="cb34-2"><a href="#cb34-2" tabindex="-1" aria-label="code-block-34-2"></a>groups <span class="op">=</span> {<span class="st">"Table"</span>: train_df[train_df[<span class="st">"Table"</span>] <span class="op">==</span> <span class="dv">1</span>], <span class="st">"Figure"</span>: train_df[train_df[<span class="st">"Figure"</span>] <span class="op">==</span> <span class="dv">1</span>],</span>
+<span id="cb34-3"><a href="#cb34-3" tabindex="-1" aria-label="code-block-34-3"></a>          <span class="st">"Quote only"</span>: train_df[(train_df[<span class="st">"Quote"</span>] <span class="op">==</span> <span class="dv">1</span>) <span class="op">&amp;</span> (train_df[<span class="st">"Table"</span>] <span class="op">==</span> <span class="dv">0</span>) <span class="op">&amp;</span> (train_df[<span class="st">"Figure"</span>] <span class="op">==</span> <span class="dv">0</span>)].head(<span class="dv">40</span>)}</span>
+<span id="cb34-4"><a href="#cb34-4" tabindex="-1" aria-label="code-block-34-4"></a></span>
+<span id="cb34-5"><a href="#cb34-5" tabindex="-1" aria-label="code-block-34-5"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="st">'questions'</span><span class="sc">:&lt;12}{</span><span class="st">'n'</span><span class="sc">:&gt;4}{</span><span class="st">'text index'</span><span class="sc">:&gt;14}{</span><span class="st">'image index'</span><span class="sc">:&gt;14}</span><span class="ss">"</span>)</span>
+<span id="cb34-6"><a href="#cb34-6" tabindex="-1" aria-label="code-block-34-6"></a><span class="cf">for</span> label, qs <span class="kw">in</span> groups.items():</span>
+<span id="cb34-7"><a href="#cb34-7" tabindex="-1" aria-label="code-block-34-7"></a>    gt <span class="op">=</span> [split_ref_ids(r) <span class="cf">for</span> r <span class="kw">in</span> qs[<span class="st">"ref_id"</span>]]</span>
+<span id="cb34-8"><a href="#cb34-8" tabindex="-1" aria-label="code-block-34-8"></a>    text_hits <span class="op">=</span> [[c[<span class="st">"doc_id"</span>] <span class="cf">for</span> c <span class="kw">in</span> retrieve_top_k(embed_query(q), chunk_embeddings, chunked_docs, k<span class="op">=</span>k)] <span class="cf">for</span> q <span class="kw">in</span> qs[<span class="st">"question"</span>]]</span>
+<span id="cb34-9"><a href="#cb34-9" tabindex="-1" aria-label="code-block-34-9"></a>    image_hits <span class="op">=</span> [[c[<span class="st">"doc_id"</span>] <span class="cf">for</span> c <span class="kw">in</span> retrieve_top_k(embed_query_mm(q), page_embeddings, caption_pages, k<span class="op">=</span>k)] <span class="cf">for</span> q <span class="kw">in</span> qs[<span class="st">"question"</span>]]</span>
+<span id="cb34-10"><a href="#cb34-10" tabindex="-1" aria-label="code-block-34-10"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">:&lt;12}{</span><span class="bu">len</span>(qs)<span class="sc">:&gt;4}{</span>hit_at_k(text_hits, gt)<span class="sc">:&gt;14.2f}{</span>hit_at_k(image_hits, gt)<span class="sc">:&gt;14.2f}</span><span class="ss">"</span>)</span></code></pre>
+</div>
+<p>Two numbers per row, and three readings. If the image index wins on
+Table and Figure and ties on Quote, the embedding model is doing what it
+was built for. If it loses everywhere, check what it was given: a page
+at 100 dpi with a dense table is readable, a page of nine small panels
+may not be. If both indexes already find the paper for nearly every
+question, retrieval was never the problem for this corpus and the loss
+is in the reading, which the next cell tests.</p>
+</div>
+<div class="section level3">
+<h3 id="let-the-model-see-the-page">Let the model see the page<a class="anchor" aria-label="anchor" href="#let-the-model-see-the-page"></a></h3>
+<p>Finding the page is half of it; DeepSeek V3 reads text only, so a
+figure retrieved as an image is no use to it. <code>converse</code>
+accepts image blocks in a user message for models that can see, and the
+swap is the model ID: Amazon Nova 2 Lite reads images and documents and
+is in the catalog for Ohio through the cross-region profile below (check
+the <a href="https://us-east-2.console.aws.amazon.com/bedrock/home?region=us-east-2#/model-catalog" class="external-link">model
+catalog</a>; <code>us.amazon.nova-lite-v1:0</code> is the cheaper,
+weaker alternative). <code>call_vision_chat</code> is
+<code>call_bedrock_chat</code> with an <code>images</code> argument: for
+each attached page it adds a text label naming the paper, then the
+image, so the model can cite what it reads.</p>
+<div class="codewrapper sourceCode" id="cb35">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" tabindex="-1" aria-label="code-block-35-1"></a>base_vision_model_id <span class="op">=</span> <span class="st">"us.amazon.nova-2-lite-v1:0"</span></span>
+<span id="cb35-2"><a href="#cb35-2" tabindex="-1" aria-label="code-block-35-2"></a>vision_model_id <span class="op">=</span> tagged_profile_arn(bedrock, base_vision_model_id, <span class="st">"wattbot-vision"</span>, name, project)</span>
+<span id="cb35-3"><a href="#cb35-3" tabindex="-1" aria-label="code-block-35-3"></a>vision_usage <span class="op">=</span> []</span>
+<span id="cb35-4"><a href="#cb35-4" tabindex="-1" aria-label="code-block-35-4"></a></span>
+<span id="cb35-5"><a href="#cb35-5" tabindex="-1" aria-label="code-block-35-5"></a><span class="kw">def</span> call_vision_chat(system_prompt: <span class="bu">str</span>, user_prompt: <span class="bu">str</span>, max_new_tokens: <span class="bu">int</span> <span class="op">=</span> <span class="dv">512</span>, images<span class="op">=</span>()) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
+<span id="cb35-6"><a href="#cb35-6" tabindex="-1" aria-label="code-block-35-6"></a>    <span class="co">"""One system + user turn, with zero or more (label, png_bytes) page images attached to the user turn."""</span></span>
+<span id="cb35-7"><a href="#cb35-7" tabindex="-1" aria-label="code-block-35-7"></a>    content <span class="op">=</span> [{<span class="st">"text"</span>: user_prompt}]</span>
+<span id="cb35-8"><a href="#cb35-8" tabindex="-1" aria-label="code-block-35-8"></a>    <span class="cf">if</span> images:</span>
+<span id="cb35-9"><a href="#cb35-9" tabindex="-1" aria-label="code-block-35-9"></a>        content.append({<span class="st">"text"</span>: <span class="st">"The page images below are from the same papers; read tables and figures from them where the text above is incomplete."</span>})</span>
+<span id="cb35-10"><a href="#cb35-10" tabindex="-1" aria-label="code-block-35-10"></a>        content.extend(image_blocks(images))</span>
+<span id="cb35-11"><a href="#cb35-11" tabindex="-1" aria-label="code-block-35-11"></a>    response <span class="op">=</span> bedrock_runtime.converse(</span>
+<span id="cb35-12"><a href="#cb35-12" tabindex="-1" aria-label="code-block-35-12"></a>        modelId<span class="op">=</span>vision_model_id,</span>
+<span id="cb35-13"><a href="#cb35-13" tabindex="-1" aria-label="code-block-35-13"></a>        system<span class="op">=</span>[{<span class="st">"text"</span>: system_prompt}],</span>
+<span id="cb35-14"><a href="#cb35-14" tabindex="-1" aria-label="code-block-35-14"></a>        messages<span class="op">=</span>[{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: content}],</span>
+<span id="cb35-15"><a href="#cb35-15" tabindex="-1" aria-label="code-block-35-15"></a>        inferenceConfig<span class="op">=</span>{<span class="st">"maxTokens"</span>: max_new_tokens, <span class="st">"temperature"</span>: <span class="dv">0</span>},</span>
+<span id="cb35-16"><a href="#cb35-16" tabindex="-1" aria-label="code-block-35-16"></a>    )</span>
+<span id="cb35-17"><a href="#cb35-17" tabindex="-1" aria-label="code-block-35-17"></a>    vision_usage.append(response[<span class="st">"usage"</span>])</span>
+<span id="cb35-18"><a href="#cb35-18" tabindex="-1" aria-label="code-block-35-18"></a>    <span class="cf">return</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span>.join(b[<span class="st">"text"</span>] <span class="cf">for</span> b <span class="kw">in</span> response[<span class="st">"output"</span>][<span class="st">"message"</span>][<span class="st">"content"</span>] <span class="cf">if</span> <span class="st">"text"</span> <span class="kw">in</span> b).strip()</span>
+<span id="cb35-19"><a href="#cb35-19" tabindex="-1" aria-label="code-block-35-19"></a></span>
+<span id="cb35-20"><a href="#cb35-20" tabindex="-1" aria-label="code-block-35-20"></a><span class="bu">print</span>(call_vision_chat(<span class="st">"You are a concise assistant."</span>, <span class="st">"What is in the attached page? One sentence."</span>, <span class="dv">64</span>,</span>
+<span id="cb35-21"><a href="#cb35-21" tabindex="-1" aria-label="code-block-35-21"></a>                       images<span class="op">=</span>[(<span class="ss">f"</span><span class="sc">{</span>caption_pages[<span class="dv">0</span>][<span class="st">'doc_id'</span>]<span class="sc">}</span><span class="ss">, page </span><span class="sc">{</span>caption_pages[<span class="dv">0</span>][<span class="st">'page_label'</span>]<span class="sc">}</span><span class="ss">"</span>, Path(caption_pages[<span class="dv">0</span>][<span class="st">"png_path"</span>]).read_bytes())]))</span></code></pre>
+</div>
+<p>Two runs over the Table and Figure questions, both through the vision
+model: one with the text chunks only, one with the top three retrieved
+page images attached as well. The first is the control. Without it, a
+better score with images could just be a different generation model, and
+the comparison would say nothing about the images.</p>
+<div class="codewrapper sourceCode" id="cb36">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" tabindex="-1" aria-label="code-block-36-1"></a>tf_df <span class="op">=</span> train_df[(train_df[<span class="st">"Table"</span>] <span class="op">==</span> <span class="dv">1</span>) <span class="op">|</span> (train_df[<span class="st">"Figure"</span>] <span class="op">==</span> <span class="dv">1</span>)]</span>
+<span id="cb36-2"><a href="#cb36-2" tabindex="-1" aria-label="code-block-36-2"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(tf_df)<span class="sc">}</span><span class="ss"> table and figure questions, two runs, two calls each"</span>)</span>
+<span id="cb36-3"><a href="#cb36-3" tabindex="-1" aria-label="code-block-36-3"></a></span>
+<span id="cb36-4"><a href="#cb36-4" tabindex="-1" aria-label="code-block-36-4"></a><span class="kw">def</span> run_tf(with_images: <span class="bu">bool</span>) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb36-5"><a href="#cb36-5" tabindex="-1" aria-label="code-block-36-5"></a>    rows <span class="op">=</span> []</span>
+<span id="cb36-6"><a href="#cb36-6" tabindex="-1" aria-label="code-block-36-6"></a>    <span class="cf">for</span> _, row <span class="kw">in</span> tf_df.iterrows():</span>
+<span id="cb36-7"><a href="#cb36-7" tabindex="-1" aria-label="code-block-36-7"></a>        images <span class="op">=</span> []</span>
+<span id="cb36-8"><a href="#cb36-8" tabindex="-1" aria-label="code-block-36-8"></a>        <span class="cf">if</span> with_images:</span>
+<span id="cb36-9"><a href="#cb36-9" tabindex="-1" aria-label="code-block-36-9"></a>            <span class="cf">for</span> pg <span class="kw">in</span> retrieve_top_k(embed_query_mm(row[<span class="st">"question"</span>]), page_embeddings, caption_pages, k<span class="op">=</span><span class="dv">3</span>):</span>
+<span id="cb36-10"><a href="#cb36-10" tabindex="-1" aria-label="code-block-36-10"></a>                images.append((<span class="ss">f"</span><span class="sc">{</span>pg[<span class="st">'doc_id'</span>]<span class="sc">}</span><span class="ss">, page </span><span class="sc">{</span>pg[<span class="st">'page_label'</span>]<span class="sc">}</span><span class="ss">"</span>, Path(pg[<span class="st">"png_path"</span>]).read_bytes()))</span>
+<span id="cb36-11"><a href="#cb36-11" tabindex="-1" aria-label="code-block-36-11"></a>        generate <span class="op">=</span> <span class="kw">lambda</span> s, u, max_new_tokens<span class="op">=</span><span class="dv">512</span>, images<span class="op">=</span>images: call_vision_chat(s, u, max_new_tokens, images<span class="op">=</span>images)</span>
+<span id="cb36-12"><a href="#cb36-12" tabindex="-1" aria-label="code-block-36-12"></a>        rows.append(run_single_qa(row<span class="op">=</span>row, embed_query<span class="op">=</span>embed_query, generate<span class="op">=</span>generate, chunk_embeddings<span class="op">=</span>chunk_embeddings,</span>
+<span id="cb36-13"><a href="#cb36-13" tabindex="-1" aria-label="code-block-36-13"></a>                                  chunked_docs<span class="op">=</span>chunked_docs, docid_to_url<span class="op">=</span>docid_to_url, top_k<span class="op">=</span><span class="dv">8</span>, retrieval_threshold<span class="op">=</span><span class="fl">0.25</span>))</span>
+<span id="cb36-14"><a href="#cb36-14" tabindex="-1" aria-label="code-block-36-14"></a>    <span class="cf">return</span> pd.DataFrame(rows)</span>
+<span id="cb36-15"><a href="#cb36-15" tabindex="-1" aria-label="code-block-36-15"></a></span>
+<span id="cb36-16"><a href="#cb36-16" tabindex="-1" aria-label="code-block-36-16"></a>t0 <span class="op">=</span> time.time()</span>
+<span id="cb36-17"><a href="#cb36-17" tabindex="-1" aria-label="code-block-36-17"></a>tf_text_only <span class="op">=</span> run_tf(with_images<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb36-18"><a href="#cb36-18" tabindex="-1" aria-label="code-block-36-18"></a>tf_text_only.to_csv(os.path.join(output_dir, <span class="st">"wattbot_solutions_vision_text_only.csv"</span>), index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb36-19"><a href="#cb36-19" tabindex="-1" aria-label="code-block-36-19"></a>tf_with_images <span class="op">=</span> run_tf(with_images<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb36-20"><a href="#cb36-20" tabindex="-1" aria-label="code-block-36-20"></a>tf_with_images.to_csv(os.path.join(output_dir, <span class="st">"wattbot_solutions_vision_with_images.csv"</span>), index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb36-21"><a href="#cb36-21" tabindex="-1" aria-label="code-block-36-21"></a><span class="bu">print</span>(<span class="ss">f"Both runs in </span><span class="sc">{</span>(time.time() <span class="op">-</span> t0) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span></code></pre>
+</div>
+<p>Score both the same way as Step 12. The scorer compares the rows it
+finds, so the breakdown is over these questions only; the
+<code>Table</code> and <code>Figure</code> lines are the ones to read,
+against each other and against the DeepSeek run.</p>
+<div class="codewrapper sourceCode" id="cb37">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" tabindex="-1" aria-label="code-block-37-1"></a><span class="cf">for</span> label, path <span class="kw">in</span> [(<span class="st">"text chunks only"</span>, <span class="st">"wattbot_solutions_vision_text_only.csv"</span>), (<span class="st">"text chunks + page images"</span>, <span class="st">"wattbot_solutions_vision_with_images.csv"</span>)]:</span>
+<span id="cb37-2"><a href="#cb37-2" tabindex="-1" aria-label="code-block-37-2"></a>    <span class="bu">print</span>(<span class="st">"="</span> <span class="op">*</span> <span class="dv">96</span>)</span>
+<span id="cb37-3"><a href="#cb37-3" tabindex="-1" aria-label="code-block-37-3"></a>    <span class="bu">print</span>(<span class="ss">f"Nova 2 Lite, </span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb37-4"><a href="#cb37-4" tabindex="-1" aria-label="code-block-37-4"></a>    compute_wattbot_score(train_qa_path<span class="op">=</span>train_qa_path, preds_path<span class="op">=</span>os.path.join(output_dir, path), n_examples<span class="op">=</span><span class="dv">3</span>)</span></code></pre>
+</div>
+<div id="what-to-expect-and-what-it-cost" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<span class="callout-header">Callout</span>
+<div id="what-to-expect-and-what-it-cost" class="callout-inner">
+<h3 class="callout-title">What to expect, and what it cost</h3>
+<div class="callout-content">
+<p>Figure questions should move the most: the text index had only a
+caption to match and the text model had nothing to read, and the image
+gives it both. Table questions move less, because a flattened table is
+still mostly readable, and some will get worse: three page images is a
+lot of tokens for a model to search, and a wrong page retrieved with
+confidence is a new way to misread. The hit-rate table tells you which
+of those happened. For the bill, every page image is roughly a thousand
+input tokens at Nova 2 Lite’s rate on the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">pricing page</a>, so the
+run with images is about three times the control;
+<code>vision_usage</code> holds both runs’ usage blocks, and the
+embedding of the page images is the per-image rate times
+<code>len(caption_pages)</code>.</p>
 </div>
 </div>
 </div>
