@@ -103,7 +103,7 @@ python3 lesson/scripts/build_wattbot_corpus.py --metadata wattbot/metadata.csv -
 aws s3 cp wattbot/pages.jsonl s3://$BUCKET/wattbot/pages.jsonl
 ```
 
-Needed for class: the 2026 corpus is about 4 million tokens and the Titan Text Embeddings V2 quota is 300,000 tokens per minute and not adjustable, so one notebook needs a quarter of an hour to embed it and a room of them would take hours. After you have run the episode once yourself, copy its embedding matrix into the shared bucket; the episode's in-class cell downloads it and skips the calls. The chunks are deterministic from `pages.jsonl`, so the vectors match. Learners working on their own embed the corpus themselves, which is the point of the step.
+Needed for class: the 2026 corpus is about 3 million tokens and the Titan Text Embeddings V2 quota is 300,000 tokens per minute and not adjustable, so one notebook needs ten minutes to embed it and a room of them would take hours. After you have run the episode once yourself with `use_instructor_embeddings = False`, copy its embedding matrix into the shared bucket; with the default `True`, the episode downloads it and skips the calls. The notebook checks that the matrix has one row per chunk and ignores it otherwise, so a copy from an older corpus falls through to computing rather than scoring against the wrong passages. The chunks are deterministic from `pages.jsonl`, so the vectors match. Learners working on their own embed the corpus themselves, which is the point of the step.
 
 ```bash
 aws s3 cp s3://<your-bucket>/wattbot/embeddings/embeddings_bedrock.npy s3://$BUCKET/wattbot/embeddings_bedrock.npy
