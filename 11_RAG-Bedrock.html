@@ -1314,7 +1314,7 @@ month’s Bedrock spend by <code>Project</code>?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -1750,7 +1750,7 @@ of the <code>ml.g6e.xlarge</code> the Processing Jobs episode rents?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>The two prices are from the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
 for DeepSeek on-demand in October 2026; update them for the model and
@@ -1896,8 +1896,10 @@ function handles both.</p>
 <span id="cb34-16"><a href="#cb34-16" tabindex="-1" aria-label="code-block-34-16"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>caption_pages[<span class="dv">0</span>][<span class="st">'doc_id'</span>]<span class="sc">}</span><span class="ss"> page </span><span class="sc">{</span>caption_pages[<span class="dv">0</span>][<span class="st">'page_label'</span>]<span class="sc">}</span><span class="ss"> -&gt; vector of </span><span class="sc">{</span>v<span class="sc">.</span>shape[<span class="dv">0</span>]<span class="sc">}</span><span class="ss"> dimensions"</span>)</span></code></pre>
 </div>
 <p>One call per page, cached like the text matrix: locally, then in your
-bucket, then computed. The question side uses the same model with
-<code>purpose="query"</code>.</p>
+bucket, then computed. A call takes a second or two, so the loop runs
+six at a time through a thread pool and prints every fifty pages; about
+a thousand pages is a few minutes. The question side uses the same model
+with <code>purpose="query"</code>.</p>
 <div class="codewrapper sourceCode" id="cb35">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1910,22 +1912,28 @@ bucket, then computed. The question side uses the same model with
 <span id="cb35-7"><a href="#cb35-7" tabindex="-1" aria-label="code-block-35-7"></a>    s3.download_file(bucket_name, page_emb_key, <span class="bu">str</span>(page_emb_path))</span>
 <span id="cb35-8"><a href="#cb35-8" tabindex="-1" aria-label="code-block-35-8"></a>    page_embeddings <span class="op">=</span> np.load(page_emb_path)</span>
 <span id="cb35-9"><a href="#cb35-9" tabindex="-1" aria-label="code-block-35-9"></a><span class="cf">else</span>:</span>
-<span id="cb35-10"><a href="#cb35-10" tabindex="-1" aria-label="code-block-35-10"></a>    t0 <span class="op">=</span> time.time()</span>
-<span id="cb35-11"><a href="#cb35-11" tabindex="-1" aria-label="code-block-35-11"></a>    rows <span class="op">=</span> []</span>
-<span id="cb35-12"><a href="#cb35-12" tabindex="-1" aria-label="code-block-35-12"></a>    <span class="cf">for</span> i, p <span class="kw">in</span> <span class="bu">enumerate</span>(caption_pages):</span>
-<span id="cb35-13"><a href="#cb35-13" tabindex="-1" aria-label="code-block-35-13"></a>        rows.append(embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png<span class="op">=</span>Path(p[<span class="st">"png_path"</span>]).read_bytes()))</span>
-<span id="cb35-14"><a href="#cb35-14" tabindex="-1" aria-label="code-block-35-14"></a>        <span class="cf">if</span> (i <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> <span class="dv">200</span> <span class="op">==</span> <span class="dv">0</span>:</span>
-<span id="cb35-15"><a href="#cb35-15" tabindex="-1" aria-label="code-block-35-15"></a>            <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span>i <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss"> / </span><span class="sc">{</span><span class="bu">len</span>(caption_pages)<span class="sc">}</span><span class="ss"> page images (</span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.0f}</span><span class="ss"> s)"</span>)</span>
-<span id="cb35-16"><a href="#cb35-16" tabindex="-1" aria-label="code-block-35-16"></a>    page_embeddings <span class="op">=</span> np.vstack(rows)</span>
-<span id="cb35-17"><a href="#cb35-17" tabindex="-1" aria-label="code-block-35-17"></a>    np.save(page_emb_path, page_embeddings)</span>
-<span id="cb35-18"><a href="#cb35-18" tabindex="-1" aria-label="code-block-35-18"></a>    s3.upload_file(<span class="bu">str</span>(page_emb_path), bucket_name, page_emb_key)</span>
-<span id="cb35-19"><a href="#cb35-19" tabindex="-1" aria-label="code-block-35-19"></a>    <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span><span class="bu">len</span>(caption_pages)<span class="sc">}</span><span class="ss"> page images in </span><span class="sc">{</span>(time.time() <span class="op">-</span> t0) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
-<span id="cb35-20"><a href="#cb35-20" tabindex="-1" aria-label="code-block-35-20"></a></span>
-<span id="cb35-21"><a href="#cb35-21" tabindex="-1" aria-label="code-block-35-21"></a><span class="cf">assert</span> page_embeddings.shape[<span class="dv">0</span>] <span class="op">==</span> <span class="bu">len</span>(caption_pages), <span class="st">"page embeddings and caption pages are out of step; delete the cached file and rerun"</span></span>
-<span id="cb35-22"><a href="#cb35-22" tabindex="-1" aria-label="code-block-35-22"></a><span class="bu">print</span>(<span class="st">"Page embeddings shape:"</span>, page_embeddings.shape)</span>
-<span id="cb35-23"><a href="#cb35-23" tabindex="-1" aria-label="code-block-35-23"></a></span>
-<span id="cb35-24"><a href="#cb35-24" tabindex="-1" aria-label="code-block-35-24"></a><span class="kw">def</span> embed_query_mm(question: <span class="bu">str</span>) <span class="op">-&gt;</span> np.ndarray:</span>
-<span id="cb35-25"><a href="#cb35-25" tabindex="-1" aria-label="code-block-35-25"></a>    <span class="cf">return</span> embed_multimodal(bedrock_runtime_mm, multimodal_model_id, text<span class="op">=</span>question, purpose<span class="op">=</span><span class="st">"query"</span>)</span></code></pre>
+<span id="cb35-10"><a href="#cb35-10" tabindex="-1" aria-label="code-block-35-10"></a>    <span class="im">from</span> concurrent.futures <span class="im">import</span> ThreadPoolExecutor</span>
+<span id="cb35-11"><a href="#cb35-11" tabindex="-1" aria-label="code-block-35-11"></a></span>
+<span id="cb35-12"><a href="#cb35-12" tabindex="-1" aria-label="code-block-35-12"></a>    <span class="kw">def</span> embed_page(p):</span>
+<span id="cb35-13"><a href="#cb35-13" tabindex="-1" aria-label="code-block-35-13"></a>        <span class="cf">return</span> embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png<span class="op">=</span>Path(p[<span class="st">"png_path"</span>]).read_bytes())</span>
+<span id="cb35-14"><a href="#cb35-14" tabindex="-1" aria-label="code-block-35-14"></a></span>
+<span id="cb35-15"><a href="#cb35-15" tabindex="-1" aria-label="code-block-35-15"></a>    t0 <span class="op">=</span> time.time()</span>
+<span id="cb35-16"><a href="#cb35-16" tabindex="-1" aria-label="code-block-35-16"></a>    rows <span class="op">=</span> []</span>
+<span id="cb35-17"><a href="#cb35-17" tabindex="-1" aria-label="code-block-35-17"></a>    <span class="cf">with</span> ThreadPoolExecutor(max_workers<span class="op">=</span><span class="dv">6</span>) <span class="im">as</span> pool:   <span class="co"># one image per call, a second or two each: six in flight at a time</span></span>
+<span id="cb35-18"><a href="#cb35-18" tabindex="-1" aria-label="code-block-35-18"></a>        <span class="cf">for</span> i, vec <span class="kw">in</span> <span class="bu">enumerate</span>(pool.<span class="bu">map</span>(embed_page, caption_pages)):</span>
+<span id="cb35-19"><a href="#cb35-19" tabindex="-1" aria-label="code-block-35-19"></a>            rows.append(vec)</span>
+<span id="cb35-20"><a href="#cb35-20" tabindex="-1" aria-label="code-block-35-20"></a>            <span class="cf">if</span> (i <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> <span class="dv">50</span> <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb35-21"><a href="#cb35-21" tabindex="-1" aria-label="code-block-35-21"></a>                <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span>i <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss"> / </span><span class="sc">{</span><span class="bu">len</span>(caption_pages)<span class="sc">}</span><span class="ss"> page images (</span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.0f}</span><span class="ss"> s, </span><span class="sc">{</span>(i <span class="op">+</span> <span class="dv">1</span>) <span class="op">/</span> (time.time() <span class="op">-</span> t0)<span class="sc">:.1f}</span><span class="ss"> per second)"</span>)</span>
+<span id="cb35-22"><a href="#cb35-22" tabindex="-1" aria-label="code-block-35-22"></a>    page_embeddings <span class="op">=</span> np.vstack(rows)</span>
+<span id="cb35-23"><a href="#cb35-23" tabindex="-1" aria-label="code-block-35-23"></a>    np.save(page_emb_path, page_embeddings)</span>
+<span id="cb35-24"><a href="#cb35-24" tabindex="-1" aria-label="code-block-35-24"></a>    s3.upload_file(<span class="bu">str</span>(page_emb_path), bucket_name, page_emb_key)</span>
+<span id="cb35-25"><a href="#cb35-25" tabindex="-1" aria-label="code-block-35-25"></a>    <span class="bu">print</span>(<span class="ss">f"Embedded </span><span class="sc">{</span><span class="bu">len</span>(caption_pages)<span class="sc">}</span><span class="ss"> page images in </span><span class="sc">{</span>(time.time() <span class="op">-</span> t0) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
+<span id="cb35-26"><a href="#cb35-26" tabindex="-1" aria-label="code-block-35-26"></a></span>
+<span id="cb35-27"><a href="#cb35-27" tabindex="-1" aria-label="code-block-35-27"></a><span class="cf">assert</span> page_embeddings.shape[<span class="dv">0</span>] <span class="op">==</span> <span class="bu">len</span>(caption_pages), <span class="st">"page embeddings and caption pages are out of step; delete the cached file and rerun"</span></span>
+<span id="cb35-28"><a href="#cb35-28" tabindex="-1" aria-label="code-block-35-28"></a><span class="bu">print</span>(<span class="st">"Page embeddings shape:"</span>, page_embeddings.shape)</span>
+<span id="cb35-29"><a href="#cb35-29" tabindex="-1" aria-label="code-block-35-29"></a></span>
+<span id="cb35-30"><a href="#cb35-30" tabindex="-1" aria-label="code-block-35-30"></a><span class="kw">def</span> embed_query_mm(question: <span class="bu">str</span>) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb35-31"><a href="#cb35-31" tabindex="-1" aria-label="code-block-35-31"></a>    <span class="cf">return</span> embed_multimodal(bedrock_runtime_mm, multimodal_model_id, text<span class="op">=</span>question, purpose<span class="op">=</span><span class="st">"query"</span>)</span></code></pre>
 </div>
 </div>
 <div class="section level3">
