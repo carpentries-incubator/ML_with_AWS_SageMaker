@@ -260,6 +260,7 @@ def job_cost_report(job_name: str, price_per_hour: float):
     billable = desc["BillableTimeInSeconds"] * n
     wall = (desc["TrainingEndTime"] - desc["CreationTime"]).total_seconds()   # launch request to end, including unbilled provisioning
     print(f"{job_name}: status {desc['TrainingJobStatus']}, wall-clock {wall/60:.1f} min, billable {billable/60:.1f} min on {n} instance(s), cost ${billable/3600*price_per_hour:.3f} at ${price_per_hour}/h")
+    print(f"    model: {desc['ModelArtifacts']['S3ModelArtifacts']}")   # the model.tar.gz this job uploaded to output_path
     return desc
 
 def tuning_cost_report(tuner, price_per_hour):
@@ -281,7 +282,7 @@ If all goes well, we can scale up the experiment with the below code. In this co
 
 With this approach, SageMaker is better able to refine configurations without overloading resources or risking inefficient exploration, making `max_parallel_jobs=2` a solid default for most use cases.
 
-Estimate first: 10 child jobs at roughly 3-4 billable minutes each is 30-40 billable minutes on `ml.m5.large`, so about `$0.06` in total (the 10,000-epoch configurations run a little longer). Wall-clock is five rounds of two jobs, so expect 15-20 minutes.
+Estimate first: 10 child jobs at roughly 3 billable minutes each is about 30 billable minutes on `ml.m5.large`, so about `$0.06` in total. Wall-clock is five rounds of two jobs, so expect 15-20 minutes. Write both numbers down; the bill below comes in well under them, for a reason worth knowing.
 
 ```python
 import time as t # always a good idea to keep a runtime of your experiments 
@@ -328,6 +329,8 @@ Once it has finished, the cost report for all 10 child jobs:
 tuning_cost_report(tuner, price_per_hour)
 ```
 
+Our run finished in 9.3 minutes of wall-clock and billed 14.1 minutes in total, `$0.03`: half the estimate. Read the per-job lines and the reason is visible. The first two child jobs billed about 3 minutes each, like every job so far. The other eight billed about 1 minute each. A tuning job keeps its instances between child jobs, so jobs 3 through 10 ran on the two instances that were already up, with the container pulled and the data downloaded. The startup overhead that dominates a single small job was paid twice, not ten times.
+
 ### Can/should we run more instances in parallel?
 Setting max_parallel_jobs to 10 (equal to max_jobs) will indeed launch all 10 jobs in parallel. This approach won't affect the total cost (since cost is based on the number of total jobs, not how many run concurrently), but it can impact the final results and resource usage pattern due to SageMaker's ability to dynamically select hyperparameter values to test to maximize efficiency and improve model performance. This adaptability is especially useful for neural networks, which often have a large hyperparameter space with complex interactions. Here's how SageMaker's approach impacts typical neural network training:
 
@@ -351,7 +354,7 @@ This balance between exploration and exploitation is particularly impactful in n
 
 ### Extracting and evaluating the best model after tuning
 
-Tuning should only take about 15-20 minutes to complete — not bad for 10 models! After SageMaker completes the hyperparameter tuning job, the results, including the trained models for each configuration, are stored in an S3 bucket. Here's a breakdown of the steps to locate and evaluate the best model on test data.
+Tuning takes about 10 minutes to complete — not bad for 10 models! After SageMaker completes the hyperparameter tuning job, the results, including the trained models for each configuration, are stored in an S3 bucket. Here's a breakdown of the steps to locate and evaluate the best model on test data.
 
 1. **Understanding the folder structure**:
    - SageMaker saves each tuning job's results in the specified S3 bucket under a unique prefix.
@@ -462,7 +465,7 @@ with torch.no_grad():
 ```
 
 ### Conclusions
-In about 20 minutes, we produced a model that is about 80% accurate on the test set. However, this performance does come at a cost (albeit manageable if you've stuck with our advice thus far). This next section will help you assess the total compute time that was used by your tuning job.
+In about 10 minutes, we produced a model that is 77-80% accurate on the test set. However, this performance does come at a cost (albeit manageable if you've stuck with our advice thus far). This next section will help you assess the total compute time that was used by your tuning job.
 
 Each child job is billed like any training job; the tuning job itself costs nothing. Here's a breakdown of what's happening:
 
@@ -509,8 +512,8 @@ print("Best objective, all-parallel run:  ", tuner_parallel.analytics().datafram
 
 ### Solution
 
-- **Cost**: about the same (~`$0.06`). You pay per child training job, and each job's billable time does not depend on how many other jobs are running. (If your account has a quota on concurrent `ml.m5.large` training instances, the request may be rejected or throttled, which is the practical limit on this approach.)
-- **Wall-clock**: roughly one job's duration (4-5 minutes) instead of five rounds of two, so about 4-5x faster.
+- **Cost**: higher, not the same. Our all-parallel run billed 27.5 minutes (`$0.05`) against 14.1 minutes (`$0.03`) for the two-at-a-time run. Ten instances each pull the container and download the data, so the startup overhead is paid ten times; with two at a time it was paid twice and the other eight child jobs reused warm instances. (If your account has a quota on concurrent `ml.m5.large` training instances, the request may be rejected or throttled, which is the practical limit on this approach.)
+- **Wall-clock**: roughly one job's duration. Our run took 4.3 minutes against 9.3, so about twice as fast, not five times: the two-at-a-time run's later jobs were short because they skipped startup.
 - **Search quality**: with all 10 launched at once, the Bayesian strategy has no completed results to learn from, so the 10 configurations are effectively a random sample of the space. On a 2-parameter problem this small you will usually see a similar best objective either way; on a larger search space with more jobs, the sequential-ish run tends to find a better configuration for the same number of jobs.
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::

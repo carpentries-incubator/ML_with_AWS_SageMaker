@@ -189,7 +189,74 @@ job_tags = [
 print(f"Name: {name}, Project: {project}, Purpose: {purpose}")
 ```
 
-We'll also bring back the `job_cost_report()` helper from the previous episode, plus the hourly rates of the instances we're about to use. Estimate first: 1000 full-batch epochs took a few seconds locally, so expect roughly 1 minute of training plus ~3 minutes of startup, i.e. about `$0.01` on `ml.m5.large`.
+## Estimating a training job before you launch it
+
+Every job in this lesson gets an estimate written down before `fit()`, and the habit matters more than the numbers here, which are cents. There are two ways to make the estimate, and which one applies depends on the size of the model.
+
+**Small models: time a smoke test and scale it.** For a network like `TitanicNet`, the arithmetic is nothing; the time is Python overhead per epoch plus the job's fixed startup. So measure the 100-epoch run you just did, scale to the epochs and data you plan, and add the startup:
+
+```python
+local_seconds_per_epoch = (t.time() - start_time) / epochs     # from the smoke test above: wall-clock over its 100 epochs
+planned_epochs = 1000
+startup_minutes = 3                                            # container pull + data download, billed; the same for every job
+rate = 0.115                                                   # $/hour, ml.m5.large
+
+train_minutes = local_seconds_per_epoch * planned_epochs / 60
+estimate = (train_minutes + startup_minutes) / 60 * rate
+print(f"{local_seconds_per_epoch * 1000:.1f} ms per epoch locally -> {train_minutes:.1f} min of training for {planned_epochs} epochs")
+print(f"estimate: {train_minutes + startup_minutes:.0f} min billed, about ${estimate:.3f} on ml.m5.large")
+```
+
+Expect a couple of minutes of training plus two or three of startup: about a cent. (The `ml.t3.medium` notebook is slower than the `ml.m5.large` the job runs on, so the training part of the estimate is high. Our run billed 2.8 minutes in total, `$0.005`.) If the planned run has ten times the rows, multiply the training minutes by ten; the startup does not change.
+
+**Large models: count the arithmetic.** Once a model has millions of parameters, compute is the cost, and it can be counted before any instance exists. Training one example through a dense network or a transformer costs about 6 floating-point operations per parameter (2 forward, 4 backward); multiply by parameters, examples and epochs, and divide by what the GPU does per second, about a quarter of its data-sheet peak in practice:
+
+```text
+FLOPs       = 6 × parameters × examples × tokens per example × epochs
+GPU-seconds = FLOPs ÷ (GPU peak FLOPS × 0.25)
+cost        = GPU-hours × instance price per hour + startup
+```
+
+On `TitanicNet` this says the training is nothing, which is the point of the two regimes:
+
+```python
+n_params = sum(p.numel() for p in TitanicNet().parameters())   # the network's weights and biases: how big the model is
+n_examples = len(np.load("train_data.npz")["X_train"])
+flops = 6 * n_params * n_examples * planned_epochs
+print(f"{n_params:,} parameters x {n_examples} examples x {planned_epochs} epochs = {flops:.1e} FLOPs")
+print(f"on an A10G at a quarter of 70 TFLOPS: {flops / (70e12 * 0.25):.4f} seconds of arithmetic; the bill is the startup")
+```
+
+The same rule, in `helpers.estimate_training_cost`, picks an instance and prints the time, cost and `max_run` for any model size. It only earns its keep from about 1e15 FLOPs up, a few million parameters over a few million examples, which is where the fine-tuning episode uses it on a 3-billion-parameter model. Here it is on a run that does need it: a 125-million-parameter text model, a million training examples of 256 tokens, three passes:
+
+```python
+helpers.estimate_training_cost(params_billions=0.125, examples=1_000_000, tokens_per_example=256, epochs=3)
+```
+
+About eight GPU-hours and nine dollars on the cheapest instance that fits, eight hours of wall-clock on one GPU; a job you want capped and tagged before it starts.
+
+::::::::::::::::::::::::::::::::::::: challenge
+
+### Estimate your own first run
+
+Take the model you expect to train for your own project or challenge, or the biggest one you have trained before, and estimate its first SageMaker run before you ever launch one. You need four numbers:
+
+1. **Parameters.** For a model you have in PyTorch, `sum(p.numel() for p in model.parameters())`; for a model card, it is in the name (`-7B`, `-125M`).
+2. **Examples and tokens per example.** Rows for tabular data, sequence length for text, pixels ÷ 784 for an image through a vision transformer; for a convolutional network use the FLOPs-per-image figure from its paper instead of the 6 × parameters rule.
+3. **Epochs.** Small data usually takes three to five passes, large corpora one to three; the number is a budget, not a given.
+4. **Instance.** From the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page, or let the helper pick the cheapest that fits.
+
+If the FLOPs come out below 1e15, use the smoke-test method instead and say what you would measure. Write the estimate down with the `max_run` you would set, and keep it: the first real bill goes next to it.
+
+:::::::::::::::::::::::: solution
+
+There is no single answer; the solution is the written estimate. One worked example for scale: a 7B language model fully fine-tuned on 50,000 documents of 2,000 tokens for 3 epochs is 6 × 7e9 × 1e8 = 1.3e19 FLOPs, 45 GPU-hours on A100s, about `$140` a run; the fine-tuning episode works that one through. A 10-million-parameter network on 100,000 rows for 20 epochs is 1.2e14 FLOPs: below the line, so time a smoke test and scale it, and expect the startup minutes to dominate.
+
+:::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+We'll also bring back the `job_cost_report()` helper from the previous episode, plus the hourly rates of the instances we're about to use.
 
 ```python
 def job_cost_report(job_name: str, price_per_hour: float):
@@ -198,6 +265,7 @@ def job_cost_report(job_name: str, price_per_hour: float):
     billable = desc["BillableTimeInSeconds"] * n   # container pull to model upload, charged per instance
     wall = (desc["TrainingEndTime"] - desc["CreationTime"]).total_seconds()   # from the launch request to the end, including unbilled provisioning
     print(f"{job_name}: status {desc['TrainingJobStatus']}, wall-clock {wall/60:.1f} min, billable {billable/60:.1f} min on {n} instance(s), cost ${billable/3600*price_per_hour:.3f} at ${price_per_hour}/h")
+    print(f"    model: {desc['ModelArtifacts']['S3ModelArtifacts']}")   # the model.tar.gz this job uploaded to output_path
     return desc
 
 # us-east-1 on-demand rates (2026-10-16); check the instances page for your region
@@ -332,7 +400,7 @@ for label, d, rate in [("CPU ml.m5.large", desc_cpu, prices["ml.m5.large"]), ("G
 
 ### Solution
 
-Typically the CPU run finishes about as fast or faster, and it is several times cheaper. Both jobs spend roughly the same few minutes on startup (provisioning, pulling the container, downloading data), and the GPU container is larger, so it often takes a little *longer* to start. The actual training is a few seconds on either instance: the network has about 2,600 parameters and the whole training set is 713 rows, so each full-batch step is tiny and the T4 sits almost idle, and the one-time CUDA initialization adds a few seconds of its own. Startup dominates both bills, and the GPU bill is about 6x higher per minute (0.74 / 0.115), so the GPU costs roughly 6x more for no speedup.
+Typically the CPU run finishes about as fast or faster, and it is several times cheaper. Both jobs spend roughly the same few minutes on startup (pulling the container, downloading data; the unbilled wait for an instance comes before that), and the GPU container is larger, so it often takes a little *longer* to start. The actual training is a few seconds on either instance: the network has about 2,600 parameters and the whole training set is 713 rows, so each full-batch step is tiny and the T4 sits almost idle, and the one-time CUDA initialization adds a few seconds of its own. Startup dominates both bills, and the GPU bill is about 6x higher per minute (0.74 / 0.115), so the GPU costs several times more for no speedup. In our run the CPU job billed 2.8 minutes (`$0.005`) and the GPU job 3.6 minutes (`$0.045`): slower, and nine times the price.
 
 A GPU pays off when the per-step work is large enough to keep it busy: bigger models, bigger batches, or datasets of hundreds of MB and up. If you ever do need more GPU than a `g4dn.xlarge`, the next sensible step is an `ml.g5.xlarge` (~`$1.41`/hour), not a multi-GPU box.
 
@@ -369,7 +437,7 @@ Setting `instance_count=2` on an estimator makes SageMaker start two instances a
 - `train_nn.py` has no distributed code, so each instance trains its own independent copy of the model on all of the data for all 1000 epochs, and each saves a model.
 - SageMaker bills `BillableTimeInSeconds x InstanceCount`.
 
-So without a distribution strategy, two instances means the same job twice, in parallel, at double the cost. Estimate first: about the same 4 minutes of wall-clock as the single-instance run, but billed for two instances, so about `$0.02` on `ml.m5.large`.
+So without a distribution strategy, two instances means the same job twice, in parallel, at double the cost. Estimate first: about the same 3-4 minutes of wall-clock as the single-instance run, but billed for two instances, so about `$0.01` on `ml.m5.large` (our run: 3.5 minutes of wall-clock, 5.5 billable minutes across the two instances, `$0.010`).
 
 ```python
 instance_count = 2   # demonstration: NOT expected to be faster, and expected to cost double
@@ -404,7 +472,7 @@ desc_2x = job_cost_report(pytorch_estimator_2x.latest_training_job.name, prices[
 print(f"Single-instance job billed {desc_cpu['BillableTimeInSeconds']/60:.1f} min; two-instance job billed {desc_2x['BillableTimeInSeconds']*2/60:.1f} min")
 ```
 
-Look at the job's log in CloudWatch, the AWS logging service introduced in the last episode (SageMaker console, Training jobs, your job, View logs): there are two log streams, `algo-1` and `algo-2`, and each one prints all 1000 epochs. The wall-clock time is about the same as the single-instance run (slightly longer, if anything, because two instances have to be provisioned), and the billable minutes are double.
+Look at the job's log in CloudWatch, the AWS logging service introduced in the last episode ([Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training) in the SageMaker console, your job, **View logs**): there are two log streams, `algo-1` and `algo-2`, and each one prints all 1000 epochs. The wall-clock time is about the same as the single-instance run (slightly longer, if anything, because two instances have to be provisioned), and the billable minutes are double.
 
 ::::::::::::::::::::::::::::::::::::::: callout
 #### What distributed training needs
@@ -428,5 +496,6 @@ Either way, the rule of thumb stands: a bigger single instance first, and multip
 - **`instance_count` alone is not distributed training**: Without `distribution=` on the estimator and distributed code in the script, `instance_count=2` runs the full script on the full data on each instance and bills twice.
 - **SageMaker configuration**: By adjusting instance counts and types, SageMaker supports scalable training setups. Starting with CPU training and scaling as needed with GPUs or distributed setups allows for performance optimization.
 - **Testing locally first**: Before deploying large-scale training in SageMaker, test locally with a smaller setup to ensure code correctness and efficient resource usage.
+- **Estimate before you launch**: for small models, time a smoke test and scale it by epochs and rows, plus about three minutes of startup; for large ones, 6 FLOPs per parameter per example-token, divided by a quarter of the GPU's peak. `helpers.estimate_training_cost` does the second; write the number down and compare it to the bill.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
