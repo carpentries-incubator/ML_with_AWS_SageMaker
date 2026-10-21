@@ -820,7 +820,7 @@ results_df.head()
 
 ## Step 12 – Score against the training answers
 
-WattBot scores each prediction with three components: 0.75 for `answer_value` (numeric within ±0.1% relative tolerance, categorical match after normalisation, and zero if you answer a question the corpus cannot answer), 0.20 for the F1 between your `ref_id` set and the ground-truth citations, and 0.05 for refusing cleanly, with every evidence field blank, when the answer is `is_blank`. The number comes from `Score.py`, the competition's own metric file, which `compute_wattbot_score` in `wattbot_rag.py` calls for the headline score so that what you see here is what the leaderboard would report. It also prints the error rate by evidence type: whether each answer rests on a quoted sentence, a table, a figure, or a calculation. The competition's solution file carries those flags; the public `train_QA.csv` only notes them in its `explanation` column, so the wrapper derives them from there. A question can carry several. Read that table before changing anything: figure and table questions failing while quote questions pass points at text extraction, which loses figures and flattens tables, not at the model. The wrapper adds a per-row score, joins on `id`, and prints the worst-scoring rows so you can see *why* the pipeline lost points. `train_QA.csv` has no separate "unanswerable" column, so `gt_is_na_col="is_blank"` tells the scorer to derive that flag from `answer_value == "is_blank"` on both sides.
+WattBot scores each prediction with three components: 0.75 for `answer_value` (numeric within ±0.1% relative tolerance, categorical match after normalisation, and zero if you answer a question the corpus cannot answer), 0.20 for the F1 between your `ref_id` set and the ground-truth citations, and 0.05 for refusing cleanly, with every evidence field blank, when the answer is `is_blank`. The number comes from `Score.py`, the competition's own metric file, which `compute_wattbot_score` in `wattbot_rag.py` calls for the headline score so that what you see here is what the leaderboard would report. It also prints the error rate by evidence type, the seven flag columns of `train_QA.csv`: **Quote** (the answer is a sentence in a paper), **Table**, **Figure**, **Math** (a calculation from numbers in the text), **is_NA** (the corpus cannot answer it, and the right response is `is_blank`), **CrossPaper** (numbers from two papers have to be combined) and **Reconcile** (two figures that sound alike but measure different things, such as water withdrawn against water consumed, or a popular claim against a measured value, and the answer is the ratio or the distinction between them; quoting either figure alone is the wrong answer the question is built to catch). A question can carry several. Read that table before changing anything: figure and table questions failing while quote questions pass points at text extraction, which loses figures and flattens tables, not at the model. The wrapper adds a per-row score, joins on `id`, and prints the worst-scoring rows so you can see *why* the pipeline lost points. `train_QA.csv` has no separate "unanswerable" column, so `gt_is_na_col="is_blank"` tells the scorer to derive that flag from `answer_value == "is_blank"` on both sides.
 
 ```python
 scored_df = compute_wattbot_score(
@@ -936,28 +936,20 @@ print(f"{len(caption_pages)} page images in {page_image_dir} ({time.time() - t0:
 
 ### Embed the page images
 
-The embedding model lives in `us-east-1`, so this is a second runtime client and a second control-plane client there, and a tagged profile created through the latter so these calls are attributed like the rest. `embed_multimodal` builds the model's request body (Nova's says whether a vector is for the index or for a query, and that the image is a document page rather than a photo) and returns a unit vector. Set `multimodal_model_id` to `amazon.titan-embed-image-v1` to try the older model; the function handles both.
+The embedding model lives in `us-east-1`, so this is a second runtime client pointed there. One difference from the text models: Bedrock rejects this model's request body when it arrives through an application inference profile, so these calls use the model ID directly and are the one Bedrock spend in this lesson that carries no project tags. `embed_multimodal` builds the model's request body (Nova's says whether a vector is for the index or for a query, and that the image is a document page rather than a photo) and returns a unit vector. Set `multimodal_model_id` to `amazon.titan-embed-image-v1` to try the older model; the function handles both.
 
 ```python
 multimodal_region = "us-east-1"
-base_multimodal_model_id = "amazon.nova-2-multimodal-embeddings-v1:0"
+multimodal_model_id = "amazon.nova-2-multimodal-embeddings-v1:0"   # called by ID: this model does not accept calls through an inference profile
 
 bedrock_runtime_mm = boto3.client("bedrock-runtime", region_name=multimodal_region,
                                   config=Config(retries={"max_attempts": 10, "mode": "adaptive"}))
-bedrock_mm = boto3.client("bedrock", region_name=multimodal_region)
-multimodal_model_id = tagged_profile_arn(bedrock_mm, base_multimodal_model_id, "wattbot-embed-mm", name, project)
 
-first_png = Path(caption_pages[0]["png_path"]).read_bytes()
-try:
-    v = embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png=first_png)
-except ClientError as e:
-    print(f"Through the tagged profile: {e.response['Error']['Message']}\nCalling the model ID directly instead; these calls will not carry the project tags")
-    multimodal_model_id = base_multimodal_model_id
-    v = embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png=first_png)
+v = embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png=Path(caption_pages[0]["png_path"]).read_bytes())
 print(f"{caption_pages[0]['doc_id']} page {caption_pages[0]['page_label']} -> vector of {v.shape[0]} dimensions")
 ```
 
-One call per page, cached like the text matrix: locally, then in your bucket, then computed. A call takes a second or two, so the loop runs six at a time through a thread pool and prints every fifty pages; about a thousand pages is a few minutes. The question side uses the same model with `purpose="query"`.
+One call per page, cached like the text matrix: locally, then in your bucket, then computed. The loop runs six calls at a time through a thread pool and prints every fifty pages; about a thousand pages takes two minutes. The question side uses the same model with `purpose="query"`.
 
 ```python
 page_emb_path = data_dir / "embeddings_pages_multimodal.npy"
