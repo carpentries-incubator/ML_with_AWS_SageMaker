@@ -23,8 +23,8 @@ Console: **Service Quotas → AWS services → Amazon SageMaker**, in the region
 | `ml.g5.xlarge for training job usage` | 100 | fine-tuning episode (one job per student at once) |
 | `ml.g6e.xlarge for training job usage` | 100 | optional: fine-tuning Exercise 2 |
 | `Number of instances across all training jobs` | 250 (already applied) | account-level ceiling; 250 covers 100 students |
-| `ml.g5.xlarge for processing job usage` | 200 | Processing Jobs episode and fine-tuning homework (two jobs per student, possibly at once) |
-| `ml.g6e.xlarge for processing job usage` | 100 | Processing Jobs episode: the RAG job serves Qwen3.8-27B. **Default is usually 0** |
+| `ml.g5.xlarge for processing job usage` | 200 | Processing Jobs episode (both jobs) and fine-tuning homework (two jobs per student, possibly at once) |
+| `ml.g6e.xlarge for processing job usage` | 100 (optional) | only the Processing Jobs episode's 27B variant. **Default is usually 0** and the increase takes days; the episode runs Qwen3-8B on `ml.g5.xlarge` without it |
 | `Number of instances across all processing jobs` | 250 (already applied) | account-level ceiling |
 
 Also check `ml.g5.xlarge for training warm pool usage` is left at its default of 0; the episodes do not use warm pools and a nonzero quota lets a student leave an idle GPU billing.
@@ -127,7 +127,7 @@ Three cautions. Test the policy with one job of each kind (training, processing,
 Console: **Service Quotas → Amazon Bedrock**, and **Bedrock → Model access**.
 
 - Enable model access for the two models the Bedrock episode uses: `deepseek.v3-v1:0` (generation) and `amazon.titan-embed-text-v2:0` (embeddings).
-- Request increases to the **tokens per minute** and **requests per minute** quotas for both. Fifty notebooks each embedding ~3,000 chunks in a loop will exceed the default embedding RPM; ask for 5–10x whatever the console shows.
+- Check the **requests per minute** and **tokens per minute** quotas for both (Service Quotas → Amazon Bedrock, search the model name). The class load, if fifty learners run the episode in the same quarter hour: the generation step is about 80 DeepSeek calls per learner at ~3,000 input tokens each, so roughly 4,000 requests and 12 million input tokens per minute at the peak; the embedding step is 2,880 Titan calls per learner in about four minutes, so roughly 700 requests and 250,000 tokens per minute per learner, or 35,000 requests and 12 million tokens per minute for fifty at once. Ask for what the console lets you (many Bedrock quotas adjust in place, some need a support case); the notebook's client retries with backoff, so a quota below the peak slows the run rather than failing it. The cross-region profile `us.deepseek.v3-v1:0` usually carries a higher quota than the in-region ID and is a one-line swap in the episode. If the embedding quota cannot be raised enough, the *Shared data bucket* page has an emergency copy of the embedding matrix learners can pull with one line; splitting the room into a RAG track and a fine-tuning track halves the peak as well.
 - **The learner execution role needs Bedrock permissions**, and the default SageMaker role has none: the Bedrock episode's first Bedrock call fails with `AccessDeniedException ... bedrock:ListInferenceProfiles` until they are added. On the UW account the role `ml-sagemaker-bedrock-use` carries them and the controller-notebook episode tells learners to pick it; the older `ml-sagemaker-use` does not, and a notebook created with it has to be stopped and re-pointed at the right role. Elsewhere, attach the policy below as an inline policy on whatever role the notebooks run with, with `<account-id>` filled in. `InvokeModel` must be allowed on **both** the application inference profile ARN and the underlying foundation-model ARN, or calls through the profile are denied; `DeleteInferenceProfile` is for the cleanup episode.
 
 ```json

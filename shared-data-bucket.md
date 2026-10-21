@@ -13,6 +13,7 @@ s3://<shared-bucket>/
         train_QA.csv        from data/data.zip
         corpus.zip          built once with scripts/build_wattbot_corpus.py
         pages.jsonl         page text extracted from corpus.zip by the same script
+        embeddings_bedrock.npy   optional emergency copy of the Titan V2 vectors, from your own Bedrock run
     badger-scribe/
         train.csv  test.csv  metadata.csv  metric.py
         sample_submission.csv  transcription_conventions.md
@@ -100,6 +101,20 @@ aws s3 cp s3://$BUCKET/wattbot/metadata.csv wattbot/metadata.csv
 python3 lesson/scripts/build_wattbot_corpus.py --metadata wattbot/metadata.csv --from-zip wattbot/corpus.zip
 aws s3 cp wattbot/pages.jsonl s3://$BUCKET/wattbot/pages.jsonl
 ```
+
+Optional, as an emergency switch: learners embed the corpus themselves in the Bedrock episode, which is the point of the step, but fifty notebooks sending 2,880 Titan calls each in the same ten minutes can be throttled hard enough to stall the room. After you have run the episode once yourself, copy its embedding matrix into the shared bucket so it is there if needed; the chunks are deterministic from `pages.jsonl`, so the vectors match.
+
+```bash
+aws s3 cp s3://<your-bucket>/wattbot/embeddings/embeddings_bedrock.npy s3://$BUCKET/wattbot/embeddings_bedrock.npy
+```
+
+If the room stalls, have learners run this one line before the embedding cell; the cell then finds the file locally and skips the calls:
+
+```python
+s3.download_file(shared_bucket, "wattbot/embeddings_bedrock.npy", str(emb_save_path))
+```
+
+Redo the copy whenever `pages.jsonl` or the chunking settings change.
 
 ## 4. Stage Badger Scribe (fine-tuning episode)
 

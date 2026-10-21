@@ -191,7 +191,7 @@ bedrock = boto3.client("bedrock", region_name=region)                  # control
 The retrieval, prompting, answer parsing and scoring logic of the WattBot pipeline is the same whether the models run on Bedrock, in a Processing job or on a notebook GPU. It lives once in the lesson repository, in `scripts/wattbot_rag.py`, and every RAG episode imports it; the only code that differs per episode is the two model calls. Clone the repository and copy the module next to this notebook (the Processing Jobs episode ships the same file inside its jobs).
 
 ```python
-!cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/wattbot_rag.py .
+!cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/wattbot_rag.py /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/Score.py .
 ```
 
 ```python
@@ -660,7 +660,20 @@ def embed_query(question: str) -> np.ndarray:
     return np.asarray(bedrock_embed_text(question), dtype="float32")
 ```
 
-Embedding 3,000 chunks is a few minutes and a few cents, so do not do it twice. The cell below looks for the finished matrix locally, then in your bucket, and only then computes it, saving progress every 500 chunks so an interrupted run picks up where it stopped. One small helper asks S3 whether an object exists.
+Embedding 3,000 chunks is a few minutes and a few cents, so do not do it twice. The cell after next looks for the finished matrix locally, then in your bucket, and only then computes it, saving progress every 500 chunks so an interrupted run picks up where it stopped.
+
+::::::::::::::::::::::::::::::::::::: callout
+
+### In a class, use the instructor's copy
+
+Bedrock allows this account 300,000 Titan embedding tokens per minute, and the quota is not adjustable. One notebook embedding this corpus uses almost all of it; a room of them shares it, so everyone's loop slows to a crawl of retries. In class, uncomment and run the cell below first: it downloads the matrix your instructor computed with the same chunks and the same model, and the cell after it finds the file and skips the calls. Working on your own, leave it commented and let the loop run; that is the step to practise.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+```python
+# In class only: the instructor's copy of the embeddings, same chunks, same model. Uncomment the next line, run, then run the cell below.
+# s3.download_file(shared_bucket, "wattbot/embeddings_bedrock.npy", str(emb_save_path))
+``` One small helper asks S3 whether an object exists.
 
 ```python
 def _s3_object_exists(bucket: str, key: str) -> bool:
@@ -817,14 +830,12 @@ results_df.head()
 
 ## Step 12 – Score against the training answers
 
-WattBot scores each prediction with three components: 0.75 for `answer_value` (numeric within ±0.1% relative tolerance, categorical exact match), 0.15 for the Jaccard overlap between predicted and ground-truth `ref_id` sets, and 0.10 for marking unanswerable questions correctly. `compute_wattbot_score` from `wattbot_rag.py` implements that, joins on `id`, and prints the worst-scoring rows so you can see *why* the pipeline lost points. `train_QA.csv` has no separate "unanswerable" column, so `gt_is_na_col="is_blank"` tells the scorer to derive that flag from `answer_value == "is_blank"` on both sides.
+WattBot scores each prediction with three components: 0.75 for `answer_value` (numeric within ±0.1% relative tolerance, categorical match after normalisation, and zero if you answer a question the corpus cannot answer), 0.20 for the F1 between your `ref_id` set and the ground-truth citations, and 0.05 for refusing cleanly, with every evidence field blank, when the answer is `is_blank`. The number comes from `Score.py`, the competition's own metric file, which `compute_wattbot_score` in `wattbot_rag.py` calls for the headline score so that what you see here is what the leaderboard would report. The wrapper adds a per-row score, joins on `id`, and prints the worst-scoring rows so you can see *why* the pipeline lost points. `train_QA.csv` has no separate "unanswerable" column, so `gt_is_na_col="is_blank"` tells the scorer to derive that flag from `answer_value == "is_blank"` on both sides.
 
 ```python
 scored_df = compute_wattbot_score(
     train_qa_path=train_qa_path,    # ground truth
     preds_path=output_path,         # our predictions, joined to it on id
-    gt_is_na_col="is_blank",        # no separate column: "unanswerable" means answer_value == "is_blank"
-    pred_is_na_col="is_blank",
     n_examples=20,
 )
 ```
@@ -855,7 +866,7 @@ for _, row in worst.iterrows():
         print(f"  passages it cited: {str(by_id.loc[qid, 'supporting_materials'])[:400]}")
 ```
 
-Read the two lines at the bottom of each block together. "Ground-truth paper retrieved: NO" is a retrieval problem: a different chunk size, a reranker, or a better embedding model is the fix, and no generator will help. "Yes" with `is_blank` is the model declining on evidence it had, which the system prompt and the retrieval threshold control. "Yes" with a wrong value is a reading error, and the cited passage usually shows what it latched onto: a nearby number, a different unit, a different model in the same table. Each of those is a different lever, and the score alone would have you pulling the wrong one.
+Read the two lines at the bottom of each block together. "Ground-truth paper retrieved: NO" is a retrieval problem: a different chunk size, a reranker, or a better embedding model is the fix, and no generator will help. "Yes" with `is_blank` is the model declining on evidence it had, which the system prompt and the retrieval threshold control. "Yes" with a wrong value is a reading error, and the cited passage usually shows what it latched onto: a nearby number, a different unit, a different model in the same table. And sometimes the explanation shows the model read correctly and the label is the problem: a question asking what inference "can account for" labelled 90 where three papers in the corpus give 60, 70 and 80 to 90 percent, so a range is arguably the better answer, or a fact that appears in several papers with the label naming only one of them. Labels are written by people. When the explanation convinces you, the fix is to the label, and the competition organisers want to hear about it. Each of those is a different lever, and the score alone would have you pulling the wrong one.
 
 ::::::::::::::::::::::::::::::::::::: challenge
 
