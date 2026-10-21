@@ -347,66 +347,74 @@ print("metadata:  ", metadata_s3)
 
 If the launch below fails at once with `ResourceLimitExceeded` naming an instance type, nothing in the notebook is wrong: the account's quota for that type is too low, and the increase is requested in [Service Quotas](https://us-east-2.console.aws.amazon.com/servicequotas/home/services/sagemaker/quotas) (days, for GPU types). On your own account, request `ml.g5.xlarge for processing job usage` before you start.
 
-Two settings on this processor matter more than on the embedding job. `volume_size_in_gb=60` attaches a 60 GB volume to the instance, mounted under `/opt/ml/processing`; the container's own root disk is small, so the 16 GB of model weights must not land there. `env={"HF_HOME": ...}` points Hugging Face's download cache at that volume, which is where the weights go.
+### What launching a job means
+
+This is the first GPU job you launch yourself in this episode (the embedding job above was staged for you in class), so here is the whole mechanism in plain terms. You describe a machine and point at a script. SageMaker rents the machine, copies the files you named from S3 onto its disk, runs your script on it, copies whatever the script wrote in its output folder back to S3, and shuts the machine down. The notebook does nothing but wait and show you the script's printed output. Nothing from this notebook's memory goes along: not `chunked_docs`, not `train_df`, not any function defined above. The script sees only the files you copied in and the arguments you gave it, which is why every input is an S3 location and every setting is a command-line flag. That is the same thing `estimator.fit` did in the fine-tuning episode, with one difference: a training job hands back a trained model, a Processing job hands back whatever files the script wrote, here a CSV of answers.
+
+The description is two cells. The first builds a `HuggingFaceProcessor`: which machine, which container image, how long it may run, whose tags it carries. Two of its settings matter more than on the embedding job. `volume_size_in_gb=60` attaches a 60 GB volume to the instance, mounted under `/opt/ml/processing`; the container's own root disk is small, so the 16 GB of model weights must not land there. `env={"HF_HOME": ...}` points Hugging Face's download cache at that volume, which is where the weights go.
 
 ```python
-rag_output_prefix = "wattbot/solutions"
+rag_output_prefix = "wattbot/solutions"                       # where this job's output lands in your bucket
 rag_output_path = f"s3://{bucket_name}/{rag_output_prefix}/"
 
-generation_model_id = "Qwen/Qwen3-8B"   # open-weight; Bedrock has the 32B and 235B, not this size. ~16 GB in bf16
+generation_model_id = "Qwen/Qwen3-8B"   # the Hugging Face name the job downloads; ~16 GB of bf16 weights
 
 rag_processor = HuggingFaceProcessor(
-    base_job_name="WattBot-rag-batch",
-    role=role,
-    tags=make_job_tags("Inference"),   # separate job, separate tags
-    instance_type="ml.g5.xlarge",      # 1 x A10G, 24 GB: holds the bf16 8B model plus KV cache
+    base_job_name="WattBot-rag-batch",   # SageMaker appends a timestamp; this is the name you look for on the Processing jobs page
+    role=role,                           # the IAM role the job runs under, to read your bucket and the shared one
+    tags=make_job_tags("Inference"),     # separate job, separate tags: nothing is inherited from the embedding job
+    instance_type="ml.g5.xlarge",        # 1 x A10G, 24 GB: holds the bf16 8B model plus the KV cache
     instance_count=1,
-    volume_size_in_gb=60,              # 16 GB of weights; mounted at /opt/ml/processing
-    env={"HF_HOME": "/opt/ml/processing/hf_cache"},   # put the weight download on that volume
-    transformers_version="4.56",
+    volume_size_in_gb=60,                # disk attached to the instance, mounted at /opt/ml/processing; the weights go here
+    env={"HF_HOME": "/opt/ml/processing/hf_cache"},   # environment variable in the container: Hugging Face downloads to this path
+    transformers_version="4.56",         # these three pick the prebuilt container image, the same one the embedding job used
     pytorch_version="2.8",
     py_version="py312",
     sagemaker_session=session,
-    max_runtime_in_seconds=2 * 60 * 60,   # 2 hours, in seconds; the estimate is 20 minutes
+    max_runtime_in_seconds=2 * 60 * 60,  # the cap: SageMaker kills the job after 2 hours; the estimate is 20 minutes
 )
+```
 
+The processor is only a description; nothing runs until `run`. Its arguments are the three things a job needs: the code (`code` and `source_dir`), the data (`inputs`, each an S3 location and the container path it is copied to before the script starts), and where the results go (`outputs`, a container path copied to S3 when the script ends). The `arguments` list is the script's command line, in the form its `argparse` expects.
+
+```python
 start = time.time()
 rag_processor.run(
-    code="wattbot_rag_batch.py",
-    source_dir="code_rag/",            # wattbot_rag_batch.py + wattbot_rag.py + hf_embedder.py
-    inputs=[
+    code="wattbot_rag_batch.py",       # the script the container runs...
+    source_dir="code_rag/",            # ...uploaded with everything beside it: wattbot_rag.py and hf_embedder.py, which it imports
+    inputs=[                           # each input: an S3 object, and the container path it is copied to before the script starts
         ProcessingInput(
-            source=chunks_s3_uri,
-            destination="/opt/ml/processing/input/chunks",   # four inputs, each in its own subdirectory
+            source=chunks_s3_uri,                              # the chunks, from your bucket
+            destination="/opt/ml/processing/input/chunks",     # four inputs, each in its own subdirectory
         ),
         ProcessingInput(
-            source=emb_output_s3,
+            source=emb_output_s3,                              # the gte-large matrix the embedding job wrote
             destination="/opt/ml/processing/input/embeddings",
         ),
         ProcessingInput(
-            source=train_qa_s3,
+            source=train_qa_s3,                                # the questions, from the shared bucket
             destination="/opt/ml/processing/input/train",
         ),
         ProcessingInput(
-            source=metadata_s3,
+            source=metadata_s3,                                # the paper index, to fill the ref_url column
             destination="/opt/ml/processing/input/metadata",
         ),
     ],
     outputs=[
         ProcessingOutput(
             output_name="solutions",
-            source="/opt/ml/processing/output",
-            destination=rag_output_path,
+            source="/opt/ml/processing/output",                # whatever the script writes here...
+            destination=rag_output_path,                       # ...is copied to this S3 prefix when the script ends
         )
     ],
-    arguments=[
-        "--input_dir", "/opt/ml/processing/input",
-        "--output_dir", "/opt/ml/processing/output",
-        "--embedding_model_id", embedding_model_id,
-        "--qwen_model_id", generation_model_id,
-        "--top_k", "8",
-        "--retrieval_threshold", "0.25",
-        "--per_type", "10",            # the same stratified sample the Bedrock episode scored (seed 0); drop it for all 245 questions
+    arguments=[                        # the script's command line: python wattbot_rag_batch.py --input_dir ... --top_k 8 ...
+        "--input_dir", "/opt/ml/processing/input",             # where the inputs above were mounted
+        "--output_dir", "/opt/ml/processing/output",           # where the script must write for the output copy to pick it up
+        "--embedding_model_id", embedding_model_id,            # the same model that embedded the chunks, to embed each question
+        "--qwen_model_id", generation_model_id,                # the generator
+        "--top_k", "8",                                        # chunks handed to the model per question
+        "--retrieval_threshold", "0.25",                       # best cosine below this => unanswerable
+        "--per_type", "10",                                    # the same stratified sample the Bedrock episode scored (seed 0); drop it for all the questions
     ],
 )
 

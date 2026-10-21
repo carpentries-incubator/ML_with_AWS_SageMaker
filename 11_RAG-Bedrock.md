@@ -892,7 +892,7 @@ Read the two lines at the bottom of each block together. "Ground-truth paper ret
 
 ### What did that run cost?
 
-Every `converse` response carried a `usage` block, and `call_bedrock_chat` kept them all in `bedrock_usage`. Sum the input and output tokens over the evaluation run and price them at the current on-demand rates for DeepSeek V3 on the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/) (fill the two prices in below). Add the embedding step: ~9,000 chunks of 1,200 characters at Titan Text Embeddings V2's `$0.02` per million input tokens. How does the total compare with the overview's estimate for "the whole WattBot pipeline on Bedrock", and with one hour of the `ml.g6e.xlarge` the Processing Jobs episode rents?
+Every `converse` response carried a `usage` block, and `call_bedrock_chat` kept them all in `bedrock_usage`. Sum the input and output tokens over the evaluation run and price them at the current on-demand rates for DeepSeek V3 on the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/) (fill the two prices in below). Add the embedding step: ~9,000 chunks of 1,200 characters at Titan Text Embeddings V2's `$0.02` per million input tokens. How does the total compare with the overview's estimate for "the whole WattBot pipeline on Bedrock", and with the `ml.g5.xlarge` GPU the Processing Jobs episode rents for the same questions, `$1.41` an hour?
 
 :::::::::::::::::::::::: solution
 
@@ -912,10 +912,10 @@ embed_cost = embed_tokens / 1e6 * 0.02
 
 print(f"{len(bedrock_usage)} generation calls: {in_tokens:,} input + {out_tokens:,} output tokens -> ${gen_cost:.3f}")
 print(f"~{embed_tokens:,.0f} embedding tokens -> ${embed_cost:.3f}")
-print(f"Total ~${gen_cost + embed_cost:.2f}; one hour of ml.g6e.xlarge is $2.61")
+print(f"Total ~${gen_cost + embed_cost:.2f}; the Processing Jobs episode rents an ml.g5.xlarge at $1.41 an hour for the same questions")
 ```
 
-With 53 questions, two calls each and ~1,500-token prompts, the run was 140K input and 9K output tokens: ten cents at DeepSeek V3's prices, plus five cents of embeddings for the 2.4 million tokens of corpus. All 245 questions is about half a dollar, which is the overview's estimate for the whole pipeline, and it is a small fraction of a single GPU-hour.
+With 53 questions, two calls each and ~1,500-token prompts, the run was 140K input and 9K output tokens: ten cents at DeepSeek V3's prices, plus five cents of embeddings for the 2.4 million tokens of corpus. All 245 questions is about half a dollar, which is the overview's estimate for the whole pipeline. The Processing Jobs episode answers the same 53 questions on a rented `ml.g5.xlarge` and bills about `$0.60` of GPU time for them, four times this run, most of it loading a model that Bedrock already has loaded.
 
 :::::::::::::::::::::::::::::::::
 
@@ -934,9 +934,13 @@ Keep the rest fixed. One change per experiment, or you will not know what moved 
 
 :::::::::::::::::::::::: solution
 
+Both solution cells start with `%%script false --no-raise-error`, which makes Jupyter skip the cell, so a Run All of the episode does not spend ten minutes here; delete that line to run one.
+
 **Generator.** `call_bedrock_chat` already takes a `model_id`, so the swap is a profile and a lambda:
 
 ```python
+%%script false --no-raise-error
+# Challenge solution: delete the line above to run this cell. It is skipped on Run All so the episode's own cells are not delayed by it.
 alt_generation_model_id = "us.amazon.nova-2-lite-v1:0"   # any chat model in the catalog with a converse API
 alt_model_arn = tagged_profile_arn(bedrock, alt_generation_model_id, "wattbot-gen-alt", name, project)
 
@@ -966,10 +970,12 @@ for m in bedrock.list_foundation_models(byOutputModality="EMBEDDING")["modelSumm
     print(f"{m['modelId']:<45} {m['providerName']}")
 ```
 
-Cohere's request takes a list of texts and says whether they are documents or a query; its response is a list of vectors, nested under the number type asked for. Everything else is Step 8 again: a tagged profile, one call per chunk, a cached matrix, and a query function that uses the same model.
+Cohere's request takes a list of texts and says whether they are documents or a query; its response is a list of vectors, nested under the number type asked for. One wrinkle: the catalog lists `cohere.embed-v4:0` for Ohio, but creating a profile on it fails with "does not support On Demand inference", because in this region the model is served only through the US cross-region profile, `us.cohere.embed-v4:0`. `tagged_profile_arn` catches that error and switches to the `us.` ID itself, which is the same thing that happens for Llama 4 and several other models. Everything else is Step 8 again: a tagged profile, one call per chunk, a cached matrix, and a query function that uses the same model.
 
 ```python
-cohere_model_id = "cohere.embed-v4:0"
+%%script false --no-raise-error
+# Challenge solution: delete the line above to run this cell. Ten minutes of embedding, so not in class.
+cohere_model_id = "cohere.embed-v4:0"   # listed for Ohio but served only through the US cross-region profile; tagged_profile_arn switches to us.cohere.embed-v4:0 on its own
 cohere_arn = tagged_profile_arn(bedrock, cohere_model_id, "wattbot-embed-cohere", name, project)
 
 def cohere_embed(text: str, input_type: str = "search_document") -> np.ndarray:
