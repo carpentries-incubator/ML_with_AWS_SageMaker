@@ -495,12 +495,11 @@ Bedrock-hosted model (DeepSeek V3) and score them against
 Select the <strong><code>conda_pytorch</code></strong> kernel. This is
 the first hands-on RAG episode, and it starts where the overview told
 you to start: <strong>Amazon Bedrock</strong>. We build a complete RAG
-pipeline for the <a href="https://www.kaggle.com/competitions/WattBot2025/overview" class="external-link">WattBot
-2025</a> challenge from a small, CPU-only SageMaker notebook. Nothing in
-this episode needs a GPU: the core model work — <strong>both text
-embeddings and answer generation</strong> — runs on Bedrock-hosted
-models that bill per token and leave nothing running between calls.
-We’ll use:</p>
+pipeline for the <a href="https://www.kaggle.com/competitions/WattBot2026" class="external-link">WattBot 2026</a>
+challenge from a small, CPU-only SageMaker notebook. Nothing in this
+episode needs a GPU: the core model work — <strong>both text embeddings
+and answer generation</strong> — runs on Bedrock-hosted models that bill
+per token and leave nothing running between calls. We’ll use:</p>
 <ul><li>an <strong>Amazon Titan Text Embeddings V2</strong> model to turn
 WattBot chunks into vectors, and<br></li>
 <li>a <strong>DeepSeek V3</strong> model hosted on Bedrock to generate
@@ -595,11 +594,11 @@ generation to keep the workflow simple, but the same RAG pattern extends
 naturally to multimodal models once you add an image‑extraction step to
 your preprocessing pipeline.</li>
 </ul></li>
-</ul><p>For a full catalog of available models (including Claude variants,
-Amazon models, and partner models), open the <strong>Model
-catalog</strong> in the Amazon Bedrock console. Each entry provides a
-model card with capabilities, typical use cases, and pricing details so
-learners can explore alternatives for their own RAG systems.</p>
+</ul><p>For the full list of available models (Claude variants, Amazon
+models, and partner models), open the <a href="https://us-east-2.console.aws.amazon.com/bedrock/home?region=us-east-2#/model-catalog" class="external-link">Model
+catalog</a> in the Amazon Bedrock console. Each entry has a model card
+with capabilities, typical use cases, and pricing, for exploring
+alternatives for your own RAG system.</p>
 <div id="choosing-the-two-models" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -1296,7 +1295,7 @@ month’s Bedrock spend by <code>Project</code>?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb17">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -1597,10 +1596,18 @@ refusing cleanly, with every evidence field blank, when the answer is
 <code>is_blank</code>. The number comes from <code>Score.py</code>, the
 competition’s own metric file, which <code>compute_wattbot_score</code>
 in <code>wattbot_rag.py</code> calls for the headline score so that what
-you see here is what the leaderboard would report. The wrapper adds a
-per-row score, joins on <code>id</code>, and prints the worst-scoring
-rows so you can see <em>why</em> the pipeline lost points.
-<code>train_QA.csv</code> has no separate “unanswerable” column, so
+you see here is what the leaderboard would report. It also prints the
+error rate by evidence type: whether each answer rests on a quoted
+sentence, a table, a figure, or a calculation. The competition’s
+solution file carries those flags; the public <code>train_QA.csv</code>
+only notes them in its <code>explanation</code> column, so the wrapper
+derives them from there. A question can carry several. Read that table
+before changing anything: figure and table questions failing while quote
+questions pass points at text extraction, which loses figures and
+flattens tables, not at the model. The wrapper adds a per-row score,
+joins on <code>id</code>, and prints the worst-scoring rows so you can
+see <em>why</em> the pipeline lost points. <code>train_QA.csv</code> has
+no separate “unanswerable” column, so
 <code>gt_is_na_col="is_blank"</code> tells the scorer to derive that
 flag from <code>answer_value == "is_blank"</code> on both sides.</p>
 <div class="codewrapper sourceCode" id="cb26">
@@ -1689,7 +1696,7 @@ of the <code>ml.g6e.xlarge</code> the Processing Jobs episode rents?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>The two prices are from the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
 for DeepSeek on-demand in October 2026; update them for the model and

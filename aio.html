@@ -1907,7 +1907,7 @@ any links that you are not going to use.
 </div>
 </section></section><section id="aio-04_Accessing-S3-via-SageMaker-notebooks"><p>Content from <a href="04_Accessing-S3-via-SageMaker-notebooks.html">Accessing and Managing Data in S3 with SageMaker Notebooks</a></p>
 <hr>
-<p>Last updated on 2026-10-20 |
+<p>Last updated on 2026-10-21 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/04_Accessing-S3-via-SageMaker-notebooks.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <div class="text-end">
@@ -1983,16 +1983,25 @@ the training jobs in later episodes will fail to find their data and
 anything you do read will be billed as cross-region transfer. If they
 differ, the fix is a new bucket in this region, not a new notebook
 instance.</p>
+<p>Work from a project folder beside the lesson clone, so downloads and
+outputs stay out of the repository. The Titanic episodes all use this
+one; the fine-tuning and RAG episodes make their own.</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="im">import</span> sagemaker                      <span class="co"># SageMaker Python SDK: higher-level API for training jobs, tuning, deployment</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1" aria-label="code-block-1-3"></a></span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1" aria-label="code-block-1-4"></a>role <span class="op">=</span> sagemaker.get_execution_role() <span class="co"># the IAM role attached to this notebook instance; every call below acts as this role</span></span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1" aria-label="code-block-1-5"></a>session <span class="op">=</span> sagemaker.Session()         <span class="co"># tracks the region, default bucket and SageMaker client for this notebook</span></span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1" aria-label="code-block-1-6"></a><span class="bu">print</span>(<span class="ss">f"Execution Role: </span><span class="sc">{</span>role<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb1-7"><a href="#cb1-7" tabindex="-1" aria-label="code-block-1-7"></a><span class="bu">print</span>(<span class="ss">f"AWS Region: </span><span class="sc">{</span>session<span class="sc">.</span>boto_region_name<span class="sc">}</span><span class="ss">"</span>)  <span class="co"># The region of the notebook instance; your bucket must be in this same region</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="op">!</span>mkdir <span class="op">-</span>p <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>titanic   <span class="co"># a project folder beside the lesson clone, so downloads and outputs stay out of the repository</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>titanic</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb2">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1" aria-label="code-block-2-1"></a><span class="im">import</span> sagemaker                      <span class="co"># SageMaker Python SDK: higher-level API for training jobs, tuning, deployment</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1" aria-label="code-block-2-2"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a>role <span class="op">=</span> sagemaker.get_execution_role() <span class="co"># the IAM role attached to this notebook instance; every call below acts as this role</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1" aria-label="code-block-2-5"></a>session <span class="op">=</span> sagemaker.Session()         <span class="co"># tracks the region, default bucket and SageMaker client for this notebook</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1" aria-label="code-block-2-6"></a><span class="bu">print</span>(<span class="ss">f"Execution Role: </span><span class="sc">{</span>role<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1" aria-label="code-block-2-7"></a><span class="bu">print</span>(<span class="ss">f"AWS Region: </span><span class="sc">{</span>session<span class="sc">.</span>boto_region_name<span class="sc">}</span><span class="ss">"</span>)  <span class="co"># The region of the notebook instance; your bucket must be in this same region</span></span></code></pre>
 </div>
 <div id="warnings-this-cell-prints" class="callout">
 <div class="callout-square">
@@ -2014,14 +2023,14 @@ warning.</p>
 </div>
 <p>Next, an S3 client, and a listing of the buckets this role can
 see.</p>
-<div class="codewrapper sourceCode" id="cb2">
+<div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1" aria-label="code-block-2-1"></a><span class="im">import</span> boto3                          <span class="co"># AWS SDK for Python: low-level access to every AWS service (S3, EC2, ...)</span></span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1" aria-label="code-block-2-2"></a></span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)               <span class="co"># client for S3 API calls (list, upload, download)</span></span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a>bucket_names <span class="op">=</span> [bucket[<span class="st">"Name"</span>] <span class="cf">for</span> bucket <span class="kw">in</span> s3.list_buckets()[<span class="st">"Buckets"</span>]]</span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1" aria-label="code-block-2-5"></a><span class="bu">print</span>(<span class="ss">f"Available S3 Buckets: </span><span class="sc">{</span>bucket_names<span class="sc">}</span><span class="ss">"</span>)  <span class="co"># Every bucket in the account this role can list, including other learners' buckets in a shared account</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a><span class="im">import</span> boto3                          <span class="co"># AWS SDK for Python: low-level access to every AWS service (S3, EC2, ...)</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1" aria-label="code-block-3-3"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)               <span class="co"># client for S3 API calls (list, upload, download)</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a>bucket_names <span class="op">=</span> [bucket[<span class="st">"Name"</span>] <span class="cf">for</span> bucket <span class="kw">in</span> s3.list_buckets()[<span class="st">"Buckets"</span>]]</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1" aria-label="code-block-3-5"></a><span class="bu">print</span>(<span class="ss">f"Available S3 Buckets: </span><span class="sc">{</span>bucket_names<span class="sc">}</span><span class="ss">"</span>)  <span class="co"># Every bucket in the account this role can list, including other learners' buckets in a shared account</span></span></code></pre>
 </div>
 </div>
 <section><h2 class="section-heading" id="reading-data-from-s3">Reading data from S3<a class="anchor" aria-label="anchor" href="#reading-data-from-s3"></a>
@@ -2071,29 +2080,29 @@ episode, named ‘challenge-lastnamefirstname’ (e.g., sinkorswim-doejohn).
 We can use the following code to read data directly from S3 into memory
 in the Jupyter notebook environment, without actually downloading a copy
 of train.csv as a local file.</p>
-<div class="codewrapper sourceCode" id="cb3">
+<div class="codewrapper sourceCode" id="cb4">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a><span class="co"># Define the S3 bucket and object key</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1" aria-label="code-block-3-3"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn'</span>  <span class="co"># replace with your S3 bucket name</span></span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a></span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1" aria-label="code-block-3-5"></a><span class="co"># Read the train data from S3</span></span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1" aria-label="code-block-3-6"></a>key <span class="op">=</span> <span class="st">'titanic_train.csv'</span>  <span class="co"># the object key: the file's path inside the bucket</span></span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1" aria-label="code-block-3-7"></a>response <span class="op">=</span> s3.get_object(Bucket<span class="op">=</span>bucket_name, Key<span class="op">=</span>key)  <span class="co"># fetch the object; its bytes arrive as a stream in response['Body']</span></span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1" aria-label="code-block-3-8"></a>train_data <span class="op">=</span> pd.read_csv(response[<span class="st">'Body'</span>])</span>
-<span id="cb3-9"><a href="#cb3-9" tabindex="-1" aria-label="code-block-3-9"></a></span>
-<span id="cb3-10"><a href="#cb3-10" tabindex="-1" aria-label="code-block-3-10"></a><span class="co"># Read the test data from S3</span></span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1" aria-label="code-block-3-11"></a>key <span class="op">=</span> <span class="st">'titanic_test.csv'</span></span>
-<span id="cb3-12"><a href="#cb3-12" tabindex="-1" aria-label="code-block-3-12"></a>response <span class="op">=</span> s3.get_object(Bucket<span class="op">=</span>bucket_name, Key<span class="op">=</span>key)</span>
-<span id="cb3-13"><a href="#cb3-13" tabindex="-1" aria-label="code-block-3-13"></a>test_data <span class="op">=</span> pd.read_csv(response[<span class="st">'Body'</span>])</span>
-<span id="cb3-14"><a href="#cb3-14" tabindex="-1" aria-label="code-block-3-14"></a></span>
-<span id="cb3-15"><a href="#cb3-15" tabindex="-1" aria-label="code-block-3-15"></a><span class="co"># check shape</span></span>
-<span id="cb3-16"><a href="#cb3-16" tabindex="-1" aria-label="code-block-3-16"></a><span class="bu">print</span>(train_data.shape)</span>
-<span id="cb3-17"><a href="#cb3-17" tabindex="-1" aria-label="code-block-3-17"></a><span class="bu">print</span>(test_data.shape)</span>
-<span id="cb3-18"><a href="#cb3-18" tabindex="-1" aria-label="code-block-3-18"></a></span>
-<span id="cb3-19"><a href="#cb3-19" tabindex="-1" aria-label="code-block-3-19"></a><span class="co"># Inspect the first few rows of the DataFrame</span></span>
-<span id="cb3-20"><a href="#cb3-20" tabindex="-1" aria-label="code-block-3-20"></a>train_data.head()</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a><span class="co"># Define the S3 bucket and object key</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn'</span>  <span class="co"># replace with your S3 bucket name</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1" aria-label="code-block-4-5"></a><span class="co"># Read the train data from S3</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1" aria-label="code-block-4-6"></a>key <span class="op">=</span> <span class="st">'titanic_train.csv'</span>  <span class="co"># the object key: the file's path inside the bucket</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1" aria-label="code-block-4-7"></a>response <span class="op">=</span> s3.get_object(Bucket<span class="op">=</span>bucket_name, Key<span class="op">=</span>key)  <span class="co"># fetch the object; its bytes arrive as a stream in response['Body']</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1" aria-label="code-block-4-8"></a>train_data <span class="op">=</span> pd.read_csv(response[<span class="st">'Body'</span>])</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1" aria-label="code-block-4-9"></a></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1" aria-label="code-block-4-10"></a><span class="co"># Read the test data from S3</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1" aria-label="code-block-4-11"></a>key <span class="op">=</span> <span class="st">'titanic_test.csv'</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1" aria-label="code-block-4-12"></a>response <span class="op">=</span> s3.get_object(Bucket<span class="op">=</span>bucket_name, Key<span class="op">=</span>key)</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1" aria-label="code-block-4-13"></a>test_data <span class="op">=</span> pd.read_csv(response[<span class="st">'Body'</span>])</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1" aria-label="code-block-4-14"></a></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1" aria-label="code-block-4-15"></a><span class="co"># check shape</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1" aria-label="code-block-4-16"></a><span class="bu">print</span>(train_data.shape)</span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1" aria-label="code-block-4-17"></a><span class="bu">print</span>(test_data.shape)</span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1" aria-label="code-block-4-18"></a></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1" aria-label="code-block-4-19"></a><span class="co"># Inspect the first few rows of the DataFrame</span></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1" aria-label="code-block-4-20"></a>train_data.head()</span></code></pre>
 </div>
 </div>
 </div>
@@ -2127,21 +2136,21 @@ until deleted.</li>
 <div class="section level4">
 <h4 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h4>
-<div class="codewrapper sourceCode" id="cb4">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="op">!</span>pwd</span></code></pre>
-</div>
 <div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="co"># Define the S3 bucket and file location</span></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a>key <span class="op">=</span> <span class="st">"titanic_train.csv"</span>  <span class="co"># Path to your file in the S3 bucket</span></span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a>local_file_path <span class="op">=</span> <span class="st">"/home/ec2-user/SageMaker/titanic_train.csv"</span>  <span class="co"># Local path to save the file</span></span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1" aria-label="code-block-5-4"></a></span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1" aria-label="code-block-5-5"></a><span class="co"># Copy the object to the instance's disk (unlike get_object above, which only read it into memory)</span></span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1" aria-label="code-block-5-6"></a>s3.download_file(bucket_name, key, local_file_path)</span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1" aria-label="code-block-5-7"></a><span class="op">!</span>ls <span class="st">"/home/ec2-user/SageMaker/"</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="op">!</span>pwd</span></code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb6">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="co"># Define the S3 bucket and file location</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a>key <span class="op">=</span> <span class="st">"titanic_train.csv"</span>  <span class="co"># Path to your file in the S3 bucket</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a>local_file_path <span class="op">=</span> <span class="st">"/home/ec2-user/SageMaker/titanic/titanic_train.csv"</span>  <span class="co"># Local path to save the file</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1" aria-label="code-block-6-5"></a><span class="co"># Copy the object to the instance's disk (unlike get_object above, which only read it into memory)</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1" aria-label="code-block-6-6"></a>s3.download_file(bucket_name, key, local_file_path)</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1" aria-label="code-block-6-7"></a><span class="op">!</span>ls <span class="st">"/home/ec2-user/SageMaker/titanic/"</span></span></code></pre>
 </div>
 <p><strong>Note</strong>: You may need to hit refresh on the file
 explorer panel to the left to see this file. If you get any permission
@@ -2178,33 +2187,33 @@ dividing by <code>1024 ** 2</code> converts it to megabytes (MB).</li>
 want to check specific folders within a bucket, you may want to refine
 this code to only fetch certain objects or folders.</p>
 </blockquote>
-<div class="codewrapper sourceCode" id="cb6">
+<div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="co"># Initialize the total size counter (bytes)</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a>total_size_bytes <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a><span class="co"># Use a paginator to handle large bucket listings (one list call returns at most 1000 objects)</span></span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1" aria-label="code-block-6-5"></a><span class="co"># This ensures that even if the bucket contains many objects, we can retrieve all of them</span></span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1" aria-label="code-block-6-6"></a>paginator <span class="op">=</span> s3.get_paginator(<span class="st">"list_objects_v2"</span>)</span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1" aria-label="code-block-6-7"></a></span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1" aria-label="code-block-6-8"></a><span class="co"># Iterate through all pages of object listings</span></span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1" aria-label="code-block-6-9"></a><span class="cf">for</span> page <span class="kw">in</span> paginator.paginate(Bucket<span class="op">=</span>bucket_name):</span>
-<span id="cb6-10"><a href="#cb6-10" tabindex="-1" aria-label="code-block-6-10"></a>    <span class="co"># 'Contents' contains the list of objects in the current page, if available</span></span>
-<span id="cb6-11"><a href="#cb6-11" tabindex="-1" aria-label="code-block-6-11"></a>    <span class="cf">for</span> obj <span class="kw">in</span> page.get(<span class="st">"Contents"</span>, []):  </span>
-<span id="cb6-12"><a href="#cb6-12" tabindex="-1" aria-label="code-block-6-12"></a>        total_size_bytes <span class="op">+=</span> obj[<span class="st">"Size"</span>]  <span class="co"># Add each object's size to the total</span></span>
-<span id="cb6-13"><a href="#cb6-13" tabindex="-1" aria-label="code-block-6-13"></a></span>
-<span id="cb6-14"><a href="#cb6-14" tabindex="-1" aria-label="code-block-6-14"></a><span class="co"># Convert the total size to gigabytes for cost estimation</span></span>
-<span id="cb6-15"><a href="#cb6-15" tabindex="-1" aria-label="code-block-6-15"></a>total_size_gb <span class="op">=</span> total_size_bytes <span class="op">/</span> (<span class="dv">1024</span> <span class="op">**</span> <span class="dv">3</span>)</span>
-<span id="cb6-16"><a href="#cb6-16" tabindex="-1" aria-label="code-block-6-16"></a></span>
-<span id="cb6-17"><a href="#cb6-17" tabindex="-1" aria-label="code-block-6-17"></a><span class="co"># Convert the total size to megabytes for easier readability</span></span>
-<span id="cb6-18"><a href="#cb6-18" tabindex="-1" aria-label="code-block-6-18"></a>total_size_mb <span class="op">=</span> total_size_bytes <span class="op">/</span> (<span class="dv">1024</span> <span class="op">**</span> <span class="dv">2</span>)</span>
-<span id="cb6-19"><a href="#cb6-19" tabindex="-1" aria-label="code-block-6-19"></a></span>
-<span id="cb6-20"><a href="#cb6-20" tabindex="-1" aria-label="code-block-6-20"></a><span class="co"># Print the total size in MB</span></span>
-<span id="cb6-21"><a href="#cb6-21" tabindex="-1" aria-label="code-block-6-21"></a><span class="bu">print</span>(<span class="ss">f"Total size of bucket '</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">': </span><span class="sc">{</span>total_size_mb<span class="sc">:.2f}</span><span class="ss"> MB"</span>)</span>
-<span id="cb6-22"><a href="#cb6-22" tabindex="-1" aria-label="code-block-6-22"></a></span>
-<span id="cb6-23"><a href="#cb6-23" tabindex="-1" aria-label="code-block-6-23"></a><span class="co"># Print the total size in GB</span></span>
-<span id="cb6-24"><a href="#cb6-24" tabindex="-1" aria-label="code-block-6-24"></a><span class="co">#print(f"Total size of bucket '{bucket_name}': {total_size_gb:.2f} GB")</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a><span class="co"># Initialize the total size counter (bytes)</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1" aria-label="code-block-7-2"></a>total_size_bytes <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1" aria-label="code-block-7-3"></a></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1" aria-label="code-block-7-4"></a><span class="co"># Use a paginator to handle large bucket listings (one list call returns at most 1000 objects)</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1" aria-label="code-block-7-5"></a><span class="co"># This ensures that even if the bucket contains many objects, we can retrieve all of them</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1" aria-label="code-block-7-6"></a>paginator <span class="op">=</span> s3.get_paginator(<span class="st">"list_objects_v2"</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1" aria-label="code-block-7-7"></a></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1" aria-label="code-block-7-8"></a><span class="co"># Iterate through all pages of object listings</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1" aria-label="code-block-7-9"></a><span class="cf">for</span> page <span class="kw">in</span> paginator.paginate(Bucket<span class="op">=</span>bucket_name):</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1" aria-label="code-block-7-10"></a>    <span class="co"># 'Contents' contains the list of objects in the current page, if available</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1" aria-label="code-block-7-11"></a>    <span class="cf">for</span> obj <span class="kw">in</span> page.get(<span class="st">"Contents"</span>, []):  </span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1" aria-label="code-block-7-12"></a>        total_size_bytes <span class="op">+=</span> obj[<span class="st">"Size"</span>]  <span class="co"># Add each object's size to the total</span></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1" aria-label="code-block-7-13"></a></span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1" aria-label="code-block-7-14"></a><span class="co"># Convert the total size to gigabytes for cost estimation</span></span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1" aria-label="code-block-7-15"></a>total_size_gb <span class="op">=</span> total_size_bytes <span class="op">/</span> (<span class="dv">1024</span> <span class="op">**</span> <span class="dv">3</span>)</span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1" aria-label="code-block-7-16"></a></span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1" aria-label="code-block-7-17"></a><span class="co"># Convert the total size to megabytes for easier readability</span></span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1" aria-label="code-block-7-18"></a>total_size_mb <span class="op">=</span> total_size_bytes <span class="op">/</span> (<span class="dv">1024</span> <span class="op">**</span> <span class="dv">2</span>)</span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1" aria-label="code-block-7-19"></a></span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1" aria-label="code-block-7-20"></a><span class="co"># Print the total size in MB</span></span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1" aria-label="code-block-7-21"></a><span class="bu">print</span>(<span class="ss">f"Total size of bucket '</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">': </span><span class="sc">{</span>total_size_mb<span class="sc">:.2f}</span><span class="ss"> MB"</span>)</span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1" aria-label="code-block-7-22"></a></span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1" aria-label="code-block-7-23"></a><span class="co"># Print the total size in GB</span></span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1" aria-label="code-block-7-24"></a><span class="co">#print(f"Total size of bucket '{bucket_name}': {total_size_gb:.2f} GB")</span></span></code></pre>
 </div>
 </div>
 </div>
@@ -2218,21 +2227,21 @@ convenience. There are also some other helper functions in
 cloned to <code>/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/</code>
 in the previous episode.</p>
 <p>Tell Python where the lesson’s <code>scripts/</code> folder is:</p>
-<div class="codewrapper sourceCode" id="cb7">
+<div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a><span class="im">import</span> sys</span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1" aria-label="code-block-7-2"></a><span class="co"># Put the lesson's scripts/ folder first on Python's import path</span></span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1" aria-label="code-block-7-3"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)</span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1" aria-label="code-block-7-4"></a><span class="im">import</span> helpers  <span class="co"># the lesson's helper functions (bucket size, cost estimate, object listing)</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" tabindex="-1" aria-label="code-block-8-1"></a><span class="im">import</span> sys</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1" aria-label="code-block-8-2"></a><span class="co"># Put the lesson's scripts/ folder first on Python's import path</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1" aria-label="code-block-8-3"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1" aria-label="code-block-8-4"></a><span class="im">import</span> helpers  <span class="co"># the lesson's helper functions (bucket size, cost estimate, object listing)</span></span></code></pre>
 </div>
 <p>Our helpers.py file can be found in
 <code>ML_with_AWS_SageMaker/scripts/helpers.py</code>. With this file
 downloaded, you can call this function via…</p>
-<div class="codewrapper sourceCode" id="cb8">
+<div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" tabindex="-1" aria-label="code-block-8-1"></a>helpers.get_s3_bucket_size(bucket_name)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a>helpers.get_s3_bucket_size(bucket_name)</span></code></pre>
 </div>
 </div>
 <div class="section level3">
@@ -2246,40 +2255,40 @@ storage cost based on AWS S3 pricing.</p>
 class. The example below uses the S3 Standard storage class pricing for
 the US East (N. Virginia) region as of November 1, 2024. Please verify
 the current pricing for your specific region and storage class on the <a href="https://aws.amazon.com/s3/pricing/" class="external-link">AWS S3 Pricing page</a>.</p>
-<div class="codewrapper sourceCode" id="cb9">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a><span class="co"># AWS S3 Standard Storage pricing for US East (N. Virginia) region</span></span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a><span class="co"># Pricing tiers as of November 1, 2024</span></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1" aria-label="code-block-9-3"></a>first_50_tb_price_per_gb <span class="op">=</span> <span class="fl">0.023</span>  <span class="co"># per GB for the first 50 TB</span></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a>next_450_tb_price_per_gb <span class="op">=</span> <span class="fl">0.022</span>  <span class="co"># per GB for the next 450 TB</span></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a>over_500_tb_price_per_gb <span class="op">=</span> <span class="fl">0.021</span>  <span class="co"># per GB for storage over 500 TB</span></span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1" aria-label="code-block-9-6"></a></span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1" aria-label="code-block-9-7"></a><span class="co"># Calculate the cost based on the size</span></span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1" aria-label="code-block-9-8"></a><span class="cf">if</span> total_size_gb <span class="op">&lt;=</span> <span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span>:</span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1" aria-label="code-block-9-9"></a>    <span class="co"># Total size is within the first 50 TB</span></span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1" aria-label="code-block-9-10"></a>    cost <span class="op">=</span> total_size_gb <span class="op">*</span> first_50_tb_price_per_gb</span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1" aria-label="code-block-9-11"></a><span class="cf">elif</span> total_size_gb <span class="op">&lt;=</span> <span class="dv">500</span> <span class="op">*</span> <span class="dv">1024</span>:</span>
-<span id="cb9-12"><a href="#cb9-12" tabindex="-1" aria-label="code-block-9-12"></a>    <span class="co"># Total size is within the next 450 TB</span></span>
-<span id="cb9-13"><a href="#cb9-13" tabindex="-1" aria-label="code-block-9-13"></a>    cost <span class="op">=</span> (<span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> first_50_tb_price_per_gb) <span class="op">+</span> <span class="op">\</span></span>
-<span id="cb9-14"><a href="#cb9-14" tabindex="-1" aria-label="code-block-9-14"></a>           ((total_size_gb <span class="op">-</span> <span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span>) <span class="op">*</span> next_450_tb_price_per_gb)</span>
-<span id="cb9-15"><a href="#cb9-15" tabindex="-1" aria-label="code-block-9-15"></a><span class="cf">else</span>:</span>
-<span id="cb9-16"><a href="#cb9-16" tabindex="-1" aria-label="code-block-9-16"></a>    <span class="co"># Total size is over 500 TB</span></span>
-<span id="cb9-17"><a href="#cb9-17" tabindex="-1" aria-label="code-block-9-17"></a>    cost <span class="op">=</span> (<span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> first_50_tb_price_per_gb) <span class="op">+</span> <span class="op">\</span></span>
-<span id="cb9-18"><a href="#cb9-18" tabindex="-1" aria-label="code-block-9-18"></a>           (<span class="dv">450</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> next_450_tb_price_per_gb) <span class="op">+</span> <span class="op">\</span></span>
-<span id="cb9-19"><a href="#cb9-19" tabindex="-1" aria-label="code-block-9-19"></a>           ((total_size_gb <span class="op">-</span> <span class="dv">500</span> <span class="op">*</span> <span class="dv">1024</span>) <span class="op">*</span> over_500_tb_price_per_gb)</span>
-<span id="cb9-20"><a href="#cb9-20" tabindex="-1" aria-label="code-block-9-20"></a></span>
-<span id="cb9-21"><a href="#cb9-21" tabindex="-1" aria-label="code-block-9-21"></a><span class="bu">print</span>(<span class="ss">f"Estimated monthly storage cost: $</span><span class="sc">{</span>cost<span class="sc">:.5f}</span><span class="ss">"</span>)</span>
-<span id="cb9-22"><a href="#cb9-22" tabindex="-1" aria-label="code-block-9-22"></a><span class="bu">print</span>(<span class="ss">f"Estimated annual storage cost: $</span><span class="sc">{</span>cost<span class="op">*</span><span class="dv">12</span><span class="sc">:.5f}</span><span class="ss">"</span>)</span></code></pre>
-</div>
-<p>For your convenience, we have also added this code to a helper
-function.</p>
 <div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a>monthly_cost, storage_size_gb <span class="op">=</span> helpers.calculate_s3_storage_cost(bucket_name)</span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a><span class="bu">print</span>(<span class="ss">f"Estimated monthly cost (</span><span class="sc">{</span>storage_size_gb<span class="sc">:.4f}</span><span class="ss"> GB): $</span><span class="sc">{</span>monthly_cost<span class="sc">:.5f}</span><span class="ss">"</span>)</span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1" aria-label="code-block-10-3"></a><span class="bu">print</span>(<span class="ss">f"Estimated annual cost (</span><span class="sc">{</span>storage_size_gb<span class="sc">:.4f}</span><span class="ss"> GB): $</span><span class="sc">{</span>monthly_cost<span class="op">*</span><span class="dv">12</span><span class="sc">:.5f}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a><span class="co"># AWS S3 Standard Storage pricing for US East (N. Virginia) region</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a><span class="co"># Pricing tiers as of November 1, 2024</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1" aria-label="code-block-10-3"></a>first_50_tb_price_per_gb <span class="op">=</span> <span class="fl">0.023</span>  <span class="co"># per GB for the first 50 TB</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1" aria-label="code-block-10-4"></a>next_450_tb_price_per_gb <span class="op">=</span> <span class="fl">0.022</span>  <span class="co"># per GB for the next 450 TB</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1" aria-label="code-block-10-5"></a>over_500_tb_price_per_gb <span class="op">=</span> <span class="fl">0.021</span>  <span class="co"># per GB for storage over 500 TB</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1" aria-label="code-block-10-6"></a></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1" aria-label="code-block-10-7"></a><span class="co"># Calculate the cost based on the size</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1" aria-label="code-block-10-8"></a><span class="cf">if</span> total_size_gb <span class="op">&lt;=</span> <span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span>:</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1" aria-label="code-block-10-9"></a>    <span class="co"># Total size is within the first 50 TB</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1" aria-label="code-block-10-10"></a>    cost <span class="op">=</span> total_size_gb <span class="op">*</span> first_50_tb_price_per_gb</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1" aria-label="code-block-10-11"></a><span class="cf">elif</span> total_size_gb <span class="op">&lt;=</span> <span class="dv">500</span> <span class="op">*</span> <span class="dv">1024</span>:</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1" aria-label="code-block-10-12"></a>    <span class="co"># Total size is within the next 450 TB</span></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1" aria-label="code-block-10-13"></a>    cost <span class="op">=</span> (<span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> first_50_tb_price_per_gb) <span class="op">+</span> <span class="op">\</span></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1" aria-label="code-block-10-14"></a>           ((total_size_gb <span class="op">-</span> <span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span>) <span class="op">*</span> next_450_tb_price_per_gb)</span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1" aria-label="code-block-10-15"></a><span class="cf">else</span>:</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1" aria-label="code-block-10-16"></a>    <span class="co"># Total size is over 500 TB</span></span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1" aria-label="code-block-10-17"></a>    cost <span class="op">=</span> (<span class="dv">50</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> first_50_tb_price_per_gb) <span class="op">+</span> <span class="op">\</span></span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1" aria-label="code-block-10-18"></a>           (<span class="dv">450</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> next_450_tb_price_per_gb) <span class="op">+</span> <span class="op">\</span></span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1" aria-label="code-block-10-19"></a>           ((total_size_gb <span class="op">-</span> <span class="dv">500</span> <span class="op">*</span> <span class="dv">1024</span>) <span class="op">*</span> over_500_tb_price_per_gb)</span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1" aria-label="code-block-10-20"></a></span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1" aria-label="code-block-10-21"></a><span class="bu">print</span>(<span class="ss">f"Estimated monthly storage cost: $</span><span class="sc">{</span>cost<span class="sc">:.5f}</span><span class="ss">"</span>)</span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1" aria-label="code-block-10-22"></a><span class="bu">print</span>(<span class="ss">f"Estimated annual storage cost: $</span><span class="sc">{</span>cost<span class="op">*</span><span class="dv">12</span><span class="sc">:.5f}</span><span class="ss">"</span>)</span></code></pre>
+</div>
+<p>For your convenience, we have also added this code to a helper
+function.</p>
+<div class="codewrapper sourceCode" id="cb11">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a>monthly_cost, storage_size_gb <span class="op">=</span> helpers.calculate_s3_storage_cost(bucket_name)</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a><span class="bu">print</span>(<span class="ss">f"Estimated monthly cost (</span><span class="sc">{</span>storage_size_gb<span class="sc">:.4f}</span><span class="ss"> GB): $</span><span class="sc">{</span>monthly_cost<span class="sc">:.5f}</span><span class="ss">"</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a><span class="bu">print</span>(<span class="ss">f"Estimated annual cost (</span><span class="sc">{</span>storage_size_gb<span class="sc">:.4f}</span><span class="ss"> GB): $</span><span class="sc">{</span>monthly_cost<span class="op">*</span><span class="dv">12</span><span class="sc">:.5f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <p><strong>Important Considerations</strong>:</p>
 <ul>
@@ -2312,47 +2321,47 @@ page</a>.</p>
 documentation, you can upload files to your bucket as demonstrated
 below. For this demo, we write a small <code>Notes.txt</code> file on
 the instance and check that it exists:</p>
-<div class="codewrapper sourceCode" id="cb11">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a>notes_file_path <span class="op">=</span> <span class="st">"/home/ec2-user/SageMaker/Notes.txt"</span></span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a><span class="cf">with</span> <span class="bu">open</span>(notes_file_path, <span class="st">"w"</span>) <span class="im">as</span> f:</span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a>    f.write(<span class="st">"Workshop notes.</span><span class="ch">\n</span><span class="st">"</span>)</span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a></span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1" aria-label="code-block-11-5"></a><span class="op">!</span>ls <span class="op">-</span>l <span class="st">"/home/ec2-user/SageMaker/Notes.txt"</span></span></code></pre>
-</div>
-<p>Then upload it. Here it goes under a <code>docs/</code> prefix; drop
-the <code>docs/</code> to put it in the bucket’s root instead.</p>
 <div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1" aria-label="code-block-12-1"></a>notes_s3_key <span class="op">=</span> <span class="st">"docs/Notes.txt"</span>   <span class="co"># the object key: a "docs/" prefix plus the file name</span></span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1" aria-label="code-block-12-2"></a><span class="co"># local file -&gt; bucket + key; S3 has no real folders, the "docs/" prefix exists as soon as one key uses it</span></span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1" aria-label="code-block-12-3"></a>s3.upload_file(notes_file_path, bucket_name, notes_s3_key)</span>
-<span id="cb12-4"><a href="#cb12-4" tabindex="-1" aria-label="code-block-12-4"></a><span class="bu">print</span>(<span class="ss">f"Uploaded </span><span class="sc">{</span>notes_file_path<span class="sc">}</span><span class="ss"> to s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>notes_s3_key<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1" aria-label="code-block-12-1"></a>notes_file_path <span class="op">=</span> <span class="st">"/home/ec2-user/SageMaker/titanic/Notes.txt"</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1" aria-label="code-block-12-2"></a><span class="cf">with</span> <span class="bu">open</span>(notes_file_path, <span class="st">"w"</span>) <span class="im">as</span> f:</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1" aria-label="code-block-12-3"></a>    f.write(<span class="st">"Workshop notes.</span><span class="ch">\n</span><span class="st">"</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1" aria-label="code-block-12-4"></a></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1" aria-label="code-block-12-5"></a><span class="op">!</span>ls <span class="op">-</span>l <span class="st">"/home/ec2-user/SageMaker/titanic/Notes.txt"</span></span></code></pre>
 </div>
-<p>After uploading, we can view the objects/files available on our
-bucket using…</p>
+<p>Then upload it. Here it goes under a <code>docs/</code> prefix; drop
+the <code>docs/</code> to put it in the bucket’s root instead.</p>
 <div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1" aria-label="code-block-13-1"></a><span class="co"># List and print all objects in the bucket</span></span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1" aria-label="code-block-13-2"></a>response <span class="op">=</span> s3.list_objects_v2(Bucket<span class="op">=</span>bucket_name)  <span class="co"># one page (up to 1000 keys); the paginator above handles more</span></span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a></span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1" aria-label="code-block-13-4"></a><span class="co"># Check if there are objects in the bucket</span></span>
-<span id="cb13-5"><a href="#cb13-5" tabindex="-1" aria-label="code-block-13-5"></a><span class="cf">if</span> <span class="st">'Contents'</span> <span class="kw">in</span> response:</span>
-<span id="cb13-6"><a href="#cb13-6" tabindex="-1" aria-label="code-block-13-6"></a>    <span class="cf">for</span> obj <span class="kw">in</span> response[<span class="st">'Contents'</span>]:</span>
-<span id="cb13-7"><a href="#cb13-7" tabindex="-1" aria-label="code-block-13-7"></a>        <span class="bu">print</span>(obj[<span class="st">'Key'</span>])  <span class="co"># Print the object's key (its path in the bucket)</span></span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1" aria-label="code-block-13-8"></a><span class="cf">else</span>:</span>
-<span id="cb13-9"><a href="#cb13-9" tabindex="-1" aria-label="code-block-13-9"></a>    <span class="bu">print</span>(<span class="st">"The bucket is empty or does not exist."</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1" aria-label="code-block-13-1"></a>notes_s3_key <span class="op">=</span> <span class="st">"docs/Notes.txt"</span>   <span class="co"># the object key: a "docs/" prefix plus the file name</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1" aria-label="code-block-13-2"></a><span class="co"># local file -&gt; bucket + key; S3 has no real folders, the "docs/" prefix exists as soon as one key uses it</span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a>s3.upload_file(notes_file_path, bucket_name, notes_s3_key)</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1" aria-label="code-block-13-4"></a><span class="bu">print</span>(<span class="ss">f"Uploaded </span><span class="sc">{</span>notes_file_path<span class="sc">}</span><span class="ss"> to s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>notes_s3_key<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<p>Alternatively, we can substitute this for a helper function call as
-well.</p>
+<p>After uploading, we can view the objects/files available on our
+bucket using…</p>
 <div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a>file_list <span class="op">=</span> helpers.list_S3_objects(bucket_name)</span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1" aria-label="code-block-14-2"></a>file_list</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a><span class="co"># List and print all objects in the bucket</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1" aria-label="code-block-14-2"></a>response <span class="op">=</span> s3.list_objects_v2(Bucket<span class="op">=</span>bucket_name)  <span class="co"># one page (up to 1000 keys); the paginator above handles more</span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1" aria-label="code-block-14-3"></a></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1" aria-label="code-block-14-4"></a><span class="co"># Check if there are objects in the bucket</span></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1" aria-label="code-block-14-5"></a><span class="cf">if</span> <span class="st">'Contents'</span> <span class="kw">in</span> response:</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1" aria-label="code-block-14-6"></a>    <span class="cf">for</span> obj <span class="kw">in</span> response[<span class="st">'Contents'</span>]:</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1" aria-label="code-block-14-7"></a>        <span class="bu">print</span>(obj[<span class="st">'Key'</span>])  <span class="co"># Print the object's key (its path in the bucket)</span></span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1" aria-label="code-block-14-8"></a><span class="cf">else</span>:</span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1" aria-label="code-block-14-9"></a>    <span class="bu">print</span>(<span class="st">"The bucket is empty or does not exist."</span>)</span></code></pre>
+</div>
+<p>Alternatively, we can substitute this for a helper function call as
+well.</p>
+<div class="codewrapper sourceCode" id="cb15">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a>file_list <span class="op">=</span> helpers.list_S3_objects(bucket_name)</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a>file_list</span></code></pre>
 </div>
 <div id="challenge-before-and-after" class="callout challenge">
 <div class="callout-square">
@@ -2382,22 +2391,22 @@ bucket per task?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>One way to do it:</li>
 </ol>
-<div class="codewrapper sourceCode" id="cb15">
+<div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a>size_before <span class="op">=</span> helpers.get_s3_bucket_size(bucket_name)</span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a></span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1" aria-label="code-block-15-3"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">"Notes2.txt"</span>, <span class="st">"w"</span>) <span class="im">as</span> f:</span>
-<span id="cb15-4"><a href="#cb15-4" tabindex="-1" aria-label="code-block-15-4"></a>    f.write(<span class="st">"A second note, to see the bucket grow.</span><span class="ch">\n</span><span class="st">"</span> <span class="op">*</span> <span class="dv">20</span>)</span>
-<span id="cb15-5"><a href="#cb15-5" tabindex="-1" aria-label="code-block-15-5"></a>s3.upload_file(<span class="st">"Notes2.txt"</span>, bucket_name, <span class="st">"docs/Notes2.txt"</span>)</span>
-<span id="cb15-6"><a href="#cb15-6" tabindex="-1" aria-label="code-block-15-6"></a></span>
-<span id="cb15-7"><a href="#cb15-7" tabindex="-1" aria-label="code-block-15-7"></a>size_after <span class="op">=</span> helpers.get_s3_bucket_size(bucket_name)</span>
-<span id="cb15-8"><a href="#cb15-8" tabindex="-1" aria-label="code-block-15-8"></a><span class="bu">print</span>(size_before, size_after)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a>size_before <span class="op">=</span> helpers.get_s3_bucket_size(bucket_name)</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a></span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">"Notes2.txt"</span>, <span class="st">"w"</span>) <span class="im">as</span> f:</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a>    f.write(<span class="st">"A second note, to see the bucket grow.</span><span class="ch">\n</span><span class="st">"</span> <span class="op">*</span> <span class="dv">20</span>)</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a>s3.upload_file(<span class="st">"Notes2.txt"</span>, bucket_name, <span class="st">"docs/Notes2.txt"</span>)</span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a></span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1" aria-label="code-block-16-7"></a>size_after <span class="op">=</span> helpers.get_s3_bucket_size(bucket_name)</span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1" aria-label="code-block-16-8"></a><span class="bu">print</span>(size_before, size_after)</span></code></pre>
 </div>
 <p>The bucket grows by the size of the file (a few hundred bytes here),
 and at <code>$0.023</code> per GB-month that is well under a thousandth
@@ -3010,22 +3019,22 @@ for the next two episodes. The <code>conda_python3</code> kernel has no
 PyTorch, and on current instances no scikit-learn either.</p>
 </div>
 <div class="section level4">
-<h4 id="cd-to-instance-home-directory">2. CD to instance home directory<a class="anchor" aria-label="anchor" href="#cd-to-instance-home-directory"></a>
+<h4 id="move-to-the-project-folder-and-import-the-helpers">2. Move to the project folder and import the helpers<a class="anchor" aria-label="anchor" href="#move-to-the-project-folder-and-import-the-helpers"></a>
 </h4>
-<p>So we all can reference the helper functions using the same path, CD
-to the instance’s root directory and make the lesson repository’s
-<code>scripts/</code> importable. The training scripts for this episode
-(<code>train_xgboost.py</code>) and the next (<code>train_nn.py</code>)
-are in that folder.</p>
+<p>Work from the Titanic project folder the S3 episode created, and make
+the lesson repository’s <code>scripts/</code> importable. The training
+scripts for this episode (<code>train_xgboost.py</code>) and the next
+(<code>train_nn.py</code>) are in that folder.</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="co"># Work from the instance root: the %run, source_dir and download paths below are relative to it</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span></span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1" aria-label="code-block-1-3"></a><span class="im">import</span> sys</span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1" aria-label="code-block-1-4"></a><span class="co"># Put the lesson's scripts/ folder on Python's import path</span></span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1" aria-label="code-block-1-5"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)</span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1" aria-label="code-block-1-6"></a><span class="im">import</span> helpers  <span class="co"># lesson helper functions; train_xgboost.py lives in the same folder</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="co"># The Titanic project folder from the S3 episode, beside the lesson clone: downloads and outputs land here, not in the repository</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="op">!</span>mkdir <span class="op">-</span>p <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>titanic</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1" aria-label="code-block-1-3"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>titanic</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1" aria-label="code-block-1-4"></a><span class="im">import</span> sys</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1" aria-label="code-block-1-5"></a><span class="co"># Put the lesson's scripts/ folder on Python's import path</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1" aria-label="code-block-1-6"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1" aria-label="code-block-1-7"></a><span class="im">import</span> helpers  <span class="co"># lesson helper functions; train_xgboost.py lives in the same folder</span></span></code></pre>
 </div>
 </div>
 <div class="section level4">
@@ -3422,7 +3431,7 @@ job.</p>
 <span id="cb9-12"><a href="#cb9-12" tabindex="-1" aria-label="code-block-9-12"></a>train_file <span class="op">=</span> <span class="st">'titanic_train.csv'</span> <span class="co">#  Points to the location of the training data</span></span>
 <span id="cb9-13"><a href="#cb9-13" tabindex="-1" aria-label="code-block-9-13"></a></span>
 <span id="cb9-14"><a href="#cb9-14" tabindex="-1" aria-label="code-block-9-14"></a><span class="co"># %run executes the script in this kernel; IPython substitutes the Python variables in {braces} into the arguments</span></span>
-<span id="cb9-15"><a href="#cb9-15" tabindex="-1" aria-label="code-block-9-15"></a><span class="op">%</span>run ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>train_xgboost.py <span class="op">--</span>max_depth {max_depth} <span class="op">--</span>eta {eta} <span class="op">--</span>subsample {subsample} <span class="op">--</span>colsample_bytree {colsample_bytree} <span class="op">--</span>num_round {num_round} <span class="op">--</span>train {train_file}</span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1" aria-label="code-block-9-15"></a><span class="op">%</span>run <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>train_xgboost.py <span class="op">--</span>max_depth {max_depth} <span class="op">--</span>eta {eta} <span class="op">--</span>subsample {subsample} <span class="op">--</span>colsample_bytree {colsample_bytree} <span class="op">--</span>num_round {num_round} <span class="op">--</span>train {train_file}</span>
 <span id="cb9-16"><a href="#cb9-16" tabindex="-1" aria-label="code-block-9-16"></a></span>
 <span id="cb9-17"><a href="#cb9-17" tabindex="-1" aria-label="code-block-9-17"></a><span class="co"># Measure and print the time taken</span></span>
 <span id="cb9-18"><a href="#cb9-18" tabindex="-1" aria-label="code-block-9-18"></a><span class="bu">print</span>(<span class="ss">f"Total local runtime: </span><span class="sc">{</span>t<span class="sc">.</span>time() <span class="op">-</span> start_time<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type = </span><span class="sc">{</span>local_instance<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
@@ -3914,7 +3923,7 @@ to look when a value does not seem to arrive.)</p>
 <span id="cb13-21"><a href="#cb13-21" tabindex="-1" aria-label="code-block-13-21"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-xgboost"</span>,   <span class="co"># prefix of the job name: who + which model; SageMaker appends a timestamp to make it unique</span></span>
 <span id="cb13-22"><a href="#cb13-22" tabindex="-1" aria-label="code-block-13-22"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
 <span id="cb13-23"><a href="#cb13-23" tabindex="-1" aria-label="code-block-13-23"></a>    entry_point<span class="op">=</span><span class="st">'train_xgboost.py'</span>,      <span class="co"># the script SageMaker runs inside the container on the training instance</span></span>
-<span id="cb13-24"><a href="#cb13-24" tabindex="-1" aria-label="code-block-13-24"></a>    source_dir<span class="op">=</span><span class="st">'ML_with_AWS_SageMaker/scripts'</span>,  <span class="co"># Directory where your script is located (uploaded to the job with it)</span></span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1" aria-label="code-block-13-24"></a>    source_dir<span class="op">=</span><span class="st">'/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts'</span>,  <span class="co"># Directory where your script is located (uploaded to the job with it)</span></span>
 <span id="cb13-25"><a href="#cb13-25" tabindex="-1" aria-label="code-block-13-25"></a>    role<span class="op">=</span>role,                           <span class="co"># the job assumes this role to read its input and write its output in S3</span></span>
 <span id="cb13-26"><a href="#cb13-26" tabindex="-1" aria-label="code-block-13-26"></a>    tags<span class="op">=</span>job_tags,                       <span class="co"># the cost-tracking tags defined above</span></span>
 <span id="cb13-27"><a href="#cb13-27" tabindex="-1" aria-label="code-block-13-27"></a>    instance_count<span class="op">=</span>instance_count,</span>
@@ -4581,11 +4590,12 @@ same location to access helper functions</p>
 <div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a><span class="co"># Work from the instance root: the %run, source_dir and download paths below are relative to it</span></span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1" aria-label="code-block-3-3"></a><span class="im">import</span> sys</span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)</span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1" aria-label="code-block-3-5"></a><span class="im">import</span> helpers</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a><span class="co"># The Titanic project folder from the S3 episode, beside the lesson clone: downloads and outputs land here, not in the repository</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a><span class="op">!</span>mkdir <span class="op">-</span>p <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>titanic</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1" aria-label="code-block-3-3"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>titanic</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a><span class="im">import</span> sys</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1" aria-label="code-block-3-5"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1" aria-label="code-block-3-6"></a><span class="im">import</span> helpers</span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb4">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -4751,7 +4761,7 @@ epochs (100) — just to verify our setup is correct.</p>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a>learning_rate <span class="op">=</span> <span class="fl">0.001</span></span>
 <span id="cb9-6"><a href="#cb9-6" tabindex="-1" aria-label="code-block-9-6"></a></span>
 <span id="cb9-7"><a href="#cb9-7" tabindex="-1" aria-label="code-block-9-7"></a>start_time <span class="op">=</span> t.time()</span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1" aria-label="code-block-9-8"></a><span class="op">%</span>run ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>train_nn.py <span class="op">--</span>train train_data.npz <span class="op">--</span>val val_data.npz <span class="op">--</span>epochs {epochs} <span class="op">--</span>learning_rate {learning_rate}</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1" aria-label="code-block-9-8"></a><span class="op">%</span>run <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>train_nn.py <span class="op">--</span>train train_data.npz <span class="op">--</span>val val_data.npz <span class="op">--</span>epochs {epochs} <span class="op">--</span>learning_rate {learning_rate}</span>
 <span id="cb9-9"><a href="#cb9-9" tabindex="-1" aria-label="code-block-9-9"></a><span class="bu">print</span>(<span class="ss">f"Local training time: </span><span class="sc">{</span>t<span class="sc">.</span>time() <span class="op">-</span> start_time<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type = </span><span class="sc">{</span>local_instance<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="deploying-pytorch-neural-network-via-sagemaker">Deploying PyTorch neural network via SageMaker<a class="anchor" aria-label="anchor" href="#deploying-pytorch-neural-network-via-sagemaker"></a>
@@ -4899,7 +4909,7 @@ goes next to it.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>There is no single answer; the solution is the written estimate. One
 worked example for scale: a 7B language model fully fine-tuned on 50,000
@@ -4950,7 +4960,7 @@ where the output goes, and a two-hour <code>max_run</code> cap.</p>
 <span id="cb16-13"><a href="#cb16-13" tabindex="-1" aria-label="code-block-16-13"></a>pytorch_estimator <span class="op">=</span> PyTorch(</span>
 <span id="cb16-14"><a href="#cb16-14" tabindex="-1" aria-label="code-block-16-14"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn"</span>,   <span class="co"># who + which model; SageMaker appends a timestamp to make each job name unique</span></span>
 <span id="cb16-15"><a href="#cb16-15" tabindex="-1" aria-label="code-block-16-15"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
-<span id="cb16-16"><a href="#cb16-16" tabindex="-1" aria-label="code-block-16-16"></a>    entry_point<span class="op">=</span><span class="st">"ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,  <span class="co"># copied into the container and run there</span></span>
+<span id="cb16-16"><a href="#cb16-16" tabindex="-1" aria-label="code-block-16-16"></a>    entry_point<span class="op">=</span><span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,  <span class="co"># copied into the container and run there</span></span>
 <span id="cb16-17"><a href="#cb16-17" tabindex="-1" aria-label="code-block-16-17"></a>    role<span class="op">=</span>role,</span>
 <span id="cb16-18"><a href="#cb16-18" tabindex="-1" aria-label="code-block-16-18"></a>    tags<span class="op">=</span>job_tags,  <span class="co"># per job; nothing is inherited from the notebook instance</span></span>
 <span id="cb16-19"><a href="#cb16-19" tabindex="-1" aria-label="code-block-16-19"></a>    instance_type<span class="op">=</span>instance_type, <span class="co"># with this small dataset, we don't necessarily need a GPU for fast training. </span></span>
@@ -5052,7 +5062,7 @@ Explain the result.</p>
 <span id="cb19-4"><a href="#cb19-4" tabindex="-1" aria-label="code-block-19-4"></a>pytorch_estimator_gpu <span class="op">=</span> PyTorch(</span>
 <span id="cb19-5"><a href="#cb19-5" tabindex="-1" aria-label="code-block-19-5"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn"</span>,</span>
 <span id="cb19-6"><a href="#cb19-6" tabindex="-1" aria-label="code-block-19-6"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
-<span id="cb19-7"><a href="#cb19-7" tabindex="-1" aria-label="code-block-19-7"></a>    entry_point<span class="op">=</span><span class="st">"ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,</span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1" aria-label="code-block-19-7"></a>    entry_point<span class="op">=</span><span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,</span>
 <span id="cb19-8"><a href="#cb19-8" tabindex="-1" aria-label="code-block-19-8"></a>    role<span class="op">=</span>role,</span>
 <span id="cb19-9"><a href="#cb19-9" tabindex="-1" aria-label="code-block-19-9"></a>    tags<span class="op">=</span>job_tags,</span>
 <span id="cb19-10"><a href="#cb19-10" tabindex="-1" aria-label="code-block-19-10"></a>    instance_type<span class="op">=</span>instance_type,</span>
@@ -5088,7 +5098,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -5199,7 +5209,7 @@ instances, <code>$0.010</code>).</p>
 <span id="cb20-4"><a href="#cb20-4" tabindex="-1" aria-label="code-block-20-4"></a>pytorch_estimator_2x <span class="op">=</span> PyTorch(</span>
 <span id="cb20-5"><a href="#cb20-5" tabindex="-1" aria-label="code-block-20-5"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn"</span>,</span>
 <span id="cb20-6"><a href="#cb20-6" tabindex="-1" aria-label="code-block-20-6"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
-<span id="cb20-7"><a href="#cb20-7" tabindex="-1" aria-label="code-block-20-7"></a>    entry_point<span class="op">=</span><span class="st">"ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,</span>
+<span id="cb20-7"><a href="#cb20-7" tabindex="-1" aria-label="code-block-20-7"></a>    entry_point<span class="op">=</span><span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,</span>
 <span id="cb20-8"><a href="#cb20-8" tabindex="-1" aria-label="code-block-20-8"></a>    role<span class="op">=</span>role,</span>
 <span id="cb20-9"><a href="#cb20-9" tabindex="-1" aria-label="code-block-20-9"></a>    tags<span class="op">=</span>job_tags,</span>
 <span id="cb20-10"><a href="#cb20-10" tabindex="-1" aria-label="code-block-20-10"></a>    instance_type<span class="op">=</span>instance_type,</span>
@@ -5437,11 +5447,12 @@ let’s cd to our instance’s root directory</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="co"># Work from the instance root: the %run, source_dir and download paths below are relative to it</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span></span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1" aria-label="code-block-1-3"></a><span class="im">import</span> sys</span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1" aria-label="code-block-1-4"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)</span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1" aria-label="code-block-1-5"></a><span class="im">import</span> helpers</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="co"># The Titanic project folder from the S3 episode, beside the lesson clone: downloads and outputs land here, not in the repository</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="op">!</span>mkdir <span class="op">-</span>p <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>titanic</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1" aria-label="code-block-1-3"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>titanic</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1" aria-label="code-block-1-4"></a><span class="im">import</span> sys</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1" aria-label="code-block-1-5"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1" aria-label="code-block-1-6"></a><span class="im">import</span> helpers</span></code></pre>
 </div>
 </div>
 <div class="section level4">
@@ -5539,7 +5550,7 @@ hyperparameter search on.</p>
 <span id="cb4-25"><a href="#cb4-25" tabindex="-1" aria-label="code-block-4-25"></a>pytorch_estimator <span class="op">=</span> PyTorch(</span>
 <span id="cb4-26"><a href="#cb4-26" tabindex="-1" aria-label="code-block-4-26"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn"</span>,   <span class="co"># who + which model; the tuner appends its own suffix to each child job</span></span>
 <span id="cb4-27"><a href="#cb4-27" tabindex="-1" aria-label="code-block-4-27"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
-<span id="cb4-28"><a href="#cb4-28" tabindex="-1" aria-label="code-block-4-28"></a>    entry_point<span class="op">=</span><span class="st">"ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,  <span class="co"># Your script for training</span></span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1" aria-label="code-block-4-28"></a>    entry_point<span class="op">=</span><span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,  <span class="co"># Your script for training</span></span>
 <span id="cb4-29"><a href="#cb4-29" tabindex="-1" aria-label="code-block-4-29"></a>    role<span class="op">=</span>role,</span>
 <span id="cb4-30"><a href="#cb4-30" tabindex="-1" aria-label="code-block-4-30"></a>    tags<span class="op">=</span>job_tags,  <span class="co"># tags a plain .fit() on this estimator; the tuner below sets its own</span></span>
 <span id="cb4-31"><a href="#cb4-31" tabindex="-1" aria-label="code-block-4-31"></a>    instance_count<span class="op">=</span>instance_count,</span>
@@ -6934,7 +6945,7 @@ realistic project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5: full fine-tuning a 7B model needs ~112 GB
 plus activations, and the g5 has 24 GB. On the p4d the 8 × 40 GB = 320
@@ -8007,7 +8018,7 @@ will compare it to the real bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Expect about 32 billed minutes. Scoring is the line most likely to
@@ -8384,7 +8395,7 @@ CER. Did the extra pixels help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -8424,7 +8435,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
 <div class="accordion-body">
 <p>Startup and upload (~6 min, <code>$0.26</code> at
 <code>$2.61</code>/h) do not speed up: the container pull and the S3
@@ -9159,12 +9170,11 @@ Bedrock-hosted model (DeepSeek V3) and score them against
 Select the <strong><code>conda_pytorch</code></strong> kernel. This is
 the first hands-on RAG episode, and it starts where the overview told
 you to start: <strong>Amazon Bedrock</strong>. We build a complete RAG
-pipeline for the <a href="https://www.kaggle.com/competitions/WattBot2025/overview" class="external-link">WattBot
-2025</a> challenge from a small, CPU-only SageMaker notebook. Nothing in
-this episode needs a GPU: the core model work — <strong>both text
-embeddings and answer generation</strong> — runs on Bedrock-hosted
-models that bill per token and leave nothing running between calls.
-We’ll use:</p>
+pipeline for the <a href="https://www.kaggle.com/competitions/WattBot2026" class="external-link">WattBot 2026</a>
+challenge from a small, CPU-only SageMaker notebook. Nothing in this
+episode needs a GPU: the core model work — <strong>both text embeddings
+and answer generation</strong> — runs on Bedrock-hosted models that bill
+per token and leave nothing running between calls. We’ll use:</p>
 <ul>
 <li>an <strong>Amazon Titan Text Embeddings V2</strong> model to turn
 WattBot chunks into vectors, and<br>
@@ -9277,11 +9287,11 @@ your preprocessing pipeline.</li>
 </ul>
 </li>
 </ul>
-<p>For a full catalog of available models (including Claude variants,
-Amazon models, and partner models), open the <strong>Model
-catalog</strong> in the Amazon Bedrock console. Each entry provides a
-model card with capabilities, typical use cases, and pricing details so
-learners can explore alternatives for their own RAG systems.</p>
+<p>For the full list of available models (Claude variants, Amazon
+models, and partner models), open the <a href="https://us-east-2.console.aws.amazon.com/bedrock/home?region=us-east-2#/model-catalog" class="external-link">Model
+catalog</a> in the Amazon Bedrock console. Each entry has a model card
+with capabilities, typical use cases, and pricing, for exploring
+alternatives for your own RAG system.</p>
 <div id="choosing-the-two-models" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -10026,7 +10036,7 @@ month’s Bedrock spend by <code>Project</code>?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb17">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -10338,10 +10348,18 @@ refusing cleanly, with every evidence field blank, when the answer is
 <code>is_blank</code>. The number comes from <code>Score.py</code>, the
 competition’s own metric file, which <code>compute_wattbot_score</code>
 in <code>wattbot_rag.py</code> calls for the headline score so that what
-you see here is what the leaderboard would report. The wrapper adds a
-per-row score, joins on <code>id</code>, and prints the worst-scoring
-rows so you can see <em>why</em> the pipeline lost points.
-<code>train_QA.csv</code> has no separate “unanswerable” column, so
+you see here is what the leaderboard would report. It also prints the
+error rate by evidence type: whether each answer rests on a quoted
+sentence, a table, a figure, or a calculation. The competition’s
+solution file carries those flags; the public <code>train_QA.csv</code>
+only notes them in its <code>explanation</code> column, so the wrapper
+derives them from there. A question can carry several. Read that table
+before changing anything: figure and table questions failing while quote
+questions pass points at text extraction, which loses figures and
+flattens tables, not at the model. The wrapper adds a per-row score,
+joins on <code>id</code>, and prints the worst-scoring rows so you can
+see <em>why</em> the pipeline lost points. <code>train_QA.csv</code> has
+no separate “unanswerable” column, so
 <code>gt_is_na_col="is_blank"</code> tells the scorer to derive that
 flag from <code>answer_value == "is_blank"</code> on both sides.</p>
 <div class="codewrapper sourceCode" id="cb26">
@@ -10431,7 +10449,7 @@ of the <code>ml.g6e.xlarge</code> the Processing Jobs episode rents?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>The two prices are from the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
 for DeepSeek on-demand in October 2026; update them for the model and
@@ -11341,7 +11359,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -11405,7 +11423,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still downloading or
@@ -11673,14 +11691,14 @@ batch transform) build on the same idea.</p>
 </section><section><h2 class="section-heading" id="overview-wattbot-rag-on-a-single-notebook-gpu">Overview: WattBot RAG on a single notebook GPU<a class="anchor" aria-label="anchor" href="#overview-wattbot-rag-on-a-single-notebook-gpu"></a>
 </h2>
 <hr class="half-width">
-<p>In this episode we rerun the <a href="https://www.kaggle.com/competitions/WattBot2025/overview" class="external-link">WattBot
-2025</a> RAG pipeline from the Bedrock episode, this time entirely from
-a single GPU-backed SageMaker notebook with self-hosted models. The
-generator is Qwen3.8-27B, the newer and larger relative of the Qwen3-8B
-the Processing Jobs episode ran: an open-weight model that fits one 48
-GB GPU in FP8 and sits within a few points of a frontier commercial
-model on agent tasks and science questions (see that episode’s chart),
-which is why it is worth the trouble of hosting.</p>
+<p>In this episode we rerun the <a href="https://www.kaggle.com/competitions/WattBot2026" class="external-link">WattBot 2026</a>
+RAG pipeline from the Bedrock episode, this time entirely from a single
+GPU-backed SageMaker notebook with self-hosted models. The generator is
+Qwen3.8-27B, the newer and larger relative of the Qwen3-8B the
+Processing Jobs episode ran: an open-weight model that fits one 48 GB
+GPU in FP8 and sits within a few points of a frontier commercial model
+on agent tasks and science questions (see that episode’s chart), which
+is why it is worth the trouble of hosting.</p>
 <p>In this episode we will:</p>
 <ol style="list-style-type: decimal">
 <li>
@@ -13250,7 +13268,7 @@ stopped your notebook instance and walked away?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>A complete list for someone who did every episode, including the
 optional ones:</p>

@@ -491,21 +491,21 @@ for the next two episodes. The <code>conda_python3</code> kernel has no
 PyTorch, and on current instances no scikit-learn either.</p>
 </div>
 <div class="section level4">
-<h4 id="cd-to-instance-home-directory">2. CD to instance home directory<a class="anchor" aria-label="anchor" href="#cd-to-instance-home-directory"></a></h4>
-<p>So we all can reference the helper functions using the same path, CD
-to the instance’s root directory and make the lesson repository’s
-<code>scripts/</code> importable. The training scripts for this episode
-(<code>train_xgboost.py</code>) and the next (<code>train_nn.py</code>)
-are in that folder.</p>
+<h4 id="move-to-the-project-folder-and-import-the-helpers">2. Move to the project folder and import the helpers<a class="anchor" aria-label="anchor" href="#move-to-the-project-folder-and-import-the-helpers"></a></h4>
+<p>Work from the Titanic project folder the S3 episode created, and make
+the lesson repository’s <code>scripts/</code> importable. The training
+scripts for this episode (<code>train_xgboost.py</code>) and the next
+(<code>train_nn.py</code>) are in that folder.</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="co"># Work from the instance root: the %run, source_dir and download paths below are relative to it</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span></span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1" aria-label="code-block-1-3"></a><span class="im">import</span> sys</span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1" aria-label="code-block-1-4"></a><span class="co"># Put the lesson's scripts/ folder on Python's import path</span></span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1" aria-label="code-block-1-5"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)</span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1" aria-label="code-block-1-6"></a><span class="im">import</span> helpers  <span class="co"># lesson helper functions; train_xgboost.py lives in the same folder</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="co"># The Titanic project folder from the S3 episode, beside the lesson clone: downloads and outputs land here, not in the repository</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="op">!</span>mkdir <span class="op">-</span>p <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>titanic</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1" aria-label="code-block-1-3"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>titanic</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1" aria-label="code-block-1-4"></a><span class="im">import</span> sys</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1" aria-label="code-block-1-5"></a><span class="co"># Put the lesson's scripts/ folder on Python's import path</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1" aria-label="code-block-1-6"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1" aria-label="code-block-1-7"></a><span class="im">import</span> helpers  <span class="co"># lesson helper functions; train_xgboost.py lives in the same folder</span></span></code></pre>
 </div>
 </div>
 <div class="section level4">
@@ -871,7 +871,7 @@ job.</p>
 <span id="cb9-12"><a href="#cb9-12" tabindex="-1" aria-label="code-block-9-12"></a>train_file <span class="op">=</span> <span class="st">'titanic_train.csv'</span> <span class="co">#  Points to the location of the training data</span></span>
 <span id="cb9-13"><a href="#cb9-13" tabindex="-1" aria-label="code-block-9-13"></a></span>
 <span id="cb9-14"><a href="#cb9-14" tabindex="-1" aria-label="code-block-9-14"></a><span class="co"># %run executes the script in this kernel; IPython substitutes the Python variables in {braces} into the arguments</span></span>
-<span id="cb9-15"><a href="#cb9-15" tabindex="-1" aria-label="code-block-9-15"></a><span class="op">%</span>run ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>train_xgboost.py <span class="op">--</span>max_depth {max_depth} <span class="op">--</span>eta {eta} <span class="op">--</span>subsample {subsample} <span class="op">--</span>colsample_bytree {colsample_bytree} <span class="op">--</span>num_round {num_round} <span class="op">--</span>train {train_file}</span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1" aria-label="code-block-9-15"></a><span class="op">%</span>run <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>train_xgboost.py <span class="op">--</span>max_depth {max_depth} <span class="op">--</span>eta {eta} <span class="op">--</span>subsample {subsample} <span class="op">--</span>colsample_bytree {colsample_bytree} <span class="op">--</span>num_round {num_round} <span class="op">--</span>train {train_file}</span>
 <span id="cb9-16"><a href="#cb9-16" tabindex="-1" aria-label="code-block-9-16"></a></span>
 <span id="cb9-17"><a href="#cb9-17" tabindex="-1" aria-label="code-block-9-17"></a><span class="co"># Measure and print the time taken</span></span>
 <span id="cb9-18"><a href="#cb9-18" tabindex="-1" aria-label="code-block-9-18"></a><span class="bu">print</span>(<span class="ss">f"Total local runtime: </span><span class="sc">{</span>t<span class="sc">.</span>time() <span class="op">-</span> start_time<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type = </span><span class="sc">{</span>local_instance<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
@@ -1301,7 +1301,7 @@ to look when a value does not seem to arrive.)</p>
 <span id="cb13-21"><a href="#cb13-21" tabindex="-1" aria-label="code-block-13-21"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-xgboost"</span>,   <span class="co"># prefix of the job name: who + which model; SageMaker appends a timestamp to make it unique</span></span>
 <span id="cb13-22"><a href="#cb13-22" tabindex="-1" aria-label="code-block-13-22"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
 <span id="cb13-23"><a href="#cb13-23" tabindex="-1" aria-label="code-block-13-23"></a>    entry_point<span class="op">=</span><span class="st">'train_xgboost.py'</span>,      <span class="co"># the script SageMaker runs inside the container on the training instance</span></span>
-<span id="cb13-24"><a href="#cb13-24" tabindex="-1" aria-label="code-block-13-24"></a>    source_dir<span class="op">=</span><span class="st">'ML_with_AWS_SageMaker/scripts'</span>,  <span class="co"># Directory where your script is located (uploaded to the job with it)</span></span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1" aria-label="code-block-13-24"></a>    source_dir<span class="op">=</span><span class="st">'/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts'</span>,  <span class="co"># Directory where your script is located (uploaded to the job with it)</span></span>
 <span id="cb13-25"><a href="#cb13-25" tabindex="-1" aria-label="code-block-13-25"></a>    role<span class="op">=</span>role,                           <span class="co"># the job assumes this role to read its input and write its output in S3</span></span>
 <span id="cb13-26"><a href="#cb13-26" tabindex="-1" aria-label="code-block-13-26"></a>    tags<span class="op">=</span>job_tags,                       <span class="co"># the cost-tracking tags defined above</span></span>
 <span id="cb13-27"><a href="#cb13-27" tabindex="-1" aria-label="code-block-13-27"></a>    instance_count<span class="op">=</span>instance_count,</span>

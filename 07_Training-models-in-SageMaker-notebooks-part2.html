@@ -523,11 +523,12 @@ same location to access helper functions</p>
 <div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a><span class="co"># Work from the instance root: the %run, source_dir and download paths below are relative to it</span></span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1" aria-label="code-block-3-3"></a><span class="im">import</span> sys</span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)</span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1" aria-label="code-block-3-5"></a><span class="im">import</span> helpers</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a><span class="co"># The Titanic project folder from the S3 episode, beside the lesson clone: downloads and outputs land here, not in the repository</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a><span class="op">!</span>mkdir <span class="op">-</span>p <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>titanic</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1" aria-label="code-block-3-3"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>titanic</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a><span class="im">import</span> sys</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1" aria-label="code-block-3-5"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1" aria-label="code-block-3-6"></a><span class="im">import</span> helpers</span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb4">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -686,7 +687,7 @@ epochs (100) — just to verify our setup is correct.</p>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a>learning_rate <span class="op">=</span> <span class="fl">0.001</span></span>
 <span id="cb9-6"><a href="#cb9-6" tabindex="-1" aria-label="code-block-9-6"></a></span>
 <span id="cb9-7"><a href="#cb9-7" tabindex="-1" aria-label="code-block-9-7"></a>start_time <span class="op">=</span> t.time()</span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1" aria-label="code-block-9-8"></a><span class="op">%</span>run ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>train_nn.py <span class="op">--</span>train train_data.npz <span class="op">--</span>val val_data.npz <span class="op">--</span>epochs {epochs} <span class="op">--</span>learning_rate {learning_rate}</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1" aria-label="code-block-9-8"></a><span class="op">%</span>run <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>train_nn.py <span class="op">--</span>train train_data.npz <span class="op">--</span>val val_data.npz <span class="op">--</span>epochs {epochs} <span class="op">--</span>learning_rate {learning_rate}</span>
 <span id="cb9-9"><a href="#cb9-9" tabindex="-1" aria-label="code-block-9-9"></a><span class="bu">print</span>(<span class="ss">f"Local training time: </span><span class="sc">{</span>t<span class="sc">.</span>time() <span class="op">-</span> start_time<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type = </span><span class="sc">{</span>local_instance<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="deploying-pytorch-neural-network-via-sagemaker">Deploying PyTorch neural network via SageMaker<a class="anchor" aria-label="anchor" href="#deploying-pytorch-neural-network-via-sagemaker"></a></h2>
@@ -827,7 +828,7 @@ goes next to it.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>There is no single answer; the solution is the written estimate. One
 worked example for scale: a 7B language model fully fine-tuned on 50,000
@@ -878,7 +879,7 @@ where the output goes, and a two-hour <code>max_run</code> cap.</p>
 <span id="cb16-13"><a href="#cb16-13" tabindex="-1" aria-label="code-block-16-13"></a>pytorch_estimator <span class="op">=</span> PyTorch(</span>
 <span id="cb16-14"><a href="#cb16-14" tabindex="-1" aria-label="code-block-16-14"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn"</span>,   <span class="co"># who + which model; SageMaker appends a timestamp to make each job name unique</span></span>
 <span id="cb16-15"><a href="#cb16-15" tabindex="-1" aria-label="code-block-16-15"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
-<span id="cb16-16"><a href="#cb16-16" tabindex="-1" aria-label="code-block-16-16"></a>    entry_point<span class="op">=</span><span class="st">"ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,  <span class="co"># copied into the container and run there</span></span>
+<span id="cb16-16"><a href="#cb16-16" tabindex="-1" aria-label="code-block-16-16"></a>    entry_point<span class="op">=</span><span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,  <span class="co"># copied into the container and run there</span></span>
 <span id="cb16-17"><a href="#cb16-17" tabindex="-1" aria-label="code-block-16-17"></a>    role<span class="op">=</span>role,</span>
 <span id="cb16-18"><a href="#cb16-18" tabindex="-1" aria-label="code-block-16-18"></a>    tags<span class="op">=</span>job_tags,  <span class="co"># per job; nothing is inherited from the notebook instance</span></span>
 <span id="cb16-19"><a href="#cb16-19" tabindex="-1" aria-label="code-block-16-19"></a>    instance_type<span class="op">=</span>instance_type, <span class="co"># with this small dataset, we don't necessarily need a GPU for fast training. </span></span>
@@ -973,7 +974,7 @@ Explain the result.</p>
 <span id="cb19-4"><a href="#cb19-4" tabindex="-1" aria-label="code-block-19-4"></a>pytorch_estimator_gpu <span class="op">=</span> PyTorch(</span>
 <span id="cb19-5"><a href="#cb19-5" tabindex="-1" aria-label="code-block-19-5"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn"</span>,</span>
 <span id="cb19-6"><a href="#cb19-6" tabindex="-1" aria-label="code-block-19-6"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
-<span id="cb19-7"><a href="#cb19-7" tabindex="-1" aria-label="code-block-19-7"></a>    entry_point<span class="op">=</span><span class="st">"ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,</span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1" aria-label="code-block-19-7"></a>    entry_point<span class="op">=</span><span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,</span>
 <span id="cb19-8"><a href="#cb19-8" tabindex="-1" aria-label="code-block-19-8"></a>    role<span class="op">=</span>role,</span>
 <span id="cb19-9"><a href="#cb19-9" tabindex="-1" aria-label="code-block-19-9"></a>    tags<span class="op">=</span>job_tags,</span>
 <span id="cb19-10"><a href="#cb19-10" tabindex="-1" aria-label="code-block-19-10"></a>    instance_type<span class="op">=</span>instance_type,</span>
@@ -1009,7 +1010,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -1113,7 +1114,7 @@ instances, <code>$0.010</code>).</p>
 <span id="cb20-4"><a href="#cb20-4" tabindex="-1" aria-label="code-block-20-4"></a>pytorch_estimator_2x <span class="op">=</span> PyTorch(</span>
 <span id="cb20-5"><a href="#cb20-5" tabindex="-1" aria-label="code-block-20-5"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn"</span>,</span>
 <span id="cb20-6"><a href="#cb20-6" tabindex="-1" aria-label="code-block-20-6"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
-<span id="cb20-7"><a href="#cb20-7" tabindex="-1" aria-label="code-block-20-7"></a>    entry_point<span class="op">=</span><span class="st">"ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,</span>
+<span id="cb20-7"><a href="#cb20-7" tabindex="-1" aria-label="code-block-20-7"></a>    entry_point<span class="op">=</span><span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,</span>
 <span id="cb20-8"><a href="#cb20-8" tabindex="-1" aria-label="code-block-20-8"></a>    role<span class="op">=</span>role,</span>
 <span id="cb20-9"><a href="#cb20-9" tabindex="-1" aria-label="code-block-20-9"></a>    tags<span class="op">=</span>job_tags,</span>
 <span id="cb20-10"><a href="#cb20-10" tabindex="-1" aria-label="code-block-20-10"></a>    instance_type<span class="op">=</span>instance_type,</span>
