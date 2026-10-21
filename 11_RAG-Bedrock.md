@@ -22,7 +22,7 @@ exercises: 20
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/11_RAG-Bedrock.ipynb`. Select the **`conda_pytorch`** kernel (`conda_pytorch_p310` on older instances).
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/11_RAG-Bedrock.ipynb`. Select the **`conda_pytorch`** kernel.
 This is the first hands-on RAG episode, and it starts where the overview told you to start: **Amazon Bedrock**. We build a complete RAG pipeline for the [WattBot 2025](https://www.kaggle.com/competitions/WattBot2025/overview) challenge from a small, CPU-only SageMaker notebook. Nothing in this episode needs a GPU: the core model work — **both text embeddings and answer generation** — runs on Bedrock-hosted models that bill per token and leave nothing running between calls. We'll use:
 
 - an **Amazon Titan Text Embeddings V2** model to turn WattBot chunks into vectors, and  
@@ -106,6 +106,8 @@ If there is no instructor-staged bucket, stage the three input files in your own
 
 ### Step 1 – Configure the notebook
 
+Imports, then a SageMaker session, the region and role, an S3 client and a Bedrock client, then the bucket names and the local folder the data is cached in.
+
 ```python
 import os
 import json
@@ -133,7 +135,7 @@ base_generation_model_id = "deepseek.v3-v1:0"
 base_embedding_model_id = "amazon.titan-embed-text-v2:0"
 
 # Buckets: the shared one is read-only (inputs); yours receives everything derived.
-shared_bucket = "ml-marathon-shared"   # <-- EDIT ME: the name your instructor gives you
+shared_bucket = "ml-marathon-shared"   # the instructor-staged, read-only bucket with the data and model weights; change only on your own account
 bucket_name = "sinkorswim-doejohn"     # <-- EDIT ME: your own bucket from the S3 episode
 
 # Keys in the shared bucket (inputs) and in your bucket (derived artifacts)
@@ -281,6 +283,8 @@ In short: **pages first → then chunks** keeps the workflow cleaner and easier 
 ```python
 %pip install -q pypdf
 ```
+
+Open each PDF listed in the metadata with `pypdf` and turn every page into one record: its text, the document id, title and URL, and the page number.
 
 ```python
 from pypdf import PdfReader
@@ -780,9 +784,11 @@ Every `converse` response carried a `usage` block, and `call_bedrock_chat` kept 
 
 :::::::::::::::::::::::: solution
 
+The two prices are from the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/) for DeepSeek on-demand in October 2026; update them for the model and region you used. The rest sums the usage blocks and prints the cost.
+
 ```python
-price_in_per_m = 0.0    # <-- EDIT ME: DeepSeek V3 on-demand, $ per million input tokens
-price_out_per_m = 0.0   # <-- EDIT ME: DeepSeek V3 on-demand, $ per million output tokens
+price_in_per_m = 0.62    # $ per million input tokens: DeepSeek v3.2 on-demand in us-east-2, October 2026; check the pricing page for your model and region
+price_out_per_m = 1.85   # $ per million output tokens, same source
 
 in_tokens = sum(u["inputTokens"] for u in bedrock_usage)
 out_tokens = sum(u["outputTokens"] for u in bedrock_usage)

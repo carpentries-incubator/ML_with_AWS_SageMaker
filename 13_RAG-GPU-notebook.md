@@ -105,7 +105,7 @@ For this episode you need a notebook instance with a GPU that can hold the FP8 2
 - **Volume size:** `100` GB (the default of 5 GB will not fit the weights or the vLLM install). This volume bills at `$0.14` per GB-month even while the instance is stopped.
 - **Tags:** the same `Project`, `Name`, `Purpose` keys as every other resource; `Purpose` is `Notebook`.
 
-Once it is `InService`, open JupyterLab, clone the lesson repository as in the controller-notebook episode (this is a new instance, so it has no copy yet), and open `/ML_with_AWS_SageMaker/notebooks/13_RAG-GPU-notebook.ipynb`. Select the **`conda_pytorch`** kernel (`conda_pytorch_p310` on older instances); it is the one with PyTorch and CUDA.
+Once it is `InService`, open JupyterLab, clone the lesson repository as in the controller-notebook episode (this is a new instance, so it has no copy yet), and open `/ML_with_AWS_SageMaker/notebooks/13_RAG-GPU-notebook.ipynb`. Select the **`conda_pytorch`** kernel.
 
 See [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for further guidance. This instance bills by the hour from the moment it starts, whether or not it is doing anything: **stop it when you leave**, and **delete it** when the episode is over.
 
@@ -122,7 +122,7 @@ We reuse the same two buckets as the Bedrock episode: the shared bucket for `met
 
 
 ```python
-# also verify you have selected a PyTorch (conda_pytorch_*) kernel
+# also verify you have selected the conda_pytorch kernel
 import torch
 print("torch cuda available:", torch.cuda.is_available())   # False means PyTorch cannot use the GPU even if nvidia-smi sees it
 print("num gpus:", torch.cuda.device_count())
@@ -150,6 +150,7 @@ If the install changes PyTorch, restart the kernel (**Kernel → Restart**) befo
 
 ## Import data from bucket into notebook
 
+The same setup as the Bedrock episode: session, region, role, an S3 client, the two bucket names and a local data folder, plus a small download helper.
 
 ```python
 import os
@@ -185,11 +186,13 @@ def download_s3_object(bucket: str, key: str, local_path: str) -> None:
 
 
 ```python
-shared_bucket = "ml-marathon-shared"   # <-- EDIT ME: read-only inputs, from your instructor
+shared_bucket = "ml-marathon-shared"   # the instructor-staged, read-only bucket with the data and model weights; change only on your own account
 bucket_name = "sinkorswim-doejohn"     # <-- EDIT ME: your own bucket (chunks live here)
 
 # Local working directory in the notebook instance
 local_data_dir = "./data"
+
+session_start = time.time()   # the meter on this GPU instance started when it booted; this marks where the episode's work began
 
 print("Local data dir:", local_data_dir)
 ```
@@ -201,6 +204,8 @@ The retrieval, prompts, answer parsing, per-question orchestration and the score
 ```python
 !cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/wattbot_rag.py .
 ```
+
+Import the pieces of the shared RAG module we reuse: the prompts, the retrieval and scoring functions, and the per-question runner.
 
 ```python
 from wattbot_rag import (
@@ -214,6 +219,7 @@ from wattbot_rag import (
 )
 ```
 
+Download the two WattBot input files from the shared bucket.
 
 ```python
 # Download metadata.csv and train_QA.csv from the shared bucket
@@ -238,6 +244,7 @@ import torch
 from sentence_transformers import SentenceTransformer   # embedding-model wrapper: encode(list of strings) -> matrix
 ```
 
+A CSV reader that tries a few encodings, because some metadata files are not valid UTF-8.
 
 ```python
 def smart_read_csv(path: str) -> pd.DataFrame:
@@ -339,6 +346,7 @@ embedder = SentenceTransformer(
 
 ```
 
+Embed every chunk in batches on the GPU and stack the results into one matrix, one row per chunk.
 
 ```python
 def embed_texts(embedder, docs, batch_size: int = 32) -> np.ndarray:
@@ -415,7 +423,7 @@ similarity" approach is usually enough. You might consider FAISS or a full vecto
   teaching demo (and the Wattbot project in general), but very relevant for production-scale systems.
 
 In this episode we deliberately stick with a simple in-memory index so the retrieval step is easy to inspect and
-debug. In later episodes (or your own projects), you can **swap out the retrieval layer** for FAISS or a vector DB
+debug. In your own projects you can **swap out the retrieval layer** for FAISS or a vector DB
 without changing the overall RAG architecture: the model still sees “top–k retrieved chunks” as context.
 
 
@@ -504,6 +512,7 @@ print("Generator model and helper loaded.")
 
 ```
 
+One throwaway question, to confirm the generator answers before spending time on the real ones.
 
 ```python
 
@@ -638,6 +647,17 @@ This is just a first pass at a RAG pipeline: it works, but there’s a lot of he
   - Are less likely to hallucinate when reading dense scientific prose.
 
 As you iterate, the goal is to treat this notebook as a baseline RAG “workbench”: you can swap in better models, smarter retrieval strategies, and richer document preprocessing without changing the overall pipeline structure.
+
+### What did this episode cost?
+
+There is no job record to ask here; the bill is simply the instance's hours. This counts from the setup cell, so the boot, the install and every pause since are in it, and it keeps counting until you stop the instance.
+
+```python
+g6e_price = 2.61   # $/hour, ml.g6e.xlarge on-demand
+hours = (time.time() - session_start) / 3600
+print(f"this notebook has been running {hours * 60:.0f} min since the setup cell: ${hours * g6e_price:.2f} so far, and counting")
+print(f"the same pipeline as Processing jobs billed about $1.30 (that episode); on Bedrock, a few cents")
+```
 
 The Processing Jobs episode does the same work, with the same `wattbot_rag.py`, as short-lived SageMaker jobs, so the GPU only bills while it is embedding or generating. Stop this instance now, and delete it if you are done with the episode.
 

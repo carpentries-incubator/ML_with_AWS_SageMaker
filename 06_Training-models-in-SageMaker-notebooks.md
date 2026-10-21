@@ -25,7 +25,7 @@ exercises: 20
 ## Initial setup 
 
 #### 1. Open prefilled .ipynb notebook
-Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/06_Training-models-in-SageMaker-notebooks.ipynb`. When asked for a kernel, pick **`conda_pytorch`** (on older Amazon Linux 2 instances it is called `conda_pytorch_p310`); we will use the same kernel for the next two episodes. The `conda_python3` kernel has no PyTorch, and on current instances no scikit-learn either.
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/06_Training-models-in-SageMaker-notebooks.ipynb`. When asked for a kernel, pick **`conda_pytorch`**; we will use the same kernel for the next two episodes. The `conda_python3` kernel has no PyTorch, and on current instances no scikit-learn either.
 
 #### 2. CD to instance home directory
 So we all can reference the helper functions using the same path, CD to the instance's root directory and make the lesson repository's `scripts/` importable. The training scripts for this episode (`train_xgboost.py`) and the next (`train_nn.py`) are in that folder.
@@ -230,6 +230,9 @@ Test train.py on this notebook's instance (or when possible, on your own machine
 ```
 
 ### Local test
+
+Run the training script here in the notebook first, on the small data, with the hyperparameters passed in as variables. A local run finds bugs for free, and the same script then runs unchanged as a SageMaker job.
+
 ```python
 import time as t # we'll use the time package to measure runtime
 
@@ -257,6 +260,8 @@ Training on this relatively small dataset should take less than a minute, but as
 
 ### Sanity check: Quick evaluation on test set
 This next section isn't SageMaker specific, but it does serve as a good sanity check to ensure our model is training properly. Here's how you would apply the outputted model to your test set using your local notebook instance.
+
+Score the model you just trained locally on the test set, reusing the script's own `preprocess_data` so the test rows are transformed exactly as the training rows were.
 
 ```python
 import xgboost as xgb
@@ -367,7 +372,7 @@ For all these Estimators, adding a `requirements.txt` file as a `dependencies` a
 ```text
 from sagemaker.sklearn.estimator import SKLearn
 sklearn_estimator = SKLearn(
-    base_job_name=notebook_instance_name,
+    base_job_name=f"{notebook_instance_name}-xgboost",   # job name = who + which model; SageMaker appends a timestamp
     entry_point="train_script.py",
     role=role,
     instance_count=1,
@@ -400,7 +405,7 @@ To avoid this, we explicitly tag each training job at launch time. This ensures 
 ```python
 name = "DoeJohn" # replace with your name
 project = "SinkOrSwim" # replace with your challenge name
-purpose = "Training"
+purpose = "Training"        # one of: Storage, Notebook, Training, Tuning, Inference
 
 # Tags: key/value labels attached to the job's resources, so its cost shows up under your name and project on the bill
 job_tags = [
@@ -435,7 +440,7 @@ output_path = f's3://{bucket_name}/{output_folder}/'   # S3 prefix (a "folder") 
 
 # Set up the SageMaker XGBoost Estimator with custom script
 xgboost_estimator = XGBoost(
-    base_job_name=notebook_instance_name,  # prefix of the job name; SageMaker appends a timestamp to make it unique
+    base_job_name=f"{notebook_instance_name}-xgboost",   # prefix of the job name: who + which model; SageMaker appends a timestamp to make it unique
     max_run=max_run, # in seconds; always include (max 48 hours)
     entry_point='train_xgboost.py',      # the script SageMaker runs inside the container on the training instance
     source_dir='ML_with_AWS_SageMaker/scripts',  # Directory where your script is located (uploaded to the job with it)
@@ -503,7 +508,7 @@ In **your bucket**, under `xgboost/<job-name>/` (the prefix from `output_path` p
 1. `output/model.tar.gz`: the model artifacts, a tarball of whatever the script saved to `SM_MODEL_DIR` (here `xgboost-model.json`). This is the file we download below.
 2. `profiler-output/` and `debug-output/`: small files from SageMaker's built-in profiler, written for every training job. Ignore them; they can be turned off with `disable_profiler=True` on the estimator.
 
-The job's log is not in S3; it is in CloudWatch, reachable from the job's page in the SageMaker console.
+The job's log is not in S3. It is in **CloudWatch**, the AWS service that collects logs and metrics from every other service: everything a training job prints goes to a CloudWatch log stream named after the job, and it stays there after the instance is gone. The quickest way to it is the **View logs** link on the job's page in the SageMaker console.
 
 A **second bucket** also appeared, `sagemaker-<region>-<account-id>`. The SageMaker SDK creates this *default bucket* the first time it needs somewhere to stage files: before the job started, `fit()` zipped `source_dir` and uploaded it there as `<job-name>/source/sourcedir.tar.gz` for the training instance to download. It holds kilobytes per job and nothing you need, but it is shared by everyone in the account and carries no tags, so it is one more thing on the cleanup list. If you want everything in your own bucket, create the session as `sagemaker.Session(default_bucket=bucket_name)`.
 
@@ -537,6 +542,8 @@ import tarfile
 with tarfile.open(local_model_path) as tar:
     tar.extractall()
 ```
+
+Now the same evaluation on the model the job trained: load it from the unpacked archive and score the test set the same way as before.
 
 ```python
 import xgboost as xgb
@@ -621,7 +628,7 @@ instance_count=1 # always start with 1
 
 # Use Estimator directly for built-in container without specifying entry_point
 xgboost_estimator_builtin = Estimator(
-    base_job_name=notebook_instance_name,
+    base_job_name=f"{notebook_instance_name}-xgboost",   # job name = who + which model; SageMaker appends a timestamp
     max_run=max_run, # in seconds; always include (max 48 hours)
     # image_uris.retrieve looks up AWS's prebuilt XGBoost container for this region; its built-in training code replaces entry_point
     image_uri=sagemaker.image_uris.retrieve("xgboost", region, version="1.7-1"),
@@ -674,7 +681,7 @@ To view and monitor your SageMaker training job, follow these steps in the AWS M
 4. **Monitor the job status**  
    - Once you've verified the correct job, click on its name to access detailed information:
      - **Status**: Confirms whether the job is `InProgress`, `Completed`, or `Failed`.
-     - **Logs**: Review CloudWatch Logs and Job Metrics for real-time updates.
+     - **Logs**: the **View logs** link opens the job's output in CloudWatch, the AWS logging service, where it is kept after the job ends; **Job Metrics** shows CPU, GPU and memory use over the run.
      - **Output Data**: Shows the S3 location with the trained model artifacts.
 
 5. **Stopping a training job**  

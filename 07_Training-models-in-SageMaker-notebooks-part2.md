@@ -22,7 +22,7 @@ exercises: 15
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## Initial setup: open prefilled .ipynb notebook
-Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/07_Training-models-in-SageMaker-notebooks-part2.ipynb`. Select the **`conda_pytorch`** kernel (`conda_pytorch_p310` on older instances).
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/07_Training-models-in-SageMaker-notebooks-part2.ipynb`. Select the **`conda_pytorch`** kernel.
 
 ## Setup notebook as controller
 Once your notebook is open, we can setup our SageMaker controller as usual:
@@ -109,11 +109,15 @@ When deploying a PyTorch model on SageMaker, it's helpful to prepare the input d
 In summary, saving the data in `.npz` files ensures a smooth workflow from data loading to model training in PyTorch, leveraging SageMaker's infrastructure for a more efficient, structured training process.
 :::::::::::::::::::::::::::::::::::::::
 
+Open `ML_with_AWS_SageMaker/scripts/train_nn.py` in the file browser and read it before going on; it is short. Three things to find: `TitanicNet`, a three-layer network with 7 inputs and one output; the training loop in `train()`, which prints `validation:accuracy = ...` once per hundred epochs (the hyperparameter-tuning episode's metric regex reads that line); and the last lines, which save the model to `/opt/ml/model` inside a job and next to the script otherwise, the same trick as `train_xgboost.py`. Questions now are cheaper than questions once it is running on a billed instance.
+
 We reuse the `preprocess_data()` function from the lesson's `scripts/train_nn.py` rather than re-typing the preprocessing here: the same function will later be applied to the test set, so train and test are transformed identically. It returns the fitted `StandardScaler`, and we save it with `joblib` so the next episode can load it.
 
 ```python
 !pip install scikit-learn   # the notebook kernels do not ship it; train_nn.py imports it
 ```
+
+Load the Titanic CSV, run it through the script's `preprocess_data`, split off a validation set, and save the arrays and the scaler. The training script reads these files; the scaler is kept so test data can later be transformed the same way.
 
 ```python
 import numpy as np
@@ -175,7 +179,7 @@ As in the XGBoost episode, every training job needs its own tags: a job does not
 ```python
 name = "DoeJohn" # replace with your name
 project = "SinkOrSwim" # replace with your challenge name
-purpose = "Training"
+purpose = "Training"        # one of: Storage, Notebook, Training, Tuning, Inference
 
 job_tags = [
     {"Key": "Name", "Value": name},
@@ -199,6 +203,8 @@ def job_cost_report(job_name: str, price_per_hour: float):
 prices = {"ml.m5.large": 0.115, "ml.m5.xlarge": 0.23, "ml.g4dn.xlarge": 0.74}
 ```
 
+Set up the estimator for a longer run: the epochs, the instance, where the output goes, and a two-hour `max_run` cap.
+
 ```python
 from sagemaker.pytorch import PyTorch
 from sagemaker.inputs import TrainingInput
@@ -213,7 +219,7 @@ max_run = 2*60*60 # 2 hours
 
 # Define the PyTorch estimator and pass hyperparameters as arguments
 pytorch_estimator = PyTorch(
-    base_job_name=notebook_instance_name,  # SageMaker appends a timestamp to make each job name unique
+    base_job_name=f"{notebook_instance_name}-nn",   # who + which model; SageMaker appends a timestamp to make each job name unique
     max_run=max_run, # in seconds; always include (max 48 hours)
     entry_point="ML_with_AWS_SageMaker/scripts/train_nn.py",  # copied into the container and run there
     role=role,
@@ -290,7 +296,7 @@ instance_type = "ml.g4dn.xlarge"  # one NVIDIA T4 GPU; train_nn.py moves to it o
 instance_count = 1
 
 pytorch_estimator_gpu = PyTorch(
-    base_job_name=notebook_instance_name,
+    base_job_name=f"{notebook_instance_name}-nn",
     max_run=max_run, # in seconds; always include (max 48 hours)
     entry_point="ML_with_AWS_SageMaker/scripts/train_nn.py",
     role=role,
@@ -369,7 +375,7 @@ instance_count = 2   # demonstration: NOT expected to be faster, and expected to
 instance_type = "ml.m5.large"
 
 pytorch_estimator_2x = PyTorch(
-    base_job_name=notebook_instance_name,
+    base_job_name=f"{notebook_instance_name}-nn",
     max_run=max_run, # in seconds; always include (max 48 hours)
     entry_point="ML_with_AWS_SageMaker/scripts/train_nn.py",
     role=role,
@@ -397,7 +403,7 @@ desc_2x = job_cost_report(pytorch_estimator_2x.latest_training_job.name, prices[
 print(f"Single-instance job billed {desc_cpu['BillableTimeInSeconds']/60:.1f} min; two-instance job billed {desc_2x['BillableTimeInSeconds']*2/60:.1f} min")
 ```
 
-Look at the CloudWatch log for this job (SageMaker console, Training jobs, your job, View logs): there are two log streams, `algo-1` and `algo-2`, and each one prints all 1000 epochs. The wall-clock time is about the same as the single-instance run (slightly longer, if anything, because two instances have to be provisioned), and the billable minutes are double.
+Look at the job's log in CloudWatch, the AWS logging service introduced in the last episode (SageMaker console, Training jobs, your job, View logs): there are two log streams, `algo-1` and `algo-2`, and each one prints all 1000 epochs. The wall-clock time is about the same as the single-instance run (slightly longer, if anything, because two instances have to be provisioned), and the billable minutes are double.
 
 ::::::::::::::::::::::::::::::::::::::: callout
 #### What distributed training needs

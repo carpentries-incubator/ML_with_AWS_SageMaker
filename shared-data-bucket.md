@@ -20,7 +20,7 @@ s3://<shared-bucket>/
         instructor/full-run/   train_summary.json, eval_before.csv, eval_after.csv
 ```
 
-Learners set `shared_bucket = "<this bucket's name>"` in the first cell of the RAG and fine-tuning episodes. Tell them the name at the start of each session.
+The RAG and fine-tuning episodes have `shared_bucket = "ml-marathon-shared"` filled in. Stage under that name and there is nothing to tell learners; stage under another and they change that line in the first cell.
 
 ## Where to run this
 

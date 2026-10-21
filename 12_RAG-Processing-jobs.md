@@ -22,7 +22,7 @@ exercises: 20
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/12_RAG-Processing-jobs.ipynb`. Select the **`conda_pytorch`** kernel (`conda_pytorch_p310` on older instances).
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/12_RAG-Processing-jobs.ipynb`. Select the **`conda_pytorch`** kernel.
 ## When Bedrock does not have your model
 
 The Bedrock episode is the default for RAG: per-token billing, nothing left running, two API calls. Bedrock's catalog is curated, though. It carries Amazon's models, Anthropic, Meta, Mistral, DeepSeek, and a few others, and within a family only some sizes, usually a generation behind: for Qwen, the serverless lineup is still the Qwen3 series. Hugging Face hosts well over a million open-weight checkpoints. The one you want (the newest release, a specific size, a fine-tune for scientific text, a model a paper just published) is usually not on Bedrock, and often never will be.
@@ -111,7 +111,7 @@ session = sagemaker.Session()
 region = session.boto_region_name
 role = get_execution_role()   # the IAM role the jobs run under to read and write S3
 
-shared_bucket = "ml-marathon-shared"   # <-- EDIT ME: read-only inputs, from your instructor
+shared_bucket = "ml-marathon-shared"   # the instructor-staged, read-only bucket with the data and model weights; change only on your own account
 bucket_name = "sinkorswim-doejohn"     # <-- EDIT ME: your own bucket (chunks in, outputs out)
 s3_client = boto3.client("s3", region_name=region)
 
@@ -214,7 +214,7 @@ Define the tags once and pass `tags=job_tags` to **every** `HuggingFaceProcessor
 name = "DoeJohn"         # replace with your name
 project = "SinkOrSwim"   # replace with your challenge name
 
-def make_job_tags(purpose: str):
+def make_job_tags(purpose: str):   # one of: Storage, Notebook, Training, Tuning, Inference
     return [
         {"Key": "Name", "Value": name},
         {"Key": "Project", "Value": project},
@@ -223,6 +223,10 @@ def make_job_tags(purpose: str):
 ```
 
 ### Launch the embedding job
+
+Open `scripts/embedding_inference.py` first; it is under fifty lines. It reads a JSONL file of chunks from the job's input directory, embeds them with whatever sentence-transformer `--model_id` names, normalises the vectors so a dot product is a cosine similarity, and saves one `embeddings.npy` to the output directory. Nothing in it knows about WattBot, which is the point of a Processing job script: inputs in, outputs out, no state.
+
+A `HuggingFaceProcessor` is the Processing-job counterpart of the estimator: the same role, tags, instance type and container versions, plus a runtime cap. Its `run` call names the script, mounts the inputs, and says where the output goes.
 
 ```python
 embedding_model_id = "thenlper/gte-large"
@@ -304,7 +308,7 @@ For the second job, we pass four inputs:
 - `train_QA.csv` – training questions (shared bucket)
 - `metadata.csv` – to resolve `ref_id` → URL (shared bucket)
 
-The script `wattbot_rag_batch.py` is short, because the pipeline lives in `scripts/wattbot_rag.py`, the same module the Bedrock episode imported:
+Open `scripts/wattbot_rag_batch.py` and read `main` before launching it. It is short, because the pipeline lives in `scripts/wattbot_rag.py`, the same module the Bedrock episode imported:
 
 - `retrieve_top_k`: cosine similarity over the embedding matrix
 - `run_single_qa`: retrieval, the answer call, the hybrid unanswerable rule (retrieval threshold OR the model's own `is_blank`), the explanation call
@@ -402,6 +406,8 @@ solutions_df = pd.read_csv(local_solutions_path)
 solutions_df.head()
 ```
 
+Score the predictions with the competition's own metric, the same function the Bedrock episode used, so the two runs compare directly.
+
 ```python
 from wattbot_rag import compute_wattbot_score
 
@@ -423,6 +429,8 @@ Compare the overall score with the Bedrock run. The retrieval logic, prompts and
 Ask SageMaker what it recorded for each job: `session.sagemaker_client.describe_processing_job(ProcessingJobName=...)` returns `CreationTime`, `ProcessingStartTime` and `ProcessingEndTime`. The job names are `embedding_processor.latest_job.job_name` and `rag_processor.latest_job.job_name`. For each job, compute the minutes between creation and start (provisioning, before the instance is billed) and between start and end (the billed window), and price the billed window at `$1.41`/h for the `ml.g5.xlarge` and `$2.61`/h for the `ml.g6e.xlarge`. Then, from the RAG job's CloudWatch log timestamps, estimate how much of its billed window was setup (pip install and weight download) and how much was generation. How does the total compare with the cost callout, and with the Bedrock run?
 
 :::::::::::::::::::::::: solution
+
+`describe_processing_job` returns three timestamps; the gap between the first two is unbilled provisioning, between the last two the billed run.
 
 ```python
 def job_cost(job_name: str, price_per_hour: float):
