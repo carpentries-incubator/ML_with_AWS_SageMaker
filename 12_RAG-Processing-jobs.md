@@ -441,6 +441,7 @@ def job_cost(job_name: str, price_per_hour: float):
     billed = (d["ProcessingEndTime"] - d["ProcessingStartTime"]).total_seconds() / 60
     cost = billed / 60 * price_per_hour
     print(f"{job_name}: {d['ProcessingJobStatus']}")
+    print(f"  wall-clock:                {provisioning + billed:.1f} min from launch to end")
     print(f"  provisioning (not billed): {provisioning:.1f} min")
     print(f"  billed window:             {billed:.1f} min at ${price_per_hour}/h = ${cost:.2f}")
     return cost

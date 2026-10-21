@@ -492,7 +492,8 @@ def job_cost_report(job_name: str, price_per_hour: float):
     desc = session.sagemaker_client.describe_training_job(TrainingJobName=job_name)  # the job's full record: status, timings, resources, output
     n = desc["ResourceConfig"]["InstanceCount"]
     billable = desc["BillableTimeInSeconds"] * n   # BillableTimeInSeconds: container pull to model upload, charged per instance
-    print(f"{job_name}: status {desc['TrainingJobStatus']}, billable {billable/60:.1f} min on {n} instance(s), cost ${billable/3600*price_per_hour:.3f} at ${price_per_hour}/h")
+    wall = (desc["TrainingEndTime"] - desc["CreationTime"]).total_seconds()   # from the launch request to the end, including unbilled provisioning
+    print(f"{job_name}: status {desc['TrainingJobStatus']}, wall-clock {wall/60:.1f} min, billable {billable/60:.1f} min on {n} instance(s), cost ${billable/3600*price_per_hour:.3f} at ${price_per_hour}/h")
     return desc
 
 desc = job_cost_report(xgboost_estimator.latest_training_job.name, price_per_hour)  # latest_training_job: the job fit() just ran
