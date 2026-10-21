@@ -374,6 +374,15 @@ except ClientError:
 page_docs[0] if page_docs else None
 ```
 
+A paper whose PDF the corpus build could not download has no pages here, and a question that cites it can only score zero, which would measure the download rather than the pipeline. `drop_questions_without_papers` removes those questions from the evaluation set and says which papers were missing; the unanswerable questions, which cite nothing, stay.
+
+```python
+from wattbot_rag import drop_questions_without_papers
+
+train_df = drop_questions_without_papers(train_df, {p["doc_id"] for p in page_docs})
+print(f"{len(train_df)} questions can be answered from this corpus")
+```
+
 ## Step 6 – Text chunking
 
 RAG systems typically break documents into **chunks** so that:
