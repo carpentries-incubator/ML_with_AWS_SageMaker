@@ -286,7 +286,7 @@ train_df.head(15)
 
 ## Step 4 – Get the PDF corpus
 
-The corpus is the set of PDFs listed in `metadata.csv`, one per paper, named `<id>.pdf`. Downloading them from the publishers' sites is slow and unreliable when fifty notebooks do it at once, so the instructors did it once with `scripts/build_wattbot_corpus.py` and staged the result as `corpus.zip` in the shared bucket. We download that one file, unpack it, and delete the zip: the instance's disk is 20 GB at most and the PDFs alone are 400 MB.
+The corpus is the set of PDFs listed in `metadata.csv`, one per paper, named `<id>.pdf`. Downloading them from the publishers' sites is slow and unreliable when fifty notebooks do it at once, so the instructors did it once with `scripts/build_wattbot_corpus.py` and staged the result as `corpus.zip` in the shared bucket. We download that one file, unpack it, and delete the zip: the instance's disk is 20 GB at most, and the zip plus the unpacked PDFs are close to 700 MB.
 
 ```python
 PDF_DIR = os.path.join(local_data_dir, "pdfs")
@@ -295,7 +295,7 @@ os.makedirs(PDF_DIR, exist_ok=True)
 corpus_path = download_from_s3(corpus_key, "corpus.zip")
 with zipfile.ZipFile(corpus_path, "r") as zf:
     zf.extractall(PDF_DIR)
-os.remove(corpus_path)   # the zip is 400 MB and the PDFs are now unpacked; the notebook disk is small
+os.remove(corpus_path)   # the zip is 270 MB and the unpacked PDFs are 400 MB; the notebook disk is small
 
 pdf_files = sorted(f for f in os.listdir(PDF_DIR) if f.lower().endswith(".pdf"))
 print(f"{len(pdf_files)} PDFs in {PDF_DIR}; metadata lists {len(metadata_df)} papers")
@@ -850,7 +850,7 @@ results_df.head()
 
 ## Step 12 – Score against the training answers
 
-WattBot scores each prediction with three components: 0.75 for `answer_value` (numeric within ±0.1% relative tolerance, categorical match after normalisation, and zero if you answer a question the corpus cannot answer), 0.20 for the F1 between your `ref_id` set and the ground-truth citations, and 0.05 for refusing cleanly, with every evidence field blank, when the answer is `is_blank`. The number comes from `Score.py`, the competition's own metric file, which `compute_wattbot_score` in `wattbot_rag.py` calls for the headline score so that what you see here is what the leaderboard would report. It also prints the error rate by evidence type, the seven flag columns of `train_QA.csv`: **Quote** (the answer is a sentence in a paper), **Table**, **Figure**, **Math** (a calculation from numbers in the text), **is_NA** (the corpus cannot answer it, and the right response is `is_blank`), **CrossPaper** (numbers from two papers have to be combined) and **Reconcile** (two figures that sound alike but measure different things, such as water withdrawn against water consumed, or a popular claim against a measured value, and the answer is the ratio or the distinction between them; quoting either figure alone is the wrong answer the question is built to catch). A question can carry several. Read that table before changing anything: figure and table questions failing while quote questions pass points at text extraction, which loses figures and flattens tables, not at the model. The wrapper adds a per-row score, joins on `id`, and prints the worst-scoring rows so you can see *why* the pipeline lost points. `train_QA.csv` has no separate "unanswerable" column, so `gt_is_na_col="is_blank"` tells the scorer to derive that flag from `answer_value == "is_blank"` on both sides.
+WattBot scores each prediction with three components: 0.75 for `answer_value` (numeric within ±0.1% relative tolerance, categorical match after normalisation, and zero if you answer a question the corpus cannot answer), 0.20 for the F1 between your `ref_id` set and the ground-truth citations, and 0.05 for refusing cleanly, with every evidence field blank, when the answer is `is_blank`. The number comes from `Score.py`, the competition's own metric file, which `compute_wattbot_score` in `wattbot_rag.py` calls for the headline score so that what you see here is what the leaderboard would report. It also prints the share of correct answers by evidence type, the seven flag columns of `train_QA.csv`: **Quote** (the answer is a sentence in a paper), **Table**, **Figure**, **Math** (a calculation from numbers in the text), **is_NA** (the corpus cannot answer it, and the right response is `is_blank`), **CrossPaper** (numbers from two papers have to be combined) and **Reconcile** (two figures that sound alike but measure different things, such as water withdrawn against water consumed, or a popular claim against a measured value, and the answer is the ratio or the distinction between them; quoting either figure alone is the wrong answer the question is built to catch). A question can carry several. Read that table before changing anything: figure and table questions failing while quote questions pass points at text extraction, which loses figures and flattens tables, not at the model. The wrapper adds a per-row score, joins on `id`, and prints the worst-scoring rows so you can see *why* the pipeline lost points. `train_QA.csv` has no separate "unanswerable" column, so `gt_is_na_col="is_blank"` tells the scorer to derive that flag from `answer_value == "is_blank"` on both sides.
 
 ```python
 scored_df = compute_wattbot_score(
@@ -928,7 +928,7 @@ With 53 questions, two calls each and ~1,500-token prompts, the run was 140K inp
 Everything above is two model IDs and two callables. The [model catalog](https://us-east-2.console.aws.amazon.com/bedrock/home?region=us-east-2#/model-catalog) has dozens of chat models and several embedding models, and "Choosing the two models" at the top of the episode said the leaderboards cannot tell you which one wins on your questions. Find out.
 
 1. **A different generator.** Pick another chat model from the catalog (for example `us.amazon.nova-2-lite-v1:0`, `us.meta.llama4-maverick-17b-instruct-v1:0`, or a Mistral or Claude model if your account has access), wrap it in a tagged profile as in Step 7, and rerun the Step 11 loop on the same 55-question sample with `call_bedrock_chat` pointed at it. Score it with `compute_wattbot_score` and price it from its `usage` blocks. Which evidence types moved, and what did a point of score cost?
-2. **A different embedder.** Retrieval is the other half. Either shrink Titan to 256 dimensions (`"dimensions": 256` in its request body) and see whether the hit rate and the score survive a four-times smaller index, or switch provider to Cohere Embed, if the region's catalog offers it, whose request body is different from Titan's: a list of `texts` and an `input_type` that is `search_document` for the corpus and `search_query` for the question. Either way the matrix must be recomputed (ten minutes at the quota, so not in class), under a new file name so the Titan one is kept.
+2. **A different embedder.** Retrieval is the other half. The Ohio catalog has one other embedding model, Cohere Embed v4 (`cohere.embed-v4:0`), and its request body is different from Titan's: a list of `texts` and an `input_type` that is `search_document` for the corpus and `search_query` for the question. Embed the chunks with it under a new file name so the Titan matrix is kept (ten minutes at the quota, so not in class), rerun Step 11 with DeepSeek unchanged, and score.
 
 Keep the rest fixed. One change per experiment, or you will not know what moved the score.
 
@@ -966,36 +966,32 @@ for m in bedrock.list_foundation_models(byOutputModality="EMBEDDING")["modelSumm
     print(f"{m['modelId']:<45} {m['providerName']}")
 ```
 
-Titan at 256 dimensions is the same call with one more key; Cohere needs its own request and response shape. Both go through a tagged profile for the new model, and both need `embed_query` to use the same model as the matrix, with Cohere's `input_type` switched for the question side.
+Cohere's request takes a list of texts and says whether they are documents or a query; its response is a list of vectors, nested under the number type asked for. Everything else is Step 8 again: a tagged profile, one call per chunk, a cached matrix, and a query function that uses the same model.
 
 ```python
-alt_embedding_model_id = base_embedding_model_id   # Titan at 256 dimensions; or a Cohere ID from the list above (cohere.embed-v4:0 where offered)
-alt_embed_arn = tagged_profile_arn(bedrock, alt_embedding_model_id, "wattbot-embed-alt", name, project)
+cohere_model_id = "cohere.embed-v4:0"
+cohere_arn = tagged_profile_arn(bedrock, cohere_model_id, "wattbot-embed-cohere", name, project)
 
-def alt_embed(text: str, for_query: bool = False) -> np.ndarray:
-    if "cohere" in alt_embedding_model_id:
-        body = {"texts": [text[:2000]], "input_type": "search_query" if for_query else "search_document", "embedding_types": ["float"]}
-    else:
-        body = {"inputText": text, "dimensions": 256, "normalize": True}   # Titan Text Embeddings V2 at a quarter of the size
-    out = json.loads(bedrock_runtime.invoke_model(modelId=alt_embed_arn, contentType="application/json",
-                                                  accept="application/json", body=json.dumps(body))["body"].read())
-    vec = out["embeddings"][0] if "embeddings" in out else out["embedding"]   # Cohere returns a list of vectors, Titan one vector
-    vec = vec["float"][0] if isinstance(vec, dict) else vec                   # newer Cohere versions nest by type
-    return np.asarray(vec, dtype="float32")
+def cohere_embed(text: str, input_type: str = "search_document") -> np.ndarray:
+    """One Cohere Embed v4 vector; input_type is search_document for the corpus, search_query for a question."""
+    body = {"texts": [text[:2000]], "input_type": input_type, "embedding_types": ["float"]}
+    response = bedrock_runtime.invoke_model(modelId=cohere_arn, contentType="application/json", accept="application/json", body=json.dumps(body))
+    return np.asarray(json.loads(response["body"].read())["embeddings"]["float"][0], dtype="float32")
 
-alt_emb_path = data_dir / "embeddings_alt.npy"   # a new file: the Titan matrix stays
-if alt_emb_path.exists():
-    alt_embeddings = np.load(alt_emb_path)
+cohere_emb_path = data_dir / "embeddings_cohere.npy"   # a new file: the Titan matrix stays
+if cohere_emb_path.exists():
+    cohere_embeddings = np.load(cohere_emb_path)
 else:
     t0 = time.time()
-    alt_embeddings = np.vstack([alt_embed(ch["text"]) for ch in chunked_docs])
-    np.save(alt_emb_path, alt_embeddings)
+    cohere_embeddings = np.vstack([cohere_embed(ch["text"]) for ch in chunked_docs])
+    np.save(cohere_emb_path, cohere_embeddings)
     print(f"Embedded {len(chunked_docs)} chunks in {(time.time() - t0) / 60:.1f} min")
 
-alt_embed_query = lambda q: alt_embed(q, for_query=True)
+def embed_query_cohere(question: str) -> np.ndarray:
+    return cohere_embed(question, input_type="search_query")
 ```
 
-Then the Step 11 loop with `embed_query=alt_embed_query` and `chunk_embeddings=alt_embeddings`, DeepSeek unchanged, and the scorer. The hit-rate cell from Step 13 is the sharper instrument here: compute it for the new matrix before scoring, because an embedder that finds the paper less often cannot be rescued by any generator.
+Then the Step 11 loop with `embed_query=embed_query_cohere` and `chunk_embeddings=cohere_embeddings`, DeepSeek unchanged, and the scorer. The hit-rate cell from Step 13 is the sharper instrument here: compute it for the new matrix before scoring, because an embedder that finds the paper less often cannot be rescued by any generator. A cheaper variant of the same experiment keeps Titan and adds `"dimensions": 256` to its request body in Step 8, which asks whether a four-times smaller index retrieves as well.
 
 :::::::::::::::::::::::::::::::::
 
@@ -1222,7 +1218,7 @@ for label, images_from in vision_runs.items():
 
 ### What to expect, and what it cost
 
-Measured once on this corpus with whole page images rather than crops, on 50 table and figure questions, before the extraction step above was written; the crops should do better, and the numbers here are the floor. Retrieval first: the text index found a ground-truth paper in its top eight for 94% of the table questions and 94% of the figure questions; the page-image index managed 91% and 82%. A whole page is a weaker key than the caption and surrounding sentences that the text chunks already carry. Then reading: with the image index's top three pages attached, Nova 2 Lite went from 0.64 to 0.67 overall, from 41% to 29% of figure questions wrong, and from 0.85 to 0.93 on citation F1, while the table questions did not move (43% to 46% wrong). Seventeen figure questions is two questions of difference, so read the direction, not the decimals. For the bill, every image is a few hundred to a thousand input tokens at Nova 2 Lite's rate on the [pricing page](https://aws.amazon.com/bedrock/pricing/), so a run with images costs two to three times the control; `vision_usage` holds all three runs' usage blocks, and the embedding of the crops is the per-image rate times `len(crops)`, a few cents. The three runs together take about eight minutes.
+Measured once on this corpus with whole page images rather than crops, on 50 table and figure questions, before the extraction step above was written; the crops should do better, and the numbers here are the floor. Retrieval first: the text index found a ground-truth paper in its top eight for 94% of the table questions and 94% of the figure questions; the page-image index managed 91% and 82%. A whole page is a weaker key than the caption and surrounding sentences that the text chunks already carry. Then reading: with the image index's top three pages attached, Nova 2 Lite went from 0.64 to 0.67 overall, from 59% to 71% of figure questions correct, and from 0.85 to 0.93 on citation F1, while the table questions did not move (57% to 54% correct). Seventeen figure questions is two questions of difference, so read the direction, not the decimals. For the bill, every image is a few hundred to a thousand input tokens at Nova 2 Lite's rate on the [pricing page](https://aws.amazon.com/bedrock/pricing/), so a run with images costs two to three times the control; `vision_usage` holds all three runs' usage blocks, and the embedding of the crops is the per-image rate times `len(crops)`, a few cents. The three runs together take about eight minutes.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 

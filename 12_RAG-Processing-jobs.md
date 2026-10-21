@@ -196,14 +196,6 @@ We use the same `embedding_inference.py` script across projects; here it expects
 
 Neither job installs anything. The Hugging Face container ships `transformers` and PyTorch, which is all the embedding wrapper and the generator need, so both jobs start as soon as the instance is up. A `requirements.txt` next to a script would be pip-installed before it runs; neither job here has one.
 
-::::::::::::::::::::::::::::::::::::: callout
-
-### Why not vLLM?
-
-vLLM is the open-source inference engine most people serve open-weight models with: you give it a model name, it loads the weights onto the GPU and answers chat requests, batching many at once so that throughput scales. That is what you want behind an API with users. This job sends about 100 prompts one at a time, so the batching would go unused, and the install is several gigabytes of billed GPU time. `transformers.generate`, already in the container, does the same prompts in about thirteen minutes with nothing to install. The GPU-notebook episode uses vLLM, where its 8-bit weights are needed to fit a larger model.
-
-::::::::::::::::::::::::::::::::::::::::::::::::
-
 ### Cost tracking: tag every job
 
 Tags do **not** propagate in AWS. The tags you put on your notebook instance cover the notebook's hourly cost and nothing else. Each Processing job below launches its own GPU instance, which is a separate billable resource with no tags unless we pass them at launch, exactly as we did for training and tuning jobs earlier in the workshop. An untagged job shows up in Cost Explorer as anonymous SageMaker spend that nobody can attribute to a team.
@@ -335,6 +327,14 @@ The `--per_type 10` argument draws the same stratified sample the Bedrock episod
 - `compute_wattbot_score`: the metric we use at the end
 
 What the batch script adds is the two model callables: `embed_query` wraps the same `gte-large` model and pooling the embedding job used (`hf_embedder.py`) (the question has to be embedded with the same model as the chunks), and `generate` wraps `transformers.generate` on the generator (Qwen3-8B here) with Qwen's thinking mode off. The job writes `wattbot_solutions.csv` in the WattBot submission format.
+
+::::::::::::::::::::::::::::::::::::: callout
+
+### Why not vLLM?
+
+vLLM is the open-source inference engine most people serve open-weight models with: you give it a model name, it loads the weights onto the GPU and answers chat requests, batching many at once so that throughput scales. That is what you want behind an API with users. This job sends about 100 prompts one at a time, so the batching would go unused, and the install is several gigabytes of billed GPU time. `transformers.generate`, already in the container, does the same prompts in about thirteen minutes with nothing to install. The GPU-notebook episode uses vLLM, where its 8-bit weights are needed to fit a larger model.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
 
 ```python
 emb_output_s3 = f"s3://{bucket_name}/{emb_output_prefix}/embeddings.npy"
