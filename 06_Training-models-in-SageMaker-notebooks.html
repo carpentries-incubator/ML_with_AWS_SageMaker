@@ -429,7 +429,7 @@ train.py script</a></li>
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Training Models in SageMaker: Intro</h1>
-        <p>Last updated on 2026-10-20 |
+        <p>Last updated on 2026-10-21 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/06_Training-models-in-SageMaker-notebooks.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -482,11 +482,9 @@ up on the bill, and read back its billable time afterwards.</li>
 <p>Open the notebook from:
 <code>/ML_with_AWS_SageMaker/notebooks/06_Training-models-in-SageMaker-notebooks.ipynb</code>.
 When asked for a kernel, pick
-<strong><code>conda_pytorch</code></strong> (on older Amazon Linux 2
-instances it is called <code>conda_pytorch_p310</code>); we will use the
-same kernel for the next two episodes. The <code>conda_python3</code>
-kernel has no PyTorch, and on current instances no scikit-learn
-either.</p>
+<strong><code>conda_pytorch</code></strong>; we will use the same kernel
+for the next two episodes. The <code>conda_python3</code> kernel has no
+PyTorch, and on current instances no scikit-learn either.</p>
 </div>
 <div class="section level4">
 <h4 id="cd-to-instance-home-directory">2. CD to instance home directory<a class="anchor" aria-label="anchor" href="#cd-to-instance-home-directory"></a></h4>
@@ -607,7 +605,7 @@ potential issues early. <strong>In your group, discuss:</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Which checks do you think are most critical before scaling up?</p>
 <ul><li>
@@ -712,7 +710,7 @@ group.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li><p><strong>Data Preprocessing</strong>: The script fills missing
 values (<code>Age</code> with median, <code>Embarked</code> with mode),
@@ -848,6 +846,10 @@ hyperparameter tuning on multiple instances)</p>
 </div>
 <div class="section level3">
 <h3 id="local-test">Local test<a class="anchor" aria-label="anchor" href="#local-test"></a></h3>
+<p>Run the training script here in the notebook first, on the small
+data, with the hyperparameters passed in as variables. A local run finds
+bugs for free, and the same script then runs unchanged as a SageMaker
+job.</p>
 <div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -890,6 +892,9 @@ resources.</p>
 good sanity check to ensure our model is training properly. Here’s how
 you would apply the outputted model to your test set using your local
 notebook instance.</p>
+<p>Score the model you just trained locally on the test set, reusing the
+script’s own <code>preprocess_data</code> so the test rows are
+transformed exactly as the training rows were.</p>
 <div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -962,7 +967,7 @@ data. Which instance would you pick for the training job, and why?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <p>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
 GB of data wants about 32 GB of memory: <code>ml.m5.2xlarge</code> (8
@@ -1140,7 +1145,7 @@ feature engineering, or model modifications. Here’s how to include it
 (illustration only; we don’t run this):</p>
 <pre class="text"><code>from sagemaker.sklearn.estimator import SKLearn
 sklearn_estimator = SKLearn(
-    base_job_name=notebook_instance_name,
+    base_job_name=f"{notebook_instance_name}-xgboost",   # job name = who + which model; SageMaker appends a timestamp
     entry_point="train_script.py",
     role=role,
     instance_count=1,
@@ -1188,7 +1193,7 @@ and a human-readable name, even after the job has completed.</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1" aria-label="code-block-12-1"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span> <span class="co"># replace with your name</span></span>
 <span id="cb12-2"><a href="#cb12-2" tabindex="-1" aria-label="code-block-12-2"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span> <span class="co"># replace with your challenge name</span></span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1" aria-label="code-block-12-3"></a>purpose <span class="op">=</span> <span class="st">"Training"</span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1" aria-label="code-block-12-3"></a>purpose <span class="op">=</span> <span class="st">"Training"</span>        <span class="co"># one of: Storage, Notebook, Training, Tuning, Inference</span></span>
 <span id="cb12-4"><a href="#cb12-4" tabindex="-1" aria-label="code-block-12-4"></a></span>
 <span id="cb12-5"><a href="#cb12-5" tabindex="-1" aria-label="code-block-12-5"></a><span class="co"># Tags: key/value labels attached to the job's resources, so its cost shows up under your name and project on the bill</span></span>
 <span id="cb12-6"><a href="#cb12-6" tabindex="-1" aria-label="code-block-12-6"></a>job_tags <span class="op">=</span> [</span>
@@ -1232,7 +1237,7 @@ minutes, or about <code>$0.01</code>.</p>
 <span id="cb13-18"><a href="#cb13-18" tabindex="-1" aria-label="code-block-13-18"></a></span>
 <span id="cb13-19"><a href="#cb13-19" tabindex="-1" aria-label="code-block-13-19"></a><span class="co"># Set up the SageMaker XGBoost Estimator with custom script</span></span>
 <span id="cb13-20"><a href="#cb13-20" tabindex="-1" aria-label="code-block-13-20"></a>xgboost_estimator <span class="op">=</span> XGBoost(</span>
-<span id="cb13-21"><a href="#cb13-21" tabindex="-1" aria-label="code-block-13-21"></a>    base_job_name<span class="op">=</span>notebook_instance_name,  <span class="co"># prefix of the job name; SageMaker appends a timestamp to make it unique</span></span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1" aria-label="code-block-13-21"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-xgboost"</span>,   <span class="co"># prefix of the job name: who + which model; SageMaker appends a timestamp to make it unique</span></span>
 <span id="cb13-22"><a href="#cb13-22" tabindex="-1" aria-label="code-block-13-22"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
 <span id="cb13-23"><a href="#cb13-23" tabindex="-1" aria-label="code-block-13-23"></a>    entry_point<span class="op">=</span><span class="st">'train_xgboost.py'</span>,      <span class="co"># the script SageMaker runs inside the container on the training instance</span></span>
 <span id="cb13-24"><a href="#cb13-24" tabindex="-1" aria-label="code-block-13-24"></a>    source_dir<span class="op">=</span><span class="st">'ML_with_AWS_SageMaker/scripts'</span>,  <span class="co"># Directory where your script is located (uploaded to the job with it)</span></span>
@@ -1337,8 +1342,12 @@ below.</li>
 files from SageMaker’s built-in profiler, written for every training
 job. Ignore them; they can be turned off with
 <code>disable_profiler=True</code> on the estimator.</li>
-</ol><p>The job’s log is not in S3; it is in CloudWatch, reachable from the
-job’s page in the SageMaker console.</p>
+</ol><p>The job’s log is not in S3. It is in <strong>CloudWatch</strong>, the
+AWS service that collects logs and metrics from every other service:
+everything a training job prints goes to a CloudWatch log stream named
+after the job, and it stays there after the instance is gone. The
+quickest way to it is the <strong>View logs</strong> link on the job’s
+page in the SageMaker console.</p>
 <p>A <strong>second bucket</strong> also appeared,
 <code>sagemaker-&lt;region&gt;-&lt;account-id&gt;</code>. The SageMaker
 SDK creates this <em>default bucket</em> the first time it needs
@@ -1389,6 +1398,8 @@ add them in place of or alongside accuracy.</p>
 <span id="cb15-12"><a href="#cb15-12" tabindex="-1" aria-label="code-block-15-12"></a><span class="cf">with</span> tarfile.<span class="bu">open</span>(local_model_path) <span class="im">as</span> tar:</span>
 <span id="cb15-13"><a href="#cb15-13" tabindex="-1" aria-label="code-block-15-13"></a>    tar.extractall()</span></code></pre>
 </div>
+<p>Now the same evaluation on the model the job trained: load it from
+the unpacked archive and score the test set the same way as before.</p>
 <div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1522,7 +1533,7 @@ objective is regression rather than binary classification.</p>
 <span id="cb18-6"><a href="#cb18-6" tabindex="-1" aria-label="code-block-18-6"></a></span>
 <span id="cb18-7"><a href="#cb18-7" tabindex="-1" aria-label="code-block-18-7"></a><span class="co"># Use Estimator directly for built-in container without specifying entry_point</span></span>
 <span id="cb18-8"><a href="#cb18-8" tabindex="-1" aria-label="code-block-18-8"></a>xgboost_estimator_builtin <span class="op">=</span> Estimator(</span>
-<span id="cb18-9"><a href="#cb18-9" tabindex="-1" aria-label="code-block-18-9"></a>    base_job_name<span class="op">=</span>notebook_instance_name,</span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1" aria-label="code-block-18-9"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-xgboost"</span>,   <span class="co"># job name = who + which model; SageMaker appends a timestamp</span></span>
 <span id="cb18-10"><a href="#cb18-10" tabindex="-1" aria-label="code-block-18-10"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
 <span id="cb18-11"><a href="#cb18-11" tabindex="-1" aria-label="code-block-18-11"></a>    <span class="co"># image_uris.retrieve looks up AWS's prebuilt XGBoost container for this region; its built-in training code replaces entry_point</span></span>
 <span id="cb18-12"><a href="#cb18-12" tabindex="-1" aria-label="code-block-18-12"></a>    image_uri<span class="op">=</span>sagemaker.image_uris.retrieve(<span class="st">"xgboost"</span>, region, version<span class="op">=</span><span class="st">"1.7-1"</span>),</span>
@@ -1594,8 +1605,10 @@ detailed information:
 <code>InProgress</code>, <code>Completed</code>, or
 <code>Failed</code>.</li>
 <li>
-<strong>Logs</strong>: Review CloudWatch Logs and Job Metrics for
-real-time updates.</li>
+<strong>Logs</strong>: the <strong>View logs</strong> link opens the
+job’s output in CloudWatch, the AWS logging service, where it is kept
+after the job ends; <strong>Job Metrics</strong> shows CPU, GPU and
+memory use over the run.</li>
 <li>
 <strong>Output Data</strong>: Shows the S3 location with the trained
 model artifacts.</li>
@@ -1775,8 +1788,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/06_Training-models-in-SageMaker-notebooks.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/06_Training-models-in-SageMaker-notebooks.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-20",
-  "datePublished": "2026-10-20"
+  "dateModified": "2026-10-21",
+  "datePublished": "2026-10-21"
 }
 
   </script><script>

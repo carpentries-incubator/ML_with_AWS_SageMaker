@@ -427,7 +427,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>RAG with Processing Jobs</h1>
-        <p>Last updated on 2026-10-20 |
+        <p>Last updated on 2026-10-21 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/12_RAG-Processing-jobs.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -481,9 +481,8 @@ against the Bedrock run.</li>
 </div>
 <p>Open the notebook from:
 <code>/ML_with_AWS_SageMaker/notebooks/12_RAG-Processing-jobs.ipynb</code>.
-Select the <strong><code>conda_pytorch</code></strong> kernel
-(<code>conda_pytorch_p310</code> on older instances). ## When Bedrock
-does not have your model</p>
+Select the <strong><code>conda_pytorch</code></strong> kernel. ## When
+Bedrock does not have your model</p>
 <p>The Bedrock episode is the default for RAG: per-token billing,
 nothing left running, two API calls. Bedrock’s catalog is curated,
 though. It carries Amazon’s models, Anthropic, Meta, Mistral, DeepSeek,
@@ -655,7 +654,7 @@ notebook for the scoring step at the end.</p>
 <span id="cb2-14"><a href="#cb2-14" tabindex="-1" aria-label="code-block-2-14"></a>region <span class="op">=</span> session.boto_region_name</span>
 <span id="cb2-15"><a href="#cb2-15" tabindex="-1" aria-label="code-block-2-15"></a>role <span class="op">=</span> get_execution_role()   <span class="co"># the IAM role the jobs run under to read and write S3</span></span>
 <span id="cb2-16"><a href="#cb2-16" tabindex="-1" aria-label="code-block-2-16"></a></span>
-<span id="cb2-17"><a href="#cb2-17" tabindex="-1" aria-label="code-block-2-17"></a>shared_bucket <span class="op">=</span> <span class="st">"ml-marathon-shared"</span>   <span class="co"># &lt;-- EDIT ME: read-only inputs, from your instructor</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1" aria-label="code-block-2-17"></a>shared_bucket <span class="op">=</span> <span class="st">"ml-marathon-shared"</span>   <span class="co"># the instructor-staged, read-only bucket with the data and model weights; change only on your own account</span></span>
 <span id="cb2-18"><a href="#cb2-18" tabindex="-1" aria-label="code-block-2-18"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>     <span class="co"># &lt;-- EDIT ME: your own bucket (chunks in, outputs out)</span></span>
 <span id="cb2-19"><a href="#cb2-19" tabindex="-1" aria-label="code-block-2-19"></a>s3_client <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
 <span id="cb2-20"><a href="#cb2-20" tabindex="-1" aria-label="code-block-2-20"></a></span>
@@ -790,7 +789,7 @@ job from the batch RAG job on the bill.</p>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span>         <span class="co"># replace with your name</span></span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>   <span class="co"># replace with your challenge name</span></span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a></span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1" aria-label="code-block-5-4"></a><span class="kw">def</span> make_job_tags(purpose: <span class="bu">str</span>):</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1" aria-label="code-block-5-4"></a><span class="kw">def</span> make_job_tags(purpose: <span class="bu">str</span>):   <span class="co"># one of: Storage, Notebook, Training, Tuning, Inference</span></span>
 <span id="cb5-5"><a href="#cb5-5" tabindex="-1" aria-label="code-block-5-5"></a>    <span class="cf">return</span> [</span>
 <span id="cb5-6"><a href="#cb5-6" tabindex="-1" aria-label="code-block-5-6"></a>        {<span class="st">"Key"</span>: <span class="st">"Name"</span>, <span class="st">"Value"</span>: name},</span>
 <span id="cb5-7"><a href="#cb5-7" tabindex="-1" aria-label="code-block-5-7"></a>        {<span class="st">"Key"</span>: <span class="st">"Project"</span>, <span class="st">"Value"</span>: project},</span>
@@ -800,6 +799,17 @@ job from the batch RAG job on the bill.</p>
 </div>
 <div class="section level3">
 <h3 id="launch-the-embedding-job">Launch the embedding job<a class="anchor" aria-label="anchor" href="#launch-the-embedding-job"></a></h3>
+<p>Open <code>scripts/embedding_inference.py</code> first; it is under
+fifty lines. It reads a JSONL file of chunks from the job’s input
+directory, embeds them with whatever sentence-transformer
+<code>--model_id</code> names, normalises the vectors so a dot product
+is a cosine similarity, and saves one <code>embeddings.npy</code> to the
+output directory. Nothing in it knows about WattBot, which is the point
+of a Processing job script: inputs in, outputs out, no state.</p>
+<p>A <code>HuggingFaceProcessor</code> is the Processing-job counterpart
+of the estimator: the same role, tags, instance type and container
+versions, plus a runtime cap. Its <code>run</code> call names the
+script, mounts the inputs, and says where the output goes.</p>
 <div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -891,9 +901,10 @@ bucket, written by Job 1)</li>
 <li>
 <code>metadata.csv</code> – to resolve <code>ref_id</code> → URL
 (shared bucket)</li>
-</ul><p>The script <code>wattbot_rag_batch.py</code> is short, because the
-pipeline lives in <code>scripts/wattbot_rag.py</code>, the same module
-the Bedrock episode imported:</p>
+</ul><p>Open <code>scripts/wattbot_rag_batch.py</code> and read
+<code>main</code> before launching it. It is short, because the pipeline
+lives in <code>scripts/wattbot_rag.py</code>, the same module the
+Bedrock episode imported:</p>
 <ul><li>
 <code>retrieve_top_k</code>: cosine similarity over the embedding
 matrix</li>
@@ -1012,6 +1023,8 @@ inspect a few rows, and compute the WattBot score against
 <span id="cb10-5"><a href="#cb10-5" tabindex="-1" aria-label="code-block-10-5"></a>solutions_df <span class="op">=</span> pd.read_csv(local_solutions_path)</span>
 <span id="cb10-6"><a href="#cb10-6" tabindex="-1" aria-label="code-block-10-6"></a>solutions_df.head()</span></code></pre>
 </div>
+<p>Score the predictions with the competition’s own metric, the same
+function the Bedrock episode used, so the two runs compare directly.</p>
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1059,8 +1072,11 @@ total compare with the cost callout, and with the Bedrock run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
+<p><code>describe_processing_job</code> returns three timestamps; the
+gap between the first two is unbilled provisioning, between the last two
+the billed run.</p>
 <div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1120,7 +1136,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still installing
@@ -1235,8 +1251,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/12_RAG-Processing-jobs.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/12_RAG-Processing-jobs.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-20",
-  "datePublished": "2026-10-20"
+  "dateModified": "2026-10-21",
+  "datePublished": "2026-10-21"
 }
 
   </script><script>

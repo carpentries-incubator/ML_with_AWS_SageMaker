@@ -430,7 +430,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>(Optional) RAG with a Notebook GPU</h1>
-        <p>Last updated on 2026-10-20 |
+        <p>Last updated on 2026-10-21 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/13_RAG-GPU-notebook.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -672,9 +672,7 @@ GB will not fit the weights or the vLLM install). This volume bills at
 repository as in the controller-notebook episode (this is a new
 instance, so it has no copy yet), and open
 <code>/ML_with_AWS_SageMaker/notebooks/13_RAG-GPU-notebook.ipynb</code>.
-Select the <strong><code>conda_pytorch</code></strong> kernel
-(<code>conda_pytorch_p310</code> on older instances); it is the one with
-PyTorch and CUDA.</p>
+Select the <strong><code>conda_pytorch</code></strong> kernel.</p>
 <p>See <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
 for ML</a> for further guidance. This instance bills by the hour from
 the moment it starts, whether or not it is doing anything: <strong>stop
@@ -698,7 +696,7 @@ those two resources are the only things being billed.</p>
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1" aria-label="code-block-2-1"></a><span class="co"># also verify you have selected a PyTorch (conda_pytorch_*) kernel</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1" aria-label="code-block-2-1"></a><span class="co"># also verify you have selected the conda_pytorch kernel</span></span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1" aria-label="code-block-2-2"></a><span class="im">import</span> torch</span>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a><span class="bu">print</span>(<span class="st">"torch cuda available:"</span>, torch.cuda.is_available())   <span class="co"># False means PyTorch cannot use the GPU even if nvidia-smi sees it</span></span>
 <span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a><span class="bu">print</span>(<span class="st">"num gpus:"</span>, torch.cuda.device_count())</span></code></pre>
@@ -740,7 +738,10 @@ Restart</strong>) before continuing.</p>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="import-data-from-bucket-into-notebook">Import data from bucket into notebook<a class="anchor" aria-label="anchor" href="#import-data-from-bucket-into-notebook"></a></h2>
-<hr class="half-width"><div class="codewrapper sourceCode" id="cb4">
+<hr class="half-width"><p>The same setup as the Bedrock episode: session, region, role, an S3
+client, the two bucket names and a local data folder, plus a small
+download helper.</p>
+<div class="codewrapper sourceCode" id="cb4">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="im">import</span> os</span>
@@ -775,13 +776,15 @@ Restart</strong>) before continuing.</p>
 <div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a>shared_bucket <span class="op">=</span> <span class="st">"ml-marathon-shared"</span>   <span class="co"># &lt;-- EDIT ME: read-only inputs, from your instructor</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a>shared_bucket <span class="op">=</span> <span class="st">"ml-marathon-shared"</span>   <span class="co"># the instructor-staged, read-only bucket with the data and model weights; change only on your own account</span></span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>     <span class="co"># &lt;-- EDIT ME: your own bucket (chunks live here)</span></span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a></span>
 <span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a><span class="co"># Local working directory in the notebook instance</span></span>
 <span id="cb6-5"><a href="#cb6-5" tabindex="-1" aria-label="code-block-6-5"></a>local_data_dir <span class="op">=</span> <span class="st">"./data"</span></span>
 <span id="cb6-6"><a href="#cb6-6" tabindex="-1" aria-label="code-block-6-6"></a></span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1" aria-label="code-block-6-7"></a><span class="bu">print</span>(<span class="st">"Local data dir:"</span>, local_data_dir)</span></code></pre>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1" aria-label="code-block-6-7"></a>session_start <span class="op">=</span> time.time()   <span class="co"># the meter on this GPU instance started when it booted; this marks where the episode's work began</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1" aria-label="code-block-6-8"></a></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1" aria-label="code-block-6-9"></a><span class="bu">print</span>(<span class="st">"Local data dir:"</span>, local_data_dir)</span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="get-the-shared-wattbot-helpers">Get the shared WattBot helpers<a class="anchor" aria-label="anchor" href="#get-the-shared-wattbot-helpers"></a></h3>
@@ -796,6 +799,8 @@ adds is the two model callables, <code>embed_query</code> and
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a><span class="op">!</span>cp <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>wattbot_rag.py .</span></code></pre>
 </div>
+<p>Import the pieces of the shared RAG module we reuse: the prompts, the
+retrieval and scoring functions, and the per-question runner.</p>
 <div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -809,6 +814,7 @@ adds is the two model callables, <code>embed_query</code> and
 <span id="cb8-8"><a href="#cb8-8" tabindex="-1" aria-label="code-block-8-8"></a>    run_single_qa,</span>
 <span id="cb8-9"><a href="#cb8-9" tabindex="-1" aria-label="code-block-8-9"></a>)</span></code></pre>
 </div>
+<p>Download the two WattBot input files from the shared bucket.</p>
 <div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -832,6 +838,8 @@ adds is the two model callables, <code>embed_query</code> and
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a><span class="im">import</span> torch</span>
 <span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a><span class="im">from</span> sentence_transformers <span class="im">import</span> SentenceTransformer   <span class="co"># embedding-model wrapper: encode(list of strings) -&gt; matrix</span></span></code></pre>
 </div>
+<p>A CSV reader that tries a few encodings, because some metadata files
+are not valid UTF-8.</p>
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -946,6 +954,8 @@ required.</p>
 <span id="cb13-13"><a href="#cb13-13" tabindex="-1" aria-label="code-block-13-13"></a>)</span>
 <span id="cb13-14"><a href="#cb13-14" tabindex="-1" aria-label="code-block-13-14"></a></span></code></pre>
 </div>
+<p>Embed every chunk in batches on the GPU and stack the results into
+one matrix, one row per chunk.</p>
 <div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1028,11 +1038,10 @@ embedding collections. This is overkill for our teaching demo (and the
 Wattbot project in general), but very relevant for production-scale
 systems.</p></li>
 </ul><p>In this episode we deliberately stick with a simple in-memory index
-so the retrieval step is easy to inspect and debug. In later episodes
-(or your own projects), you can <strong>swap out the retrieval
-layer</strong> for FAISS or a vector DB without changing the overall RAG
-architecture: the model still sees “top–k retrieved chunks” as
-context.</p>
+so the retrieval step is easy to inspect and debug. In your own projects
+you can <strong>swap out the retrieval layer</strong> for FAISS or a
+vector DB without changing the overall RAG architecture: the model still
+sees “top–k retrieved chunks” as context.</p>
 <p><code>retrieve_top_k</code> from <code>wattbot_rag.py</code> is that
 search: normalize the query and the matrix, one matrix multiply for the
 cosine similarities, <code>argsort</code> for the top <em>k</em>. Open
@@ -1147,6 +1156,8 @@ and billed, until you stop the instance.</p>
 <span id="cb19-15"><a href="#cb19-15" tabindex="-1" aria-label="code-block-19-15"></a></span>
 <span id="cb19-16"><a href="#cb19-16" tabindex="-1" aria-label="code-block-19-16"></a><span class="bu">print</span>(<span class="st">"Generator model and helper loaded."</span>)</span></code></pre>
 </div>
+<p>One throwaway question, to confirm the generator answers before
+spending time on the real ones.</p>
 <div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1364,6 +1375,20 @@ prose.</li>
 “workbench”: you can swap in better models, smarter retrieval
 strategies, and richer document preprocessing without changing the
 overall pipeline structure.</p>
+<div class="section level3">
+<h3 id="what-did-this-episode-cost">What did this episode cost?<a class="anchor" aria-label="anchor" href="#what-did-this-episode-cost"></a></h3>
+<p>There is no job record to ask here; the bill is simply the instance’s
+hours. This counts from the setup cell, so the boot, the install and
+every pause since are in it, and it keeps counting until you stop the
+instance.</p>
+<div class="codewrapper sourceCode" id="cb24">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" tabindex="-1" aria-label="code-block-24-1"></a>g6e_price <span class="op">=</span> <span class="fl">2.61</span>   <span class="co"># $/hour, ml.g6e.xlarge on-demand</span></span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1" aria-label="code-block-24-2"></a>hours <span class="op">=</span> (time.time() <span class="op">-</span> session_start) <span class="op">/</span> <span class="dv">3600</span></span>
+<span id="cb24-3"><a href="#cb24-3" tabindex="-1" aria-label="code-block-24-3"></a><span class="bu">print</span>(<span class="ss">f"this notebook has been running </span><span class="sc">{</span>hours <span class="op">*</span> <span class="dv">60</span><span class="sc">:.0f}</span><span class="ss"> min since the setup cell: $</span><span class="sc">{</span>hours <span class="op">*</span> g6e_price<span class="sc">:.2f}</span><span class="ss"> so far, and counting"</span>)</span>
+<span id="cb24-4"><a href="#cb24-4" tabindex="-1" aria-label="code-block-24-4"></a><span class="bu">print</span>(<span class="ss">f"the same pipeline as Processing jobs billed about $1.30 (that episode); on Bedrock, a few cents"</span>)</span></code></pre>
+</div>
 <p>The Processing Jobs episode does the same work, with the same
 <code>wattbot_rag.py</code>, as short-lived SageMaker jobs, so the GPU
 only bills while it is embedding or generating. Stop this instance now,
@@ -1418,6 +1443,7 @@ interface used here.</li>
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
  -->
+</div>
 </section></div> <!-- / div.lesson-content -->
     </main><!-- / main#main-content.main-content --><nav class="bottom-pagination mx-md-4" aria-label="Previous and Next Chapter Bottom"><div class="d-block d-sm-block d-md-none">
         <a class="chapter-link" href="12_RAG-Processing-jobs.html"><i aria-hidden="true" class="small-arrow" data-feather="arrow-left"></i>Previous</a>
@@ -1478,8 +1504,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/13_RAG-GPU-notebook.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/13_RAG-GPU-notebook.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-20",
-  "datePublished": "2026-10-20"
+  "dateModified": "2026-10-21",
+  "datePublished": "2026-10-21"
 }
 
   </script><script>

@@ -430,7 +430,7 @@ instance</a></li>
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Training Models in SageMaker: PyTorch Example</h1>
-        <p>Last updated on 2026-10-20 |
+        <p>Last updated on 2026-10-21 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/07_Training-models-in-SageMaker-notebooks-part2.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -478,8 +478,7 @@ determine when each is appropriate in SageMaker.</li>
 <section><h2 class="section-heading" id="initial-setup-open-prefilled--ipynb-notebook">Initial setup: open prefilled .ipynb notebook<a class="anchor" aria-label="anchor" href="#initial-setup-open-prefilled--ipynb-notebook"></a></h2>
 <hr class="half-width"><p>Open the notebook from:
 <code>/ML_with_AWS_SageMaker/notebooks/07_Training-models-in-SageMaker-notebooks-part2.ipynb</code>.
-Select the <strong><code>conda_pytorch</code></strong> kernel
-(<code>conda_pytorch_p310</code> on older instances).</p>
+Select the <strong><code>conda_pytorch</code></strong> kernel.</p>
 </section><section><h2 class="section-heading" id="setup-notebook-as-controller">Setup notebook as controller<a class="anchor" aria-label="anchor" href="#setup-notebook-as-controller"></a></h2>
 <hr class="half-width"><p>Once your notebook is open, we can setup our SageMaker controller as
 usual:</p>
@@ -607,6 +606,16 @@ training process.</p>
 </div>
 </div>
 </div>
+<p>Open <code>ML_with_AWS_SageMaker/scripts/train_nn.py</code> in the
+file browser and read it before going on; it is short. Three things to
+find: <code>TitanicNet</code>, a three-layer network with 7 inputs and
+one output; the training loop in <code>train()</code>, which prints
+<code>validation:accuracy = ...</code> once per hundred epochs (the
+hyperparameter-tuning episode’s metric regex reads that line); and the
+last lines, which save the model to <code>/opt/ml/model</code> inside a
+job and next to the script otherwise, the same trick as
+<code>train_xgboost.py</code>. Questions now are cheaper than questions
+once it is running on a billed instance.</p>
 <p>We reuse the <code>preprocess_data()</code> function from the
 lesson’s <code>scripts/train_nn.py</code> rather than re-typing the
 preprocessing here: the same function will later be applied to the test
@@ -618,6 +627,10 @@ fitted <code>StandardScaler</code>, and we save it with
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="op">!</span>pip install scikit<span class="op">-</span>learn   <span class="co"># the notebook kernels do not ship it; train_nn.py imports it</span></span></code></pre>
 </div>
+<p>Load the Titanic CSV, run it through the script’s
+<code>preprocess_data</code>, split off a validation set, and save the
+arrays and the scaler. The training script reads these files; the scaler
+is kept so test data can later be transformed the same way.</p>
 <div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -699,7 +712,7 @@ is anonymous on the bill. Define them once here and pass
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span> <span class="co"># replace with your name</span></span>
 <span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span> <span class="co"># replace with your challenge name</span></span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1" aria-label="code-block-10-3"></a>purpose <span class="op">=</span> <span class="st">"Training"</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1" aria-label="code-block-10-3"></a>purpose <span class="op">=</span> <span class="st">"Training"</span>        <span class="co"># one of: Storage, Notebook, Training, Tuning, Inference</span></span>
 <span id="cb10-4"><a href="#cb10-4" tabindex="-1" aria-label="code-block-10-4"></a></span>
 <span id="cb10-5"><a href="#cb10-5" tabindex="-1" aria-label="code-block-10-5"></a>job_tags <span class="op">=</span> [</span>
 <span id="cb10-6"><a href="#cb10-6" tabindex="-1" aria-label="code-block-10-6"></a>    {<span class="st">"Key"</span>: <span class="st">"Name"</span>, <span class="st">"Value"</span>: name},</span>
@@ -726,6 +739,8 @@ startup, i.e. about <code>$0.01</code> on <code>ml.m5.large</code>.</p>
 <span id="cb11-8"><a href="#cb11-8" tabindex="-1" aria-label="code-block-11-8"></a><span class="co"># us-east-1 on-demand rates (2026-10-16); check the instances page for your region</span></span>
 <span id="cb11-9"><a href="#cb11-9" tabindex="-1" aria-label="code-block-11-9"></a>prices <span class="op">=</span> {<span class="st">"ml.m5.large"</span>: <span class="fl">0.115</span>, <span class="st">"ml.m5.xlarge"</span>: <span class="fl">0.23</span>, <span class="st">"ml.g4dn.xlarge"</span>: <span class="fl">0.74</span>}</span></code></pre>
 </div>
+<p>Set up the estimator for a longer run: the epochs, the instance,
+where the output goes, and a two-hour <code>max_run</code> cap.</p>
 <div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -742,7 +757,7 @@ startup, i.e. about <code>$0.01</code> on <code>ml.m5.large</code>.</p>
 <span id="cb12-11"><a href="#cb12-11" tabindex="-1" aria-label="code-block-12-11"></a></span>
 <span id="cb12-12"><a href="#cb12-12" tabindex="-1" aria-label="code-block-12-12"></a><span class="co"># Define the PyTorch estimator and pass hyperparameters as arguments</span></span>
 <span id="cb12-13"><a href="#cb12-13" tabindex="-1" aria-label="code-block-12-13"></a>pytorch_estimator <span class="op">=</span> PyTorch(</span>
-<span id="cb12-14"><a href="#cb12-14" tabindex="-1" aria-label="code-block-12-14"></a>    base_job_name<span class="op">=</span>notebook_instance_name,  <span class="co"># SageMaker appends a timestamp to make each job name unique</span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1" aria-label="code-block-12-14"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn"</span>,   <span class="co"># who + which model; SageMaker appends a timestamp to make each job name unique</span></span>
 <span id="cb12-15"><a href="#cb12-15" tabindex="-1" aria-label="code-block-12-15"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
 <span id="cb12-16"><a href="#cb12-16" tabindex="-1" aria-label="code-block-12-16"></a>    entry_point<span class="op">=</span><span class="st">"ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,  <span class="co"># copied into the container and run there</span></span>
 <span id="cb12-17"><a href="#cb12-17" tabindex="-1" aria-label="code-block-12-17"></a>    role<span class="op">=</span>role,</span>
@@ -838,7 +853,7 @@ Explain the result.</p>
 <span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a>instance_count <span class="op">=</span> <span class="dv">1</span></span>
 <span id="cb15-3"><a href="#cb15-3" tabindex="-1" aria-label="code-block-15-3"></a></span>
 <span id="cb15-4"><a href="#cb15-4" tabindex="-1" aria-label="code-block-15-4"></a>pytorch_estimator_gpu <span class="op">=</span> PyTorch(</span>
-<span id="cb15-5"><a href="#cb15-5" tabindex="-1" aria-label="code-block-15-5"></a>    base_job_name<span class="op">=</span>notebook_instance_name,</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1" aria-label="code-block-15-5"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn"</span>,</span>
 <span id="cb15-6"><a href="#cb15-6" tabindex="-1" aria-label="code-block-15-6"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
 <span id="cb15-7"><a href="#cb15-7" tabindex="-1" aria-label="code-block-15-7"></a>    entry_point<span class="op">=</span><span class="st">"ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,</span>
 <span id="cb15-8"><a href="#cb15-8" tabindex="-1" aria-label="code-block-15-8"></a>    role<span class="op">=</span>role,</span>
@@ -973,7 +988,7 @@ instances, so about <code>$0.02</code> on <code>ml.m5.large</code>.</p>
 <span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a>instance_type <span class="op">=</span> <span class="st">"ml.m5.large"</span></span>
 <span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a></span>
 <span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a>pytorch_estimator_2x <span class="op">=</span> PyTorch(</span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a>    base_job_name<span class="op">=</span>notebook_instance_name,</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn"</span>,</span>
 <span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
 <span id="cb16-7"><a href="#cb16-7" tabindex="-1" aria-label="code-block-16-7"></a>    entry_point<span class="op">=</span><span class="st">"ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,</span>
 <span id="cb16-8"><a href="#cb16-8" tabindex="-1" aria-label="code-block-16-8"></a>    role<span class="op">=</span>role,</span>
@@ -1000,12 +1015,13 @@ instances, so about <code>$0.02</code> on <code>ml.m5.large</code>.</p>
 <span id="cb16-29"><a href="#cb16-29" tabindex="-1" aria-label="code-block-16-29"></a>desc_2x <span class="op">=</span> job_cost_report(pytorch_estimator_2x.latest_training_job.name, prices[instance_type])</span>
 <span id="cb16-30"><a href="#cb16-30" tabindex="-1" aria-label="code-block-16-30"></a><span class="bu">print</span>(<span class="ss">f"Single-instance job billed </span><span class="sc">{</span>desc_cpu[<span class="st">'BillableTimeInSeconds'</span>]<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min; two-instance job billed </span><span class="sc">{</span>desc_2x[<span class="st">'BillableTimeInSeconds'</span>]<span class="op">*</span><span class="dv">2</span><span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span></code></pre>
 </div>
-<p>Look at the CloudWatch log for this job (SageMaker console, Training
-jobs, your job, View logs): there are two log streams,
-<code>algo-1</code> and <code>algo-2</code>, and each one prints all
-1000 epochs. The wall-clock time is about the same as the
-single-instance run (slightly longer, if anything, because two instances
-have to be provisioned), and the billable minutes are double.</p>
+<p>Look at the job’s log in CloudWatch, the AWS logging service
+introduced in the last episode (SageMaker console, Training jobs, your
+job, View logs): there are two log streams, <code>algo-1</code> and
+<code>algo-2</code>, and each one prints all 1000 epochs. The wall-clock
+time is about the same as the single-instance run (slightly longer, if
+anything, because two instances have to be provisioned), and the
+billable minutes are double.</p>
 <div id="what-distributed-training-needs" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -1155,8 +1171,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/07_Training-models-in-SageMaker-notebooks-part2.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/07_Training-models-in-SageMaker-notebooks-part2.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-20",
-  "datePublished": "2026-10-20"
+  "dateModified": "2026-10-21",
+  "datePublished": "2026-10-21"
 }
 
   </script><script>

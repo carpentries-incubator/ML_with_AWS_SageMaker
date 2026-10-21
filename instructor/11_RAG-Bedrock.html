@@ -439,7 +439,7 @@ puzzle</a></li>
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>RAG with Bedrock</h1>
-        <p>Last updated on 2026-10-20 |
+        <p>Last updated on 2026-10-21 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/11_RAG-Bedrock.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -492,11 +492,10 @@ Bedrock-hosted model (DeepSeek V3) and score them against
 </div>
 <p>Open the notebook from:
 <code>/ML_with_AWS_SageMaker/notebooks/11_RAG-Bedrock.ipynb</code>.
-Select the <strong><code>conda_pytorch</code></strong> kernel
-(<code>conda_pytorch_p310</code> on older instances). This is the first
-hands-on RAG episode, and it starts where the overview told you to
-start: <strong>Amazon Bedrock</strong>. We build a complete RAG pipeline
-for the <a href="https://www.kaggle.com/competitions/WattBot2025/overview" class="external-link">WattBot
+Select the <strong><code>conda_pytorch</code></strong> kernel. This is
+the first hands-on RAG episode, and it starts where the overview told
+you to start: <strong>Amazon Bedrock</strong>. We build a complete RAG
+pipeline for the <a href="https://www.kaggle.com/competitions/WattBot2025/overview" class="external-link">WattBot
 2025</a> challenge from a small, CPU-only SageMaker notebook. Nothing in
 this episode needs a GPU: the core model work — <strong>both text
 embeddings and answer generation</strong> — runs on Bedrock-hosted
@@ -654,6 +653,9 @@ below and everything else works unchanged.</p>
 </div>
 <div class="section level3">
 <h3 id="step-1-configure-the-notebook">Step 1 – Configure the notebook<a class="anchor" aria-label="anchor" href="#step-1-configure-the-notebook"></a></h3>
+<p>Imports, then a SageMaker session, the region and role, an S3 client
+and a Bedrock client, then the bucket names and the local folder the
+data is cached in.</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -683,7 +685,7 @@ below and everything else works unchanged.</p>
 <span id="cb1-24"><a href="#cb1-24" tabindex="-1" aria-label="code-block-1-24"></a>base_embedding_model_id <span class="op">=</span> <span class="st">"amazon.titan-embed-text-v2:0"</span></span>
 <span id="cb1-25"><a href="#cb1-25" tabindex="-1" aria-label="code-block-1-25"></a></span>
 <span id="cb1-26"><a href="#cb1-26" tabindex="-1" aria-label="code-block-1-26"></a><span class="co"># Buckets: the shared one is read-only (inputs); yours receives everything derived.</span></span>
-<span id="cb1-27"><a href="#cb1-27" tabindex="-1" aria-label="code-block-1-27"></a>shared_bucket <span class="op">=</span> <span class="st">"ml-marathon-shared"</span>   <span class="co"># &lt;-- EDIT ME: the name your instructor gives you</span></span>
+<span id="cb1-27"><a href="#cb1-27" tabindex="-1" aria-label="code-block-1-27"></a>shared_bucket <span class="op">=</span> <span class="st">"ml-marathon-shared"</span>   <span class="co"># the instructor-staged, read-only bucket with the data and model weights; change only on your own account</span></span>
 <span id="cb1-28"><a href="#cb1-28" tabindex="-1" aria-label="code-block-1-28"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>     <span class="co"># &lt;-- EDIT ME: your own bucket from the S3 episode</span></span>
 <span id="cb1-29"><a href="#cb1-29" tabindex="-1" aria-label="code-block-1-29"></a></span>
 <span id="cb1-30"><a href="#cb1-30" tabindex="-1" aria-label="code-block-1-30"></a><span class="co"># Keys in the shared bucket (inputs) and in your bucket (derived artifacts)</span></span>
@@ -875,6 +877,9 @@ workflow cleaner and easier to reason about.</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="op">%</span>pip install <span class="op">-</span>q pypdf</span></code></pre>
 </div>
+<p>Open each PDF listed in the metadata with <code>pypdf</code> and turn
+every page into one record: its text, the document id, title and URL,
+and the page number.</p>
 <div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1514,11 +1519,14 @@ of the <code>ml.g6e.xlarge</code> the Processing Jobs episode rents?</p>
 </button>
 <div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
+<p>The two prices are from the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
+for DeepSeek on-demand in October 2026; update them for the model and
+region you used. The rest sums the usage blocks and prints the cost.</p>
 <div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1" aria-label="code-block-20-1"></a>price_in_per_m <span class="op">=</span> <span class="fl">0.0</span>    <span class="co"># &lt;-- EDIT ME: DeepSeek V3 on-demand, $ per million input tokens</span></span>
-<span id="cb20-2"><a href="#cb20-2" tabindex="-1" aria-label="code-block-20-2"></a>price_out_per_m <span class="op">=</span> <span class="fl">0.0</span>   <span class="co"># &lt;-- EDIT ME: DeepSeek V3 on-demand, $ per million output tokens</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1" aria-label="code-block-20-1"></a>price_in_per_m <span class="op">=</span> <span class="fl">0.62</span>    <span class="co"># $ per million input tokens: DeepSeek v3.2 on-demand in us-east-2, October 2026; check the pricing page for your model and region</span></span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1" aria-label="code-block-20-2"></a>price_out_per_m <span class="op">=</span> <span class="fl">1.85</span>   <span class="co"># $ per million output tokens, same source</span></span>
 <span id="cb20-3"><a href="#cb20-3" tabindex="-1" aria-label="code-block-20-3"></a></span>
 <span id="cb20-4"><a href="#cb20-4" tabindex="-1" aria-label="code-block-20-4"></a>in_tokens <span class="op">=</span> <span class="bu">sum</span>(u[<span class="st">"inputTokens"</span>] <span class="cf">for</span> u <span class="kw">in</span> bedrock_usage)</span>
 <span id="cb20-5"><a href="#cb20-5" tabindex="-1" aria-label="code-block-20-5"></a>out_tokens <span class="op">=</span> <span class="bu">sum</span>(u[<span class="st">"outputTokens"</span>] <span class="cf">for</span> u <span class="kw">in</span> bedrock_usage)</span>
@@ -1699,8 +1707,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/11_RAG-Bedrock.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/11_RAG-Bedrock.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-20",
-  "datePublished": "2026-10-20"
+  "dateModified": "2026-10-21",
+  "datePublished": "2026-10-21"
 }
 
   </script><script>
