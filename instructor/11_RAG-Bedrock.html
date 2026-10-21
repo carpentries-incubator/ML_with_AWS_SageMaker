@@ -910,7 +910,10 @@ workflow cleaner and easier to reason about.</p>
 </div>
 <p>Open each PDF listed in the metadata with <code>pypdf</code> and turn
 every page into one record: its text, the document id, title and URL,
-and the page number.</p>
+and the page number. The function is the reference for what a page
+record is; on a CPU notebook it takes several minutes over this corpus,
+so the cell after it first looks for <code>pages.jsonl</code>, the same
+records written once when the corpus was staged.</p>
 <div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -967,9 +970,15 @@ and the page number.</p>
 <span id="cb10-51"><a href="#cb10-51" tabindex="-1" aria-label="code-block-10-51"></a>    <span class="cf">return</span> page_docs</span>
 <span id="cb10-52"><a href="#cb10-52" tabindex="-1" aria-label="code-block-10-52"></a></span>
 <span id="cb10-53"><a href="#cb10-53" tabindex="-1" aria-label="code-block-10-53"></a></span>
-<span id="cb10-54"><a href="#cb10-54" tabindex="-1" aria-label="code-block-10-54"></a>page_docs <span class="op">=</span> pdfs_to_page_docs(metadata_df, PDF_DIR)</span>
-<span id="cb10-55"><a href="#cb10-55" tabindex="-1" aria-label="code-block-10-55"></a><span class="bu">print</span>(<span class="ss">f"Loaded </span><span class="sc">{</span><span class="bu">len</span>(page_docs)<span class="sc">}</span><span class="ss"> page-level records from </span><span class="sc">{</span><span class="bu">len</span>(metadata_df)<span class="sc">}</span><span class="ss"> PDFs."</span>)</span>
-<span id="cb10-56"><a href="#cb10-56" tabindex="-1" aria-label="code-block-10-56"></a>page_docs[<span class="dv">0</span>] <span class="cf">if</span> page_docs <span class="cf">else</span> <span class="va">None</span></span></code></pre>
+<span id="cb10-54"><a href="#cb10-54" tabindex="-1" aria-label="code-block-10-54"></a>start <span class="op">=</span> time.time()</span>
+<span id="cb10-55"><a href="#cb10-55" tabindex="-1" aria-label="code-block-10-55"></a><span class="cf">try</span>:</span>
+<span id="cb10-56"><a href="#cb10-56" tabindex="-1" aria-label="code-block-10-56"></a>    pages_path <span class="op">=</span> download_from_s3(<span class="st">"wattbot/pages.jsonl"</span>, <span class="st">"pages.jsonl"</span>)   <span class="co"># staged next to corpus.zip by the corpus build script</span></span>
+<span id="cb10-57"><a href="#cb10-57" tabindex="-1" aria-label="code-block-10-57"></a>    page_docs <span class="op">=</span> [json.loads(line) <span class="cf">for</span> line <span class="kw">in</span> <span class="bu">open</span>(pages_path)]</span>
+<span id="cb10-58"><a href="#cb10-58" tabindex="-1" aria-label="code-block-10-58"></a>    <span class="bu">print</span>(<span class="ss">f"Loaded </span><span class="sc">{</span><span class="bu">len</span>(page_docs)<span class="sc">}</span><span class="ss"> pre-extracted page records in </span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> start<span class="sc">:.1f}</span><span class="ss"> s"</span>)</span>
+<span id="cb10-59"><a href="#cb10-59" tabindex="-1" aria-label="code-block-10-59"></a><span class="cf">except</span> ClientError:</span>
+<span id="cb10-60"><a href="#cb10-60" tabindex="-1" aria-label="code-block-10-60"></a>    page_docs <span class="op">=</span> pdfs_to_page_docs(metadata_df, PDF_DIR)</span>
+<span id="cb10-61"><a href="#cb10-61" tabindex="-1" aria-label="code-block-10-61"></a>    <span class="bu">print</span>(<span class="ss">f"Extracted </span><span class="sc">{</span><span class="bu">len</span>(page_docs)<span class="sc">}</span><span class="ss"> page-level records from </span><span class="sc">{</span><span class="bu">len</span>(metadata_df)<span class="sc">}</span><span class="ss"> PDFs in </span><span class="sc">{</span>(time.time() <span class="op">-</span> start) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span>
+<span id="cb10-62"><a href="#cb10-62" tabindex="-1" aria-label="code-block-10-62"></a>page_docs[<span class="dv">0</span>] <span class="cf">if</span> page_docs <span class="cf">else</span> <span class="va">None</span></span></code></pre>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="step-6-simple-explicit-text-chunking">Step 6 – Simple, explicit text chunking<a class="anchor" aria-label="anchor" href="#step-6-simple-explicit-text-chunking"></a></h2>
@@ -1289,7 +1298,7 @@ month’s Bedrock spend by <code>Project</code>?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -1592,7 +1601,7 @@ of the <code>ml.g6e.xlarge</code> the Processing Jobs episode rents?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>The two prices are from the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
 for DeepSeek on-demand in October 2026; update them for the model and
