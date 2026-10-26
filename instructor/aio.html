@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
-<title>Machine Learning with Amazon SageMaker: All in One View</title>
+<title>Machine Learning on AWS with SageMaker and Bedrock: All in One View</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="../assets/themetoggle.js"></script><link rel="stylesheet" type="text/css" href="../assets/styles.css">
 <script src="../assets/scripts.js" type="text/javascript"></script><!-- mathjax --><!-- NOTE: https://docs.mathjax.org/en/latest/output/mathml.html#mathml-support --><!-- Changes from V2 to V4: https://mathjax.github.io/MathJax-demos-web/convert-configuration/convert-configuration.html
@@ -103,7 +103,7 @@
       <img class="small-logo" alt="Learn to run machine learning workflows on AWS without losing control of the bill: SageMaker notebooks as controllers, training and hyperparameter-tuning jobs, retrieval-augmented generation on Amazon Bedrock and on rented GPUs, and fine-tuning an open-weight vision-language model. Developed for the UW-Madison Machine Learning Marathon and Research Bazaar; some setup steps refer to the shared workshop account." src="../assets/images/incubator-logo-sm.svg"></a>
     </div>
     <div class="lesson-title-md">
-      Machine Learning with Amazon SageMaker
+      Machine Learning on AWS with SageMaker and Bedrock
     </div>
     <div class="search-icon-sm">
       <!-- TODO: do not show until we have search
@@ -114,7 +114,7 @@
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 <li class="nav-item">
           <span class="lesson-title">
-            Machine Learning with Amazon SageMaker
+            Machine Learning on AWS with SageMaker and Bedrock
           </span>
         </li>
         <li class="nav-item">
@@ -138,6 +138,7 @@
 <hr>
 <li><a class="dropdown-item" href="reference.html">Glossary</a></li>
 <li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
+<li><a class="dropdown-item" href="refused-launch.html">If a Launch Is Refused</a></li>
 <li><a class="dropdown-item" href="running-from-your-laptop.html">Running this lesson from your own machine</a></li>
           </ul>
 </li>
@@ -478,6 +479,7 @@
 <hr>
 <li><a class="dropdown-item" href="reference.html">Glossary</a></li>
 <li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
+<li><a class="dropdown-item" href="refused-launch.html">If a Launch Is Refused</a></li>
 <li><a class="dropdown-item" href="running-from-your-laptop.html">Running this lesson from your own machine</a></li>
                     </ul>
 </div>
@@ -510,7 +512,7 @@
         
 <section id="aio-01_SageMaker-overview"><p>Content from <a href="01_SageMaker-overview.html">Overview: ML on AWS</a></p>
 <hr>
-<p>Last updated on 2026-10-20 |
+<p>Last updated on 2026-10-26 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/01_SageMaker-overview.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 15 minutes</p>
@@ -617,11 +619,11 @@ a job runs.</p></li>
 inference scripts can be run using pre-configured <em>estimators</em> or
 <em>containers</em> that come with popular ML frameworks such as
 scikit-learn, PyTorch, TensorFlow, and Hugging Face already installed.
-In many cases, you can simply include a <code>requirements.txt</code>
-file to add any additional dependencies you need. When you need more
-control, SageMaker also supports fully custom Docker containers, so you
-can bring your own code, dependencies, and environments for training,
-tuning, and inference.</p></li>
+In many cases a <code>requirements.txt</code> file is enough to add any
+additional dependencies you need. When you need more control, SageMaker
+also supports fully custom Docker containers, so you can bring your own
+code, dependencies, and environments for training, tuning, and
+inference.</p></li>
 <li>
 <p><strong>Flexible compute options</strong>: SageMaker lets you
 easily select instance types tailored to your project needs. For
@@ -766,7 +768,7 @@ any links that you are not going to use.
  -->
 </div></section><section id="aio-02_Data-storage-setting-up-S3"><p>Content from <a href="02_Data-storage-setting-up-S3.html">Data Storage: Setting up S3</a></p>
 <hr>
-<p>Last updated on 2026-10-21 |
+<p>Last updated on 2026-10-26 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/02_Data-storage-setting-up-S3.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 20 minutes</p>
@@ -1007,11 +1009,13 @@ everywhere in the lesson. Global keeps the name as you type it.</li>
 <strong>Bucket name</strong>:
 <code>challenge-lastnamefirstname</code>, all lowercase,
 e.g. <code>sinkorswim-doejohn</code>: the challenge you are working on
-(<code>sinkorswim</code>, <code>wattbot2026</code>,
-<code>badgerscribe</code>, <code>badgercode</code>, …), a hyphen, then
-your last and first name run together. S3 requires lowercase letters,
-digits and hyphens only, 3 to 63 characters, starting and ending with a
-letter or digit. Buckets are the one place AWS forces lowercase; for the
+(<code>wattbot2026</code>, <code>badgerscribe</code>,
+<code>badgercode</code>, <code>braindecoding</code>,
+<code>poisonedwell</code>, <code>snapshotwi</code>, or
+<code>sinkorswim</code> for the workshop itself), a hyphen, then your
+last and first name run together. S3 requires lowercase letters, digits
+and hyphens only, 3 to 63 characters, starting and ending with a letter
+or digit. Buckets are the one place AWS forces lowercase; for the
 notebook instance and the tags we use the same words with capitals,
 <code>SinkOrSwim</code> and <code>DoeJohn</code>. <strong>This is the
 only bucket you will create in the workshop.</strong> Every later
@@ -1055,11 +1059,14 @@ account’s approved cost-allocation keys, see <a href="https://kb.wisc.edu/7245
 three keys on every resource you create in this lesson.</p>
 <ul>
 <li>
-<strong>Project</strong>: your challenge name
-(<code>SinkOrSwim</code>, <code>WattBot2026</code>,
-<code>BadgerScribe</code>, <code>BadgerCode</code>, …),
-e.g. <code>SinkOrSwim</code>
-</li>
+<strong>Project</strong>: your challenge, one of
+<code>WattBot2026</code>, <code>BadgerScribe</code>,
+<code>BadgerCode</code>, <code>BrainDecoding</code>,
+<code>PoisonedWell</code>, <code>SnapshotWI</code>, spelled exactly like
+that, or <code>SinkOrSwim</code>, the workshop’s own project, if you are
+not on a challenge yet. The account refuses a job tagged with any other
+Project value, so a typo is caught at the first launch rather than on
+the bill.</li>
 <li>
 <strong>Name</strong>: your last and first name run together,
 e.g. <code>DoeJohn</code>
@@ -1072,11 +1079,26 @@ e.g. <code>DoeJohn</code>
 <p>AWS allows tag values of up to 256 characters made of letters,
 digits, spaces and <code>+ - = . _ : / @</code>, and they are
 case-sensitive. We use capitalised words with no spaces, and the same
-spelling on every resource: <code>SinkOrSwim</code> and
-<code>sinkorswim</code> would be separate rows in Cost Explorer.</p>
+spelling on every resource. <code>SinkOrSwim</code> and
+<code>sinkorswim</code> would be separate rows in Cost Explorer, and the
+account accepts only the first: the <code>Project</code> and
+<code>Purpose</code> lists are case-sensitive, so a job tagged
+<code>sinkorswim</code> or <code>training</code> is refused. (The bucket
+name is lowercase because S3 requires it; bucket names are not
+tags.)</p>
 <p><code>Purpose</code> takes one of five values, so that the bill can
 be summed by kind of work rather than by individual job. Which job it
 was is already in the job’s name.</p>
+<p>These lists are enforced: the account refuses a job whose tags are
+missing, blank or off the lists, and the refusal says only
+<code>AccessDenied ... explicit deny</code>, not which tag. The training
+episode checks the tags in the notebook before each launch and names the
+problem; <a href="refused-launch.html">If a Launch Is Refused</a> is the
+full list of rules and fixes, for later. The rules are not part of
+SageMaker: the instructor sets them from the account’s administrator
+view, and an instructor running this lesson on a new account sets them
+up following the <a href="aws-account-prep.html">AWS account
+preparation</a> page before class.</p>
 <table class="table">
 <thead><tr>
 <th><code>Purpose</code></th>
@@ -1196,7 +1218,7 @@ also give it to you)</li>
 <span id="cb1-24"><a href="#cb1-24" tabindex="-1" aria-label="code-block-1-24"></a>	<span class="ot">]</span></span>
 <span id="cb1-25"><a href="#cb1-25" tabindex="-1" aria-label="code-block-1-25"></a><span class="fu">}</span></span></code></pre>
 </div>
-<p>What the policy says, line by line:</p>
+<p>The policy, statement by statement:</p>
 <ul>
 <li>
 <strong>Principal</strong> is <em>who</em> gets access. SageMaker
@@ -1434,7 +1456,7 @@ charge?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -1537,13 +1559,13 @@ per 1,000 = <code>$0.00004</code><br>
 </ol>
 <p>These costs assume no additional request charges beyond those for
 storage, the download, and <code>GET</code> requests for training.</p>
-<p>Two things to notice. The <code>GET</code> line is the same
-four-thousandths of a cent at every size: request costs depend on how
-many objects you touch, not how big they are. And the download line
-grows from 80% of the total at 1 GB to almost all of it at 1 TB: for a
-dataset of any size, moving it out of AWS costs several times more than
-keeping it there for a month, so plan to keep large data in the region
-and bring code to it, not the other way round.</p>
+<p>The <code>GET</code> line is the same four-thousandths of a cent at
+every size: request costs depend on how many objects you touch, not how
+big they are. And the download line grows from 80% of the total at 1 GB
+to almost all of it at 1 TB: for a dataset of any size, moving it out of
+AWS costs several times more than keeping it there for a month, so plan
+to keep large data in the region and bring code to it, not the other way
+round.</p>
 <ol start="3" style="list-style-type: decimal">
 <li>
 <strong>Wrong region, 100 GB</strong>: 100 reads x 100 GB x
@@ -1615,7 +1637,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-03_SageMaker-notebooks-as-controllers"><p>Content from <a href="03_SageMaker-notebooks-as-controllers.html">Notebooks as Controllers</a></p>
 <hr>
-<p>Last updated on 2026-10-21 |
+<p>Last updated on 2026-10-26 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/03_SageMaker-notebooks-as-controllers.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 20 minutes</p>
@@ -1823,10 +1845,11 @@ applies here too.</p>
 <tbody>
 <tr>
 <td><code>Project</code></td>
-<td>your challenge name (<code>SinkOrSwim</code>,
-<code>WattBot2026</code>, <code>BadgerScribe</code>,
-<code>BadgerCode</code>, …), e.g. <code>SinkOrSwim</code>
-</td>
+<td>your challenge, one of <code>WattBot2026</code>,
+<code>BadgerScribe</code>, <code>BadgerCode</code>,
+<code>BrainDecoding</code>, <code>PoisonedWell</code>,
+<code>SnapshotWI</code>, or <code>SinkOrSwim</code> for the workshop
+itself</td>
 </tr>
 <tr>
 <td><code>Name</code></td>
@@ -1840,6 +1863,11 @@ applies here too.</p>
 </tr>
 </tbody>
 </table>
+<p>Same spelling as on the bucket. The <code>Project</code> and
+<code>Purpose</code> lists from the S3 episode apply to every job you
+launch from this instance, and a value off them is refused at the first
+launch; the training episode shows what that looks like and how to check
+first.</p>
 <figure><img src="../fig/notebook_tags.PNG" alt="Screenshot showing the three required tags on a SageMaker notebook instance" class="figure mx-auto d-block"><div class="figcaption">Tag Setup Example</div>
 </figure>
 </li>
@@ -1930,7 +1958,7 @@ any links that you are not going to use.
 </div>
 </section></section><section id="aio-04_Accessing-S3-via-SageMaker-notebooks"><p>Content from <a href="04_Accessing-S3-via-SageMaker-notebooks.html">Accessing and Managing Data in S3 with SageMaker Notebooks</a></p>
 <hr>
-<p>Last updated on 2026-10-21 |
+<p>Last updated on 2026-10-26 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/04_Accessing-S3-via-SageMaker-notebooks.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 30 minutes</p>
@@ -1977,9 +2005,7 @@ one you used in the last episode).</p>
 <div class="section level4">
 <h4 id="set-up-aws-environment">Set up AWS environment<a class="anchor" aria-label="anchor" href="#set-up-aws-environment"></a>
 </h4>
-<p>To begin each notebook, it’s important to set up an AWS environment
-that will allow seamless access to the necessary cloud resources. Here’s
-what we’ll do to get started:</p>
+<p>Each notebook starts by setting up the AWS session it works in:</p>
 <ol style="list-style-type: decimal">
 <li><p><strong>Define the Role</strong>: We’ll use
 <code>get_execution_role()</code> to retrieve the IAM role associated
@@ -2193,8 +2219,8 @@ in your bucket. You can do this from a Jupyter notebook in SageMaker by
 using the <strong>Boto3</strong> library, which is the AWS SDK for
 Python. This will allow you to calculate the total size of objects
 within a specified bucket.</p>
-<p>The code below will calculate your bucket size for you. Here is a
-breakdown of the important pieces in the next code section:</p>
+<p>The code below calculates your bucket size. The pieces that
+matter:</p>
 <ol style="list-style-type: decimal">
 <li>
 <strong>Paginator</strong>: Since S3 buckets can contain many
@@ -2415,7 +2441,7 @@ bucket per task?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>One way to do it:</li>
@@ -2929,7 +2955,7 @@ change on GitHub.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Still inside
 <code>/home/ec2-user/SageMaker/sagemaker-work</code>:</p>
@@ -2984,7 +3010,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-06_Training-models-in-SageMaker-notebooks"><p>Content from <a href="06_Training-models-in-SageMaker-notebooks.html">Training Models in SageMaker: Intro</a></p>
 <hr>
-<p>Last updated on 2026-10-21 |
+<p>Last updated on 2026-10-26 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/06_Training-models-in-SageMaker-notebooks.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 65 minutes</p>
@@ -3162,8 +3188,8 @@ hyperparameters or scaling.</li>
 <div class="callout-content">
 <p>Before scaling to multiple or more powerful instances (e.g., training
 on larger/multiple datasets in parallel or tuning hyperparameters in
-parallel), it’s important to run a few quick sanity checks to catch
-potential issues early. <strong>In your group, discuss:</strong></p>
+parallel), run a few quick sanity checks to catch problems early.
+<strong>In your group, discuss:</strong></p>
 <ul>
 <li>Which checks do you think are most critical before scaling up?<br>
 </li>
@@ -3174,7 +3200,7 @@ potential issues early. <strong>In your group, discuss:</strong></p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Which checks do you think are most critical before scaling up?</p>
 <ul>
@@ -3292,7 +3318,7 @@ group.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li><p><strong>Data Preprocessing</strong>: The script fills missing
@@ -3350,10 +3376,9 @@ scaling things up.</p>
 <span class="callout-header">Callout</span>
 <div class="callout-inner">
 <div class="callout-content">
-<p>While we demonstrate how to download data into the notebook
-environment for testing our code (previously setup for local ML
-pipelines), keep in mind that S3 is the preferred location for dataset
-storage in a scalable ML pipeline.</p>
+<p>We download the data into the notebook to test the code, as a local
+pipeline would. In a pipeline that scales, the data lives in S3 and the
+jobs read it from there.</p>
 </div>
 </div>
 </div>
@@ -3479,10 +3504,9 @@ resources.</p>
 <div class="section level3">
 <h3 id="sanity-check-quick-evaluation-on-test-set">Sanity check: Quick evaluation on test set<a class="anchor" aria-label="anchor" href="#sanity-check-quick-evaluation-on-test-set"></a>
 </h3>
-<p>This next section isn’t SageMaker specific, but it does serve as a
-good sanity check to ensure our model is training properly. Here’s how
-you would apply the outputted model to your test set using your local
-notebook instance.</p>
+<p>This section is not SageMaker specific; it checks that the model
+trained properly by applying it to the test set on the notebook
+instance.</p>
 <p>Score the model you just trained locally on the test set, reusing the
 script’s own <code>preprocess_data</code> so the test rows are
 transformed exactly as the training rows were.</p>
@@ -3524,9 +3548,9 @@ container<a class="anchor" aria-label="anchor" href="#training-via-sagemaker-you
 </h2>
 <hr class="half-width">
 <p>Unlike “local” training (using this notebook), this next approach
-leverages SageMaker’s managed infrastructure to handle resources,
-parallelism, and scalability. By specifying instance parameters, such as
-instance_count and instance_type, you can control the resources
+runs the job on an instance SageMaker rents for it, which is where
+instance count and type come in. By specifying instance parameters, such
+as instance_count and instance_type, you can control the resources
 allocated for training.</p>
 <div class="section level3">
 <h3 id="which-instance-to-start-with">Which instance to start with?<a class="anchor" aria-label="anchor" href="#which-instance-to-start-with"></a>
@@ -3561,7 +3585,7 @@ data. Which instance would you pick for the training job, and why?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <p>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
 GB of data wants about 32 GB of memory: <code>ml.m5.2xlarge</code> (8
@@ -3646,8 +3670,7 @@ SageMaker, Estimator classes streamline the configuration and training
 of models on managed instances. Each Estimator can work with custom
 scripts and be enhanced with additional dependencies by specifying a
 <code>requirements.txt</code> file, which is automatically installed at
-the start of training. Here’s a breakdown of some commonly used
-Estimator classes in SageMaker:</p>
+the start of training. The commonly used Estimator classes:</p>
 <div class="section level4">
 <h4 id="estimator-base-class">1. <strong><code>Estimator</code> (Base Class)</strong>
 <a class="anchor" aria-label="anchor" href="#estimator-base-class"></a>
@@ -3832,8 +3855,8 @@ using pretrained Transformer models.</li>
 as a <code>dependencies</code> argument ensures that additional packages
 are installed before training begins. This approach allows the use of
 specific libraries that may be critical for custom preprocessing,
-feature engineering, or model modifications. Here’s how to include it
-(illustration only; we don’t run this):</p>
+feature engineering, or model modifications. To include it (illustration
+only; we don’t run this):</p>
 <pre class="text"><code>from sagemaker.sklearn.estimator import SKLearn
 sklearn_estimator = SKLearn(
     base_job_name=f"{notebook_instance_name}-xgboost",   # job name = who + which model; SageMaker appends a timestamp
@@ -3869,8 +3892,8 @@ pre-installed packages.</p>
 </h3>
 <p>For this deployment, we configure the <code>XGBoost</code> estimator
 with a custom training script, <code>train_xgboost.py</code>, and define
-hyperparameters directly within the SageMaker setup. Here’s the full
-code, with some additional explanation following the code.</p>
+hyperparameters directly within the SageMaker setup. The full code is
+below, with explanation after it.</p>
 <div class="section level4">
 <h4 id="cost-tracking">Cost tracking<a class="anchor" aria-label="anchor" href="#cost-tracking"></a>
 </h4>
@@ -3885,7 +3908,7 @@ and a human-readable name, even after the job has completed.</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1" aria-label="code-block-12-1"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span> <span class="co"># replace with your name</span></span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1" aria-label="code-block-12-2"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span> <span class="co"># replace with your challenge name</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1" aria-label="code-block-12-2"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>   <span class="co"># your challenge: WattBot2026, BadgerScribe, BadgerCode, BrainDecoding, PoisonedWell or SnapshotWI; SinkOrSwim is the workshop itself</span></span>
 <span id="cb12-3"><a href="#cb12-3" tabindex="-1" aria-label="code-block-12-3"></a>purpose <span class="op">=</span> <span class="st">"Training"</span>        <span class="co"># one of: Storage, Notebook, Training, Tuning, Inference</span></span>
 <span id="cb12-4"><a href="#cb12-4" tabindex="-1" aria-label="code-block-12-4"></a></span>
 <span id="cb12-5"><a href="#cb12-5" tabindex="-1" aria-label="code-block-12-5"></a><span class="co"># Tags: key/value labels attached to the job's resources, so its cost shows up under your name and project on the bill</span></span>
@@ -3894,7 +3917,8 @@ and a human-readable name, even after the job has completed.</p>
 <span id="cb12-8"><a href="#cb12-8" tabindex="-1" aria-label="code-block-12-8"></a>    {<span class="st">"Key"</span>: <span class="st">"Project"</span>, <span class="st">"Value"</span>: project},</span>
 <span id="cb12-9"><a href="#cb12-9" tabindex="-1" aria-label="code-block-12-9"></a>    {<span class="st">"Key"</span>: <span class="st">"Purpose"</span>, <span class="st">"Value"</span>: purpose},</span>
 <span id="cb12-10"><a href="#cb12-10" tabindex="-1" aria-label="code-block-12-10"></a>]</span>
-<span id="cb12-11"><a href="#cb12-11" tabindex="-1" aria-label="code-block-12-11"></a><span class="bu">print</span>(<span class="ss">f"Name: </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">, Project: </span><span class="sc">{</span>project<span class="sc">}</span><span class="ss">, Purpose: </span><span class="sc">{</span>purpose<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1" aria-label="code-block-12-11"></a>helpers.check_launch(job_tags)   <span class="co"># the account's rules, checked here first: AWS's own refusal does not say which rule</span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1" aria-label="code-block-12-12"></a><span class="bu">print</span>(<span class="ss">f"Name: </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">, Project: </span><span class="sc">{</span>project<span class="sc">}</span><span class="ss">, Purpose: </span><span class="sc">{</span>purpose<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 </div>
 <div class="section level4">
@@ -3944,44 +3968,87 @@ to look when a value does not seem to arrive.)</p>
 <span id="cb13-16"><a href="#cb13-16" tabindex="-1" aria-label="code-block-13-16"></a>output_folder <span class="op">=</span> <span class="st">'xgboost'</span></span>
 <span id="cb13-17"><a href="#cb13-17" tabindex="-1" aria-label="code-block-13-17"></a>output_path <span class="op">=</span> <span class="ss">f's3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>output_folder<span class="sc">}</span><span class="ss">/'</span>   <span class="co"># S3 prefix (a "folder") where SageMaker uploads the job's outputs</span></span>
 <span id="cb13-18"><a href="#cb13-18" tabindex="-1" aria-label="code-block-13-18"></a></span>
-<span id="cb13-19"><a href="#cb13-19" tabindex="-1" aria-label="code-block-13-19"></a><span class="co"># The XGBoost framework estimator: AWS's XGBoost container, running our script</span></span>
-<span id="cb13-20"><a href="#cb13-20" tabindex="-1" aria-label="code-block-13-20"></a>xgboost_estimator <span class="op">=</span> XGBoost(</span>
-<span id="cb13-21"><a href="#cb13-21" tabindex="-1" aria-label="code-block-13-21"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-xgboost"</span>,   <span class="co"># prefix of the job name: who + which model; SageMaker appends a timestamp to make it unique</span></span>
-<span id="cb13-22"><a href="#cb13-22" tabindex="-1" aria-label="code-block-13-22"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
-<span id="cb13-23"><a href="#cb13-23" tabindex="-1" aria-label="code-block-13-23"></a>    entry_point<span class="op">=</span><span class="st">'train_xgboost.py'</span>,      <span class="co"># the script SageMaker runs inside the container on the training instance</span></span>
-<span id="cb13-24"><a href="#cb13-24" tabindex="-1" aria-label="code-block-13-24"></a>    source_dir<span class="op">=</span><span class="st">'/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts'</span>,  <span class="co"># Directory where your script is located (uploaded to the job with it)</span></span>
-<span id="cb13-25"><a href="#cb13-25" tabindex="-1" aria-label="code-block-13-25"></a>    role<span class="op">=</span>role,                           <span class="co"># the job assumes this role to read its input and write its output in S3</span></span>
-<span id="cb13-26"><a href="#cb13-26" tabindex="-1" aria-label="code-block-13-26"></a>    tags<span class="op">=</span>job_tags,                       <span class="co"># the cost-tracking tags defined above</span></span>
-<span id="cb13-27"><a href="#cb13-27" tabindex="-1" aria-label="code-block-13-27"></a>    instance_count<span class="op">=</span>instance_count,</span>
-<span id="cb13-28"><a href="#cb13-28" tabindex="-1" aria-label="code-block-13-28"></a>    instance_type<span class="op">=</span>instance_type,</span>
-<span id="cb13-29"><a href="#cb13-29" tabindex="-1" aria-label="code-block-13-29"></a>    output_path<span class="op">=</span>output_path,</span>
-<span id="cb13-30"><a href="#cb13-30" tabindex="-1" aria-label="code-block-13-30"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb13-31"><a href="#cb13-31" tabindex="-1" aria-label="code-block-13-31"></a>    framework_version<span class="op">=</span><span class="st">"1.7-1"</span>,           <span class="co"># XGBoost container version</span></span>
-<span id="cb13-32"><a href="#cb13-32" tabindex="-1" aria-label="code-block-13-32"></a>    hyperparameters<span class="op">=</span>{                    <span class="co"># passed to the script as command-line arguments: --train ..., --max_depth ...</span></span>
-<span id="cb13-33"><a href="#cb13-33" tabindex="-1" aria-label="code-block-13-33"></a>        <span class="st">'train'</span>: train_file,</span>
-<span id="cb13-34"><a href="#cb13-34" tabindex="-1" aria-label="code-block-13-34"></a>        <span class="st">'max_depth'</span>: max_depth,</span>
-<span id="cb13-35"><a href="#cb13-35" tabindex="-1" aria-label="code-block-13-35"></a>        <span class="st">'eta'</span>: eta,</span>
-<span id="cb13-36"><a href="#cb13-36" tabindex="-1" aria-label="code-block-13-36"></a>        <span class="st">'subsample'</span>: subsample,</span>
-<span id="cb13-37"><a href="#cb13-37" tabindex="-1" aria-label="code-block-13-37"></a>        <span class="st">'colsample_bytree'</span>: colsample_bytree,</span>
-<span id="cb13-38"><a href="#cb13-38" tabindex="-1" aria-label="code-block-13-38"></a>        <span class="st">'num_round'</span>: num_round</span>
-<span id="cb13-39"><a href="#cb13-39" tabindex="-1" aria-label="code-block-13-39"></a>    }</span>
-<span id="cb13-40"><a href="#cb13-40" tabindex="-1" aria-label="code-block-13-40"></a>)</span>
-<span id="cb13-41"><a href="#cb13-41" tabindex="-1" aria-label="code-block-13-41"></a></span>
-<span id="cb13-42"><a href="#cb13-42" tabindex="-1" aria-label="code-block-13-42"></a><span class="co"># Define input data</span></span>
-<span id="cb13-43"><a href="#cb13-43" tabindex="-1" aria-label="code-block-13-43"></a><span class="co"># TrainingInput: where the data is and its format; SageMaker copies it onto the training instance before the script runs</span></span>
-<span id="cb13-44"><a href="#cb13-44" tabindex="-1" aria-label="code-block-13-44"></a>train_input <span class="op">=</span> TrainingInput(train_s3_path, content_type<span class="op">=</span><span class="st">'csv'</span>)</span>
-<span id="cb13-45"><a href="#cb13-45" tabindex="-1" aria-label="code-block-13-45"></a></span>
-<span id="cb13-46"><a href="#cb13-46" tabindex="-1" aria-label="code-block-13-46"></a><span class="co"># Measure and start training time</span></span>
-<span id="cb13-47"><a href="#cb13-47" tabindex="-1" aria-label="code-block-13-47"></a>start <span class="op">=</span> t.time()</span>
-<span id="cb13-48"><a href="#cb13-48" tabindex="-1" aria-label="code-block-13-48"></a><span class="co"># fit() launches the job and blocks until it finishes (wait=False would return at once); the 'train' channel becomes SM_CHANNEL_TRAIN</span></span>
-<span id="cb13-49"><a href="#cb13-49" tabindex="-1" aria-label="code-block-13-49"></a>xgboost_estimator.fit({<span class="st">'train'</span>: train_input})</span>
-<span id="cb13-50"><a href="#cb13-50" tabindex="-1" aria-label="code-block-13-50"></a>end <span class="op">=</span> t.time()</span>
-<span id="cb13-51"><a href="#cb13-51" tabindex="-1" aria-label="code-block-13-51"></a></span>
-<span id="cb13-52"><a href="#cb13-52" tabindex="-1" aria-label="code-block-13-52"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1" aria-label="code-block-13-19"></a>helpers.check_launch(job_tags, instance_type, max_run)   <span class="co"># tags, instance type and cap against the account's rules, before anything is sent</span></span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1" aria-label="code-block-13-20"></a></span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1" aria-label="code-block-13-21"></a><span class="co"># The XGBoost framework estimator: AWS's XGBoost container, running our script</span></span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1" aria-label="code-block-13-22"></a>xgboost_estimator <span class="op">=</span> XGBoost(</span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1" aria-label="code-block-13-23"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-xgboost"</span>,   <span class="co"># prefix of the job name: who + which model; SageMaker appends a timestamp to make it unique</span></span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1" aria-label="code-block-13-24"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
+<span id="cb13-25"><a href="#cb13-25" tabindex="-1" aria-label="code-block-13-25"></a>    entry_point<span class="op">=</span><span class="st">'train_xgboost.py'</span>,      <span class="co"># the script SageMaker runs inside the container on the training instance</span></span>
+<span id="cb13-26"><a href="#cb13-26" tabindex="-1" aria-label="code-block-13-26"></a>    source_dir<span class="op">=</span><span class="st">'/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts'</span>,  <span class="co"># Directory where your script is located (uploaded to the job with it)</span></span>
+<span id="cb13-27"><a href="#cb13-27" tabindex="-1" aria-label="code-block-13-27"></a>    role<span class="op">=</span>role,                           <span class="co"># the job assumes this role to read its input and write its output in S3</span></span>
+<span id="cb13-28"><a href="#cb13-28" tabindex="-1" aria-label="code-block-13-28"></a>    tags<span class="op">=</span>job_tags,                       <span class="co"># the cost-tracking tags defined above</span></span>
+<span id="cb13-29"><a href="#cb13-29" tabindex="-1" aria-label="code-block-13-29"></a>    instance_count<span class="op">=</span>instance_count,</span>
+<span id="cb13-30"><a href="#cb13-30" tabindex="-1" aria-label="code-block-13-30"></a>    instance_type<span class="op">=</span>instance_type,</span>
+<span id="cb13-31"><a href="#cb13-31" tabindex="-1" aria-label="code-block-13-31"></a>    output_path<span class="op">=</span>output_path,</span>
+<span id="cb13-32"><a href="#cb13-32" tabindex="-1" aria-label="code-block-13-32"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb13-33"><a href="#cb13-33" tabindex="-1" aria-label="code-block-13-33"></a>    framework_version<span class="op">=</span><span class="st">"1.7-1"</span>,           <span class="co"># XGBoost container version</span></span>
+<span id="cb13-34"><a href="#cb13-34" tabindex="-1" aria-label="code-block-13-34"></a>    hyperparameters<span class="op">=</span>{                    <span class="co"># passed to the script as command-line arguments: --train ..., --max_depth ...</span></span>
+<span id="cb13-35"><a href="#cb13-35" tabindex="-1" aria-label="code-block-13-35"></a>        <span class="st">'train'</span>: train_file,</span>
+<span id="cb13-36"><a href="#cb13-36" tabindex="-1" aria-label="code-block-13-36"></a>        <span class="st">'max_depth'</span>: max_depth,</span>
+<span id="cb13-37"><a href="#cb13-37" tabindex="-1" aria-label="code-block-13-37"></a>        <span class="st">'eta'</span>: eta,</span>
+<span id="cb13-38"><a href="#cb13-38" tabindex="-1" aria-label="code-block-13-38"></a>        <span class="st">'subsample'</span>: subsample,</span>
+<span id="cb13-39"><a href="#cb13-39" tabindex="-1" aria-label="code-block-13-39"></a>        <span class="st">'colsample_bytree'</span>: colsample_bytree,</span>
+<span id="cb13-40"><a href="#cb13-40" tabindex="-1" aria-label="code-block-13-40"></a>        <span class="st">'num_round'</span>: num_round</span>
+<span id="cb13-41"><a href="#cb13-41" tabindex="-1" aria-label="code-block-13-41"></a>    }</span>
+<span id="cb13-42"><a href="#cb13-42" tabindex="-1" aria-label="code-block-13-42"></a>)</span>
+<span id="cb13-43"><a href="#cb13-43" tabindex="-1" aria-label="code-block-13-43"></a></span>
+<span id="cb13-44"><a href="#cb13-44" tabindex="-1" aria-label="code-block-13-44"></a><span class="co"># Define input data</span></span>
+<span id="cb13-45"><a href="#cb13-45" tabindex="-1" aria-label="code-block-13-45"></a><span class="co"># TrainingInput: where the data is and its format; SageMaker copies it onto the training instance before the script runs</span></span>
+<span id="cb13-46"><a href="#cb13-46" tabindex="-1" aria-label="code-block-13-46"></a>train_input <span class="op">=</span> TrainingInput(train_s3_path, content_type<span class="op">=</span><span class="st">'csv'</span>)</span>
+<span id="cb13-47"><a href="#cb13-47" tabindex="-1" aria-label="code-block-13-47"></a></span>
+<span id="cb13-48"><a href="#cb13-48" tabindex="-1" aria-label="code-block-13-48"></a><span class="co"># Measure and start training time</span></span>
+<span id="cb13-49"><a href="#cb13-49" tabindex="-1" aria-label="code-block-13-49"></a>start <span class="op">=</span> t.time()</span>
+<span id="cb13-50"><a href="#cb13-50" tabindex="-1" aria-label="code-block-13-50"></a><span class="co"># fit() launches the job and blocks until it finishes (wait=False would return at once); the 'train' channel becomes SM_CHANNEL_TRAIN</span></span>
+<span id="cb13-51"><a href="#cb13-51" tabindex="-1" aria-label="code-block-13-51"></a>xgboost_estimator.fit({<span class="st">'train'</span>: train_input})</span>
+<span id="cb13-52"><a href="#cb13-52" tabindex="-1" aria-label="code-block-13-52"></a>end <span class="op">=</span> t.time()</span>
+<span id="cb13-53"><a href="#cb13-53" tabindex="-1" aria-label="code-block-13-53"></a></span>
+<span id="cb13-54"><a href="#cb13-54" tabindex="-1" aria-label="code-block-13-54"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<p>When running longer training jobs, you can check on their status
-periodically from the AWS SageMaker Console (where we originally
-launched our Notebook instance) on left side panel under “Training”.</p>
+<p>While a job runs, its status is on the console under <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training" class="external-link">Training
+jobs</a>. For a job too long to sit through, see “Launching a job and
+walking away” below: launch with <code>wait=False</code> and stop the
+notebook instance.</p>
+<div id="if-the-launch-is-refused" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<span class="callout-header">Callout</span>
+<div id="if-the-launch-is-refused" class="callout-inner">
+<h3 class="callout-title">If the launch is refused</h3>
+<div class="callout-content">
+<p>The account checks every launch against a short list of rules, and
+refuses one that breaks any of them with an
+<code>AccessDeniedException</code> ending in
+<code>with an explicit deny in an identity-based policy</code>. The
+rules: the three tags <code>Name</code>, <code>Project</code> and
+<code>Purpose</code> must be present, <code>Name</code> must not be
+blank, <code>Project</code> must be one of SinkOrSwim, WattBot2026,
+BadgerScribe, BadgerCode, BrainDecoding, PoisonedWell, SnapshotWI,
+<code>Purpose</code> must be Storage, Notebook, Training, Tuning or
+Inference, the instance type must be one the lesson uses, the runtime
+cap must be 48 hours or less, and endpoints and EC2 instances cannot be
+created at all.</p>
+<p>The error message does not say which rule was broken. AWS does not
+let an administrator attach an explanation to a refusal, so the lesson’s
+helper module fills the gap.
+<code>helpers.check_launch(job_tags, instance_type, max_run)</code>
+checks a launch against the same rules before it is sent and says what
+to change; the tag cell above and every launch in the later episodes
+call it. <code>helpers.rules()</code> prints the rules.
+<code>helpers.explain_refusal()</code> is for afterwards: it reads the
+refused requests of the last hour from CloudTrail, the account’s log of
+every API call, and says which rule each one broke. All three read the
+rules from <code>scripts/guardrails.json</code>, the same file the
+administrator attached to the account, so they cannot disagree with it.
+A launch that passes <code>check_launch</code> and is still refused is
+almost always a missing <code>tags=job_tags</code> line on the
+estimator. The <a href="refused-launch.html">If a Launch Is Refused</a>
+page has all of this on one page for your own notebooks after the
+workshop.</p>
+</div>
+</div>
+</div>
 </div>
 <div class="section level4">
 <h4 id="hyperparameters">Hyperparameters<a class="anchor" aria-label="anchor" href="#hyperparameters"></a>
@@ -4411,6 +4478,132 @@ consequences.</li>
 <p>Following these steps helps ensure you only interact with and modify
 jobs you own, reducing the risk of impacting other users’ training
 processes.</p>
+</section><section><h2 class="section-heading" id="launching-a-job-and-walking-away">Launching a job and walking away<a class="anchor" aria-label="anchor" href="#launching-a-job-and-walking-away"></a>
+</h2>
+<hr class="half-width">
+<p>Everything after <code>fit()</code> returned happened on the job’s
+instance, not this one. The notebook is the launcher: once SageMaker has
+the request, the job pulls its container, trains, uploads the model to
+S3 and writes its log to CloudWatch whether or not this notebook is
+still running. <code>wait=True</code>, the default, only makes the cell
+block and stream the log here. That is right for a four-minute job. For
+a run of hours it means a notebook instance left running all night, five
+cents an hour on an <code>ml.t3.medium</code> and <code>$63</code> on a
+GPU notebook, so that a cell can watch a log you could read in
+CloudWatch.</p>
+<p>The alternative is three steps: launch with <code>wait=False</code>,
+write the job name down, stop the notebook instance. Come back when the
+job is done, start the instance, and pick the job up by name.</p>
+<div class="codewrapper sourceCode" id="cb21">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" tabindex="-1" aria-label="code-block-21-1"></a><span class="co"># Launch and return at once: the cell ends in seconds, and the job runs on its own instance</span></span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1" aria-label="code-block-21-2"></a>xgboost_estimator.fit({<span class="st">'train'</span>: train_input}, wait<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1" aria-label="code-block-21-3"></a>job_name <span class="op">=</span> xgboost_estimator.latest_training_job.name   <span class="co"># what you need to come back to this job</span></span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1" aria-label="code-block-21-4"></a><span class="bu">print</span>(<span class="st">"launched:"</span>, job_name)</span></code></pre>
+</div>
+<p>Keep the name somewhere outside the kernel: a cell’s printed output
+survives a kernel restart and a stopped instance, a variable does not.
+If you are leaving, stop the notebook instance from <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/notebook-instances" class="external-link">Notebook
+instances</a> (select it, <strong>Actions</strong>,
+<strong>Stop</strong>). The job keeps running, and its status and log
+are on its page under <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training" class="external-link">Training
+jobs</a> from any browser.</p>
+<p>To pick it up again, two calls. <code>describe_training_job</code> is
+the quick look: the status, and the timings once it has finished.
+<code>attach</code> rebuilds the estimator from the job’s record: if the
+job is still running it streams the rest of the log and waits, as
+<code>fit()</code> would have; if it has finished it returns at once.
+Either way <code>model_data</code> then points at the model in S3, so
+the download-and-evaluate cells above work unchanged.</p>
+<div class="codewrapper sourceCode" id="cb22">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" tabindex="-1" aria-label="code-block-22-1"></a><span class="im">from</span> sagemaker.xgboost.estimator <span class="im">import</span> XGBoost</span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1" aria-label="code-block-22-2"></a></span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1" aria-label="code-block-22-3"></a><span class="co"># after a kernel restart or a stopped instance, set job_name = "&lt;the name printed by the launch cell&gt;" first</span></span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1" aria-label="code-block-22-4"></a>status <span class="op">=</span> session.sagemaker_client.describe_training_job(TrainingJobName<span class="op">=</span>job_name)[<span class="st">"TrainingJobStatus"</span>]</span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1" aria-label="code-block-22-5"></a><span class="bu">print</span>(job_name, status)   <span class="co"># InProgress, Completed, Failed or Stopped</span></span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1" aria-label="code-block-22-6"></a></span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1" aria-label="code-block-22-7"></a>xgboost_estimator <span class="op">=</span> XGBoost.attach(job_name, sagemaker_session<span class="op">=</span>session)   <span class="co"># waits and streams the log if InProgress; returns at once if done</span></span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1" aria-label="code-block-22-8"></a><span class="bu">print</span>(<span class="st">"model:"</span>, xgboost_estimator.model_data)</span>
+<span id="cb22-9"><a href="#cb22-9" tabindex="-1" aria-label="code-block-22-9"></a>desc <span class="op">=</span> job_cost_report(job_name, price_per_hour)</span></code></pre>
+</div>
+<p>Interrupting the cell, restarting the kernel and stopping the
+instance all leave the job running. Only <strong>Stop</strong> on the
+job’s page, or the job’s own cap, ends it. A job you launched and forgot
+bills until one of those happens, which is what the two habits below are
+for.</p>
+<div class="section level3">
+<h3 id="two-habits-for-any-run-longer-than-half-an-hour">Two habits for any run longer than half an hour<a class="anchor" aria-label="anchor" href="#two-habits-for-any-run-longer-than-half-an-hour"></a>
+</h3>
+<p><strong>A cap you chose.</strong> <code>max_run</code> is the most a
+job can bill, in seconds, and every estimator in this lesson sets it.
+Put it a little above your estimate, twice the estimate is a fair
+margin, and never above the account’s 48-hour ceiling, which the account
+refuses. Leave it out and the SDK sends 24 hours, which on an
+<code>ml.g5.xlarge</code> is <code>$34</code> for a job that hung in its
+first minute.</p>
+<p><strong>Checkpoints.</strong> The cap ends a hung job, but without
+checkpoints the work it did is gone with it, and so is the bill. Two
+estimator arguments fix that: <code>checkpoint_s3_uri=</code> names an
+S3 prefix, and <code>checkpoint_local_path="/opt/ml/checkpoints"</code>
+names a folder on the training instance that SageMaker copies to that
+prefix while the job runs. The script’s part is to save its state into
+that folder at the end of every epoch and, when it starts, to resume
+from whatever it finds there. A job that is killed, or that crashes,
+then costs one epoch instead of the run, and a second launch with the
+same <code>checkpoint_s3_uri</code> carries on. It is not worth setting
+up for this one-minute job; the fine-tuning episode’s script does it,
+and its estimator has the two lines to copy.</p>
+<div id="launch-lose-the-kernel-come-back" class="callout challenge">
+<div class="callout-square">
+<i class="callout-icon" data-feather="zap"></i>
+</div>
+<span class="callout-header">Challenge</span>
+<div id="launch-lose-the-kernel-come-back" class="callout-inner">
+<h3 class="callout-title">Launch, lose the kernel, come back</h3>
+<div class="callout-content">
+<p>Do the walk-away sequence once while the job is short, so that it is
+familiar when the job is long.</p>
+<ol style="list-style-type: decimal">
+<li>Run the <code>wait=False</code> launch cell above and note the
+printed job name.</li>
+<li>From the Jupyter menu choose <strong>Kernel</strong>,
+<strong>Restart</strong>. Every variable is gone, which is what a
+stopped instance would also do to you, without the minutes of waiting
+for it to start again.</li>
+<li>Rerun the setup cells at the top of the episode (the session, bucket
+and role) and the cell that defines <code>job_cost_report</code> and
+<code>price_per_hour</code>.</li>
+<li>Set <code>job_name</code> to the name you noted and run the pick-up
+cell.</li>
+</ol>
+<p>What was the job’s status when you looked, and what did it cost
+compared with the first job?</p>
+</div>
+</div>
+</div>
+<div id="accordionSolution4" class="accordion challenge-accordion accordion-flush">
+<div class="accordion-item">
+<button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
+  <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
+</button>
+<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
+<div class="accordion-body">
+<p>The status is <code>InProgress</code> if you were quick and
+<code>Completed</code> otherwise; <code>attach</code> waits in the first
+case and returns at once in the second. The cost is the same as the
+first run, since the job did the same work, and it did not care that the
+kernel it was launched from no longer existed. The only thing that
+connected the kernel to the job was the name, and if you lose that too,
+the <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training" class="external-link">Training
+jobs</a> list, filtered by your notebook instance name, has it.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
 </section><section><h2 class="section-heading" id="when-training-takes-too-long">When training takes too long<a class="anchor" aria-label="anchor" href="#when-training-takes-too-long"></a>
 </h2>
 <hr class="half-width">
@@ -4508,6 +4701,12 @@ minutes + ~3 minutes startup), then read back
 <code>BillableTimeInSeconds</code> with <code>job_cost_report()</code>
 after every job and compare.</li>
 <li>
+<strong>Long runs</strong>: launch with <code>wait=False</code>,
+note the job name, stop the notebook instance;
+<code>attach(job_name)</code> picks the job up later. Set
+<code>max_run</code> a little above the estimate, and checkpoint to S3
+on anything longer than half an hour.</li>
+<li>
 <strong>Scaling</strong>: Upgrade the single instance first;
 consider multiple instances only when data no longer fits in memory or a
 run takes more than ~10 hours.</li>
@@ -4522,7 +4721,7 @@ any links that you are not going to use.
 </div>
 </section></section><section id="aio-07_Training-models-in-SageMaker-notebooks-part2"><p>Content from <a href="07_Training-models-in-SageMaker-notebooks-part2.html">Training Models in SageMaker: PyTorch Example</a></p>
 <hr>
-<p>Last updated on 2026-10-21 |
+<p>Last updated on 2026-10-26 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/07_Training-models-in-SageMaker-notebooks-part2.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 50 minutes</p>
@@ -4700,10 +4899,8 @@ related to training data in one place. Similarly,
 <code>val_data.npz</code> organizes validation features and labels,
 simplifying file management.</p></li>
 </ol>
-<p>In summary, saving the data in <code>.npz</code> files ensures a
-smooth workflow from data loading to model training in PyTorch,
-leveraging SageMaker’s infrastructure for a more efficient, structured
-training process.</p>
+<p>Saving the data as <code>.npz</code> files keeps loading fast and the
+arrays in the shape the training script expects.</p>
 </div>
 </div>
 </div>
@@ -4817,7 +5014,7 @@ is anonymous on the bill. Define them once here and pass
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span> <span class="co"># replace with your name</span></span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span> <span class="co"># replace with your challenge name</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>   <span class="co"># your challenge: WattBot2026, BadgerScribe, BadgerCode, BrainDecoding, PoisonedWell or SnapshotWI; SinkOrSwim is the workshop itself</span></span>
 <span id="cb10-3"><a href="#cb10-3" tabindex="-1" aria-label="code-block-10-3"></a>purpose <span class="op">=</span> <span class="st">"Training"</span>        <span class="co"># one of: Storage, Notebook, Training, Tuning, Inference</span></span>
 <span id="cb10-4"><a href="#cb10-4" tabindex="-1" aria-label="code-block-10-4"></a></span>
 <span id="cb10-5"><a href="#cb10-5" tabindex="-1" aria-label="code-block-10-5"></a>job_tags <span class="op">=</span> [</span>
@@ -4825,7 +5022,8 @@ is anonymous on the bill. Define them once here and pass
 <span id="cb10-7"><a href="#cb10-7" tabindex="-1" aria-label="code-block-10-7"></a>    {<span class="st">"Key"</span>: <span class="st">"Project"</span>, <span class="st">"Value"</span>: project},</span>
 <span id="cb10-8"><a href="#cb10-8" tabindex="-1" aria-label="code-block-10-8"></a>    {<span class="st">"Key"</span>: <span class="st">"Purpose"</span>, <span class="st">"Value"</span>: purpose},</span>
 <span id="cb10-9"><a href="#cb10-9" tabindex="-1" aria-label="code-block-10-9"></a>]</span>
-<span id="cb10-10"><a href="#cb10-10" tabindex="-1" aria-label="code-block-10-10"></a><span class="bu">print</span>(<span class="ss">f"Name: </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">, Project: </span><span class="sc">{</span>project<span class="sc">}</span><span class="ss">, Purpose: </span><span class="sc">{</span>purpose<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1" aria-label="code-block-10-10"></a>helpers.check_launch(job_tags)   <span class="co"># the account's rules, checked here first: AWS's own refusal does not say which rule</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1" aria-label="code-block-10-11"></a><span class="bu">print</span>(<span class="ss">f"Name: </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">, Project: </span><span class="sc">{</span>project<span class="sc">}</span><span class="ss">, Purpose: </span><span class="sc">{</span>purpose<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="estimating-a-training-job-before-you-launch-it">Estimating a training job before you launch it<a class="anchor" aria-label="anchor" href="#estimating-a-training-job-before-you-launch-it"></a>
@@ -4969,6 +5167,11 @@ to use.</p>
 </div>
 <p>Set up the estimator for a longer run: the epochs, the instance,
 where the output goes, and a two-hour <code>max_run</code> cap.</p>
+<p>If the launch is refused with an <code>AccessDeniedException</code>
+ending in <code>explicit deny</code>, the account’s checks are the
+cause: a missing tag, an instance type outside the lesson’s list, or a
+resource kind the lesson never creates; the first training episode’s
+callout <em>If the launch is refused</em> says what to look at.</p>
 <div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -5442,7 +5645,7 @@ any links that you are not going to use.
 </div>
 </section></section><section id="aio-08_Hyperparameter-tuning"><p>Content from <a href="08_Hyperparameter-tuning.html">Hyperparameter Tuning in SageMaker: Neural Network Example</a></p>
 <hr>
-<p>Last updated on 2026-10-21 |
+<p>Last updated on 2026-10-26 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/08_Hyperparameter-tuning.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 60 minutes</p>
@@ -5494,11 +5697,10 @@ Select the <strong><code>conda_pytorch</code></strong> kernel.</p>
 </section><section><h2 class="section-heading" id="hyperparameter-tuning-in-sagemaker">Hyperparameter tuning in SageMaker<a class="anchor" aria-label="anchor" href="#hyperparameter-tuning-in-sagemaker"></a>
 </h2>
 <hr class="half-width">
-<p>To conduct efficient hyperparameter tuning with neural networks (or
-any model) in SageMaker, we’ll leverage SageMaker’s
-<strong>hyperparameter tuning jobs</strong> while carefully managing
-parameter ranges and model count. Here’s an overview of the process,
-with a focus on both efficiency and cost-effectiveness.</p>
+<p>SageMaker’s <strong>hyperparameter tuning jobs</strong> search a
+parameter space for any model; what keeps them cheap is the choice of
+ranges and the number of models trained. This episode walks through one
+tuning job with both in view.</p>
 <div class="section level3">
 <h3 id="key-steps">Key steps<a class="anchor" aria-label="anchor" href="#key-steps"></a>
 </h3>
@@ -5608,7 +5810,7 @@ too).</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span> <span class="co"># replace with your name</span></span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span> <span class="co"># replace with your challenge name</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>   <span class="co"># your challenge: WattBot2026, BadgerScribe, BadgerCode, BrainDecoding, PoisonedWell or SnapshotWI; SinkOrSwim is the workshop itself</span></span>
 <span id="cb3-3"><a href="#cb3-3" tabindex="-1" aria-label="code-block-3-3"></a>purpose <span class="op">=</span> <span class="st">"Tuning"</span>        <span class="co"># one of: Storage, Notebook, Training, Tuning, Inference</span></span>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a></span>
 <span id="cb3-5"><a href="#cb3-5" tabindex="-1" aria-label="code-block-3-5"></a>job_tags <span class="op">=</span> [</span>
@@ -5616,7 +5818,8 @@ too).</p>
 <span id="cb3-7"><a href="#cb3-7" tabindex="-1" aria-label="code-block-3-7"></a>    {<span class="st">"Key"</span>: <span class="st">"Project"</span>, <span class="st">"Value"</span>: project},</span>
 <span id="cb3-8"><a href="#cb3-8" tabindex="-1" aria-label="code-block-3-8"></a>    {<span class="st">"Key"</span>: <span class="st">"Purpose"</span>, <span class="st">"Value"</span>: purpose},</span>
 <span id="cb3-9"><a href="#cb3-9" tabindex="-1" aria-label="code-block-3-9"></a>]</span>
-<span id="cb3-10"><a href="#cb3-10" tabindex="-1" aria-label="code-block-3-10"></a><span class="bu">print</span>(<span class="ss">f"Name: </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">, Project: </span><span class="sc">{</span>project<span class="sc">}</span><span class="ss">, Purpose: </span><span class="sc">{</span>purpose<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1" aria-label="code-block-3-10"></a>helpers.check_launch(job_tags)   <span class="co"># the account's rules, checked here first: AWS's own refusal does not say which rule</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1" aria-label="code-block-3-11"></a><span class="bu">print</span>(<span class="ss">f"Name: </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">, Project: </span><span class="sc">{</span>project<span class="sc">}</span><span class="ss">, Purpose: </span><span class="sc">{</span>purpose<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <p>Next, we’ll configure the baseline estimator that we plan to do
 hyperparameter search on.</p>
@@ -5893,6 +6096,11 @@ accuracy.</p>
 <p>Estimate first: one child job is the same ~1 minute of training plus
 ~3 minutes of startup we saw in the previous episode, so about
 <code>$0.01</code>.</p>
+<p>If the launch is refused with an <code>AccessDeniedException</code>
+ending in <code>explicit deny</code>, the account’s checks are the
+cause: a missing tag, an instance type outside the lesson’s list, or a
+resource kind the lesson never creates; the first training episode’s
+callout <em>If the launch is refused</em> says what to look at.</p>
 <div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -5961,12 +6169,11 @@ while setting <code>max_parallel_jobs=2</code> to manage parallelization
 efficiently. With two jobs running at once, SageMaker will be able to
 explore potential improvements more quickly than in a fully sequential
 setup, while still dynamically selecting promising values as it learns
-from completed jobs. This balance leverages SageMaker’s Bayesian
-optimization, which uses completed trials to inform subsequent ones,
-helping to avoid redundant testing of less promising parameter
-combinations. <strong>Setting <code>max_parallel_jobs</code> higher than
-2-4 reduces tuning efficiency, as SageMaker’s ability to learn from
-completed jobs decreases when too many jobs run
+from completed jobs. SageMaker’s Bayesian optimization uses the
+completed trials to choose the next ones, so it spends fewer jobs on
+unpromising combinations. <strong>Setting <code>max_parallel_jobs</code>
+higher than 2-4 reduces tuning efficiency, as SageMaker’s ability to
+learn from completed jobs decreases when too many jobs run
 simultaneously.</strong></p>
 <p>With this approach, SageMaker is better able to refine configurations
 without overloading resources or risking inefficient exploration, making
@@ -6051,8 +6258,8 @@ concurrently), but it can impact the final results and resource usage
 pattern due to SageMaker’s ability to dynamically select hyperparameter
 values to test to maximize efficiency and improve model performance.
 This adaptability is especially useful for neural networks, which often
-have a large hyperparameter space with complex interactions. Here’s how
-SageMaker’s approach impacts typical neural network training:</p>
+have a large hyperparameter space with complex interactions. What this
+means for neural network training:</p>
 <div class="section level4">
 <h4 id="adaptive-search-strategies">1. Adaptive Search Strategies<a class="anchor" aria-label="anchor" href="#adaptive-search-strategies"></a>
 </h4>
@@ -6078,8 +6285,7 @@ the subsequent batch, which may yield better results over time.</li>
 <code>max_parallel_jobs=10</code>), SageMaker can’t learn and adapt
 within a single batch, making this setup more like a traditional grid or
 random search. This approach is still valid, especially for small search
-spaces, but it doesn’t leverage the full potential of adaptive
-tuning.</li>
+spaces, but it gives up the adaptive part.</li>
 </ul>
 </div>
 <div class="section level4">
@@ -6107,8 +6313,8 @@ jobs by fine-tuning hyperparameters over multiple iterations.</li>
 simultaneous testing.</li>
 <li>
 <strong>For adaptive, refined tuning</strong>: Use a smaller
-<code>max_parallel_jobs</code> (like 2–4) to let SageMaker leverage
-adaptive tuning for optimal configurations.</li>
+<code>max_parallel_jobs</code> (like 2–4) so that later jobs can learn
+from earlier ones.</li>
 </ul>
 <p>This balance between exploration and exploitation is particularly
 impactful in neural network tuning, where training costs can be high and
@@ -6121,8 +6327,8 @@ parameters interact in complex ways.</p>
 <p>Tuning takes about 10 minutes to complete — not bad for 10 models!
 After SageMaker completes the hyperparameter tuning job, the results,
 including the trained models for each configuration, are stored in an S3
-bucket. Here’s a breakdown of the steps to locate and evaluate the best
-model on test data.</p>
+bucket. The steps to locate and evaluate the best model on test
+data:</p>
 <ol style="list-style-type: decimal">
 <li>
 <strong>Understanding the folder structure</strong>:
@@ -6349,7 +6555,7 @@ and the runtime print.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <ul>
 <li>
@@ -6399,7 +6605,7 @@ in the notebook?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>The tuner can only vary what the script reads. Right now
 <code>train_nn.py</code> has no <code>--batch_size</code> argument and
@@ -7128,7 +7334,7 @@ project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5: a full fine-tune of a 7B model needs about
 112 GB plus activations, and the g5 has 24 GB. On the p4d, 8 × 40 GB =
@@ -7434,7 +7640,7 @@ whole bill.</li>
 <button class="accordion-button instructor-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInstructor1" aria-expanded="false" aria-controls="collapseInstructor1">
   <h3 class="accordion-header" id="headingInstructor1">  <div class="note-square"><i aria-hidden="true" class="callout-icon" data-feather="edit-2"></i></div> Before class (instructor checklist) </h3>
 </button>
-<div id="collapseInstructor1" class="accordion-collapse collapse" data-bs-parent="#accordionInstructor1" aria-labelledby="headingInstructor1">
+<div id="collapseInstructor1" class="accordion-collapse collapse" aria-labelledby="headingInstructor1" data-bs-parent="#accordionInstructor1">
 <div class="accordion-body">
 <p>Students never download the data themselves; four things have to be
 in place before the session. Each is written out in the instructor
@@ -7672,13 +7878,13 @@ starts.</p>
 <span id="cb14-12"><a href="#cb14-12" tabindex="-1" aria-label="code-block-14-12"></a><span class="bu">print</span>(<span class="ss">f"transcription: </span><span class="sc">{</span><span class="bu">len</span>(row.text.split())<span class="sc">}</span><span class="ss"> words, </span><span class="sc">{</span><span class="bu">len</span>(row.text)<span class="sc">}</span><span class="ss"> characters -&gt; </span><span class="sc">{</span>n_total <span class="op">-</span> n_prompt<span class="sc">}</span><span class="ss"> tokens"</span>)</span>
 <span id="cb14-13"><a href="#cb14-13" tabindex="-1" aria-label="code-block-14-13"></a><span class="bu">print</span>(<span class="ss">f"tokens the model sees for this page: </span><span class="sc">{</span>n_total<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<p>Two things to notice in the output. The image is close to the
-1,280-token cap whatever the page’s original size, because every scan is
-larger than a megapixel and gets shrunk to it. And the transcription
-comes out near two tokens per word, not the 1.3 of the English rule of
-thumb: German, 1930s spelling and the writer’s abbreviations all split
-into more pieces. That is why the guess in Step 0 is a guess, and why
-the next cell measures the average instead.</p>
+<p>The image is close to the 1,280-token cap whatever the page’s
+original size, because every scan is larger than a megapixel and gets
+shrunk to it. And the transcription comes out near two tokens per word,
+not the 1.3 of the English rule of thumb: German, 1930s spelling and the
+writer’s abbreviations all split into more pieces. That is why the guess
+in Step 0 is a guess, and why the next cell measures the average
+instead.</p>
 <p>One page is a point, not an average. Text length varies a lot from
 page to page; image tokens hardly vary, because almost every scan is
 larger than <code>max_pixels</code> and gets resized to the same cap. So
@@ -7790,14 +7996,16 @@ jobs it launches. Pass them to every estimator.</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" tabindex="-1" aria-label="code-block-21-1"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span>         <span class="co"># replace with your name</span></span>
-<span id="cb21-2"><a href="#cb21-2" tabindex="-1" aria-label="code-block-21-2"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>   <span class="co"># replace with your challenge name</span></span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1" aria-label="code-block-21-2"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>   <span class="co"># your challenge: WattBot2026, BadgerScribe, BadgerCode, BrainDecoding, PoisonedWell or SnapshotWI; SinkOrSwim is the workshop itself</span></span>
 <span id="cb21-3"><a href="#cb21-3" tabindex="-1" aria-label="code-block-21-3"></a></span>
 <span id="cb21-4"><a href="#cb21-4" tabindex="-1" aria-label="code-block-21-4"></a><span class="kw">def</span> make_job_tags(purpose: <span class="bu">str</span>):   <span class="co"># one of: Storage, Notebook, Training, Tuning, Inference</span></span>
-<span id="cb21-5"><a href="#cb21-5" tabindex="-1" aria-label="code-block-21-5"></a>    <span class="cf">return</span> [</span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1" aria-label="code-block-21-5"></a>    <span class="cf">return</span> helpers.check_launch([   <span class="co"># checked against the account's rules first, with a message that names the problem</span></span>
 <span id="cb21-6"><a href="#cb21-6" tabindex="-1" aria-label="code-block-21-6"></a>        {<span class="st">"Key"</span>: <span class="st">"Name"</span>, <span class="st">"Value"</span>: name},</span>
 <span id="cb21-7"><a href="#cb21-7" tabindex="-1" aria-label="code-block-21-7"></a>        {<span class="st">"Key"</span>: <span class="st">"Project"</span>, <span class="st">"Value"</span>: project},</span>
 <span id="cb21-8"><a href="#cb21-8" tabindex="-1" aria-label="code-block-21-8"></a>        {<span class="st">"Key"</span>: <span class="st">"Purpose"</span>, <span class="st">"Value"</span>: purpose},</span>
-<span id="cb21-9"><a href="#cb21-9" tabindex="-1" aria-label="code-block-21-9"></a>    ]</span></code></pre>
+<span id="cb21-9"><a href="#cb21-9" tabindex="-1" aria-label="code-block-21-9"></a>    ])</span>
+<span id="cb21-10"><a href="#cb21-10" tabindex="-1" aria-label="code-block-21-10"></a></span>
+<span id="cb21-11"><a href="#cb21-11" tabindex="-1" aria-label="code-block-21-11"></a>make_job_tags(<span class="st">"Training"</span>)   <span class="co"># fails here, with the fix, rather than at the launch</span></span></code></pre>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="step-1-launch-the-lora-fine-tune">Step 1: Launch the LoRA fine-tune<a class="anchor" aria-label="anchor" href="#step-1-launch-the-lora-fine-tune"></a>
@@ -7938,6 +8146,11 @@ unique in the account, and a name that is fixed fails with
 guard-rail cell gives a new name and a new checkpoint prefix. To
 <strong>resume</strong> a job that was killed, keep the old
 <code>checkpoint_s3_uri</code> and launch under the new name.</li>
+<li>If the launch is refused with an <code>AccessDeniedException</code>
+ending in <code>explicit deny</code>, the account’s checks are the
+cause: a missing tag, an instance type outside the lesson’s list, or a
+resource kind the lesson never creates; the first training episode’s
+callout <em>If the launch is refused</em> says what to look at.</li>
 <li>
 <code>wait=True</code> (the default) blocks the notebook until the
 job ends and streams its log here. For a 25-minute job that is the right
@@ -8260,7 +8473,7 @@ will compare it to the bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Expect about 32 billed minutes. Scoring is the line most likely to
@@ -8637,7 +8850,7 @@ CER. Did the extra pixels help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -8677,7 +8890,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
 <div class="accordion-body">
 <p>Startup and upload (~6 min, <code>$0.26</code> at
 <code>$2.61</code>/h) do not speed up: the container pull and the S3
@@ -8730,8 +8943,8 @@ the model does not fit on one GPU and waste when it does.</li>
 <li>Score the holdout at the end of every epoch: the curve, not a rule
 of thumb, says how many passes were worth paying for. Measure the gain
 on the same held-out pages before and after, with the task’s own metric,
-and remember that a page-level holdout is optimistic when the real test
-is split by document.</li>
+and a page-level holdout is optimistic when the real test is split by
+document.</li>
 </ul>
 </div>
 </div>
@@ -8742,7 +8955,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-10_RAG-overview"><p>Content from <a href="10_RAG-overview.html">Overview of RAG Workflows on AWS</a></p>
 <hr>
-<p>Last updated on 2026-10-21 |
+<p>Last updated on 2026-10-26 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/10_RAG-overview.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 15 minutes</p>
@@ -8821,9 +9034,7 @@ language model (LLM) to answer a question.</li>
 <p>No model weights are updated. No backprop. No training job.<br>
 RAG is an inference‑only pattern that layers retrieval logic around an
 LLM.</p>
-<p>This matters for how you should think about compute. The
-<em>only</em> things a RAG pipeline needs from a model are two stateless
-calls:</p>
+<p>A RAG pipeline needs only two stateless calls from a model:</p>
 <ul>
 <li>“Turn this text into an embedding vector.”</li>
 <li>“Given this prompt (question + retrieved chunks), generate an
@@ -8891,9 +9102,8 @@ failure mode: if you stop calling it, you stop paying.</p>
 <div class="section level3">
 <h3 id="what-forgetting-actually-costs">What forgetting actually costs<a class="anchor" aria-label="anchor" href="#what-forgetting-actually-costs"></a>
 </h3>
-<p>To make this concrete, here is what a GPU notebook instance costs if
-it is left running after you close your laptop (on‑demand prices at time
-of writing; see the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">instances
+<p>A GPU notebook instance left running after you close your laptop
+costs this much (on‑demand prices at time of writing; see the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">instances
 page</a>):</p>
 <table style="width:100%;" class="table">
 <colgroup>
@@ -9238,8 +9448,8 @@ money went to.</li>
 parameter. An application inference profile is a free, model‑specific
 wrapper that carries tags; usage routed through it is attributed to
 those tags. One profile per base model (so one for the embedding model
-and one for the generation model). Note that Bedrock’s tag format is
-lowercase <code>key</code>/<code>value</code>, while SageMaker’s is
+and one for the generation model). Bedrock’s tag format is lowercase
+<code>key</code>/<code>value</code>, while SageMaker’s is
 <code>Key</code>/<code>Value</code>; the tag <em>names</em> stay the
 same.</li>
 <li>
@@ -10217,7 +10427,7 @@ model ID.</p>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a><span class="im">from</span> wattbot_rag <span class="im">import</span> tagged_profile_arn</span>
 <span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a></span>
 <span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span>         <span class="co"># replace with your name</span></span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>   <span class="co"># replace with your challenge name</span></span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>   <span class="co"># your challenge: WattBot2026, BadgerScribe, BadgerCode, BrainDecoding, PoisonedWell or SnapshotWI; SinkOrSwim is the workshop itself</span></span>
 <span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a><span class="bu">print</span>(<span class="ss">f"Tags on the profiles, and so on every Bedrock call: Name=</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">, Project=</span><span class="sc">{</span>project<span class="sc">}</span><span class="ss">, Purpose=Inference"</span>)   <span class="co"># check them first: a profile tagged DoeJohn bills as DoeJohn</span></span>
 <span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a></span>
 <span id="cb16-7"><a href="#cb16-7" tabindex="-1" aria-label="code-block-16-7"></a><span class="co"># From here on, these ARNs are what we pass as modelId. The base IDs are never sent to the runtime again.</span></span>
@@ -10292,7 +10502,7 @@ month’s Bedrock spend by <code>Project</code>?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -10748,7 +10958,7 @@ same questions, <code>$1.41</code> an hour?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>The two prices are from the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
 for DeepSeek on-demand in October 2026; update them for the model and
@@ -10828,7 +11038,7 @@ what moved the score.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
 <p>Both solution cells start with
 <code>%%script false --no-raise-error</code>, which makes Jupyter skip
@@ -11864,16 +12074,20 @@ job from the batch RAG job on the bill.</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span>         <span class="co"># replace with your name</span></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>   <span class="co"># replace with your challenge name</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>   <span class="co"># your challenge: WattBot2026, BadgerScribe, BadgerCode, BrainDecoding, PoisonedWell or SnapshotWI; SinkOrSwim is the workshop itself</span></span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a></span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1" aria-label="code-block-5-4"></a><span class="kw">def</span> make_job_tags(purpose: <span class="bu">str</span>):   <span class="co"># one of: Storage, Notebook, Training, Tuning, Inference</span></span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1" aria-label="code-block-5-5"></a>    <span class="cf">return</span> [</span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1" aria-label="code-block-5-6"></a>        {<span class="st">"Key"</span>: <span class="st">"Name"</span>, <span class="st">"Value"</span>: name},</span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1" aria-label="code-block-5-7"></a>        {<span class="st">"Key"</span>: <span class="st">"Project"</span>, <span class="st">"Value"</span>: project},</span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1" aria-label="code-block-5-8"></a>        {<span class="st">"Key"</span>: <span class="st">"Purpose"</span>, <span class="st">"Value"</span>: purpose},   <span class="co"># differs per job so the bill tells them apart</span></span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1" aria-label="code-block-5-9"></a>    ]</span>
-<span id="cb5-10"><a href="#cb5-10" tabindex="-1" aria-label="code-block-5-10"></a></span>
-<span id="cb5-11"><a href="#cb5-11" tabindex="-1" aria-label="code-block-5-11"></a><span class="bu">print</span>(<span class="st">"Tags on every job this episode launches:"</span>, make_job_tags(<span class="st">"Inference"</span>))   <span class="co"># check them before launching: a job tagged DoeJohn is on the bill as DoeJohn</span></span></code></pre>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1" aria-label="code-block-5-4"></a><span class="im">import</span> sys</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1" aria-label="code-block-5-5"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1" aria-label="code-block-5-6"></a><span class="im">import</span> helpers   <span class="co"># check_launch: the account's rules, with a message that names the problem</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1" aria-label="code-block-5-7"></a></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1" aria-label="code-block-5-8"></a><span class="kw">def</span> make_job_tags(purpose: <span class="bu">str</span>):   <span class="co"># one of: Storage, Notebook, Training, Tuning, Inference</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1" aria-label="code-block-5-9"></a>    <span class="cf">return</span> helpers.check_launch([   <span class="co"># checked against the account's rules first, with a message that names the problem</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1" aria-label="code-block-5-10"></a>        {<span class="st">"Key"</span>: <span class="st">"Name"</span>, <span class="st">"Value"</span>: name},</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1" aria-label="code-block-5-11"></a>        {<span class="st">"Key"</span>: <span class="st">"Project"</span>, <span class="st">"Value"</span>: project},</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1" aria-label="code-block-5-12"></a>        {<span class="st">"Key"</span>: <span class="st">"Purpose"</span>, <span class="st">"Value"</span>: purpose},   <span class="co"># differs per job so the bill tells them apart</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1" aria-label="code-block-5-13"></a>    ])</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1" aria-label="code-block-5-14"></a></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1" aria-label="code-block-5-15"></a><span class="bu">print</span>(<span class="st">"Tags on every job this episode launches:"</span>, make_job_tags(<span class="st">"Inference"</span>))   <span class="co"># check them before launching: a job tagged DoeJohn is on the bill as DoeJohn</span></span></code></pre>
 </div>
 </div>
 <div class="section level3">
@@ -11981,9 +12195,8 @@ link</a> in the class region (change <code>us-east-2</code> in it for
 another region).</p>
 <p>It takes about 10 minutes in total for the job to complete: a couple
 of provisioning the instance and downloading the embedding model, eight
-of embedding. This is the downside of launching jobs, but the good news
-is that we only need to launch one embedding job for our RAG pipeline.
-This strategy also ensures we’re only paying for the GPU while the job
+of embedding. That startup is the cost of a job, paid once: the
+embedding job runs once per corpus, and the GPU bills only while it
 runs.</p>
 </div>
 <div class="section level3">
@@ -12085,30 +12298,34 @@ fit a larger model.</p>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a><span class="bu">print</span>(<span class="st">"train_QA:  "</span>, train_qa_s3)</span>
 <span id="cb9-6"><a href="#cb9-6" tabindex="-1" aria-label="code-block-9-6"></a><span class="bu">print</span>(<span class="st">"metadata:  "</span>, metadata_s3)</span></code></pre>
 </div>
-<p>If the launch below fails at once with
-<code>ResourceLimitExceeded</code> naming an instance type, nothing in
-the notebook is wrong: the account’s quota for that type is too low, and
-the increase is requested in <a href="https://us-east-2.console.aws.amazon.com/servicequotas/home/services/sagemaker/quotas" class="external-link">Service
+<p>If the launch is refused with an <code>AccessDeniedException</code>
+ending in <code>explicit deny</code>, the account’s checks are the
+cause: a missing tag, an instance type outside the lesson’s list, or a
+resource kind the lesson never creates; the first training episode’s
+callout <em>If the launch is refused</em> says what to look at. If the
+launch below fails at once with <code>ResourceLimitExceeded</code>
+naming an instance type, nothing in the notebook is wrong: the account’s
+quota for that type is too low, and the increase is requested in <a href="https://us-east-2.console.aws.amazon.com/servicequotas/home/services/sagemaker/quotas" class="external-link">Service
 Quotas</a> (days, for GPU types). On your own account, request
 <code>ml.g5.xlarge for processing job usage</code> before you start.</p>
 <div class="section level3">
 <h3 id="what-launching-a-job-means">What launching a job means<a class="anchor" aria-label="anchor" href="#what-launching-a-job-means"></a>
 </h3>
 <p>This is the first GPU job you launch yourself in this episode (the
-embedding job above was staged for you in class), so here is the whole
-mechanism in plain terms. You describe a machine and point at a script.
-SageMaker rents the machine, copies the files you named from S3 onto its
-disk, runs your script on it, copies whatever the script wrote in its
-output folder back to S3, and shuts the machine down. The notebook does
-nothing but wait and show you the script’s printed output. Nothing from
-this notebook’s memory goes along: not <code>chunked_docs</code>, not
-<code>train_df</code>, not any function defined above. The script sees
-only the files you copied in and the arguments you gave it, which is why
-every input is an S3 location and every setting is a command-line flag.
-That is the same thing <code>estimator.fit</code> did in the fine-tuning
-episode, with one difference: a training job hands back a trained model,
-a Processing job hands back whatever files the script wrote, here a CSV
-of answers.</p>
+embedding job above was staged for you in class), so this is what
+happens when you launch one. You describe a machine and point at a
+script. SageMaker rents the machine, copies the files you named from S3
+onto its disk, runs your script on it, copies whatever the script wrote
+in its output folder back to S3, and shuts the machine down. The
+notebook does nothing but wait and show you the script’s printed output.
+Nothing from this notebook’s memory goes along: not
+<code>chunked_docs</code>, not <code>train_df</code>, not any function
+defined above. The script sees only the files you copied in and the
+arguments you gave it, which is why every input is an S3 location and
+every setting is a command-line flag. That is the same thing
+<code>estimator.fit</code> did in the fine-tuning episode, with one
+difference: a training job hands back a trained model, a Processing job
+hands back whatever files the script wrote, here a CSV of answers.</p>
 <p>The description is two cells. The first builds a
 <code>HuggingFaceProcessor</code>: which machine, which container image,
 how long it may run, whose tags it carries. Two of its settings matter
@@ -12277,7 +12494,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -12340,7 +12557,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still downloading or
@@ -13490,7 +13707,7 @@ any links that you are not going to use.
 </div>
 </section></section><section id="aio-14_CLI-equivalents"><p>Content from <a href="14_CLI-equivalents.html">(Optional) The Same Jobs from the Terminal</a></p>
 <hr>
-<p>Last updated on 2026-10-20 |
+<p>Last updated on 2026-10-26 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/14_CLI-equivalents.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 30 minutes</p>
@@ -13574,9 +13791,12 @@ instances and GPU notebook instances do not</strong>, and the lesson
 never creates them from the CLI, or at all.</li>
 <li>
 <strong>An <code>AccessDeniedException</code> on the commands below
-is intended.</strong> The workshop permission set denies endpoint and
-EC2 creation, instance types outside the lesson’s list, and any job
-launched without the tags. Do not look for a workaround.</li>
+is intended.</strong> The workshop account carries a guard-rail policy
+that denies endpoint and EC2 creation, instance types outside the
+lesson’s list, and any job launched without the three tags. Do not look
+for a workaround. (Instructors: the policy is on the <em>Account
+preparation checklist</em> page, and it applies only once attached to
+the permission set and to the notebook role.)</li>
 </ol>
 </div>
 </div>
@@ -13585,14 +13805,19 @@ launched without the tags. Do not look for a workaround.</li>
 <section><h2 class="section-heading" id="sign-in-with-identity-center">1. Sign in with Identity Center<a class="anchor" aria-label="anchor" href="#sign-in-with-identity-center"></a>
 </h2>
 <hr class="half-width">
-<p>Install <a href="https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html" class="external-link">AWS
-CLI v2</a> if you do not have it, then register the account’s Identity
-Center once. It asks for the start URL and region of the sign-in page
-you used in the browser (for the workshop account they are in your
-sign-in email), opens a browser to approve the device, lets you pick the
-account and permission set, and asks for a default region
-(<code>us-east-2</code> for the workshop account) and a profile
-name.</p>
+<p>This episode runs from your own laptop, which is the point of it: a
+terminal that works when no notebook is open. The AWS CLI is already
+installed in CloudShell and on every SageMaker notebook instance, where
+it uses the instance’s role and needs no sign-in; a laptop has neither,
+so install <a href="https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html" class="external-link">AWS
+CLI v2</a> there, then register the account’s Identity Center once. It
+asks four things. First the start URL and the region of the Identity
+Center sign-in page, the same ones you used in the browser; for the
+workshop account both are in the sign-in email from your instructor. It
+then opens a browser tab for you to approve the device, lets you pick
+the account and the permission set, and finally asks for a default
+region, <code>us-east-2</code> for the workshop account, and a name for
+the profile.</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13600,12 +13825,43 @@ name.</p>
 </div>
 <p>From then on, every session starts with a login, and a check that you
 are who you think you are, in the account you think you are in:</p>
+<p>The commands in this episode are the same in Bash (macOS, Linux, Git
+Bash on Windows) and in PowerShell; where the shell’s own syntax
+differs, variables, line continuation, writing a file, the two are shown
+as tabs.</p>
+<div class="tabs">
+<nav><div id="nav-tab-1" class="nav nav-tabs" role="tablist">
+<button class="nav-link active" id="nav-tab-1-1" data-bs-toggle="tab" data-bs-target="#nav-tabpanel-1-1" type="button" role="tab" aria-controls="nav-tabpanel-1-1" aria-selected="true">
+  <h3 class="tab-header" id="nav-tab-heading-1-1">
+  Bash
+  </h3>
+</button>
+<button class="nav-link" id="nav-tab-1-2" data-bs-toggle="tab" data-bs-target="#nav-tabpanel-1-2" type="button" role="tab" aria-controls="nav-tabpanel-1-2" aria-selected="false">
+  <h3 class="tab-header" id="nav-tab-heading-1-2">
+  PowerShell
+  </h3>
+</button>
+</div>
+</nav><div id="nav-tabContent-1" class="tab-content">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1" aria-label="code-block-2-1"></a><span class="ex">aws</span> sso login <span class="at">--profile</span> workshop</span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1" aria-label="code-block-2-2"></a><span class="bu">export</span> <span class="va">AWS_PROFILE</span><span class="op">=</span>workshop          <span class="co"># PowerShell: $env:AWS_PROFILE="workshop"</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1" aria-label="code-block-2-2"></a><span class="bu">export</span> <span class="va">AWS_PROFILE</span><span class="op">=</span>workshop</span>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a><span class="ex">aws</span> sts get-caller-identity</span></code></pre>
+</div>
+</div>
+<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
+<div class="codewrapper sourceCode" id="cb3">
+<h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode powershell" tabindex="0"><code class="sourceCode powershell"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a>aws sso login <span class="op">--</span>profile workshop</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a><span class="va">$env</span><span class="op">:</span><span class="va">AWS_PROFILE</span> <span class="op">=</span> <span class="st">"workshop"</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1" aria-label="code-block-3-3"></a>aws sts get-caller-identity</span></code></pre>
+</div>
+</div>
+</div>
 </div>
 <p>The output names the account ID and an
 <code>AWSReservedSSO_...</code> role. The credentials expire after a few
@@ -13622,59 +13878,112 @@ one.</p>
 <p>The SageMaker SDK calls you used map one-to-one onto
 <code>aws sagemaker</code> subcommands. <code>--query</code> is a <a href="https://jmespath.org/" class="external-link">JMESPath</a> filter that keeps the output
 to what you asked about.</p>
-<div class="codewrapper sourceCode" id="cb3">
+<div class="codewrapper sourceCode" id="cb4">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a><span class="co"># Everything that is running right now, by type. Each list should be short, or empty.</span></span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a><span class="ex">aws</span> sagemaker list-training-jobs   <span class="at">--status-equals</span> InProgress <span class="at">--query</span> <span class="st">'TrainingJobSummaries[].TrainingJobName'</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1" aria-label="code-block-3-3"></a><span class="ex">aws</span> sagemaker list-processing-jobs <span class="at">--status-equals</span> InProgress <span class="at">--query</span> <span class="st">'ProcessingJobSummaries[].ProcessingJobName'</span></span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a><span class="ex">aws</span> sagemaker list-hyper-parameter-tuning-jobs <span class="at">--status-equals</span> InProgress <span class="at">--query</span> <span class="st">'HyperParameterTuningJobSummaries[].HyperParameterTuningJobName'</span></span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1" aria-label="code-block-3-5"></a><span class="ex">aws</span> sagemaker list-notebook-instances <span class="at">--query</span> <span class="st">'NotebookInstances[].[NotebookInstanceName,NotebookInstanceStatus,InstanceType]'</span> <span class="at">--output</span> table</span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1" aria-label="code-block-3-6"></a><span class="ex">aws</span> sagemaker list-endpoints       <span class="co"># must print an empty list on the workshop account</span></span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="co"># Everything that is running right now, by type. Each list should be short, or empty.</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a><span class="ex">aws</span> sagemaker list-training-jobs   <span class="at">--status-equals</span> InProgress <span class="at">--query</span> <span class="st">'TrainingJobSummaries[].TrainingJobName'</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a><span class="ex">aws</span> sagemaker list-processing-jobs <span class="at">--status-equals</span> InProgress <span class="at">--query</span> <span class="st">'ProcessingJobSummaries[].ProcessingJobName'</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a><span class="ex">aws</span> sagemaker list-hyper-parameter-tuning-jobs <span class="at">--status-equals</span> InProgress <span class="at">--query</span> <span class="st">'HyperParameterTuningJobSummaries[].HyperParameterTuningJobName'</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1" aria-label="code-block-4-5"></a><span class="ex">aws</span> sagemaker list-notebook-instances <span class="at">--query</span> <span class="st">'NotebookInstances[].[NotebookInstanceName,NotebookInstanceStatus,InstanceType]'</span> <span class="at">--output</span> table</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1" aria-label="code-block-4-6"></a><span class="ex">aws</span> sagemaker list-endpoints       <span class="co"># must print an empty list on the workshop account</span></span></code></pre>
 </div>
 <p><code>describe-training-job</code> is the call behind
 <code>job_cost_report()</code> in the training episodes. The same number
 is there: billable time, which includes the container pull and data
 download you paid for.</p>
-<div class="codewrapper sourceCode" id="cb4">
+<div class="tabs">
+<nav><div id="nav-tab-2" class="nav nav-tabs" role="tablist">
+<button class="nav-link active" id="nav-tab-2-1" data-bs-toggle="tab" data-bs-target="#nav-tabpanel-2-1" type="button" role="tab" aria-controls="nav-tabpanel-2-1" aria-selected="true">
+  <h3 class="tab-header" id="nav-tab-heading-2-1">
+  Bash
+  </h3>
+</button>
+<button class="nav-link" id="nav-tab-2-2" data-bs-toggle="tab" data-bs-target="#nav-tabpanel-2-2" type="button" role="tab" aria-controls="nav-tabpanel-2-2" aria-selected="false">
+  <h3 class="tab-header" id="nav-tab-heading-2-2">
+  PowerShell
+  </h3>
+</button>
+</div>
+</nav><div id="nav-tabContent-2" class="tab-content">
+<div id="nav-tabpanel-2-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-2-1">
+<div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="va">JOB</span><span class="op">=&lt;</span>a <span class="ex">training</span> job name from the list above<span class="op">&gt;</span></span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a><span class="ex">aws</span> sagemaker describe-training-job <span class="at">--training-job-name</span> <span class="va">$JOB</span> <span class="dt">\</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a>  <span class="at">--query</span> <span class="st">'{status:TrainingJobStatus, instance:ResourceConfig.InstanceType, count:ResourceConfig.InstanceCount, billable_s:BillableTimeInSeconds, tags:Tags}'</span></span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="va">JOB</span><span class="op">=&lt;</span>a <span class="ex">training</span> job name from the list above<span class="op">&gt;</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a><span class="ex">aws</span> sagemaker describe-training-job <span class="at">--training-job-name</span> <span class="va">$JOB</span> <span class="dt">\</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a>  <span class="at">--query</span> <span class="st">'{status:TrainingJobStatus, instance:ResourceConfig.InstanceType, count:ResourceConfig.InstanceCount, billable_s:BillableTimeInSeconds}'</span></span></code></pre>
+</div>
+</div>
+<div id="nav-tabpanel-2-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-2-2">
+<div class="codewrapper sourceCode" id="cb6">
+<h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode powershell" tabindex="0"><code class="sourceCode powershell"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="va">$JOB</span> <span class="op">=</span> <span class="st">"&lt;a training job name from the list above&gt;"</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a>aws sagemaker describe-training-job <span class="op">--</span>training-job-name <span class="va">$JOB</span> `</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a>  <span class="op">--</span>query <span class="st">'{status:TrainingJobStatus, instance:ResourceConfig.InstanceType, count:ResourceConfig.InstanceCount, billable_s:BillableTimeInSeconds}'</span></span></code></pre>
+</div>
+</div>
+</div>
 </div>
 <p>Cost is billable seconds × instance count × the hourly rate, exactly
 as in the notebooks. Tags are returned by a separate call, which is also
 how you find the untagged job that will show up as “unallocated” on the
 bill:</p>
-<div class="codewrapper sourceCode" id="cb5">
+<div class="tabs">
+<nav><div id="nav-tab-3" class="nav nav-tabs" role="tablist">
+<button class="nav-link active" id="nav-tab-3-1" data-bs-toggle="tab" data-bs-target="#nav-tabpanel-3-1" type="button" role="tab" aria-controls="nav-tabpanel-3-1" aria-selected="true">
+  <h3 class="tab-header" id="nav-tab-heading-3-1">
+  Bash
+  </h3>
+</button>
+<button class="nav-link" id="nav-tab-3-2" data-bs-toggle="tab" data-bs-target="#nav-tabpanel-3-2" type="button" role="tab" aria-controls="nav-tabpanel-3-2" aria-selected="false">
+  <h3 class="tab-header" id="nav-tab-heading-3-2">
+  PowerShell
+  </h3>
+</button>
+</div>
+</nav><div id="nav-tabContent-3" class="tab-content">
+<div id="nav-tabpanel-3-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-3-1">
+<div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="va">ARN</span><span class="op">=</span><span class="va">$(</span><span class="ex">aws</span> sagemaker describe-training-job <span class="at">--training-job-name</span> <span class="va">$JOB</span> <span class="at">--query</span> TrainingJobArn <span class="at">--output</span> text<span class="va">)</span></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a><span class="ex">aws</span> sagemaker list-tags <span class="at">--resource-arn</span> <span class="va">$ARN</span> <span class="at">--query</span> <span class="st">'Tags[].[Key,Value]'</span> <span class="at">--output</span> table</span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a><span class="va">ARN</span><span class="op">=</span><span class="va">$(</span><span class="ex">aws</span> sagemaker describe-training-job <span class="at">--training-job-name</span> <span class="va">$JOB</span> <span class="at">--query</span> TrainingJobArn <span class="at">--output</span> text<span class="va">)</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1" aria-label="code-block-7-2"></a><span class="ex">aws</span> sagemaker list-tags <span class="at">--resource-arn</span> <span class="va">$ARN</span> <span class="at">--query</span> <span class="st">'Tags[].[Key,Value]'</span> <span class="at">--output</span> table</span></code></pre>
+</div>
+</div>
+<div id="nav-tabpanel-3-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-3-2">
+<div class="codewrapper sourceCode" id="cb8">
+<h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode powershell" tabindex="0"><code class="sourceCode powershell"><span id="cb8-1"><a href="#cb8-1" tabindex="-1" aria-label="code-block-8-1"></a><span class="va">$ARN</span> <span class="op">=</span> aws sagemaker describe-training-job <span class="op">--</span>training-job-name <span class="va">$JOB</span> <span class="op">--</span>query TrainingJobArn <span class="op">--</span>output text</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1" aria-label="code-block-8-2"></a>aws sagemaker list-tags <span class="op">--</span>resource-arn <span class="va">$ARN</span> <span class="op">--</span>query <span class="st">'Tags[].[Key,Value]'</span> <span class="op">--</span>output table</span></code></pre>
+</div>
+</div>
+</div>
 </div>
 </section><section><h2 class="section-heading" id="stop-the-commands-worth-memorising">3. Stop: the commands worth memorising<a class="anchor" aria-label="anchor" href="#stop-the-commands-worth-memorising"></a>
 </h2>
 <hr class="half-width">
 <p>These are the most useful CLI commands to know. Each one stops a
 charge.</p>
-<div class="codewrapper sourceCode" id="cb6">
+<div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="ex">aws</span> sagemaker stop-training-job   <span class="at">--training-job-name</span>   <span class="op">&lt;</span>name<span class="op">&gt;</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a><span class="ex">aws</span> sagemaker stop-processing-job <span class="at">--processing-job-name</span> <span class="op">&lt;</span>name<span class="op">&gt;</span></span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a><span class="ex">aws</span> sagemaker stop-hyper-parameter-tuning-job <span class="at">--hyper-parameter-tuning-job-name</span> <span class="op">&lt;</span>name<span class="op">&gt;</span>   <span class="co"># stops every child job</span></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a><span class="ex">aws</span> sagemaker stop-notebook-instance <span class="at">--notebook-instance-name</span> <span class="op">&lt;</span>name<span class="op">&gt;</span></span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a><span class="ex">aws</span> sagemaker stop-training-job   <span class="at">--training-job-name</span>   <span class="op">&lt;</span>name<span class="op">&gt;</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a><span class="ex">aws</span> sagemaker stop-processing-job <span class="at">--processing-job-name</span> <span class="op">&lt;</span>name<span class="op">&gt;</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1" aria-label="code-block-9-3"></a><span class="ex">aws</span> sagemaker stop-hyper-parameter-tuning-job <span class="at">--hyper-parameter-tuning-job-name</span> <span class="op">&lt;</span>name<span class="op">&gt;</span>   <span class="co"># stops every child job</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a><span class="ex">aws</span> sagemaker stop-notebook-instance <span class="at">--notebook-instance-name</span> <span class="op">&lt;</span>name<span class="op">&gt;</span></span></code></pre>
 </div>
 <p>A stopped job keeps its logs and whatever it had already written to
 S3; a stopped notebook instance keeps
 <code>/home/ec2-user/SageMaker/</code>. Stopping is never the expensive
 mistake. Deleting an instance when you are done with it is the step that
 stops the storage charge too:</p>
-<div class="codewrapper sourceCode" id="cb7">
+<div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a><span class="ex">aws</span> sagemaker delete-notebook-instance <span class="at">--notebook-instance-name</span> <span class="op">&lt;</span>name<span class="op">&gt;</span>   <span class="co"># only after it reports Stopped</span></span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a><span class="ex">aws</span> sagemaker delete-notebook-instance <span class="at">--notebook-instance-name</span> <span class="op">&lt;</span>name<span class="op">&gt;</span>   <span class="co"># only after it reports Stopped</span></span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="copy-s3-in-bulk">4. Copy: S3 in bulk<a class="anchor" aria-label="anchor" href="#copy-s3-in-bulk"></a>
 </h2>
@@ -13682,13 +13991,13 @@ stops the storage charge too:</p>
 <p>The S3 episode uploaded through the console and the SDK. For many
 files, or for pulling a job’s outputs down to a laptop, the CLI is the
 better tool:</p>
-<div class="codewrapper sourceCode" id="cb8">
+<div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1" aria-label="code-block-8-1"></a><span class="ex">aws</span> s3 ls s3://<span class="op">&lt;</span>your-bucket<span class="op">&gt;</span>/ <span class="at">--recursive</span> <span class="at">--human-readable</span> <span class="at">--summarize</span>     <span class="co"># every object, and the bucket's total size</span></span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1" aria-label="code-block-8-2"></a><span class="ex">aws</span> s3 sync s3://<span class="op">&lt;</span>your-bucket<span class="op">&gt;</span>/xgboost/ ./xgboost-outputs/                 <span class="co"># download a prefix; only new or changed files move</span></span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1" aria-label="code-block-8-3"></a><span class="ex">aws</span> s3 sync ./my-data/ s3://<span class="op">&lt;</span>your-bucket<span class="op">&gt;</span>/my-data/                         <span class="co"># upload a folder the same way</span></span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1" aria-label="code-block-8-4"></a><span class="ex">aws</span> s3 rm s3://<span class="op">&lt;</span>your-bucket<span class="op">&gt;</span>/scratch/ <span class="at">--recursive</span>                          <span class="co"># delete a prefix; this one asks no questions</span></span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a><span class="ex">aws</span> s3 ls s3://<span class="op">&lt;</span>your-bucket<span class="op">&gt;</span>/ <span class="at">--recursive</span> <span class="at">--human-readable</span> <span class="at">--summarize</span>     <span class="co"># every object, and the bucket's total size</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a><span class="ex">aws</span> s3 sync s3://<span class="op">&lt;</span>your-bucket<span class="op">&gt;</span>/xgboost/ ./xgboost-outputs/                 <span class="co"># download a prefix; only new or changed files move</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a><span class="ex">aws</span> s3 sync ./my-data/ s3://<span class="op">&lt;</span>your-bucket<span class="op">&gt;</span>/my-data/                         <span class="co"># upload a folder the same way</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a><span class="ex">aws</span> s3 rm s3://<span class="op">&lt;</span>your-bucket<span class="op">&gt;</span>/scratch/ <span class="at">--recursive</span>                          <span class="co"># delete a prefix; this one asks no questions</span></span></code></pre>
 </div>
 <p>Downloads to a laptop are a transfer out of AWS (<code>$0.09</code>
 per GB). For anything larger than a few hundred megabytes, keep the data
@@ -13704,55 +14013,115 @@ image URI (run
 training episode’s notebook), your role ARN (<code>print(role)</code>),
 your bucket, your tag values, and a job name, which must be unique in
 the account.</p>
-<div class="codewrapper sourceCode" id="cb9">
+<p>The request is a JSON file. Save it as
+<code>train-xgboost.json</code> with any editor, or from the shell:</p>
+<div class="tabs">
+<nav><div id="nav-tab-4" class="nav nav-tabs" role="tablist">
+<button class="nav-link active" id="nav-tab-4-1" data-bs-toggle="tab" data-bs-target="#nav-tabpanel-4-1" type="button" role="tab" aria-controls="nav-tabpanel-4-1" aria-selected="true">
+  <h3 class="tab-header" id="nav-tab-heading-4-1">
+  Bash
+  </h3>
+</button>
+<button class="nav-link" id="nav-tab-4-2" data-bs-toggle="tab" data-bs-target="#nav-tabpanel-4-2" type="button" role="tab" aria-controls="nav-tabpanel-4-2" aria-selected="false">
+  <h3 class="tab-header" id="nav-tab-heading-4-2">
+  PowerShell
+  </h3>
+</button>
+</div>
+</nav><div id="nav-tabContent-4" class="tab-content">
+<div id="nav-tabpanel-4-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-4-1">
+<div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> train-xgboost.json <span class="op">&lt;&lt;'JSON'</span></span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a><span class="st">{</span></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1" aria-label="code-block-9-3"></a><span class="st">  "TrainingJobName": "&lt;notebook-instance-name&gt;-cli-xgboost-1",</span></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a><span class="st">  "AlgorithmSpecification": {</span></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a><span class="st">    "TrainingImage": "&lt;xgboost image URI for your region&gt;",</span></span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1" aria-label="code-block-9-6"></a><span class="st">    "TrainingInputMode": "File"</span></span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1" aria-label="code-block-9-7"></a><span class="st">  },</span></span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1" aria-label="code-block-9-8"></a><span class="st">  "RoleArn": "&lt;execution role ARN&gt;",</span></span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1" aria-label="code-block-9-9"></a><span class="st">  "HyperParameters": { "objective": "binary:logistic", "num_round": "100", "max_depth": "5", "eta": "0.1" },</span></span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1" aria-label="code-block-9-10"></a><span class="st">  "InputDataConfig": [</span></span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1" aria-label="code-block-9-11"></a><span class="st">    {</span></span>
-<span id="cb9-12"><a href="#cb9-12" tabindex="-1" aria-label="code-block-9-12"></a><span class="st">      "ChannelName": "train",</span></span>
-<span id="cb9-13"><a href="#cb9-13" tabindex="-1" aria-label="code-block-9-13"></a><span class="st">      "ContentType": "text/csv",</span></span>
-<span id="cb9-14"><a href="#cb9-14" tabindex="-1" aria-label="code-block-9-14"></a><span class="st">      "DataSource": { "S3DataSource": {</span></span>
-<span id="cb9-15"><a href="#cb9-15" tabindex="-1" aria-label="code-block-9-15"></a><span class="st">        "S3DataType": "S3Prefix",</span></span>
-<span id="cb9-16"><a href="#cb9-16" tabindex="-1" aria-label="code-block-9-16"></a><span class="st">        "S3Uri": "s3://&lt;your-bucket&gt;/xgboost/builtin/train_builtin.csv",</span></span>
-<span id="cb9-17"><a href="#cb9-17" tabindex="-1" aria-label="code-block-9-17"></a><span class="st">        "S3DataDistributionType": "FullyReplicated" } }</span></span>
-<span id="cb9-18"><a href="#cb9-18" tabindex="-1" aria-label="code-block-9-18"></a><span class="st">    }</span></span>
-<span id="cb9-19"><a href="#cb9-19" tabindex="-1" aria-label="code-block-9-19"></a><span class="st">  ],</span></span>
-<span id="cb9-20"><a href="#cb9-20" tabindex="-1" aria-label="code-block-9-20"></a><span class="st">  "OutputDataConfig": { "S3OutputPath": "s3://&lt;your-bucket&gt;/xgboost/cli-output/" },</span></span>
-<span id="cb9-21"><a href="#cb9-21" tabindex="-1" aria-label="code-block-9-21"></a><span class="st">  "ResourceConfig": { "InstanceType": "ml.m5.large", "InstanceCount": 1, "VolumeSizeInGB": 10 },</span></span>
-<span id="cb9-22"><a href="#cb9-22" tabindex="-1" aria-label="code-block-9-22"></a><span class="st">  "StoppingCondition": { "MaxRuntimeInSeconds": 1200 },</span></span>
-<span id="cb9-23"><a href="#cb9-23" tabindex="-1" aria-label="code-block-9-23"></a><span class="st">  "Tags": [</span></span>
-<span id="cb9-24"><a href="#cb9-24" tabindex="-1" aria-label="code-block-9-24"></a><span class="st">    { "Key": "Project", "Value": "&lt;ChallengeName&gt;" },</span></span>
-<span id="cb9-25"><a href="#cb9-25" tabindex="-1" aria-label="code-block-9-25"></a><span class="st">    { "Key": "Name",    "Value": "&lt;LastnameFirstname&gt;" },</span></span>
-<span id="cb9-26"><a href="#cb9-26" tabindex="-1" aria-label="code-block-9-26"></a><span class="st">    { "Key": "Purpose", "Value": "Training" }</span></span>
-<span id="cb9-27"><a href="#cb9-27" tabindex="-1" aria-label="code-block-9-27"></a><span class="st">  ]</span></span>
-<span id="cb9-28"><a href="#cb9-28" tabindex="-1" aria-label="code-block-9-28"></a><span class="st">}</span></span>
-<span id="cb9-29"><a href="#cb9-29" tabindex="-1" aria-label="code-block-9-29"></a><span class="op">JSON</span></span>
-<span id="cb9-30"><a href="#cb9-30" tabindex="-1" aria-label="code-block-9-30"></a><span class="ex">aws</span> sagemaker create-training-job <span class="at">--cli-input-json</span> file://train-xgboost.json</span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" tabindex="-1" aria-label="code-block-12-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> train-xgboost.json <span class="op">&lt;&lt;'JSON'</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1" aria-label="code-block-12-2"></a><span class="st">{</span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1" aria-label="code-block-12-3"></a><span class="st">  "TrainingJobName": "&lt;notebook-instance-name&gt;-cli-xgboost-1",</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1" aria-label="code-block-12-4"></a><span class="st">  "AlgorithmSpecification": {</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1" aria-label="code-block-12-5"></a><span class="st">    "TrainingImage": "&lt;xgboost image URI for your region&gt;",</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1" aria-label="code-block-12-6"></a><span class="st">    "TrainingInputMode": "File"</span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1" aria-label="code-block-12-7"></a><span class="st">  },</span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1" aria-label="code-block-12-8"></a><span class="st">  "RoleArn": "&lt;execution role ARN&gt;",</span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1" aria-label="code-block-12-9"></a><span class="st">  "HyperParameters": { "objective": "binary:logistic", "num_round": "100", "max_depth": "5", "eta": "0.1" },</span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1" aria-label="code-block-12-10"></a><span class="st">  "InputDataConfig": [</span></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1" aria-label="code-block-12-11"></a><span class="st">    {</span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1" aria-label="code-block-12-12"></a><span class="st">      "ChannelName": "train",</span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1" aria-label="code-block-12-13"></a><span class="st">      "ContentType": "text/csv",</span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1" aria-label="code-block-12-14"></a><span class="st">      "DataSource": { "S3DataSource": {</span></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1" aria-label="code-block-12-15"></a><span class="st">        "S3DataType": "S3Prefix",</span></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1" aria-label="code-block-12-16"></a><span class="st">        "S3Uri": "s3://&lt;your-bucket&gt;/xgboost/builtin/train_builtin.csv",</span></span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1" aria-label="code-block-12-17"></a><span class="st">        "S3DataDistributionType": "FullyReplicated" } }</span></span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1" aria-label="code-block-12-18"></a><span class="st">    }</span></span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1" aria-label="code-block-12-19"></a><span class="st">  ],</span></span>
+<span id="cb12-20"><a href="#cb12-20" tabindex="-1" aria-label="code-block-12-20"></a><span class="st">  "OutputDataConfig": { "S3OutputPath": "s3://&lt;your-bucket&gt;/xgboost/cli-output/" },</span></span>
+<span id="cb12-21"><a href="#cb12-21" tabindex="-1" aria-label="code-block-12-21"></a><span class="st">  "ResourceConfig": { "InstanceType": "ml.m5.large", "InstanceCount": 1, "VolumeSizeInGB": 10 },</span></span>
+<span id="cb12-22"><a href="#cb12-22" tabindex="-1" aria-label="code-block-12-22"></a><span class="st">  "StoppingCondition": { "MaxRuntimeInSeconds": 1200 },</span></span>
+<span id="cb12-23"><a href="#cb12-23" tabindex="-1" aria-label="code-block-12-23"></a><span class="st">  "Tags": [</span></span>
+<span id="cb12-24"><a href="#cb12-24" tabindex="-1" aria-label="code-block-12-24"></a><span class="st">    { "Key": "Project", "Value": "&lt;ChallengeName&gt;" },</span></span>
+<span id="cb12-25"><a href="#cb12-25" tabindex="-1" aria-label="code-block-12-25"></a><span class="st">    { "Key": "Name",    "Value": "&lt;LastnameFirstname&gt;" },</span></span>
+<span id="cb12-26"><a href="#cb12-26" tabindex="-1" aria-label="code-block-12-26"></a><span class="st">    { "Key": "Purpose", "Value": "Training" }</span></span>
+<span id="cb12-27"><a href="#cb12-27" tabindex="-1" aria-label="code-block-12-27"></a><span class="st">  ]</span></span>
+<span id="cb12-28"><a href="#cb12-28" tabindex="-1" aria-label="code-block-12-28"></a><span class="st">}</span></span>
+<span id="cb12-29"><a href="#cb12-29" tabindex="-1" aria-label="code-block-12-29"></a><span class="op">JSON</span></span></code></pre>
+</div>
+</div>
+<div id="nav-tabpanel-4-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-4-2">
+<div class="codewrapper sourceCode" id="cb13">
+<h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode powershell" tabindex="0"><code class="sourceCode powershell"><span id="cb13-1"><a href="#cb13-1" tabindex="-1" aria-label="code-block-13-1"></a><span class="vs">@'</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1" aria-label="code-block-13-2"></a><span class="vs">{</span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a><span class="vs">  "TrainingJobName": "&lt;notebook-instance-name&gt;-cli-xgboost-1",</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1" aria-label="code-block-13-4"></a><span class="vs">  "AlgorithmSpecification": {</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1" aria-label="code-block-13-5"></a><span class="vs">    "TrainingImage": "&lt;xgboost image URI for your region&gt;",</span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1" aria-label="code-block-13-6"></a><span class="vs">    "TrainingInputMode": "File"</span></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1" aria-label="code-block-13-7"></a><span class="vs">  },</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1" aria-label="code-block-13-8"></a><span class="vs">  "RoleArn": "&lt;execution role ARN&gt;",</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1" aria-label="code-block-13-9"></a><span class="vs">  "HyperParameters": { "objective": "binary:logistic", "num_round": "100", "max_depth": "5", "eta": "0.1" },</span></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1" aria-label="code-block-13-10"></a><span class="vs">  "InputDataConfig": [</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1" aria-label="code-block-13-11"></a><span class="vs">    {</span></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1" aria-label="code-block-13-12"></a><span class="vs">      "ChannelName": "train",</span></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1" aria-label="code-block-13-13"></a><span class="vs">      "ContentType": "text/csv",</span></span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1" aria-label="code-block-13-14"></a><span class="vs">      "DataSource": { "S3DataSource": {</span></span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1" aria-label="code-block-13-15"></a><span class="vs">        "S3DataType": "S3Prefix",</span></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1" aria-label="code-block-13-16"></a><span class="vs">        "S3Uri": "s3://&lt;your-bucket&gt;/xgboost/builtin/train_builtin.csv",</span></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1" aria-label="code-block-13-17"></a><span class="vs">        "S3DataDistributionType": "FullyReplicated" } }</span></span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1" aria-label="code-block-13-18"></a><span class="vs">    }</span></span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1" aria-label="code-block-13-19"></a><span class="vs">  ],</span></span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1" aria-label="code-block-13-20"></a><span class="vs">  "OutputDataConfig": { "S3OutputPath": "s3://&lt;your-bucket&gt;/xgboost/cli-output/" },</span></span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1" aria-label="code-block-13-21"></a><span class="vs">  "ResourceConfig": { "InstanceType": "ml.m5.large", "InstanceCount": 1, "VolumeSizeInGB": 10 },</span></span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1" aria-label="code-block-13-22"></a><span class="vs">  "StoppingCondition": { "MaxRuntimeInSeconds": 1200 },</span></span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1" aria-label="code-block-13-23"></a><span class="vs">  "Tags": [</span></span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1" aria-label="code-block-13-24"></a><span class="vs">    { "Key": "Project", "Value": "&lt;ChallengeName&gt;" },</span></span>
+<span id="cb13-25"><a href="#cb13-25" tabindex="-1" aria-label="code-block-13-25"></a><span class="vs">    { "Key": "Name",    "Value": "&lt;LastnameFirstname&gt;" },</span></span>
+<span id="cb13-26"><a href="#cb13-26" tabindex="-1" aria-label="code-block-13-26"></a><span class="vs">    { "Key": "Purpose", "Value": "Training" }</span></span>
+<span id="cb13-27"><a href="#cb13-27" tabindex="-1" aria-label="code-block-13-27"></a><span class="vs">  ]</span></span>
+<span id="cb13-28"><a href="#cb13-28" tabindex="-1" aria-label="code-block-13-28"></a><span class="vs">}</span></span>
+<span id="cb13-29"><a href="#cb13-29" tabindex="-1" aria-label="code-block-13-29"></a><span class="vs">'@</span> <span class="op">|</span> <span class="fu">Set-Content</span> <span class="op">-</span>Path train-xgboost<span class="op">.</span><span class="fu">json</span></span></code></pre>
+</div>
+</div>
+</div>
+</div>
+<p>Then send it. This one line is <code>estimator.fit()</code>:</p>
+<div class="codewrapper sourceCode" id="cb14">
+<h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a><span class="ex">aws</span> sagemaker create-training-job <span class="at">--cli-input-json</span> file://train-xgboost.json</span></code></pre>
 </div>
 <p>Three fields to notice.
 <code>StoppingCondition.MaxRuntimeInSeconds</code> is the
 <code>max_run</code> you set on every estimator; the SDK would have sent
-48 hours if you had not. <code>Tags</code> is the <code>tags=</code>
+24 hours if you had not. <code>Tags</code> is the <code>tags=</code>
 argument, and without it the request is refused on the workshop account.
 <code>ResourceConfig</code> sets the instance type and count, which
 determine the cost; nothing in a JSON file prints a price, so check it
 as carefully as you would in a notebook.</p>
 <p>The CLI returns the moment the request is accepted; nothing waits. To
 follow the job the way <code>wait=True</code> did:</p>
-<div class="codewrapper sourceCode" id="cb10">
+<div class="codewrapper sourceCode" id="cb15">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a><span class="ex">aws</span> sagemaker wait training-job-completed-or-stopped <span class="at">--training-job-name</span> <span class="op">&lt;</span>the job name<span class="op">&gt;</span>   <span class="co"># blocks until it ends</span></span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a><span class="ex">aws</span> sagemaker describe-training-job <span class="at">--training-job-name</span> <span class="op">&lt;</span>the job name<span class="op">&gt;</span> --query <span class="st">'{status:TrainingJobStatus, billable_s:BillableTimeInSeconds, failure:FailureReason}'</span></span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a><span class="ex">aws</span> sagemaker wait training-job-completed-or-stopped <span class="at">--training-job-name</span> <span class="op">&lt;</span>the job name<span class="op">&gt;</span>   <span class="co"># blocks until it ends</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a><span class="ex">aws</span> sagemaker describe-training-job <span class="at">--training-job-name</span> <span class="op">&lt;</span>the job name<span class="op">&gt;</span> --query <span class="st">'{status:TrainingJobStatus, billable_s:BillableTimeInSeconds, failure:FailureReason}'</span></span></code></pre>
 </div>
 <p>Estimate first, compare after, as always: this is the same ~4 minutes
 billable on <code>ml.m5.large</code>, about a cent.</p>
@@ -13811,15 +14180,15 @@ finds something. Then run them against your own resources.</p>
 </button>
 <div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
-<div class="codewrapper sourceCode" id="cb11">
+<div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a><span class="ex">aws</span> sso login <span class="at">--profile</span> workshop <span class="kw">&amp;&amp;</span> <span class="bu">export</span> <span class="va">AWS_PROFILE</span><span class="op">=</span>workshop</span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a><span class="ex">aws</span> sagemaker list-training-jobs   <span class="at">--status-equals</span> InProgress <span class="at">--query</span> <span class="st">'TrainingJobSummaries[].TrainingJobName'</span></span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a><span class="ex">aws</span> sagemaker list-processing-jobs <span class="at">--status-equals</span> InProgress <span class="at">--query</span> <span class="st">'ProcessingJobSummaries[].ProcessingJobName'</span></span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a><span class="ex">aws</span> sagemaker list-hyper-parameter-tuning-jobs <span class="at">--status-equals</span> InProgress <span class="at">--query</span> <span class="st">'HyperParameterTuningJobSummaries[].HyperParameterTuningJobName'</span></span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1" aria-label="code-block-11-5"></a><span class="ex">aws</span> sagemaker list-notebook-instances <span class="at">--query</span> <span class="st">'NotebookInstances[?NotebookInstanceStatus==`InService`].NotebookInstanceName'</span></span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1" aria-label="code-block-11-6"></a><span class="ex">aws</span> sagemaker list-endpoints <span class="at">--query</span> <span class="st">'Endpoints[].EndpointName'</span></span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a><span class="ex">aws</span> sso login <span class="at">--profile</span> workshop <span class="kw">&amp;&amp;</span> <span class="bu">export</span> <span class="va">AWS_PROFILE</span><span class="op">=</span>workshop</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a><span class="ex">aws</span> sagemaker list-training-jobs   <span class="at">--status-equals</span> InProgress <span class="at">--query</span> <span class="st">'TrainingJobSummaries[].TrainingJobName'</span></span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a><span class="ex">aws</span> sagemaker list-processing-jobs <span class="at">--status-equals</span> InProgress <span class="at">--query</span> <span class="st">'ProcessingJobSummaries[].ProcessingJobName'</span></span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a><span class="ex">aws</span> sagemaker list-hyper-parameter-tuning-jobs <span class="at">--status-equals</span> InProgress <span class="at">--query</span> <span class="st">'HyperParameterTuningJobSummaries[].HyperParameterTuningJobName'</span></span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a><span class="ex">aws</span> sagemaker list-notebook-instances <span class="at">--query</span> <span class="st">'NotebookInstances[?NotebookInstanceStatus==`InService`].NotebookInstanceName'</span></span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a><span class="ex">aws</span> sagemaker list-endpoints <span class="at">--query</span> <span class="st">'Endpoints[].EndpointName'</span></span></code></pre>
 </div>
 <p>For anything the first four print: the matching <code>stop-...</code>
 command from section 3. A job you recognise as yours and expect to
@@ -13869,7 +14238,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-15_Resource-management-cleanup"><p>Content from <a href="15_Resource-management-cleanup.html">Resource Management and Monitoring</a></p>
 <hr>
-<p>Last updated on 2026-10-21 |
+<p>Last updated on 2026-10-26 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/15_Resource-management-cleanup.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 35 minutes</p>
@@ -13933,7 +14302,7 @@ against reality before and after you clean up.</p>
 <span id="cb1-10"><a href="#cb1-10" tabindex="-1" aria-label="code-block-1-10"></a>region <span class="op">=</span> session.boto_region_name</span>
 <span id="cb1-11"><a href="#cb1-11" tabindex="-1" aria-label="code-block-1-11"></a></span>
 <span id="cb1-12"><a href="#cb1-12" tabindex="-1" aria-label="code-block-1-12"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span>                              <span class="co"># replace with your name, as used in job names and tags</span></span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1" aria-label="code-block-1-13"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>                        <span class="co"># replace with your challenge name, as used in the Bedrock profile names</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1" aria-label="code-block-1-13"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>   <span class="co"># the Project value used in your Bedrock profile names</span></span>
 <span id="cb1-14"><a href="#cb1-14" tabindex="-1" aria-label="code-block-1-14"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>            <span class="co"># replace with your bucket</span></span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="what-is-still-running-under-your-name">What is still running under your name?<a class="anchor" aria-label="anchor" href="#what-is-still-running-under-your-name"></a>
@@ -14061,7 +14430,7 @@ buckets, ensuring that only unnecessary resources are deleted.</p>
 </h2>
 <hr class="half-width">
 <p>SageMaker charges for training, tuning and Processing jobs while they
-run, so make sure to terminate unused jobs. Every job in this lesson was
+run, so stop jobs you no longer need. Every job in this lesson was
 launched with a runtime cap (<code>max_run</code> on training and tuning
 jobs, <code>max_runtime_in_seconds</code> on Processing jobs), so a
 forgotten job ends on its own.</p>
@@ -14157,34 +14526,114 @@ the workshop. That sweep deletes notebook instances and the learner
 buckets only, so if you forget those, they will still go. It does not
 touch Bedrock application inference profiles, so those are yours to
 remove.</p>
-</section><section><h2 class="section-heading" id="best-practices-for-resource-management">Best practices for resource management<a class="anchor" aria-label="anchor" href="#best-practices-for-resource-management"></a>
+</section><section><h2 class="section-heading" id="rules-the-account-enforces-and-how-to-set-them-on-your-own">Rules the account enforces, and how to set them on your own<a class="anchor" aria-label="anchor" href="#rules-the-account-enforces-and-how-to-set-them-on-your-own"></a>
 </h2>
 <hr class="half-width">
-<p>Efficient resource management can save significant costs and improve
-your workflows. Below are some best practices:</p>
+<p>Several things you could have done wrong in this workshop were
+refused before they cost anything: a job launched without the three
+tags, with a blank name, with a Project that is not on the account’s
+list, with an instance type outside the lesson’s list, or with no
+runtime cap, and any endpoint or EC2 instance at all. None of that is
+SageMaker’s own behaviour. It is a set of rules the account
+administrator attached to the role your notebook runs as, written in the
+same IAM policy language that gave the role its permissions, and each
+one says: refuse this request if it looks like this. An AWS account with
+no such rules lets a tagged job and an untagged one through alike, and
+lets a notebook instance run until someone remembers it.</p>
+<p>If you administer an account of your own, a lab’s or a project’s, the
+same rules are an afternoon’s work and they hold across the console, the
+SDK and the CLI, because all three are the same API. The lesson’s
+<em>Account preparation checklist</em> instructor page has the policy as
+JSON and the one command that attaches it to a role; its <em>Overnight
+safeguards</em> section has the three measures that go with it. In order
+of what they prevent for what they cost:</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr>
+<th>Rule</th>
+<th>What it stops</th>
+<th>How it is done</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>Every job carries the three cost tags, with real values</td>
+<td>spend nobody can attribute</td>
+<td>an IAM deny on <code>CreateTrainingJob</code> and the like when
+<code>aws:RequestTag/Name</code> is missing or blank, or
+<code>Project</code> and <code>Purpose</code> are missing or not on
+their lists</td>
+</tr>
+<tr>
+<td>Only instance types you have priced</td>
+<td>the <code>$63</code>-an-hour box chosen by accident</td>
+<td>an IAM deny when <code>sagemaker:InstanceTypes</code> is not on your
+list</td>
+</tr>
+<tr>
+<td>A runtime cap on every job, at most 48 hours</td>
+<td>a hung job billing for a week</td>
+<td>an IAM deny when <code>sagemaker:MaxRuntimeInSeconds</code> is
+missing or too large</td>
+</tr>
+<tr>
+<td>No endpoints, no EC2</td>
+<td>the two resource kinds with no runtime cap at all</td>
+<td>an IAM deny on <code>CreateEndpoint</code> and
+<code>ec2:RunInstances</code>
+</td>
+</tr>
+<tr>
+<td>Notebook instances stop at 11 pm</td>
+<td>the forgotten GPU notebook, <code>$60</code> a night</td>
+<td>a ten-line scheduled Lambda function</td>
+</tr>
+<tr>
+<td>A budget per person and a brake on the total</td>
+<td>a quiet overspend</td>
+<td>AWS Budgets on the <code>Name</code> tag, with an action that
+attaches a deny policy at the ceiling</td>
+</tr>
+</tbody>
+</table>
+<p>A deny applies to everyone who uses the role, including you, so your
+own launches need real tag values and listed instance types too. And the
+error a refused request gets,
+<code>AccessDeniedException ... with an explicit deny in an identity-based policy</code>,
+does not say which rule matched, so write the rules down where the
+people using the account will find them, as the <em>If the launch is
+refused</em> callout in the first training episode does here. A deny
+cannot carry a custom message either: AWS says
+<code>explicit deny in an identity-based policy</code> and nothing more,
+which is why this lesson keeps a copy of the policy next to its helper
+code and checks every launch against it in the notebook first, with
+<code>helpers.check_launch</code>, so the message you get names the
+rule. The <a href="refused-launch.html">If a Launch Is Refused</a> page
+is the same list in one place, for the day a job of your own is
+refused.</p>
+<p>Habits that need no administrator:</p>
 <ul>
 <li>
-<strong>Automate resource cleanup:</strong> Use AWS SDK or CLI
-scripts to automatically shut down instances and clean up S3 buckets
-when not in use. <a href="https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html" class="external-link">Learn
-more about automation with AWS CLI</a>.</li>
+<strong>Automate the cleanup you do by hand.</strong> The inventory
+cells at the top of this episode are the SDK calls; a script that runs
+them and stops what it finds is the Lambda in the table above.</li>
 <li>
-<strong>Schedule resource usage:</strong> Schedule instance start
-and stop times using AWS Lambda. <a href="https://docs.aws.amazon.com/lambda/latest/dg/tutorial-scheduled-events.html" class="external-link">Learn
-how to schedule tasks with AWS Lambda</a>.</li>
+<strong>Test on a slice first.</strong> Every expensive run in this
+lesson was preceded by a small one on the same code: a few epochs, a
+subset of pages, a handful of questions.</li>
 <li>
-<strong>Test workflows locally first:</strong> Before scaling up
-experiments in SageMaker, test them locally to minimize cloud usage and
-costs. <a href="https://sagemaker.readthedocs.io/en/stable/overview.html#local-mode" class="external-link">Learn
-about SageMaker local mode</a>.</li>
+<strong>Estimate, then compare.</strong> Write down what a run
+should cost before launching it, read <code>BillableTimeInSeconds</code>
+afterwards, and find out why when the two disagree, as the fine-tuning
+episode does.</li>
 <li>
-<strong>Use cost tracking tools:</strong> Explore AWS’s cost
-allocation tags and budget tracking features. <a href="https://aws.amazon.com/aws-cost-management/" class="external-link">Learn more about cost
-management in AWS</a>.</li>
+<strong>Tag everything, yourself, every time.</strong> Cost
+allocation tags are the only way a shared bill becomes individual bills,
+and they never propagate.</li>
 </ul>
-<p>By following these practices and leveraging the additional resources
-provided, you can optimize your use of AWS while keeping costs under
-control.</p>
 <div id="challenge-your-own-cleanup-list" class="callout challenge">
 <div class="callout-square">
 <i class="callout-icon" data-feather="zap"></i>
@@ -14304,6 +14753,10 @@ charges.</p></li>
 need.</p></li>
 <li><p>Bedrock application inference profiles are not swept by the
 instructors’ aws-nuke run; remove them yourself.</p></li>
+<li><p>The refusals you met in this workshop (untagged jobs, wrong
+instance types, endpoints) are IAM deny rules an administrator attached
+to the role, not SageMaker defaults; on an account you administer, the
+instructor pages have the policy to copy.</p></li>
 <li><p>Regularly clean up unused S3 buckets and objects to save on
 storage costs.</p></li>
 <li><p>Monitor your expenses through the AWS Billing Dashboard and set

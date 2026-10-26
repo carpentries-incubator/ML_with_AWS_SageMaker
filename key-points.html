@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
-<title>Machine Learning with Amazon SageMaker: Key Points</title>
+<title>Machine Learning on AWS with SageMaker and Bedrock: Key Points</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="assets/themetoggle.js"></script><link rel="stylesheet" type="text/css" href="assets/styles.css">
 <script src="assets/scripts.js" type="text/javascript"></script><!-- mathjax --><!-- NOTE: https://docs.mathjax.org/en/latest/output/mathml.html#mathml-support --><!-- Changes from V2 to V4: https://mathjax.github.io/MathJax-demos-web/convert-configuration/convert-configuration.html
@@ -103,7 +103,7 @@
       <img class="small-logo" alt="Learn to run machine learning workflows on AWS without losing control of the bill: SageMaker notebooks as controllers, training and hyperparameter-tuning jobs, retrieval-augmented generation on Amazon Bedrock and on rented GPUs, and fine-tuning an open-weight vision-language model. Developed for the UW-Madison Machine Learning Marathon and Research Bazaar; some setup steps refer to the shared workshop account." src="assets/images/incubator-logo-sm.svg"></a>
     </div>
     <div class="lesson-title-md">
-      Machine Learning with Amazon SageMaker
+      Machine Learning on AWS with SageMaker and Bedrock
     </div>
     <div class="search-icon-sm">
       <!-- TODO: do not show until we have search
@@ -114,7 +114,7 @@
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 <li class="nav-item">
           <span class="lesson-title">
-            Machine Learning with Amazon SageMaker
+            Machine Learning on AWS with SageMaker and Bedrock
           </span>
         </li>
         <li class="nav-item">
@@ -133,6 +133,7 @@
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
 <li><a class="dropdown-item" href="reference.html">Glossary</a></li>
 <li><a class="dropdown-item" href="instances-for-ML.html">Instances for ML</a></li>
+<li><a class="dropdown-item" href="refused-launch.html">If a Launch Is Refused</a></li>
 <li><a class="dropdown-item" href="running-from-your-laptop.html">Running this lesson from your own machine</a></li>
           </ul>
 </li>
@@ -468,6 +469,7 @@
                     <ul>
 <li><a href="reference.html">Glossary</a></li>
 <li><a href="instances-for-ML.html">Instances for ML</a></li>
+<li><a href="refused-launch.html">If a Launch Is Refused</a></li>
 <li><a href="running-from-your-laptop.html">Running this lesson from your own machine</a></li>
                     </ul>
 </div>
@@ -601,6 +603,12 @@ minutes + ~3 minutes startup), then read back
 <code>BillableTimeInSeconds</code> with <code>job_cost_report()</code>
 after every job and compare.</li>
 <li>
+<strong>Long runs</strong>: launch with <code>wait=False</code>,
+note the job name, stop the notebook instance;
+<code>attach(job_name)</code> picks the job up later. Set
+<code>max_run</code> a little above the estimate, and checkpoint to S3
+on anything longer than half an hour.</li>
+<li>
 <strong>Scaling</strong>: Upgrade the single instance first;
 consider multiple instances only when data no longer fits in memory or a
 run takes more than ~10 hours.</li>
@@ -707,8 +715,8 @@ the model does not fit on one GPU and waste when it does.</li>
 <li>Score the holdout at the end of every epoch: the curve, not a rule
 of thumb, says how many passes were worth paying for. Measure the gain
 on the same held-out pages before and after, with the task’s own metric,
-and remember that a page-level holdout is optimistic when the real test
-is split by document.</li>
+and a page-level holdout is optimistic when the real test is split by
+document.</li>
 </ul></section><section id="10_RAG-overview"><h2 class="section-heading"><a href="10_RAG-overview.html">Overview of RAG Workflows on AWS</a></h2>
 <hr class="half-width">
 <ul>
@@ -839,6 +847,10 @@ charges.</p></li>
 need.</p></li>
 <li><p>Bedrock application inference profiles are not swept by the
 instructors’ aws-nuke run; remove them yourself.</p></li>
+<li><p>The refusals you met in this workshop (untagged jobs, wrong
+instance types, endpoints) are IAM deny rules an administrator attached
+to the role, not SageMaker defaults; on an account you administer, the
+instructor pages have the policy to copy.</p></li>
 <li><p>Regularly clean up unused S3 buckets and objects to save on
 storage costs.</p></li>
 <li><p>Monitor your expenses through the AWS Billing Dashboard and set
