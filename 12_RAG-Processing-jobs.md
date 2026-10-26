@@ -212,6 +212,8 @@ def make_job_tags(purpose: str):   # one of: Storage, Notebook, Training, Tuning
         {"Key": "Project", "Value": project},
         {"Key": "Purpose", "Value": purpose},   # differs per job so the bill tells them apart
     ]
+
+print("Tags on every job this episode launches:", make_job_tags("Inference"))   # check them before launching: a job tagged DoeJohn is on the bill as DoeJohn
 ```
 
 ### Launch the embedding job

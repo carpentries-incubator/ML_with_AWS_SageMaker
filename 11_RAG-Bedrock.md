@@ -530,6 +530,7 @@ from wattbot_rag import tagged_profile_arn
 
 name = "DoeJohn"         # replace with your name
 project = "SinkOrSwim"   # replace with your challenge name
+print(f"Tags on the profiles, and so on every Bedrock call: Name={name}, Project={project}, Purpose=Inference")   # check them first: a profile tagged DoeJohn bills as DoeJohn
 
 # From here on, these ARNs are what we pass as modelId. The base IDs are never sent to the runtime again.
 bedrock_model_id = tagged_profile_arn(bedrock, base_generation_model_id, "wattbot-gen", name, project)

@@ -58,3 +58,9 @@ Once your AWS account is set up, log in to the **AWS Management Console**. For t
 
 ### 4. Review the Workshop Glossary Page  
 When learning cloud tools for the first time, understanding new terminology is half the battle. We encourage learners to *briefly review* the [Glossary page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/reference.html#glossary) (also accessible from the top menu of each lesson page) before the workshop.  *You don't need to memorize the terms*—just a quick read-through will help familiarize you with key concepts. Once we start running our own AWS SageMaker experiments, these terms will start to make more sense in context. If you feel lost at any point during the workshop, please ask the instructor for assistance or refer back to the glossary.
+
+### 5. Episodes 1 to 4 come first
+
+The first four episodes are the setup for everything after them, and the instructor walks through them with the class rather than leaving them as reading. Episode 2 creates the S3 bucket that every later episode writes to, and episode 3 creates the notebook instance and clones this lesson's repository onto it, which is where the prefilled notebooks for every episode come from: each later episode opens with "Open the notebook from `/ML_with_AWS_SageMaker/notebooks/...`", and that folder exists only once episode 3 has been done. Episode 4 is where the notebook first reads your bucket, with the helper that every later data step uses.
+
+If you want to jump ahead to a later episode, do episodes 1 to 4 first on the instance you will use, and then start wherever you like. The training and fine-tuning episodes (6 to 9) stand on their own after that; the RAG episodes (10 to 13) are a sequence, since each one reuses what the one before it cached in your bucket.
