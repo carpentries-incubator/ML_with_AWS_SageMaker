@@ -34,13 +34,13 @@ The CLI, the SDK and the console are the same API. Nothing here is more powerful
 
 1. **Authenticate with `aws sso login` only.** Never `aws configure` with an access key ID and secret. Those are long-lived, and they end up in shell histories and committed files.
 2. **Launch only jobs** (training, processing, tuning), with the same three tags and the same `MaxRuntimeInSeconds` the notebooks always set. Jobs end on their own. **Endpoints, EC2 instances and GPU notebook instances do not**, and the lesson never creates them from the CLI, or at all.
-3. **An `AccessDeniedException` on the commands below is intended.** The workshop permission set denies endpoint and EC2 creation, instance types outside the lesson's list, and any job launched without the tags. Do not look for a workaround.
+3. **An `AccessDeniedException` on the commands below is intended.** The workshop account carries a guard-rail policy that denies endpoint and EC2 creation, instance types outside the lesson's list, and any job launched without the three tags. Do not look for a workaround. (Instructors: the policy is on the *Account preparation checklist* page, and it applies only once attached to the permission set and to the notebook role.)
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## 1. Sign in with Identity Center
 
-Install [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) if you do not have it, then register the account's Identity Center once. It asks for the start URL and region of the sign-in page you used in the browser (for the workshop account they are in your sign-in email), opens a browser to approve the device, lets you pick the account and permission set, and asks for a default region (`us-east-2` for the workshop account) and a profile name.
+This episode runs from your own laptop, which is the point of it: a terminal that works when no notebook is open. The AWS CLI is already installed in CloudShell and on every SageMaker notebook instance, where it uses the instance's role and needs no sign-in; a laptop has neither, so install [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) there, then register the account's Identity Center once. It asks four things. First the start URL and the region of the Identity Center sign-in page, the same ones you used in the browser; for the workshop account both are in the sign-in email from your instructor. It then opens a browser tab for you to approve the device, lets you pick the account and the permission set, and finally asks for a default region, `us-east-2` for the workshop account, and a name for the profile.
 
 ```bash
 aws configure sso
@@ -48,11 +48,27 @@ aws configure sso
 
 From then on, every session starts with a login, and a check that you are who you think you are, in the account you think you are in:
 
+The commands in this episode are the same in Bash (macOS, Linux, Git Bash on Windows) and in PowerShell; where the shell's own syntax differs, variables, line continuation, writing a file, the two are shown as tabs.
+
+::::::::::::::::::::::::::::::::::::: tab
+
+### Bash
+
 ```bash
 aws sso login --profile workshop
-export AWS_PROFILE=workshop          # PowerShell: $env:AWS_PROFILE="workshop"
+export AWS_PROFILE=workshop
 aws sts get-caller-identity
 ```
+
+### PowerShell
+
+```powershell
+aws sso login --profile workshop
+$env:AWS_PROFILE = "workshop"
+aws sts get-caller-identity
+```
+
+::::::::::::::::::::::::::::::::::::::::::::::::
 
 The output names the account ID and an `AWSReservedSSO_...` role. The credentials expire after a few hours; `aws sso login` again when a command returns `ExpiredToken`. Nothing that would still work next month is written anywhere.
 
@@ -73,18 +89,45 @@ aws sagemaker list-endpoints       # must print an empty list on the workshop ac
 
 `describe-training-job` is the call behind `job_cost_report()` in the training episodes. The same number is there: billable time, which includes the container pull and data download you paid for.
 
+::::::::::::::::::::::::::::::::::::: tab
+
+### Bash
+
 ```bash
 JOB=<a training job name from the list above>
 aws sagemaker describe-training-job --training-job-name $JOB \
-  --query '{status:TrainingJobStatus, instance:ResourceConfig.InstanceType, count:ResourceConfig.InstanceCount, billable_s:BillableTimeInSeconds, tags:Tags}'
+  --query '{status:TrainingJobStatus, instance:ResourceConfig.InstanceType, count:ResourceConfig.InstanceCount, billable_s:BillableTimeInSeconds}'
 ```
 
+### PowerShell
+
+```powershell
+$JOB = "<a training job name from the list above>"
+aws sagemaker describe-training-job --training-job-name $JOB `
+  --query '{status:TrainingJobStatus, instance:ResourceConfig.InstanceType, count:ResourceConfig.InstanceCount, billable_s:BillableTimeInSeconds}'
+```
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
 Cost is billable seconds × instance count × the hourly rate, exactly as in the notebooks. Tags are returned by a separate call, which is also how you find the untagged job that will show up as "unallocated" on the bill:
+
+::::::::::::::::::::::::::::::::::::: tab
+
+### Bash
 
 ```bash
 ARN=$(aws sagemaker describe-training-job --training-job-name $JOB --query TrainingJobArn --output text)
 aws sagemaker list-tags --resource-arn $ARN --query 'Tags[].[Key,Value]' --output table
 ```
+
+### PowerShell
+
+```powershell
+$ARN = aws sagemaker describe-training-job --training-job-name $JOB --query TrainingJobArn --output text
+aws sagemaker list-tags --resource-arn $ARN --query 'Tags[].[Key,Value]' --output table
+```
+
+::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## 3. Stop: the commands worth memorising
 
@@ -120,6 +163,12 @@ Downloads to a laptop are a transfer out of AWS (`$0.09` per GB). For anything l
 
 Every `estimator.fit()` in the training episodes assembled a JSON request and sent it to `CreateTrainingJob`. Here is that request. Fill in the five placeholders from your notebook: the image URI (run `print(xgboost_estimator.training_image_uri())` in the training episode's notebook), your role ARN (`print(role)`), your bucket, your tag values, and a job name, which must be unique in the account.
 
+The request is a JSON file. Save it as `train-xgboost.json` with any editor, or from the shell:
+
+::::::::::::::::::::::::::::::::::::: tab
+
+### Bash
+
 ```bash
 cat > train-xgboost.json <<'JSON'
 {
@@ -150,10 +199,51 @@ cat > train-xgboost.json <<'JSON'
   ]
 }
 JSON
+```
+
+### PowerShell
+
+```powershell
+@'
+{
+  "TrainingJobName": "<notebook-instance-name>-cli-xgboost-1",
+  "AlgorithmSpecification": {
+    "TrainingImage": "<xgboost image URI for your region>",
+    "TrainingInputMode": "File"
+  },
+  "RoleArn": "<execution role ARN>",
+  "HyperParameters": { "objective": "binary:logistic", "num_round": "100", "max_depth": "5", "eta": "0.1" },
+  "InputDataConfig": [
+    {
+      "ChannelName": "train",
+      "ContentType": "text/csv",
+      "DataSource": { "S3DataSource": {
+        "S3DataType": "S3Prefix",
+        "S3Uri": "s3://<your-bucket>/xgboost/builtin/train_builtin.csv",
+        "S3DataDistributionType": "FullyReplicated" } }
+    }
+  ],
+  "OutputDataConfig": { "S3OutputPath": "s3://<your-bucket>/xgboost/cli-output/" },
+  "ResourceConfig": { "InstanceType": "ml.m5.large", "InstanceCount": 1, "VolumeSizeInGB": 10 },
+  "StoppingCondition": { "MaxRuntimeInSeconds": 1200 },
+  "Tags": [
+    { "Key": "Project", "Value": "<ChallengeName>" },
+    { "Key": "Name",    "Value": "<LastnameFirstname>" },
+    { "Key": "Purpose", "Value": "Training" }
+  ]
+}
+'@ | Set-Content -Path train-xgboost.json
+```
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+Then send it. This one line is `estimator.fit()`:
+
+```bash
 aws sagemaker create-training-job --cli-input-json file://train-xgboost.json
 ```
 
-Three fields to notice. `StoppingCondition.MaxRuntimeInSeconds` is the `max_run` you set on every estimator; the SDK would have sent 48 hours if you had not. `Tags` is the `tags=` argument, and without it the request is refused on the workshop account. `ResourceConfig` sets the instance type and count, which determine the cost; nothing in a JSON file prints a price, so check it as carefully as you would in a notebook.
+Three fields to notice. `StoppingCondition.MaxRuntimeInSeconds` is the `max_run` you set on every estimator; the SDK would have sent 24 hours if you had not. `Tags` is the `tags=` argument, and without it the request is refused on the workshop account. `ResourceConfig` sets the instance type and count, which determine the cost; nothing in a JSON file prints a price, so check it as carefully as you would in a notebook.
 
 The CLI returns the moment the request is accepted; nothing waits. To follow the job the way `wait=True` did:
 

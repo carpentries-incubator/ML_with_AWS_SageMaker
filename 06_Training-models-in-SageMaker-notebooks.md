@@ -90,7 +90,7 @@ In this next section, we will learn how to take a model training script that was
 
 ### What tests should we do before scaling?  
 
-Before scaling to multiple or more powerful instances (e.g., training on larger/multiple datasets in parallel or tuning hyperparameters in parallel), it's important to run a few quick sanity checks to catch potential issues early. **In your group, discuss:**  
+Before scaling to multiple or more powerful instances (e.g., training on larger/multiple datasets in parallel or tuning hyperparameters in parallel), run a few quick sanity checks to catch problems early. **In your group, discuss:**  
 
 - Which checks do you think are most critical before scaling up?  
 - What potential issues might we miss if we skip this step?  
@@ -169,7 +169,7 @@ After reviewing, discuss any questions or observations with your group.
 It can be convenient to have a copy of the data (i.e., one that you store in your notebook's instance) to allow us to test our code before scaling things up. 
 
 :::: callout
-While we demonstrate how to download data into the notebook environment for testing our code (previously setup for local ML pipelines), keep in mind that S3 is the preferred location for dataset storage in a scalable ML pipeline. 
+We download the data into the notebook to test the code, as a local pipeline would. In a pipeline that scales, the data lives in S3 and the jobs read it from there. 
 :::::
 
 Run the next code chunk to download data from S3 to notebook environment. You may need to hit refresh on the file explorer panel to the left to see this file. If you get any permission issues...
@@ -260,7 +260,7 @@ Training on this relatively small dataset should take less than a minute, but as
 **Note**: Our code above includes print statements to monitor dataset size, training time, and total runtime, which provides insights into resource usage for model development. We recommend incorporating similar logging to track not only training time but also total runtime, which includes additional steps like data loading, evaluation, and saving results. Tracking both can help you pinpoint bottlenecks and optimize your workflow as projects grow in size and complexity, especially when scaling with SageMaker's distributed resources.
 
 ### Sanity check: Quick evaluation on test set
-This next section isn't SageMaker specific, but it does serve as a good sanity check to ensure our model is training properly. Here's how you would apply the outputted model to your test set using your local notebook instance.
+This section is not SageMaker specific; it checks that the model trained properly by applying it to the test set on the notebook instance.
 
 Score the model you just trained locally on the test set, reusing the script's own `preprocess_data` so the test rows are transformed exactly as the training rows were.
 
@@ -296,7 +296,7 @@ print(f"Test Set Accuracy: {accuracy:.4f}")
 A reasonably high test set accuracy suggests our code/model is working correctly.
 
 ## Training via SageMaker: your script inside AWS's XGBoost container
-Unlike "local" training (using this notebook), this next approach leverages SageMaker's managed infrastructure to handle resources, parallelism, and scalability. By specifying instance parameters, such as instance_count and instance_type, you can control the resources allocated for training.
+Unlike "local" training (using this notebook), this next approach runs the job on an instance SageMaker rents for it, which is where instance count and type come in. By specifying instance parameters, such as instance_count and instance_type, you can control the resources allocated for training.
 
 ### Which instance to start with?
 In this example, we start with one ml.m5.large instance, which is suitable for small- to medium-sized datasets and simpler models. Using a single instance is often cost-effective and sufficient for initial testing, allowing for straightforward scaling up to more powerful instance types or multiple instances if training takes too long. See here for further guidance on selecting an appropriate instance for your data/model: [Instances for ML page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html)
@@ -330,7 +330,7 @@ Every training job runs inside a container image, and for XGBoost that image com
 The class names point the wrong way. `XGBoost` is a *framework estimator*: a convenience that looks up AWS's XGBoost image and runs your script in it; `PyTorch`, `SKLearn` and `HuggingFace` are the same idea for other frameworks. The plain `Estimator` takes an image directly, and when that image is one of AWS's built-in algorithms the image's own code does the training. We do the script version first, because it is the one that generalises to every later episode, and the built-in algorithm at the end of this one.
 
 ### Overview of Estimator classes in SageMaker
-To launch this training "job", we'll use the XGBoost Estimator. In SageMaker, Estimator classes streamline the configuration and training of models on managed instances. Each Estimator can work with custom scripts and be enhanced with additional dependencies by specifying a `requirements.txt` file, which is automatically installed at the start of training. Here's a breakdown of some commonly used Estimator classes in SageMaker:
+To launch this training "job", we'll use the XGBoost Estimator. In SageMaker, Estimator classes streamline the configuration and training of models on managed instances. Each Estimator can work with custom scripts and be enhanced with additional dependencies by specifying a `requirements.txt` file, which is automatically installed at the start of training. The commonly used Estimator classes:
 
 #### 1. **`Estimator` (Base Class)**
    - **Purpose**: Runs whatever image you name: one of AWS's built-in algorithms, or a container of your own.
@@ -382,7 +382,7 @@ To launch this training "job", we'll use the XGBoost Estimator. In SageMaker, Es
 ::::::::::::::::::::::::::::::::::::: callout 
 #### Configuring custom environments with `requirements.txt`
 
-For all these Estimators, adding a `requirements.txt` file as a `dependencies` argument ensures that additional packages are installed before training begins. This approach allows the use of specific libraries that may be critical for custom preprocessing, feature engineering, or model modifications. Here's how to include it (illustration only; we don't run this):
+For all these Estimators, adding a `requirements.txt` file as a `dependencies` argument ensures that additional packages are installed before training begins. This approach allows the use of specific libraries that may be critical for custom preprocessing, feature engineering, or model modifications. To include it (illustration only; we don't run this):
 
 ```text
 from sagemaker.sklearn.estimator import SKLearn
@@ -410,7 +410,7 @@ This setup simplifies training, allowing you to maintain custom environments dir
 :::::::::::::::::::::::::::::::::::::::::::::
 
 ### Deploying to other instances
-For this deployment, we configure the `XGBoost` estimator with a custom training script, `train_xgboost.py`, and define hyperparameters directly within the SageMaker setup. Here's the full code, with some additional explanation following the code.
+For this deployment, we configure the `XGBoost` estimator with a custom training script, `train_xgboost.py`, and define hyperparameters directly within the SageMaker setup. The full code is below, with explanation after it.
 
 #### Cost tracking
 When you launch a SageMaker training job from a notebook, SageMaker creates new managed resources (EC2 instances, attached storage, logs) on your behalf. These resources do not automatically inherit the notebook instance's tags. 
@@ -419,7 +419,7 @@ To avoid this, we explicitly tag each training job at launch time. This ensures 
 
 ```python
 name = "DoeJohn" # replace with your name
-project = "SinkOrSwim" # replace with your challenge name
+project = "SinkOrSwim"   # your challenge: WattBot2026, BadgerScribe, BadgerCode, BrainDecoding, PoisonedWell or SnapshotWI; SinkOrSwim is the workshop itself
 purpose = "Training"        # one of: Storage, Notebook, Training, Tuning, Inference
 
 # Tags: key/value labels attached to the job's resources, so its cost shows up under your name and project on the bill
@@ -428,6 +428,7 @@ job_tags = [
     {"Key": "Project", "Value": project},
     {"Key": "Purpose", "Value": purpose},
 ]
+helpers.check_launch(job_tags)   # the account's rules, checked here first: AWS's own refusal does not say which rule
 print(f"Name: {name}, Project: {project}, Purpose: {purpose}")
 ```
 
@@ -454,6 +455,8 @@ train_s3_path = f's3://{bucket_name}/{train_filename}'  # an S3 URI: bucket plus
 # we'll store all results in a subfolder called xgboost on our bucket. This folder will automatically be created if it doesn't exist already.
 output_folder = 'xgboost'
 output_path = f's3://{bucket_name}/{output_folder}/'   # S3 prefix (a "folder") where SageMaker uploads the job's outputs
+
+helpers.check_launch(job_tags, instance_type, max_run)   # tags, instance type and cap against the account's rules, before anything is sent
 
 # The XGBoost framework estimator: AWS's XGBoost container, running our script
 xgboost_estimator = XGBoost(
@@ -491,7 +494,17 @@ end = t.time()
 print(f"Runtime for training on SageMaker: {end - start:.2f} seconds, instance_type: {instance_type}, instance_count: {instance_count}")
 ```
 
-When running longer training jobs, you can check on their status periodically from the AWS SageMaker Console (where we originally launched our Notebook instance) on left side panel under "Training".
+While a job runs, its status is on the console under [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training). For a job too long to sit through, see "Launching a job and walking away" below: launch with `wait=False` and stop the notebook instance.
+
+::::::::::::::::::::::::::::::::::::: callout
+
+### If the launch is refused
+
+The account checks every launch against a short list of rules, and refuses one that breaks any of them with an `AccessDeniedException` ending in `with an explicit deny in an identity-based policy`. The rules: the three tags `Name`, `Project` and `Purpose` must be present, `Name` must not be blank, `Project` must be one of SinkOrSwim, WattBot2026, BadgerScribe, BadgerCode, BrainDecoding, PoisonedWell, SnapshotWI, `Purpose` must be Storage, Notebook, Training, Tuning or Inference, the instance type must be one the lesson uses, the runtime cap must be 48 hours or less, and endpoints and EC2 instances cannot be created at all.
+
+The error message does not say which rule was broken. AWS does not let an administrator attach an explanation to a refusal, so the lesson's helper module fills the gap. `helpers.check_launch(job_tags, instance_type, max_run)` checks a launch against the same rules before it is sent and says what to change; the tag cell above and every launch in the later episodes call it. `helpers.rules()` prints the rules. `helpers.explain_refusal()` is for afterwards: it reads the refused requests of the last hour from CloudTrail, the account's log of every API call, and says which rule each one broke. All three read the rules from `scripts/guardrails.json`, the same file the administrator attached to the account, so they cannot disagree with it. A launch that passes `check_launch` and is still refused is almost always a missing `tags=job_tags` line on the estimator. The [If a Launch Is Refused](../learners/refused-launch.md) page has all of this on one page for your own notebooks after the workshop.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
 
 #### Hyperparameters
 The `hyperparameters` section in this code defines the input arguments of `train_xgboost.py`. The first is the name of the training input file, and the others are hyperparameters for the XGBoost model, such as `max_depth`, `eta`, `subsample`, `colsample_bytree`, and `num_round`.
@@ -719,6 +732,64 @@ To view and monitor your SageMaker training job, follow these steps in the AWS M
 
 Following these steps helps ensure you only interact with and modify jobs you own, reducing the risk of impacting other users' training processes.
 
+## Launching a job and walking away
+
+Everything after `fit()` returned happened on the job's instance, not this one. The notebook is the launcher: once SageMaker has the request, the job pulls its container, trains, uploads the model to S3 and writes its log to CloudWatch whether or not this notebook is still running. `wait=True`, the default, only makes the cell block and stream the log here. That is right for a four-minute job. For a run of hours it means a notebook instance left running all night, five cents an hour on an `ml.t3.medium` and `$63` on a GPU notebook, so that a cell can watch a log you could read in CloudWatch.
+
+The alternative is three steps: launch with `wait=False`, write the job name down, stop the notebook instance. Come back when the job is done, start the instance, and pick the job up by name.
+
+```python
+# Launch and return at once: the cell ends in seconds, and the job runs on its own instance
+xgboost_estimator.fit({'train': train_input}, wait=False)
+job_name = xgboost_estimator.latest_training_job.name   # what you need to come back to this job
+print("launched:", job_name)
+```
+
+Keep the name somewhere outside the kernel: a cell's printed output survives a kernel restart and a stopped instance, a variable does not. If you are leaving, stop the notebook instance from [Notebook instances](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/notebook-instances) (select it, **Actions**, **Stop**). The job keeps running, and its status and log are on its page under [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training) from any browser.
+
+To pick it up again, two calls. `describe_training_job` is the quick look: the status, and the timings once it has finished. `attach` rebuilds the estimator from the job's record: if the job is still running it streams the rest of the log and waits, as `fit()` would have; if it has finished it returns at once. Either way `model_data` then points at the model in S3, so the download-and-evaluate cells above work unchanged.
+
+```python
+from sagemaker.xgboost.estimator import XGBoost
+
+# after a kernel restart or a stopped instance, set job_name = "<the name printed by the launch cell>" first
+status = session.sagemaker_client.describe_training_job(TrainingJobName=job_name)["TrainingJobStatus"]
+print(job_name, status)   # InProgress, Completed, Failed or Stopped
+
+xgboost_estimator = XGBoost.attach(job_name, sagemaker_session=session)   # waits and streams the log if InProgress; returns at once if done
+print("model:", xgboost_estimator.model_data)
+desc = job_cost_report(job_name, price_per_hour)
+```
+
+Interrupting the cell, restarting the kernel and stopping the instance all leave the job running. Only **Stop** on the job's page, or the job's own cap, ends it. A job you launched and forgot bills until one of those happens, which is what the two habits below are for.
+
+### Two habits for any run longer than half an hour
+
+**A cap you chose.** `max_run` is the most a job can bill, in seconds, and every estimator in this lesson sets it. Put it a little above your estimate, twice the estimate is a fair margin, and never above the account's 48-hour ceiling, which the account refuses. Leave it out and the SDK sends 24 hours, which on an `ml.g5.xlarge` is `$34` for a job that hung in its first minute.
+
+**Checkpoints.** The cap ends a hung job, but without checkpoints the work it did is gone with it, and so is the bill. Two estimator arguments fix that: `checkpoint_s3_uri=` names an S3 prefix, and `checkpoint_local_path="/opt/ml/checkpoints"` names a folder on the training instance that SageMaker copies to that prefix while the job runs. The script's part is to save its state into that folder at the end of every epoch and, when it starts, to resume from whatever it finds there. A job that is killed, or that crashes, then costs one epoch instead of the run, and a second launch with the same `checkpoint_s3_uri` carries on. It is not worth setting up for this one-minute job; the fine-tuning episode's script does it, and its estimator has the two lines to copy.
+
+::::::::::::::::::::::::::::::::::::: challenge
+
+### Launch, lose the kernel, come back
+
+Do the walk-away sequence once while the job is short, so that it is familiar when the job is long.
+
+1. Run the `wait=False` launch cell above and note the printed job name.
+2. From the Jupyter menu choose **Kernel**, **Restart**. Every variable is gone, which is what a stopped instance would also do to you, without the minutes of waiting for it to start again.
+3. Rerun the setup cells at the top of the episode (the session, bucket and role) and the cell that defines `job_cost_report` and `price_per_hour`.
+4. Set `job_name` to the name you noted and run the pick-up cell.
+
+What was the job's status when you looked, and what did it cost compared with the first job?
+
+:::::::::::::::: solution
+
+The status is `InProgress` if you were quick and `Completed` otherwise; `attach` waits in the first case and returns at once in the second. The cost is the same as the first run, since the job did the same work, and it did not care that the kernel it was launched from no longer existed. The only thing that connected the kernel to the job was the name, and if you lose that too, the [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training) list, filtered by your notebook instance name, has it.
+
+:::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
 ## When training takes too long
 
 When training time becomes excessive, two main options can improve efficiency in SageMaker:
@@ -762,6 +833,7 @@ In the next episode we train a PyTorch network, try Option 1 (a GPU instance), a
 - **Your script vs. the built-in algorithm**: both run in AWS's XGBoost container. `XGBoost(entry_point=...)` runs your script in it and is the pattern every later episode uses; `Estimator(image_uri=...)` with no script runs AWS's own training code, which needs the data pre-shaped and takes XGBoost's own parameters.
 - **Training data channels**: Using `TrainingInput` ensures SageMaker manages data efficiently.
 - **Cost habit**: Estimate cost before launching (rate x minutes + ~3 minutes startup), then read back `BillableTimeInSeconds` with `job_cost_report()` after every job and compare.
+- **Long runs**: launch with `wait=False`, note the job name, stop the notebook instance; `attach(job_name)` picks the job up later. Set `max_run` a little above the estimate, and checkpoint to S3 on anything longer than half an hour.
 - **Scaling**: Upgrade the single instance first; consider multiple instances only when data no longer fits in memory or a run takes more than ~10 hours.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::

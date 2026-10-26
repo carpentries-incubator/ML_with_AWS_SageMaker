@@ -42,7 +42,7 @@ sm = session.sagemaker_client
 region = session.boto_region_name
 
 name = "DoeJohn"                              # replace with your name, as used in job names and tags
-project = "SinkOrSwim"                        # replace with your challenge name, as used in the Bedrock profile names
+project = "SinkOrSwim"   # the Project value used in your Bedrock profile names
 bucket_name = "sinkorswim-doejohn"            # replace with your bucket
 ```
 
@@ -130,7 +130,7 @@ While S3 storage is relatively inexpensive, cleaning up unused buckets and files
 
 ## Monitoring and stopping active jobs
 
-SageMaker charges for training, tuning and Processing jobs while they run, so make sure to terminate unused jobs. Every job in this lesson was launched with a runtime cap (`max_run` on training and tuning jobs, `max_runtime_in_seconds` on Processing jobs), so a forgotten job ends on its own.
+SageMaker charges for training, tuning and Processing jobs while they run, so stop jobs you no longer need. Every job in this lesson was launched with a runtime cap (`max_run` on training and tuning jobs, `max_runtime_in_seconds` on Processing jobs), so a forgotten job ends on its own.
 
 1. In the SageMaker Console, go to **Training jobs**, **Hyperparameter tuning jobs**, or **Processing jobs**.
 2. Identify any active jobs that you no longer need.
@@ -166,20 +166,29 @@ Every stop and delete in this list has a one-line CLI equivalent; the optional e
 
 In the shared workshop account, the instructors sweep the account with [aws-nuke](https://github.com/ekristen/aws-nuke) after the workshop. That sweep deletes notebook instances and the learner buckets only, so if you forget those, they will still go. It does not touch Bedrock application inference profiles, so those are yours to remove.
 
-## Best practices for resource management
+## Rules the account enforces, and how to set them on your own
 
-Efficient resource management can save significant costs and improve your workflows. Below are some best practices:
+Several things you could have done wrong in this workshop were refused before they cost anything: a job launched without the three tags, with a blank name, with a Project that is not on the account's list, with an instance type outside the lesson's list, or with no runtime cap, and any endpoint or EC2 instance at all. None of that is SageMaker's own behaviour. It is a set of rules the account administrator attached to the role your notebook runs as, written in the same IAM policy language that gave the role its permissions, and each one says: refuse this request if it looks like this. An AWS account with no such rules lets a tagged job and an untagged one through alike, and lets a notebook instance run until someone remembers it.
 
-- **Automate resource cleanup:**
-   Use AWS SDK or CLI scripts to automatically shut down instances and clean up S3 buckets when not in use. [Learn more about automation with AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html).
-- **Schedule resource usage:**
-   Schedule instance start and stop times using AWS Lambda. [Learn how to schedule tasks with AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/tutorial-scheduled-events.html).
-- **Test workflows locally first:**
-   Before scaling up experiments in SageMaker, test them locally to minimize cloud usage and costs. [Learn about SageMaker local mode](https://sagemaker.readthedocs.io/en/stable/overview.html#local-mode).
-- **Use cost tracking tools:**
-   Explore AWS’s cost allocation tags and budget tracking features. [Learn more about cost management in AWS](https://aws.amazon.com/aws-cost-management/).
+If you administer an account of your own, a lab's or a project's, the same rules are an afternoon's work and they hold across the console, the SDK and the CLI, because all three are the same API. The lesson's *Account preparation checklist* instructor page has the policy as JSON and the one command that attaches it to a role; its *Overnight safeguards* section has the three measures that go with it. In order of what they prevent for what they cost:
 
-By following these practices and leveraging the additional resources provided, you can optimize your use of AWS while keeping costs under control.
+| Rule | What it stops | How it is done |
+|---|---|---|
+| Every job carries the three cost tags, with real values | spend nobody can attribute | an IAM deny on `CreateTrainingJob` and the like when `aws:RequestTag/Name` is missing or blank, or `Project` and `Purpose` are missing or not on their lists |
+| Only instance types you have priced | the `$63`-an-hour box chosen by accident | an IAM deny when `sagemaker:InstanceTypes` is not on your list |
+| A runtime cap on every job, at most 48 hours | a hung job billing for a week | an IAM deny when `sagemaker:MaxRuntimeInSeconds` is missing or too large |
+| No endpoints, no EC2 | the two resource kinds with no runtime cap at all | an IAM deny on `CreateEndpoint` and `ec2:RunInstances` |
+| Notebook instances stop at 11 pm | the forgotten GPU notebook, `$60` a night | a ten-line scheduled Lambda function |
+| A budget per person and a brake on the total | a quiet overspend | AWS Budgets on the `Name` tag, with an action that attaches a deny policy at the ceiling |
+
+A deny applies to everyone who uses the role, including you, so your own launches need real tag values and listed instance types too. And the error a refused request gets, `AccessDeniedException ... with an explicit deny in an identity-based policy`, does not say which rule matched, so write the rules down where the people using the account will find them, as the *If the launch is refused* callout in the first training episode does here. A deny cannot carry a custom message either: AWS says `explicit deny in an identity-based policy` and nothing more, which is why this lesson keeps a copy of the policy next to its helper code and checks every launch against it in the notebook first, with `helpers.check_launch`, so the message you get names the rule. The [If a Launch Is Refused](../learners/refused-launch.md) page is the same list in one place, for the day a job of your own is refused.
+
+Habits that need no administrator:
+
+- **Automate the cleanup you do by hand.** The inventory cells at the top of this episode are the SDK calls; a script that runs them and stops what it finds is the Lambda in the table above.
+- **Test on a slice first.** Every expensive run in this lesson was preceded by a small one on the same code: a few epochs, a subset of pages, a handful of questions.
+- **Estimate, then compare.** Write down what a run should cost before launching it, read `BillableTimeInSeconds` afterwards, and find out why when the two disagree, as the fine-tuning episode does.
+- **Tag everything, yourself, every time.** Cost allocation tags are the only way a shared bill becomes individual bills, and they never propagate.
 
 ::::::::::::::::::::::::::::::::::::: challenge
 
@@ -214,6 +223,7 @@ Stopping the controller and walking away leaves the bucket billing for storage, 
 - Stop any training, tuning or Processing job you no longer need.
 
 - Bedrock application inference profiles are not swept by the instructors' aws-nuke run; remove them yourself.
+- The refusals you met in this workshop (untagged jobs, wrong instance types, endpoints) are IAM deny rules an administrator attached to the role, not SageMaker defaults; on an account you administer, the instructor pages have the policy to copy.
 - Regularly clean up unused S3 buckets and objects to save on storage costs.
 - Monitor your expenses through the AWS Billing Dashboard and set up alerts.
 - Use tags (set up earlier in the workshop) to track and monitor costs by resource.

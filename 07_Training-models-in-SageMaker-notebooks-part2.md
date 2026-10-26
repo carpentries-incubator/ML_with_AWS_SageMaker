@@ -107,7 +107,7 @@ When deploying a PyTorch model on SageMaker, it's helpful to prepare the input d
 5. **Support for multiple data types**:  
    `.npz` files support storage of multiple arrays within a single file. This is helpful for organizing features and labels without additional code. Here, the `train_data.npz` file contains both `X_train` and `y_train`, keeping everything related to training data in one place. Similarly, `val_data.npz` organizes validation features and labels, simplifying file management.
 
-In summary, saving the data in `.npz` files ensures a smooth workflow from data loading to model training in PyTorch, leveraging SageMaker's infrastructure for a more efficient, structured training process.
+Saving the data as `.npz` files keeps loading fast and the arrays in the shape the training script expects.
 :::::::::::::::::::::::::::::::::::::::
 
 Open `ML_with_AWS_SageMaker/scripts/train_nn.py` in the file browser and read it before going on; it is short. Three things to find: `TitanicNet`, a three-layer network with 7 inputs and one output; the training loop in `train()`, which prints `validation:accuracy = ...` once per hundred epochs (the hyperparameter-tuning episode's metric regex reads that line); and the last lines, which save the model to `/opt/ml/model` inside a job and next to the script otherwise, the same trick as `train_xgboost.py`. Questions now are cheaper than questions once it is running on a billed instance.
@@ -179,7 +179,7 @@ As in the XGBoost episode, every training job needs its own tags: a job does not
 
 ```python
 name = "DoeJohn" # replace with your name
-project = "SinkOrSwim" # replace with your challenge name
+project = "SinkOrSwim"   # your challenge: WattBot2026, BadgerScribe, BadgerCode, BrainDecoding, PoisonedWell or SnapshotWI; SinkOrSwim is the workshop itself
 purpose = "Training"        # one of: Storage, Notebook, Training, Tuning, Inference
 
 job_tags = [
@@ -187,6 +187,7 @@ job_tags = [
     {"Key": "Project", "Value": project},
     {"Key": "Purpose", "Value": purpose},
 ]
+helpers.check_launch(job_tags)   # the account's rules, checked here first: AWS's own refusal does not say which rule
 print(f"Name: {name}, Project: {project}, Purpose: {purpose}")
 ```
 
@@ -274,6 +275,8 @@ prices = {"ml.m5.large": 0.115, "ml.m5.xlarge": 0.23, "ml.g4dn.xlarge": 0.74}
 ```
 
 Set up the estimator for a longer run: the epochs, the instance, where the output goes, and a two-hour `max_run` cap.
+
+If the launch is refused with an `AccessDeniedException` ending in `explicit deny`, the account's checks are the cause: a missing tag, an instance type outside the lesson's list, or a resource kind the lesson never creates; the first training episode's callout *If the launch is refused* says what to look at.
 
 ```python
 from sagemaker.pytorch import PyTorch

@@ -7,7 +7,7 @@ site: sandpaper::sandpaper_site
 This workshop introduces machine learning workflows on AWS using **Amazon SageMaker**. It has two parts:
 
 1. **SageMaker: training, tuning and fine-tuning.** Storing data in S3, using a small notebook instance as a *controller*, running training jobs (XGBoost and PyTorch) and hyperparameter tuning, with guidance on choosing CPU vs. GPU instances and when parallel instances help; then fine-tuning a 3B open-weight vision-language model with LoRA as a training job, for handwriting transcription, with before/after evaluation on held-out pages.
-2. **Retrieval-Augmented Generation (RAG).** Building a RAG pipeline over a corpus of research papers two ways: with Amazon Bedrock (pay per token, nothing left running) and with SageMaker Processing jobs serving an open-weight model that Bedrock does not offer.
+2. **Retrieval-Augmented Generation (RAG).** Building a RAG pipeline over a corpus of research papers two ways: with Amazon Bedrock (pay per token, nothing left running), including multimodal embeddings for the questions that live in tables and figures, and with SageMaker Processing jobs serving an open-weight model that Bedrock does not offer. An optional episode does the same on a notebook GPU, as the comparison.
 
 ### Who this workshop is for
 
@@ -15,7 +15,7 @@ Researchers and students who use ML or AI in their work and want to run it on AW
 
 ### Cost controls
 
-Run as written, the full workshop costs a few dollars per learner. Every episode tags its resources, caps job runtime, estimates cost before launching and checks the bill after, and cleans up. The final episode covers monitoring and cleanup.
+Run as written, the full workshop costs a few dollars per learner. Every episode tags its resources, caps job runtime, estimates cost before launching and checks the bill after, and cleans up. The final episode covers monitoring and cleanup, and the rules a shared account can enforce.
 
 ### What This Workshop Does Not Cover
 

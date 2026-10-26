@@ -204,14 +204,18 @@ Define the tags once and pass `tags=job_tags` to **every** `HuggingFaceProcessor
 
 ```python
 name = "DoeJohn"         # replace with your name
-project = "SinkOrSwim"   # replace with your challenge name
+project = "SinkOrSwim"   # your challenge: WattBot2026, BadgerScribe, BadgerCode, BrainDecoding, PoisonedWell or SnapshotWI; SinkOrSwim is the workshop itself
+
+import sys
+sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
+import helpers   # check_launch: the account's rules, with a message that names the problem
 
 def make_job_tags(purpose: str):   # one of: Storage, Notebook, Training, Tuning, Inference
-    return [
+    return helpers.check_launch([   # checked against the account's rules first, with a message that names the problem
         {"Key": "Name", "Value": name},
         {"Key": "Project", "Value": project},
         {"Key": "Purpose", "Value": purpose},   # differs per job so the bill tells them apart
-    ]
+    ])
 
 print("Tags on every job this episode launches:", make_job_tags("Inference"))   # check them before launching: a job tagged DoeJohn is on the bill as DoeJohn
 ```
@@ -295,7 +299,7 @@ if run_embedding_job:   # False in class when the instructor's matrix was copied
 
 To view the job running from the AWS Console, you can visit SageMaker AI, and then find the "Data Preparation" dropdown menu on the left side panel. Click that to find "Processing jobs", or open [this link](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs) in the class region (change `us-east-2` in it for another region).
 
-It takes about 10 minutes in total for the job to complete: a couple of provisioning the instance and downloading the embedding model, eight of embedding. This is the downside of launching jobs, but the good news is that we only need to launch one embedding job for our RAG pipeline. This strategy also ensures we're only paying for the GPU while the job runs.
+It takes about 10 minutes in total for the job to complete: a couple of provisioning the instance and downloading the embedding model, eight of embedding. That startup is the cost of a job, paid once: the embedding job runs once per corpus, and the GPU bills only while it runs.
 
 
 ### Sanity-check the embeddings locally
@@ -347,11 +351,11 @@ print("train_QA:  ", train_qa_s3)
 print("metadata:  ", metadata_s3)
 ```
 
-If the launch below fails at once with `ResourceLimitExceeded` naming an instance type, nothing in the notebook is wrong: the account's quota for that type is too low, and the increase is requested in [Service Quotas](https://us-east-2.console.aws.amazon.com/servicequotas/home/services/sagemaker/quotas) (days, for GPU types). On your own account, request `ml.g5.xlarge for processing job usage` before you start.
+If the launch is refused with an `AccessDeniedException` ending in `explicit deny`, the account's checks are the cause: a missing tag, an instance type outside the lesson's list, or a resource kind the lesson never creates; the first training episode's callout *If the launch is refused* says what to look at. If the launch below fails at once with `ResourceLimitExceeded` naming an instance type, nothing in the notebook is wrong: the account's quota for that type is too low, and the increase is requested in [Service Quotas](https://us-east-2.console.aws.amazon.com/servicequotas/home/services/sagemaker/quotas) (days, for GPU types). On your own account, request `ml.g5.xlarge for processing job usage` before you start.
 
 ### What launching a job means
 
-This is the first GPU job you launch yourself in this episode (the embedding job above was staged for you in class), so here is the whole mechanism in plain terms. You describe a machine and point at a script. SageMaker rents the machine, copies the files you named from S3 onto its disk, runs your script on it, copies whatever the script wrote in its output folder back to S3, and shuts the machine down. The notebook does nothing but wait and show you the script's printed output. Nothing from this notebook's memory goes along: not `chunked_docs`, not `train_df`, not any function defined above. The script sees only the files you copied in and the arguments you gave it, which is why every input is an S3 location and every setting is a command-line flag. That is the same thing `estimator.fit` did in the fine-tuning episode, with one difference: a training job hands back a trained model, a Processing job hands back whatever files the script wrote, here a CSV of answers.
+This is the first GPU job you launch yourself in this episode (the embedding job above was staged for you in class), so this is what happens when you launch one. You describe a machine and point at a script. SageMaker rents the machine, copies the files you named from S3 onto its disk, runs your script on it, copies whatever the script wrote in its output folder back to S3, and shuts the machine down. The notebook does nothing but wait and show you the script's printed output. Nothing from this notebook's memory goes along: not `chunked_docs`, not `train_df`, not any function defined above. The script sees only the files you copied in and the arguments you gave it, which is why every input is an S3 location and every setting is a command-line flag. That is the same thing `estimator.fit` did in the fine-tuning episode, with one difference: a training job hands back a trained model, a Processing job hands back whatever files the script wrote, here a CSV of answers.
 
 The description is two cells. The first builds a `HuggingFaceProcessor`: which machine, which container image, how long it may run, whose tags it carries. Two of its settings matter more than on the embedding job. `volume_size_in_gb=60` attaches a 60 GB volume to the instance, mounted under `/opt/ml/processing`; the container's own root disk is small, so the 16 GB of model weights must not land there. `env={"HF_HOME": ...}` points Hugging Face's download cache at that volume, which is where the weights go.
 

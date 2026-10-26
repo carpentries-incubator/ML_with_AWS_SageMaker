@@ -9,7 +9,7 @@ name: Zain Waseem & Chris Endemann
 
 These live under the **Extras** dropdown, which the site shows only when the **Instructor View** toggle (top bar) is on.
 
-- [Account preparation checklist (quotas, Bedrock, tags)](aws-account-prep.html): before the term.
+- [Account preparation checklist (quotas, Bedrock, tags)](aws-account-prep.html): before the term. As of October 2026 the notebook role `ml-sagemaker-use` carries two inline policies set from CloudShell: `BedrockAccess`, so any instance can call Bedrock, and `WorkshopGuardRails`, which refuses untagged, blank-tagged or placeholder-tagged jobs, instance types outside the lesson's list, endpoints and EC2. Both are on that page with the command that applies them; the guard rails are not yet on the learner permission set.
 - [Shared data bucket: staging before each term](shared-data-bucket.html): create and fill `ml-marathon-shared` from CloudShell.
 - [Badger Scribe data: publishing a release](badger-scribe-data-release.html): only when the competition data changes.
 - [Fine-tuning episode: cost, capacity and setup](finetuning-episode-cost-estimate.html)

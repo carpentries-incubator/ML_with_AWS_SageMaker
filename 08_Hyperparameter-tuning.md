@@ -25,7 +25,7 @@ exercises: 15
 Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/08_Hyperparameter-tuning.ipynb`. Select the **`conda_pytorch`** kernel.
 
 ## Hyperparameter tuning in SageMaker
-To conduct efficient hyperparameter tuning with neural networks (or any model) in SageMaker, we'll leverage SageMaker's **hyperparameter tuning jobs** while carefully managing parameter ranges and model count. Here's an overview of the process, with a focus on both efficiency and cost-effectiveness.
+SageMaker's **hyperparameter tuning jobs** search a parameter space for any model; what keeps them cheap is the choice of ranges and the number of models trained. This episode walks through one tuning job with both in view.
 
 ### Key steps 
 The overall process involves these seven below steps.
@@ -90,7 +90,7 @@ print(f"Instance Type: {local_instance}")
 
 ```python
 name = "DoeJohn" # replace with your name
-project = "SinkOrSwim" # replace with your challenge name
+project = "SinkOrSwim"   # your challenge: WattBot2026, BadgerScribe, BadgerCode, BrainDecoding, PoisonedWell or SnapshotWI; SinkOrSwim is the workshop itself
 purpose = "Tuning"        # one of: Storage, Notebook, Training, Tuning, Inference
 
 job_tags = [
@@ -98,6 +98,7 @@ job_tags = [
     {"Key": "Project", "Value": project},
     {"Key": "Purpose", "Value": purpose},
 ]
+helpers.check_launch(job_tags)   # the account's rules, checked here first: AWS's own refusal does not say which rule
 print(f"Name: {name}, Project: {project}, Purpose: {purpose}")
 ```
 
@@ -235,6 +236,8 @@ In step 5, we define the input data paths for the training job and launch the hy
 
 Estimate first: one child job is the same ~1 minute of training plus ~3 minutes of startup we saw in the previous episode, so about `$0.01`.
 
+If the launch is refused with an `AccessDeniedException` ending in `explicit deny`, the account's checks are the cause: a missing tag, an instance type outside the lesson's list, or a resource kind the lesson never creates; the first training episode's callout *If the launch is refused* says what to look at.
+
 ```python
 # Define the input paths
 train_input = TrainingInput(f"s3://{bucket_name}/train_data.npz", content_type="application/x-npz")
@@ -279,7 +282,7 @@ tuning_cost_report(tuner, price_per_hour)
 ```
 
 ### Scaling up our approach
-If all goes well, we can scale up the experiment with the below code. In this configuration, we're scaling up the search by allowing SageMaker to test more hyperparameter configurations (`max_jobs=10`) while setting `max_parallel_jobs=2` to manage parallelization efficiently. With two jobs running at once, SageMaker will be able to explore potential improvements more quickly than in a fully sequential setup, while still dynamically selecting promising values as it learns from completed jobs. This balance leverages SageMaker's Bayesian optimization, which uses completed trials to inform subsequent ones, helping to avoid redundant testing of less promising parameter combinations. **Setting `max_parallel_jobs` higher than 2-4 reduces tuning efficiency, as SageMaker's ability to learn from completed jobs decreases when too many jobs run simultaneously.**
+If all goes well, we can scale up the experiment with the below code. In this configuration, we're scaling up the search by allowing SageMaker to test more hyperparameter configurations (`max_jobs=10`) while setting `max_parallel_jobs=2` to manage parallelization efficiently. With two jobs running at once, SageMaker will be able to explore potential improvements more quickly than in a fully sequential setup, while still dynamically selecting promising values as it learns from completed jobs. SageMaker's Bayesian optimization uses the completed trials to choose the next ones, so it spends fewer jobs on unpromising combinations. **Setting `max_parallel_jobs` higher than 2-4 reduces tuning efficiency, as SageMaker's ability to learn from completed jobs decreases when too many jobs run simultaneously.**
 
 With this approach, SageMaker is better able to refine configurations without overloading resources or risking inefficient exploration, making `max_parallel_jobs=2` a solid default for most use cases.
 
@@ -333,7 +336,7 @@ tuning_cost_report(tuner, price_per_hour)
 Our run finished in 9.3 minutes of wall-clock and billed 14.1 minutes in total, `$0.03`: half the estimate. Read the per-job lines and the reason is visible. The first two child jobs billed about 3 minutes each, like every job so far. The other eight billed about 1 minute each. A tuning job keeps its instances between child jobs, so jobs 3 through 10 ran on the two instances that were already up, with the container pulled and the data downloaded. The startup overhead that dominates a single small job was paid twice, not ten times.
 
 ### Can/should we run more instances in parallel?
-Setting max_parallel_jobs to 10 (equal to max_jobs) will indeed launch all 10 jobs in parallel. This approach won't affect the total cost (since cost is based on the number of total jobs, not how many run concurrently), but it can impact the final results and resource usage pattern due to SageMaker's ability to dynamically select hyperparameter values to test to maximize efficiency and improve model performance. This adaptability is especially useful for neural networks, which often have a large hyperparameter space with complex interactions. Here's how SageMaker's approach impacts typical neural network training:
+Setting max_parallel_jobs to 10 (equal to max_jobs) will indeed launch all 10 jobs in parallel. This approach won't affect the total cost (since cost is based on the number of total jobs, not how many run concurrently), but it can impact the final results and resource usage pattern due to SageMaker's ability to dynamically select hyperparameter values to test to maximize efficiency and improve model performance. This adaptability is especially useful for neural networks, which often have a large hyperparameter space with complex interactions. What this means for neural network training:
 
 #### 1. Adaptive Search Strategies
    - SageMaker offers **Bayesian optimization** for hyperparameter tuning. Instead of purely random sampling, it learns from previous jobs to choose the next set of hyperparameters more likely to improve the objective metric.
@@ -341,7 +344,7 @@ Setting max_parallel_jobs to 10 (equal to max_jobs) will indeed launch all 10 jo
 
 #### 2. Effect of `max_parallel_jobs` on adaptive tuning
    - When using Bayesian optimization, a lower `max_parallel_jobs` (e.g., 2–4) can allow SageMaker to iteratively adjust and improve its choices. Each batch of jobs informs the subsequent batch, which may yield better results over time.
-   - Conversely, if all jobs are run in parallel (e.g., `max_parallel_jobs=10`), SageMaker can't learn and adapt within a single batch, making this setup more like a traditional grid or random search. This approach is still valid, especially for small search spaces, but it doesn't leverage the full potential of adaptive tuning.
+   - Conversely, if all jobs are run in parallel (e.g., `max_parallel_jobs=10`), SageMaker can't learn and adapt within a single batch, making this setup more like a traditional grid or random search. This approach is still valid, especially for small search spaces, but it gives up the adaptive part.
 
 #### 3. Practical impact on neural network training
    - **For simpler models** or smaller parameter ranges, running jobs in parallel with a higher `max_parallel_jobs` works well and quickly completes the search.
@@ -349,13 +352,13 @@ Setting max_parallel_jobs to 10 (equal to max_jobs) will indeed launch all 10 jo
 
 #### Summary
 - **For fast, straightforward tuning**: Set `max_parallel_jobs` closer to `max_jobs` for simultaneous testing.
-- **For adaptive, refined tuning**: Use a smaller `max_parallel_jobs` (like 2–4) to let SageMaker leverage adaptive tuning for optimal configurations. 
+- **For adaptive, refined tuning**: Use a smaller `max_parallel_jobs` (like 2–4) so that later jobs can learn from earlier ones. 
 
 This balance between exploration and exploitation is particularly impactful in neural network tuning, where training costs can be high and parameters interact in complex ways.
 
 ### Extracting and evaluating the best model after tuning
 
-Tuning takes about 10 minutes to complete — not bad for 10 models! After SageMaker completes the hyperparameter tuning job, the results, including the trained models for each configuration, are stored in an S3 bucket. Here's a breakdown of the steps to locate and evaluate the best model on test data.
+Tuning takes about 10 minutes to complete — not bad for 10 models! After SageMaker completes the hyperparameter tuning job, the results, including the trained models for each configuration, are stored in an S3 bucket. The steps to locate and evaluate the best model on test data:
 
 1. **Understanding the folder structure**:
    - SageMaker saves each tuning job's results in the specified S3 bucket under a unique prefix.

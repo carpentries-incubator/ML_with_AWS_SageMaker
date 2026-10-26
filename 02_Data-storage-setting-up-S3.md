@@ -91,7 +91,7 @@ Click **Create bucket**. The form has the sections below; most defaults are righ
 - **AWS Region**: the region your instructor named (in the workshop account, US East (Ohio), `us-east-2`). This must be the same region your notebook instance and jobs run in.
 - **Bucket type**: General purpose (the default).
 - **Bucket namespace**: **Global namespace**. The console recommends the account Regional namespace, but that appends your account ID, region and `-an` to every bucket name, which would turn `sinkorswim-doejohn` into `sinkorswim-doejohn-123456789012-us-east-2-an` everywhere in the lesson. Global keeps the name as you type it.
-- **Bucket name**: `challenge-lastnamefirstname`, all lowercase, e.g. `sinkorswim-doejohn`: the challenge you are working on (`sinkorswim`, `wattbot2026`, `badgerscribe`, `badgercode`, ...), a hyphen, then your last and first name run together. S3 requires lowercase letters, digits and hyphens only, 3 to 63 characters, starting and ending with a letter or digit. Buckets are the one place AWS forces lowercase; for the notebook instance and the tags we use the same words with capitals, `SinkOrSwim` and `DoeJohn`. **This is the only bucket you will create in the workshop.** Every later episode writes its outputs (trained models, embeddings, predictions) into this same bucket.
+- **Bucket name**: `challenge-lastnamefirstname`, all lowercase, e.g. `sinkorswim-doejohn`: the challenge you are working on (`wattbot2026`, `badgerscribe`, `badgercode`, `braindecoding`, `poisonedwell`, `snapshotwi`, or `sinkorswim` for the workshop itself), a hyphen, then your last and first name run together. S3 requires lowercase letters, digits and hyphens only, 3 to 63 characters, starting and ending with a letter or digit. Buckets are the one place AWS forces lowercase; for the notebook instance and the tags we use the same words with capitals, `SinkOrSwim` and `DoeJohn`. **This is the only bucket you will create in the workshop.** Every later episode writes its outputs (trained models, embeddings, predictions) into this same bucket.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
@@ -109,13 +109,15 @@ A SageMaker training or processing job reads only from buckets in its own region
 
 **Tags (NOT OPTIONAL)**: tags are how the bill is broken down by project, person and purpose; this is the one section you must fill in. Add the following three keys, spelled exactly (they are the account's approved cost-allocation keys, see [KB 72454](https://kb.wisc.edu/72454)). You will put the same three keys on every resource you create in this lesson.
 
-- **Project**: your challenge name (`SinkOrSwim`, `WattBot2026`, `BadgerScribe`, `BadgerCode`, ...), e.g. `SinkOrSwim`
+- **Project**: your challenge, one of `WattBot2026`, `BadgerScribe`, `BadgerCode`, `BrainDecoding`, `PoisonedWell`, `SnapshotWI`, spelled exactly like that, or `SinkOrSwim`, the workshop's own project, if you are not on a challenge yet. The account refuses a job tagged with any other Project value, so a typo is caught at the first launch rather than on the bill.
 - **Name**: your last and first name run together, e.g. `DoeJohn`
 - **Purpose**: one of five fixed values, here `Storage`
 
-AWS allows tag values of up to 256 characters made of letters, digits, spaces and `+ - = . _ : / @`, and they are case-sensitive. We use capitalised words with no spaces, and the same spelling on every resource: `SinkOrSwim` and `sinkorswim` would be separate rows in Cost Explorer.
+AWS allows tag values of up to 256 characters made of letters, digits, spaces and `+ - = . _ : / @`, and they are case-sensitive. We use capitalised words with no spaces, and the same spelling on every resource. `SinkOrSwim` and `sinkorswim` would be separate rows in Cost Explorer, and the account accepts only the first: the `Project` and `Purpose` lists are case-sensitive, so a job tagged `sinkorswim` or `training` is refused. (The bucket name is lowercase because S3 requires it; bucket names are not tags.)
 
 `Purpose` takes one of five values, so that the bill can be summed by kind of work rather than by individual job. Which job it was is already in the job's name.
+
+These lists are enforced: the account refuses a job whose tags are missing, blank or off the lists, and the refusal says only `AccessDenied ... explicit deny`, not which tag. The training episode checks the tags in the notebook before each launch and names the problem; [If a Launch Is Refused](../learners/refused-launch.md) is the full list of rules and fixes, for later. The rules are not part of SageMaker: the instructor sets them from the account's administrator view, and an instructor running this lesson on a new account sets them up following the [AWS account preparation](../instructors/aws-account-prep.md) page before class.
 
 | `Purpose` | Used for |
 |---|---|
@@ -180,7 +182,7 @@ Once the bucket is created, the console opens the new bucket's page (a green "Su
 }
 ```
 
-What the policy says, line by line:
+The policy, statement by statement:
 
 - **Principal** is *who* gets access. SageMaker never acts as you; it acts as an IAM **role** attached to your notebook instance and to every job you launch (the *execution role*). In the workshop account there are two: `ml-sagemaker-bedrock-use`, which you will pick when you create your notebook instance in the next episode and which every job inherits, and the older SageMaker-only `ml-sagemaker-use`, listed so that a notebook created with it still reads the bucket. The `<account-id>` is the 12-digit number shown next to the account name at the top right of the console.
 - **Action** is *what* they may do: read objects, write objects, delete objects, list the bucket's contents, and list the parts of a large upload in progress.
@@ -300,7 +302,7 @@ Using the S3 Standard rate in us-east-1:
 
 These costs assume no additional request charges beyond those for storage, the download, and `GET` requests for training.
 
-Two things to notice. The `GET` line is the same four-thousandths of a cent at every size: request costs depend on how many objects you touch, not how big they are. And the download line grows from 80% of the total at 1 GB to almost all of it at 1 TB: for a dataset of any size, moving it out of AWS costs several times more than keeping it there for a month, so plan to keep large data in the region and bring code to it, not the other way round.
+The `GET` line is the same four-thousandths of a cent at every size: request costs depend on how many objects you touch, not how big they are. And the download line grows from 80% of the total at 1 GB to almost all of it at 1 TB: for a dataset of any size, moving it out of AWS costs several times more than keeping it there for a month, so plan to keep large data in the region and bring code to it, not the other way round.
 
 3. **Wrong region, 100 GB**: 100 reads x 100 GB x `$0.02` = **`$200`** of inter-region transfer, on top of the `$11.30` above. The one-time download to a laptop was `$9`; the misplaced bucket costs twenty times that, silently, and keeps costing with every job. This is why the region is the first setting on the create-bucket form and why the warning above tells you to check it before clicking Create.
 

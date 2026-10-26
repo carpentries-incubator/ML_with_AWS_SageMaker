@@ -529,7 +529,7 @@ One call per model does all of it. `tagged_profile_arn` in `wattbot_rag.py` look
 from wattbot_rag import tagged_profile_arn
 
 name = "DoeJohn"         # replace with your name
-project = "SinkOrSwim"   # replace with your challenge name
+project = "SinkOrSwim"   # your challenge: WattBot2026, BadgerScribe, BadgerCode, BrainDecoding, PoisonedWell or SnapshotWI; SinkOrSwim is the workshop itself
 print(f"Tags on the profiles, and so on every Bedrock call: Name={name}, Project={project}, Purpose=Inference")   # check them first: a profile tagged DoeJohn bills as DoeJohn
 
 # From here on, these ARNs are what we pass as modelId. The base IDs are never sent to the runtime again.

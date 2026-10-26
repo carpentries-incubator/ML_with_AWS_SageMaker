@@ -62,9 +62,11 @@ We'll follow these steps to create our first "SageMaker notebook instance".
 
   | Key | Value |
   |---|---|
-  | `Project` | your challenge name (`SinkOrSwim`, `WattBot2026`, `BadgerScribe`, `BadgerCode`, ...), e.g. `SinkOrSwim` |
+  | `Project` | your challenge, one of `WattBot2026`, `BadgerScribe`, `BadgerCode`, `BrainDecoding`, `PoisonedWell`, `SnapshotWI`, or `SinkOrSwim` for the workshop itself |
   | `Name` | your name, e.g. `DoeJohn` |
   | `Purpose` | what this resource is for, `Notebook` |
+
+  Same spelling as on the bucket. The `Project` and `Purpose` lists from the S3 episode apply to every job you launch from this instance, and a value off them is refused at the first launch; the training episode shows what that looks like and how to check first.
 
   ![Tag Setup Example](fig/notebook_tags.PNG){alt="Screenshot showing the three required tags on a SageMaker notebook instance"}
 

@@ -31,6 +31,7 @@ If you are attending this lesson at UW-Madison, the instructors will provide a s
     * Stick to the lesson materials, so that expensive pipelines (e.g., training/tuning LLMs) do not lead to high costs and wasted credits.
     * Do not use any tools we do not explicitly cover without discussing with the instructors first.
     * Stop (and at the end of the workshop, delete) every notebook instance you create. A GPU notebook left running costs about `$60` a day.
+* The account enforces a short list of rules on every launch (the three cost tags with values from fixed lists, the lesson's instance types, a 48-hour cap, no endpoints). A job that breaks one is refused with an `AccessDenied` message that does not say why; [If a Launch Is Refused](refused-launch.md) does, and the lesson's helper module can tell you before and after the launch. Check there before emailing.
 
 ### Your own AWS account
 
