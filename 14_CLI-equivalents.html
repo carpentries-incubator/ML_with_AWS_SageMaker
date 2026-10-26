@@ -336,10 +336,10 @@
     <div id="flush-collapsecurrent" class="accordion-collapse collapse show" data-bs-parent="#accordionFlushcurrent">
       <div class="accordion-body">
         <ul><li><a href="#sign-in-with-identity-center">1. Sign in with Identity Center</a></li>
-<li><a href="#look-what-is-running-and-what-did-it-cost">2. Look: what is running and what did it cost</a></li>
-<li><a href="#stop-the-commands-worth-memorising">3. Stop: the commands worth memorising</a></li>
-<li><a href="#copy-s3-in-bulk">4. Copy: S3 in bulk</a></li>
-<li><a href="#launch-one-training-job-as-json">5. Launch: one training job, as JSON</a></li>
+<li><a href="#what-is-running-and-what-a-job-cost">2. What is running, and what a job cost</a></li>
+<li><a href="#stopping-jobs-and-notebook-instances">3. Stopping jobs and notebook instances</a></li>
+<li><a href="#copying-to-and-from-s3">4. Copying to and from S3</a></li>
+<li><a href="#launching-a-training-job-from-a-json-file">5. Launching a training job from a JSON file</a></li>
         </ul></div><!--/div.accordion-body-->
     </div><!--/div.accordion-collapse-->
 
@@ -479,8 +479,28 @@ the account refuses them.</li>
 notebook. The same account can be used from a terminal with the AWS CLI:
 to check on a job from another machine, to stop something when no
 notebook is open, to copy results out of S3 in bulk, or to script a
-launch. This episode shows the CLI equivalents of what you already did,
-in four groups: <strong>look, stop, copy, launch</strong>.</p>
+launch. This episode does five things from a laptop terminal: signs in
+to the account with Identity Center, lists what is running and reads
+what a job cost, stops jobs and notebook instances, copies data to and
+from S3, and launches one training job from a JSON file, the same
+request <code>estimator.fit()</code> sent in the training episodes.</p>
+<p>The case for the terminal is the notebook instance. Every job in this
+lesson was launched from an <code>ml.t3.medium</code> that bills while
+it is on, five cents an hour, a dollar a day, and that someone has to
+remember to stop. A job launched from a laptop needs no instance at all:
+the request goes from your terminal to SageMaker, the job runs on a
+machine rented for it and ends, and the model lands in S3. For a project
+that launches a job a day and otherwise works locally, that is the
+notebook’s whole cost gone and nothing left running overnight. The
+training episode’s <code>wait=False</code> pattern gets most of the way
+there from a notebook; the CLI gets the rest.</p>
+<p>What you give up is what the instance did for you. On the instance,
+its role signs every call, the lesson’s helper checks a launch against
+the account’s rules before it goes, and the console shows what you
+started next to everyone else’s work. On a laptop you sign in yourself,
+the JSON carries no price and no check, and a mistake is not seen until
+the bill. The rules in the callout, and the request check in section 5,
+are what make the trade worth it.</p>
 <div id="read-this-before-the-first-command" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -512,10 +532,14 @@ never creates them from the CLI, or at all.</li>
 <strong>An <code>AccessDeniedException</code> on the commands below
 is intended.</strong> The workshop account carries a guard-rail policy
 that denies endpoint and EC2 creation, instance types outside the
-lesson’s list, and any job launched without the three tags. Do not look
-for a workaround. (Instructors: the policy is on the <em>Account
-preparation checklist</em> page, and it applies only once attached to
-the permission set and to the notebook role.)</li>
+lesson’s list, caps over 48 hours, and any job whose three tags are
+missing, blank or off the <code>Project</code> and <code>Purpose</code>
+lists. Do not look for a workaround. The policy is on the notebook role
+today, which covers every launch from an instance; a laptop CLI runs
+under the permission set, which gets the same policy when the Identity
+Center administrator attaches it, and until then these rules are yours
+to keep by hand from a laptop. (Instructors: the policy and its status
+are on the <em>Account preparation checklist</em> page.)</li>
 </ol></div>
 </div>
 </div>
@@ -588,7 +612,7 @@ written anywhere.</p>
 <strong>File → New → Terminal</strong>), skip this step: the instance’s
 role is already the identity, which is the reason the lesson works from
 one.</p>
-</section><section><h2 class="section-heading" id="look-what-is-running-and-what-did-it-cost">2. Look: what is running and what did it cost<a class="anchor" aria-label="anchor" href="#look-what-is-running-and-what-did-it-cost"></a></h2>
+</section><section><h2 class="section-heading" id="what-is-running-and-what-a-job-cost">2. What is running, and what a job cost<a class="anchor" aria-label="anchor" href="#what-is-running-and-what-a-job-cost"></a></h2>
 <hr class="half-width"><p>The SageMaker SDK calls you used map one-to-one onto
 <code>aws sagemaker</code> subcommands. <code>--query</code> is a <a href="https://jmespath.org/" class="external-link">JMESPath</a> filter that keeps the output
 to what you asked about.</p>
@@ -676,9 +700,8 @@ bill:</p>
 </div>
 </div>
 </div>
-</section><section><h2 class="section-heading" id="stop-the-commands-worth-memorising">3. Stop: the commands worth memorising<a class="anchor" aria-label="anchor" href="#stop-the-commands-worth-memorising"></a></h2>
-<hr class="half-width"><p>These are the most useful CLI commands to know. Each one stops a
-charge.</p>
+</section><section><h2 class="section-heading" id="stopping-jobs-and-notebook-instances">3. Stopping jobs and notebook instances<a class="anchor" aria-label="anchor" href="#stopping-jobs-and-notebook-instances"></a></h2>
+<hr class="half-width"><p>Each of these stops a charge.</p>
 <div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -697,7 +720,7 @@ stops the storage charge too:</p>
 </h3>
 <pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a><span class="ex">aws</span> sagemaker delete-notebook-instance <span class="at">--notebook-instance-name</span> <span class="op">&lt;</span>name<span class="op">&gt;</span>   <span class="co"># only after it reports Stopped</span></span></code></pre>
 </div>
-</section><section><h2 class="section-heading" id="copy-s3-in-bulk">4. Copy: S3 in bulk<a class="anchor" aria-label="anchor" href="#copy-s3-in-bulk"></a></h2>
+</section><section><h2 class="section-heading" id="copying-to-and-from-s3">4. Copying to and from S3<a class="anchor" aria-label="anchor" href="#copying-to-and-from-s3"></a></h2>
 <hr class="half-width"><p>The S3 episode uploaded through the console and the SDK. For many
 files, or for pulling a job’s outputs down to a laptop, the CLI is the
 better tool:</p>
@@ -712,7 +735,7 @@ better tool:</p>
 <p>Downloads to a laptop are a transfer out of AWS (<code>$0.09</code>
 per GB). For anything larger than a few hundred megabytes, keep the data
 in the region and let a job read it, which is the lesson’s pattern.</p>
-</section><section><h2 class="section-heading" id="launch-one-training-job-as-json">5. Launch: one training job, as JSON<a class="anchor" aria-label="anchor" href="#launch-one-training-job-as-json"></a></h2>
+</section><section><h2 class="section-heading" id="launching-a-training-job-from-a-json-file">5. Launching a training job from a JSON file<a class="anchor" aria-label="anchor" href="#launching-a-training-job-from-a-json-file"></a></h2>
 <hr class="half-width"><p>Every <code>estimator.fit()</code> in the training episodes assembled
 a JSON request and sent it to <code>CreateTrainingJob</code>. Here is
 that request. Fill in the five placeholders from your notebook: the
@@ -809,11 +832,23 @@ the account.</p>
 </div>
 </div>
 </div>
-<p>Then send it. This one line is <code>estimator.fit()</code>:</p>
+<p>Before sending it, check it the way the notebooks did. The lesson
+repository has the account’s rules in
+<code>scripts/guardrails.json</code> and a script that applies them to a
+request file; a placeholder left in, a wrong <code>Purpose</code> or an
+instance type off the list is named here rather than refused silently by
+AWS:</p>
 <div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a><span class="ex">aws</span> sagemaker create-training-job <span class="at">--cli-input-json</span> file://train-xgboost.json</span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a><span class="fu">git</span> clone <span class="at">-q</span> https://github.com/qualiaMachine/ML_with_Amazon_SageMaker.git   <span class="co"># once, anywhere on the laptop</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1" aria-label="code-block-14-2"></a><span class="ex">python</span> ML_with_Amazon_SageMaker/scripts/check_request.py train-xgboost.json</span></code></pre>
+</div>
+<p>Then send it. This one line is <code>estimator.fit()</code>:</p>
+<div class="codewrapper sourceCode" id="cb15">
+<h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a><span class="ex">aws</span> sagemaker create-training-job <span class="at">--cli-input-json</span> file://train-xgboost.json</span></code></pre>
 </div>
 <p>Three fields to notice.
 <code>StoppingCondition.MaxRuntimeInSeconds</code> is the
@@ -825,11 +860,11 @@ determine the cost; nothing in a JSON file prints a price, so check it
 as carefully as you would in a notebook.</p>
 <p>The CLI returns the moment the request is accepted; nothing waits. To
 follow the job the way <code>wait=True</code> did:</p>
-<div class="codewrapper sourceCode" id="cb15">
+<div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a><span class="ex">aws</span> sagemaker wait training-job-completed-or-stopped <span class="at">--training-job-name</span> <span class="op">&lt;</span>the job name<span class="op">&gt;</span>   <span class="co"># blocks until it ends</span></span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a><span class="ex">aws</span> sagemaker describe-training-job <span class="at">--training-job-name</span> <span class="op">&lt;</span>the job name<span class="op">&gt;</span> --query <span class="st">'{status:TrainingJobStatus, billable_s:BillableTimeInSeconds, failure:FailureReason}'</span></span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a><span class="ex">aws</span> sagemaker wait training-job-completed-or-stopped <span class="at">--training-job-name</span> <span class="op">&lt;</span>the job name<span class="op">&gt;</span>   <span class="co"># blocks until it ends</span></span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a><span class="ex">aws</span> sagemaker describe-training-job <span class="at">--training-job-name</span> <span class="op">&lt;</span>the job name<span class="op">&gt;</span> --query <span class="st">'{status:TrainingJobStatus, billable_s:BillableTimeInSeconds, failure:FailureReason}'</span></span></code></pre>
 </div>
 <p>Estimate first, compare after, as always: this is the same ~4 minutes
 billable on <code>ml.m5.large</code>, about a cent.</p>
@@ -856,11 +891,13 @@ stays visible, and deletes it the same hour.</li>
 <code>aws ec2 run-instances</code>: bare virtual machines have no
 tags required, no runtime cap and no SageMaker job list to appear
 in.</li>
-</ul><p>On the workshop account all three are denied by the permission set,
-as is any instance type outside the lesson’s list and any job without
-the three tags; the instructor page <em>Account preparation
-checklist</em> has the policy. On your own account, the same denies take
-about fifteen minutes to set up.</p>
+</ul><p>On the workshop account all three are denied on the notebook role, as
+is any instance type outside the lesson’s list, any cap over 48 hours
+and any job whose tags are missing or off the lists; the permission set
+a laptop uses gets the same policy once the administrator attaches it.
+The instructor page <em>Account preparation checklist</em> has the
+policy. On your own account, the same denies take about fifteen minutes
+to set up.</p>
 </div>
 </div>
 </div>
@@ -886,15 +923,44 @@ finds something. Then run them against your own resources.</p>
 </button>
 <div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
-<div class="codewrapper sourceCode" id="cb16">
+<div class="tabs">
+<nav><div id="nav-tab-5" class="nav nav-tabs" role="tablist">
+<button class="nav-link active" id="nav-tab-5-1" data-bs-toggle="tab" data-bs-target="#nav-tabpanel-5-1" type="button" role="tab" aria-controls="nav-tabpanel-5-1" aria-selected="true">
+  <h3 class="tab-header" id="nav-tab-heading-5-1">
+  Bash
+  </h3>
+</button>
+<button class="nav-link" id="nav-tab-5-2" data-bs-toggle="tab" data-bs-target="#nav-tabpanel-5-2" type="button" role="tab" aria-controls="nav-tabpanel-5-2" aria-selected="false">
+  <h3 class="tab-header" id="nav-tab-heading-5-2">
+  PowerShell
+  </h3>
+</button>
+</div>
+</nav><div id="nav-tabContent-5" class="tab-content">
+<div id="nav-tabpanel-5-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-5-1">
+<div class="codewrapper sourceCode" id="cb17">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a><span class="ex">aws</span> sso login <span class="at">--profile</span> workshop <span class="kw">&amp;&amp;</span> <span class="bu">export</span> <span class="va">AWS_PROFILE</span><span class="op">=</span>workshop</span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a><span class="ex">aws</span> sagemaker list-training-jobs   <span class="at">--status-equals</span> InProgress <span class="at">--query</span> <span class="st">'TrainingJobSummaries[].TrainingJobName'</span></span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a><span class="ex">aws</span> sagemaker list-processing-jobs <span class="at">--status-equals</span> InProgress <span class="at">--query</span> <span class="st">'ProcessingJobSummaries[].ProcessingJobName'</span></span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a><span class="ex">aws</span> sagemaker list-hyper-parameter-tuning-jobs <span class="at">--status-equals</span> InProgress <span class="at">--query</span> <span class="st">'HyperParameterTuningJobSummaries[].HyperParameterTuningJobName'</span></span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a><span class="ex">aws</span> sagemaker list-notebook-instances <span class="at">--query</span> <span class="st">'NotebookInstances[?NotebookInstanceStatus==`InService`].NotebookInstanceName'</span></span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a><span class="ex">aws</span> sagemaker list-endpoints <span class="at">--query</span> <span class="st">'Endpoints[].EndpointName'</span></span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" tabindex="-1" aria-label="code-block-17-1"></a><span class="ex">aws</span> sso login <span class="at">--profile</span> workshop <span class="kw">&amp;&amp;</span> <span class="bu">export</span> <span class="va">AWS_PROFILE</span><span class="op">=</span>workshop</span></code></pre>
+</div>
+</div>
+<div id="nav-tabpanel-5-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-5-2">
+<div class="codewrapper sourceCode" id="cb18">
+<h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode powershell" tabindex="0"><code class="sourceCode powershell"><span id="cb18-1"><a href="#cb18-1" tabindex="-1" aria-label="code-block-18-1"></a>aws sso login <span class="op">--</span>profile workshop<span class="op">;</span> <span class="va">$env</span><span class="op">:</span><span class="va">AWS_PROFILE</span> <span class="op">=</span> <span class="st">"workshop"</span></span></code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="codewrapper sourceCode" id="cb19">
+<h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" tabindex="-1" aria-label="code-block-19-1"></a><span class="ex">aws</span> sagemaker list-training-jobs   <span class="at">--status-equals</span> InProgress <span class="at">--query</span> <span class="st">'TrainingJobSummaries[].TrainingJobName'</span></span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1" aria-label="code-block-19-2"></a><span class="ex">aws</span> sagemaker list-processing-jobs <span class="at">--status-equals</span> InProgress <span class="at">--query</span> <span class="st">'ProcessingJobSummaries[].ProcessingJobName'</span></span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1" aria-label="code-block-19-3"></a><span class="ex">aws</span> sagemaker list-hyper-parameter-tuning-jobs <span class="at">--status-equals</span> InProgress <span class="at">--query</span> <span class="st">'HyperParameterTuningJobSummaries[].HyperParameterTuningJobName'</span></span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1" aria-label="code-block-19-4"></a><span class="ex">aws</span> sagemaker list-notebook-instances <span class="at">--query</span> <span class="st">'NotebookInstances[?NotebookInstanceStatus==`InService`].NotebookInstanceName'</span></span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1" aria-label="code-block-19-5"></a><span class="ex">aws</span> sagemaker list-endpoints <span class="at">--query</span> <span class="st">'Endpoints[].EndpointName'</span></span></code></pre>
 </div>
 <p>For anything the first four print: the matching <code>stop-...</code>
 command from section 3. A job you recognise as yours and expect to
