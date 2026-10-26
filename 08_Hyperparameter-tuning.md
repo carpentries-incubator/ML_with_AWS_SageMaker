@@ -104,6 +104,8 @@ print(f"Name: {name}, Project: {project}, Purpose: {purpose}")
 
 Next, we'll configure the baseline estimator that we plan to do hyperparameter search on.
 
+Every price in this episode is from the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page, us-east-1 on-demand; the tuning job's cost is that rate times the sum of the child jobs' billable minutes.
+
 ```python
 import sagemaker
 # range types for the search: ContinuousParameter (float range), IntegerParameter (whole-number range), CategoricalParameter (explicit list)
@@ -123,7 +125,7 @@ print("Region:", session.boto_region_name)
 # Define instance type/count we'll use for training
 instance_type="ml.m5.large"
 instance_count=1 # always start with 1; tuning parallelism comes from max_parallel_jobs, not instance_count
-price_per_hour = 0.115 # ml.m5.large, us-east-1 on-demand (2026-10-16); check the instances page for your region
+price_per_hour = 0.115 # ml.m5.large, us-east-1 on-demand (2026-10-16), from the Instances for ML page; check it for your region
 
 # Define max runtime in seconds to ensure you don't use more compute time than expected. Use a generous threshold (2x expected time but < 2 days) so that work isn't interrupted without any gains.
 max_run = 2*60*60 # 2 hours

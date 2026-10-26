@@ -49,6 +49,8 @@ Qwen figures are from the Qwen3.8-27B model card and were not reproduced here; O
 
 ### What this episode costs
 
+Rates are us-east-1 on-demand from the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page.
+
 | Job | Instance | `$`/h | Expected duration | Cost |
 |---|---|---|---|---|
 | Embed ~9,000 chunks | `ml.g5.xlarge` (A10G, 24 GB) | `$1.41` | ~10 min incl. startup | ~`$0.20` |

@@ -101,7 +101,7 @@ In this episode we will:
 
 For this episode you need a notebook instance with a GPU that can hold the FP8 27B model plus the embedding model plus working memory for generation. Create a new notebook instance (same steps as the controller-notebook episode, same three tags) with:
 
-- **Instance type:** `ml.g6e.xlarge` (1 × L40S, 48 GB GPU memory, `$2.61`/h). The FP8 weights are ~27 GB; the rest is for the embedding model and the KV cache that generation needs for long prompts. The L40S runs FP8 natively. A 24 GB instance such as `ml.g5.xlarge` cannot hold this model; a 16 GB `ml.g4dn.xlarge` cannot hold anything in this size class.
+- **Instance type:** `ml.g6e.xlarge` (1 × L40S, 48 GB GPU memory, `$2.61`/h on the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page). The FP8 weights are ~27 GB; the rest is for the embedding model and the KV cache that generation needs for long prompts. The L40S runs FP8 natively. A 24 GB instance such as `ml.g5.xlarge` cannot hold this model; a 16 GB `ml.g4dn.xlarge` cannot hold anything in this size class.
 - **Volume size:** `100` GB (the default of 5 GB will not fit the weights or the vLLM install). This volume bills at `$0.14` per GB-month even while the instance is stopped.
 - **Tags:** the same `Project`, `Name`, `Purpose` keys as every other resource; `Purpose` is `Notebook`.
 
@@ -640,7 +640,7 @@ As you iterate, the goal is to treat this notebook as a baseline RAG “workbenc
 There is no job record to ask here; the bill is simply the instance's hours. This counts from the setup cell, so the boot, the install and every pause since are in it, and it keeps counting until you stop the instance.
 
 ```python
-g6e_price = 2.61   # $/hour, ml.g6e.xlarge on-demand
+g6e_price = 2.61   # $/hour, ml.g6e.xlarge on-demand, from the Instances for ML page
 hours = (time.time() - session_start) / 3600
 print(f"this notebook has been running {hours * 60:.0f} min since the setup cell: ${hours * g6e_price:.2f} so far, and counting")
 print(f"the same pipeline as Processing jobs billed about $0.60 (that episode); on Bedrock, about fifteen cents")

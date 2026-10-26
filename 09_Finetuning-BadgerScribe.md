@@ -103,7 +103,7 @@ GPUs come in fixed boxes. An `ml.g5.xlarge` is one A10G, an `ml.p4d.24xlarge` is
 
 Two of those bars are worth a second look. The CHURRO bar is the model you are about to fine-tune: Stanford spent on the order of 800 H100-hours making it, and you get the benefit for a dollar because you are adapting it rather than retraining it. Starting from a model that already knows most of your task is the biggest saving available, and it is decided before any GPU is involved. The sweep extension is the one that surprises research groups: a first run is rarely the last, so a "`$140` full fine-tune" is usually a `$700` to `$1,400` project.
 
-The habits in this episode are cheap practice at a dollar a run. At `$140` a run they are the difference between a project and a budget incident; at `$6,000` a run, one forgotten `max_run` or one wrong instance type is a grant line.
+This episode's run costs a dollar. The same steps on a `$140` run, or a `$6,000` one, are where a forgotten `max_run` or a wrong instance type costs a grant line, which is why the episode does them on a dollar first.
 
 ### Back of the envelope: will it fit, and how long will it take?
 
@@ -132,7 +132,7 @@ Multiply the bytes per parameter by the parameter count, add about 4 GB for acti
 
 Read it across a row. A 7B model you can run on one 24 GB GPU needs 116 GB to fully fine-tune, which is a four-GPU box at `$13` an hour with the model sharded across the GPUs. The jump is the one from the inference rows to the training rows in the first table: training cannot run on quantized weights the way inference can, because each step's update is too small for 8-bit or 4-bit numbers to hold. LoRA avoids the jump by freezing the model and training a few million adapter parameters, which is why this episode fits on one 24 GB card.
 
-**Rule 2, time: how many GPU-hours?** Training on one token costs three matrix products per layer, each one multiply and one add per weight. A full fine-tune does all three; LoRA skips the weight update for the frozen base.
+**Rule 2, time: how many GPU-hours?** The unit is the floating-point operation, one multiply or add. FLOPs is a count of them; FLOPS, capital S, is a rate, operations per second, and is how a GPU's speed is quoted. Training on one token costs three matrix products per layer, each one multiply and one add per weight, so 2 FLOPs per weight per product. A full fine-tune does all three; LoRA skips the weight update for the frozen base.
 
 ![Three matrix products per token: forward (2 FLOPs per weight), error passed back to the inputs (2), and the weight update (2); full fine-tuning does all three for 6, LoRA skips the update for 4](fig/flops-per-token.svg){alt="A layer W with an input arrow, an output arrow, an error arrow going back and an update arrow into W, each labelled 2 FLOPs; a box totals 6 for full fine-tuning and 4 for LoRA"}
 
@@ -298,7 +298,7 @@ Students never download the data themselves; four things have to be in place bef
 3. **Quotas**: `ml.g5.xlarge for training job usage` at least the class size (request 100). Default is often 0 to 4 and increases take days; file three to four weeks ahead. Full list in *Account preparation checklist*.
 4. **Keep the bucket name `ml-marathon-shared`**; the episodes have it filled in. If you stage under another name, tell students to change `shared_bucket` in the first code cell.
 
-Fallback instance if g5 capacity is short: `ml.g6.xlarge` (L4, 24 GB, `$1.13`/h).
+Fallback instance if g5 capacity is short: `ml.g6.xlarge` (L4, 24 GB, `$1.13`/h on the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page).
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -542,7 +542,7 @@ First the guard rails, each one a named variable so that the printout below show
 
 ```python
 instance_type = "ml.g5.xlarge"            # one A10G GPU, 24 GB; the GPU lives in the job, not in this notebook
-g5_price = 1.41                           # $/hour, us-east-1 on-demand
+g5_price = 1.41                           # $/hour, us-east-1 on-demand, from the Instances for ML page
 estimated_minutes = 32                    # the Step 0 estimate
 max_run_minutes = 65                      # about twice the estimate; SageMaker kills the job at this cap, whatever it is doing
 run_id = time.strftime("%m%d-%H%M")                                   # launch time, so every run gets a new name: job names must be unique in the account
@@ -1068,7 +1068,7 @@ Time per page roughly doubles: the sequence is twice as long and attention cost 
 
 ### Exercise 2: Cheaper per run, or just faster?
 
-`ml.g6e.xlarge` (one L40S, 48 GB) costs `$2.61`/h, 1.85x the price of `ml.g5.xlarge`, and runs this workload roughly 2.5–3x faster. It also has twice the GPU memory, so `batch_size` can be 2 or 4 instead of 1, which uses the GPU more efficiently.
+`ml.g6e.xlarge` (one L40S, 48 GB) costs `$2.61`/h on the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page, 1.85x the price of `ml.g5.xlarge`, and runs this workload roughly 2.5–3x faster. It also has twice the GPU memory, so `batch_size` can be 2 or 4 instead of 1, which uses the GPU more efficiently.
 
 Using the Step 0 phase table, estimate the cost of the class job on `ml.g6e.xlarge`. Then do the same for the homework run (25 min of training, 34 min of scoring, 6 min of startup and upload on the g5). Which phase does *not* get faster, and when does the faster instance save money?
 
