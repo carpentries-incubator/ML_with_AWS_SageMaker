@@ -44,7 +44,7 @@ The CLI, the SDK and the console are the same API. Nothing here is more powerful
 
 ## 1. Sign in with Identity Center
 
-This episode runs from your own laptop, which is the point of it: a terminal that works when no notebook is open. The AWS CLI is already installed in CloudShell and on every SageMaker notebook instance, where it uses the instance's role and needs no sign-in; a laptop has neither, so install [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) there, then register the account's Identity Center once. It asks four things. First the start URL and the region of the Identity Center sign-in page, the same ones you used in the browser; for the workshop account both are in the sign-in email from your instructor. It then opens a browser tab for you to approve the device, lets you pick the account and the permission set, and finally asks for a default region, `us-east-2` for the workshop account, and a name for the profile.
+This episode runs from your own laptop, a terminal that works when no notebook is open. The AWS CLI is already installed in CloudShell and on every SageMaker notebook instance, where it uses the instance's role and needs no sign-in; a laptop has neither, so install [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) there, then register the account's Identity Center once. It asks four things. First the start URL and the region of the Identity Center sign-in page, the same ones you used in the browser; for the workshop account both are in the sign-in email from your instructor. It then opens a browser tab for you to approve the device, lets you pick the account and the permission set, and finally asks for a default region, `us-east-2` for the workshop account, and a name for the profile.
 
 ```bash
 aws configure sso
@@ -254,7 +254,7 @@ Then send it. This one line is `estimator.fit()`:
 aws sagemaker create-training-job --cli-input-json file://train-xgboost.json
 ```
 
-Three fields to notice. `StoppingCondition.MaxRuntimeInSeconds` is the `max_run` you set on every estimator; the SDK would have sent 24 hours if you had not. `Tags` is the `tags=` argument, and without it the request is refused on the workshop account. `ResourceConfig` sets the instance type and count, which determine the cost; nothing in a JSON file prints a price, so check it as carefully as you would in a notebook.
+Three fields to notice. `StoppingCondition.MaxRuntimeInSeconds` is the `max_run` you set on every estimator; the SDK would have sent 24 hours if you had not. `Tags` is the `tags=` argument, and without it the request is refused on the workshop account. `ResourceConfig` sets the instance type and count, which determine the cost; nothing in a JSON file prints a price, so look the type up on the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page before sending it, as you would in a notebook.
 
 The CLI returns the moment the request is accepted; nothing waits. To follow the job the way `wait=True` did:
 

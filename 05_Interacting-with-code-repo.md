@@ -173,7 +173,7 @@ with open(".gitignore", "a") as gitignore:   # "a" appends, so re-running the ce
 !cat .gitignore
 ```
 
-3. While we are here, ignore the usual clutter too: caches, temporary files, and the NumPy archives the training episodes write next to notebooks.
+3. While we are here, ignore the usual clutter too: caches and temporary files. (The NumPy archives the training episodes write are the challenge at the end.)
 
 ```python
 with open(".gitignore", "a") as gitignore:

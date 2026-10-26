@@ -24,8 +24,8 @@ exercises: 15
 ## Initial setup: open prefilled .ipynb notebook
 Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/07_Training-models-in-SageMaker-notebooks-part2.ipynb`. Select the **`conda_pytorch`** kernel.
 
-## Setup notebook as controller
-Once your notebook is open, we can setup our SageMaker controller as usual:
+## Setup
+The same setup as the previous episode: role, S3 client, bucket, filenames.
 
 ```python
 import boto3
@@ -48,7 +48,6 @@ train_filename = 'titanic_train.csv'
 test_filename = 'titanic_test.csv'
 ```
 
-Create a SageMaker session to manage interactions with Amazon SageMaker, such as training jobs, model deployments, and data input/output. As before, the region comes from the notebook instance.
 
 ```python
 region = boto3.Session().region_name  # inherited from the notebook instance; do not hard-code a region
@@ -57,7 +56,7 @@ sagemaker_client = session.sagemaker_client  # low-level boto3 client; describe_
 print(f"region = {region}")
 ```
 
-We should also record our local instance information to report this information during testing. First, let's make sure we're starting in the same location to access helper functions
+Work in the Titanic folder beside the lesson clone, with the helper module on the path, and record which instance this notebook runs on so that runtimes can be compared.
 
 ```python
 # The Titanic project folder from the S3 episode, beside the lesson clone: downloads and outputs land here, not in the repository
@@ -84,31 +83,10 @@ s3.download_file(bucket_name, test_filename, test_filename)
 ```
 
 ## Training a neural network with SageMaker
-Let's see how to do a similar experiment, but this time using PyTorch neural networks. We will again demonstrate how to test our custom model train script (`train_nn.py`) before deploying to SageMaker, and discuss some strategies (e.g., using a GPU) for improving train time when needed.
+The same experiment as the previous episode with a PyTorch network in place of XGBoost: test the script here, run it as a job, and then, the question this episode is for, see what a GPU and a second instance do to the time and the bill.
 
-### Preparing the data (compressed npz files)
-When deploying a PyTorch model on SageMaker, it's helpful to prepare the input data in a format that's directly accessible and compatible with PyTorch's data handling methods. The next code cell will prep our npz files from the existing csv versions. 
-
-:::::::::::::::::::::::::::::::: callout
-#### Why are we using this file format? 
-
-1. **Optimized data loading**:  
-   The `.npz` format stores arrays in a compressed, binary format, making it efficient for both storage and loading. PyTorch can easily handle `.npz` files, especially in batch processing, without requiring complex data transformations during training.
-
-2. **Batch compatibility**:  
-   When training neural networks in PyTorch, it's common to load data in batches. By storing data in an `.npz` file, we can quickly load the entire dataset or specific parts (e.g., `X_train`, `y_train`) into memory and feed it to the PyTorch `DataLoader`, enabling efficient batched data loading.
-
-3. **Reduced I/O overhead in SageMaker**:  
-   Storing data in `.npz` files minimizes the I/O operations during training, reducing time spent on data handling. This is especially beneficial in cloud environments like SageMaker, where efficient data handling directly impacts training costs and performance.
-
-4. **Consistency and compatibility**:  
-   Using `.npz` files allows us to ensure consistency between training and validation datasets. Each file (`train_data.npz` and `val_data.npz`) stores the arrays in a standardized way that can be easily accessed by keys (`X_train`, `y_train`, `X_val`, `y_val`). This structure is compatible with PyTorch's `Dataset` class, making it straightforward to design custom datasets for training.
-
-5. **Support for multiple data types**:  
-   `.npz` files support storage of multiple arrays within a single file. This is helpful for organizing features and labels without additional code. Here, the `train_data.npz` file contains both `X_train` and `y_train`, keeping everything related to training data in one place. Similarly, `val_data.npz` organizes validation features and labels, simplifying file management.
-
-Saving the data as `.npz` files keeps loading fast and the arrays in the shape the training script expects.
-:::::::::::::::::::::::::::::::::::::::
+### Preparing the data
+The training script reads NumPy arrays from `.npz` files rather than CSVs: one file holds the training features and labels, one the validation ones, already encoded and standardized, so the script does no preprocessing of its own. The cells below make those two files from the Titanic CSV and upload them.
 
 Open `ML_with_AWS_SageMaker/scripts/train_nn.py` in the file browser and read it before going on; it is short. Three things to find: `TitanicNet`, a three-layer network with 7 inputs and one output; the training loop in `train()`, which prints `validation:accuracy = ...` once per hundred epochs (the hyperparameter-tuning episode's metric regex reads that line); and the last lines, which save the model to `/opt/ml/model` inside a job and next to the script otherwise, the same trick as `train_xgboost.py`. Questions now are cheaper than questions once it is running on a billed instance.
 
@@ -193,15 +171,15 @@ print(f"Name: {name}, Project: {project}, Purpose: {purpose}")
 
 ## Estimating a training job before you launch it
 
-Every job in this lesson gets an estimate written down before `fit()`, and the habit matters more than the numbers here, which are cents. There are two ways to make the estimate, and which one applies depends on the size of the model.
+Every job in this lesson gets an estimate written down before `fit()`. There are two ways to make it, and which one applies depends on the size of the model.
 
-**Small models: time a smoke test and scale it.** For a network like `TitanicNet`, the arithmetic is nothing; the time is Python overhead per epoch plus the job's fixed startup. So measure the 100-epoch run you just did, scale to the epochs and data you plan, and add the startup:
+**Small models: time a smoke test and scale it.** For a network like `TitanicNet`, the arithmetic is nothing; the time is Python overhead per epoch plus the job's fixed startup. Each epoch costs the same as the last, so training time scales linearly with epochs, and with rows once the data is bigger than a batch. So measure the 100-epoch run you just did, multiply by the epochs and rows you plan, and add the two or three minutes of startup, which are billed and are most of the bill for a job this small:
 
 ```python
 local_seconds_per_epoch = (t.time() - start_time) / epochs     # from the smoke test above: wall-clock over its 100 epochs
 planned_epochs = 1000
 startup_minutes = 3                                            # container pull + data download, billed; the same for every job
-rate = 0.115                                                   # $/hour, ml.m5.large
+rate = 0.115                                                   # $/hour, ml.m5.large, from the Instances for ML page
 
 train_minutes = local_seconds_per_epoch * planned_epochs / 60
 estimate = (train_minutes + startup_minutes) / 60 * rate
@@ -211,7 +189,7 @@ print(f"estimate: {train_minutes + startup_minutes:.0f} min billed, about ${esti
 
 Expect a couple of minutes of training plus two or three of startup: about a cent. (The `ml.t3.medium` notebook is slower than the `ml.m5.large` the job runs on, so the training part of the estimate is high. Our run billed 2.8 minutes in total, `$0.005`.) If the planned run has ten times the rows, multiply the training minutes by ten; the startup does not change.
 
-**Large models: count the arithmetic.** Once a model has millions of parameters, compute is the cost, and it can be counted before any instance exists. Training one example through a dense network or a transformer costs about 6 floating-point operations per parameter (2 forward, 4 backward); multiply by parameters, examples and epochs, and divide by what the GPU does per second, about a quarter of its data-sheet peak in practice:
+**Large models: count the arithmetic.** From a few hundred million parameters up, the training arithmetic takes longer than the job's startup, so compute is the cost, and it can be counted before any instance exists. The unit is the floating-point operation, one multiply or add: FLOPs, plural, is a count of them, and FLOPS with a capital S is a rate, operations per second, which is how a GPU's speed is quoted (an A10G does about 70 trillion per second, 70 TFLOPS). Training one example through a dense network or a transformer costs about 6 FLOPs per parameter (2 forward, 4 backward); multiply by parameters, examples and epochs for the count, and divide by the rate the GPU reaches, about a quarter of its data-sheet peak in practice:
 
 ```text
 FLOPs       = 6 × parameters × examples × tokens per example × epochs
@@ -219,23 +197,99 @@ GPU-seconds = FLOPs ÷ (GPU peak FLOPS × 0.25)
 cost        = GPU-hours × instance price per hour + startup
 ```
 
-On `TitanicNet` this says the training is nothing, which is the point of the two regimes:
+On `TitanicNet` the arithmetic comes out as a fraction of a second, which is why the smoke-test method is the one to use for it:
 
 ```python
 n_params = sum(p.numel() for p in TitanicNet().parameters())   # the network's weights and biases: how big the model is
-n_examples = len(np.load("train_data.npz")["X_train"])
-flops = 6 * n_params * n_examples * planned_epochs
+n_examples = len(np.load("train_data.npz")["X_train"])          # one example = one passenger, a row of 7 numbers; 569 of them after the validation split
+tokens_per_example = 1                                          # the network reads a whole row in one step, so a row is one token
+flops = 6 * n_params * n_examples * tokens_per_example * planned_epochs
 print(f"{n_params:,} parameters x {n_examples} examples x {planned_epochs} epochs = {flops:.1e} FLOPs")
 print(f"on an A10G at a quarter of 70 TFLOPS: {flops / (70e12 * 0.25):.4f} seconds of arithmetic; the bill is the startup")
 ```
 
-The same rule, in `helpers.estimate_training_cost`, picks an instance and prints the time, cost and `max_run` for any model size. It only earns its keep from about 1e15 FLOPs up, a few million parameters over a few million examples, which is where the fine-tuning episode uses it on a 3-billion-parameter model. Here it is on a run that does need it: a 125-million-parameter text model, a million training examples of 256 tokens, three passes:
+The same rule, in `helpers.estimate_training_cost`, picks an instance and prints the time, cost and `max_run` for any model size. It only earns its keep from about 1e15 FLOPs up, a few million parameters over a few million examples, which is where the fine-tuning episode uses it on a 3-billion-parameter model. Its four inputs are the four numbers in the formula, and what each one is depends on the data:
+
+- `params_billions`: every parameter in the model, in billions. `TitanicNet` has 2,625, which is 0.0000026; a BERT-base text classifier has 110 million, 0.11.
+- `examples`: one example is one training item, whatever the model takes in at a time. A passenger's row here; one tweet, one abstract, one document for a text model; one page image in the fine-tuning episode.
+- `tokens_per_example`: how many units the model processes for one item, which is what the arithmetic scales with. A row through `TitanicNet` is one step, so 1. A text model works in tokens, about 1.3 per English word: a tweet is 40, an abstract 256, a short paper 2,000. An image through a vision transformer is one token per patch, 196 for a 224 × 224 image in 16 × 16 patches.
+- `epochs`: passes over the whole set.
+
+The three data numbers multiply to the tokens the model trains on. Here it is on a run that does need the rule: a BERT-sized text classifier trained from scratch on a million abstracts, three passes:
 
 ```python
-helpers.estimate_training_cost(params_billions=0.125, examples=1_000_000, tokens_per_example=256, epochs=3)
+helpers.estimate_training_cost(
+    params_billions=0.125,      # a BERT-base-sized model: 125 million parameters
+    examples=1_000_000,         # one example = one abstract; a million of them
+    tokens_per_example=256,     # an abstract is about 190 words, 256 tokens
+    epochs=3,                   # three passes over the million abstracts
+)
 ```
 
-About eight GPU-hours and nine dollars on the cheapest instance that fits, eight hours of wall-clock on one GPU; a job you want capped and tagged before it starts.
+```output
+Training from scratch of a 0.125B model: 1,000,000 examples x 256 tokens x 3 passes = 768.0M tokens
+memory:     ~6 GB needed; ml.g6.xlarge has 24 GB (1 x L4)
+compute:    8.64e+17 FLOPs at 25% of the 121 TFLOPS peak = 7.93 GPU-hours
+wall-clock: ~486 min including 10 min startup
+cost:       ~$9.15 per run at $1.13/h; ~$9.15 for 1 run(s)
+set max_run=58200  (970 min, about twice the estimate)
+```
+
+Line by line:
+
+- **tokens**: examples × tokens per example × epochs. 768 million tokens is the amount of work; everything below is derived from it.
+- **memory**: 16 bytes per parameter for full training (weights, gradients and the optimizer's two running averages, in the fine-tuning episode's table) is 2 GB for 125 million parameters, plus 4 GB the helper allows for activations: 6 GB. The cheapest GPU on the lesson's list with that much memory is the `ml.g6.xlarge`, one L4 with 24 GB, so that is the instance the rest of the lines price.
+- **compute**: 6 FLOPs × 0.125e9 parameters × 768e6 tokens is 5.8e17; the helper multiplies by 1.5 because it assumes gradient checkpointing, which recomputes the forward pass during the backward one to save memory, giving 8.6e17. Divided by a quarter of the L4's 121 TFLOPS peak, 30 trillion a second, that is 28,500 seconds: 7.9 GPU-hours.
+- **wall-clock**: the GPU-hours on one GPU, plus the 10 minutes of startup the helper assumes for a job this size.
+- **cost**: the wall-clock hours at the instance's price, `$1.13` an hour, so about `$9` a run. The second figure is the same times the number of runs, one here; the hyperparameter-tuning episode is where that multiplier bites.
+- **max_run**: twice the wall-clock estimate, in seconds, ready to paste into the estimator. A job that runs past this is killed, so a hung run costs at most `$18`, not a week.
+
+The function also returns the same numbers as a dictionary, so a notebook can use `max_run_seconds` and `instance_type` directly rather than copying them from the printout. Eight hours and nine dollars on one GPU is a job you want capped and tagged before it starts.
+
+### What a language model costs, before anyone launches one
+
+Run the same function on two sizes a project might be tempted by: a 1-billion-parameter model and a 7-billion one, each trained from scratch on a million documents of 2,000 tokens, one pass. Nothing is launched; the function only does the arithmetic.
+
+```python
+helpers.estimate_training_cost(
+    params_billions=1,          # a 1B model, the size of the smallest open-weight language models
+    examples=1_000_000,         # one example = one document, a million of them
+    tokens_per_example=2000,    # a short paper: about 1,500 words
+    epochs=1,                   # one pass
+)
+```
+
+```output
+Training from scratch of a 1B model: 1,000,000 examples x 2,000 tokens x 1 passes = 2,000.0M tokens
+memory:     ~20 GB needed; ml.g6.xlarge has 24 GB (1 x L4)
+compute:    1.80e+19 FLOPs at 25% of the 121 TFLOPS peak = 165.29 GPU-hours
+wall-clock: ~9927 min including 10 min startup
+cost:       ~$186.97 per run at $1.13/h; ~$186.97 for 1 run(s)
+set max_run=1191300  (19855 min, about twice the estimate)
+```
+
+```python
+helpers.estimate_training_cost(
+    params_billions=7,          # a 7B model, the size most "small" open-weight LLMs are
+    examples=1_000_000,         # the same million documents
+    tokens_per_example=2000,
+    epochs=1,
+)
+```
+
+```output
+Training from scratch of a 7B model: 1,000,000 examples x 2,000 tokens x 1 passes = 2,000.0M tokens
+memory:     ~116 GB needed; ml.g6e.12xlarge has 192 GB (4 x L40S)
+compute:    1.26e+20 FLOPs at 25% of the 362 TFLOPS peak = 386.74 GPU-hours
+wall-clock: ~5811 min including 10 min startup
+cost:       ~$1270.69 per run at $13.12/h; ~$1270.69 for 1 run(s)
+set max_run=697200  (11620 min, about twice the estimate)
+warning:    multi-GPU instance; not allowed on the class account, and more GPUs do not make the run cheaper
+```
+
+Read the two against the 125M run above. The 1B model still fits on the cheapest GPU, but the arithmetic is 165 GPU-hours: a week of wall-clock on one GPU, `$187`, and a `max_run` of 330 hours, which the account refuses, since no job may run longer than 48 hours. A run like that has to be split into checkpointed jobs of a day or two each, or moved to a four-GPU box, which finishes in two days for the same `$187` plus the startup, and which the class account does not allow. The 7B model no longer fits on one GPU at all: 116 GB of weights, gradients and optimizer state need the four-GPU `ml.g6e.12xlarge` at `$13` an hour, four days of it, `$1,270` for one pass over two billion tokens. And two billion tokens is a small corpus; the models on Bedrock were trained on thousands of times more.
+
+That is why nothing in this lesson trains a language model, and why the Marathon's rules say no full training above 20 million parameters and inference only above 8 billion. What the lesson does instead is in the fine-tuning episode: LoRA on a 3-billion-parameter model, which trains a few million adapter parameters on 251 pages for about a dollar, and the RAG episodes, which use a trained model through Bedrock by the token. The function is for the day a project asks for more: run it first, and the number says whether the run is a job, a grant line, or something to do differently.
 
 ::::::::::::::::::::::::::::::::::::: challenge
 
@@ -357,7 +411,7 @@ X_train, y_train = X_train.to(device), y_train.to(device)
 
 ### CPU or GPU: predict, then measure
 
-We're about to run the identical job on an `ml.g4dn.xlarge` (one NVIDIA T4 GPU, about `$0.74`/hour) instead of the `ml.m5.large` (`$0.115`/hour). Before you run the cell:
+We're about to run the identical job on an `ml.g4dn.xlarge` (one NVIDIA T4 GPU, about `$0.74`/hour) instead of the `ml.m5.large` (`$0.115`/hour); both rates are from the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page. Before you run the cell:
 
 1. Predict which instance finishes first (total wall-clock, as `fit()` reports it).
 2. Predict which costs less for this job.
@@ -429,7 +483,7 @@ If training time continues to be critical, sticking with a CPU instance may be t
 
 ## Distributed Training for Neural Networks in SageMaker
 
-The previous episode gave the rule of thumb: upgrade the single instance first, and consider multiple instances only when the dataset no longer fits in one instance's memory (tens of GB or more) or a single-instance run takes longer than about 10 hours. The GPU exercise was Option 1. Let's now look at Option 2, starting with what `instance_count=2` does.
+When a run is too slow, the first move is a bigger machine, which is what the GPU exercise above was. The second is more than one machine, which pays only when the dataset no longer fits in one instance's memory (tens of GB or more) or a single-instance run takes longer than about 10 hours. This section measures it, starting with what `instance_count=2` does on its own.
 
 ### What `instance_count=2` does on its own
 
@@ -441,46 +495,11 @@ Setting `instance_count=2` on an estimator makes SageMaker start two instances a
 - `train_nn.py` has no distributed code, so each instance trains its own independent copy of the model on all of the data for all 1000 epochs, and each saves a model.
 - SageMaker bills `BillableTimeInSeconds x InstanceCount`.
 
-So without a distribution strategy, two instances means the same job twice, in parallel, at double the cost. Estimate first: about the same 3-4 minutes of wall-clock as the single-instance run, but billed for two instances, so about `$0.01` on `ml.m5.large` (our run: 3.5 minutes of wall-clock, 5.5 billable minutes across the two instances, `$0.010`).
-
-```python
-instance_count = 2   # demonstration: NOT expected to be faster, and expected to cost double
-instance_type = "ml.m5.large"
-
-pytorch_estimator_2x = PyTorch(
-    base_job_name=f"{notebook_instance_name}-nn",
-    max_run=max_run, # in seconds; always include (max 48 hours)
-    entry_point="/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py",
-    role=role,
-    tags=job_tags,
-    instance_type=instance_type,
-    instance_count=instance_count,  # no distribution= argument, so each instance runs the whole script on the whole dataset
-    framework_version="2.3",
-    py_version="py311",
-    output_path=output_path,
-    sagemaker_session=session,
-    hyperparameters={
-        "train": "/opt/ml/input/data/train/train_data.npz",
-        "val": "/opt/ml/input/data/val/val_data.npz",
-        "epochs": epochs,
-        "learning_rate": learning_rate
-    }
-)
-
-start = t.time()
-pytorch_estimator_2x.fit({"train": train_input, "val": val_input})
-end = t.time()
-print(f"Runtime for training on SageMaker: {end - start:.2f} seconds, instance_type: {instance_type}, instance_count: {instance_count}")
-
-desc_2x = job_cost_report(pytorch_estimator_2x.latest_training_job.name, prices[instance_type])
-print(f"Single-instance job billed {desc_cpu['BillableTimeInSeconds']/60:.1f} min; two-instance job billed {desc_2x['BillableTimeInSeconds']*2/60:.1f} min")
-```
-
-Look at the job's log: open [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training), click the job's name, scroll to **Monitor**, click **View logs**. This time CloudWatch lists two streams, `algo-1` and `algo-2`, and each one prints all 1000 epochs. The wall-clock time is about the same as the single-instance run (slightly longer, if anything, because two instances have to be provisioned), and the billable minutes are double.
+So without a distribution strategy, two instances means the same job twice, in parallel, at double the cost. There is nothing to launch to see this; we ran it once while writing the episode, and the record is what the bullets predict: the same 3.5 minutes of wall-clock as the single-instance run, 5.5 billable minutes across the two instances, `$0.010`, two CloudWatch log streams, `algo-1` and `algo-2`, each printing all 1000 epochs, and two identical saved models. Nobody wants that job. The one worth launching is below.
 
 ### Data parallelism, done properly
 
-To split one training run across two instances instead of running it twice, the script needs three things the demo above did not have, and the estimator needs one. `scripts/train_nn_ddp.py` is `train_nn.py` with those three added; open the two side by side, the differences are marked 1, 2 and 3 in the comments.
+To split one training run across two instances instead of running it twice, the script needs three things `train_nn.py` does not have, and the estimator needs one. `scripts/train_nn_ddp.py` is `train_nn.py` with those three added; open the two side by side, the differences are marked 1, 2 and 3 in the comments.
 
 1. **Join the process group.** The launcher starts one copy of the script on each instance. The copies are numbered from zero, and a copy's number is its **rank**: with two instances, one copy is rank 0 and the other rank 1, and the count of copies, 2, is the **world size**. Each copy learns its own rank and the world size from environment variables the launcher sets, and `setup_distributed` reads them and calls `init_process_group`, after which the copies can talk to each other. The rank is the only thing that differs between the copies, and everything below that has to differ between instances keys off it. With no launcher the function returns rank 0 of 1 and the script trains like `train_nn.py`.
 2. **Shard the data.** Each copy keeps the rows whose index, counting from zero, leaves its rank as the remainder when divided by the world size: rank 0 takes rows 0, 2, 4, ... and rank 1 takes rows 1, 3, 5, ..., which is `X_train[rank::world_size]`. Half the training set each, no row seen twice, and the copies agree on the split without talking, because each one knows only its rank.
@@ -516,7 +535,7 @@ print(f"Data-parallel run: {(t.time() - start) / 60:.1f} min wall-clock on 2 x m
 desc_ddp = job_cost_report(pytorch_estimator_ddp.latest_training_job.name, prices["ml.m5.large"])
 ```
 
-Read the log before the bill. The two CloudWatch streams now say different things: each prints `training on 446 of 891 rows` (or 445), and only `algo-1` prints the epochs and saves the model. The final validation loss matches the single-instance run to the third decimal, because the averaged gradient is the same gradient; that match is the proof that the work was split rather than copied. The wall-clock is not shorter. Each step now costs a round of gradient exchange between two machines, which takes longer than the 445 rows it saves, and the bill is still two instances' worth. That is the rule of thumb again, measured: data parallelism pays when the step is big enough that the exchange is a small part of it, which on tabular data of 891 rows it never is.
+Read the log before the bill. The two CloudWatch streams now say different things: each prints `training on 285 of 569 rows` (or 284), and only `algo-1` prints the epochs and saves the model. The final validation loss matches the single-instance run to the third decimal, because the averaged gradient is the same gradient; that match is the proof that the work was split rather than copied. The wall-clock is not shorter. Each step now costs a round of gradient exchange between two machines, which takes longer than the 445 rows it saves, and the bill is still two instances' worth. That is the rule of thumb again, measured: data parallelism pays when the step is big enough that the exchange is a small part of it, which on tabular data of 891 rows it never is.
 
 **Model parallelism** is the other kind, for a model too large for one device's memory, where the layers themselves are spread across devices (`smdistributed.modelparallel`, or PyTorch's FSDP). There is no example here because no model in this lesson needs it: the fine-tuning episode's memory arithmetic shows what does, a model whose weights plus their gradients and optimizer state exceed one GPU, and the usual answer at this scale is a LoRA fine-tune, which shrinks the problem instead of spreading it.
 
@@ -526,7 +545,6 @@ Either way, the rule of thumb stands: a bigger single instance first, and multip
 
 ::::::::::::::::::::::::::::::::::::: keypoints
 
-- **Efficient data handling**: The `.npz` format is optimized for efficient loading, reducing I/O overhead and enabling batch compatibility for PyTorch's `DataLoader`.
 - **Startup dominates small jobs**: Every SageMaker training job waits a minute or so for an instance (not billed), then spends one to three minutes on container pull and data download (billed) before the script runs; for a job whose script finishes in seconds, that overhead is the whole bill.
 - **GPU training**: While beneficial for larger models or datasets, GPUs may introduce overhead for smaller tasks; selecting the right instance type is critical for cost-efficiency.
 - **Data parallelism vs. model parallelism**: Data parallelism splits data across instances and synchronizes model weights, suitable for typical neural network tasks. Model parallelism, which divides model layers, is ideal for very large models that exceed memory capacity.

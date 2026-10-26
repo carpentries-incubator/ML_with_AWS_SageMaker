@@ -130,7 +130,7 @@ But it is the **most expensive way to run RAG and the easiest one to get wrong**
 - Treat it as a learning exercise, not a deployment pattern.
 - Stop the instance the moment you are done, and **verify** the status on the [Notebook instances page](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/notebook-instances).
 - Set up an [AWS Budget](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html) alert and consider a [lifecycle configuration](https://docs.aws.amazon.com/sagemaker/latest/dg/notebook-lifecycle-config.html) that auto‑stops idle notebooks.
-- For larger models the hourly rate (e.g., `$25`/hour for a p4d.24xlarge) becomes a limiting factor very quickly.
+- For larger models the hourly rate (e.g., `$25`/hour for a p4d.24xlarge; the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page has the full list) becomes a limiting factor very quickly.
 
 **Use it for:** walking through RAG internals step by step, debugging a model locally before packaging it as a job, or short experiments where you will be at the keyboard the whole time.
 

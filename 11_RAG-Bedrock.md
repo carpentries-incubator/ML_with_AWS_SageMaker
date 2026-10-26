@@ -1265,7 +1265,7 @@ When deciding between these options in practice:
   - You want tight control over which architectures/checkpoints you run or fine‑tune.  
   - You already have institutional access to cost‑effective on‑prem or cloud GPUs.
 
-The core **RAG evaluation logic stays identical** across all three episodes, which is the main takeaway:
+The RAG evaluation logic is the same in all three episodes:
 once you have a clean retrieval + normalization pipeline (like WattBot’s, in `wattbot_rag.py`), swapping out the generator
 is mostly a matter of re‑implementing `embed_query` and `generate`
 for each compute option you care about.

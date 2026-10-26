@@ -151,7 +151,7 @@ Managing your AWS expenses is vital to staying within budget. Follow these steps
    - Go to the AWS **Billing Dashboard**.
    - Navigate to **Budgets** and create a budget alert to track your spending.
 2. **Review usage and costs:**
-   - Use the AWS **Cost Explorer** in the Billing Dashboard to view detailed expenses by service, such as SageMaker and S3.
+   - Use the AWS **Cost Explorer** in the Billing Dashboard to view detailed expenses by service, such as SageMaker and S3. To turn a line on the bill back into hours, the rates are on the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page.
 3. **Use tags for cost tracking:**
    - Refer to the tags you set up earlier in the workshop. Remember that tags never propagate between resources: your notebook instance, each S3 bucket, each training/tuning/Processing job, and each Bedrock application inference profile carries its own tags, and anything you launched without tags is untraceable after the fact.
    - Only the three approved keys count on the bill, `Name`, `Project` and `Purpose`, spelled exactly (the S3 episode says why); a tag you just added can take up to 24 hours to appear in Cost Explorer.
