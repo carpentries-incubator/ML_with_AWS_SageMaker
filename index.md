@@ -4,18 +4,32 @@ site: sandpaper::sandpaper_site
 
 ## Workshop Overview
 
-This workshop introduces machine learning workflows on AWS using **Amazon SageMaker**. It has two parts:
+This workshop is about running machine learning and AI work on AWS without losing control of the bill: where the data goes, which machine does what, how a job is launched and paid for, and how to find out what it cost. It is in four parts.
 
-1. **SageMaker: training, tuning and fine-tuning.** Storing data in S3, using a small notebook instance as a *controller*, running training jobs (XGBoost and PyTorch) and hyperparameter tuning, with guidance on choosing CPU vs. GPU instances and when parallel instances help; then fine-tuning a 3B open-weight vision-language model with LoRA as a training job, for handwriting transcription, with before/after evaluation on held-out pages.
-2. **Retrieval-Augmented Generation (RAG).** Building a RAG pipeline over a corpus of research papers two ways: with Amazon Bedrock (pay per token, nothing left running), including multimodal embeddings for the questions that live in tables and figures, and with SageMaker Processing jobs serving an open-weight model that Bedrock does not offer. An optional episode does the same on a notebook GPU, as the comparison.
+**Part 1, orientation.** What the cloud offers a researcher compared with a laptop or the cluster down the hall, and what it costs. The two services the lesson uses: **SageMaker** rents machines by the second, for a notebook you work in and for jobs that run on their own and end; **Bedrock** serves hosted models by the token, with nothing to start or stop. The four things every episode uses, S3, a notebook instance, jobs and Bedrock, and the cost habits every later episode follows.
+
+**Part 2, SageMaker: data, training, tuning and fine-tuning.**
+
+- Put the data in an S3 bucket and start a small notebook instance that launches everything else. The notebook is the controller, not the workhorse: the expensive compute runs on instances SageMaker rents for each job and releases when it ends.
+- Train XGBoost and PyTorch models on the Titanic data as training jobs. Estimate the cost before each launch and read the billable seconds after, compare a CPU instance with a GPU, and see what two instances buy and what they do not.
+- Run a hyperparameter tuning job that trains ten models under a budget set up front.
+- Fine-tune a 3B open-weight vision-language model with LoRA, as a training job with checkpoints and a runtime cap, for transcribing handwritten German letters (Badger Scribe), scored on held-out pages before and after.
+
+**Part 3, Bedrock: inference and retrieval-augmented generation.**
+
+- Build a RAG pipeline over a corpus of energy research papers (WattBot): embed the papers, retrieve, generate, score. The models are Bedrock's, paid per token through tagged inference profiles so the spend has an owner, and the whole run costs cents.
+- Add multimodal embeddings for the questions whose answers live in tables and figures, and measure what they change.
+- Run the same pipeline with an open-weight model Bedrock does not serve, as SageMaker Processing jobs that rent a GPU for the minutes they need; optionally, the same on a notebook GPU, as the comparison.
+
+**Part 4, resource management and cleanup.** What to stop, what to delete, how to read the bill, and the rules the account enforces on every launch, with how to set the same rules on an account of your own. An optional episode shows the same jobs from a terminal.
 
 ### Who this workshop is for
 
-Researchers and students who use ML or AI in their work and want to run it on AWS. The lesson assumes a basic machine learning background: you know what training, hyperparameter tuning, fine-tuning, embeddings and retrieval-augmented generation are. It does not teach these concepts; instructors may briefly review some of them depending on the audience, but the default schedule does not include that time. Python and Jupyter are used throughout; no prior AWS experience is needed.
+Researchers and students who use ML or AI in their work and want or need to run it in the cloud. The lesson assumes a basic machine learning background: you know what training, hyperparameter tuning, fine-tuning, embeddings and retrieval-augmented generation are. It does not teach these concepts; instructors may briefly review some of them depending on the audience, but the default schedule does not include that time. Python and Jupyter are used throughout; no prior AWS experience is needed.
 
 ### Cost controls
 
-Run as written, the full workshop costs a few dollars per learner. Every episode tags its resources, caps job runtime, estimates cost before launching and checks the bill after, and cleans up. The final episode covers monitoring and cleanup, and the rules a shared account can enforce.
+The cloud is often very affordable for research workloads, and this lesson shows it: run as written, the whole workshop, training jobs, a tuning job, a LoRA fine-tune on a GPU and two RAG pipelines, costs each learner a few dollars. What keeps it there is habit rather than restraint. Every episode tags its resources, caps job runtime, estimates cost before launching and checks the bill after, and cleans up. The final episode covers monitoring and cleanup, and the rules a shared account can enforce.
 
 ### What This Workshop Does Not Cover
 

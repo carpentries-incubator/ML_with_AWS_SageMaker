@@ -1,5 +1,5 @@
 ---
-title: 'AWS Nuke Script Tutorial'
+title: 'Instructor Notes'
 name: Zain Waseem & Chris Endemann
 ---
 
@@ -9,13 +9,23 @@ name: Zain Waseem & Chris Endemann
 
 These live under the **Extras** dropdown, which the site shows only when the **Instructor View** toggle (top bar) is on.
 
-- [Account preparation checklist (quotas, Bedrock, tags)](aws-account-prep.html): before the term. As of October 2026 the notebook role `ml-sagemaker-use` carries two inline policies set from CloudShell: `BedrockAccess`, so any instance can call Bedrock, and `WorkshopGuardRails`, which refuses untagged, blank-tagged or placeholder-tagged jobs, instance types outside the lesson's list, endpoints and EC2. Both are on that page with the command that applies them; the guard rails are not yet on the learner permission set.
+- [Account preparation checklist (quotas, Bedrock, tags)](aws-account-prep.html): before the term. As of October 2026 the notebook role `ml-sagemaker-use` carries two inline policies set from CloudShell: `BedrockAccess`, so any instance can call Bedrock, and `WorkshopGuardRails`, which refuses jobs with missing or blank tags or with a `Project` or `Purpose` off the lists in `scripts/guardrails.json`, instance types outside the lesson's list, caps over 48 hours, endpoints and EC2. Both are on that page with the command that applies them; the guard rails are not yet on the learner permission set.
 - [Shared data bucket: staging before each term](shared-data-bucket.html): create and fill `ml-marathon-shared` from CloudShell.
 - [Badger Scribe data: publishing a release](badger-scribe-data-release.html): only when the competition data changes.
 - [Fine-tuning episode: cost, capacity and setup](finetuning-episode-cost-estimate.html)
 - This page: cleaning the account with aws-nuke after the workshop. The config it uses is [instructors/nuke-config.yml](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/instructors/nuke-config.yml) in the repository.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
+
+## How the workshop is taught
+
+The first part is taught in lockstep: the overview, S3, the notebook instance, reading and writing S3, and the first training episode, through the first job launch and its bill. Everyone does the same thing at the same time, because everything after depends on it (a bucket, a running instance, the cloned repository, and the habit of estimating a job and then reading its billable seconds).
+
+After that the lesson opens up. Learners pick the episodes closest to their own work, the PyTorch training and tuning episodes, the fine-tune, the Bedrock RAG episode or the Processing-jobs one, and work through them with instructors circulating. The prefilled notebooks make this possible: each episode runs on its own after the first part, and the expensive steps are staged in the shared bucket so a learner who starts late still finishes. The Bedrock episode is the one to steer everyone through at some point, since it is the cheapest route to a working pipeline and the one most projects will use.
+
+This format worked for the 2026 Marathon class in three hours. It needs participants who are willing to ask questions and work through things on their own, which is the audience the lesson assumes: intermediate, comfortable in Python and Jupyter, knowing what training, tuning, fine-tuning and RAG are, with no AWS experience required. With a group that expects to be walked through every cell, keep the lockstep going through the PyTorch episode and the Bedrock episode and leave the rest as homework.
+
+## Cleaning the account with aws-nuke
 
 Hello all! In this document, we will show you how to run an AWS Nuke script within the ML-Marathon Sagemaker server. As you progress through the Sagemaker
 workshop, towards the end of the workshop you'll be tasked to remove and empty your notebooks \& buckets. However, depending on the size of your data, it can take a long time to remove them altogether.
