@@ -726,6 +726,14 @@ launch; what they cost is a job on the bill under <code>DoeJohn</code>,
 which Cost Explorer shows and the first episodes tell learners to
 check.</li>
 <li>
+<strong>Buckets are not covered.</strong> A bucket can be created
+without tags, from the console or the SDK, and the policy does not try
+to stop it: the S3 console creates the bucket and attaches the tags in a
+second call, so a deny on an untagged <code>CreateBucket</code> would
+refuse every bucket. An untagged bucket costs cents a month and shows on
+the bill as unallocated, which is where you find it at cleanup. The S3
+episode makes the tags mandatory in words instead.</li>
+<li>
 <strong>RuntimeCapAtMost48Hours and ProcessingJobsNeedACap</strong>
 bound what one job can bill. A training job always carries a
 <code>StoppingCondition</code> (the API requires one, and the SDK’s

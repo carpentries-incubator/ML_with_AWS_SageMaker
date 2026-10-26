@@ -273,7 +273,7 @@
     <div id="flush-collapsecurrent" class="accordion-collapse collapse show" data-bs-parent="#accordionFlushcurrent">
       <div class="accordion-body">
         <ul><li><a href="#initial-setup-open-prefilled-.ipynb-notebook">Initial setup: open prefilled .ipynb notebook</a></li>
-<li><a href="#setup-notebook-as-controller">Setup notebook as controller</a></li>
+<li><a href="#setup">Setup</a></li>
 <li><a href="#training-a-neural-network-with-sagemaker">Training a neural network with SageMaker</a></li>
 <li><a href="#testing-on-notebook-instance">Testing on notebook instance</a></li>
 <li><a href="#deploying-pytorch-neural-network-via-sagemaker">Deploying PyTorch neural network via SageMaker</a></li>
@@ -480,9 +480,9 @@ determine when each is appropriate in SageMaker.</li>
 <hr class="half-width"><p>Open the notebook from:
 <code>/ML_with_AWS_SageMaker/notebooks/07_Training-models-in-SageMaker-notebooks-part2.ipynb</code>.
 Select the <strong><code>conda_pytorch</code></strong> kernel.</p>
-</section><section><h2 class="section-heading" id="setup-notebook-as-controller">Setup notebook as controller<a class="anchor" aria-label="anchor" href="#setup-notebook-as-controller"></a></h2>
-<hr class="half-width"><p>Once your notebook is open, we can setup our SageMaker controller as
-usual:</p>
+</section><section><h2 class="section-heading" id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a></h2>
+<hr class="half-width"><p>The same setup as the previous episode: role, S3 client, bucket,
+filenames.</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -505,10 +505,6 @@ usual:</p>
 <span id="cb1-17"><a href="#cb1-17" tabindex="-1" aria-label="code-block-1-17"></a>train_filename <span class="op">=</span> <span class="st">'titanic_train.csv'</span></span>
 <span id="cb1-18"><a href="#cb1-18" tabindex="-1" aria-label="code-block-1-18"></a>test_filename <span class="op">=</span> <span class="st">'titanic_test.csv'</span></span></code></pre>
 </div>
-<p>Create a SageMaker session to manage interactions with Amazon
-SageMaker, such as training jobs, model deployments, and data
-input/output. As before, the region comes from the notebook
-instance.</p>
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -517,9 +513,9 @@ instance.</p>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a>sagemaker_client <span class="op">=</span> session.sagemaker_client  <span class="co"># low-level boto3 client; describe_training_job() below uses it</span></span>
 <span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a><span class="bu">print</span>(<span class="ss">f"region = </span><span class="sc">{</span>region<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<p>We should also record our local instance information to report this
-information during testing. First, let’s make sure we’re starting in the
-same location to access helper functions</p>
+<p>Work in the Titanic folder beside the lesson clone, with the helper
+module on the path, and record which instance this notebook runs on so
+that runtimes can be compared.</p>
 <div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -548,64 +544,17 @@ Titanic CSVs from S3 again.</p>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a>s3.download_file(bucket_name, test_filename, test_filename)</span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="training-a-neural-network-with-sagemaker">Training a neural network with SageMaker<a class="anchor" aria-label="anchor" href="#training-a-neural-network-with-sagemaker"></a></h2>
-<hr class="half-width"><p>Let’s see how to do a similar experiment, but this time using PyTorch
-neural networks. We will again demonstrate how to test our custom model
-train script (<code>train_nn.py</code>) before deploying to SageMaker,
-and discuss some strategies (e.g., using a GPU) for improving train time
-when needed.</p>
+<hr class="half-width"><p>The same experiment as the previous episode with a PyTorch network in
+place of XGBoost: test the script here, run it as a job, and then, the
+question this episode is for, see what a GPU and a second instance do to
+the time and the bill.</p>
 <div class="section level3">
-<h3 id="preparing-the-data-compressed-npz-files">Preparing the data (compressed npz files)<a class="anchor" aria-label="anchor" href="#preparing-the-data-compressed-npz-files"></a></h3>
-<p>When deploying a PyTorch model on SageMaker, it’s helpful to prepare
-the input data in a format that’s directly accessible and compatible
-with PyTorch’s data handling methods. The next code cell will prep our
-npz files from the existing csv versions.</p>
-<div id="why-are-we-using-this-file-format" class="callout">
-<div class="callout-square">
-<i class="callout-icon" data-feather="bell"></i>
-</div>
-<span class="callout-header">Callout</span>
-<div id="why-are-we-using-this-file-format" class="callout-inner">
-<h3 class="callout-title">Why are we using this file format?</h3>
-<div class="callout-content">
-<ol style="list-style-type: decimal"><li><p><strong>Optimized data loading</strong>:<br>
-The <code>.npz</code> format stores arrays in a compressed, binary
-format, making it efficient for both storage and loading. PyTorch can
-easily handle <code>.npz</code> files, especially in batch processing,
-without requiring complex data transformations during training.</p></li>
-<li><p><strong>Batch compatibility</strong>:<br>
-When training neural networks in PyTorch, it’s common to load data in
-batches. By storing data in an <code>.npz</code> file, we can quickly
-load the entire dataset or specific parts (e.g., <code>X_train</code>,
-<code>y_train</code>) into memory and feed it to the PyTorch
-<code>DataLoader</code>, enabling efficient batched data
-loading.</p></li>
-<li><p><strong>Reduced I/O overhead in SageMaker</strong>:<br>
-Storing data in <code>.npz</code> files minimizes the I/O operations
-during training, reducing time spent on data handling. This is
-especially beneficial in cloud environments like SageMaker, where
-efficient data handling directly impacts training costs and
-performance.</p></li>
-<li><p><strong>Consistency and compatibility</strong>:<br>
-Using <code>.npz</code> files allows us to ensure consistency between
-training and validation datasets. Each file (<code>train_data.npz</code>
-and <code>val_data.npz</code>) stores the arrays in a standardized way
-that can be easily accessed by keys (<code>X_train</code>,
-<code>y_train</code>, <code>X_val</code>, <code>y_val</code>). This
-structure is compatible with PyTorch’s <code>Dataset</code> class,
-making it straightforward to design custom datasets for
-training.</p></li>
-<li><p><strong>Support for multiple data types</strong>:<br><code>.npz</code> files support storage of multiple arrays within a
-single file. This is helpful for organizing features and labels without
-additional code. Here, the <code>train_data.npz</code> file contains
-both <code>X_train</code> and <code>y_train</code>, keeping everything
-related to training data in one place. Similarly,
-<code>val_data.npz</code> organizes validation features and labels,
-simplifying file management.</p></li>
-</ol><p>Saving the data as <code>.npz</code> files keeps loading fast and the
-arrays in the shape the training script expects.</p>
-</div>
-</div>
-</div>
+<h3 id="preparing-the-data">Preparing the data<a class="anchor" aria-label="anchor" href="#preparing-the-data"></a></h3>
+<p>The training script reads NumPy arrays from <code>.npz</code> files
+rather than CSVs: one file holds the training features and labels, one
+the validation ones, already encoded and standardized, so the script
+does no preprocessing of its own. The cells below make those two files
+from the Titanic CSV and upload them.</p>
 <p>Open <code>ML_with_AWS_SageMaker/scripts/train_nn.py</code> in the
 file browser and read it before going on; it is short. Three things to
 find: <code>TitanicNet</code>, a three-layer network with 7 inputs and
@@ -725,21 +674,23 @@ is anonymous on the bill. Define them once here and pass
 </div>
 </section><section><h2 class="section-heading" id="estimating-a-training-job-before-you-launch-it">Estimating a training job before you launch it<a class="anchor" aria-label="anchor" href="#estimating-a-training-job-before-you-launch-it"></a></h2>
 <hr class="half-width"><p>Every job in this lesson gets an estimate written down before
-<code>fit()</code>, and the habit matters more than the numbers here,
-which are cents. There are two ways to make the estimate, and which one
-applies depends on the size of the model.</p>
+<code>fit()</code>. There are two ways to make it, and which one applies
+depends on the size of the model.</p>
 <p><strong>Small models: time a smoke test and scale it.</strong> For a
 network like <code>TitanicNet</code>, the arithmetic is nothing; the
-time is Python overhead per epoch plus the job’s fixed startup. So
-measure the 100-epoch run you just did, scale to the epochs and data you
-plan, and add the startup:</p>
+time is Python overhead per epoch plus the job’s fixed startup. Each
+epoch costs the same as the last, so training time scales linearly with
+epochs, and with rows once the data is bigger than a batch. So measure
+the 100-epoch run you just did, multiply by the epochs and rows you
+plan, and add the two or three minutes of startup, which are billed and
+are most of the bill for a job this small:</p>
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a>local_seconds_per_epoch <span class="op">=</span> (t.time() <span class="op">-</span> start_time) <span class="op">/</span> epochs     <span class="co"># from the smoke test above: wall-clock over its 100 epochs</span></span>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a>planned_epochs <span class="op">=</span> <span class="dv">1000</span></span>
 <span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a>startup_minutes <span class="op">=</span> <span class="dv">3</span>                                            <span class="co"># container pull + data download, billed; the same for every job</span></span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a>rate <span class="op">=</span> <span class="fl">0.115</span>                                                   <span class="co"># $/hour, ml.m5.large</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a>rate <span class="op">=</span> <span class="fl">0.115</span>                                                   <span class="co"># $/hour, ml.m5.large, from the Instances for ML page</span></span>
 <span id="cb11-5"><a href="#cb11-5" tabindex="-1" aria-label="code-block-11-5"></a></span>
 <span id="cb11-6"><a href="#cb11-6" tabindex="-1" aria-label="code-block-11-6"></a>train_minutes <span class="op">=</span> local_seconds_per_epoch <span class="op">*</span> planned_epochs <span class="op">/</span> <span class="dv">60</span></span>
 <span id="cb11-7"><a href="#cb11-7" tabindex="-1" aria-label="code-block-11-7"></a>estimate <span class="op">=</span> (train_minutes <span class="op">+</span> startup_minutes) <span class="op">/</span> <span class="dv">60</span> <span class="op">*</span> rate</span>
@@ -752,42 +703,188 @@ about a cent. (The <code>ml.t3.medium</code> notebook is slower than the
 estimate is high. Our run billed 2.8 minutes in total,
 <code>$0.005</code>.) If the planned run has ten times the rows,
 multiply the training minutes by ten; the startup does not change.</p>
-<p><strong>Large models: count the arithmetic.</strong> Once a model has
-millions of parameters, compute is the cost, and it can be counted
-before any instance exists. Training one example through a dense network
-or a transformer costs about 6 floating-point operations per parameter
-(2 forward, 4 backward); multiply by parameters, examples and epochs,
-and divide by what the GPU does per second, about a quarter of its
-data-sheet peak in practice:</p>
+<p><strong>Large models: count the arithmetic.</strong> From a few
+hundred million parameters up, the training arithmetic takes longer than
+the job’s startup, so compute is the cost, and it can be counted before
+any instance exists. The unit is the floating-point operation, one
+multiply or add: FLOPs, plural, is a count of them, and FLOPS with a
+capital S is a rate, operations per second, which is how a GPU’s speed
+is quoted (an A10G does about 70 trillion per second, 70 TFLOPS).
+Training one example through a dense network or a transformer costs
+about 6 FLOPs per parameter (2 forward, 4 backward); multiply by
+parameters, examples and epochs for the count, and divide by the rate
+the GPU reaches, about a quarter of its data-sheet peak in practice:</p>
 <pre class="text"><code>FLOPs       = 6 × parameters × examples × tokens per example × epochs
 GPU-seconds = FLOPs ÷ (GPU peak FLOPS × 0.25)
 cost        = GPU-hours × instance price per hour + startup</code></pre>
-<p>On <code>TitanicNet</code> this says the training is nothing, which
-is the point of the two regimes:</p>
+<p>On <code>TitanicNet</code> the arithmetic comes out as a fraction of
+a second, which is why the smoke-test method is the one to use for
+it:</p>
 <div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1" aria-label="code-block-13-1"></a>n_params <span class="op">=</span> <span class="bu">sum</span>(p.numel() <span class="cf">for</span> p <span class="kw">in</span> TitanicNet().parameters())   <span class="co"># the network's weights and biases: how big the model is</span></span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1" aria-label="code-block-13-2"></a>n_examples <span class="op">=</span> <span class="bu">len</span>(np.load(<span class="st">"train_data.npz"</span>)[<span class="st">"X_train"</span>])</span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a>flops <span class="op">=</span> <span class="dv">6</span> <span class="op">*</span> n_params <span class="op">*</span> n_examples <span class="op">*</span> planned_epochs</span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1" aria-label="code-block-13-4"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>n_params<span class="sc">:,}</span><span class="ss"> parameters x </span><span class="sc">{</span>n_examples<span class="sc">}</span><span class="ss"> examples x </span><span class="sc">{</span>planned_epochs<span class="sc">}</span><span class="ss"> epochs = </span><span class="sc">{</span>flops<span class="sc">:.1e}</span><span class="ss"> FLOPs"</span>)</span>
-<span id="cb13-5"><a href="#cb13-5" tabindex="-1" aria-label="code-block-13-5"></a><span class="bu">print</span>(<span class="ss">f"on an A10G at a quarter of 70 TFLOPS: </span><span class="sc">{</span>flops <span class="op">/</span> (<span class="fl">70e12</span> <span class="op">*</span> <span class="fl">0.25</span>)<span class="sc">:.4f}</span><span class="ss"> seconds of arithmetic; the bill is the startup"</span>)</span></code></pre>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1" aria-label="code-block-13-2"></a>n_examples <span class="op">=</span> <span class="bu">len</span>(np.load(<span class="st">"train_data.npz"</span>)[<span class="st">"X_train"</span>])          <span class="co"># one example = one passenger, a row of 7 numbers; 569 of them after the validation split</span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a>tokens_per_example <span class="op">=</span> <span class="dv">1</span>                                          <span class="co"># the network reads a whole row in one step, so a row is one token</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1" aria-label="code-block-13-4"></a>flops <span class="op">=</span> <span class="dv">6</span> <span class="op">*</span> n_params <span class="op">*</span> n_examples <span class="op">*</span> tokens_per_example <span class="op">*</span> planned_epochs</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1" aria-label="code-block-13-5"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>n_params<span class="sc">:,}</span><span class="ss"> parameters x </span><span class="sc">{</span>n_examples<span class="sc">}</span><span class="ss"> examples x </span><span class="sc">{</span>planned_epochs<span class="sc">}</span><span class="ss"> epochs = </span><span class="sc">{</span>flops<span class="sc">:.1e}</span><span class="ss"> FLOPs"</span>)</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1" aria-label="code-block-13-6"></a><span class="bu">print</span>(<span class="ss">f"on an A10G at a quarter of 70 TFLOPS: </span><span class="sc">{</span>flops <span class="op">/</span> (<span class="fl">70e12</span> <span class="op">*</span> <span class="fl">0.25</span>)<span class="sc">:.4f}</span><span class="ss"> seconds of arithmetic; the bill is the startup"</span>)</span></code></pre>
 </div>
 <p>The same rule, in <code>helpers.estimate_training_cost</code>, picks
 an instance and prints the time, cost and <code>max_run</code> for any
 model size. It only earns its keep from about 1e15 FLOPs up, a few
 million parameters over a few million examples, which is where the
-fine-tuning episode uses it on a 3-billion-parameter model. Here it is
-on a run that does need it: a 125-million-parameter text model, a
-million training examples of 256 tokens, three passes:</p>
+fine-tuning episode uses it on a 3-billion-parameter model. Its four
+inputs are the four numbers in the formula, and what each one is depends
+on the data:</p>
+<ul><li>
+<code>params_billions</code>: every parameter in the model, in
+billions. <code>TitanicNet</code> has 2,625, which is 0.0000026; a
+BERT-base text classifier has 110 million, 0.11.</li>
+<li>
+<code>examples</code>: one example is one training item, whatever
+the model takes in at a time. A passenger’s row here; one tweet, one
+abstract, one document for a text model; one page image in the
+fine-tuning episode.</li>
+<li>
+<code>tokens_per_example</code>: how many units the model processes
+for one item, which is what the arithmetic scales with. A row through
+<code>TitanicNet</code> is one step, so 1. A text model works in tokens,
+about 1.3 per English word: a tweet is 40, an abstract 256, a short
+paper 2,000. An image through a vision transformer is one token per
+patch, 196 for a 224 × 224 image in 16 × 16 patches.</li>
+<li>
+<code>epochs</code>: passes over the whole set.</li>
+</ul><p>The three data numbers multiply to the tokens the model trains on.
+Here it is on a run that does need the rule: a BERT-sized text
+classifier trained from scratch on a million abstracts, three
+passes:</p>
 <div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a>helpers.estimate_training_cost(params_billions<span class="op">=</span><span class="fl">0.125</span>, examples<span class="op">=</span><span class="dv">1_000_000</span>, tokens_per_example<span class="op">=</span><span class="dv">256</span>, epochs<span class="op">=</span><span class="dv">3</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a>helpers.estimate_training_cost(</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1" aria-label="code-block-14-2"></a>    params_billions<span class="op">=</span><span class="fl">0.125</span>,      <span class="co"># a BERT-base-sized model: 125 million parameters</span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1" aria-label="code-block-14-3"></a>    examples<span class="op">=</span><span class="dv">1_000_000</span>,         <span class="co"># one example = one abstract; a million of them</span></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1" aria-label="code-block-14-4"></a>    tokens_per_example<span class="op">=</span><span class="dv">256</span>,     <span class="co"># an abstract is about 190 words, 256 tokens</span></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1" aria-label="code-block-14-5"></a>    epochs<span class="op">=</span><span class="dv">3</span>,                   <span class="co"># three passes over the million abstracts</span></span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1" aria-label="code-block-14-6"></a>)</span></code></pre>
 </div>
-<p>About eight GPU-hours and nine dollars on the cheapest instance that
-fits, eight hours of wall-clock on one GPU; a job you want capped and
-tagged before it starts.</p>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Training from scratch of a 0.125B model: 1,000,000 examples x 256 tokens x 3 passes = 768.0M tokens
+memory:     ~6 GB needed; ml.g6.xlarge has 24 GB (1 x L4)
+compute:    8.64e+17 FLOPs at 25% of the 121 TFLOPS peak = 7.93 GPU-hours
+wall-clock: ~486 min including 10 min startup
+cost:       ~$9.15 per run at $1.13/h; ~$9.15 for 1 run(s)
+set max_run=58200  (970 min, about twice the estimate)</code></pre>
+</div>
+<p>Line by line:</p>
+<ul><li>
+<strong>tokens</strong>: examples × tokens per example × epochs. 768
+million tokens is the amount of work; everything below is derived from
+it.</li>
+<li>
+<strong>memory</strong>: 16 bytes per parameter for full training
+(weights, gradients and the optimizer’s two running averages, in the
+fine-tuning episode’s table) is 2 GB for 125 million parameters, plus 4
+GB the helper allows for activations: 6 GB. The cheapest GPU on the
+lesson’s list with that much memory is the <code>ml.g6.xlarge</code>,
+one L4 with 24 GB, so that is the instance the rest of the lines
+price.</li>
+<li>
+<strong>compute</strong>: 6 FLOPs × 0.125e9 parameters × 768e6
+tokens is 5.8e17; the helper multiplies by 1.5 because it assumes
+gradient checkpointing, which recomputes the forward pass during the
+backward one to save memory, giving 8.6e17. Divided by a quarter of the
+L4’s 121 TFLOPS peak, 30 trillion a second, that is 28,500 seconds: 7.9
+GPU-hours.</li>
+<li>
+<strong>wall-clock</strong>: the GPU-hours on one GPU, plus the 10
+minutes of startup the helper assumes for a job this size.</li>
+<li>
+<strong>cost</strong>: the wall-clock hours at the instance’s price,
+<code>$1.13</code> an hour, so about <code>$9</code> a run. The second
+figure is the same times the number of runs, one here; the
+hyperparameter-tuning episode is where that multiplier bites.</li>
+<li>
+<strong>max_run</strong>: twice the wall-clock estimate, in seconds,
+ready to paste into the estimator. A job that runs past this is killed,
+so a hung run costs at most <code>$18</code>, not a week.</li>
+</ul><p>The function also returns the same numbers as a dictionary, so a
+notebook can use <code>max_run_seconds</code> and
+<code>instance_type</code> directly rather than copying them from the
+printout. Eight hours and nine dollars on one GPU is a job you want
+capped and tagged before it starts.</p>
+<div class="section level3">
+<h3 id="what-a-language-model-costs-before-anyone-launches-one">What a language model costs, before anyone launches one<a class="anchor" aria-label="anchor" href="#what-a-language-model-costs-before-anyone-launches-one"></a></h3>
+<p>Run the same function on two sizes a project might be tempted by: a
+1-billion-parameter model and a 7-billion one, each trained from scratch
+on a million documents of 2,000 tokens, one pass. Nothing is launched;
+the function only does the arithmetic.</p>
+<div class="codewrapper sourceCode" id="cb16">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a>helpers.estimate_training_cost(</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a>    params_billions<span class="op">=</span><span class="dv">1</span>,          <span class="co"># a 1B model, the size of the smallest open-weight language models</span></span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a>    examples<span class="op">=</span><span class="dv">1_000_000</span>,         <span class="co"># one example = one document, a million of them</span></span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a>    tokens_per_example<span class="op">=</span><span class="dv">2000</span>,    <span class="co"># a short paper: about 1,500 words</span></span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a>    epochs<span class="op">=</span><span class="dv">1</span>,                   <span class="co"># one pass</span></span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a>)</span></code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Training from scratch of a 1B model: 1,000,000 examples x 2,000 tokens x 1 passes = 2,000.0M tokens
+memory:     ~20 GB needed; ml.g6.xlarge has 24 GB (1 x L4)
+compute:    1.80e+19 FLOPs at 25% of the 121 TFLOPS peak = 165.29 GPU-hours
+wall-clock: ~9927 min including 10 min startup
+cost:       ~$186.97 per run at $1.13/h; ~$186.97 for 1 run(s)
+set max_run=1191300  (19855 min, about twice the estimate)</code></pre>
+</div>
+<div class="codewrapper sourceCode" id="cb18">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1" aria-label="code-block-18-1"></a>helpers.estimate_training_cost(</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1" aria-label="code-block-18-2"></a>    params_billions<span class="op">=</span><span class="dv">7</span>,          <span class="co"># a 7B model, the size most "small" open-weight LLMs are</span></span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a>    examples<span class="op">=</span><span class="dv">1_000_000</span>,         <span class="co"># the same million documents</span></span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1" aria-label="code-block-18-4"></a>    tokens_per_example<span class="op">=</span><span class="dv">2000</span>,</span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1" aria-label="code-block-18-5"></a>    epochs<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1" aria-label="code-block-18-6"></a>)</span></code></pre>
+</div>
+<div class="codewrapper">
+<h3 class="code-label">OUTPUT<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="output" tabindex="0"><code>Training from scratch of a 7B model: 1,000,000 examples x 2,000 tokens x 1 passes = 2,000.0M tokens
+memory:     ~116 GB needed; ml.g6e.12xlarge has 192 GB (4 x L40S)
+compute:    1.26e+20 FLOPs at 25% of the 362 TFLOPS peak = 386.74 GPU-hours
+wall-clock: ~5811 min including 10 min startup
+cost:       ~$1270.69 per run at $13.12/h; ~$1270.69 for 1 run(s)
+set max_run=697200  (11620 min, about twice the estimate)
+warning:    multi-GPU instance; not allowed on the class account, and more GPUs do not make the run cheaper</code></pre>
+</div>
+<p>Read the two against the 125M run above. The 1B model still fits on
+the cheapest GPU, but the arithmetic is 165 GPU-hours: a week of
+wall-clock on one GPU, <code>$187</code>, and a <code>max_run</code> of
+330 hours, which the account refuses, since no job may run longer than
+48 hours. A run like that has to be split into checkpointed jobs of a
+day or two each, or moved to a four-GPU box, which finishes in two days
+for the same <code>$187</code> plus the startup, and which the class
+account does not allow. The 7B model no longer fits on one GPU at all:
+116 GB of weights, gradients and optimizer state need the four-GPU
+<code>ml.g6e.12xlarge</code> at <code>$13</code> an hour, four days of
+it, <code>$1,270</code> for one pass over two billion tokens. And two
+billion tokens is a small corpus; the models on Bedrock were trained on
+thousands of times more.</p>
+<p>That is why nothing in this lesson trains a language model, and why
+the Marathon’s rules say no full training above 20 million parameters
+and inference only above 8 billion. What the lesson does instead is in
+the fine-tuning episode: LoRA on a 3-billion-parameter model, which
+trains a few million adapter parameters on 251 pages for about a dollar,
+and the RAG episodes, which use a trained model through Bedrock by the
+token. The function is for the day a project asks for more: run it
+first, and the number says whether the run is a job, a grant line, or
+something to do differently.</p>
 <div id="estimate-your-own-first-run" class="callout challenge">
 <div class="callout-square">
 <i class="callout-icon" data-feather="zap"></i>
@@ -827,7 +924,7 @@ goes next to it.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>There is no single answer; the solution is the written estimate. One
 worked example for scale: a 7B language model fully fine-tuned on 50,000
@@ -843,20 +940,20 @@ smoke test and scale it, and expect the startup minutes to dominate.</p>
 <p>We’ll also bring back the <code>job_cost_report()</code> helper from
 the previous episode, plus the hourly rates of the instances we’re about
 to use.</p>
-<div class="codewrapper sourceCode" id="cb15">
+<div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a><span class="kw">def</span> job_cost_report(job_name: <span class="bu">str</span>, price_per_hour: <span class="bu">float</span>):</span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a>    desc <span class="op">=</span> session.sagemaker_client.describe_training_job(TrainingJobName<span class="op">=</span>job_name)  <span class="co"># the job record the console shows</span></span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1" aria-label="code-block-15-3"></a>    n <span class="op">=</span> desc[<span class="st">"ResourceConfig"</span>][<span class="st">"InstanceCount"</span>]</span>
-<span id="cb15-4"><a href="#cb15-4" tabindex="-1" aria-label="code-block-15-4"></a>    billable <span class="op">=</span> desc[<span class="st">"BillableTimeInSeconds"</span>] <span class="op">*</span> n   <span class="co"># container pull to model upload, charged per instance</span></span>
-<span id="cb15-5"><a href="#cb15-5" tabindex="-1" aria-label="code-block-15-5"></a>    wall <span class="op">=</span> (desc[<span class="st">"TrainingEndTime"</span>] <span class="op">-</span> desc[<span class="st">"CreationTime"</span>]).total_seconds()   <span class="co"># from the launch request to the end, including unbilled provisioning</span></span>
-<span id="cb15-6"><a href="#cb15-6" tabindex="-1" aria-label="code-block-15-6"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>job_name<span class="sc">}</span><span class="ss">: status </span><span class="sc">{</span>desc[<span class="st">'TrainingJobStatus'</span>]<span class="sc">}</span><span class="ss">, wall-clock </span><span class="sc">{</span>wall<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min, billable </span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min on </span><span class="sc">{</span>n<span class="sc">}</span><span class="ss"> instance(s), cost $</span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">3600</span><span class="op">*</span>price_per_hour<span class="sc">:.3f}</span><span class="ss"> at $</span><span class="sc">{</span>price_per_hour<span class="sc">}</span><span class="ss">/h"</span>)</span>
-<span id="cb15-7"><a href="#cb15-7" tabindex="-1" aria-label="code-block-15-7"></a>    <span class="bu">print</span>(<span class="ss">f"    model: </span><span class="sc">{</span>desc[<span class="st">'ModelArtifacts'</span>][<span class="st">'S3ModelArtifacts'</span>]<span class="sc">}</span><span class="ss">"</span>)   <span class="co"># the model.tar.gz this job uploaded to output_path</span></span>
-<span id="cb15-8"><a href="#cb15-8" tabindex="-1" aria-label="code-block-15-8"></a>    <span class="cf">return</span> desc</span>
-<span id="cb15-9"><a href="#cb15-9" tabindex="-1" aria-label="code-block-15-9"></a></span>
-<span id="cb15-10"><a href="#cb15-10" tabindex="-1" aria-label="code-block-15-10"></a><span class="co"># us-east-1 on-demand rates (2026-10-16); check the instances page for your region</span></span>
-<span id="cb15-11"><a href="#cb15-11" tabindex="-1" aria-label="code-block-15-11"></a>prices <span class="op">=</span> {<span class="st">"ml.m5.large"</span>: <span class="fl">0.115</span>, <span class="st">"ml.m5.xlarge"</span>: <span class="fl">0.23</span>, <span class="st">"ml.g4dn.xlarge"</span>: <span class="fl">0.74</span>}</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1" aria-label="code-block-20-1"></a><span class="kw">def</span> job_cost_report(job_name: <span class="bu">str</span>, price_per_hour: <span class="bu">float</span>):</span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1" aria-label="code-block-20-2"></a>    desc <span class="op">=</span> session.sagemaker_client.describe_training_job(TrainingJobName<span class="op">=</span>job_name)  <span class="co"># the job record the console shows</span></span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1" aria-label="code-block-20-3"></a>    n <span class="op">=</span> desc[<span class="st">"ResourceConfig"</span>][<span class="st">"InstanceCount"</span>]</span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1" aria-label="code-block-20-4"></a>    billable <span class="op">=</span> desc[<span class="st">"BillableTimeInSeconds"</span>] <span class="op">*</span> n   <span class="co"># container pull to model upload, charged per instance</span></span>
+<span id="cb20-5"><a href="#cb20-5" tabindex="-1" aria-label="code-block-20-5"></a>    wall <span class="op">=</span> (desc[<span class="st">"TrainingEndTime"</span>] <span class="op">-</span> desc[<span class="st">"CreationTime"</span>]).total_seconds()   <span class="co"># from the launch request to the end, including unbilled provisioning</span></span>
+<span id="cb20-6"><a href="#cb20-6" tabindex="-1" aria-label="code-block-20-6"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>job_name<span class="sc">}</span><span class="ss">: status </span><span class="sc">{</span>desc[<span class="st">'TrainingJobStatus'</span>]<span class="sc">}</span><span class="ss">, wall-clock </span><span class="sc">{</span>wall<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min, billable </span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min on </span><span class="sc">{</span>n<span class="sc">}</span><span class="ss"> instance(s), cost $</span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">3600</span><span class="op">*</span>price_per_hour<span class="sc">:.3f}</span><span class="ss"> at $</span><span class="sc">{</span>price_per_hour<span class="sc">}</span><span class="ss">/h"</span>)</span>
+<span id="cb20-7"><a href="#cb20-7" tabindex="-1" aria-label="code-block-20-7"></a>    <span class="bu">print</span>(<span class="ss">f"    model: </span><span class="sc">{</span>desc[<span class="st">'ModelArtifacts'</span>][<span class="st">'S3ModelArtifacts'</span>]<span class="sc">}</span><span class="ss">"</span>)   <span class="co"># the model.tar.gz this job uploaded to output_path</span></span>
+<span id="cb20-8"><a href="#cb20-8" tabindex="-1" aria-label="code-block-20-8"></a>    <span class="cf">return</span> desc</span>
+<span id="cb20-9"><a href="#cb20-9" tabindex="-1" aria-label="code-block-20-9"></a></span>
+<span id="cb20-10"><a href="#cb20-10" tabindex="-1" aria-label="code-block-20-10"></a><span class="co"># us-east-1 on-demand rates (2026-10-16); check the instances page for your region</span></span>
+<span id="cb20-11"><a href="#cb20-11" tabindex="-1" aria-label="code-block-20-11"></a>prices <span class="op">=</span> {<span class="st">"ml.m5.large"</span>: <span class="fl">0.115</span>, <span class="st">"ml.m5.xlarge"</span>: <span class="fl">0.23</span>, <span class="st">"ml.g4dn.xlarge"</span>: <span class="fl">0.74</span>}</span></code></pre>
 </div>
 <p>Set up the estimator for a longer run: the epochs, the instance,
 where the output goes, and a two-hour <code>max_run</code> cap.</p>
@@ -865,61 +962,62 @@ ending in <code>explicit deny</code>, the account’s checks are the
 cause: a missing tag, an instance type outside the lesson’s list, or a
 resource kind the lesson never creates; the first training episode’s
 callout <em>If the launch is refused</em> says what to look at.</p>
-<div class="codewrapper sourceCode" id="cb16">
+<div class="codewrapper sourceCode" id="cb21">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a><span class="im">from</span> sagemaker.pytorch <span class="im">import</span> PyTorch</span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a><span class="im">from</span> sagemaker.inputs <span class="im">import</span> TrainingInput</span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a></span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a>epochs <span class="op">=</span> <span class="dv">1000</span>          <span class="co"># more epochs now that the script is known to work</span></span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a>instance_count <span class="op">=</span> <span class="dv">1</span></span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a>instance_type <span class="op">=</span> <span class="st">"ml.m5.large"</span></span>
-<span id="cb16-7"><a href="#cb16-7" tabindex="-1" aria-label="code-block-16-7"></a>output_path <span class="op">=</span> <span class="ss">f's3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/output_nn/'</span> <span class="co"># this folder will auto-generate if it doesn't exist already</span></span>
-<span id="cb16-8"><a href="#cb16-8" tabindex="-1" aria-label="code-block-16-8"></a></span>
-<span id="cb16-9"><a href="#cb16-9" tabindex="-1" aria-label="code-block-16-9"></a><span class="co"># Define max runtime in seconds to ensure you don't use more compute time than expected. Use a generous threshold (2x expected time but &lt; 2 days) so that work isn't interrupted without any gains.</span></span>
-<span id="cb16-10"><a href="#cb16-10" tabindex="-1" aria-label="code-block-16-10"></a>max_run <span class="op">=</span> <span class="dv">2</span><span class="op">*</span><span class="dv">60</span><span class="op">*</span><span class="dv">60</span> <span class="co"># 2 hours</span></span>
-<span id="cb16-11"><a href="#cb16-11" tabindex="-1" aria-label="code-block-16-11"></a></span>
-<span id="cb16-12"><a href="#cb16-12" tabindex="-1" aria-label="code-block-16-12"></a><span class="co"># Define the PyTorch estimator and pass hyperparameters as arguments</span></span>
-<span id="cb16-13"><a href="#cb16-13" tabindex="-1" aria-label="code-block-16-13"></a>pytorch_estimator <span class="op">=</span> PyTorch(</span>
-<span id="cb16-14"><a href="#cb16-14" tabindex="-1" aria-label="code-block-16-14"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn"</span>,   <span class="co"># who + which model; SageMaker appends a timestamp to make each job name unique</span></span>
-<span id="cb16-15"><a href="#cb16-15" tabindex="-1" aria-label="code-block-16-15"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
-<span id="cb16-16"><a href="#cb16-16" tabindex="-1" aria-label="code-block-16-16"></a>    entry_point<span class="op">=</span><span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,  <span class="co"># copied into the container and run there</span></span>
-<span id="cb16-17"><a href="#cb16-17" tabindex="-1" aria-label="code-block-16-17"></a>    role<span class="op">=</span>role,</span>
-<span id="cb16-18"><a href="#cb16-18" tabindex="-1" aria-label="code-block-16-18"></a>    tags<span class="op">=</span>job_tags,  <span class="co"># per job; nothing is inherited from the notebook instance</span></span>
-<span id="cb16-19"><a href="#cb16-19" tabindex="-1" aria-label="code-block-16-19"></a>    instance_type<span class="op">=</span>instance_type, <span class="co"># with this small dataset, we don't necessarily need a GPU for fast training. </span></span>
-<span id="cb16-20"><a href="#cb16-20" tabindex="-1" aria-label="code-block-16-20"></a>    instance_count<span class="op">=</span>instance_count,</span>
-<span id="cb16-21"><a href="#cb16-21" tabindex="-1" aria-label="code-block-16-21"></a>    <span class="co"># framework_version + py_version pick the prebuilt PyTorch training image the job runs in</span></span>
-<span id="cb16-22"><a href="#cb16-22" tabindex="-1" aria-label="code-block-16-22"></a>    framework_version<span class="op">=</span><span class="st">"2.3"</span>,  <span class="co"># if fit() fails with an image error, check available versions with: sagemaker.image_uris.retrieve("pytorch", region, version="2.3", py_version="py311", image_scope="training", instance_type="ml.m5.large")</span></span>
-<span id="cb16-23"><a href="#cb16-23" tabindex="-1" aria-label="code-block-16-23"></a>    py_version<span class="op">=</span><span class="st">"py311"</span>,</span>
-<span id="cb16-24"><a href="#cb16-24" tabindex="-1" aria-label="code-block-16-24"></a>    output_path<span class="op">=</span>output_path,</span>
-<span id="cb16-25"><a href="#cb16-25" tabindex="-1" aria-label="code-block-16-25"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb16-26"><a href="#cb16-26" tabindex="-1" aria-label="code-block-16-26"></a>    hyperparameters<span class="op">=</span>{  <span class="co"># passed to train_nn.py as command-line flags: --train ... --epochs 1000 ...</span></span>
-<span id="cb16-27"><a href="#cb16-27" tabindex="-1" aria-label="code-block-16-27"></a>        <span class="st">"train"</span>: <span class="st">"/opt/ml/input/data/train/train_data.npz"</span>,  <span class="co"># SageMaker will mount this path</span></span>
-<span id="cb16-28"><a href="#cb16-28" tabindex="-1" aria-label="code-block-16-28"></a>        <span class="st">"val"</span>: <span class="st">"/opt/ml/input/data/val/val_data.npz"</span>,        <span class="co"># SageMaker will mount this path</span></span>
-<span id="cb16-29"><a href="#cb16-29" tabindex="-1" aria-label="code-block-16-29"></a>        <span class="st">"epochs"</span>: epochs,</span>
-<span id="cb16-30"><a href="#cb16-30" tabindex="-1" aria-label="code-block-16-30"></a>        <span class="st">"learning_rate"</span>: learning_rate</span>
-<span id="cb16-31"><a href="#cb16-31" tabindex="-1" aria-label="code-block-16-31"></a>    }</span>
-<span id="cb16-32"><a href="#cb16-32" tabindex="-1" aria-label="code-block-16-32"></a>)</span>
-<span id="cb16-33"><a href="#cb16-33" tabindex="-1" aria-label="code-block-16-33"></a></span>
-<span id="cb16-34"><a href="#cb16-34" tabindex="-1" aria-label="code-block-16-34"></a><span class="co"># Define input paths: each TrainingInput is a channel; its S3 object is copied to /opt/ml/input/data/&lt;channel&gt;/ in the container</span></span>
-<span id="cb16-35"><a href="#cb16-35" tabindex="-1" aria-label="code-block-16-35"></a><span class="co"># content_type is a label only; our script reads the file itself</span></span>
-<span id="cb16-36"><a href="#cb16-36" tabindex="-1" aria-label="code-block-16-36"></a>train_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/train_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
-<span id="cb16-37"><a href="#cb16-37" tabindex="-1" aria-label="code-block-16-37"></a>val_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/val_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
-<span id="cb16-38"><a href="#cb16-38" tabindex="-1" aria-label="code-block-16-38"></a></span>
-<span id="cb16-39"><a href="#cb16-39" tabindex="-1" aria-label="code-block-16-39"></a><span class="co"># Start the training job and time it</span></span>
-<span id="cb16-40"><a href="#cb16-40" tabindex="-1" aria-label="code-block-16-40"></a>start <span class="op">=</span> t.time()</span>
-<span id="cb16-41"><a href="#cb16-41" tabindex="-1" aria-label="code-block-16-41"></a>pytorch_estimator.fit({<span class="st">"train"</span>: train_input, <span class="st">"val"</span>: val_input})</span>
-<span id="cb16-42"><a href="#cb16-42" tabindex="-1" aria-label="code-block-16-42"></a>end <span class="op">=</span> t.time()</span>
-<span id="cb16-43"><a href="#cb16-43" tabindex="-1" aria-label="code-block-16-43"></a></span>
-<span id="cb16-44"><a href="#cb16-44" tabindex="-1" aria-label="code-block-16-44"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" tabindex="-1" aria-label="code-block-21-1"></a><span class="im">from</span> sagemaker.pytorch <span class="im">import</span> PyTorch</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1" aria-label="code-block-21-2"></a><span class="im">from</span> sagemaker.inputs <span class="im">import</span> TrainingInput</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1" aria-label="code-block-21-3"></a></span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1" aria-label="code-block-21-4"></a>epochs <span class="op">=</span> <span class="dv">1000</span>          <span class="co"># more epochs now that the script is known to work</span></span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1" aria-label="code-block-21-5"></a>instance_count <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb21-6"><a href="#cb21-6" tabindex="-1" aria-label="code-block-21-6"></a>instance_type <span class="op">=</span> <span class="st">"ml.m5.large"</span></span>
+<span id="cb21-7"><a href="#cb21-7" tabindex="-1" aria-label="code-block-21-7"></a>output_path <span class="op">=</span> <span class="ss">f's3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/output_nn/'</span> <span class="co"># this folder will auto-generate if it doesn't exist already</span></span>
+<span id="cb21-8"><a href="#cb21-8" tabindex="-1" aria-label="code-block-21-8"></a></span>
+<span id="cb21-9"><a href="#cb21-9" tabindex="-1" aria-label="code-block-21-9"></a><span class="co"># Define max runtime in seconds to ensure you don't use more compute time than expected. Use a generous threshold (2x expected time but &lt; 2 days) so that work isn't interrupted without any gains.</span></span>
+<span id="cb21-10"><a href="#cb21-10" tabindex="-1" aria-label="code-block-21-10"></a>max_run <span class="op">=</span> <span class="dv">2</span><span class="op">*</span><span class="dv">60</span><span class="op">*</span><span class="dv">60</span> <span class="co"># 2 hours</span></span>
+<span id="cb21-11"><a href="#cb21-11" tabindex="-1" aria-label="code-block-21-11"></a></span>
+<span id="cb21-12"><a href="#cb21-12" tabindex="-1" aria-label="code-block-21-12"></a><span class="co"># Define the PyTorch estimator and pass hyperparameters as arguments</span></span>
+<span id="cb21-13"><a href="#cb21-13" tabindex="-1" aria-label="code-block-21-13"></a>pytorch_estimator <span class="op">=</span> PyTorch(</span>
+<span id="cb21-14"><a href="#cb21-14" tabindex="-1" aria-label="code-block-21-14"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn"</span>,   <span class="co"># who + which model; SageMaker appends a timestamp to make each job name unique</span></span>
+<span id="cb21-15"><a href="#cb21-15" tabindex="-1" aria-label="code-block-21-15"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
+<span id="cb21-16"><a href="#cb21-16" tabindex="-1" aria-label="code-block-21-16"></a>    entry_point<span class="op">=</span><span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,  <span class="co"># copied into the container and run there</span></span>
+<span id="cb21-17"><a href="#cb21-17" tabindex="-1" aria-label="code-block-21-17"></a>    role<span class="op">=</span>role,</span>
+<span id="cb21-18"><a href="#cb21-18" tabindex="-1" aria-label="code-block-21-18"></a>    tags<span class="op">=</span>job_tags,  <span class="co"># per job; nothing is inherited from the notebook instance</span></span>
+<span id="cb21-19"><a href="#cb21-19" tabindex="-1" aria-label="code-block-21-19"></a>    instance_type<span class="op">=</span>instance_type, <span class="co"># with this small dataset, we don't necessarily need a GPU for fast training. </span></span>
+<span id="cb21-20"><a href="#cb21-20" tabindex="-1" aria-label="code-block-21-20"></a>    instance_count<span class="op">=</span>instance_count,</span>
+<span id="cb21-21"><a href="#cb21-21" tabindex="-1" aria-label="code-block-21-21"></a>    <span class="co"># framework_version + py_version pick the prebuilt PyTorch training image the job runs in</span></span>
+<span id="cb21-22"><a href="#cb21-22" tabindex="-1" aria-label="code-block-21-22"></a>    framework_version<span class="op">=</span><span class="st">"2.3"</span>,  <span class="co"># if fit() fails with an image error, check available versions with: sagemaker.image_uris.retrieve("pytorch", region, version="2.3", py_version="py311", image_scope="training", instance_type="ml.m5.large")</span></span>
+<span id="cb21-23"><a href="#cb21-23" tabindex="-1" aria-label="code-block-21-23"></a>    py_version<span class="op">=</span><span class="st">"py311"</span>,</span>
+<span id="cb21-24"><a href="#cb21-24" tabindex="-1" aria-label="code-block-21-24"></a>    output_path<span class="op">=</span>output_path,</span>
+<span id="cb21-25"><a href="#cb21-25" tabindex="-1" aria-label="code-block-21-25"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb21-26"><a href="#cb21-26" tabindex="-1" aria-label="code-block-21-26"></a>    hyperparameters<span class="op">=</span>{  <span class="co"># passed to train_nn.py as command-line flags: --train ... --epochs 1000 ...</span></span>
+<span id="cb21-27"><a href="#cb21-27" tabindex="-1" aria-label="code-block-21-27"></a>        <span class="st">"train"</span>: <span class="st">"/opt/ml/input/data/train/train_data.npz"</span>,  <span class="co"># SageMaker will mount this path</span></span>
+<span id="cb21-28"><a href="#cb21-28" tabindex="-1" aria-label="code-block-21-28"></a>        <span class="st">"val"</span>: <span class="st">"/opt/ml/input/data/val/val_data.npz"</span>,        <span class="co"># SageMaker will mount this path</span></span>
+<span id="cb21-29"><a href="#cb21-29" tabindex="-1" aria-label="code-block-21-29"></a>        <span class="st">"epochs"</span>: epochs,</span>
+<span id="cb21-30"><a href="#cb21-30" tabindex="-1" aria-label="code-block-21-30"></a>        <span class="st">"learning_rate"</span>: learning_rate</span>
+<span id="cb21-31"><a href="#cb21-31" tabindex="-1" aria-label="code-block-21-31"></a>    }</span>
+<span id="cb21-32"><a href="#cb21-32" tabindex="-1" aria-label="code-block-21-32"></a>)</span>
+<span id="cb21-33"><a href="#cb21-33" tabindex="-1" aria-label="code-block-21-33"></a></span>
+<span id="cb21-34"><a href="#cb21-34" tabindex="-1" aria-label="code-block-21-34"></a><span class="co"># Define input paths: each TrainingInput is a channel; its S3 object is copied to /opt/ml/input/data/&lt;channel&gt;/ in the container</span></span>
+<span id="cb21-35"><a href="#cb21-35" tabindex="-1" aria-label="code-block-21-35"></a><span class="co"># content_type is a label only; our script reads the file itself</span></span>
+<span id="cb21-36"><a href="#cb21-36" tabindex="-1" aria-label="code-block-21-36"></a>train_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/train_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
+<span id="cb21-37"><a href="#cb21-37" tabindex="-1" aria-label="code-block-21-37"></a>val_input <span class="op">=</span> TrainingInput(<span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/val_data.npz"</span>, content_type<span class="op">=</span><span class="st">"application/x-npz"</span>)</span>
+<span id="cb21-38"><a href="#cb21-38" tabindex="-1" aria-label="code-block-21-38"></a></span>
+<span id="cb21-39"><a href="#cb21-39" tabindex="-1" aria-label="code-block-21-39"></a><span class="co"># Start the training job and time it</span></span>
+<span id="cb21-40"><a href="#cb21-40" tabindex="-1" aria-label="code-block-21-40"></a>start <span class="op">=</span> t.time()</span>
+<span id="cb21-41"><a href="#cb21-41" tabindex="-1" aria-label="code-block-21-41"></a>pytorch_estimator.fit({<span class="st">"train"</span>: train_input, <span class="st">"val"</span>: val_input})</span>
+<span id="cb21-42"><a href="#cb21-42" tabindex="-1" aria-label="code-block-21-42"></a>end <span class="op">=</span> t.time()</span>
+<span id="cb21-43"><a href="#cb21-43" tabindex="-1" aria-label="code-block-21-43"></a></span>
+<span id="cb21-44"><a href="#cb21-44" tabindex="-1" aria-label="code-block-21-44"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<div class="codewrapper sourceCode" id="cb17">
+<div class="codewrapper sourceCode" id="cb22">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1" aria-label="code-block-17-1"></a>desc_cpu <span class="op">=</span> job_cost_report(pytorch_estimator.latest_training_job.name, prices[instance_type])</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" tabindex="-1" aria-label="code-block-22-1"></a>desc_cpu <span class="op">=</span> job_cost_report(pytorch_estimator.latest_training_job.name, prices[instance_type])</span></code></pre>
 </div>
 <p>For a job this small, almost all of the billable minutes are
 startup.</p>
+</div>
 </section><section><h2 class="section-heading" id="deploying-pytorch-neural-network-via-sagemaker-with-a-gpu-instance">Deploying PyTorch neural network via SageMaker with a GPU
 instance<a class="anchor" aria-label="anchor" href="#deploying-pytorch-neural-network-via-sagemaker-with-a-gpu-instance"></a></h2>
 <hr class="half-width"><p>In this section, we’ll implement the same procedure as above, but
@@ -962,49 +1060,50 @@ X_train, y_train = X_train.to(device), y_train.to(device)</code></pre>
 <p>We’re about to run the identical job on an
 <code>ml.g4dn.xlarge</code> (one NVIDIA T4 GPU, about
 <code>$0.74</code>/hour) instead of the <code>ml.m5.large</code>
-(<code>$0.115</code>/hour). Before you run the cell:</p>
+(<code>$0.115</code>/hour); both rates are from the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
+for ML</a> page. Before you run the cell:</p>
 <ol style="list-style-type: decimal"><li>Predict which instance finishes first (total wall-clock, as
 <code>fit()</code> reports it).</li>
 <li>Predict which costs less for this job.</li>
 </ol><p>Then run the GPU job, call <code>job_cost_report()</code> for it, and
 compute cost = rate x billable minutes for both runs. Were you right?
 Explain the result.</p>
-<div class="codewrapper sourceCode" id="cb19">
+<div class="codewrapper sourceCode" id="cb24">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1" aria-label="code-block-19-1"></a>instance_type <span class="op">=</span> <span class="st">"ml.g4dn.xlarge"</span>  <span class="co"># one NVIDIA T4 GPU; train_nn.py moves to it on its own via torch.cuda.is_available()</span></span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1" aria-label="code-block-19-2"></a>instance_count <span class="op">=</span> <span class="dv">1</span></span>
-<span id="cb19-3"><a href="#cb19-3" tabindex="-1" aria-label="code-block-19-3"></a></span>
-<span id="cb19-4"><a href="#cb19-4" tabindex="-1" aria-label="code-block-19-4"></a>pytorch_estimator_gpu <span class="op">=</span> PyTorch(</span>
-<span id="cb19-5"><a href="#cb19-5" tabindex="-1" aria-label="code-block-19-5"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn"</span>,</span>
-<span id="cb19-6"><a href="#cb19-6" tabindex="-1" aria-label="code-block-19-6"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
-<span id="cb19-7"><a href="#cb19-7" tabindex="-1" aria-label="code-block-19-7"></a>    entry_point<span class="op">=</span><span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,</span>
-<span id="cb19-8"><a href="#cb19-8" tabindex="-1" aria-label="code-block-19-8"></a>    role<span class="op">=</span>role,</span>
-<span id="cb19-9"><a href="#cb19-9" tabindex="-1" aria-label="code-block-19-9"></a>    tags<span class="op">=</span>job_tags,</span>
-<span id="cb19-10"><a href="#cb19-10" tabindex="-1" aria-label="code-block-19-10"></a>    instance_type<span class="op">=</span>instance_type,</span>
-<span id="cb19-11"><a href="#cb19-11" tabindex="-1" aria-label="code-block-19-11"></a>    instance_count<span class="op">=</span>instance_count,</span>
-<span id="cb19-12"><a href="#cb19-12" tabindex="-1" aria-label="code-block-19-12"></a>    framework_version<span class="op">=</span><span class="st">"2.3"</span>,</span>
-<span id="cb19-13"><a href="#cb19-13" tabindex="-1" aria-label="code-block-19-13"></a>    py_version<span class="op">=</span><span class="st">"py311"</span>,</span>
-<span id="cb19-14"><a href="#cb19-14" tabindex="-1" aria-label="code-block-19-14"></a>    output_path<span class="op">=</span>output_path,</span>
-<span id="cb19-15"><a href="#cb19-15" tabindex="-1" aria-label="code-block-19-15"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb19-16"><a href="#cb19-16" tabindex="-1" aria-label="code-block-19-16"></a>    hyperparameters<span class="op">=</span>{</span>
-<span id="cb19-17"><a href="#cb19-17" tabindex="-1" aria-label="code-block-19-17"></a>        <span class="st">"train"</span>: <span class="st">"/opt/ml/input/data/train/train_data.npz"</span>,</span>
-<span id="cb19-18"><a href="#cb19-18" tabindex="-1" aria-label="code-block-19-18"></a>        <span class="st">"val"</span>: <span class="st">"/opt/ml/input/data/val/val_data.npz"</span>,</span>
-<span id="cb19-19"><a href="#cb19-19" tabindex="-1" aria-label="code-block-19-19"></a>        <span class="st">"epochs"</span>: epochs,</span>
-<span id="cb19-20"><a href="#cb19-20" tabindex="-1" aria-label="code-block-19-20"></a>        <span class="st">"learning_rate"</span>: learning_rate</span>
-<span id="cb19-21"><a href="#cb19-21" tabindex="-1" aria-label="code-block-19-21"></a>    }</span>
-<span id="cb19-22"><a href="#cb19-22" tabindex="-1" aria-label="code-block-19-22"></a>)</span>
-<span id="cb19-23"><a href="#cb19-23" tabindex="-1" aria-label="code-block-19-23"></a></span>
-<span id="cb19-24"><a href="#cb19-24" tabindex="-1" aria-label="code-block-19-24"></a>start <span class="op">=</span> t.time()</span>
-<span id="cb19-25"><a href="#cb19-25" tabindex="-1" aria-label="code-block-19-25"></a>pytorch_estimator_gpu.fit({<span class="st">"train"</span>: train_input, <span class="st">"val"</span>: val_input})</span>
-<span id="cb19-26"><a href="#cb19-26" tabindex="-1" aria-label="code-block-19-26"></a>end <span class="op">=</span> t.time()</span>
-<span id="cb19-27"><a href="#cb19-27" tabindex="-1" aria-label="code-block-19-27"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb19-28"><a href="#cb19-28" tabindex="-1" aria-label="code-block-19-28"></a></span>
-<span id="cb19-29"><a href="#cb19-29" tabindex="-1" aria-label="code-block-19-29"></a>desc_gpu <span class="op">=</span> job_cost_report(pytorch_estimator_gpu.latest_training_job.name, prices[instance_type])</span>
-<span id="cb19-30"><a href="#cb19-30" tabindex="-1" aria-label="code-block-19-30"></a></span>
-<span id="cb19-31"><a href="#cb19-31" tabindex="-1" aria-label="code-block-19-31"></a><span class="cf">for</span> label, d, rate <span class="kw">in</span> [(<span class="st">"CPU ml.m5.large"</span>, desc_cpu, prices[<span class="st">"ml.m5.large"</span>]), (<span class="st">"GPU ml.g4dn.xlarge"</span>, desc_gpu, prices[<span class="st">"ml.g4dn.xlarge"</span>])]:</span>
-<span id="cb19-32"><a href="#cb19-32" tabindex="-1" aria-label="code-block-19-32"></a>    billable_min <span class="op">=</span> d[<span class="st">"BillableTimeInSeconds"</span>] <span class="op">/</span> <span class="dv">60</span></span>
-<span id="cb19-33"><a href="#cb19-33" tabindex="-1" aria-label="code-block-19-33"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">: billable </span><span class="sc">{</span>billable_min<span class="sc">:.1f}</span><span class="ss"> min x $</span><span class="sc">{</span>rate<span class="sc">}</span><span class="ss">/h = $</span><span class="sc">{</span>billable_min<span class="op">/</span><span class="dv">60</span><span class="op">*</span>rate<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" tabindex="-1" aria-label="code-block-24-1"></a>instance_type <span class="op">=</span> <span class="st">"ml.g4dn.xlarge"</span>  <span class="co"># one NVIDIA T4 GPU; train_nn.py moves to it on its own via torch.cuda.is_available()</span></span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1" aria-label="code-block-24-2"></a>instance_count <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb24-3"><a href="#cb24-3" tabindex="-1" aria-label="code-block-24-3"></a></span>
+<span id="cb24-4"><a href="#cb24-4" tabindex="-1" aria-label="code-block-24-4"></a>pytorch_estimator_gpu <span class="op">=</span> PyTorch(</span>
+<span id="cb24-5"><a href="#cb24-5" tabindex="-1" aria-label="code-block-24-5"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn"</span>,</span>
+<span id="cb24-6"><a href="#cb24-6" tabindex="-1" aria-label="code-block-24-6"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
+<span id="cb24-7"><a href="#cb24-7" tabindex="-1" aria-label="code-block-24-7"></a>    entry_point<span class="op">=</span><span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,</span>
+<span id="cb24-8"><a href="#cb24-8" tabindex="-1" aria-label="code-block-24-8"></a>    role<span class="op">=</span>role,</span>
+<span id="cb24-9"><a href="#cb24-9" tabindex="-1" aria-label="code-block-24-9"></a>    tags<span class="op">=</span>job_tags,</span>
+<span id="cb24-10"><a href="#cb24-10" tabindex="-1" aria-label="code-block-24-10"></a>    instance_type<span class="op">=</span>instance_type,</span>
+<span id="cb24-11"><a href="#cb24-11" tabindex="-1" aria-label="code-block-24-11"></a>    instance_count<span class="op">=</span>instance_count,</span>
+<span id="cb24-12"><a href="#cb24-12" tabindex="-1" aria-label="code-block-24-12"></a>    framework_version<span class="op">=</span><span class="st">"2.3"</span>,</span>
+<span id="cb24-13"><a href="#cb24-13" tabindex="-1" aria-label="code-block-24-13"></a>    py_version<span class="op">=</span><span class="st">"py311"</span>,</span>
+<span id="cb24-14"><a href="#cb24-14" tabindex="-1" aria-label="code-block-24-14"></a>    output_path<span class="op">=</span>output_path,</span>
+<span id="cb24-15"><a href="#cb24-15" tabindex="-1" aria-label="code-block-24-15"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb24-16"><a href="#cb24-16" tabindex="-1" aria-label="code-block-24-16"></a>    hyperparameters<span class="op">=</span>{</span>
+<span id="cb24-17"><a href="#cb24-17" tabindex="-1" aria-label="code-block-24-17"></a>        <span class="st">"train"</span>: <span class="st">"/opt/ml/input/data/train/train_data.npz"</span>,</span>
+<span id="cb24-18"><a href="#cb24-18" tabindex="-1" aria-label="code-block-24-18"></a>        <span class="st">"val"</span>: <span class="st">"/opt/ml/input/data/val/val_data.npz"</span>,</span>
+<span id="cb24-19"><a href="#cb24-19" tabindex="-1" aria-label="code-block-24-19"></a>        <span class="st">"epochs"</span>: epochs,</span>
+<span id="cb24-20"><a href="#cb24-20" tabindex="-1" aria-label="code-block-24-20"></a>        <span class="st">"learning_rate"</span>: learning_rate</span>
+<span id="cb24-21"><a href="#cb24-21" tabindex="-1" aria-label="code-block-24-21"></a>    }</span>
+<span id="cb24-22"><a href="#cb24-22" tabindex="-1" aria-label="code-block-24-22"></a>)</span>
+<span id="cb24-23"><a href="#cb24-23" tabindex="-1" aria-label="code-block-24-23"></a></span>
+<span id="cb24-24"><a href="#cb24-24" tabindex="-1" aria-label="code-block-24-24"></a>start <span class="op">=</span> t.time()</span>
+<span id="cb24-25"><a href="#cb24-25" tabindex="-1" aria-label="code-block-24-25"></a>pytorch_estimator_gpu.fit({<span class="st">"train"</span>: train_input, <span class="st">"val"</span>: val_input})</span>
+<span id="cb24-26"><a href="#cb24-26" tabindex="-1" aria-label="code-block-24-26"></a>end <span class="op">=</span> t.time()</span>
+<span id="cb24-27"><a href="#cb24-27" tabindex="-1" aria-label="code-block-24-27"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb24-28"><a href="#cb24-28" tabindex="-1" aria-label="code-block-24-28"></a></span>
+<span id="cb24-29"><a href="#cb24-29" tabindex="-1" aria-label="code-block-24-29"></a>desc_gpu <span class="op">=</span> job_cost_report(pytorch_estimator_gpu.latest_training_job.name, prices[instance_type])</span>
+<span id="cb24-30"><a href="#cb24-30" tabindex="-1" aria-label="code-block-24-30"></a></span>
+<span id="cb24-31"><a href="#cb24-31" tabindex="-1" aria-label="code-block-24-31"></a><span class="cf">for</span> label, d, rate <span class="kw">in</span> [(<span class="st">"CPU ml.m5.large"</span>, desc_cpu, prices[<span class="st">"ml.m5.large"</span>]), (<span class="st">"GPU ml.g4dn.xlarge"</span>, desc_gpu, prices[<span class="st">"ml.g4dn.xlarge"</span>])]:</span>
+<span id="cb24-32"><a href="#cb24-32" tabindex="-1" aria-label="code-block-24-32"></a>    billable_min <span class="op">=</span> d[<span class="st">"BillableTimeInSeconds"</span>] <span class="op">/</span> <span class="dv">60</span></span>
+<span id="cb24-33"><a href="#cb24-33" tabindex="-1" aria-label="code-block-24-33"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">: billable </span><span class="sc">{</span>billable_min<span class="sc">:.1f}</span><span class="ss"> min x $</span><span class="sc">{</span>rate<span class="sc">}</span><span class="ss">/h = $</span><span class="sc">{</span>billable_min<span class="op">/</span><span class="dv">60</span><span class="op">*</span>rate<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 </div>
 </div>
@@ -1014,7 +1113,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -1078,12 +1177,12 @@ apparent.</p>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="distributed-training-for-neural-networks-in-sagemaker">Distributed Training for Neural Networks in SageMaker<a class="anchor" aria-label="anchor" href="#distributed-training-for-neural-networks-in-sagemaker"></a></h2>
-<hr class="half-width"><p>The previous episode gave the rule of thumb: upgrade the single
-instance first, and consider multiple instances only when the dataset no
-longer fits in one instance’s memory (tens of GB or more) or a
-single-instance run takes longer than about 10 hours. The GPU exercise
-was Option 1. Let’s now look at Option 2, starting with what
-<code>instance_count=2</code> does.</p>
+<hr class="half-width"><p>When a run is too slow, the first move is a bigger machine, which is
+what the GPU exercise above was. The second is more than one machine,
+which pays only when the dataset no longer fits in one instance’s memory
+(tens of GB or more) or a single-instance run takes longer than about 10
+hours. This section measures it, starting with what
+<code>instance_count=2</code> does on its own.</p>
 <div class="section level3">
 <h3 id="what-instance_count2-does-on-its-own">What <code>instance_count=2</code> does on its own<a class="anchor" aria-label="anchor" href="#what-instance_count2-does-on-its-own"></a></h3>
 <figure><img src="fig/instance-count-vs-data-parallel.svg" alt="Two panels comparing instance_count=2 without distribution, where each instance trains on the full data, with data parallelism, where batches are split and gradients synced" class="figure mx-auto d-block"><div class="figcaption">Left: two instances each receive the full
@@ -1104,59 +1203,21 @@ trains its own independent copy of the model on all of the data for all
 <li>SageMaker bills
 <code>BillableTimeInSeconds x InstanceCount</code>.</li>
 </ul><p>So without a distribution strategy, two instances means the same job
-twice, in parallel, at double the cost. Estimate first: about the same
-3-4 minutes of wall-clock as the single-instance run, but billed for two
-instances, so about <code>$0.01</code> on <code>ml.m5.large</code> (our
-run: 3.5 minutes of wall-clock, 5.5 billable minutes across the two
-instances, <code>$0.010</code>).</p>
-<div class="codewrapper sourceCode" id="cb20">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1" aria-label="code-block-20-1"></a>instance_count <span class="op">=</span> <span class="dv">2</span>   <span class="co"># demonstration: NOT expected to be faster, and expected to cost double</span></span>
-<span id="cb20-2"><a href="#cb20-2" tabindex="-1" aria-label="code-block-20-2"></a>instance_type <span class="op">=</span> <span class="st">"ml.m5.large"</span></span>
-<span id="cb20-3"><a href="#cb20-3" tabindex="-1" aria-label="code-block-20-3"></a></span>
-<span id="cb20-4"><a href="#cb20-4" tabindex="-1" aria-label="code-block-20-4"></a>pytorch_estimator_2x <span class="op">=</span> PyTorch(</span>
-<span id="cb20-5"><a href="#cb20-5" tabindex="-1" aria-label="code-block-20-5"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn"</span>,</span>
-<span id="cb20-6"><a href="#cb20-6" tabindex="-1" aria-label="code-block-20-6"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
-<span id="cb20-7"><a href="#cb20-7" tabindex="-1" aria-label="code-block-20-7"></a>    entry_point<span class="op">=</span><span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,</span>
-<span id="cb20-8"><a href="#cb20-8" tabindex="-1" aria-label="code-block-20-8"></a>    role<span class="op">=</span>role,</span>
-<span id="cb20-9"><a href="#cb20-9" tabindex="-1" aria-label="code-block-20-9"></a>    tags<span class="op">=</span>job_tags,</span>
-<span id="cb20-10"><a href="#cb20-10" tabindex="-1" aria-label="code-block-20-10"></a>    instance_type<span class="op">=</span>instance_type,</span>
-<span id="cb20-11"><a href="#cb20-11" tabindex="-1" aria-label="code-block-20-11"></a>    instance_count<span class="op">=</span>instance_count,  <span class="co"># no distribution= argument, so each instance runs the whole script on the whole dataset</span></span>
-<span id="cb20-12"><a href="#cb20-12" tabindex="-1" aria-label="code-block-20-12"></a>    framework_version<span class="op">=</span><span class="st">"2.3"</span>,</span>
-<span id="cb20-13"><a href="#cb20-13" tabindex="-1" aria-label="code-block-20-13"></a>    py_version<span class="op">=</span><span class="st">"py311"</span>,</span>
-<span id="cb20-14"><a href="#cb20-14" tabindex="-1" aria-label="code-block-20-14"></a>    output_path<span class="op">=</span>output_path,</span>
-<span id="cb20-15"><a href="#cb20-15" tabindex="-1" aria-label="code-block-20-15"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb20-16"><a href="#cb20-16" tabindex="-1" aria-label="code-block-20-16"></a>    hyperparameters<span class="op">=</span>{</span>
-<span id="cb20-17"><a href="#cb20-17" tabindex="-1" aria-label="code-block-20-17"></a>        <span class="st">"train"</span>: <span class="st">"/opt/ml/input/data/train/train_data.npz"</span>,</span>
-<span id="cb20-18"><a href="#cb20-18" tabindex="-1" aria-label="code-block-20-18"></a>        <span class="st">"val"</span>: <span class="st">"/opt/ml/input/data/val/val_data.npz"</span>,</span>
-<span id="cb20-19"><a href="#cb20-19" tabindex="-1" aria-label="code-block-20-19"></a>        <span class="st">"epochs"</span>: epochs,</span>
-<span id="cb20-20"><a href="#cb20-20" tabindex="-1" aria-label="code-block-20-20"></a>        <span class="st">"learning_rate"</span>: learning_rate</span>
-<span id="cb20-21"><a href="#cb20-21" tabindex="-1" aria-label="code-block-20-21"></a>    }</span>
-<span id="cb20-22"><a href="#cb20-22" tabindex="-1" aria-label="code-block-20-22"></a>)</span>
-<span id="cb20-23"><a href="#cb20-23" tabindex="-1" aria-label="code-block-20-23"></a></span>
-<span id="cb20-24"><a href="#cb20-24" tabindex="-1" aria-label="code-block-20-24"></a>start <span class="op">=</span> t.time()</span>
-<span id="cb20-25"><a href="#cb20-25" tabindex="-1" aria-label="code-block-20-25"></a>pytorch_estimator_2x.fit({<span class="st">"train"</span>: train_input, <span class="st">"val"</span>: val_input})</span>
-<span id="cb20-26"><a href="#cb20-26" tabindex="-1" aria-label="code-block-20-26"></a>end <span class="op">=</span> t.time()</span>
-<span id="cb20-27"><a href="#cb20-27" tabindex="-1" aria-label="code-block-20-27"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb20-28"><a href="#cb20-28" tabindex="-1" aria-label="code-block-20-28"></a></span>
-<span id="cb20-29"><a href="#cb20-29" tabindex="-1" aria-label="code-block-20-29"></a>desc_2x <span class="op">=</span> job_cost_report(pytorch_estimator_2x.latest_training_job.name, prices[instance_type])</span>
-<span id="cb20-30"><a href="#cb20-30" tabindex="-1" aria-label="code-block-20-30"></a><span class="bu">print</span>(<span class="ss">f"Single-instance job billed </span><span class="sc">{</span>desc_cpu[<span class="st">'BillableTimeInSeconds'</span>]<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min; two-instance job billed </span><span class="sc">{</span>desc_2x[<span class="st">'BillableTimeInSeconds'</span>]<span class="op">*</span><span class="dv">2</span><span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min"</span>)</span></code></pre>
-</div>
-<p>Look at the job’s log: open <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training" class="external-link">Training
-jobs</a>, click the job’s name, scroll to <strong>Monitor</strong>,
-click <strong>View logs</strong>. This time CloudWatch lists two
-streams, <code>algo-1</code> and <code>algo-2</code>, and each one
-prints all 1000 epochs. The wall-clock time is about the same as the
-single-instance run (slightly longer, if anything, because two instances
-have to be provisioned), and the billable minutes are double.</p>
+twice, in parallel, at double the cost. There is nothing to launch to
+see this; we ran it once while writing the episode, and the record is
+what the bullets predict: the same 3.5 minutes of wall-clock as the
+single-instance run, 5.5 billable minutes across the two instances,
+<code>$0.010</code>, two CloudWatch log streams, <code>algo-1</code> and
+<code>algo-2</code>, each printing all 1000 epochs, and two identical
+saved models. Nobody wants that job. The one worth launching is
+below.</p>
 </div>
 <div class="section level3">
 <h3 id="data-parallelism-done-properly">Data parallelism, done properly<a class="anchor" aria-label="anchor" href="#data-parallelism-done-properly"></a></h3>
 <p>To split one training run across two instances instead of running it
-twice, the script needs three things the demo above did not have, and
-the estimator needs one. <code>scripts/train_nn_ddp.py</code> is
-<code>train_nn.py</code> with those three added; open the two side by
+twice, the script needs three things <code>train_nn.py</code> does not
+have, and the estimator needs one. <code>scripts/train_nn_ddp.py</code>
+is <code>train_nn.py</code> with those three added; open the two side by
 side, the differences are marked 1, 2 and 3 in the comments.</p>
 <ol style="list-style-type: decimal"><li>
 <strong>Join the process group.</strong> The launcher starts one
@@ -1197,38 +1258,38 @@ script reads and lets the instances find each other by name.
 (<code>torch_distributed</code>, the <code>torchrun</code> launcher, is
 the same idea for GPU instances; the script handles either.) Everything
 else is the two-instance estimator from the demo.</p>
-<div class="codewrapper sourceCode" id="cb21">
+<div class="codewrapper sourceCode" id="cb25">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" tabindex="-1" aria-label="code-block-21-1"></a>pytorch_estimator_ddp <span class="op">=</span> PyTorch(</span>
-<span id="cb21-2"><a href="#cb21-2" tabindex="-1" aria-label="code-block-21-2"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn-ddp"</span>,</span>
-<span id="cb21-3"><a href="#cb21-3" tabindex="-1" aria-label="code-block-21-3"></a>    max_run<span class="op">=</span>max_run,</span>
-<span id="cb21-4"><a href="#cb21-4" tabindex="-1" aria-label="code-block-21-4"></a>    entry_point<span class="op">=</span><span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn_ddp.py"</span>,   <span class="co"># the three additions, marked in the script</span></span>
-<span id="cb21-5"><a href="#cb21-5" tabindex="-1" aria-label="code-block-21-5"></a>    role<span class="op">=</span>role,</span>
-<span id="cb21-6"><a href="#cb21-6" tabindex="-1" aria-label="code-block-21-6"></a>    tags<span class="op">=</span>job_tags,</span>
-<span id="cb21-7"><a href="#cb21-7" tabindex="-1" aria-label="code-block-21-7"></a>    instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span>,</span>
-<span id="cb21-8"><a href="#cb21-8" tabindex="-1" aria-label="code-block-21-8"></a>    instance_count<span class="op">=</span><span class="dv">2</span>,</span>
-<span id="cb21-9"><a href="#cb21-9" tabindex="-1" aria-label="code-block-21-9"></a>    distribution<span class="op">=</span>{<span class="st">"mpi"</span>: {<span class="st">"enabled"</span>: <span class="va">True</span>, <span class="st">"processes_per_host"</span>: <span class="dv">1</span>}},   <span class="co"># start one process per instance and connect them; without this, two copies again</span></span>
-<span id="cb21-10"><a href="#cb21-10" tabindex="-1" aria-label="code-block-21-10"></a>    framework_version<span class="op">=</span><span class="st">"2.3"</span>,</span>
-<span id="cb21-11"><a href="#cb21-11" tabindex="-1" aria-label="code-block-21-11"></a>    py_version<span class="op">=</span><span class="st">"py311"</span>,</span>
-<span id="cb21-12"><a href="#cb21-12" tabindex="-1" aria-label="code-block-21-12"></a>    output_path<span class="op">=</span>output_path,</span>
-<span id="cb21-13"><a href="#cb21-13" tabindex="-1" aria-label="code-block-21-13"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb21-14"><a href="#cb21-14" tabindex="-1" aria-label="code-block-21-14"></a>    hyperparameters<span class="op">=</span>{</span>
-<span id="cb21-15"><a href="#cb21-15" tabindex="-1" aria-label="code-block-21-15"></a>        <span class="st">"train"</span>: <span class="st">"/opt/ml/input/data/train/train_data.npz"</span>,</span>
-<span id="cb21-16"><a href="#cb21-16" tabindex="-1" aria-label="code-block-21-16"></a>        <span class="st">"val"</span>: <span class="st">"/opt/ml/input/data/val/val_data.npz"</span>,</span>
-<span id="cb21-17"><a href="#cb21-17" tabindex="-1" aria-label="code-block-21-17"></a>        <span class="st">"epochs"</span>: epochs,</span>
-<span id="cb21-18"><a href="#cb21-18" tabindex="-1" aria-label="code-block-21-18"></a>        <span class="st">"learning_rate"</span>: learning_rate,</span>
-<span id="cb21-19"><a href="#cb21-19" tabindex="-1" aria-label="code-block-21-19"></a>    },</span>
-<span id="cb21-20"><a href="#cb21-20" tabindex="-1" aria-label="code-block-21-20"></a>)</span>
-<span id="cb21-21"><a href="#cb21-21" tabindex="-1" aria-label="code-block-21-21"></a></span>
-<span id="cb21-22"><a href="#cb21-22" tabindex="-1" aria-label="code-block-21-22"></a>start <span class="op">=</span> t.time()</span>
-<span id="cb21-23"><a href="#cb21-23" tabindex="-1" aria-label="code-block-21-23"></a>pytorch_estimator_ddp.fit({<span class="st">"train"</span>: train_input, <span class="st">"val"</span>: val_input})</span>
-<span id="cb21-24"><a href="#cb21-24" tabindex="-1" aria-label="code-block-21-24"></a><span class="bu">print</span>(<span class="ss">f"Data-parallel run: </span><span class="sc">{</span>(t.time() <span class="op">-</span> start) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min wall-clock on 2 x ml.m5.large"</span>)</span>
-<span id="cb21-25"><a href="#cb21-25" tabindex="-1" aria-label="code-block-21-25"></a>desc_ddp <span class="op">=</span> job_cost_report(pytorch_estimator_ddp.latest_training_job.name, prices[<span class="st">"ml.m5.large"</span>])</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" tabindex="-1" aria-label="code-block-25-1"></a>pytorch_estimator_ddp <span class="op">=</span> PyTorch(</span>
+<span id="cb25-2"><a href="#cb25-2" tabindex="-1" aria-label="code-block-25-2"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn-ddp"</span>,</span>
+<span id="cb25-3"><a href="#cb25-3" tabindex="-1" aria-label="code-block-25-3"></a>    max_run<span class="op">=</span>max_run,</span>
+<span id="cb25-4"><a href="#cb25-4" tabindex="-1" aria-label="code-block-25-4"></a>    entry_point<span class="op">=</span><span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn_ddp.py"</span>,   <span class="co"># the three additions, marked in the script</span></span>
+<span id="cb25-5"><a href="#cb25-5" tabindex="-1" aria-label="code-block-25-5"></a>    role<span class="op">=</span>role,</span>
+<span id="cb25-6"><a href="#cb25-6" tabindex="-1" aria-label="code-block-25-6"></a>    tags<span class="op">=</span>job_tags,</span>
+<span id="cb25-7"><a href="#cb25-7" tabindex="-1" aria-label="code-block-25-7"></a>    instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span>,</span>
+<span id="cb25-8"><a href="#cb25-8" tabindex="-1" aria-label="code-block-25-8"></a>    instance_count<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb25-9"><a href="#cb25-9" tabindex="-1" aria-label="code-block-25-9"></a>    distribution<span class="op">=</span>{<span class="st">"mpi"</span>: {<span class="st">"enabled"</span>: <span class="va">True</span>, <span class="st">"processes_per_host"</span>: <span class="dv">1</span>}},   <span class="co"># start one process per instance and connect them; without this, two copies again</span></span>
+<span id="cb25-10"><a href="#cb25-10" tabindex="-1" aria-label="code-block-25-10"></a>    framework_version<span class="op">=</span><span class="st">"2.3"</span>,</span>
+<span id="cb25-11"><a href="#cb25-11" tabindex="-1" aria-label="code-block-25-11"></a>    py_version<span class="op">=</span><span class="st">"py311"</span>,</span>
+<span id="cb25-12"><a href="#cb25-12" tabindex="-1" aria-label="code-block-25-12"></a>    output_path<span class="op">=</span>output_path,</span>
+<span id="cb25-13"><a href="#cb25-13" tabindex="-1" aria-label="code-block-25-13"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb25-14"><a href="#cb25-14" tabindex="-1" aria-label="code-block-25-14"></a>    hyperparameters<span class="op">=</span>{</span>
+<span id="cb25-15"><a href="#cb25-15" tabindex="-1" aria-label="code-block-25-15"></a>        <span class="st">"train"</span>: <span class="st">"/opt/ml/input/data/train/train_data.npz"</span>,</span>
+<span id="cb25-16"><a href="#cb25-16" tabindex="-1" aria-label="code-block-25-16"></a>        <span class="st">"val"</span>: <span class="st">"/opt/ml/input/data/val/val_data.npz"</span>,</span>
+<span id="cb25-17"><a href="#cb25-17" tabindex="-1" aria-label="code-block-25-17"></a>        <span class="st">"epochs"</span>: epochs,</span>
+<span id="cb25-18"><a href="#cb25-18" tabindex="-1" aria-label="code-block-25-18"></a>        <span class="st">"learning_rate"</span>: learning_rate,</span>
+<span id="cb25-19"><a href="#cb25-19" tabindex="-1" aria-label="code-block-25-19"></a>    },</span>
+<span id="cb25-20"><a href="#cb25-20" tabindex="-1" aria-label="code-block-25-20"></a>)</span>
+<span id="cb25-21"><a href="#cb25-21" tabindex="-1" aria-label="code-block-25-21"></a></span>
+<span id="cb25-22"><a href="#cb25-22" tabindex="-1" aria-label="code-block-25-22"></a>start <span class="op">=</span> t.time()</span>
+<span id="cb25-23"><a href="#cb25-23" tabindex="-1" aria-label="code-block-25-23"></a>pytorch_estimator_ddp.fit({<span class="st">"train"</span>: train_input, <span class="st">"val"</span>: val_input})</span>
+<span id="cb25-24"><a href="#cb25-24" tabindex="-1" aria-label="code-block-25-24"></a><span class="bu">print</span>(<span class="ss">f"Data-parallel run: </span><span class="sc">{</span>(t.time() <span class="op">-</span> start) <span class="op">/</span> <span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min wall-clock on 2 x ml.m5.large"</span>)</span>
+<span id="cb25-25"><a href="#cb25-25" tabindex="-1" aria-label="code-block-25-25"></a>desc_ddp <span class="op">=</span> job_cost_report(pytorch_estimator_ddp.latest_training_job.name, prices[<span class="st">"ml.m5.large"</span>])</span></code></pre>
 </div>
 <p>Read the log before the bill. The two CloudWatch streams now say
-different things: each prints <code>training on 446 of 891 rows</code>
-(or 445), and only <code>algo-1</code> prints the epochs and saves the
+different things: each prints <code>training on 285 of 569 rows</code>
+(or 284), and only <code>algo-1</code> prints the epochs and saves the
 model. The final validation loss matches the single-instance run to the
 third decimal, because the averaged gradient is the same gradient; that
 match is the proof that the work was split rather than copied. The
@@ -1264,10 +1325,6 @@ exceeds ~10 hours.</p>
 <div class="callout-inner">
 <div class="callout-content">
 <ul><li>
-<strong>Efficient data handling</strong>: The <code>.npz</code>
-format is optimized for efficient loading, reducing I/O overhead and
-enabling batch compatibility for PyTorch’s <code>DataLoader</code>.</li>
-<li>
 <strong>Startup dominates small jobs</strong>: Every SageMaker
 training job waits a minute or so for an instance (not billed), then
 spends one to three minutes on container pull and data download (billed)

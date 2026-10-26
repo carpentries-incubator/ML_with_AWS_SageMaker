@@ -582,17 +582,9 @@ locally (on a smaller scale) before scaling things up. This avoids
 wasting resources on buggy code that doesn’t produce reliable
 results.</li>
 <li>
-<strong>Estimator classes</strong>: SageMaker provides
-framework-specific Estimator classes (e.g., XGBoost, PyTorch, SKLearn)
-to streamline training setups, each suited to different model types and
-workflows.</li>
-<li>
-<strong>Your script vs. the built-in algorithm</strong>: both run in
-AWS’s XGBoost container. <code>XGBoost(entry_point=...)</code> runs your
-script in it and is the pattern every later episode uses;
-<code>Estimator(image_uri=...)</code> with no script runs AWS’s own
-training code, which needs the data pre-shaped and takes XGBoost’s own
-parameters.</li>
+<strong>Estimators</strong>: <code>XGBoost(entry_point=...)</code>
+is AWS’s container running your script, the pattern every later episode
+uses with <code>PyTorch</code> and <code>HuggingFace</code>.</li>
 <li>
 <strong>Training data channels</strong>: Using
 <code>TrainingInput</code> ensures SageMaker manages data
@@ -608,17 +600,9 @@ note the job name, stop the notebook instance;
 <code>attach(job_name)</code> picks the job up later. Set
 <code>max_run</code> a little above the estimate, and checkpoint to S3
 on anything longer than half an hour.</li>
-<li>
-<strong>Scaling</strong>: Upgrade the single instance first;
-consider multiple instances only when data no longer fits in memory or a
-run takes more than ~10 hours.</li>
 </ul></section><section id="07_Training-models-in-SageMaker-notebooks-part2"><h2 class="section-heading"><a href="07_Training-models-in-SageMaker-notebooks-part2.html">Training Models in SageMaker: PyTorch Example</a></h2>
 <hr class="half-width">
 <ul>
-<li>
-<strong>Efficient data handling</strong>: The <code>.npz</code>
-format is optimized for efficient loading, reducing I/O overhead and
-enabling batch compatibility for PyTorch’s <code>DataLoader</code>.</li>
 <li>
 <strong>Startup dominates small jobs</strong>: Every SageMaker
 training job waits a minute or so for an instance (not billed), then

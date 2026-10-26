@@ -739,10 +739,10 @@ is decided before any GPU is involved. The sweep extension is the one
 that surprises research groups: a first run is rarely the last, so a
 “<code>$140</code> full fine-tune” is usually a <code>$700</code> to
 <code>$1,400</code> project.</p>
-<p>The habits in this episode are cheap practice at a dollar a run. At
-<code>$140</code> a run they are the difference between a project and a
-budget incident; at <code>$6,000</code> a run, one forgotten
-<code>max_run</code> or one wrong instance type is a grant line.</p>
+<p>This episode’s run costs a dollar. The same steps on a
+<code>$140</code> run, or a <code>$6,000</code> one, are where a
+forgotten <code>max_run</code> or a wrong instance type costs a grant
+line, which is why the episode does them on a dollar first.</p>
 </div>
 <div class="section level3">
 <h3 id="back-of-the-envelope-will-it-fit-and-how-long-will-it-take">Back of the envelope: will it fit, and how long will it take?<a class="anchor" aria-label="anchor" href="#back-of-the-envelope-will-it-fit-and-how-long-will-it-take"></a></h3>
@@ -826,9 +826,12 @@ cannot run on quantized weights the way inference can, because each
 step’s update is too small for 8-bit or 4-bit numbers to hold. LoRA
 avoids the jump by freezing the model and training a few million adapter
 parameters, which is why this episode fits on one 24 GB card.</p>
-<p><strong>Rule 2, time: how many GPU-hours?</strong> Training on one
-token costs three matrix products per layer, each one multiply and one
-add per weight. A full fine-tune does all three; LoRA skips the weight
+<p><strong>Rule 2, time: how many GPU-hours?</strong> The unit is the
+floating-point operation, one multiply or add. FLOPs is a count of them;
+FLOPS, capital S, is a rate, operations per second, and is how a GPU’s
+speed is quoted. Training on one token costs three matrix products per
+layer, each one multiply and one add per weight, so 2 FLOPs per weight
+per product. A full fine-tune does all three; LoRA skips the weight
 update for the frozen base.</p>
 <figure><img src="../fig/flops-per-token.svg" alt="A layer W with an input arrow, an output arrow, an error arrow going back and an update arrow into W, each labelled 2 FLOPs; a box totals 6 for full fine-tuning and 4 for LoRA" class="figure mx-auto d-block"><div class="figcaption">Three matrix products per token: forward (2
 FLOPs per weight), error passed back to the inputs (2), and the weight
@@ -1231,7 +1234,8 @@ checklist</em>.</li>
 in. If you stage under another name, tell students to change
 <code>shared_bucket</code> in the first code cell.</li>
 </ol><p>Fallback instance if g5 capacity is short: <code>ml.g6.xlarge</code>
-(L4, 24 GB, <code>$1.13</code>/h).</p>
+(L4, 24 GB, <code>$1.13</code>/h on the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
+for ML</a> page).</p>
 </div>
 </div>
 </div>
@@ -1572,7 +1576,7 @@ progress.</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" tabindex="-1" aria-label="code-block-22-1"></a>instance_type <span class="op">=</span> <span class="st">"ml.g5.xlarge"</span>            <span class="co"># one A10G GPU, 24 GB; the GPU lives in the job, not in this notebook</span></span>
-<span id="cb22-2"><a href="#cb22-2" tabindex="-1" aria-label="code-block-22-2"></a>g5_price <span class="op">=</span> <span class="fl">1.41</span>                           <span class="co"># $/hour, us-east-1 on-demand</span></span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1" aria-label="code-block-22-2"></a>g5_price <span class="op">=</span> <span class="fl">1.41</span>                           <span class="co"># $/hour, us-east-1 on-demand, from the Instances for ML page</span></span>
 <span id="cb22-3"><a href="#cb22-3" tabindex="-1" aria-label="code-block-22-3"></a>estimated_minutes <span class="op">=</span> <span class="dv">32</span>                    <span class="co"># the Step 0 estimate</span></span>
 <span id="cb22-4"><a href="#cb22-4" tabindex="-1" aria-label="code-block-22-4"></a>max_run_minutes <span class="op">=</span> <span class="dv">65</span>                      <span class="co"># about twice the estimate; SageMaker kills the job at this cap, whatever it is doing</span></span>
 <span id="cb22-5"><a href="#cb22-5" tabindex="-1" aria-label="code-block-22-5"></a>run_id <span class="op">=</span> time.strftime(<span class="st">"%m</span><span class="sc">%d</span><span class="st">-%H%M"</span>)                                   <span class="co"># launch time, so every run gets a new name: job names must be unique in the account</span></span>
@@ -2389,10 +2393,11 @@ as the <code>½</code> fractions.</p>
 faster?</h3>
 <div class="callout-content">
 <p><code>ml.g6e.xlarge</code> (one L40S, 48 GB) costs
-<code>$2.61</code>/h, 1.85x the price of <code>ml.g5.xlarge</code>, and
-runs this workload roughly 2.5–3x faster. It also has twice the GPU
-memory, so <code>batch_size</code> can be 2 or 4 instead of 1, which
-uses the GPU more efficiently.</p>
+<code>$2.61</code>/h on the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
+for ML</a> page, 1.85x the price of <code>ml.g5.xlarge</code>, and runs
+this workload roughly 2.5–3x faster. It also has twice the GPU memory,
+so <code>batch_size</code> can be 2 or 4 instead of 1, which uses the
+GPU more efficiently.</p>
 <p>Using the Step 0 phase table, estimate the cost of the class job on
 <code>ml.g6e.xlarge</code>. Then do the same for the homework run (25
 min of training, 34 min of scoring, 6 min of startup and upload on the
