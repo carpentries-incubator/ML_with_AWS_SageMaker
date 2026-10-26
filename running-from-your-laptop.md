@@ -14,11 +14,25 @@ aws configure sso
 
 It asks for the start URL and region of the Identity Center instance (ask your account administrator; for the workshop account they are in your sign-in email), opens a browser to approve the device, then lets you pick the account and permission set and asks for a default region (`us-east-2` for the workshop account) and a profile name. Afterwards, every new day starts with
 
+::: tab
+
+### Bash
+
 ```bash
 aws sso login --profile <profile-name>
-export AWS_PROFILE=<profile-name>      # Windows Git Bash: the same; PowerShell: $env:AWS_PROFILE="<profile-name>"
+export AWS_PROFILE=<profile-name>      # the same in Git Bash on Windows
 aws sts get-caller-identity           # should print the account id and an AWSReservedSSO_... role
 ```
+
+### PowerShell
+
+```powershell
+aws sso login --profile <profile-name>
+$env:AWS_PROFILE = "<profile-name>"
+aws sts get-caller-identity           # should print the account id and an AWSReservedSSO_... role
+```
+
+:::
 
 The credentials this issues expire after a few hours, and nothing is written to disk that would still work next month. **Do not run `aws configure` and paste an access key ID and secret**: those are long-lived, they end up in shell histories and notebooks, and committing one to GitHub is the standard way research groups lose money. If someone hands you a key pair, ask for SSO access instead.
 

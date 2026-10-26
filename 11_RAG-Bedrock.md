@@ -543,11 +543,25 @@ embedding_model_id_bedrock = tagged_profile_arn(bedrock, base_embedding_model_id
 
 Outside a notebook it is one CLI command per model, which is all the helper wraps:
 
+::: tab
+
+### Bash
+
 ```bash
 aws bedrock create-inference-profile --inference-profile-name SinkOrSwim-DoeJohn-wattbot-gen \
   --model-source copyFrom=arn:aws:bedrock:us-east-2::foundation-model/deepseek.v3-v1:0 \
   --tags key=Name,value=DoeJohn key=Project,value=SinkOrSwim key=Purpose,value=Inference
 ```
+
+### PowerShell
+
+```powershell
+aws bedrock create-inference-profile --inference-profile-name SinkOrSwim-DoeJohn-wattbot-gen `
+  --model-source copyFrom=arn:aws:bedrock:us-east-2::foundation-model/deepseek.v3-v1:0 `
+  --tags key=Name,value=DoeJohn key=Project,value=SinkOrSwim key=Purpose,value=Inference
+```
+
+:::
 
 It prints the profile ARN; pass that as `modelId`. The helper adds only the reuse check, so rerunning does not create duplicates.
 

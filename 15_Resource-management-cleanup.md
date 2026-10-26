@@ -34,12 +34,12 @@ import boto3
 import sagemaker
 import sys
 
-sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
+sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")   # the lesson's helper module, cloned in the controllers episode
 import helpers
 
 session = sagemaker.Session()
-sm = session.sagemaker_client
-region = session.boto_region_name
+sm = session.sagemaker_client          # the low-level SageMaker client: list_*, describe_*, stop_* calls
+region = session.boto_region_name      # the region the notebook runs in (us-east-2 on the workshop account)
 
 name = "DoeJohn"                              # replace with your name, as used in job names and tags
 project = "SinkOrSwim"   # the Project value used in your Bedrock profile names
@@ -51,10 +51,15 @@ bucket_name = "sinkorswim-doejohn"            # replace with your bucket
 Everything this lesson launched carries your name in its job name or its tags, so one pass over the job lists shows what is still billing. A completed job holds nothing; an InProgress one bills until it ends or hits its cap.
 
 ```python
+# Every notebook instance in the account (the list is shared, so other learners' instances appear too), with its status.
+# InService bills the instance's hourly rate; Stopped bills only the volume.
 print("Notebook instances (bill while InService; volume bills while Stopped):")
 for nb in sm.list_notebook_instances()["NotebookInstances"]:
     print(f"  {nb['NotebookInstanceName']:<40} {nb['NotebookInstanceStatus']:<12} {nb['InstanceType']}")
 
+# The three kinds of job, each with its own list call. The call returns a dictionary; the list of jobs is under a key
+# whose name differs per kind ("TrainingJobSummaries", ...), and so does the key holding the job's name, so the loop
+# carries both. StatusEquals keeps only running jobs; NameContains keeps the ones with your name in the job name.
 print("\nJobs still InProgress with your name in them:")
 running = 0
 for kind, lister, key, name_key in [
@@ -71,18 +76,19 @@ print("  none" if running == 0 else f"  {running} job(s) still billing: stop the
 Then storage, which bills whether or not anything runs:
 
 ```python
-helpers.get_s3_bucket_size(bucket_name)
+helpers.get_s3_bucket_size(bucket_name)   # sums the size of every object in the bucket; S3 bills per GB-month whether or not anything runs
 ```
 
 And the Bedrock inference profiles, which cost nothing to keep but are yours to remove (the instructors' cleanup does not touch them):
 
 ```python
-bedrock = boto3.client("bedrock", region_name=region)
+bedrock = boto3.client("bedrock", region_name=region)   # the Bedrock control-plane client: profiles are created and deleted here, not on the runtime client
 mine = f"{project}-{name}-"   # the Bedrock episode named every profile <project>-<name>-<label>, so this prefix is yours and nobody else's
+# list_inference_profiles returns every application profile in the account; keep the ones whose name starts with your prefix
 profiles = [p for p in bedrock.list_inference_profiles(typeEquals="APPLICATION")["inferenceProfileSummaries"]
             if p["inferenceProfileName"].startswith(mine)]
 for p in profiles:
-    print(p["inferenceProfileName"], p["inferenceProfileArn"])
+    print(p["inferenceProfileName"], p["inferenceProfileArn"])   # the ARN is what the delete call below takes
 print("none" if not profiles else f"{len(profiles)} profile(s) with your prefix; the next cell deletes them")
 ```
 
@@ -92,10 +98,10 @@ Deleting them is one call per profile. The cell deletes only the profiles the ce
 confirm_delete = False   # set to True after reading the list above
 
 if confirm_delete:
-    for p in profiles:
-        bedrock.delete_inference_profile(inferenceProfileIdentifier=p["inferenceProfileArn"])
+    for p in profiles:   # only the profiles the cell above listed: yours, by prefix
+        bedrock.delete_inference_profile(inferenceProfileIdentifier=p["inferenceProfileArn"])   # one call per profile; there is no undo
         print("deleted", p["inferenceProfileName"])
-    profiles = []
+    profiles = []        # so a rerun of this cell does not try to delete them twice
 else:
     print("nothing deleted; set confirm_delete = True and rerun to delete the profiles listed above")
 ```

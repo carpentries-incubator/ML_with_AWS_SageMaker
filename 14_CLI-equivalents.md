@@ -24,7 +24,11 @@ exercises: 10
 
 ### Optional, self-study episode
 
-Everything in this lesson went through the SageMaker Python SDK in a notebook. The same account can be used from a terminal with the AWS CLI: to check on a job from another machine, to stop something when no notebook is open, to copy results out of S3 in bulk, or to script a launch. This episode shows the CLI equivalents of what you already did, in four groups: **look, stop, copy, launch**.
+Everything in this lesson went through the SageMaker Python SDK in a notebook. The same account can be used from a terminal with the AWS CLI: to check on a job from another machine, to stop something when no notebook is open, to copy results out of S3 in bulk, or to script a launch. This episode does five things from a laptop terminal: signs in to the account with Identity Center, lists what is running and reads what a job cost, stops jobs and notebook instances, copies data to and from S3, and launches one training job from a JSON file, the same request `estimator.fit()` sent in the training episodes.
+
+The case for the terminal is the notebook instance. Every job in this lesson was launched from an `ml.t3.medium` that bills while it is on, five cents an hour, a dollar a day, and that someone has to remember to stop. A job launched from a laptop needs no instance at all: the request goes from your terminal to SageMaker, the job runs on a machine rented for it and ends, and the model lands in S3. For a project that launches a job a day and otherwise works locally, that is the notebook's whole cost gone and nothing left running overnight. The training episode's `wait=False` pattern gets most of the way there from a notebook; the CLI gets the rest.
+
+What you give up is what the instance did for you. On the instance, its role signs every call, the lesson's helper checks a launch against the account's rules before it goes, and the console shows what you started next to everyone else's work. On a laptop you sign in yourself, the JSON carries no price and no check, and a mistake is not seen until the bill. The rules in the callout, and the request check in section 5, are what make the trade worth it.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
@@ -34,7 +38,7 @@ The CLI, the SDK and the console are the same API. Nothing here is more powerful
 
 1. **Authenticate with `aws sso login` only.** Never `aws configure` with an access key ID and secret. Those are long-lived, and they end up in shell histories and committed files.
 2. **Launch only jobs** (training, processing, tuning), with the same three tags and the same `MaxRuntimeInSeconds` the notebooks always set. Jobs end on their own. **Endpoints, EC2 instances and GPU notebook instances do not**, and the lesson never creates them from the CLI, or at all.
-3. **An `AccessDeniedException` on the commands below is intended.** The workshop account carries a guard-rail policy that denies endpoint and EC2 creation, instance types outside the lesson's list, and any job launched without the three tags. Do not look for a workaround. (Instructors: the policy is on the *Account preparation checklist* page, and it applies only once attached to the permission set and to the notebook role.)
+3. **An `AccessDeniedException` on the commands below is intended.** The workshop account carries a guard-rail policy that denies endpoint and EC2 creation, instance types outside the lesson's list, caps over 48 hours, and any job whose three tags are missing, blank or off the `Project` and `Purpose` lists. Do not look for a workaround. The policy is on the notebook role today, which covers every launch from an instance; a laptop CLI runs under the permission set, which gets the same policy when the Identity Center administrator attaches it, and until then these rules are yours to keep by hand from a laptop. (Instructors: the policy and its status are on the *Account preparation checklist* page.)
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -74,7 +78,7 @@ The output names the account ID and an `AWSReservedSSO_...` role. The credential
 
 If you are on the notebook instance's own terminal (JupyterLab, **File → New → Terminal**), skip this step: the instance's role is already the identity, which is the reason the lesson works from one.
 
-## 2. Look: what is running and what did it cost
+## 2. What is running, and what a job cost
 
 The SageMaker SDK calls you used map one-to-one onto `aws sagemaker` subcommands. `--query` is a [JMESPath](https://jmespath.org/) filter that keeps the output to what you asked about.
 
@@ -129,9 +133,9 @@ aws sagemaker list-tags --resource-arn $ARN --query 'Tags[].[Key,Value]' --outpu
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-## 3. Stop: the commands worth memorising
+## 3. Stopping jobs and notebook instances
 
-These are the most useful CLI commands to know. Each one stops a charge.
+Each of these stops a charge.
 
 ```bash
 aws sagemaker stop-training-job   --training-job-name   <name>
@@ -146,7 +150,7 @@ A stopped job keeps its logs and whatever it had already written to S3; a stoppe
 aws sagemaker delete-notebook-instance --notebook-instance-name <name>   # only after it reports Stopped
 ```
 
-## 4. Copy: S3 in bulk
+## 4. Copying to and from S3
 
 The S3 episode uploaded through the console and the SDK. For many files, or for pulling a job's outputs down to a laptop, the CLI is the better tool:
 
@@ -159,7 +163,7 @@ aws s3 rm s3://<your-bucket>/scratch/ --recursive                          # del
 
 Downloads to a laptop are a transfer out of AWS (`$0.09` per GB). For anything larger than a few hundred megabytes, keep the data in the region and let a job read it, which is the lesson's pattern.
 
-## 5. Launch: one training job, as JSON
+## 5. Launching a training job from a JSON file
 
 Every `estimator.fit()` in the training episodes assembled a JSON request and sent it to `CreateTrainingJob`. Here is that request. Fill in the five placeholders from your notebook: the image URI (run `print(xgboost_estimator.training_image_uri())` in the training episode's notebook), your role ARN (`print(role)`), your bucket, your tag values, and a job name, which must be unique in the account.
 
@@ -237,6 +241,13 @@ JSON
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
+Before sending it, check it the way the notebooks did. The lesson repository has the account's rules in `scripts/guardrails.json` and a script that applies them to a request file; a placeholder left in, a wrong `Purpose` or an instance type off the list is named here rather than refused silently by AWS:
+
+```bash
+git clone -q https://github.com/qualiaMachine/ML_with_Amazon_SageMaker.git   # once, anywhere on the laptop
+python ML_with_Amazon_SageMaker/scripts/check_request.py train-xgboost.json
+```
+
 Then send it. This one line is `estimator.fit()`:
 
 ```bash
@@ -262,7 +273,7 @@ Estimate first, compare after, as always: this is the same ~4 minutes billable o
 - `aws sagemaker create-notebook-instance` with a GPU type: a GPU notebook is `$60` a day while you are asleep. The optional GPU-notebook episode creates one through the console, where it stays visible, and deletes it the same hour.
 - `aws ec2 run-instances`: bare virtual machines have no tags required, no runtime cap and no SageMaker job list to appear in.
 
-On the workshop account all three are denied by the permission set, as is any instance type outside the lesson's list and any job without the three tags; the instructor page *Account preparation checklist* has the policy. On your own account, the same denies take about fifteen minutes to set up.
+On the workshop account all three are denied on the notebook role, as is any instance type outside the lesson's list, any cap over 48 hours and any job whose tags are missing or off the lists; the permission set a laptop uses gets the same policy once the administrator attaches it. The instructor page *Account preparation checklist* has the policy. On your own account, the same denies take about fifteen minutes to set up.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -274,8 +285,23 @@ You are leaving for the weekend and have a terminal, not a browser. Write the co
 
 :::::::::::::::::::::::::::::::::::: solution
 
+::: tab
+
+### Bash
+
 ```bash
 aws sso login --profile workshop && export AWS_PROFILE=workshop
+```
+
+### PowerShell
+
+```powershell
+aws sso login --profile workshop; $env:AWS_PROFILE = "workshop"
+```
+
+:::
+
+```bash
 aws sagemaker list-training-jobs   --status-equals InProgress --query 'TrainingJobSummaries[].TrainingJobName'
 aws sagemaker list-processing-jobs --status-equals InProgress --query 'ProcessingJobSummaries[].ProcessingJobName'
 aws sagemaker list-hyper-parameter-tuning-jobs --status-equals InProgress --query 'HyperParameterTuningJobSummaries[].HyperParameterTuningJobName'
