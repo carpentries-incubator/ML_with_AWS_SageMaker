@@ -61,7 +61,7 @@ Most researchers already have somewhere to run ML, such as a campus HPC cluster,
 
 **Amazon S3** is where data lives. Buckets hold files of any size, every SageMaker job reads its inputs from a bucket and writes its outputs back to one, and storage costs about two cents per GB per month. In this lesson you create one bucket of your own in the next episode and use it for the rest of the workshop; the larger datasets are in a shared bucket the instructors staged.
 
-### How the pieces fit together
+### The four things you will use
 
 ![S3 holds data and outputs; a small notebook instance launches SageMaker jobs that read from and write to S3 and end on their own; Bedrock is called as an API per token](fig/aws-ml-ecosystem.svg){alt="Diagram of the lesson's AWS components: S3 buckets at the top, a notebook instance on the left launching SageMaker training, tuning and processing jobs in the center, and Bedrock on the right called as an API"}
 
@@ -69,10 +69,13 @@ Everything in the lesson is one of these four boxes. S3 holds your data and ever
 
 ### Lesson outline
 
-The rest of the lesson is hands-on, in two parts:
+This episode is part 1 of four: the orientation. The rest is hands-on.
 
-1. **SageMaker: training, tuning and fine-tuning.** Set up an S3 bucket and a small notebook instance, launch training jobs (XGBoost and PyTorch) and a hyperparameter tuning job from it, then fine-tune a vision-language model for handwriting transcription as a training job.
-2. **Retrieval-augmented generation (RAG).** Build a RAG pipeline over research papers on Amazon Bedrock, then run the same pipeline as SageMaker Processing jobs with an open-weight model.
+**Part 2, SageMaker: data, training, tuning and fine-tuning.** Put the Titanic data in an S3 bucket and start a small notebook instance as the controller. Train XGBoost and PyTorch models as training jobs, estimating the cost before each launch and reading the bill after, on CPU and on GPU, on one instance and on two. Run a tuning job under a budget. Then fine-tune a 3B vision-language model with LoRA, as a training job with checkpoints and a cap, for transcribing handwritten German letters (Badger Scribe).
+
+**Part 3, Bedrock: inference and retrieval-augmented generation.** Build a RAG pipeline over energy research papers (WattBot) on Bedrock's hosted models, paid per token through tagged profiles, for cents a run; add multimodal embeddings for the table and figure questions; then run the same pipeline with an open-weight model Bedrock does not serve, as Processing jobs that rent a GPU for the minutes they need.
+
+**Part 4, resource management and cleanup.** What to stop, what to delete, how to read the bill, and the rules the account enforces, with an optional episode on the same jobs from a terminal.
 
 Every job is tagged, capped, estimated before launch and checked against the bill after.
 
