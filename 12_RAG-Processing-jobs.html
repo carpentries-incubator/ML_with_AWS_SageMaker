@@ -567,16 +567,16 @@ for ML</a> page.</p>
 <td>
 <code>ml.g5.xlarge</code> (A10G, 24 GB)</td>
 <td><code>$1.41</code></td>
-<td>~20 min: 1 provisioning, ~4 downloading and loading 16 GB of
-weights, ~13 generating</td>
-<td>~<code>$0.40</code>
+<td>~15 min: 1 provisioning, ~8 downloading and loading 16 GB of
+weights, ~6 generating</td>
+<td>~<code>$0.35</code>
 </td>
 </tr><tr><td>Controller notebook</td>
 <td><code>ml.t3.medium</code></td>
 <td><code>$0.05</code></td>
 <td>2 h</td>
 <td><code>$0.10</code></td>
-</tr></tbody></table><p>About <code>$0.70</code> for the episode, and the GPUs are off the
+</tr></tbody></table><p>About <code>$0.65</code> for the episode, and the GPUs are off the
 moment each script ends. The RAG job answers the same stratified sample
 of questions as the Bedrock episode (ten per evidence type, 53 questions
 once the two papers the corpus lacks are dropped); all 220 is about an
@@ -1135,8 +1135,8 @@ named after your job; click it. The text is the container’s stdout, kept
 after the job ends, updated while it runs (refresh). You will see, in
 order: <code>Loading model with transformers</code>, the weight download
 (16 GB in shards), a line per batch of answers and of explanations, then
-one line per question. The whole job is the 20 minutes in the cost
-callout; the generation is the second half of it.</p>
+one line per question. The whole job is the 15 minutes in the cost
+callout; the generation is the last six of them.</p>
 </div>
 </section><section><h2 class="section-heading" id="step-4-download-predictions-and-evaluate">Step 4 – Download predictions and evaluate<a class="anchor" aria-label="anchor" href="#step-4-download-predictions-and-evaluate"></a></h2>
 <hr class="half-width"><p>Finally, we download <code>wattbot_solutions.csv</code> from S3,
@@ -1171,11 +1171,12 @@ used, so the two runs compare directly.</p>
 prompts and scoring are identical, so any difference is the two models:
 <code>gte-large</code> versus Titan for retrieval, Qwen3-8B versus
 DeepSeek V3 for generation. In one run on the same 53 questions,
-Qwen3-8B scored 0.57 against DeepSeek V3’s 0.66: its citations were
-better (F1 0.70 against 0.57) and its answers worse (51% against 66%
+Qwen3-8B scored 0.54 against DeepSeek V3’s 0.69: its citations were
+better (F1 0.70 against 0.60) and its answers worse (47% against 70%
 correct), with the cross-paper and calculation questions losing the
-most. An 8B model against a 671B one is not a fair fight, and the gap is
-the price of a model you host yourself on one small GPU.</p>
+most, a fifth of each right against three fifths. An 8B model against a
+671B one is not a fair fight, and the gap is the price of a model you
+host yourself on one small GPU.</p>
 <div id="what-did-the-two-jobs-cost" class="callout challenge">
 <div class="callout-square">
 <i class="callout-icon" data-feather="zap"></i>
@@ -1206,7 +1207,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -1233,14 +1234,14 @@ the billed run.</p>
 <span id="cb14-17"><a href="#cb14-17" tabindex="-1" aria-label="code-block-14-17"></a><span class="bu">print</span>(<span class="ss">f"GPU total for the episode: $</span><span class="sc">{</span>total<span class="sc">:.2f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <p>Expect the embedding job to bill about 8 minutes (about
-<code>$0.20</code>) and the RAG job about 17 minutes (about
-<code>$0.40</code>), so about <code>$0.60</code> of GPU time, the
-callout’s GPU figure. In the RAG job’s log, the first 4 minutes of the
-billed window are the download and the model load; the rest is the
-questions, two generation calls each. Setup is a third of what you paid
-for, which is the argument for keeping an <code>HF_HOME</code> cache on
-S3 (skip the download) once a job is run routinely. The Bedrock run of
-the same questions cost cents, and the self-hosted route is only
+<code>$0.20</code>) and the RAG job about 14 minutes (about
+<code>$0.32</code>), so about <code>$0.50</code> of GPU time, the
+callout’s GPU figure. In the RAG job’s log, the first 8 minutes of the
+billed window are the download and the model load; the last 6 are the
+questions, two generation calls each. Setup is more than half of what
+you paid for, which is the argument for keeping an <code>HF_HOME</code>
+cache on S3 (skip the download) once a job is run routinely. The Bedrock
+run of the same questions cost cents, and the self-hosted route is only
 justified here because the model is not in the catalog.</p>
 </div>
 </div>
@@ -1270,7 +1271,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still downloading or
