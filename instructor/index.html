@@ -417,9 +417,34 @@
 and keep the cost under control. It covers where the data goes, which
 machine does what, how a job is launched and paid for, and how to find
 out what it cost. It is in four parts.</p>
-<p><strong>Part 1, orientation.</strong> What the cloud offers a
-researcher compared with a laptop or the cluster down the hall, what it
-costs, and the setup every later episode builds on.</p>
+<div class="tabs">
+<nav><div id="nav-tab-1" class="nav nav-tabs" role="tablist">
+<button class="nav-link active" id="nav-tab-1-1" data-bs-toggle="tab" data-bs-target="#nav-tabpanel-1-1" type="button" role="tab" aria-controls="nav-tabpanel-1-1" aria-selected="true">
+  <h3 class="tab-header" id="nav-tab-heading-1-1">
+  Part 1, orientation
+  </h3>
+</button>
+<button class="nav-link" id="nav-tab-1-2" data-bs-toggle="tab" data-bs-target="#nav-tabpanel-1-2" type="button" role="tab" aria-controls="nav-tabpanel-1-2" aria-selected="false">
+  <h3 class="tab-header" id="nav-tab-heading-1-2">
+  Part 2, SageMaker
+  </h3>
+</button>
+<button class="nav-link" id="nav-tab-1-3" data-bs-toggle="tab" data-bs-target="#nav-tabpanel-1-3" type="button" role="tab" aria-controls="nav-tabpanel-1-3" aria-selected="false">
+  <h3 class="tab-header" id="nav-tab-heading-1-3">
+  Part 3, Bedrock
+  </h3>
+</button>
+<button class="nav-link" id="nav-tab-1-4" data-bs-toggle="tab" data-bs-target="#nav-tabpanel-1-4" type="button" role="tab" aria-controls="nav-tabpanel-1-4" aria-selected="false">
+  <h3 class="tab-header" id="nav-tab-heading-1-4">
+  Part 4, cleanup
+  </h3>
+</button>
+</div>
+</nav><div id="nav-tabContent-1" class="tab-content">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
+<p>What the cloud offers a researcher compared with a laptop or the
+cluster down the hall, what it costs, and the setup every later episode
+builds on.</p>
 <ul><li>The two services the lesson uses. <strong>SageMaker</strong> rents
 machines by the second, for a notebook you work in and for jobs that run
 on their own and end. <strong>Bedrock</strong> serves hosted models by
@@ -432,11 +457,12 @@ launches everything else, read and write the bucket from it, and
 optionally put your notebooks under version control. The notebook is the
 controller, not the workhorse. The expensive compute runs on instances
 SageMaker rents for each job and releases when it ends.</li>
-</ul><p><strong>Part 2, SageMaker: training, fine-tuning and tuning.</strong>
-Every model in this part is trained by a SageMaker job on a rented
-instance that ends when the script does, launched from the small
-notebook, with the cost estimated before the launch and read back after
-it.</p>
+</ul></div>
+<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
+<p><strong>Training, fine-tuning and tuning.</strong> Every model in
+this part is trained by a SageMaker job on a rented instance that ends
+when the script does, launched from the small notebook, with the cost
+estimated before the launch and read back after it.</p>
 <ul><li>Train XGBoost and PyTorch models on the Titanic data as training
 jobs. Estimate the cost before each launch and read the billable seconds
 after, compare a CPU instance with a GPU, and see what two instances buy
@@ -447,11 +473,12 @@ handwritten German letters (Badger Scribe), scored on held-out pages
 before and after.</li>
 <li>Run a hyperparameter tuning job that trains ten models under a
 budget set up front.</li>
-</ul><p><strong>Part 3, Bedrock: inference and retrieval-augmented
-generation.</strong> Nothing is trained here. A RAG pipeline is built
-three ways, on Bedrock’s per-token models, as GPU jobs, and on a GPU
-notebook, and the three are compared on cost, speed and what they can
-run.</p>
+</ul></div>
+<div id="nav-tabpanel-1-3" class="tab-pane" aria-labelledby="nav-tab-1-3" role="tabpanel">
+<p><strong>Inference and retrieval-augmented generation.</strong>
+Nothing is trained here. A RAG pipeline is built three ways, on
+Bedrock’s per-token models, as GPU jobs, and on a GPU notebook, and the
+three are compared on cost, speed and what they can run.</p>
 <ul><li>Build a RAG pipeline over a corpus of energy research papers
 (WattBot): embed the papers, retrieve, generate, score. The models are
 Bedrock’s, paid per token through tagged inference profiles so the spend
@@ -461,9 +488,10 @@ tables and figures, and measure what they change.</li>
 <li>Run the same pipeline with an open-weight model Bedrock does not
 serve, as SageMaker Processing jobs that rent a GPU for the minutes they
 need; optionally, the same on a notebook GPU, as the comparison.</li>
-</ul><p><strong>Part 4, resource management and cleanup.</strong> What is
-still billing when the work is done, and how to make sure nothing
-is.</p>
+</ul></div>
+<div id="nav-tabpanel-1-4" class="tab-pane" aria-labelledby="nav-tab-1-4" role="tabpanel">
+<p><strong>Resource management and cleanup.</strong> What is still
+billing when the work is done, and how to make sure nothing is.</p>
 <ul><li>List what is running and stored under your name, then stop the
 notebook instance, delete the bucket, and remove the Bedrock
 profiles.</li>
@@ -473,7 +501,10 @@ carried.</li>
 same rules on an account of your own.</li>
 <li>Optionally, the same jobs and cleanup from a terminal with the AWS
 CLI.</li>
-</ul><div class="section level3">
+</ul></div>
+</div>
+</div>
+<div class="section level3">
 <h3 id="who-this-workshop-is-for">Who this workshop is for<a class="anchor" aria-label="anchor" href="#who-this-workshop-is-for"></a></h3>
 <p>Researchers and students who use ML or AI in their work and want or
 need to run it in the cloud. The lesson assumes a basic machine learning
@@ -486,13 +517,14 @@ needed.</p>
 </div>
 <div class="section level3">
 <h3 id="cost-controls">Cost controls<a class="anchor" aria-label="anchor" href="#cost-controls"></a></h3>
-<p>The cloud is often very affordable for research workloads, and this
-lesson shows it: run as written, the whole workshop, training jobs, a
-tuning job, a LoRA fine-tune on a GPU and two RAG pipelines, costs each
-learner a few dollars. Every episode tags its resources, caps job
-runtime, estimates cost before launching and checks the bill after, and
-cleans up. The final episode covers monitoring and cleanup, and the
-rules a shared account can enforce.</p>
+<p>The cloud does cost money, but far less than most researchers assume,
+and for most research projects it is cheap. Run as written, the whole
+workshop, training jobs, a tuning job, a LoRA fine-tune on a GPU and two
+RAG pipelines, costs each learner a few dollars. What makes that true is
+habit, not luck. Every episode tags its resources, caps job runtime,
+estimates the cost before launching, checks the bill after, and cleans
+up, and the final episode covers monitoring, cleanup and the rules a
+shared account can enforce.</p>
 </div>
 <div class="section level3">
 <h3 id="what-this-workshop-does-not-cover">What This Workshop Does Not Cover<a class="anchor" aria-label="anchor" href="#what-this-workshop-does-not-cover"></a></h3>
@@ -766,7 +798,7 @@ choose.</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
 <p>If you are attending this lesson at UW-Madison, the instructors will
 provide a shared AWS account for all attendees. You do not need to set
 up your own AWS account. What to expect:</p>
@@ -805,7 +837,7 @@ with an <code>AccessDenied</code> message that does not say why; <a href="refuse
 lesson’s helper module can tell you before and after the launch. Check
 there before emailing.</li>
 </ul></div>
-<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
+<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
 <p>If you are not attending through the shared account, follow these
 steps:</p>
 <ol style="list-style-type: decimal"><li>Create an account at <a href="https://aws.amazon.com/" class="external-link">aws.amazon.com</a> on the <strong>paid
