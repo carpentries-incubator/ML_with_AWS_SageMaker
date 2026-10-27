@@ -51,13 +51,13 @@ The difference is where we begin. Rather than initializing the model with random
 
 We could update every parameter in the model, which is called ***full fine-tuning***. That's how CHURRO itself was created. But even a relatively small model with 3 billion parameters is expensive to train this way, because training requires much more GPU memory than simply running the model.
 
-### LoRA trains a small part of a large model
+### LoRA adds new small weights beside the frozen model
 
 ***Low-rank adaptation***, or ***LoRA***, reduces the amount of training by keeping the pretrained weights frozen and adding small sets of trainable parameters to selected layers. Rather than directly changing a large weight matrix, LoRA learns a much smaller adjustment to its output.
 
 ![Full fine-tuning updates every entry of a d × d weight matrix; LoRA freezes it and trains two thin matrices of rank r whose product is added to its output](fig/lora.svg){alt="Left: a d by d weight matrix, all trained, 16 bytes per weight. Right: the same matrix frozen in bf16 plus two thin trained matrices B (d by r) and A (r by d); output is W x plus B A x."}
 
-The result is that we train only a fraction of the model's parameters. We still run the original model during training, but we don't need to calculate and store weight updates for most of it. That saves enough memory to fine-tune CHURRO on a single GPU with 24 GB of memory; the next section says how much.
+Nothing in the original model is trained. The trained parameters are the new matrices, and they are a small fraction of the model's size, under one percent in this episode. We still run the whole model during training, but we only calculate and store weight updates for the new matrices. That saves enough memory to fine-tune CHURRO on a single GPU with 24 GB of memory; the next section says how much.
 
 LoRA also produces a relatively small ***adapter*** that we can save separately from the original model. To use the fine-tuned model later, we load the pretrained weights together with the adapter.
 
@@ -137,19 +137,21 @@ A 7B model that runs on one 24 GB GPU needs 116 GB to fully fine-tune, a four-GP
 
 ### How long will it run?
 
-Training time is arithmetic. The unit is the floating-point operation, one multiply or add. FLOPs is a count of them; FLOPS, with a capital S, is a rate, operations per second, and is how a GPU's speed is quoted. Training on one token costs three matrix products per layer, each one multiply and one add per weight, so 2 FLOPs per weight per product. A full fine-tune does all three; LoRA skips the weight update for the frozen base.
+How long a job runs is how much work it does divided by how fast the GPU does it. The work is counted in floating-point operations, FLOPs, one multiply or one add on one number. The GPU's speed is a rate, floating-point operations per second, written FLOPS with a capital S, and a trillion a second is a TFLOPS, which is how a data sheet quotes a GPU.
+
+The work per token is easy to count, because every parameter does the same small amount of it. Running the model forward is one multiply and one add per parameter, 2 FLOPs. Passing the error back through the model to find what each parameter should have done is another 2. Updating the parameters is another 2. A full fine-tune does all three, 6 FLOPs per parameter per token. LoRA leaves the base weights alone, so it skips the update and does 4.
 
 ![Three matrix products per token: forward (2 FLOPs per weight), error passed back to the inputs (2), and the weight update (2); full fine-tuning does all three for 6, LoRA skips the update for 4](fig/flops-per-token.svg){alt="A layer W with an input arrow, an output arrow, an error arrow going back and an update arrow into W, each labelled 2 FLOPs; a box totals 6 for full fine-tuning and 4 for LoRA"}
 
 ```text
 tokens      = examples × tokens per example × passes over the data
 FLOPs       = 6 × parameters × tokens      (4 × for LoRA)
-GPU-seconds = FLOPs ÷ (GPU peak FLOPS × 0.25)      a training job reaches about a quarter of the peak on the data sheet
+GPU-seconds = FLOPs ÷ (GPU speed in FLOPS × 0.25)      a training job reaches about a quarter of the speed on the data sheet
 ```
 
-Peak FLOPS is on the GPU's data sheet, about 70 trillion per second for an A10G, 312 for an A100, 989 for an H100. A training job reaches about a quarter of that in practice. Cost is GPU-hours times the hourly rate, plus the startup minutes every job spends pulling its container and data, which are billed too.
+The data sheet quotes a GPU's peak speed, about 70 TFLOPS for an A10G, 312 for an A100, 989 for an H100. A training job reaches about a quarter of that, because the GPU spends much of its time waiting for data to arrive from memory. Cost is GPU-hours times the hourly rate, plus the startup minutes every job spends pulling its container and data, which are billed too.
 
-For the class run, 251 pages at about 1,600 tokens each for 2 passes is 803,000 tokens. LoRA on 3.75B parameters is 4 × 3.75e9 × 8.03e5, about 1.2e16 FLOPs. A quarter of an A10G's 70 TFLOPS is 17 TFLOPS, so about 700 seconds, call it 12 minutes. Measured, the same instance trains at 1.45 seconds per page-pass, so 502 page-passes take about 12 minutes. The rule lands on the number.
+For the class run, 251 pages at about 1,600 tokens each for 2 passes is 803,000 tokens. LoRA on 3.75B parameters is 4 × 3.75 billion × 803,000, about 1.2 × 10¹⁶ FLOPs. A quarter of an A10G's 70 TFLOPS is 17 trillion a second, so about 700 seconds, call it 12 minutes. Measured, the same instance trains at 1.45 seconds per page-pass, so 502 page-passes take about 12 minutes. The rule lands on the number.
 
 ### The same arithmetic as a function
 
@@ -759,7 +761,7 @@ Open a second browser tab on the SageMaker console: **SageMaker AI → Training 
 Things to find in the log while you wait:
 
 - `pages: 295 total -> 251 train / 44 holdout`: the split.
-- `trainable params: ...`: how many of the 3.75B parameters LoRA trains, about 30 million. The `safeguards:` line after it means the script's two checks passed.
+- `trainable params: ...`: how many parameters LoRA trains, about 30 million in the adapter, against the 3.75B it leaves frozen. The `safeguards:` line after it means the script's two checks passed.
 - `[eval before] 15 holdout pages in ...s (... s/page) -> macro CER ...`: the base model's score, and the time per page one at a time; the homework's inference jobs batch pages and are faster per page.
 - The Trainer's loss lines every 5 steps, and `[eval epoch1] ...` at the end of each epoch: the points of the curve you plot in Step 2.
 

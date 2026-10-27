@@ -34,11 +34,15 @@ This episode is not taught in the workshop. **The Bedrock and Processing Jobs ep
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-## When Bedrock does not have your model
+## Why run RAG on a GPU notebook?
 
-In the Bedrock episode we built the full WattBot pipeline on **Amazon Bedrock**, the recommended default for RAG inference because it bills per token and leaves nothing running between calls. Bedrock's catalog is curated, though. It has Amazon's own models, Anthropic, Meta, Mistral, DeepSeek, and a handful of others, and even within a family it carries a few sizes and lags the releases. For Qwen, the serverless lineup is still the Qwen3 generation (Qwen3-32B, Qwen3-235B and the Qwen3-Coder models). Hugging Face hosts well over a million open-weight checkpoints. The one you want (the newest release, a specific size, a specific fine-tune, a model tuned on scientific text) is usually not on Bedrock, and often never will be.
+The Bedrock and Processing Jobs episodes are the better patterns for most research work. Bedrock serves the models for you, and a Processing job rents a GPU only long enough to finish a batch. A notebook GPU gives you something different, an interactive place to load a model, watch GPU memory, try retrieval strategies and change prompts without repackaging a job after every experiment.
 
-When that happens you host the model yourself on a GPU you rent. This episode does that in its simplest form, a single GPU notebook instance, with **Qwen3.8-27B** as the generator. It is a 27-billion-parameter open-weight (Apache 2.0) model released in August 2026 that is not offered on Bedrock, large enough to follow the WattBot answer format reliably, and small enough to fit on one 48 GB GPU once its weights are stored in 8-bit floating point. Everything Bedrock abstracts away (loading an embedding model, loading a generator, fitting both in GPU memory) becomes visible as plain Python. Treat it as a learning exercise and a prototyping workbench, not a deployment pattern.
+That matters when you need a model Bedrock does not offer and want to work on it by hand. This episode runs the WattBot pipeline with **Qwen3.8-27B** as the generator, a 27-billion-parameter open-weight (Apache 2.0) model released in August 2026 that Bedrock does not carry, loaded in FP8 through vLLM beside a local embedding model. Everything a managed model API hides, loading an embedding model, loading a generator, fitting both in GPU memory, is a cell you can run and change.
+
+A 27B model is large enough that the choice of GPU and weight precision matters. At about one byte per weight, FP8 puts the weights near 27 GB, and a 48 GB L40S leaves room for the embedding model and the attention cache that generation needs. The 24 GB GPU the earlier episodes used cannot hold this setup. That makes the notebook a good place to learn about model serving, and an expensive place to leave idle.
+
+**Treat this as an interactive experiment, not a deployment pattern.** Create the separate GPU notebook described below. Do not run it on the CPU controller from the other episodes.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
@@ -69,28 +73,13 @@ What keeps this safe:
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-Self-hosting on a notebook GPU is the simplest form of it. Choose a GPU instance and a model, and every step of retrieval and generation is a cell you can run and change. That makes it the quickest way to learn what each step does and to try prompts and models Bedrock does not carry.
+## What we'll build
 
-The Processing Jobs episode runs this same pipeline as short-lived jobs, so the GPU only bills while it is embedding or generating; that is the pattern to use for real work.
+We reuse the [WattBot 2026](https://www.kaggle.com/competitions/WattBot2026) document chunks and evaluation questions prepared in the Bedrock episode. The pipeline keeps its purpose. What changes is that its two managed model calls become two models running on this GPU, `thenlper/gte-large` for embeddings and Qwen3.8-27B for answers. Qwen3.8-27B is the newer and larger relative of the Qwen3-8B the Processing Jobs episode ran, and sits within a few points of a frontier commercial model on agent tasks and science questions (see that episode's chart), which is why it is worth the trouble of hosting.
 
+First we load the cached chunks and embed them into a searchable matrix. Then we implement cosine-similarity retrieval so a question brings back the most relevant passages. Finally we load Qwen through vLLM, pass those passages into the same WattBot prompts, and generate answers, citations and short explanations that label the evidence type, `[text]`, `[table]`, `[figure]` or a combination such as `[text+table]`. Scoring those answers against the competition's references tells us how the self-hosted pipeline performs, not only whether it runs.
 
-## WattBot RAG on a single notebook GPU
-
-In this episode we rerun the [WattBot 2026](https://www.kaggle.com/competitions/WattBot2026) RAG pipeline from the Bedrock episode, this time entirely from a single GPU-backed SageMaker notebook with self-hosted models. The generator is Qwen3.8-27B, the newer and larger relative of the Qwen3-8B the Processing Jobs episode ran, an open-weight model that fits one 48 GB GPU in FP8 and sits within a few points of a frontier commercial model on agent tasks and science questions (see that episode's chart), which is why it is worth the trouble of hosting.
-
-In this episode we will:
-
-1. **Reuse the WattBot data you prepared in the Bedrock episode.**
-   - Pull `train_QA.csv` and `metadata.csv` from the shared bucket and the cached `chunks.jsonl` from your own.
-2. **Implement the model steps explicitly in code.**
-   - Embed chunks with an open embedding model (`thenlper/gte-large`) running on the notebook's GPU.
-   - Implement cosine-similarity search over the embedding matrix.
-3. **Serve an open-weight generator that Bedrock does not offer.**
-   - Load Qwen3.8-27B with FP8 weights through vLLM on a single `ml.g6e.xlarge` GPU.
-   - Construct WattBot-style answers that we can compare against `train_QA.csv`.
-4. **Add an explanation pass.**
-   - Use an LLM to look at the retrieved evidence, the answer, and citations.
-   - Generate a short explanation and label the **evidence type**: `[text]`, `[table]`, `[figure]` or a combination such as `[text+table]`.
+The workflow is kept close to the earlier episodes on purpose. With the documents, prompts and scoring the same, the differences in model serving are the only thing left to compare.
 
 
 ## Notebook + dataset setup

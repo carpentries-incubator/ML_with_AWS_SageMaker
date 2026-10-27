@@ -23,11 +23,12 @@ exercises: 20
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/12_RAG-Processing-jobs.ipynb`. Select the **`conda_pytorch`** kernel.
+
 ## When Bedrock does not have your model
 
-The Bedrock episode is the default for RAG, with per-token billing, nothing left running and two API calls. Bedrock's catalog is curated, though. It carries Amazon's models, Anthropic, Meta, Mistral, DeepSeek, and a few others, and within a family only some sizes, usually a generation behind. For Qwen, the serverless lineup is still the Qwen3 series. Hugging Face hosts well over a million open-weight checkpoints. The one you want (the newest release, a specific size, a fine-tune for scientific text, a model a paper just published) is usually not on Bedrock, and often never will be.
+The Bedrock episode built the whole WattBot pipeline without managing a GPU, and that stays the simplest choice whenever Bedrock carries a model that will do. Research often depends on a particular open-weight checkpoint, though. A newly released model, a smaller size, a fine-tune for scientific text, a model a paper just published. Bedrock's catalog is curated. It carries Amazon's models, Anthropic, Meta, Mistral, DeepSeek and a few others, and within a family only some sizes, usually a generation behind. For Qwen, the serverless lineup is still the Qwen3 series. Hugging Face hosts well over a million open-weight checkpoints, and the one you want is usually not on Bedrock, and often never will be.
 
-When that happens you host the model yourself on a GPU you rent, and the question is how. There are three ways to rent a GPU on SageMaker:
+In that case you run the model on hardware you rent through SageMaker, and the next decision is how long to keep that hardware. SageMaker rents a GPU three ways.
 
 | | Bills | Stops when | Best for |
 |---|---|---|---|
@@ -35,7 +36,7 @@ When that happens you host the model yourself on a GPU you rent, and the questio
 | Processing or training job | by the second while the job runs | the script ends, or `max_runtime_in_seconds` | batch work: embed a corpus, answer a list of questions, train |
 | Inference endpoint | by the hour while deployed | you delete it | serving a model to an application with steady traffic |
 
-For research RAG, almost all the work is batch. Embed everything once, answer a list of questions, score them. That is a job, and a job is the one option that cannot be forgotten. This episode runs the WattBot pipeline that way. The notebook itself is a small CPU instance and never touches the model; it stages data, launches two GPU jobs, and reads the results back.
+For research RAG, almost all the work is batch. Embed everything once, answer a list of questions, score them. That is a job, and a job is the one option that releases the instance on its own, so it cannot be forgotten. This episode runs the WattBot pipeline as two jobs. The first turns the cached chunks into embeddings with `thenlper/gte-large`. The second loads the generator, retrieves evidence for each question and writes answers in WattBot's submission format. The notebook stays a small CPU instance that never touches a model. It stages data, launches the jobs and reads the results back.
 
 The generator is **Qwen3-8B**, an 8-billion-parameter open-weight model (Apache 2.0). Bedrock serves the 32B and 235B members of that family but not this size, which is the usual situation, where the size you want is the one missing. The job runs it with `transformers`, the same library the fine-tuning episode trained with. `from_pretrained` downloads the weights onto the GPU, and `generate` writes the answer to a chat prompt, the self-hosted counterpart of what Bedrock does behind `converse`. Inference needs no gradients, so the weights are the memory cost, and 8B parameters at two bytes each in bf16 is about 16 GB, which fits the 24 GB GPU of an `ml.g5.xlarge` with room for the KV cache. (The fine-tuning episode has the full memory arithmetic; the short version is that inference needs only the weights and training needs eight times more per parameter.)
 
@@ -68,21 +69,21 @@ In this episode we will:
 
 - Reuse the chunks cached in your bucket by the Bedrock episode and the inputs in the shared bucket.
 - Run two short-lived GPU Processing jobs. One computes embeddings for all chunks, the second runs Qwen3-8B with `transformers` and the full RAG loop (retrieval + generation) over the same 53-question sample as the Bedrock episode.
-- Score the result and compare it with the Bedrock run.
+- Score the result and compare it with the Bedrock run. The retrieval logic, prompts and scorer are unchanged, so the comparison is of the models, not of the pipeline.
 
 
 ## Setup
 
 ### A code folder for each job
 
-The four scripts the jobs need are already on this instance, in the lesson clone, but a job cannot use them from there: it runs in a container on another machine, cannot import anything from this notebook, and the only code it gets is the one directory named by `source_dir=`, uploaded whole. So each job gets a small folder holding just the files it imports, copied out of the clone, rather than `source_dir` pointing at the lesson's whole `scripts/` directory. The four files:
+A Processing job runs in a container on a separate machine. It cannot see the Python variables or files that exist only in this notebook, and the only code it gets is the one directory named by `source_dir=`, uploaded whole, the same way the training estimator's `source_dir` worked in the fine-tuning episode. The four scripts the jobs need are already on this instance, in the lesson clone, but pointing `source_dir` at the lesson's whole `scripts/` directory would upload every script in the workshop. So each job gets a small folder holding just the files it imports, copied out of the clone. The four files:
 
 - `scripts/embedding_inference.py`: generic embedding script (JSONL with a `text` field in, `embeddings.npy` out).
 - `scripts/hf_embedder.py`: the embedding model wrapper both jobs use, on plain `transformers` (mean pooling and normalisation, thirty lines), so neither job has to install anything for it.
 - `scripts/wattbot_rag_batch.py`: the WattBot RAG loop as a batch job: loads the inputs, runs the generator, writes `wattbot_solutions.csv`.
 - `scripts/wattbot_rag.py`: the shared pipeline logic (retrieval, prompts, answer parsing, `run_single_qa`, the scorer) that the Bedrock episode imported too. The batch script imports it, so it ships with the job; the notebook imports it for scoring.
 
-The cell below copies them out of the lesson clone into the project folder, one directory per job, `code_embed/` for the embedding job and `code_rag/` for the RAG job. The split follows from how a job gets its code. `run(source_dir=...)` uploads that whole directory into the container, the same way the training estimator's `source_dir` did in the fine-tuning episode, so each directory holds the files its job imports and nothing else. The copies of `wattbot_rag.py` and `Score.py` next to the notebook are for the scoring step at the end, which runs in the notebook, not in a job.
+The cell below copies them into the project folder, `code_embed/` for the embedding job and `code_rag/` for the RAG job. The copies of `wattbot_rag.py` and `Score.py` next to the notebook are for the scoring step at the end, which runs in the notebook, not in a job.
 
 ```python
 !mkdir -p /home/ec2-user/SageMaker/wattbot   # the same project folder the Bedrock episode used, beside the lesson clone
@@ -99,7 +100,7 @@ The cell below copies them out of the lesson clone into the project folder, one 
 !ls code_embed code_rag
 ```
 
-Next, set up the AWS SDK, SageMaker session, and bucket names.
+Now connect the notebook to SageMaker and S3. The shared bucket holds the challenge data. Your own bucket holds the chunks the Bedrock episode cached and will receive the job outputs.
 
 ```python
 import os
