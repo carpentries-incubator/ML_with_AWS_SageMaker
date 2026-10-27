@@ -53,7 +53,7 @@ We could update every parameter in the model, which is called ***full fine-tunin
 
 ### LoRA adds new small weights beside the frozen model
 
-***Low-rank adaptation***, or ***LoRA***, reduces the amount of training by keeping the pretrained weights frozen and adding small sets of trainable parameters to selected layers. Rather than directly changing a large weight matrix, LoRA learns a much smaller adjustment to its output.
+The alternative to full fine-tuning is ***parameter-efficient fine-tuning***, or ***PEFT***, a family of methods that leave the pretrained weights frozen and train a small number of new parameters instead. ***Low-rank adaptation***, or ***LoRA***, is the most widely used form of PEFT. It keeps the pretrained weights frozen and adds small sets of trainable parameters to selected layers. Rather than directly changing a large weight matrix, LoRA learns a much smaller adjustment to its output.
 
 ![Full fine-tuning updates every entry of a d × d weight matrix; LoRA freezes it and trains two thin matrices of rank r whose product is added to its output](fig/lora.svg){alt="Left: a d by d weight matrix, all trained, 16 bytes per weight. Right: the same matrix frozen in bf16 plus two thin trained matrices B (d by r) and A (r by d); output is W x plus B A x."}
 
@@ -110,7 +110,7 @@ Do not fully fine-tune anything in this workshop, and do not LoRA fine-tune a mo
 
 Before launching a fine-tune, write down what it should cost. If the bill comes in at three times your number, something is wrong, and you want to find that out on the first run, not the fiftieth. Two questions decide the cost of any training run. Will the model fit on the GPU, and how long will it run? Both can be answered on paper, to within a factor of two, before anything is rented.
 
-### Will it fit?
+### How much GPU memory it needs
 
 Every parameter in the model takes up GPU memory, and how much depends on what you are doing with it. Running the model needs only the weight. A full fine-tune needs the weight, its gradient, a 32-bit copy of the weight, and the two running averages Adam keeps for it, the four numbers per weight from the *How fine-tuning works* section above. A LoRA fine-tune keeps the weights frozen in 16-bit and adds a small adapter that carries its own gradients and optimizer state.
 
@@ -248,7 +248,7 @@ The number of passes is a choice. Two passes for the class run is a budget decis
 
 ### Estimate a run you have not launched
 
-A lab wants to **fully fine-tune a 7B model** on 50,000 documents for 3 epochs. Each document is about 2,000 tokens (roughly 1,500 words), so one pass is 100 million tokens and three passes are 300 million. They are choosing between `ml.p4d.24xlarge` (8 × A100 40 GB, `$25.25`/h, about 312 TFLOPS bf16 per GPU) and a single `ml.g5.xlarge`; the supplemental [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page has both, with what each box holds and how its price covers all of its GPUs. Using the two rules, does it fit on the g5? How many GPU-hours on the p4d, and what does one run cost? What does a project cost?
+A lab wants to **fully fine-tune a 7B model** on 50,000 documents for 3 epochs. Each document is about 2,000 tokens (roughly 1,500 words), so one pass is 100 million tokens and three passes are 300 million. They are choosing between `ml.p4d.24xlarge` (8 × A100 40 GB, `$25.25`/h, about 312 TFLOPS bf16 per GPU) and a single `ml.g5.xlarge`; the supplemental [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page has both, with what each box holds and how its price covers all of its GPUs. Using the two rules, does it fit in the memory of the g5? How many GPU-hours on the p4d, and what does one run cost? What does a project cost?
 
 :::::::::::::::::::::::: solution
 
@@ -556,7 +556,7 @@ for f in ["badger_common.py", "finetune_churro_lora.py", "churro_transcribe_batc
     shutil.copy(f"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/{f}", f"code/{f}")
 
 with open("code/requirements.txt", "w") as f:  # pip-installed inside the container before the script starts
-    f.write("\n".join(["peft>=0.14", "accelerate", "pillow", "pandas"]))
+    f.write("\n".join(["peft>=0.14", "accelerate", "pillow", "pandas"]))   # peft is Hugging Face's library of PEFT methods; it is where get_peft_model and LoraConfig come from
 
 print(os.listdir("code"))
 ```
