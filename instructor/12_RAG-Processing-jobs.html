@@ -606,11 +606,15 @@ sample as the Bedrock episode.</li>
 <li>Score the result and compare it with the Bedrock run.</li>
 </ul><section><h2 class="section-heading" id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a></h2>
 <hr class="half-width"><div class="section level3">
-<h3 id="the-scripts">The scripts<a class="anchor" aria-label="anchor" href="#the-scripts"></a></h3>
-<p>Jobs run in containers, so the code they execute has to be shipped
-with the job: a Processing job cannot import functions defined in this
-notebook. The lesson clone has the four files we need as standalone
-scripts. Copy them:</p>
+<h3 id="a-code-folder-for-each-job">A code folder for each job<a class="anchor" aria-label="anchor" href="#a-code-folder-for-each-job"></a></h3>
+<p>The four scripts the jobs need are already on this instance, in the
+lesson clone, but a job cannot use them from there: it runs in a
+container on another machine, cannot import anything from this notebook,
+and the only code it gets is the one directory named by
+<code>source_dir=</code>, uploaded whole. So each job gets a small
+folder holding just the files it imports, copied out of the clone,
+rather than <code>source_dir</code> pointing at the lesson’s whole
+<code>scripts/</code> directory. The four files:</p>
 <ul><li>
 <code>scripts/embedding_inference.py</code>: generic embedding
 script (JSONL with a <code>text</code> field in,
@@ -1196,7 +1200,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -1236,13 +1240,14 @@ justified here because the model is not in the catalog.</p>
 </div>
 </div>
 </div>
-<div id="the-runtime-cap" class="callout challenge">
+<div id="what-a-shorter-runtime-cap-would-have-done" class="callout challenge">
 <div class="callout-square">
 <i class="callout-icon" data-feather="zap"></i>
 </div>
 <span class="callout-header">Challenge</span>
-<div id="the-runtime-cap" class="callout-inner">
-<h3 class="callout-title">The runtime cap</h3>
+<div id="what-a-shorter-runtime-cap-would-have-done" class="callout-inner">
+<h3 class="callout-title">What a shorter runtime cap would have
+done</h3>
 <div class="callout-content">
 <p>Both processors set <code>max_runtime_in_seconds=2 * 60 * 60</code>.
 Predict what would happen if the RAG job were launched with
@@ -1259,7 +1264,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still downloading or

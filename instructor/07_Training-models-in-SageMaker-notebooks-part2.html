@@ -769,10 +769,10 @@ passes:</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a>helpers.estimate_training_cost(   <span class="co"># the semicolon at the end keeps Jupyter from also displaying the dictionary the function returns</span></span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1" aria-label="code-block-14-2"></a>    params_billions<span class="op">=</span><span class="fl">0.125</span>,      <span class="co"># a BERT-base-sized model: 125 million parameters</span></span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1" aria-label="code-block-14-3"></a>    examples<span class="op">=</span><span class="dv">1_000_000</span>,         <span class="co"># one example = one abstract; a million of them</span></span>
-<span id="cb14-4"><a href="#cb14-4" tabindex="-1" aria-label="code-block-14-4"></a>    tokens_per_example<span class="op">=</span><span class="dv">256</span>,     <span class="co"># an abstract is about 190 words, 256 tokens</span></span>
-<span id="cb14-5"><a href="#cb14-5" tabindex="-1" aria-label="code-block-14-5"></a>    epochs<span class="op">=</span><span class="dv">3</span>,                   <span class="co"># three passes over the million abstracts</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1" aria-label="code-block-14-2"></a>    params_billions<span class="op">=</span><span class="fl">0.125</span>,      <span class="co"># a BERT-base-sized model, 125 million parameters</span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1" aria-label="code-block-14-3"></a>    examples<span class="op">=</span><span class="dv">1_000_000</span>,         <span class="co"># a million abstracts</span></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1" aria-label="code-block-14-4"></a>    tokens_per_example<span class="op">=</span><span class="dv">256</span>,     <span class="co"># 190 words per abstract, about 256 tokens</span></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1" aria-label="code-block-14-5"></a>    epochs<span class="op">=</span><span class="dv">3</span>,                   <span class="co"># three full training passes over all abstracts</span></span>
 <span id="cb14-6"><a href="#cb14-6" tabindex="-1" aria-label="code-block-14-6"></a>)<span class="op">;</span></span></code></pre>
 </div>
 <p>Each line:</p>
@@ -812,19 +812,19 @@ notebook can use <code>max_run_seconds</code> and
 <code>instance_type</code> directly rather than copying them from the
 printout.</p>
 <div class="section level3">
-<h3 id="what-a-language-model-costs-before-anyone-launches-one">What a language model costs, before anyone launches one<a class="anchor" aria-label="anchor" href="#what-a-language-model-costs-before-anyone-launches-one"></a></h3>
+<h3 id="what-training-a-language-model-would-cost">What training a language model would cost<a class="anchor" aria-label="anchor" href="#what-training-a-language-model-would-cost"></a></h3>
 <p>Run the same function on two sizes a project might be tempted by: a
 1-billion-parameter model and a 7-billion one, each trained from scratch
-on a million documents of 2,000 tokens, one pass. Nothing is launched;
-the function only does the arithmetic.</p>
+on a million papers, one pass. Nothing is launched; the function only
+does the arithmetic.</p>
 <div class="codewrapper sourceCode" id="cb15">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a>helpers.estimate_training_cost(</span>
 <span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a>    params_billions<span class="op">=</span><span class="dv">1</span>,          <span class="co"># a 1B model, the size of the smallest open-weight language models</span></span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1" aria-label="code-block-15-3"></a>    examples<span class="op">=</span><span class="dv">1_000_000</span>,         <span class="co"># one example = one document, a million of them</span></span>
-<span id="cb15-4"><a href="#cb15-4" tabindex="-1" aria-label="code-block-15-4"></a>    tokens_per_example<span class="op">=</span><span class="dv">2000</span>,    <span class="co"># a short paper: about 1,500 words</span></span>
-<span id="cb15-5"><a href="#cb15-5" tabindex="-1" aria-label="code-block-15-5"></a>    epochs<span class="op">=</span><span class="dv">1</span>,                   <span class="co"># one pass</span></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1" aria-label="code-block-15-3"></a>    examples<span class="op">=</span><span class="dv">1_000_000</span>,         <span class="co"># a million papers</span></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1" aria-label="code-block-15-4"></a>    tokens_per_example<span class="op">=</span><span class="dv">2000</span>,    <span class="co"># 1,500 words per paper, about 2,000 tokens</span></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1" aria-label="code-block-15-5"></a>    epochs<span class="op">=</span><span class="dv">1</span>,                   <span class="co"># one full training pass over all papers</span></span>
 <span id="cb15-6"><a href="#cb15-6" tabindex="-1" aria-label="code-block-15-6"></a>)<span class="op">;</span></span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb16">
@@ -832,9 +832,9 @@ the function only does the arithmetic.</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a>helpers.estimate_training_cost(</span>
 <span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a>    params_billions<span class="op">=</span><span class="dv">7</span>,          <span class="co"># a 7B model, the size most "small" open-weight LLMs are</span></span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a>    examples<span class="op">=</span><span class="dv">1_000_000</span>,         <span class="co"># the same million documents</span></span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a>    tokens_per_example<span class="op">=</span><span class="dv">2000</span>,</span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a>    epochs<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a>    examples<span class="op">=</span><span class="dv">1_000_000</span>,         <span class="co"># the same million papers</span></span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a>    tokens_per_example<span class="op">=</span><span class="dv">2000</span>,    <span class="co"># 1,500 words per paper, about 2,000 tokens</span></span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a>    epochs<span class="op">=</span><span class="dv">1</span>,                   <span class="co"># one full training pass over all papers</span></span>
 <span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a>)<span class="op">;</span></span></code></pre>
 </div>
 <p>Read the two against the 125M run above. The 1B model still fits on
@@ -900,7 +900,7 @@ goes next to it.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>There is no single answer; the solution is the written estimate. One
 worked example for scale: a 7B language model fully fine-tuned on 50,000
@@ -1015,7 +1015,7 @@ provides a single GPU and costs approximately <code>$0.74/hour</code>
 for ML page</a> for detailed pricing).</p>
 </div>
 <div class="section level4">
-<h4 id="nothing-changes-in-the-script">Nothing changes in the script<a class="anchor" aria-label="anchor" href="#nothing-changes-in-the-script"></a></h4>
+<h4 id="the-script-does-not-change">The script does not change<a class="anchor" aria-label="anchor" href="#the-script-does-not-change"></a></h4>
 <p><code>train_nn.py</code> already picks the GPU when there is one and
 moves the model and the tensors to it, which is why the same file runs
 on both instance types:</p>
@@ -1026,13 +1026,13 @@ on both instance types:</p>
 <span id="cb20-2"><a href="#cb20-2" tabindex="-1" aria-label="code-block-20-2"></a>model <span class="op">=</span> TitanicNet().to(device)</span>
 <span id="cb20-3"><a href="#cb20-3" tabindex="-1" aria-label="code-block-20-3"></a>X_train, y_train <span class="op">=</span> X_train.to(device), y_train.to(device)</span></code></pre>
 </div>
-<div id="cpu-or-gpu-predict-then-measure" class="callout challenge">
+<div id="will-the-gpu-job-be-faster-or-cheaper" class="callout challenge">
 <div class="callout-square">
 <i class="callout-icon" data-feather="zap"></i>
 </div>
 <span class="callout-header">Challenge</span>
-<div id="cpu-or-gpu-predict-then-measure" class="callout-inner">
-<h3 class="callout-title">CPU or GPU: predict, then measure</h3>
+<div id="will-the-gpu-job-be-faster-or-cheaper" class="callout-inner">
+<h3 class="callout-title">Will the GPU job be faster or cheaper?</h3>
 <div class="callout-content">
 <p>We’re about to run the identical job on an
 <code>ml.g4dn.xlarge</code> (one NVIDIA T4 GPU, about
@@ -1091,7 +1091,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -1143,8 +1143,8 @@ it.</li>
 <code>instance_type</code>, and on the class account it is the only form
 available, since the instance list stops at one GPU per instance. The
 rest of this section shows it on two <code>ml.m5.large</code> CPU
-instances, where it costs cents, then does the arithmetic for when it
-pays and says how to set it up for each kind of job.</p>
+instances, where it costs cents, then estimates when it helps and shows
+the setup for each kind of job.</p>
 <div class="section level3">
 <h3 id="what-instance_count2-does-on-its-own">What <code>instance_count=2</code> does on its own<a class="anchor" aria-label="anchor" href="#what-instance_count2-does-on-its-own"></a></h3>
 <figure><img src="../fig/instance-count-vs-data-parallel.svg" alt="Two panels comparing instance_count=2 without distribution, where each instance trains on the full data, with data parallelism, where batches are split and gradients synced" class="figure mx-auto d-block"><div class="figcaption">Left: two instances each receive the full
@@ -1175,7 +1175,7 @@ saved models. Nobody wants that job. The one worth launching is
 below.</p>
 </div>
 <div class="section level3">
-<h3 id="data-parallelism-done-properly">Data parallelism, done properly<a class="anchor" aria-label="anchor" href="#data-parallelism-done-properly"></a></h3>
+<h3 id="data-parallelism">Data parallelism<a class="anchor" aria-label="anchor" href="#data-parallelism"></a></h3>
 <p>To split one training run across two instances instead of running it
 twice, the script needs three things <code>train_nn.py</code> does not
 have, and the estimator needs one. <code>scripts/train_nn_ddp.py</code>
@@ -1283,7 +1283,7 @@ microseconds. The exchange is a per-step cost that is the same whether
 the step is tiny or huge; here it is the whole step.</p>
 </div>
 <div class="section level3">
-<h3 id="when-it-pays-the-arithmetic">When it pays: the arithmetic<a class="anchor" aria-label="anchor" href="#when-it-pays-the-arithmetic"></a></h3>
+<h3 id="when-a-second-machine-helps">When a second machine helps<a class="anchor" aria-label="anchor" href="#when-a-second-machine-helps"></a></h3>
 <p><code>helpers.estimate_parallel_speedup</code> puts numbers on that
 for any model and any box, with the same assumptions as the cost
 estimator: 6 FLOPs per parameter per token at a quarter of the GPU’s
@@ -1322,7 +1322,7 @@ more than one device, and read the cost line: the speedup is what you
 buy, the cost ratio is what you pay for it.</p>
 </div>
 <div class="section level3">
-<h3 id="how-to-set-it-up-for-each-kind-of-job">How to set it up, for each kind of job<a class="anchor" aria-label="anchor" href="#how-to-set-it-up-for-each-kind-of-job"></a></h3>
+<h3 id="setting-it-up-for-each-kind-of-job">Setting it up for each kind of job<a class="anchor" aria-label="anchor" href="#setting-it-up-for-each-kind-of-job"></a></h3>
 <p>A job has one instance type and one count; the count is how many of
 that type, and every instance gets the same script. What differs is how
 the work is split, which depends on what is running:</p>
