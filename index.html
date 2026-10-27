@@ -413,25 +413,31 @@
     </nav><main id="main-content" class="main-content"><h1 class="schedule-heading">Summary and Setup</h1>
       
 <section><h2 class="section-heading" id="workshop-overview">Workshop Overview<a class="anchor" aria-label="anchor" href="#workshop-overview"></a></h2>
-<hr class="half-width"><p>This workshop is about running machine learning and AI work on AWS
-without losing control of the bill: where the data goes, which machine
-does what, how a job is launched and paid for, and how to find out what
-it cost. It is in four parts.</p>
+<hr class="half-width"><p>This workshop teaches how to run machine learning and AI work on AWS
+and keep the cost under control. It covers where the data goes, which
+machine does what, how a job is launched and paid for, and how to find
+out what it cost. It is in four parts.</p>
 <p><strong>Part 1, orientation.</strong> What the cloud offers a
-researcher compared with a laptop or the cluster down the hall, and what
-it costs. The two services the lesson uses: <strong>SageMaker</strong>
-rents machines by the second, for a notebook you work in and for jobs
-that run on their own and end; <strong>Bedrock</strong> serves hosted
-models by the token, with nothing to start or stop. The four things
-every episode uses, S3, a notebook instance, jobs and Bedrock, and how
-every later episode estimates and checks what a job costs.</p>
-<p><strong>Part 2, SageMaker: data, training, fine-tuning and
-tuning.</strong></p>
-<ul><li>Put the data in an S3 bucket and start a small notebook instance
-that launches everything else. The notebook is the controller, not the
-workhorse: the expensive compute runs on instances SageMaker rents for
-each job and releases when it ends.</li>
-<li>Train XGBoost and PyTorch models on the Titanic data as training
+researcher compared with a laptop or the cluster down the hall, what it
+costs, and the setup every later episode builds on.</p>
+<ul><li>The two services the lesson uses. <strong>SageMaker</strong> rents
+machines by the second, for a notebook you work in and for jobs that run
+on their own and end. <strong>Bedrock</strong> serves hosted models by
+the token, with nothing to start or stop.</li>
+<li>The four things every episode uses, S3, a notebook instance, jobs
+and Bedrock, and how every later episode estimates and checks what a job
+costs.</li>
+<li>Put the data in an S3 bucket, start a small notebook instance that
+launches everything else, read and write the bucket from it, and
+optionally put your notebooks under version control. The notebook is the
+controller, not the workhorse. The expensive compute runs on instances
+SageMaker rents for each job and releases when it ends.</li>
+</ul><p><strong>Part 2, SageMaker: training, fine-tuning and tuning.</strong>
+Every model in this part is trained by a SageMaker job on a rented
+instance that ends when the script does, launched from the small
+notebook, with the cost estimated before the launch and read back after
+it.</p>
+<ul><li>Train XGBoost and PyTorch models on the Titanic data as training
 jobs. Estimate the cost before each launch and read the billable seconds
 after, compare a CPU instance with a GPU, and see what two instances buy
 and what they do not.</li>
@@ -442,7 +448,10 @@ before and after.</li>
 <li>Run a hyperparameter tuning job that trains ten models under a
 budget set up front.</li>
 </ul><p><strong>Part 3, Bedrock: inference and retrieval-augmented
-generation.</strong></p>
+generation.</strong> Nothing is trained here. A RAG pipeline is built
+three ways, on Bedrock’s per-token models, as GPU jobs, and on a GPU
+notebook, and the three are compared on cost, speed and what they can
+run.</p>
 <ul><li>Build a RAG pipeline over a corpus of energy research papers
 (WattBot): embed the papers, retrieve, generate, score. The models are
 Bedrock’s, paid per token through tagged inference profiles so the spend
@@ -452,12 +461,19 @@ tables and figures, and measure what they change.</li>
 <li>Run the same pipeline with an open-weight model Bedrock does not
 serve, as SageMaker Processing jobs that rent a GPU for the minutes they
 need; optionally, the same on a notebook GPU, as the comparison.</li>
-</ul><p><strong>Part 4, resource management and cleanup.</strong> What to
-stop, what to delete, how to read the bill, and the rules the account
-enforces on every launch, with how to set the same rules on an account
-of your own. An optional episode shows the same jobs from a
-terminal.</p>
-<div class="section level3">
+</ul><p><strong>Part 4, resource management and cleanup.</strong> What is
+still billing when the work is done, and how to make sure nothing
+is.</p>
+<ul><li>List what is running and stored under your name, then stop the
+notebook instance, delete the bucket, and remove the Bedrock
+profiles.</li>
+<li>Read the bill in Cost Explorer by the tags every resource
+carried.</li>
+<li>The rules the account enforced on every launch, and how to set the
+same rules on an account of your own.</li>
+<li>Optionally, the same jobs and cleanup from a terminal with the AWS
+CLI.</li>
+</ul><div class="section level3">
 <h3 id="who-this-workshop-is-for">Who this workshop is for<a class="anchor" aria-label="anchor" href="#who-this-workshop-is-for"></a></h3>
 <p>Researchers and students who use ML or AI in their work and want or
 need to run it in the cloud. The lesson assumes a basic machine learning
