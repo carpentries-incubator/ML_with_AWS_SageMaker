@@ -25,25 +25,17 @@ exercises: 15
 Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/09_Hyperparameter-tuning.ipynb`. Select the **`conda_pytorch`** kernel.
 
 ## Hyperparameter tuning in SageMaker
-SageMaker's **hyperparameter tuning jobs** search a parameter space for any model; what keeps them cheap is the choice of ranges and the number of models trained. This episode walks through one tuning job with both in view.
+The PyTorch episode trained one neural network with a learning rate and an epoch count chosen by hand. Those settings change the result, and choosing them by hand means launching a series of experiments and keeping track of their scores yourself. SageMaker's hyperparameter tuner does that for us. We say which settings may vary, how a good result is measured, and how many training jobs we are willing to pay for.
 
-### Key steps 
-The overall process involves these seven below steps.
+Each trial is an ordinary SageMaker training job, launched from the controller notebook on its own instance. The tuner changes the hyperparameters between trials and compares the validation metric they report. That makes the search easier to run, but it does not make it free. Ten trials are ten training jobs on the bill, and what keeps a tuning job cheap is the choice of ranges and the number of models trained. We begin with a single trial to check the configuration before paying for a larger search, the same test-first pattern as the training episodes.
 
-1. Setup estimator
-2. Define parameter ranges
-3. Set up HyperparameterTuner object
-4. Prepare training script to log metrics
-5. Set data paths and launch tuner.fit()
-6. Monitor tuning job from SageMaker console
-7. Extract best model for final evaluation
+### The experiment
 
-#### Code example for SageMaker hyperparameter tuning with neural networks
-We'll walk through each step in detail by tuning a neural network. Specifically, we will test out different values for our `epochs` and `learning_rate` parameters. We are sticking to just two hyperparameters for demonstration purposes, but you may wish to explore additional parameters in your own work. 
- 
-`epochs` is a `CategoricalParameter`, a list of values to try; `learning_rate` a `ContinuousParameter`, a range to sample; `max_jobs` and `max_parallel_jobs` bound the cost.
+We reuse the Titanic network and training data from the PyTorch episode and tune two settings, `epochs` and `learning_rate`. One is picked from a short list of values, the other sampled from a continuous range. Two settings are enough to see the mechanics without a new dataset or model. In your own work you may tune more.
 
-#### 0. Directory setup
+There are three pieces to connect. An estimator says how each model is trained, a search space says what may change, and a validation metric tells SageMaker which trials did better. The tuner then bounds the search with the total number of trials, `max_jobs`, and how many run at once, `max_parallel_jobs`. Afterwards we read the results, add up the billed compute time, and evaluate the chosen model on the test data.
+
+### Set up the project folder
 Start in the Titanic project folder, as in the previous episodes:
 
 ```python
@@ -55,12 +47,9 @@ sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
 import helpers
 ```
 
-#### 1. Setup estimator
-The tuner needs an estimator first. The estimator setup here is the PyTorch episode's, where we used it to configure and train a model directly. However, this time, rather than directly running a training job with the estimator, we'll be using it as the foundation for **hyperparameter tuning**.
+### Define the training job
 
-In SageMaker, the estimator serves as a blueprint for each tuning job, specifying the training script, instance type, and key parameters like data paths and metrics. Once defined, this estimator will be passed to a **Hyperparameter Tuner** that manages the creation of multiple training jobs with various hyperparameter combinations, helping us find an optimal configuration.
-
-The PyTorch estimator, which includes specifying the entry script for training (`train_nn.py`) and defining hyperparameters that will remain fixed across tuning jobs. The hyperparameters we're setting up to tune include `epochs` and `learning_rate`, with a few specific values or ranges defined.
+We begin with a PyTorch estimator like the one in the previous episode. It names the training script, the instance, the input paths and the metric to record. When it is handed to the tuner, SageMaker uses it as the template for every trial and substitutes new values for the hyperparameters being searched. The training script does not change.
 
 We'll use our notebook instance name again to label the training jobs launched in this episode
 
@@ -156,7 +145,7 @@ pytorch_estimator = PyTorch(
 )
 ```
 
-#### 2. Define hyperparameter ranges
+### Define the search space
 
 In SageMaker, you must explicitly define ranges for any hyperparameters you want to tune. SageMaker supports `ContinuousParameter`, `IntegerParameter` and `CategoricalParameter` types:  
 
@@ -174,19 +163,13 @@ hyperparameter_ranges = {
 }
 ```
 
-#### 3. Set up HyperparameterTuner object
-In step 3, we set up the `HyperparameterTuner`, which controls the tuning process by specifying the...
+### Configure the tuner
 
-- `estimator`: Here, we connect the previously defined `pytorch_estimator` to `tuner`, ensuring that the tuning job will run with our PyTorch model configuration.
-- `objective`: The `metric_definitions` and `objective_metric_name` indicate which metric SageMaker should monitor to find the best-performing model; in this case, we're tracking "validation:accuracy" and aiming to maximize it. We'll show you how to setup your training script to report this information in the next step.
-- `hyperparameter_ranges`: Defined above.
-- `strategy`: SageMaker uses a **Bayesian strategy** by default, which iteratively improves parameter selection based on past performance to find an optimal model more efficiently. Although it's possible to adjust to a "Random" strategy, Bayesian optimization generally provides better results, so it's recommended to keep this setting. 
-- `max_jobs` and `max_parallel_jobs`: Finally, we set `max_jobs` to control the total number of configurations SageMaker will explore and `max_parallel_jobs` to limit the number of jobs that run simultaneously, balancing resource usage and tuning speed. Since SageMaker tests different hyperparameter values dynamically, keep `max_parallel_jobs` at 4 or fewer. 
+The `HyperparameterTuner` brings the estimator and the search space together. It also needs an objective. Here it maximizes `validation:accuracy`, which the training script prints and SageMaker reads out of the log. The strategy chooses which configurations to try, `max_jobs` caps how many training jobs are launched in total, and `max_parallel_jobs` says how many run at once. Parallel trials finish sooner, and each one still bills its own instance.
 
 > Tuning gains are usually marginal past 20 to 30 configurations, and the search space is where the money goes: a published range for the parameters that matter beats a wide search over all of them. 
 
-**Always start with `max_jobs = 1` and `max_parallel_jobs=1`.**
-Before running the full search, let's test our setup by setting max_jobs = 1. This will test just one possible hyperparameter configuration. 
+We first set both limits to one. That single trial checks that the script, the metric extraction, the input files and the permissions all work before we pay for a search.
 
 ```python
 # Tuner configuration
@@ -205,8 +188,9 @@ tuner = HyperparameterTuner(
 )
 ```
 
-#### 4. Prepare training script to log metrics
-To prepare `train_nn.py` for hyperparameter tuning, we added code to log validation metrics in a format that SageMaker recognizes for tracking. In the training loop, we added a print statement for the validation accuracy in a specific format that SageMaker can capture. 
+### Check how the objective metric is recorded
+
+A tuner needs a number from every trial. `train_nn.py` prints the validation accuracy during training, and the estimator's `metric_definitions` regex pulls that value out of the job's log. The name in the log line, in the metric definition and in the tuner's `objective_metric_name` have to agree, or SageMaker has nothing to compare the trials on.
 
 **Note**: It's best to use an if statement to only print out metrics periodically (e.g., every 100 epochs), so that your print time does not eat up too much of your training time. Printing every epoch is a measurable share of a step this small. On the flipside of this, you don't want to print metrics so infrequently that you lose resolution in the monitored validation accuracy. Choose a number between 100-1000 epochs or divide your total epoch count by ~25 to yield a reasonable range. 
 
@@ -217,8 +201,9 @@ if (epoch + 1) % 100 == 0 or epoch == epochs - 1:
 
 Paired with this, our `metric_definitions` above uses a regular expression `"validation:accuracy = ([0-9\\.]+)"` to extract the val_accuracy value from each log line. This regex specifically looks for `validation:accuracy =`, followed by a floating-point number, which corresponds to the format of our log statement in `train_nn.py`.
 
-#### 5. Set data paths and launch tuner.fit()
-In step 5, we define the input data paths for the training job and launch the hyperparameter tuning process. Using `TrainingInput`, we specify the S3 paths to our `train_data.npz` and `val_data.npz` files (uploaded in the PyTorch episode). We then call `tuner.fit` and pass a dictionary mapping each data channel ("train" and "val") to its respective path. This command initiates the tuning job, triggering SageMaker to begin sampling hyperparameter combinations, training the model, and evaluating performance based on our defined objective metric. Once the job is launched, SageMaker handles the tuning process automatically, running the specified number of configurations and keeping track of the best model parameters based on validation accuracy.
+### Launch the first trial
+
+Now we give the tuner the training and validation `.npz` files the PyTorch episode saved to S3. The two `TrainingInput` channels map those files to the paths `train_nn.py` expects. `tuner.fit()` starts the tuning job. SageMaker launches one training job with one configuration from the search space and records the validation metric it reports. With `max_jobs=1` this is a test of the setup, not yet a search.
 
 Estimate first: one child job is the same three billable minutes as the PyTorch episode's CPU job, almost all of it startup, so about `$0.01`.
 
@@ -237,7 +222,7 @@ tuner.fit({"train": train_input, "val": val_input})
 print(f"Hyperparameter tuning job finished in {t.time() - start_time:.1f} seconds (wall-clock, including instance startup)")
 ```
 
-#### 6. Monitor tuning job from SageMaker console
+### Monitor the tuning job
 While the above cell runs, we can check on the progress by visiting the SageMaker Console and finding the "Training" tab located on the left panel. Click "Hyperparameter tuning jobs" to view running jobs.
 
 #### What did that cost?

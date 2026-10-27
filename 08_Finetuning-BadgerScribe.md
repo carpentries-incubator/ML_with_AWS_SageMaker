@@ -27,7 +27,7 @@ Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/08_Finetuning-BadgerSc
 
 ## Why fine-tune a model?
 
-In the earlier training episodes, we built relatively small models from scratch. That works when we have a well-defined problem and enough training data, but it isn't practical for tasks that require the broad capabilities of a modern language or vision model. Training one of those models from scratch can require thousands of GPUs and enormous datasets. The PyTorch episode put numbers on that with `helpers.estimate_training_cost`. One pass of a 7B language model over a million papers came to about `$1,270` on a four-GPU box, and the models behind ChatGPT are far larger and trained on far more.
+In the earlier training episodes, we built relatively small models from scratch. That works when we have a well-defined problem and enough training data, but it isn't practical for tasks that require the broad capabilities of a modern language or vision model with billions of weights. Training one of those models from scratch can require thousands of GPUs and enormous datasets. The PyTorch episode put numbers on that with `helpers.estimate_training_cost`. One pass of a 7B language model over a million papers came to about `$1,270` on a four-GPU box, and the models behind ChatGPT are far larger and trained on far more.
 
 Fortunately, we don't have to start from scratch. ***Pretrained*** models already know how to interpret images, understand language, and generate text. ***Fine-tuning*** lets us build on those capabilities by training a model further on examples from our own task.
 
