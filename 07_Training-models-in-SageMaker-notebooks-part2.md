@@ -227,10 +227,10 @@ The three data numbers multiply to the tokens the model trains on. Here it is on
 
 ```python
 helpers.estimate_training_cost(   # the semicolon at the end keeps Jupyter from also displaying the dictionary the function returns
-    params_billions=0.125,      # a BERT-base-sized model: 125 million parameters
-    examples=1_000_000,         # one example = one abstract; a million of them
-    tokens_per_example=256,     # an abstract is about 190 words, 256 tokens
-    epochs=3,                   # three passes over the million abstracts
+    params_billions=0.125,      # a BERT-base-sized model, 125 million parameters
+    examples=1_000_000,         # a million abstracts
+    tokens_per_example=256,     # 190 words per abstract, about 256 tokens
+    epochs=3,                   # three full training passes over all abstracts
 );
 ```
 
@@ -245,25 +245,25 @@ Each line:
 
 The function also returns the same numbers as a dictionary, so a notebook can use `max_run_seconds` and `instance_type` directly rather than copying them from the printout.
 
-### What a language model costs, before anyone launches one
+### What training a language model would cost
 
-Run the same function on two sizes a project might be tempted by: a 1-billion-parameter model and a 7-billion one, each trained from scratch on a million documents of 2,000 tokens, one pass. Nothing is launched; the function only does the arithmetic.
+Run the same function on two sizes a project might be tempted by: a 1-billion-parameter model and a 7-billion one, each trained from scratch on a million papers, one pass. Nothing is launched; the function only does the arithmetic.
 
 ```python
 helpers.estimate_training_cost(
     params_billions=1,          # a 1B model, the size of the smallest open-weight language models
-    examples=1_000_000,         # one example = one document, a million of them
-    tokens_per_example=2000,    # a short paper: about 1,500 words
-    epochs=1,                   # one pass
+    examples=1_000_000,         # a million papers
+    tokens_per_example=2000,    # 1,500 words per paper, about 2,000 tokens
+    epochs=1,                   # one full training pass over all papers
 );
 ```
 
 ```python
 helpers.estimate_training_cost(
     params_billions=7,          # a 7B model, the size most "small" open-weight LLMs are
-    examples=1_000_000,         # the same million documents
-    tokens_per_example=2000,
-    epochs=1,
+    examples=1_000_000,         # the same million papers
+    tokens_per_example=2000,    # 1,500 words per paper, about 2,000 tokens
+    epochs=1,                   # one full training pass over all papers
 );
 ```
 
@@ -376,7 +376,7 @@ A second job: the same script and the same data, with one change, `instance_type
 #### Selecting a GPU Instance
 For a small dataset like ours, we don't strictly need a GPU, but for larger datasets or more complex models, a GPU can reduce training time. Here, we'll select an `ml.g4dn.xlarge` instance, which provides a single GPU and costs approximately `$0.74/hour` (check [Instances for ML page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for detailed pricing).
 
-#### Nothing changes in the script
+#### The script does not change
 `train_nn.py` already picks the GPU when there is one and moves the model and the tensors to it, which is why the same file runs on both instance types:
 
 ```py
@@ -387,7 +387,7 @@ X_train, y_train = X_train.to(device), y_train.to(device)
 
 ::::::::::::::::::::::::::::::::::::::: challenge
 
-### CPU or GPU: predict, then measure
+### Will the GPU job be faster or cheaper?
 
 We're about to run the identical job on an `ml.g4dn.xlarge` (one NVIDIA T4 GPU, about `$0.74`/hour) instead of the `ml.m5.large` (`$0.115`/hour); both rates are from the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page. Before you run the cell:
 
@@ -454,7 +454,7 @@ When a run is too slow, the moves are in this order, and each one is tried befor
 2. **More devices in one box.** A multi-GPU instance such as `ml.g5.12xlarge` or `ml.p4d.24xlarge`. The GPUs share a link inside the machine, tens to hundreds of GB/s, so splitting a run across them loses little.
 3. **More than one instance.** The same split across the network between instances, 10 to 400 Gb/s depending on the type, which is ten to a hundred times slower than the link inside a box. This is the last resort, for a run that will not fit one box or would take days on it.
 
-Only the third needs more than a change of `instance_type`, and on the class account it is the only form available, since the instance list stops at one GPU per instance. The rest of this section shows it on two `ml.m5.large` CPU instances, where it costs cents, then does the arithmetic for when it pays and says how to set it up for each kind of job.
+Only the third needs more than a change of `instance_type`, and on the class account it is the only form available, since the instance list stops at one GPU per instance. The rest of this section shows it on two `ml.m5.large` CPU instances, where it costs cents, then estimates when it helps and shows the setup for each kind of job.
 
 ### What `instance_count=2` does on its own
 
@@ -468,7 +468,7 @@ Setting `instance_count=2` on an estimator makes SageMaker start two instances a
 
 So without a distribution strategy, two instances means the same job twice, in parallel, at double the cost. There is nothing to launch to see this; we ran it once while writing the episode, and the record is what the bullets predict: the same 3.5 minutes of wall-clock as the single-instance run, 5.5 billable minutes across the two instances, `$0.010`, two CloudWatch log streams, `algo-1` and `algo-2`, each printing all 1000 epochs, and two identical saved models. Nobody wants that job. The one worth launching is below.
 
-### Data parallelism, done properly
+### Data parallelism
 
 To split one training run across two instances instead of running it twice, the script needs three things `train_nn.py` does not have, and the estimator needs one. `scripts/train_nn_ddp.py` is `train_nn.py` with those three added; open the two side by side; the three additions are marked 1, 2 and 3 in the comments.
 
@@ -521,7 +521,7 @@ for label, d in [("1 x ml.m5.large", desc_cpu), ("2 x ml.m5.large, data parallel
 
 Nothing was gained: the two-instance run took longer and cost twice as much. Each step now ends with a gradient exchange between the two machines, and that exchange has a fixed cost, a network round trip of about a millisecond, plus the gradient's bytes divided by the link's bandwidth. What it saves is the forward and backward pass over the 284 rows the other machine took, which for `TitanicNet` is microseconds. The exchange is a per-step cost that is the same whether the step is tiny or huge; here it is the whole step.
 
-### When it pays: the arithmetic
+### When a second machine helps
 
 `helpers.estimate_parallel_speedup` puts numbers on that for any model and any box, with the same assumptions as the cost estimator: 6 FLOPs per parameter per token at a quarter of the GPU's peak, and a gradient of 4 bytes per trainable parameter exchanged once per step over the slowest link in use. It does not overlap the exchange with the computation, which real runs partly do, so its speedup is a floor. The 7B model from the cost section, trained with a batch of 16 documents of 2,000 tokens, three ways:
 
@@ -544,7 +544,7 @@ Read the three together. Two L40S instances over a 20 Gb/s network spend as long
 
 The rule, then: data parallelism pays when each step's computation is large next to the exchange, which means a big model, a big batch and a fast link, in that order of importance. Run the function before renting more than one device, and read the cost line: the speedup is what you buy, the cost ratio is what you pay for it.
 
-### How to set it up, for each kind of job
+### Setting it up for each kind of job
 
 A job has one instance type and one count; the count is how many of that type, and every instance gets the same script. What differs is how the work is split, which depends on what is running:
 

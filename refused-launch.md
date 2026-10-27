@@ -36,6 +36,8 @@ job_tags = [
 helpers.check_launch(job_tags, instance_type="ml.g5.xlarge", max_run=2 * 60 * 60)   # raises ValueError naming each problem; returns the tags when all is well
 ```
 
+The fine-tuning episode uses `helpers.check_finetune_launch`, which runs the same check and then this lesson's own rules for a fine-tune: LoRA rather than a full fine-tune, a model of at most 7B, a cap between the estimate and four times it, checkpoints on any run that may pass an hour, a fixed job name, and sane values for the passes and the pixel budget.
+
 A failing check looks like this:
 
 ```output

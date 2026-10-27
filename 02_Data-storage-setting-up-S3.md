@@ -27,7 +27,7 @@ AWS has several places to keep data, with different uses.
 > When using AWS for research, **ensure that no restricted or sensitive data is uploaded to S3 or any other AWS service *unless explicitly approved by your institution’s IT or cloud security team***.
 > For projects involving sensitive or regulated data (e.g., HIPAA, FERPA, or proprietary research data), consult your institution's cloud security or compliance team to explore approved solutions. This may include encryption, restricted-access storage, or dedicated secure environments. If unsure about data classification, review your institution's data security policies before uploading.
 
-## Where data lives: the notebook's disk, or S3
+## The notebook's disk versus S3
 A SageMaker notebook instance has a disk of its own, the volume you size when you create it, and files there under `/home/ec2-user/SageMaker` survive a **Stop** and are lost when the instance is **Deleted**; `pip install`s and files anywhere else on the instance are lost on every Stop. That disk is for the copy of a file you are working on. The data itself lives in S3, where every job can read it, where it survives the instance, and where it costs cents a month.
 
 ### What is an S3 bucket?
