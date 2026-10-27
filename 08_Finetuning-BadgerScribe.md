@@ -23,7 +23,7 @@ exercises: 75
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/09_Finetuning-BadgerScribe.ipynb`. Select the **`conda_pytorch`** kernel.
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/08_Finetuning-BadgerScribe.ipynb`. Select the **`conda_pytorch`** kernel.
 
 ## Why fine-tune an LLM
 
@@ -40,6 +40,10 @@ Sources: [CHURRO, EMNLP 2025](https://arxiv.org/abs/2509.19768); [Goedel-Prover-
 ### What fine-tuning is
 
 Fine-tuning is ordinary training that starts from a trained model instead of random weights. You show the model your examples, it computes how wrong its output was, and gradient descent nudges the weights toward your data. Because the model already knows how to read, write and look at images, it needs hundreds of examples to learn your task where training from scratch would need millions. Everything it learned before stays in the weights; you are adjusting them, not replacing them.
+
+Where a model's weights come from sets the bill. Training from scratch, the step that makes a foundation model like the ones behind ChatGPT, sets every weight from random on trillions of tokens, on thousands of GPUs for months, which is why a handful of companies do it: Qwen2.5, the family CHURRO descends from, was trained on 18 trillion tokens ([technical report](https://arxiv.org/abs/2412.15115)), and Meta reports about 31 million GPU-hours for Llama 3.1 405B ([model card](https://huggingface.co/meta-llama/Llama-3.1-405B)). Fine-tuning starts from those weights and needs a sliver of that data, but updating every weight of a model with billions of them is still a multi-GPU job for hours or days: CHURRO itself took on the order of 800 H100-hours. LoRA fine-tuning freezes the weights and trains a small adapter beside them, which brings the same kind of adaptation down to one GPU and minutes to hours; this episode's run is 251 pages, half an hour and under a dollar. On one axis the three are six orders of magnitude apart, and the electricity follows the GPU-hours: the training run draws what thirty homes use in a year, the full fine-tune what one home uses in a couple of weeks, the LoRA run what a laptop uses in half a day. The rest of this section says what the difference between the last two is made of.
+
+![GPU-hours on a log scale for three ways to get a 3B model that does a task: training Llama 3.2 3B from scratch, 460,000 GPU-hours, about a thousand H100s for three weeks and some 300 MWh; the full fine-tune that made CHURRO-3B, 800 GPU-hours, eight H100s for four days and about 500 kWh; this episode's LoRA run, half a GPU-hour, one A10G for 32 minutes and about 0.2 kWh](fig/pretrain-finetune-lora.svg){alt="Horizontal bar chart on a logarithmic GPU-hours axis from 0.1 to 10 million. Training from scratch, every weight from random: 460,000 GPU-hours. Full fine-tuning, every weight from a pretrained model: 800 GPU-hours. LoRA fine-tuning, an adapter under one percent of the weights: 0.5 GPU-hours. Each bar is labelled with the GPUs, the time and the electricity. Energy is GPU electricity at the rated draw, a lower bound."}
 
 ### Full fine-tuning is expensive
 

@@ -8,12 +8,12 @@ This workshop is about running machine learning and AI work on AWS without losin
 
 **Part 1, orientation.** What the cloud offers a researcher compared with a laptop or the cluster down the hall, and what it costs. The two services the lesson uses: **SageMaker** rents machines by the second, for a notebook you work in and for jobs that run on their own and end; **Bedrock** serves hosted models by the token, with nothing to start or stop. The four things every episode uses, S3, a notebook instance, jobs and Bedrock, and how every later episode estimates and checks what a job costs.
 
-**Part 2, SageMaker: data, training, tuning and fine-tuning.**
+**Part 2, SageMaker: data, training, fine-tuning and tuning.**
 
 - Put the data in an S3 bucket and start a small notebook instance that launches everything else. The notebook is the controller, not the workhorse: the expensive compute runs on instances SageMaker rents for each job and releases when it ends.
 - Train XGBoost and PyTorch models on the Titanic data as training jobs. Estimate the cost before each launch and read the billable seconds after, compare a CPU instance with a GPU, and see what two instances buy and what they do not.
-- Run a hyperparameter tuning job that trains ten models under a budget set up front.
 - Fine-tune a 3B open-weight vision-language model with LoRA, as a training job with checkpoints and a runtime cap, for transcribing handwritten German letters (Badger Scribe), scored on held-out pages before and after.
+- Run a hyperparameter tuning job that trains ten models under a budget set up front.
 
 **Part 3, Bedrock: inference and retrieval-augmented generation.**
 

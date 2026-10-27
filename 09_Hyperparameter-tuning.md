@@ -22,7 +22,7 @@ exercises: 15
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## Initial setup: open prefilled .ipynb notebook
-Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/08_Hyperparameter-tuning.ipynb`. Select the **`conda_pytorch`** kernel.
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/09_Hyperparameter-tuning.ipynb`. Select the **`conda_pytorch`** kernel.
 
 ## Hyperparameter tuning in SageMaker
 SageMaker's **hyperparameter tuning jobs** search a parameter space for any model; what keeps them cheap is the choice of ranges and the number of models trained. This episode walks through one tuning job with both in view.
@@ -56,7 +56,7 @@ import helpers
 ```
 
 #### 1. Setup estimator
-The tuner needs an estimator first. The estimator setup here is very similar to our previous episode, where we used it to configure and train a model directly. However, this time, rather than directly running a training job with the estimator, we'll be using it as the foundation for **hyperparameter tuning**.
+The tuner needs an estimator first. The estimator setup here is the PyTorch episode's, where we used it to configure and train a model directly. However, this time, rather than directly running a training job with the estimator, we'll be using it as the foundation for **hyperparameter tuning**.
 
 In SageMaker, the estimator serves as a blueprint for each tuning job, specifying the training script, instance type, and key parameters like data paths and metrics. Once defined, this estimator will be passed to a **Hyperparameter Tuner** that manages the creation of multiple training jobs with various hyperparameter combinations, helping us find an optimal configuration.
 
@@ -80,7 +80,7 @@ local_instance = response['InstanceType']
 print(f"Instance Type: {local_instance}")
 ```
 
-**Cost tracking**: Just like in the previous episode, we explicitly tag each training job at launch time. This ensures that compute usage is traceable to a project, a purpose, and a human-readable name, even after the job has completed. Tags on the `HyperparameterTuner` are copied to every child training job it launches, so we only need to set them once, on the tuner (we also set them on the estimator so a plain `.fit()` on it is tagged too).
+**Cost tracking**: As in every training episode, we explicitly tag each training job at launch time. This ensures that compute usage is traceable to a project, a purpose, and a human-readable name, even after the job has completed. Tags on the `HyperparameterTuner` are copied to every child training job it launches, so we only need to set them once, on the tuner (we also set them on the estimator so a plain `.fit()` on it is tagged too).
 
 ```python
 name = "DoeJohn" # replace with your name
@@ -218,9 +218,9 @@ if (epoch + 1) % 100 == 0 or epoch == epochs - 1:
 Paired with this, our `metric_definitions` above uses a regular expression `"validation:accuracy = ([0-9\\.]+)"` to extract the val_accuracy value from each log line. This regex specifically looks for `validation:accuracy =`, followed by a floating-point number, which corresponds to the format of our log statement in `train_nn.py`.
 
 #### 5. Set data paths and launch tuner.fit()
-In step 5, we define the input data paths for the training job and launch the hyperparameter tuning process. Using `TrainingInput`, we specify the S3 paths to our `train_data.npz` and `val_data.npz` files (uploaded in the previous episode). We then call `tuner.fit` and pass a dictionary mapping each data channel ("train" and "val") to its respective path. This command initiates the tuning job, triggering SageMaker to begin sampling hyperparameter combinations, training the model, and evaluating performance based on our defined objective metric. Once the job is launched, SageMaker handles the tuning process automatically, running the specified number of configurations and keeping track of the best model parameters based on validation accuracy.
+In step 5, we define the input data paths for the training job and launch the hyperparameter tuning process. Using `TrainingInput`, we specify the S3 paths to our `train_data.npz` and `val_data.npz` files (uploaded in the PyTorch episode). We then call `tuner.fit` and pass a dictionary mapping each data channel ("train" and "val") to its respective path. This command initiates the tuning job, triggering SageMaker to begin sampling hyperparameter combinations, training the model, and evaluating performance based on our defined objective metric. Once the job is launched, SageMaker handles the tuning process automatically, running the specified number of configurations and keeping track of the best model parameters based on validation accuracy.
 
-Estimate first: one child job is the same three billable minutes as the previous episode's job, almost all of it startup, so about `$0.01`.
+Estimate first: one child job is the same three billable minutes as the PyTorch episode's CPU job, almost all of it startup, so about `$0.01`.
 
 If the launch is refused with an `AccessDeniedException` ending in `explicit deny`, the account's checks are the cause: a missing tag, an instance type outside the lesson's list, or a resource kind the lesson never creates; the first training episode's callout *If the launch is refused* says what to look at.
 
@@ -383,7 +383,7 @@ print("Best model downloaded and extracted.")
 ```
 
 #### Prepare test set as test_data.npz
-In our previous episode, we converted our train dataset into train/validate subsets, and saved them out as .npz files for efficient processing. We'll need to preprocess our test data the same way to evaluate it on our model. 
+In the PyTorch episode, we converted our train dataset into train/validate subsets, and saved them out as .npz files for efficient processing. We'll need to preprocess our test data the same way to evaluate it on our model. 
 
 Preprocessing lives in a function so that the test set is transformed exactly as the training set was. We'll import our preprocessing function from `train_nn.py`, and pass it the scaler that was fit on the training data (saved as `scaler.joblib` in the previous episode). Calling `preprocess_data(test_df)` without the scaler would fit a new one on the test set and transform the features differently from what the model saw in training.
 
@@ -402,7 +402,7 @@ from train_nn import preprocess_data
 # Fetch the test CSV and the training-set scaler from S3 (both uploaded in earlier episodes)
 s3.download_file(bucket_name, "titanic_test.csv", "titanic_test.csv")
 s3.download_file(bucket_name, "scaler.joblib", "scaler.joblib")
-scaler = joblib.load("scaler.joblib")  # the StandardScaler fit on the training data in the previous episode
+scaler = joblib.load("scaler.joblib")  # the StandardScaler fit on the training data in the PyTorch episode
 
 # Preprocess test data with the same scaler used for training
 test_df = pd.read_csv("titanic_test.csv")
