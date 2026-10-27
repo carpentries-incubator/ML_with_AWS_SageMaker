@@ -555,9 +555,13 @@ memory than simply running the model.</p>
 </div>
 <div class="section level3">
 <h3 id="lora-adds-new-small-weights-beside-the-frozen-model">LoRA adds new small weights beside the frozen model<a class="anchor" aria-label="anchor" href="#lora-adds-new-small-weights-beside-the-frozen-model"></a></h3>
-<p><strong><em>Low-rank adaptation</em></strong>, or
-<strong><em>LoRA</em></strong>, reduces the amount of training by
-keeping the pretrained weights frozen and adding small sets of trainable
+<p>The alternative to full fine-tuning is
+<strong><em>parameter-efficient fine-tuning</em></strong>, or
+<strong><em>PEFT</em></strong>, a family of methods that leave the
+pretrained weights frozen and train a small number of new parameters
+instead. <strong><em>Low-rank adaptation</em></strong>, or
+<strong><em>LoRA</em></strong>, is the most widely used form of PEFT. It
+keeps the pretrained weights frozen and adds small sets of trainable
 parameters to selected layers. Rather than directly changing a large
 weight matrix, LoRA learns a much smaller adjustment to its output.</p>
 <figure><img src="../fig/lora.svg" alt="Left: a d by d weight matrix, all trained, 16 bytes per weight. Right: the same matrix frozen in bf16 plus two thin trained matrices B (d by r) and A (r by d); output is W x plus B A x." class="figure mx-auto d-block"><div class="figcaption">Full fine-tuning updates every entry of a d × d
@@ -682,7 +686,7 @@ decide the cost of any training run. Will the model fit on the GPU, and
 how long will it run? Both can be answered on paper, to within a factor
 of two, before anything is rented.</p>
 <div class="section level3">
-<h3 id="will-it-fit">Will it fit?<a class="anchor" aria-label="anchor" href="#will-it-fit"></a></h3>
+<h3 id="how-much-gpu-memory-it-needs">How much GPU memory it needs<a class="anchor" aria-label="anchor" href="#how-much-gpu-memory-it-needs"></a></h3>
 <p>Every parameter in the model takes up GPU memory, and how much
 depends on what you are doing with it. Running the model needs only the
 weight. A full fine-tune needs the weight, its gradient, a 32-bit copy
@@ -1070,9 +1074,9 @@ million. They are choosing between <code>ml.p4d.24xlarge</code> (8 ×
 A100 40 GB, <code>$25.25</code>/h, about 312 TFLOPS bf16 per GPU) and a
 single <code>ml.g5.xlarge</code>; the supplemental <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
 for ML</a> page has both, with what each box holds and how its price
-covers all of its GPUs. Using the two rules, does it fit on the g5? How
-many GPU-hours on the p4d, and what does one run cost? What does a
-project cost?</p>
+covers all of its GPUs. Using the two rules, does it fit in the memory
+of the g5? How many GPU-hours on the p4d, and what does one run cost?
+What does a project cost?</p>
 </div>
 </div>
 </div>
@@ -1613,7 +1617,7 @@ repository:</p>
 <span id="cb24-5"><a href="#cb24-5" tabindex="-1" aria-label="code-block-24-5"></a>    shutil.copy(<span class="ss">f"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/</span><span class="sc">{</span>f<span class="sc">}</span><span class="ss">"</span>, <span class="ss">f"code/</span><span class="sc">{</span>f<span class="sc">}</span><span class="ss">"</span>)</span>
 <span id="cb24-6"><a href="#cb24-6" tabindex="-1" aria-label="code-block-24-6"></a></span>
 <span id="cb24-7"><a href="#cb24-7" tabindex="-1" aria-label="code-block-24-7"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">"code/requirements.txt"</span>, <span class="st">"w"</span>) <span class="im">as</span> f:  <span class="co"># pip-installed inside the container before the script starts</span></span>
-<span id="cb24-8"><a href="#cb24-8" tabindex="-1" aria-label="code-block-24-8"></a>    f.write(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span>.join([<span class="st">"peft&gt;=0.14"</span>, <span class="st">"accelerate"</span>, <span class="st">"pillow"</span>, <span class="st">"pandas"</span>]))</span>
+<span id="cb24-8"><a href="#cb24-8" tabindex="-1" aria-label="code-block-24-8"></a>    f.write(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span>.join([<span class="st">"peft&gt;=0.14"</span>, <span class="st">"accelerate"</span>, <span class="st">"pillow"</span>, <span class="st">"pandas"</span>]))   <span class="co"># peft is Hugging Face's library of PEFT methods; it is where get_peft_model and LoraConfig come from</span></span>
 <span id="cb24-9"><a href="#cb24-9" tabindex="-1" aria-label="code-block-24-9"></a></span>
 <span id="cb24-10"><a href="#cb24-10" tabindex="-1" aria-label="code-block-24-10"></a><span class="bu">print</span>(os.listdir(<span class="st">"code"</span>))</span></code></pre>
 </div>
