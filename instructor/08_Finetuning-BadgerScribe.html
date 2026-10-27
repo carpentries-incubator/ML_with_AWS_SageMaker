@@ -1307,25 +1307,19 @@ input channels.</p>
 <span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a></span>
 <span id="cb6-5"><a href="#cb6-5" tabindex="-1" aria-label="code-block-6-5"></a><span class="im">import</span> boto3</span>
 <span id="cb6-6"><a href="#cb6-6" tabindex="-1" aria-label="code-block-6-6"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1" aria-label="code-block-6-7"></a><span class="im">import</span> os</span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1" aria-label="code-block-6-8"></a>os.environ[<span class="st">"SAGEMAKER_SUPPRESS_V2_WARNING"</span>] <span class="op">=</span> <span class="st">"1"</span>   <span class="co"># the SDK otherwise prints a deprecation notice on import and on every estimator</span></span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1" aria-label="code-block-6-9"></a><span class="im">import</span> sagemaker</span>
-<span id="cb6-10"><a href="#cb6-10" tabindex="-1" aria-label="code-block-6-10"></a><span class="im">import</span> logging</span>
-<span id="cb6-11"><a href="#cb6-11" tabindex="-1" aria-label="code-block-6-11"></a>logging.getLogger(<span class="st">"sagemaker.telemetry.telemetry_logging"</span>).setLevel(logging.WARNING)   <span class="co"># silence the telemetry notice; the "Creating training-job" line still prints</span></span>
-<span id="cb6-12"><a href="#cb6-12" tabindex="-1" aria-label="code-block-6-12"></a>logging.getLogger(<span class="st">"sagemaker.image_uris"</span>).setLevel(logging.WARNING)</span>
-<span id="cb6-13"><a href="#cb6-13" tabindex="-1" aria-label="code-block-6-13"></a>logging.getLogger(<span class="st">"sagemaker.config"</span>).addFilter(<span class="kw">lambda</span> record: record.levelno <span class="op">&gt;=</span> logging.WARNING)   <span class="co"># drop the two "Not applying SDK defaults" lines; a filter holds even where the SDK resets the logger's level</span></span>
-<span id="cb6-14"><a href="#cb6-14" tabindex="-1" aria-label="code-block-6-14"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
-<span id="cb6-15"><a href="#cb6-15" tabindex="-1" aria-label="code-block-6-15"></a></span>
-<span id="cb6-16"><a href="#cb6-16" tabindex="-1" aria-label="code-block-6-16"></a><span class="im">import</span> sys</span>
-<span id="cb6-17"><a href="#cb6-17" tabindex="-1" aria-label="code-block-6-17"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)   <span class="co"># repeated from Step 0 so that Setup runs on its own after a kernel restart</span></span>
-<span id="cb6-18"><a href="#cb6-18" tabindex="-1" aria-label="code-block-6-18"></a><span class="im">import</span> helpers</span>
-<span id="cb6-19"><a href="#cb6-19" tabindex="-1" aria-label="code-block-6-19"></a></span>
-<span id="cb6-20"><a href="#cb6-20" tabindex="-1" aria-label="code-block-6-20"></a>session <span class="op">=</span> sagemaker.Session()</span>
-<span id="cb6-21"><a href="#cb6-21" tabindex="-1" aria-label="code-block-6-21"></a>region <span class="op">=</span> session.boto_region_name</span>
-<span id="cb6-22"><a href="#cb6-22" tabindex="-1" aria-label="code-block-6-22"></a>role <span class="op">=</span> get_execution_role()</span>
-<span id="cb6-23"><a href="#cb6-23" tabindex="-1" aria-label="code-block-6-23"></a>s3_client <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
-<span id="cb6-24"><a href="#cb6-24" tabindex="-1" aria-label="code-block-6-24"></a><span class="bu">print</span>(<span class="st">"Region:"</span>, region)</span>
-<span id="cb6-25"><a href="#cb6-25" tabindex="-1" aria-label="code-block-6-25"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)</span></code></pre>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1" aria-label="code-block-6-7"></a><span class="im">import</span> sagemaker</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1" aria-label="code-block-6-8"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1" aria-label="code-block-6-9"></a></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1" aria-label="code-block-6-10"></a><span class="im">import</span> sys</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1" aria-label="code-block-6-11"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)   <span class="co"># repeated from Step 0 so that Setup runs on its own after a kernel restart</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1" aria-label="code-block-6-12"></a><span class="im">import</span> helpers</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1" aria-label="code-block-6-13"></a></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1" aria-label="code-block-6-14"></a>session <span class="op">=</span> sagemaker.Session()</span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1" aria-label="code-block-6-15"></a>region <span class="op">=</span> session.boto_region_name</span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1" aria-label="code-block-6-16"></a>role <span class="op">=</span> get_execution_role()</span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1" aria-label="code-block-6-17"></a>s3_client <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1" aria-label="code-block-6-18"></a><span class="bu">print</span>(<span class="st">"Region:"</span>, region)</span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1" aria-label="code-block-6-19"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)</span></code></pre>
 </div>
 <p>Now the names, after moving into a project folder of our own under
 the instance root. Everything this episode downloads or stages
@@ -1459,9 +1453,7 @@ transcription itself.</p>
 <span id="cb14-6"><a href="#cb14-6" tabindex="-1" aria-label="code-block-14-6"></a><span class="cf">for</span> fname <span class="kw">in</span> [<span class="st">"config.json"</span>, <span class="st">"preprocessor_config.json"</span>, <span class="st">"tokenizer.json"</span>, <span class="st">"tokenizer_config.json"</span>, <span class="st">"special_tokens_map.json"</span>,</span>
 <span id="cb14-7"><a href="#cb14-7" tabindex="-1" aria-label="code-block-14-7"></a>              <span class="st">"added_tokens.json"</span>, <span class="st">"vocab.json"</span>, <span class="st">"merges.txt"</span>, <span class="st">"chat_template.json"</span>, <span class="st">"video_preprocessor_config.json"</span>]:</span>
 <span id="cb14-8"><a href="#cb14-8" tabindex="-1" aria-label="code-block-14-8"></a>    s3_client.download_file(shared_bucket, <span class="ss">f"</span><span class="sc">{</span>data_prefix<span class="sc">}</span><span class="ss">/model/churro-3B/</span><span class="sc">{</span>fname<span class="sc">}</span><span class="ss">"</span>, os.path.join(proc_dir, fname))</span>
-<span id="cb14-9"><a href="#cb14-9" tabindex="-1" aria-label="code-block-14-9"></a><span class="im">import</span> warnings</span>
-<span id="cb14-10"><a href="#cb14-10" tabindex="-1" aria-label="code-block-14-10"></a>warnings.filterwarnings(<span class="st">"ignore"</span>, category<span class="op">=</span><span class="pp">FutureWarning</span>, module<span class="op">=</span><span class="st">"transformers"</span>)   <span class="co"># the pixel limits are passed the way this transformers version wants; the newer form is a FutureWarning it prints on every call</span></span>
-<span id="cb14-11"><a href="#cb14-11" tabindex="-1" aria-label="code-block-14-11"></a>processor <span class="op">=</span> AutoProcessor.from_pretrained(proc_dir, min_pixels<span class="op">=</span>bc.DEFAULT_MIN_PIXELS, max_pixels<span class="op">=</span>bc.DEFAULT_MAX_PIXELS)</span></code></pre>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1" aria-label="code-block-14-9"></a>processor <span class="op">=</span> AutoProcessor.from_pretrained(proc_dir, min_pixels<span class="op">=</span>bc.DEFAULT_MIN_PIXELS, max_pixels<span class="op">=</span>bc.DEFAULT_MAX_PIXELS)</span></code></pre>
 </div>
 <p>Now the page you displayed above, prepared the way the training
 script prepares it: the image resized to the pixel cap, the instruction

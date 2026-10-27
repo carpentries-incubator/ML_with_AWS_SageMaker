@@ -682,18 +682,13 @@ role, printed because the Bedrock calls below run as it.</p>
 <span id="cb1-12"><a href="#cb1-12" tabindex="-1" aria-label="code-block-1-12"></a><span class="im">import</span> sys</span>
 <span id="cb1-13"><a href="#cb1-13" tabindex="-1" aria-label="code-block-1-13"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)   <span class="co"># the lesson's helper module, cloned in the controllers episode</span></span>
 <span id="cb1-14"><a href="#cb1-14" tabindex="-1" aria-label="code-block-1-14"></a><span class="im">import</span> helpers</span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1" aria-label="code-block-1-15"></a>os.environ[<span class="st">"SAGEMAKER_SUPPRESS_V2_WARNING"</span>] <span class="op">=</span> <span class="st">"1"</span>   <span class="co"># the SDK otherwise prints a deprecation notice on import and on every estimator</span></span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1" aria-label="code-block-1-16"></a><span class="im">import</span> sagemaker</span>
-<span id="cb1-17"><a href="#cb1-17" tabindex="-1" aria-label="code-block-1-17"></a><span class="im">import</span> logging</span>
-<span id="cb1-18"><a href="#cb1-18" tabindex="-1" aria-label="code-block-1-18"></a>logging.getLogger(<span class="st">"sagemaker.telemetry.telemetry_logging"</span>).setLevel(logging.WARNING)   <span class="co"># silence the telemetry notice; the "Creating training-job" line still prints</span></span>
-<span id="cb1-19"><a href="#cb1-19" tabindex="-1" aria-label="code-block-1-19"></a>logging.getLogger(<span class="st">"sagemaker.image_uris"</span>).setLevel(logging.WARNING)</span>
-<span id="cb1-20"><a href="#cb1-20" tabindex="-1" aria-label="code-block-1-20"></a>logging.getLogger(<span class="st">"sagemaker.config"</span>).addFilter(<span class="kw">lambda</span> record: record.levelno <span class="op">&gt;=</span> logging.WARNING)   <span class="co"># drop the two "Not applying SDK defaults" lines; a filter holds even where the SDK resets the logger's level</span></span>
-<span id="cb1-21"><a href="#cb1-21" tabindex="-1" aria-label="code-block-1-21"></a></span>
-<span id="cb1-22"><a href="#cb1-22" tabindex="-1" aria-label="code-block-1-22"></a>session <span class="op">=</span> sagemaker.Session()</span>
-<span id="cb1-23"><a href="#cb1-23" tabindex="-1" aria-label="code-block-1-23"></a>region <span class="op">=</span> session.boto_region_name</span>
-<span id="cb1-24"><a href="#cb1-24" tabindex="-1" aria-label="code-block-1-24"></a>s3 <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
-<span id="cb1-25"><a href="#cb1-25" tabindex="-1" aria-label="code-block-1-25"></a>role <span class="op">=</span> sagemaker.get_execution_role()</span>
-<span id="cb1-26"><a href="#cb1-26" tabindex="-1" aria-label="code-block-1-26"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)   <span class="co"># the execution role: on the class account it carries the Bedrock permissions; on your own, it must</span></span></code></pre>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1" aria-label="code-block-1-15"></a><span class="im">import</span> sagemaker</span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1" aria-label="code-block-1-16"></a></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1" aria-label="code-block-1-17"></a>session <span class="op">=</span> sagemaker.Session()</span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1" aria-label="code-block-1-18"></a>region <span class="op">=</span> session.boto_region_name</span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1" aria-label="code-block-1-19"></a>s3 <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1" aria-label="code-block-1-20"></a>role <span class="op">=</span> sagemaker.get_execution_role()</span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1" aria-label="code-block-1-21"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)   <span class="co"># the execution role: on the class account it carries the Bedrock permissions; on your own, it must</span></span></code></pre>
 </div>
 <p><strong>The models.</strong> RAG needs two, an embedding model, which
 turns a piece of text into a vector so that similar passages land near
@@ -1179,7 +1174,7 @@ helper wraps:</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1188,7 +1183,7 @@ helper wraps:</p>
 <span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a>  <span class="at">--tags</span> key=Name,value=DoeJohn key=Project,value=SinkOrSwim key=Purpose,value=Inference</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
+<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>

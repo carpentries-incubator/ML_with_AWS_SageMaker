@@ -1396,7 +1396,7 @@ charge?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -1949,31 +1949,31 @@ one; the fine-tuning and RAG episodes make their own.</p>
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1" aria-label="code-block-2-1"></a><span class="im">import</span> os</span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1" aria-label="code-block-2-2"></a>os.environ[<span class="st">"SAGEMAKER_SUPPRESS_V2_WARNING"</span>] <span class="op">=</span> <span class="st">"1"</span>   <span class="co"># the SDK otherwise prints a deprecation notice on import and on every estimator</span></span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a><span class="im">import</span> sagemaker                      <span class="co"># SageMaker Python SDK: higher-level API for training jobs, tuning, deployment</span></span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a><span class="im">import</span> logging</span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1" aria-label="code-block-2-5"></a>logging.getLogger(<span class="st">"sagemaker.telemetry.telemetry_logging"</span>).setLevel(logging.WARNING)   <span class="co"># silence the telemetry notice; the "Creating training-job" line still prints</span></span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1" aria-label="code-block-2-6"></a>logging.getLogger(<span class="st">"sagemaker.image_uris"</span>).setLevel(logging.WARNING)</span>
-<span id="cb2-7"><a href="#cb2-7" tabindex="-1" aria-label="code-block-2-7"></a>logging.getLogger(<span class="st">"sagemaker.config"</span>).addFilter(<span class="kw">lambda</span> record: record.levelno <span class="op">&gt;=</span> logging.WARNING)   <span class="co"># drop the two "Not applying SDK defaults" lines; a filter holds even where the SDK resets the logger's level</span></span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1" aria-label="code-block-2-8"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1" aria-label="code-block-2-9"></a></span>
-<span id="cb2-10"><a href="#cb2-10" tabindex="-1" aria-label="code-block-2-10"></a>role <span class="op">=</span> sagemaker.get_execution_role() <span class="co"># the IAM role attached to this notebook instance; every call below acts as this role</span></span>
-<span id="cb2-11"><a href="#cb2-11" tabindex="-1" aria-label="code-block-2-11"></a>session <span class="op">=</span> sagemaker.Session()         <span class="co"># tracks the region, default bucket and SageMaker client for this notebook</span></span>
-<span id="cb2-12"><a href="#cb2-12" tabindex="-1" aria-label="code-block-2-12"></a><span class="bu">print</span>(<span class="ss">f"Execution Role: </span><span class="sc">{</span>role<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1" aria-label="code-block-2-13"></a><span class="bu">print</span>(<span class="ss">f"AWS Region: </span><span class="sc">{</span>session<span class="sc">.</span>boto_region_name<span class="sc">}</span><span class="ss">"</span>)  <span class="co"># The region of the notebook instance; your bucket must be in this same region</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1" aria-label="code-block-2-1"></a><span class="im">import</span> sagemaker                      <span class="co"># SageMaker Python SDK: higher-level API for training jobs, tuning, deployment</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1" aria-label="code-block-2-2"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a>role <span class="op">=</span> sagemaker.get_execution_role() <span class="co"># the IAM role attached to this notebook instance; every call below acts as this role</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1" aria-label="code-block-2-5"></a>session <span class="op">=</span> sagemaker.Session()         <span class="co"># tracks the region, default bucket and SageMaker client for this notebook</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1" aria-label="code-block-2-6"></a><span class="bu">print</span>(<span class="ss">f"Execution Role: </span><span class="sc">{</span>role<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1" aria-label="code-block-2-7"></a><span class="bu">print</span>(<span class="ss">f"AWS Region: </span><span class="sc">{</span>session<span class="sc">.</span>boto_region_name<span class="sc">}</span><span class="ss">"</span>)  <span class="co"># The region of the notebook instance; your bucket must be in this same region</span></span></code></pre>
 </div>
-<div id="warnings-this-cell-prints" class="callout">
+<div id="messages-this-cell-prints" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
 </div>
 <span class="callout-header">Callout</span>
-<div id="warnings-this-cell-prints" class="callout-inner">
-<h3 class="callout-title">Warnings this cell prints</h3>
+<div id="messages-this-cell-prints" class="callout-inner">
+<h3 class="callout-title">Messages this cell prints</h3>
 <div class="callout-content">
-<p><code>sagemaker.config INFO - Not applying SDK defaults from location: ...</code>:
-an info line, not an error. The SDK looked for an optional defaults file
-in two standard places and found none.</p>
+<p>The SageMaker SDK prints a few lines of its own when it is imported
+and when a session is created, and none of them is an error.
+<code>sagemaker.config INFO - Not applying SDK defaults from location: ...</code>
+means it looked for an optional defaults file in two standard places and
+found none. A line about telemetry says it reports usage to AWS. A
+warning that this version of the SDK is deprecated means a newer major
+version exists. The code in this lesson is written for the version the
+notebook instances ship. All three appear in later episodes too, and can
+be ignored.</p>
 </div>
 </div>
 </div>
@@ -2040,9 +2040,12 @@ in the Jupyter notebook environment, without downloading a copy of
 </h3>
 <p><code>download_file</code> writes the object to the instance’s disk,
 on the 20 GB <code>SageMaker/</code> volume. There is no transfer
-charge, since the instance and the bucket are in the same region; the
-same call on a laptop would be a transfer out of AWS at
-<code>$0.09</code> per GB. The file stays until you delete it.</p>
+charge, because the instance and the bucket are in the same region, and
+in-region transfer between AWS services is free. The same call from a
+laptop, with the AWS CLI or with <code>boto3</code>, pulls the data out
+of AWS at <code>$0.09</code> per GB. The optional <em>Same Jobs from the
+Terminal</em> episode covers working from a laptop and when that charge
+matters. The file stays on the instance until you delete it.</p>
 <div class="section level4">
 <h4 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h4>
@@ -2286,7 +2289,7 @@ task?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>One way to do it:</li>
@@ -2772,7 +2775,7 @@ commit it, push with your PAT, and verify the change on GitHub.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Still inside
 <code>/home/ec2-user/SageMaker/sagemaker-work</code>:</p>
@@ -2884,13 +2887,23 @@ no PyTorch, and on current instances no scikit-learn either.</p>
 <hr class="half-width">
 <p>The Titanic data trains in a second on the notebook, and nothing
 about it needs the cloud. We use it because the pattern matters more
-than the example. Test the code on a small sample first, where a bug
-costs nothing, and once it works, scale up to a more powerful instance
-when the data or the model calls for one. A SageMaker training job is
-that scale-up step. The notebook describes the job and launches it, and
-SageMaker rents the instance, runs the script on it and releases it when
-the script ends. The fine-tuning episode follows the same two steps with
-a 3B model on a GPU, where the cloud earns its keep.</p>
+than the example. Test the code on a small sample first, on the cheapest
+machine you have, and once it works, scale up to a more powerful
+instance when the data or the model calls for one. The notebook instance
+is that cheap machine here. It is a rental too, at about five cents an
+hour, but a crash on it costs a few seconds of that, where a crash on a
+rented GPU costs the minutes the instance spent starting up, at twenty
+times the rate. A SageMaker training job is that scale-up step. The
+notebook describes the job and launches it, and SageMaker rents the
+instance, runs the script on it and releases it when the script ends.
+The fine-tuning episode follows the same two steps with a 3B model on a
+GPU, where the cloud earns its keep.</p>
+<p>The notebook is not the only way to launch a job. The same launch is
+a few lines of the AWS CLI from a laptop, which the optional <a href="14_CLI-equivalents.html">Same Jobs from the Terminal</a> episode
+shows, and on your own account that is a fine way to work once you know
+the pattern. On the shared account, launch from the notebook. Every job
+then comes from a notebook the administrators can open and read, which
+is what lets them find and fix a problem quickly if one arises.</p>
 <p>This episode walks through both steps once with XGBoost. First the
 script runs on the notebook, to check that it handles the data and the
 arguments. Then the same script runs as a training job, with the data
@@ -2940,27 +2953,22 @@ Python, with the notebook’s role as the identity.</p>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1" aria-label="code-block-2-1"></a><span class="im">import</span> boto3                          <span class="co"># AWS SDK for Python: low-level access to every AWS service (S3, EC2, ...)</span></span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1" aria-label="code-block-2-2"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a><span class="im">import</span> os</span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a>os.environ[<span class="st">"SAGEMAKER_SUPPRESS_V2_WARNING"</span>] <span class="op">=</span> <span class="st">"1"</span>   <span class="co"># the SDK otherwise prints a deprecation notice on import and on every estimator</span></span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1" aria-label="code-block-2-5"></a><span class="im">import</span> sagemaker                      <span class="co"># SageMaker Python SDK: higher-level API for training jobs, tuning, deployment</span></span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1" aria-label="code-block-2-6"></a><span class="im">import</span> logging</span>
-<span id="cb2-7"><a href="#cb2-7" tabindex="-1" aria-label="code-block-2-7"></a>logging.getLogger(<span class="st">"sagemaker.telemetry.telemetry_logging"</span>).setLevel(logging.WARNING)   <span class="co"># silence the telemetry notice; the "Creating training-job" line still prints</span></span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1" aria-label="code-block-2-8"></a>logging.getLogger(<span class="st">"sagemaker.image_uris"</span>).setLevel(logging.WARNING)</span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1" aria-label="code-block-2-9"></a>logging.getLogger(<span class="st">"sagemaker.config"</span>).addFilter(<span class="kw">lambda</span> record: record.levelno <span class="op">&gt;=</span> logging.WARNING)   <span class="co"># drop the two "Not applying SDK defaults" lines; a filter holds even where the SDK resets the logger's level</span></span>
-<span id="cb2-10"><a href="#cb2-10" tabindex="-1" aria-label="code-block-2-10"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
-<span id="cb2-11"><a href="#cb2-11" tabindex="-1" aria-label="code-block-2-11"></a></span>
-<span id="cb2-12"><a href="#cb2-12" tabindex="-1" aria-label="code-block-2-12"></a><span class="co"># Initialize the SageMaker role (will reflect notebook instance's policy)</span></span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1" aria-label="code-block-2-13"></a>role <span class="op">=</span> sagemaker.get_execution_role()  <span class="co"># the IAM role attached to this notebook instance; every call below acts as this role</span></span>
-<span id="cb2-14"><a href="#cb2-14" tabindex="-1" aria-label="code-block-2-14"></a><span class="bu">print</span>(<span class="ss">f'role = </span><span class="sc">{</span>role<span class="sc">}</span><span class="ss">'</span>)</span>
-<span id="cb2-15"><a href="#cb2-15" tabindex="-1" aria-label="code-block-2-15"></a></span>
-<span id="cb2-16"><a href="#cb2-16" tabindex="-1" aria-label="code-block-2-16"></a><span class="co"># Initialize an S3 client to interact with Amazon S3, allowing operations like uploading, downloading, and managing objects and buckets.</span></span>
-<span id="cb2-17"><a href="#cb2-17" tabindex="-1" aria-label="code-block-2-17"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
-<span id="cb2-18"><a href="#cb2-18" tabindex="-1" aria-label="code-block-2-18"></a></span>
-<span id="cb2-19"><a href="#cb2-19" tabindex="-1" aria-label="code-block-2-19"></a><span class="co"># Define the S3 bucket that we will load from</span></span>
-<span id="cb2-20"><a href="#cb2-20" tabindex="-1" aria-label="code-block-2-20"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn'</span>  <span class="co"># replace with your S3 bucket name</span></span>
-<span id="cb2-21"><a href="#cb2-21" tabindex="-1" aria-label="code-block-2-21"></a></span>
-<span id="cb2-22"><a href="#cb2-22" tabindex="-1" aria-label="code-block-2-22"></a><span class="co"># Define train/test filenames</span></span>
-<span id="cb2-23"><a href="#cb2-23" tabindex="-1" aria-label="code-block-2-23"></a>train_filename <span class="op">=</span> <span class="st">'titanic_train.csv'</span>  <span class="co"># object keys inside the bucket (no prefix: they sit at the bucket root)</span></span>
-<span id="cb2-24"><a href="#cb2-24" tabindex="-1" aria-label="code-block-2-24"></a>test_filename <span class="op">=</span> <span class="st">'titanic_test.csv'</span></span></code></pre>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a><span class="im">import</span> sagemaker                      <span class="co"># SageMaker Python SDK: higher-level API for training jobs, tuning, deployment</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1" aria-label="code-block-2-5"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1" aria-label="code-block-2-6"></a></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1" aria-label="code-block-2-7"></a><span class="co"># Initialize the SageMaker role (will reflect notebook instance's policy)</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1" aria-label="code-block-2-8"></a>role <span class="op">=</span> sagemaker.get_execution_role()  <span class="co"># the IAM role attached to this notebook instance; every call below acts as this role</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1" aria-label="code-block-2-9"></a><span class="bu">print</span>(<span class="ss">f'role = </span><span class="sc">{</span>role<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1" aria-label="code-block-2-10"></a></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1" aria-label="code-block-2-11"></a><span class="co"># Initialize an S3 client to interact with Amazon S3, allowing operations like uploading, downloading, and managing objects and buckets.</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1" aria-label="code-block-2-12"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1" aria-label="code-block-2-13"></a></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1" aria-label="code-block-2-14"></a><span class="co"># Define the S3 bucket that we will load from</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1" aria-label="code-block-2-15"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn'</span>  <span class="co"># replace with your S3 bucket name</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1" aria-label="code-block-2-16"></a></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1" aria-label="code-block-2-17"></a><span class="co"># Define train/test filenames</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1" aria-label="code-block-2-18"></a>train_filename <span class="op">=</span> <span class="st">'titanic_train.csv'</span>  <span class="co"># object keys inside the bucket (no prefix: they sit at the bucket root)</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1" aria-label="code-block-2-19"></a>test_filename <span class="op">=</span> <span class="st">'titanic_test.csv'</span></span></code></pre>
 </div>
 <p>Create a SageMaker session to manage interactions with Amazon
 SageMaker, such as training jobs, model deployments, and data
@@ -2982,10 +2990,11 @@ same notebook works in any account.</p>
 <p>A training job runs your script on a machine SageMaker rents for it,
 so the script has to work before it is worth renting anything. Run it
 here first, on the notebook instance, on the small Titanic data. If it
-crashes here, it costs nothing. If it crashes as a job, you still pay
-for the minutes the instance spent starting up. Every later episode does
-the same, a few epochs on a subset on the cheapest machine, then the
-real run.</p>
+crashes here, it costs a few seconds of a five-cent-an-hour machine. If
+it crashes as a job, you pay for the minutes the job’s instance spent
+starting up, on a machine that costs more. Every later episode does the
+same, a few epochs on a subset on the cheapest machine, then the real
+run.</p>
 <div id="understanding-the-xgboost-training-script" class="callout challenge">
 <div class="callout-square">
 <i class="callout-icon" data-feather="zap"></i>
@@ -3026,7 +3035,7 @@ group.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li><p><strong>Data Preprocessing</strong>: The script fills missing
@@ -3085,6 +3094,12 @@ and never uses these local copies.</p>
 <p>We download the data into the notebook to test the code, as a local
 pipeline would. In a pipeline that scales, the data lives in S3 and the
 jobs read it from there.</p>
+<p>The download costs nothing beyond a fraction of a cent in requests.
+The notebook instance and the bucket are in the same region, and
+transfer between AWS services inside a region is free. Pulling the same
+files to a laptop with the AWS CLI is a transfer out of AWS at
+<code>$0.09</code> per GB, which the optional <em>Same Jobs from the
+Terminal</em> episode covers.</p>
 </div>
 </div>
 </div>
@@ -3165,8 +3180,8 @@ complicated (e.g., hyperparameter tuning on multiple instances)</p>
 </h3>
 <p>Run the training script here in the notebook first, on the small
 data, with the hyperparameters passed in as variables. A local run finds
-bugs for free, and the same script then runs unchanged as a SageMaker
-job.</p>
+bugs on the cheapest machine, and the same script then runs unchanged as
+a SageMaker job.</p>
 <div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -3275,7 +3290,7 @@ data. Which instance would you pick for the training job, and why?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
 GB of data wants about 32 GB of memory: <code>ml.m5.2xlarge</code> (8
@@ -3791,7 +3806,7 @@ compared with the first job?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
 <p>The status is <code>InProgress</code> if you were quick and
 <code>Completed</code> otherwise. The cost is the same as the first run,
@@ -3829,7 +3844,7 @@ and compare the bill and the accuracy with the script version.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
 <div class="accordion-body">
 <p>The built-in algorithm will not run our
 <code>preprocess_data()</code> for us, and it expects a CSV with no
@@ -4052,28 +4067,22 @@ choose.</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="im">import</span> boto3</span>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1" aria-label="code-block-1-3"></a><span class="im">import</span> os</span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1" aria-label="code-block-1-4"></a>os.environ[<span class="st">"SAGEMAKER_SUPPRESS_V2_WARNING"</span>] <span class="op">=</span> <span class="st">"1"</span>   <span class="co"># the SDK otherwise prints a deprecation notice on import and on every estimator</span></span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1" aria-label="code-block-1-5"></a><span class="im">import</span> sagemaker</span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1" aria-label="code-block-1-6"></a><span class="im">import</span> logging</span>
-<span id="cb1-7"><a href="#cb1-7" tabindex="-1" aria-label="code-block-1-7"></a>logging.getLogger(<span class="st">"sagemaker.telemetry.telemetry_logging"</span>).setLevel(logging.WARNING)   <span class="co"># silence the telemetry notice; the "Creating training-job" line still prints</span></span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1" aria-label="code-block-1-8"></a>logging.getLogger(<span class="st">"sagemaker.image_uris"</span>).setLevel(logging.WARNING)</span>
-<span id="cb1-9"><a href="#cb1-9" tabindex="-1" aria-label="code-block-1-9"></a>logging.getLogger(<span class="st">"sagemaker.config"</span>).addFilter(<span class="kw">lambda</span> record: record.levelno <span class="op">&gt;=</span> logging.WARNING)   <span class="co"># drop the two "Not applying SDK defaults" lines; a filter holds even where the SDK resets the logger's level</span></span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1" aria-label="code-block-1-10"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
-<span id="cb1-11"><a href="#cb1-11" tabindex="-1" aria-label="code-block-1-11"></a></span>
-<span id="cb1-12"><a href="#cb1-12" tabindex="-1" aria-label="code-block-1-12"></a><span class="co"># Initialize the SageMaker role (will reflect notebook instance's policy)</span></span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1" aria-label="code-block-1-13"></a>role <span class="op">=</span> sagemaker.get_execution_role()</span>
-<span id="cb1-14"><a href="#cb1-14" tabindex="-1" aria-label="code-block-1-14"></a><span class="bu">print</span>(<span class="ss">f'role = </span><span class="sc">{</span>role<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1" aria-label="code-block-1-3"></a><span class="im">import</span> sagemaker</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1" aria-label="code-block-1-4"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1" aria-label="code-block-1-5"></a></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1" aria-label="code-block-1-6"></a><span class="co"># Initialize the SageMaker role (will reflect notebook instance's policy)</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1" aria-label="code-block-1-7"></a>role <span class="op">=</span> sagemaker.get_execution_role()</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1" aria-label="code-block-1-8"></a><span class="bu">print</span>(<span class="ss">f'role = </span><span class="sc">{</span>role<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1" aria-label="code-block-1-9"></a></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1" aria-label="code-block-1-10"></a><span class="co"># Initialize an S3 client to interact with Amazon S3, allowing operations like uploading, downloading, and managing objects and buckets.</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1" aria-label="code-block-1-11"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1" aria-label="code-block-1-12"></a></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1" aria-label="code-block-1-13"></a><span class="co"># Define the S3 bucket that we will load from</span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1" aria-label="code-block-1-14"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn'</span>  <span class="co"># replace with your S3 bucket name</span></span>
 <span id="cb1-15"><a href="#cb1-15" tabindex="-1" aria-label="code-block-1-15"></a></span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1" aria-label="code-block-1-16"></a><span class="co"># Initialize an S3 client to interact with Amazon S3, allowing operations like uploading, downloading, and managing objects and buckets.</span></span>
-<span id="cb1-17"><a href="#cb1-17" tabindex="-1" aria-label="code-block-1-17"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
-<span id="cb1-18"><a href="#cb1-18" tabindex="-1" aria-label="code-block-1-18"></a></span>
-<span id="cb1-19"><a href="#cb1-19" tabindex="-1" aria-label="code-block-1-19"></a><span class="co"># Define the S3 bucket that we will load from</span></span>
-<span id="cb1-20"><a href="#cb1-20" tabindex="-1" aria-label="code-block-1-20"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn'</span>  <span class="co"># replace with your S3 bucket name</span></span>
-<span id="cb1-21"><a href="#cb1-21" tabindex="-1" aria-label="code-block-1-21"></a></span>
-<span id="cb1-22"><a href="#cb1-22" tabindex="-1" aria-label="code-block-1-22"></a><span class="co"># Define train/test filenames</span></span>
-<span id="cb1-23"><a href="#cb1-23" tabindex="-1" aria-label="code-block-1-23"></a>train_filename <span class="op">=</span> <span class="st">'titanic_train.csv'</span></span>
-<span id="cb1-24"><a href="#cb1-24" tabindex="-1" aria-label="code-block-1-24"></a>test_filename <span class="op">=</span> <span class="st">'titanic_test.csv'</span></span></code></pre>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1" aria-label="code-block-1-16"></a><span class="co"># Define train/test filenames</span></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1" aria-label="code-block-1-17"></a>train_filename <span class="op">=</span> <span class="st">'titanic_train.csv'</span></span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1" aria-label="code-block-1-18"></a>test_filename <span class="op">=</span> <span class="st">'titanic_test.csv'</span></span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -4483,7 +4492,7 @@ goes next to it.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>There is no single answer; the solution is the written estimate. One
 worked example for scale: a 7B language model fully fine-tuned on 50,000
@@ -4680,7 +4689,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -6102,25 +6111,19 @@ input channels.</p>
 <span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a></span>
 <span id="cb6-5"><a href="#cb6-5" tabindex="-1" aria-label="code-block-6-5"></a><span class="im">import</span> boto3</span>
 <span id="cb6-6"><a href="#cb6-6" tabindex="-1" aria-label="code-block-6-6"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1" aria-label="code-block-6-7"></a><span class="im">import</span> os</span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1" aria-label="code-block-6-8"></a>os.environ[<span class="st">"SAGEMAKER_SUPPRESS_V2_WARNING"</span>] <span class="op">=</span> <span class="st">"1"</span>   <span class="co"># the SDK otherwise prints a deprecation notice on import and on every estimator</span></span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1" aria-label="code-block-6-9"></a><span class="im">import</span> sagemaker</span>
-<span id="cb6-10"><a href="#cb6-10" tabindex="-1" aria-label="code-block-6-10"></a><span class="im">import</span> logging</span>
-<span id="cb6-11"><a href="#cb6-11" tabindex="-1" aria-label="code-block-6-11"></a>logging.getLogger(<span class="st">"sagemaker.telemetry.telemetry_logging"</span>).setLevel(logging.WARNING)   <span class="co"># silence the telemetry notice; the "Creating training-job" line still prints</span></span>
-<span id="cb6-12"><a href="#cb6-12" tabindex="-1" aria-label="code-block-6-12"></a>logging.getLogger(<span class="st">"sagemaker.image_uris"</span>).setLevel(logging.WARNING)</span>
-<span id="cb6-13"><a href="#cb6-13" tabindex="-1" aria-label="code-block-6-13"></a>logging.getLogger(<span class="st">"sagemaker.config"</span>).addFilter(<span class="kw">lambda</span> record: record.levelno <span class="op">&gt;=</span> logging.WARNING)   <span class="co"># drop the two "Not applying SDK defaults" lines; a filter holds even where the SDK resets the logger's level</span></span>
-<span id="cb6-14"><a href="#cb6-14" tabindex="-1" aria-label="code-block-6-14"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
-<span id="cb6-15"><a href="#cb6-15" tabindex="-1" aria-label="code-block-6-15"></a></span>
-<span id="cb6-16"><a href="#cb6-16" tabindex="-1" aria-label="code-block-6-16"></a><span class="im">import</span> sys</span>
-<span id="cb6-17"><a href="#cb6-17" tabindex="-1" aria-label="code-block-6-17"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)   <span class="co"># repeated from Step 0 so that Setup runs on its own after a kernel restart</span></span>
-<span id="cb6-18"><a href="#cb6-18" tabindex="-1" aria-label="code-block-6-18"></a><span class="im">import</span> helpers</span>
-<span id="cb6-19"><a href="#cb6-19" tabindex="-1" aria-label="code-block-6-19"></a></span>
-<span id="cb6-20"><a href="#cb6-20" tabindex="-1" aria-label="code-block-6-20"></a>session <span class="op">=</span> sagemaker.Session()</span>
-<span id="cb6-21"><a href="#cb6-21" tabindex="-1" aria-label="code-block-6-21"></a>region <span class="op">=</span> session.boto_region_name</span>
-<span id="cb6-22"><a href="#cb6-22" tabindex="-1" aria-label="code-block-6-22"></a>role <span class="op">=</span> get_execution_role()</span>
-<span id="cb6-23"><a href="#cb6-23" tabindex="-1" aria-label="code-block-6-23"></a>s3_client <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
-<span id="cb6-24"><a href="#cb6-24" tabindex="-1" aria-label="code-block-6-24"></a><span class="bu">print</span>(<span class="st">"Region:"</span>, region)</span>
-<span id="cb6-25"><a href="#cb6-25" tabindex="-1" aria-label="code-block-6-25"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)</span></code></pre>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1" aria-label="code-block-6-7"></a><span class="im">import</span> sagemaker</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1" aria-label="code-block-6-8"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1" aria-label="code-block-6-9"></a></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1" aria-label="code-block-6-10"></a><span class="im">import</span> sys</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1" aria-label="code-block-6-11"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)   <span class="co"># repeated from Step 0 so that Setup runs on its own after a kernel restart</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1" aria-label="code-block-6-12"></a><span class="im">import</span> helpers</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1" aria-label="code-block-6-13"></a></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1" aria-label="code-block-6-14"></a>session <span class="op">=</span> sagemaker.Session()</span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1" aria-label="code-block-6-15"></a>region <span class="op">=</span> session.boto_region_name</span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1" aria-label="code-block-6-16"></a>role <span class="op">=</span> get_execution_role()</span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1" aria-label="code-block-6-17"></a>s3_client <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1" aria-label="code-block-6-18"></a><span class="bu">print</span>(<span class="st">"Region:"</span>, region)</span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1" aria-label="code-block-6-19"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)</span></code></pre>
 </div>
 <p>Now the names, after moving into a project folder of our own under
 the instance root. Everything this episode downloads or stages
@@ -6255,9 +6258,7 @@ transcription itself.</p>
 <span id="cb14-6"><a href="#cb14-6" tabindex="-1" aria-label="code-block-14-6"></a><span class="cf">for</span> fname <span class="kw">in</span> [<span class="st">"config.json"</span>, <span class="st">"preprocessor_config.json"</span>, <span class="st">"tokenizer.json"</span>, <span class="st">"tokenizer_config.json"</span>, <span class="st">"special_tokens_map.json"</span>,</span>
 <span id="cb14-7"><a href="#cb14-7" tabindex="-1" aria-label="code-block-14-7"></a>              <span class="st">"added_tokens.json"</span>, <span class="st">"vocab.json"</span>, <span class="st">"merges.txt"</span>, <span class="st">"chat_template.json"</span>, <span class="st">"video_preprocessor_config.json"</span>]:</span>
 <span id="cb14-8"><a href="#cb14-8" tabindex="-1" aria-label="code-block-14-8"></a>    s3_client.download_file(shared_bucket, <span class="ss">f"</span><span class="sc">{</span>data_prefix<span class="sc">}</span><span class="ss">/model/churro-3B/</span><span class="sc">{</span>fname<span class="sc">}</span><span class="ss">"</span>, os.path.join(proc_dir, fname))</span>
-<span id="cb14-9"><a href="#cb14-9" tabindex="-1" aria-label="code-block-14-9"></a><span class="im">import</span> warnings</span>
-<span id="cb14-10"><a href="#cb14-10" tabindex="-1" aria-label="code-block-14-10"></a>warnings.filterwarnings(<span class="st">"ignore"</span>, category<span class="op">=</span><span class="pp">FutureWarning</span>, module<span class="op">=</span><span class="st">"transformers"</span>)   <span class="co"># the pixel limits are passed the way this transformers version wants; the newer form is a FutureWarning it prints on every call</span></span>
-<span id="cb14-11"><a href="#cb14-11" tabindex="-1" aria-label="code-block-14-11"></a>processor <span class="op">=</span> AutoProcessor.from_pretrained(proc_dir, min_pixels<span class="op">=</span>bc.DEFAULT_MIN_PIXELS, max_pixels<span class="op">=</span>bc.DEFAULT_MAX_PIXELS)</span></code></pre>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1" aria-label="code-block-14-9"></a>processor <span class="op">=</span> AutoProcessor.from_pretrained(proc_dir, min_pixels<span class="op">=</span>bc.DEFAULT_MIN_PIXELS, max_pixels<span class="op">=</span>bc.DEFAULT_MAX_PIXELS)</span></code></pre>
 </div>
 <p>Now the page you displayed above, prepared the way the training
 script prepares it: the image resized to the pixel cap, the instruction
@@ -7739,59 +7740,52 @@ times the sum of the child jobs’ billable minutes.</p>
 <div class="codewrapper sourceCode" id="cb4">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="im">import</span> os</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a>os.environ[<span class="st">"SAGEMAKER_SUPPRESS_V2_WARNING"</span>] <span class="op">=</span> <span class="st">"1"</span>   <span class="co"># the SDK otherwise prints a deprecation notice on import and on every estimator</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a><span class="im">import</span> sagemaker</span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a><span class="im">import</span> logging</span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1" aria-label="code-block-4-5"></a>logging.getLogger(<span class="st">"sagemaker.telemetry.telemetry_logging"</span>).setLevel(logging.WARNING)   <span class="co"># silence the telemetry notice; the "Creating training-job" line still prints</span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1" aria-label="code-block-4-6"></a>logging.getLogger(<span class="st">"sagemaker.image_uris"</span>).setLevel(logging.WARNING)</span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1" aria-label="code-block-4-7"></a>logging.getLogger(<span class="st">"sagemaker.config"</span>).addFilter(<span class="kw">lambda</span> record: record.levelno <span class="op">&gt;=</span> logging.WARNING)   <span class="co"># drop the two "Not applying SDK defaults" lines; a filter holds even where the SDK resets the logger's level</span></span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1" aria-label="code-block-4-8"></a>logging.getLogger(<span class="st">"sagemaker.estimator"</span>).setLevel(logging.ERROR)   <span class="co"># tuner.fit reads estimator.model_data before any job exists and logs a harmless "No finished training job found" warning</span></span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1" aria-label="code-block-4-9"></a><span class="co"># range types for the search: ContinuousParameter (float range), IntegerParameter (whole-number range), CategoricalParameter (explicit list)</span></span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1" aria-label="code-block-4-10"></a><span class="im">from</span> sagemaker.tuner <span class="im">import</span> HyperparameterTuner, IntegerParameter, ContinuousParameter, CategoricalParameter</span>
-<span id="cb4-11"><a href="#cb4-11" tabindex="-1" aria-label="code-block-4-11"></a><span class="im">from</span> sagemaker.pytorch <span class="im">import</span> PyTorch</span>
-<span id="cb4-12"><a href="#cb4-12" tabindex="-1" aria-label="code-block-4-12"></a><span class="im">from</span> sagemaker.inputs <span class="im">import</span> TrainingInput</span>
-<span id="cb4-13"><a href="#cb4-13" tabindex="-1" aria-label="code-block-4-13"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
-<span id="cb4-14"><a href="#cb4-14" tabindex="-1" aria-label="code-block-4-14"></a></span>
-<span id="cb4-15"><a href="#cb4-15" tabindex="-1" aria-label="code-block-4-15"></a><span class="co"># Initialize role, bucket, and SageMaker session variables</span></span>
-<span id="cb4-16"><a href="#cb4-16" tabindex="-1" aria-label="code-block-4-16"></a>role <span class="op">=</span> get_execution_role()</span>
-<span id="cb4-17"><a href="#cb4-17" tabindex="-1" aria-label="code-block-4-17"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn'</span>  <span class="co"># replace with your S3 bucket name</span></span>
-<span id="cb4-18"><a href="#cb4-18" tabindex="-1" aria-label="code-block-4-18"></a>session <span class="op">=</span> sagemaker.Session()</span>
-<span id="cb4-19"><a href="#cb4-19" tabindex="-1" aria-label="code-block-4-19"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
-<span id="cb4-20"><a href="#cb4-20" tabindex="-1" aria-label="code-block-4-20"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)</span>
-<span id="cb4-21"><a href="#cb4-21" tabindex="-1" aria-label="code-block-4-21"></a><span class="bu">print</span>(<span class="st">"Region:"</span>, session.boto_region_name)</span>
-<span id="cb4-22"><a href="#cb4-22" tabindex="-1" aria-label="code-block-4-22"></a></span>
-<span id="cb4-23"><a href="#cb4-23" tabindex="-1" aria-label="code-block-4-23"></a><span class="co"># Define instance type/count we'll use for training</span></span>
-<span id="cb4-24"><a href="#cb4-24" tabindex="-1" aria-label="code-block-4-24"></a>instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span></span>
-<span id="cb4-25"><a href="#cb4-25" tabindex="-1" aria-label="code-block-4-25"></a>instance_count<span class="op">=</span><span class="dv">1</span> <span class="co"># always start with 1; tuning parallelism comes from max_parallel_jobs, not instance_count</span></span>
-<span id="cb4-26"><a href="#cb4-26" tabindex="-1" aria-label="code-block-4-26"></a>price_per_hour <span class="op">=</span> <span class="fl">0.115</span> <span class="co"># ml.m5.large, us-east-1 on-demand (2026-10-16), from the Instances for ML page; check it for your region</span></span>
-<span id="cb4-27"><a href="#cb4-27" tabindex="-1" aria-label="code-block-4-27"></a></span>
-<span id="cb4-28"><a href="#cb4-28" tabindex="-1" aria-label="code-block-4-28"></a><span class="co"># The runtime cap, in seconds: SageMaker stops the job and releases the instance when it is reached. Set it a little above the estimate;</span></span>
-<span id="cb4-29"><a href="#cb4-29" tabindex="-1" aria-label="code-block-4-29"></a><span class="co"># the estimate here is three or four minutes, so 20 minutes leaves room for a slow container pull without letting a hung job bill for hours.</span></span>
-<span id="cb4-30"><a href="#cb4-30" tabindex="-1" aria-label="code-block-4-30"></a>max_run <span class="op">=</span> <span class="dv">20</span><span class="op">*</span><span class="dv">60</span> <span class="co"># 20 minutes</span></span>
-<span id="cb4-31"><a href="#cb4-31" tabindex="-1" aria-label="code-block-4-31"></a></span>
-<span id="cb4-32"><a href="#cb4-32" tabindex="-1" aria-label="code-block-4-32"></a><span class="co"># Define the PyTorch estimator with entry script and environment details</span></span>
-<span id="cb4-33"><a href="#cb4-33" tabindex="-1" aria-label="code-block-4-33"></a>pytorch_estimator <span class="op">=</span> PyTorch(</span>
-<span id="cb4-34"><a href="#cb4-34" tabindex="-1" aria-label="code-block-4-34"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn"</span>,   <span class="co"># who + which model; the tuner appends its own suffix to each child job</span></span>
-<span id="cb4-35"><a href="#cb4-35" tabindex="-1" aria-label="code-block-4-35"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
-<span id="cb4-36"><a href="#cb4-36" tabindex="-1" aria-label="code-block-4-36"></a>    entry_point<span class="op">=</span><span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,  <span class="co"># Your script for training</span></span>
-<span id="cb4-37"><a href="#cb4-37" tabindex="-1" aria-label="code-block-4-37"></a>    role<span class="op">=</span>role,</span>
-<span id="cb4-38"><a href="#cb4-38" tabindex="-1" aria-label="code-block-4-38"></a>    tags<span class="op">=</span>job_tags,  <span class="co"># tags a plain .fit() on this estimator; the tuner below sets its own</span></span>
-<span id="cb4-39"><a href="#cb4-39" tabindex="-1" aria-label="code-block-4-39"></a>    instance_count<span class="op">=</span>instance_count,</span>
-<span id="cb4-40"><a href="#cb4-40" tabindex="-1" aria-label="code-block-4-40"></a>    instance_type<span class="op">=</span>instance_type,</span>
-<span id="cb4-41"><a href="#cb4-41" tabindex="-1" aria-label="code-block-4-41"></a>    framework_version<span class="op">=</span><span class="st">"2.3"</span>,  <span class="co"># if a job fails with an image error, check with: sagemaker.image_uris.retrieve("pytorch", region, version="2.3", py_version="py311", image_scope="training", instance_type="ml.m5.large")</span></span>
-<span id="cb4-42"><a href="#cb4-42" tabindex="-1" aria-label="code-block-4-42"></a>    py_version<span class="op">=</span><span class="st">"py311"</span>,</span>
-<span id="cb4-43"><a href="#cb4-43" tabindex="-1" aria-label="code-block-4-43"></a>    <span class="co"># the Regex pulls the number out of each "validation:accuracy = 0.8123" line the script prints; SageMaker records it as the metric</span></span>
-<span id="cb4-44"><a href="#cb4-44" tabindex="-1" aria-label="code-block-4-44"></a>    metric_definitions<span class="op">=</span>[{<span class="st">"Name"</span>: <span class="st">"validation:accuracy"</span>, <span class="st">"Regex"</span>: <span class="st">"validation:accuracy = ([0-9</span><span class="ch">\\</span><span class="st">.]+)"</span>}],</span>
-<span id="cb4-45"><a href="#cb4-45" tabindex="-1" aria-label="code-block-4-45"></a>    hyperparameters<span class="op">=</span>{</span>
-<span id="cb4-46"><a href="#cb4-46" tabindex="-1" aria-label="code-block-4-46"></a>        <span class="st">"train"</span>: <span class="st">"/opt/ml/input/data/train/train_data.npz"</span>,  <span class="co"># SageMaker will mount this path</span></span>
-<span id="cb4-47"><a href="#cb4-47" tabindex="-1" aria-label="code-block-4-47"></a>        <span class="st">"val"</span>: <span class="st">"/opt/ml/input/data/val/val_data.npz"</span>,        <span class="co"># SageMaker will mount this path</span></span>
-<span id="cb4-48"><a href="#cb4-48" tabindex="-1" aria-label="code-block-4-48"></a>        <span class="st">"epochs"</span>: <span class="dv">100</span>, <span class="co"># Placeholder initial value. Will be overridden by the tuning values tested</span></span>
-<span id="cb4-49"><a href="#cb4-49" tabindex="-1" aria-label="code-block-4-49"></a>        <span class="st">"learning_rate"</span>: <span class="fl">0.001</span> <span class="co"># Placeholder initial value. Will be overridden by the tuning values tested</span></span>
-<span id="cb4-50"><a href="#cb4-50" tabindex="-1" aria-label="code-block-4-50"></a>    },</span>
-<span id="cb4-51"><a href="#cb4-51" tabindex="-1" aria-label="code-block-4-51"></a>    output_path<span class="op">=</span><span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/tuning/"</span>,   <span class="co"># every child job's model.tar.gz lands here, in your bucket</span></span>
-<span id="cb4-52"><a href="#cb4-52" tabindex="-1" aria-label="code-block-4-52"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb4-53"><a href="#cb4-53" tabindex="-1" aria-label="code-block-4-53"></a>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="im">import</span> sagemaker</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a><span class="co"># range types for the search: ContinuousParameter (float range), IntegerParameter (whole-number range), CategoricalParameter (explicit list)</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a><span class="im">from</span> sagemaker.tuner <span class="im">import</span> HyperparameterTuner, IntegerParameter, ContinuousParameter, CategoricalParameter</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a><span class="im">from</span> sagemaker.pytorch <span class="im">import</span> PyTorch</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1" aria-label="code-block-4-5"></a><span class="im">from</span> sagemaker.inputs <span class="im">import</span> TrainingInput</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1" aria-label="code-block-4-6"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1" aria-label="code-block-4-7"></a></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1" aria-label="code-block-4-8"></a><span class="co"># Initialize role, bucket, and SageMaker session variables</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1" aria-label="code-block-4-9"></a>role <span class="op">=</span> get_execution_role()</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1" aria-label="code-block-4-10"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn'</span>  <span class="co"># replace with your S3 bucket name</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1" aria-label="code-block-4-11"></a>session <span class="op">=</span> sagemaker.Session()</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1" aria-label="code-block-4-12"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1" aria-label="code-block-4-13"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1" aria-label="code-block-4-14"></a><span class="bu">print</span>(<span class="st">"Region:"</span>, session.boto_region_name)</span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1" aria-label="code-block-4-15"></a></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1" aria-label="code-block-4-16"></a><span class="co"># Define instance type/count we'll use for training</span></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1" aria-label="code-block-4-17"></a>instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1" aria-label="code-block-4-18"></a>instance_count<span class="op">=</span><span class="dv">1</span> <span class="co"># always start with 1; tuning parallelism comes from max_parallel_jobs, not instance_count</span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1" aria-label="code-block-4-19"></a>price_per_hour <span class="op">=</span> <span class="fl">0.115</span> <span class="co"># ml.m5.large, us-east-1 on-demand (2026-10-16), from the Instances for ML page; check it for your region</span></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1" aria-label="code-block-4-20"></a></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1" aria-label="code-block-4-21"></a><span class="co"># The runtime cap, in seconds: SageMaker stops the job and releases the instance when it is reached. Set it a little above the estimate;</span></span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1" aria-label="code-block-4-22"></a><span class="co"># the estimate here is three or four minutes, so 20 minutes leaves room for a slow container pull without letting a hung job bill for hours.</span></span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1" aria-label="code-block-4-23"></a>max_run <span class="op">=</span> <span class="dv">20</span><span class="op">*</span><span class="dv">60</span> <span class="co"># 20 minutes</span></span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1" aria-label="code-block-4-24"></a></span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1" aria-label="code-block-4-25"></a><span class="co"># Define the PyTorch estimator with entry script and environment details</span></span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1" aria-label="code-block-4-26"></a>pytorch_estimator <span class="op">=</span> PyTorch(</span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1" aria-label="code-block-4-27"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn"</span>,   <span class="co"># who + which model; the tuner appends its own suffix to each child job</span></span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1" aria-label="code-block-4-28"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
+<span id="cb4-29"><a href="#cb4-29" tabindex="-1" aria-label="code-block-4-29"></a>    entry_point<span class="op">=</span><span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,  <span class="co"># Your script for training</span></span>
+<span id="cb4-30"><a href="#cb4-30" tabindex="-1" aria-label="code-block-4-30"></a>    role<span class="op">=</span>role,</span>
+<span id="cb4-31"><a href="#cb4-31" tabindex="-1" aria-label="code-block-4-31"></a>    tags<span class="op">=</span>job_tags,  <span class="co"># tags a plain .fit() on this estimator; the tuner below sets its own</span></span>
+<span id="cb4-32"><a href="#cb4-32" tabindex="-1" aria-label="code-block-4-32"></a>    instance_count<span class="op">=</span>instance_count,</span>
+<span id="cb4-33"><a href="#cb4-33" tabindex="-1" aria-label="code-block-4-33"></a>    instance_type<span class="op">=</span>instance_type,</span>
+<span id="cb4-34"><a href="#cb4-34" tabindex="-1" aria-label="code-block-4-34"></a>    framework_version<span class="op">=</span><span class="st">"2.3"</span>,  <span class="co"># if a job fails with an image error, check with: sagemaker.image_uris.retrieve("pytorch", region, version="2.3", py_version="py311", image_scope="training", instance_type="ml.m5.large")</span></span>
+<span id="cb4-35"><a href="#cb4-35" tabindex="-1" aria-label="code-block-4-35"></a>    py_version<span class="op">=</span><span class="st">"py311"</span>,</span>
+<span id="cb4-36"><a href="#cb4-36" tabindex="-1" aria-label="code-block-4-36"></a>    <span class="co"># the Regex pulls the number out of each "validation:accuracy = 0.8123" line the script prints; SageMaker records it as the metric</span></span>
+<span id="cb4-37"><a href="#cb4-37" tabindex="-1" aria-label="code-block-4-37"></a>    metric_definitions<span class="op">=</span>[{<span class="st">"Name"</span>: <span class="st">"validation:accuracy"</span>, <span class="st">"Regex"</span>: <span class="st">"validation:accuracy = ([0-9</span><span class="ch">\\</span><span class="st">.]+)"</span>}],</span>
+<span id="cb4-38"><a href="#cb4-38" tabindex="-1" aria-label="code-block-4-38"></a>    hyperparameters<span class="op">=</span>{</span>
+<span id="cb4-39"><a href="#cb4-39" tabindex="-1" aria-label="code-block-4-39"></a>        <span class="st">"train"</span>: <span class="st">"/opt/ml/input/data/train/train_data.npz"</span>,  <span class="co"># SageMaker will mount this path</span></span>
+<span id="cb4-40"><a href="#cb4-40" tabindex="-1" aria-label="code-block-4-40"></a>        <span class="st">"val"</span>: <span class="st">"/opt/ml/input/data/val/val_data.npz"</span>,        <span class="co"># SageMaker will mount this path</span></span>
+<span id="cb4-41"><a href="#cb4-41" tabindex="-1" aria-label="code-block-4-41"></a>        <span class="st">"epochs"</span>: <span class="dv">100</span>, <span class="co"># Placeholder initial value. Will be overridden by the tuning values tested</span></span>
+<span id="cb4-42"><a href="#cb4-42" tabindex="-1" aria-label="code-block-4-42"></a>        <span class="st">"learning_rate"</span>: <span class="fl">0.001</span> <span class="co"># Placeholder initial value. Will be overridden by the tuning values tested</span></span>
+<span id="cb4-43"><a href="#cb4-43" tabindex="-1" aria-label="code-block-4-43"></a>    },</span>
+<span id="cb4-44"><a href="#cb4-44" tabindex="-1" aria-label="code-block-4-44"></a>    output_path<span class="op">=</span><span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/tuning/"</span>,   <span class="co"># every child job's model.tar.gz lands here, in your bucket</span></span>
+<span id="cb4-45"><a href="#cb4-45" tabindex="-1" aria-label="code-block-4-45"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb4-46"><a href="#cb4-46" tabindex="-1" aria-label="code-block-4-46"></a>)</span></code></pre>
 </div>
 </div>
 <div class="section level3">
@@ -9287,18 +9281,13 @@ role, printed because the Bedrock calls below run as it.</p>
 <span id="cb1-12"><a href="#cb1-12" tabindex="-1" aria-label="code-block-1-12"></a><span class="im">import</span> sys</span>
 <span id="cb1-13"><a href="#cb1-13" tabindex="-1" aria-label="code-block-1-13"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)   <span class="co"># the lesson's helper module, cloned in the controllers episode</span></span>
 <span id="cb1-14"><a href="#cb1-14" tabindex="-1" aria-label="code-block-1-14"></a><span class="im">import</span> helpers</span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1" aria-label="code-block-1-15"></a>os.environ[<span class="st">"SAGEMAKER_SUPPRESS_V2_WARNING"</span>] <span class="op">=</span> <span class="st">"1"</span>   <span class="co"># the SDK otherwise prints a deprecation notice on import and on every estimator</span></span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1" aria-label="code-block-1-16"></a><span class="im">import</span> sagemaker</span>
-<span id="cb1-17"><a href="#cb1-17" tabindex="-1" aria-label="code-block-1-17"></a><span class="im">import</span> logging</span>
-<span id="cb1-18"><a href="#cb1-18" tabindex="-1" aria-label="code-block-1-18"></a>logging.getLogger(<span class="st">"sagemaker.telemetry.telemetry_logging"</span>).setLevel(logging.WARNING)   <span class="co"># silence the telemetry notice; the "Creating training-job" line still prints</span></span>
-<span id="cb1-19"><a href="#cb1-19" tabindex="-1" aria-label="code-block-1-19"></a>logging.getLogger(<span class="st">"sagemaker.image_uris"</span>).setLevel(logging.WARNING)</span>
-<span id="cb1-20"><a href="#cb1-20" tabindex="-1" aria-label="code-block-1-20"></a>logging.getLogger(<span class="st">"sagemaker.config"</span>).addFilter(<span class="kw">lambda</span> record: record.levelno <span class="op">&gt;=</span> logging.WARNING)   <span class="co"># drop the two "Not applying SDK defaults" lines; a filter holds even where the SDK resets the logger's level</span></span>
-<span id="cb1-21"><a href="#cb1-21" tabindex="-1" aria-label="code-block-1-21"></a></span>
-<span id="cb1-22"><a href="#cb1-22" tabindex="-1" aria-label="code-block-1-22"></a>session <span class="op">=</span> sagemaker.Session()</span>
-<span id="cb1-23"><a href="#cb1-23" tabindex="-1" aria-label="code-block-1-23"></a>region <span class="op">=</span> session.boto_region_name</span>
-<span id="cb1-24"><a href="#cb1-24" tabindex="-1" aria-label="code-block-1-24"></a>s3 <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
-<span id="cb1-25"><a href="#cb1-25" tabindex="-1" aria-label="code-block-1-25"></a>role <span class="op">=</span> sagemaker.get_execution_role()</span>
-<span id="cb1-26"><a href="#cb1-26" tabindex="-1" aria-label="code-block-1-26"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)   <span class="co"># the execution role: on the class account it carries the Bedrock permissions; on your own, it must</span></span></code></pre>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1" aria-label="code-block-1-15"></a><span class="im">import</span> sagemaker</span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1" aria-label="code-block-1-16"></a></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1" aria-label="code-block-1-17"></a>session <span class="op">=</span> sagemaker.Session()</span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1" aria-label="code-block-1-18"></a>region <span class="op">=</span> session.boto_region_name</span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1" aria-label="code-block-1-19"></a>s3 <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1" aria-label="code-block-1-20"></a>role <span class="op">=</span> sagemaker.get_execution_role()</span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1" aria-label="code-block-1-21"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)   <span class="co"># the execution role: on the class account it carries the Bedrock permissions; on your own, it must</span></span></code></pre>
 </div>
 <p><strong>The models.</strong> RAG needs two, an embedding model, which
 turns a piece of text into a vector so that similar passages land near
@@ -9815,7 +9804,7 @@ helper wraps:</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -9824,7 +9813,7 @@ helper wraps:</p>
 <span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a>  <span class="at">--tags</span> key=Name,value=DoeJohn key=Project,value=SinkOrSwim key=Purpose,value=Inference</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
+<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -11288,31 +11277,25 @@ cached and will receive the job outputs.</p>
 <span id="cb2-5"><a href="#cb2-5" tabindex="-1" aria-label="code-block-2-5"></a><span class="im">import</span> time</span>
 <span id="cb2-6"><a href="#cb2-6" tabindex="-1" aria-label="code-block-2-6"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb2-7"><a href="#cb2-7" tabindex="-1" aria-label="code-block-2-7"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1" aria-label="code-block-2-8"></a><span class="im">import</span> os</span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1" aria-label="code-block-2-9"></a>os.environ[<span class="st">"SAGEMAKER_SUPPRESS_V2_WARNING"</span>] <span class="op">=</span> <span class="st">"1"</span>   <span class="co"># the SDK otherwise prints a deprecation notice on import and on every estimator</span></span>
-<span id="cb2-10"><a href="#cb2-10" tabindex="-1" aria-label="code-block-2-10"></a><span class="im">import</span> sagemaker</span>
-<span id="cb2-11"><a href="#cb2-11" tabindex="-1" aria-label="code-block-2-11"></a><span class="im">import</span> logging</span>
-<span id="cb2-12"><a href="#cb2-12" tabindex="-1" aria-label="code-block-2-12"></a>logging.getLogger(<span class="st">"sagemaker.telemetry.telemetry_logging"</span>).setLevel(logging.WARNING)   <span class="co"># silence the telemetry notice; the "Creating training-job" line still prints</span></span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1" aria-label="code-block-2-13"></a>logging.getLogger(<span class="st">"sagemaker.image_uris"</span>).setLevel(logging.WARNING)</span>
-<span id="cb2-14"><a href="#cb2-14" tabindex="-1" aria-label="code-block-2-14"></a>logging.getLogger(<span class="st">"sagemaker.config"</span>).addFilter(<span class="kw">lambda</span> record: record.levelno <span class="op">&gt;=</span> logging.WARNING)   <span class="co"># drop the two "Not applying SDK defaults" lines; a filter holds even where the SDK resets the logger's level</span></span>
-<span id="cb2-15"><a href="#cb2-15" tabindex="-1" aria-label="code-block-2-15"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
-<span id="cb2-16"><a href="#cb2-16" tabindex="-1" aria-label="code-block-2-16"></a><span class="im">from</span> sagemaker.huggingface <span class="im">import</span> HuggingFaceProcessor         <span class="co"># launches a job in the prebuilt Hugging Face container</span></span>
-<span id="cb2-17"><a href="#cb2-17" tabindex="-1" aria-label="code-block-2-17"></a><span class="im">from</span> sagemaker.processing <span class="im">import</span> ProcessingInput, ProcessingOutput   <span class="co"># S3 &lt;-&gt; container path mappings for a job</span></span>
-<span id="cb2-18"><a href="#cb2-18" tabindex="-1" aria-label="code-block-2-18"></a></span>
-<span id="cb2-19"><a href="#cb2-19" tabindex="-1" aria-label="code-block-2-19"></a>session <span class="op">=</span> sagemaker.Session()</span>
-<span id="cb2-20"><a href="#cb2-20" tabindex="-1" aria-label="code-block-2-20"></a>region <span class="op">=</span> session.boto_region_name</span>
-<span id="cb2-21"><a href="#cb2-21" tabindex="-1" aria-label="code-block-2-21"></a>role <span class="op">=</span> get_execution_role()   <span class="co"># the IAM role the jobs run under to read and write S3</span></span>
-<span id="cb2-22"><a href="#cb2-22" tabindex="-1" aria-label="code-block-2-22"></a></span>
-<span id="cb2-23"><a href="#cb2-23" tabindex="-1" aria-label="code-block-2-23"></a>shared_bucket <span class="op">=</span> <span class="st">"ml-marathon-shared"</span>   <span class="co"># the instructor-staged, read-only bucket with the data and model weights; change only on your own account</span></span>
-<span id="cb2-24"><a href="#cb2-24" tabindex="-1" aria-label="code-block-2-24"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>     <span class="co"># &lt;-- EDIT ME: your own bucket (chunks in, outputs out)</span></span>
-<span id="cb2-25"><a href="#cb2-25" tabindex="-1" aria-label="code-block-2-25"></a>s3_client <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
-<span id="cb2-26"><a href="#cb2-26" tabindex="-1" aria-label="code-block-2-26"></a></span>
-<span id="cb2-27"><a href="#cb2-27" tabindex="-1" aria-label="code-block-2-27"></a>local_data_dir <span class="op">=</span> <span class="st">"./data"</span></span>
-<span id="cb2-28"><a href="#cb2-28" tabindex="-1" aria-label="code-block-2-28"></a>os.makedirs(local_data_dir, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb2-29"><a href="#cb2-29" tabindex="-1" aria-label="code-block-2-29"></a></span>
-<span id="cb2-30"><a href="#cb2-30" tabindex="-1" aria-label="code-block-2-30"></a><span class="bu">print</span>(<span class="st">"Region:"</span>, region)</span>
-<span id="cb2-31"><a href="#cb2-31" tabindex="-1" aria-label="code-block-2-31"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)</span>
-<span id="cb2-32"><a href="#cb2-32" tabindex="-1" aria-label="code-block-2-32"></a><span class="bu">print</span>(<span class="st">"Bucket:"</span>, bucket_name)</span></code></pre>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1" aria-label="code-block-2-8"></a><span class="im">import</span> sagemaker</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1" aria-label="code-block-2-9"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1" aria-label="code-block-2-10"></a><span class="im">from</span> sagemaker.huggingface <span class="im">import</span> HuggingFaceProcessor         <span class="co"># launches a job in the prebuilt Hugging Face container</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1" aria-label="code-block-2-11"></a><span class="im">from</span> sagemaker.processing <span class="im">import</span> ProcessingInput, ProcessingOutput   <span class="co"># S3 &lt;-&gt; container path mappings for a job</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1" aria-label="code-block-2-12"></a></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1" aria-label="code-block-2-13"></a>session <span class="op">=</span> sagemaker.Session()</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1" aria-label="code-block-2-14"></a>region <span class="op">=</span> session.boto_region_name</span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1" aria-label="code-block-2-15"></a>role <span class="op">=</span> get_execution_role()   <span class="co"># the IAM role the jobs run under to read and write S3</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1" aria-label="code-block-2-16"></a></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1" aria-label="code-block-2-17"></a>shared_bucket <span class="op">=</span> <span class="st">"ml-marathon-shared"</span>   <span class="co"># the instructor-staged, read-only bucket with the data and model weights; change only on your own account</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1" aria-label="code-block-2-18"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>     <span class="co"># &lt;-- EDIT ME: your own bucket (chunks in, outputs out)</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1" aria-label="code-block-2-19"></a>s3_client <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1" aria-label="code-block-2-20"></a></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1" aria-label="code-block-2-21"></a>local_data_dir <span class="op">=</span> <span class="st">"./data"</span></span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1" aria-label="code-block-2-22"></a>os.makedirs(local_data_dir, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1" aria-label="code-block-2-23"></a></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1" aria-label="code-block-2-24"></a><span class="bu">print</span>(<span class="st">"Region:"</span>, region)</span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1" aria-label="code-block-2-25"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)</span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1" aria-label="code-block-2-26"></a><span class="bu">print</span>(<span class="st">"Bucket:"</span>, bucket_name)</span></code></pre>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="step-1-check-the-inputs">Step 1 – Check the inputs<a class="anchor" aria-label="anchor" href="#step-1-check-the-inputs"></a>
@@ -11847,7 +11830,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -11911,7 +11894,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still downloading or
@@ -12312,24 +12295,18 @@ download helper.</p>
 <span id="cb4-6"><a href="#cb4-6" tabindex="-1" aria-label="code-block-4-6"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb4-7"><a href="#cb4-7" tabindex="-1" aria-label="code-block-4-7"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb4-8"><a href="#cb4-8" tabindex="-1" aria-label="code-block-4-8"></a></span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1" aria-label="code-block-4-9"></a><span class="im">import</span> os</span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1" aria-label="code-block-4-10"></a>os.environ[<span class="st">"SAGEMAKER_SUPPRESS_V2_WARNING"</span>] <span class="op">=</span> <span class="st">"1"</span>   <span class="co"># the SDK otherwise prints a deprecation notice on import and on every estimator</span></span>
-<span id="cb4-11"><a href="#cb4-11" tabindex="-1" aria-label="code-block-4-11"></a><span class="im">import</span> sagemaker</span>
-<span id="cb4-12"><a href="#cb4-12" tabindex="-1" aria-label="code-block-4-12"></a><span class="im">import</span> logging</span>
-<span id="cb4-13"><a href="#cb4-13" tabindex="-1" aria-label="code-block-4-13"></a>logging.getLogger(<span class="st">"sagemaker.telemetry.telemetry_logging"</span>).setLevel(logging.WARNING)   <span class="co"># silence the telemetry notice; the "Creating training-job" line still prints</span></span>
-<span id="cb4-14"><a href="#cb4-14" tabindex="-1" aria-label="code-block-4-14"></a>logging.getLogger(<span class="st">"sagemaker.image_uris"</span>).setLevel(logging.WARNING)</span>
-<span id="cb4-15"><a href="#cb4-15" tabindex="-1" aria-label="code-block-4-15"></a>logging.getLogger(<span class="st">"sagemaker.config"</span>).addFilter(<span class="kw">lambda</span> record: record.levelno <span class="op">&gt;=</span> logging.WARNING)   <span class="co"># drop the two "Not applying SDK defaults" lines; a filter holds even where the SDK resets the logger's level</span></span>
-<span id="cb4-16"><a href="#cb4-16" tabindex="-1" aria-label="code-block-4-16"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
-<span id="cb4-17"><a href="#cb4-17" tabindex="-1" aria-label="code-block-4-17"></a></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1" aria-label="code-block-4-9"></a><span class="im">import</span> sagemaker</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1" aria-label="code-block-4-10"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1" aria-label="code-block-4-11"></a></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1" aria-label="code-block-4-12"></a></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1" aria-label="code-block-4-13"></a><span class="co"># Initialize SageMaker + AWS basics</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1" aria-label="code-block-4-14"></a>session <span class="op">=</span> sagemaker.Session()</span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1" aria-label="code-block-4-15"></a>region <span class="op">=</span> session.boto_region_name</span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1" aria-label="code-block-4-16"></a>role <span class="op">=</span> get_execution_role()</span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1" aria-label="code-block-4-17"></a>s3_client <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
 <span id="cb4-18"><a href="#cb4-18" tabindex="-1" aria-label="code-block-4-18"></a></span>
-<span id="cb4-19"><a href="#cb4-19" tabindex="-1" aria-label="code-block-4-19"></a><span class="co"># Initialize SageMaker + AWS basics</span></span>
-<span id="cb4-20"><a href="#cb4-20" tabindex="-1" aria-label="code-block-4-20"></a>session <span class="op">=</span> sagemaker.Session()</span>
-<span id="cb4-21"><a href="#cb4-21" tabindex="-1" aria-label="code-block-4-21"></a>region <span class="op">=</span> session.boto_region_name</span>
-<span id="cb4-22"><a href="#cb4-22" tabindex="-1" aria-label="code-block-4-22"></a>role <span class="op">=</span> get_execution_role()</span>
-<span id="cb4-23"><a href="#cb4-23" tabindex="-1" aria-label="code-block-4-23"></a>s3_client <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
-<span id="cb4-24"><a href="#cb4-24" tabindex="-1" aria-label="code-block-4-24"></a></span>
-<span id="cb4-25"><a href="#cb4-25" tabindex="-1" aria-label="code-block-4-25"></a><span class="bu">print</span>(<span class="st">"Region:"</span>, region)</span>
-<span id="cb4-26"><a href="#cb4-26" tabindex="-1" aria-label="code-block-4-26"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)</span></code></pre>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1" aria-label="code-block-4-19"></a><span class="bu">print</span>(<span class="st">"Region:"</span>, region)</span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1" aria-label="code-block-4-20"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)</span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -13586,25 +13563,19 @@ against reality before and after you clean up.</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="im">import</span> boto3</span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="im">import</span> os</span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1" aria-label="code-block-1-3"></a>os.environ[<span class="st">"SAGEMAKER_SUPPRESS_V2_WARNING"</span>] <span class="op">=</span> <span class="st">"1"</span>   <span class="co"># the SDK otherwise prints a deprecation notice on import and on every estimator</span></span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1" aria-label="code-block-1-4"></a><span class="im">import</span> sagemaker</span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1" aria-label="code-block-1-5"></a><span class="im">import</span> logging</span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1" aria-label="code-block-1-6"></a>logging.getLogger(<span class="st">"sagemaker.telemetry.telemetry_logging"</span>).setLevel(logging.WARNING)   <span class="co"># silence the telemetry notice; the "Creating training-job" line still prints</span></span>
-<span id="cb1-7"><a href="#cb1-7" tabindex="-1" aria-label="code-block-1-7"></a>logging.getLogger(<span class="st">"sagemaker.image_uris"</span>).setLevel(logging.WARNING)</span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1" aria-label="code-block-1-8"></a>logging.getLogger(<span class="st">"sagemaker.config"</span>).addFilter(<span class="kw">lambda</span> record: record.levelno <span class="op">&gt;=</span> logging.WARNING)   <span class="co"># drop the two "Not applying SDK defaults" lines; a filter holds even where the SDK resets the logger's level</span></span>
-<span id="cb1-9"><a href="#cb1-9" tabindex="-1" aria-label="code-block-1-9"></a><span class="im">import</span> sys</span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1" aria-label="code-block-1-10"></a></span>
-<span id="cb1-11"><a href="#cb1-11" tabindex="-1" aria-label="code-block-1-11"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)   <span class="co"># the lesson's helper module, cloned in the controllers episode</span></span>
-<span id="cb1-12"><a href="#cb1-12" tabindex="-1" aria-label="code-block-1-12"></a><span class="im">import</span> helpers</span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1" aria-label="code-block-1-13"></a></span>
-<span id="cb1-14"><a href="#cb1-14" tabindex="-1" aria-label="code-block-1-14"></a>session <span class="op">=</span> sagemaker.Session()</span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1" aria-label="code-block-1-15"></a>sm <span class="op">=</span> session.sagemaker_client          <span class="co"># the low-level SageMaker client: list_*, describe_*, stop_* calls</span></span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1" aria-label="code-block-1-16"></a>region <span class="op">=</span> session.boto_region_name      <span class="co"># the region the notebook runs in (us-east-2 on the workshop account)</span></span>
-<span id="cb1-17"><a href="#cb1-17" tabindex="-1" aria-label="code-block-1-17"></a></span>
-<span id="cb1-18"><a href="#cb1-18" tabindex="-1" aria-label="code-block-1-18"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span>                              <span class="co"># replace with your name, as used in job names and tags</span></span>
-<span id="cb1-19"><a href="#cb1-19" tabindex="-1" aria-label="code-block-1-19"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>   <span class="co"># the Project value used in your Bedrock profile names</span></span>
-<span id="cb1-20"><a href="#cb1-20" tabindex="-1" aria-label="code-block-1-20"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>            <span class="co"># replace with your bucket</span></span></code></pre>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="im">import</span> sagemaker</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1" aria-label="code-block-1-3"></a><span class="im">import</span> sys</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1" aria-label="code-block-1-4"></a></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1" aria-label="code-block-1-5"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)   <span class="co"># the lesson's helper module, cloned in the controllers episode</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1" aria-label="code-block-1-6"></a><span class="im">import</span> helpers</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1" aria-label="code-block-1-7"></a></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1" aria-label="code-block-1-8"></a>session <span class="op">=</span> sagemaker.Session()</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1" aria-label="code-block-1-9"></a>sm <span class="op">=</span> session.sagemaker_client          <span class="co"># the low-level SageMaker client: list_*, describe_*, stop_* calls</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1" aria-label="code-block-1-10"></a>region <span class="op">=</span> session.boto_region_name      <span class="co"># the region the notebook runs in (us-east-2 on the workshop account)</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1" aria-label="code-block-1-11"></a></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1" aria-label="code-block-1-12"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span>                              <span class="co"># replace with your name, as used in job names and tags</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1" aria-label="code-block-1-13"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>   <span class="co"># the Project value used in your Bedrock profile names</span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1" aria-label="code-block-1-14"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>            <span class="co"># replace with your bucket</span></span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="what-is-still-running-under-your-name">What is still running under your name?<a class="anchor" aria-label="anchor" href="#what-is-still-running-under-your-name"></a>
 </h2>
@@ -13957,7 +13928,7 @@ stopped your notebook instance and walked away?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>A complete list for someone who did every episode, including the
 optional ones:</p>

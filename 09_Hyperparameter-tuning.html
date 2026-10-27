@@ -573,59 +573,52 @@ times the sum of the child jobs’ billable minutes.</p>
 <div class="codewrapper sourceCode" id="cb4">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="im">import</span> os</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a>os.environ[<span class="st">"SAGEMAKER_SUPPRESS_V2_WARNING"</span>] <span class="op">=</span> <span class="st">"1"</span>   <span class="co"># the SDK otherwise prints a deprecation notice on import and on every estimator</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a><span class="im">import</span> sagemaker</span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a><span class="im">import</span> logging</span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1" aria-label="code-block-4-5"></a>logging.getLogger(<span class="st">"sagemaker.telemetry.telemetry_logging"</span>).setLevel(logging.WARNING)   <span class="co"># silence the telemetry notice; the "Creating training-job" line still prints</span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1" aria-label="code-block-4-6"></a>logging.getLogger(<span class="st">"sagemaker.image_uris"</span>).setLevel(logging.WARNING)</span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1" aria-label="code-block-4-7"></a>logging.getLogger(<span class="st">"sagemaker.config"</span>).addFilter(<span class="kw">lambda</span> record: record.levelno <span class="op">&gt;=</span> logging.WARNING)   <span class="co"># drop the two "Not applying SDK defaults" lines; a filter holds even where the SDK resets the logger's level</span></span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1" aria-label="code-block-4-8"></a>logging.getLogger(<span class="st">"sagemaker.estimator"</span>).setLevel(logging.ERROR)   <span class="co"># tuner.fit reads estimator.model_data before any job exists and logs a harmless "No finished training job found" warning</span></span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1" aria-label="code-block-4-9"></a><span class="co"># range types for the search: ContinuousParameter (float range), IntegerParameter (whole-number range), CategoricalParameter (explicit list)</span></span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1" aria-label="code-block-4-10"></a><span class="im">from</span> sagemaker.tuner <span class="im">import</span> HyperparameterTuner, IntegerParameter, ContinuousParameter, CategoricalParameter</span>
-<span id="cb4-11"><a href="#cb4-11" tabindex="-1" aria-label="code-block-4-11"></a><span class="im">from</span> sagemaker.pytorch <span class="im">import</span> PyTorch</span>
-<span id="cb4-12"><a href="#cb4-12" tabindex="-1" aria-label="code-block-4-12"></a><span class="im">from</span> sagemaker.inputs <span class="im">import</span> TrainingInput</span>
-<span id="cb4-13"><a href="#cb4-13" tabindex="-1" aria-label="code-block-4-13"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
-<span id="cb4-14"><a href="#cb4-14" tabindex="-1" aria-label="code-block-4-14"></a></span>
-<span id="cb4-15"><a href="#cb4-15" tabindex="-1" aria-label="code-block-4-15"></a><span class="co"># Initialize role, bucket, and SageMaker session variables</span></span>
-<span id="cb4-16"><a href="#cb4-16" tabindex="-1" aria-label="code-block-4-16"></a>role <span class="op">=</span> get_execution_role()</span>
-<span id="cb4-17"><a href="#cb4-17" tabindex="-1" aria-label="code-block-4-17"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn'</span>  <span class="co"># replace with your S3 bucket name</span></span>
-<span id="cb4-18"><a href="#cb4-18" tabindex="-1" aria-label="code-block-4-18"></a>session <span class="op">=</span> sagemaker.Session()</span>
-<span id="cb4-19"><a href="#cb4-19" tabindex="-1" aria-label="code-block-4-19"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
-<span id="cb4-20"><a href="#cb4-20" tabindex="-1" aria-label="code-block-4-20"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)</span>
-<span id="cb4-21"><a href="#cb4-21" tabindex="-1" aria-label="code-block-4-21"></a><span class="bu">print</span>(<span class="st">"Region:"</span>, session.boto_region_name)</span>
-<span id="cb4-22"><a href="#cb4-22" tabindex="-1" aria-label="code-block-4-22"></a></span>
-<span id="cb4-23"><a href="#cb4-23" tabindex="-1" aria-label="code-block-4-23"></a><span class="co"># Define instance type/count we'll use for training</span></span>
-<span id="cb4-24"><a href="#cb4-24" tabindex="-1" aria-label="code-block-4-24"></a>instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span></span>
-<span id="cb4-25"><a href="#cb4-25" tabindex="-1" aria-label="code-block-4-25"></a>instance_count<span class="op">=</span><span class="dv">1</span> <span class="co"># always start with 1; tuning parallelism comes from max_parallel_jobs, not instance_count</span></span>
-<span id="cb4-26"><a href="#cb4-26" tabindex="-1" aria-label="code-block-4-26"></a>price_per_hour <span class="op">=</span> <span class="fl">0.115</span> <span class="co"># ml.m5.large, us-east-1 on-demand (2026-10-16), from the Instances for ML page; check it for your region</span></span>
-<span id="cb4-27"><a href="#cb4-27" tabindex="-1" aria-label="code-block-4-27"></a></span>
-<span id="cb4-28"><a href="#cb4-28" tabindex="-1" aria-label="code-block-4-28"></a><span class="co"># The runtime cap, in seconds: SageMaker stops the job and releases the instance when it is reached. Set it a little above the estimate;</span></span>
-<span id="cb4-29"><a href="#cb4-29" tabindex="-1" aria-label="code-block-4-29"></a><span class="co"># the estimate here is three or four minutes, so 20 minutes leaves room for a slow container pull without letting a hung job bill for hours.</span></span>
-<span id="cb4-30"><a href="#cb4-30" tabindex="-1" aria-label="code-block-4-30"></a>max_run <span class="op">=</span> <span class="dv">20</span><span class="op">*</span><span class="dv">60</span> <span class="co"># 20 minutes</span></span>
-<span id="cb4-31"><a href="#cb4-31" tabindex="-1" aria-label="code-block-4-31"></a></span>
-<span id="cb4-32"><a href="#cb4-32" tabindex="-1" aria-label="code-block-4-32"></a><span class="co"># Define the PyTorch estimator with entry script and environment details</span></span>
-<span id="cb4-33"><a href="#cb4-33" tabindex="-1" aria-label="code-block-4-33"></a>pytorch_estimator <span class="op">=</span> PyTorch(</span>
-<span id="cb4-34"><a href="#cb4-34" tabindex="-1" aria-label="code-block-4-34"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn"</span>,   <span class="co"># who + which model; the tuner appends its own suffix to each child job</span></span>
-<span id="cb4-35"><a href="#cb4-35" tabindex="-1" aria-label="code-block-4-35"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
-<span id="cb4-36"><a href="#cb4-36" tabindex="-1" aria-label="code-block-4-36"></a>    entry_point<span class="op">=</span><span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,  <span class="co"># Your script for training</span></span>
-<span id="cb4-37"><a href="#cb4-37" tabindex="-1" aria-label="code-block-4-37"></a>    role<span class="op">=</span>role,</span>
-<span id="cb4-38"><a href="#cb4-38" tabindex="-1" aria-label="code-block-4-38"></a>    tags<span class="op">=</span>job_tags,  <span class="co"># tags a plain .fit() on this estimator; the tuner below sets its own</span></span>
-<span id="cb4-39"><a href="#cb4-39" tabindex="-1" aria-label="code-block-4-39"></a>    instance_count<span class="op">=</span>instance_count,</span>
-<span id="cb4-40"><a href="#cb4-40" tabindex="-1" aria-label="code-block-4-40"></a>    instance_type<span class="op">=</span>instance_type,</span>
-<span id="cb4-41"><a href="#cb4-41" tabindex="-1" aria-label="code-block-4-41"></a>    framework_version<span class="op">=</span><span class="st">"2.3"</span>,  <span class="co"># if a job fails with an image error, check with: sagemaker.image_uris.retrieve("pytorch", region, version="2.3", py_version="py311", image_scope="training", instance_type="ml.m5.large")</span></span>
-<span id="cb4-42"><a href="#cb4-42" tabindex="-1" aria-label="code-block-4-42"></a>    py_version<span class="op">=</span><span class="st">"py311"</span>,</span>
-<span id="cb4-43"><a href="#cb4-43" tabindex="-1" aria-label="code-block-4-43"></a>    <span class="co"># the Regex pulls the number out of each "validation:accuracy = 0.8123" line the script prints; SageMaker records it as the metric</span></span>
-<span id="cb4-44"><a href="#cb4-44" tabindex="-1" aria-label="code-block-4-44"></a>    metric_definitions<span class="op">=</span>[{<span class="st">"Name"</span>: <span class="st">"validation:accuracy"</span>, <span class="st">"Regex"</span>: <span class="st">"validation:accuracy = ([0-9</span><span class="ch">\\</span><span class="st">.]+)"</span>}],</span>
-<span id="cb4-45"><a href="#cb4-45" tabindex="-1" aria-label="code-block-4-45"></a>    hyperparameters<span class="op">=</span>{</span>
-<span id="cb4-46"><a href="#cb4-46" tabindex="-1" aria-label="code-block-4-46"></a>        <span class="st">"train"</span>: <span class="st">"/opt/ml/input/data/train/train_data.npz"</span>,  <span class="co"># SageMaker will mount this path</span></span>
-<span id="cb4-47"><a href="#cb4-47" tabindex="-1" aria-label="code-block-4-47"></a>        <span class="st">"val"</span>: <span class="st">"/opt/ml/input/data/val/val_data.npz"</span>,        <span class="co"># SageMaker will mount this path</span></span>
-<span id="cb4-48"><a href="#cb4-48" tabindex="-1" aria-label="code-block-4-48"></a>        <span class="st">"epochs"</span>: <span class="dv">100</span>, <span class="co"># Placeholder initial value. Will be overridden by the tuning values tested</span></span>
-<span id="cb4-49"><a href="#cb4-49" tabindex="-1" aria-label="code-block-4-49"></a>        <span class="st">"learning_rate"</span>: <span class="fl">0.001</span> <span class="co"># Placeholder initial value. Will be overridden by the tuning values tested</span></span>
-<span id="cb4-50"><a href="#cb4-50" tabindex="-1" aria-label="code-block-4-50"></a>    },</span>
-<span id="cb4-51"><a href="#cb4-51" tabindex="-1" aria-label="code-block-4-51"></a>    output_path<span class="op">=</span><span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/tuning/"</span>,   <span class="co"># every child job's model.tar.gz lands here, in your bucket</span></span>
-<span id="cb4-52"><a href="#cb4-52" tabindex="-1" aria-label="code-block-4-52"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb4-53"><a href="#cb4-53" tabindex="-1" aria-label="code-block-4-53"></a>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="im">import</span> sagemaker</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a><span class="co"># range types for the search: ContinuousParameter (float range), IntegerParameter (whole-number range), CategoricalParameter (explicit list)</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a><span class="im">from</span> sagemaker.tuner <span class="im">import</span> HyperparameterTuner, IntegerParameter, ContinuousParameter, CategoricalParameter</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a><span class="im">from</span> sagemaker.pytorch <span class="im">import</span> PyTorch</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1" aria-label="code-block-4-5"></a><span class="im">from</span> sagemaker.inputs <span class="im">import</span> TrainingInput</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1" aria-label="code-block-4-6"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1" aria-label="code-block-4-7"></a></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1" aria-label="code-block-4-8"></a><span class="co"># Initialize role, bucket, and SageMaker session variables</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1" aria-label="code-block-4-9"></a>role <span class="op">=</span> get_execution_role()</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1" aria-label="code-block-4-10"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn'</span>  <span class="co"># replace with your S3 bucket name</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1" aria-label="code-block-4-11"></a>session <span class="op">=</span> sagemaker.Session()</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1" aria-label="code-block-4-12"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1" aria-label="code-block-4-13"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1" aria-label="code-block-4-14"></a><span class="bu">print</span>(<span class="st">"Region:"</span>, session.boto_region_name)</span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1" aria-label="code-block-4-15"></a></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1" aria-label="code-block-4-16"></a><span class="co"># Define instance type/count we'll use for training</span></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1" aria-label="code-block-4-17"></a>instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1" aria-label="code-block-4-18"></a>instance_count<span class="op">=</span><span class="dv">1</span> <span class="co"># always start with 1; tuning parallelism comes from max_parallel_jobs, not instance_count</span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1" aria-label="code-block-4-19"></a>price_per_hour <span class="op">=</span> <span class="fl">0.115</span> <span class="co"># ml.m5.large, us-east-1 on-demand (2026-10-16), from the Instances for ML page; check it for your region</span></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1" aria-label="code-block-4-20"></a></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1" aria-label="code-block-4-21"></a><span class="co"># The runtime cap, in seconds: SageMaker stops the job and releases the instance when it is reached. Set it a little above the estimate;</span></span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1" aria-label="code-block-4-22"></a><span class="co"># the estimate here is three or four minutes, so 20 minutes leaves room for a slow container pull without letting a hung job bill for hours.</span></span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1" aria-label="code-block-4-23"></a>max_run <span class="op">=</span> <span class="dv">20</span><span class="op">*</span><span class="dv">60</span> <span class="co"># 20 minutes</span></span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1" aria-label="code-block-4-24"></a></span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1" aria-label="code-block-4-25"></a><span class="co"># Define the PyTorch estimator with entry script and environment details</span></span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1" aria-label="code-block-4-26"></a>pytorch_estimator <span class="op">=</span> PyTorch(</span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1" aria-label="code-block-4-27"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-nn"</span>,   <span class="co"># who + which model; the tuner appends its own suffix to each child job</span></span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1" aria-label="code-block-4-28"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
+<span id="cb4-29"><a href="#cb4-29" tabindex="-1" aria-label="code-block-4-29"></a>    entry_point<span class="op">=</span><span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/train_nn.py"</span>,  <span class="co"># Your script for training</span></span>
+<span id="cb4-30"><a href="#cb4-30" tabindex="-1" aria-label="code-block-4-30"></a>    role<span class="op">=</span>role,</span>
+<span id="cb4-31"><a href="#cb4-31" tabindex="-1" aria-label="code-block-4-31"></a>    tags<span class="op">=</span>job_tags,  <span class="co"># tags a plain .fit() on this estimator; the tuner below sets its own</span></span>
+<span id="cb4-32"><a href="#cb4-32" tabindex="-1" aria-label="code-block-4-32"></a>    instance_count<span class="op">=</span>instance_count,</span>
+<span id="cb4-33"><a href="#cb4-33" tabindex="-1" aria-label="code-block-4-33"></a>    instance_type<span class="op">=</span>instance_type,</span>
+<span id="cb4-34"><a href="#cb4-34" tabindex="-1" aria-label="code-block-4-34"></a>    framework_version<span class="op">=</span><span class="st">"2.3"</span>,  <span class="co"># if a job fails with an image error, check with: sagemaker.image_uris.retrieve("pytorch", region, version="2.3", py_version="py311", image_scope="training", instance_type="ml.m5.large")</span></span>
+<span id="cb4-35"><a href="#cb4-35" tabindex="-1" aria-label="code-block-4-35"></a>    py_version<span class="op">=</span><span class="st">"py311"</span>,</span>
+<span id="cb4-36"><a href="#cb4-36" tabindex="-1" aria-label="code-block-4-36"></a>    <span class="co"># the Regex pulls the number out of each "validation:accuracy = 0.8123" line the script prints; SageMaker records it as the metric</span></span>
+<span id="cb4-37"><a href="#cb4-37" tabindex="-1" aria-label="code-block-4-37"></a>    metric_definitions<span class="op">=</span>[{<span class="st">"Name"</span>: <span class="st">"validation:accuracy"</span>, <span class="st">"Regex"</span>: <span class="st">"validation:accuracy = ([0-9</span><span class="ch">\\</span><span class="st">.]+)"</span>}],</span>
+<span id="cb4-38"><a href="#cb4-38" tabindex="-1" aria-label="code-block-4-38"></a>    hyperparameters<span class="op">=</span>{</span>
+<span id="cb4-39"><a href="#cb4-39" tabindex="-1" aria-label="code-block-4-39"></a>        <span class="st">"train"</span>: <span class="st">"/opt/ml/input/data/train/train_data.npz"</span>,  <span class="co"># SageMaker will mount this path</span></span>
+<span id="cb4-40"><a href="#cb4-40" tabindex="-1" aria-label="code-block-4-40"></a>        <span class="st">"val"</span>: <span class="st">"/opt/ml/input/data/val/val_data.npz"</span>,        <span class="co"># SageMaker will mount this path</span></span>
+<span id="cb4-41"><a href="#cb4-41" tabindex="-1" aria-label="code-block-4-41"></a>        <span class="st">"epochs"</span>: <span class="dv">100</span>, <span class="co"># Placeholder initial value. Will be overridden by the tuning values tested</span></span>
+<span id="cb4-42"><a href="#cb4-42" tabindex="-1" aria-label="code-block-4-42"></a>        <span class="st">"learning_rate"</span>: <span class="fl">0.001</span> <span class="co"># Placeholder initial value. Will be overridden by the tuning values tested</span></span>
+<span id="cb4-43"><a href="#cb4-43" tabindex="-1" aria-label="code-block-4-43"></a>    },</span>
+<span id="cb4-44"><a href="#cb4-44" tabindex="-1" aria-label="code-block-4-44"></a>    output_path<span class="op">=</span><span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/tuning/"</span>,   <span class="co"># every child job's model.tar.gz lands here, in your bucket</span></span>
+<span id="cb4-45"><a href="#cb4-45" tabindex="-1" aria-label="code-block-4-45"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb4-46"><a href="#cb4-46" tabindex="-1" aria-label="code-block-4-46"></a>)</span></code></pre>
 </div>
 </div>
 <div class="section level3">

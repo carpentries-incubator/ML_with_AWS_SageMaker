@@ -424,7 +424,44 @@ and sometimes a support exchange, so file them three to four weeks
 ahead. Instance usage per episode is taken from the code in the
 episodes; if you change an instance type in an episode, change the quota
 here.</p>
-<section><h2 class="section-heading" id="region">Region<a class="anchor" aria-label="anchor" href="#region"></a></h2>
+<section><h2 class="section-heading" id="in-order">In order<a class="anchor" aria-label="anchor" href="#in-order"></a></h2>
+<hr class="half-width"><p>Everything below, as a list to work down. The sections that follow
+have the details and the commands.</p>
+<ol style="list-style-type: decimal"><li>
+<strong>Pick the region</strong> and use it for everything after
+this (next section).</li>
+<li>
+<strong>File the GPU quota increases</strong>, three to four weeks
+ahead (<em>SageMaker service quotas</em>).</li>
+<li>
+<strong>The notebook role.</strong> Make sure
+<code>ml-sagemaker-use</code> exists, then attach its three inline
+policies from CloudShell: <code>WorkshopGuardRails</code> from the
+repo’s <code>scripts/guardrails.json</code>,
+<code>ReadOwnCloudTrail</code>, and <code>BedrockAccess</code> (<em>The
+notebook role</em>, <em>Permission set guard rails</em>,
+<em>Bedrock</em>). Run the policy simulator, then one test job of each
+kind from a learner sign-in.</li>
+<li>
+<strong>Enable Bedrock model access</strong> for the two models the
+RAG episode calls, and check their rate quotas (<em>Bedrock</em>).</li>
+<li>
+<strong>Cost allocation tags</strong> active on the account, a
+Budgets alert on the class total (<em>Cost allocation tags</em>).</li>
+<li>
+<strong>Stage the shared bucket</strong> from CloudShell, following
+<em>Shared data bucket: staging before each term</em>.</li>
+<li>
+<strong>Add the learners</strong> to the Identity Center group and
+send the sign-in email (<em>Learner access</em>).</li>
+<li>
+<strong>Overnight safeguards</strong>, the nightly notebook stop and
+the per-learner budgets, if the class runs more than a day
+(<em>Overnight safeguards</em>).</li>
+<li>
+<strong>After class</strong>, lower the GPU quotas and run the
+cleanup in <em>Instructor Notes</em>.</li>
+</ol></section><section><h2 class="section-heading" id="region">Region<a class="anchor" aria-label="anchor" href="#region"></a></h2>
 <hr class="half-width"><p>The shared workshop account runs in <strong>US East (Ohio),
 <code>us-east-2</code></strong>. Quotas are per region, so file them
 there; the nuke config targets it; learners are told the region in the
@@ -453,11 +490,12 @@ class</td>
 <td>one controller per student</td>
 </tr><tr><td><code>ml.m5.large for training job usage</code></td>
 <td>200</td>
-<td>XGBoost episode; PyTorch part 2; tuning (2 parallel jobs each)</td>
-</tr><tr><td><code>ml.m5.xlarge for training job usage</code></td>
-<td>200</td>
-<td>PyTorch part 2 runs <code>instance_count=2</code>
-</td>
+<td>XGBoost episode; PyTorch part 2, including its two-instance
+data-parallel job; tuning (2 parallel jobs each)</td>
+</tr><tr><td><code>ml.m5.xlarge for notebook instance usage</code></td>
+<td>0 (optional)</td>
+<td>the fine-tuning episode allows it as the controller;
+<code>ml.t3.medium</code> is the default</td>
 </tr><tr><td><code>ml.g4dn.xlarge for training job usage</code></td>
 <td>100</td>
 <td>PyTorch part 2 GPU comparison</td>
@@ -474,11 +512,19 @@ class</td>
 <td>200</td>
 <td>Processing Jobs episode (both jobs) and fine-tuning homework (two
 jobs per student, possibly at once)</td>
+</tr><tr><td>
+<code>ml.g6.xlarge for training job usage</code> and
+<code>for processing job usage</code>
+</td>
+<td>100 each (fallback)</td>
+<td>the capacity fallback for <code>ml.g5.xlarge</code> at the end of
+this page; it is on the guard-rail list, and a fallback without a quota
+is no fallback</td>
 </tr><tr><td><code>ml.g6e.xlarge for processing job usage</code></td>
-<td>100 (optional)</td>
-<td>only the Processing Jobs episode’s 27B variant. <strong>Default is
-usually 0</strong> and the increase takes days; the episode runs
-Qwen3-8B on <code>ml.g5.xlarge</code> without it</td>
+<td>0</td>
+<td>no episode uses it; the Processing Jobs episode runs Qwen3-8B on
+<code>ml.g5.xlarge</code>, and the 27B generator runs only in the
+optional GPU-notebook episode, on a notebook instance</td>
 </tr><tr><td><code>Number of instances across all processing jobs</code></td>
 <td>250 (already applied)</td>
 <td>account-level ceiling</td>
@@ -498,6 +544,26 @@ convincing phishing page, and the lesson is reused outside UW. Ask
 learners to run the “verify your access” steps in the setup page; a
 missing assignment is the most common day-one problem and it cannot be
 fixed from the classroom in a hurry.</p>
+</section><section><h2 class="section-heading" id="the-notebook-role">The notebook role<a class="anchor" aria-label="anchor" href="#the-notebook-role"></a></h2>
+<hr class="half-width"><p>Every notebook instance in the lesson runs as the IAM role
+<code>ml-sagemaker-use</code>, which the controllers episode tells
+learners to pick from the dropdown. The three inline policies below
+(<code>WorkshopGuardRails</code>, <code>ReadOwnCloudTrail</code>,
+<code>BedrockAccess</code>) are attached to that role, and each one’s
+command names it. On the UW account the role exists. On a new account,
+create it first, as a SageMaker execution role (trusted by
+<code>sagemaker.amazonaws.com</code>) with SageMaker permissions and
+read and write access to the buckets learners create. The managed
+<code>AmazonSageMakerFullAccess</code> policy only reaches buckets with
+<code>sagemaker</code> in the name, and the lesson’s buckets are named
+after the learner, so the role needs S3 access beyond it. To copy the UW
+role’s base permissions onto a new account, list them there first:</p>
+<div class="codewrapper sourceCode" id="cb1">
+<h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="ex">aws</span> iam list-attached-role-policies <span class="at">--role-name</span> ml-sagemaker-use   <span class="co"># managed policies</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a><span class="ex">aws</span> iam list-role-policies <span class="at">--role-name</span> ml-sagemaker-use            <span class="co"># inline policies; get-role-policy prints each one</span></span></code></pre>
+</div>
 </section><section><h2 class="section-heading" id="permission-set-guard-rails">Permission set guard rails<a class="anchor" aria-label="anchor" href="#permission-set-guard-rails"></a></h2>
 <hr class="half-width"><p>Learners reach the account through the console, the SageMaker SDK in
 notebooks, and, whether or not you teach it, the AWS CLI: the Identity
@@ -509,189 +575,189 @@ jobs; this section is what makes that true. Attach it as an inline
 policy on the workshop permission set alongside the SageMaker allow
 policy, replacing the instance-type list with the one your quota table
 allows.</p>
-<div class="codewrapper sourceCode" id="cb1">
+<div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">JSON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode json" tabindex="0"><code class="sourceCode json"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="fu">{</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1" aria-label="code-block-1-2"></a>  <span class="dt">"Version"</span><span class="fu">:</span> <span class="st">"2012-10-17"</span><span class="fu">,</span></span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1" aria-label="code-block-1-3"></a>  <span class="dt">"Statement"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1" aria-label="code-block-1-4"></a>    <span class="fu">{</span></span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1" aria-label="code-block-1-5"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"NothingThatRunsUntilDeleted"</span><span class="fu">,</span></span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1" aria-label="code-block-1-6"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Deny"</span><span class="fu">,</span></span>
-<span id="cb1-7"><a href="#cb1-7" tabindex="-1" aria-label="code-block-1-7"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1" aria-label="code-block-1-8"></a>        <span class="st">"sagemaker:CreateEndpoint"</span><span class="ot">,</span></span>
-<span id="cb1-9"><a href="#cb1-9" tabindex="-1" aria-label="code-block-1-9"></a>        <span class="st">"sagemaker:CreateEndpointConfig"</span><span class="ot">,</span></span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1" aria-label="code-block-1-10"></a>        <span class="st">"sagemaker:CreateInferenceComponent"</span><span class="ot">,</span></span>
-<span id="cb1-11"><a href="#cb1-11" tabindex="-1" aria-label="code-block-1-11"></a>        <span class="st">"ec2:RunInstances"</span></span>
-<span id="cb1-12"><a href="#cb1-12" tabindex="-1" aria-label="code-block-1-12"></a>      <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1" aria-label="code-block-1-13"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span></span>
-<span id="cb1-14"><a href="#cb1-14" tabindex="-1" aria-label="code-block-1-14"></a>    <span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1" aria-label="code-block-1-15"></a>    <span class="fu">{</span></span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1" aria-label="code-block-1-16"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"OnlyLessonInstanceTypes"</span><span class="fu">,</span></span>
-<span id="cb1-17"><a href="#cb1-17" tabindex="-1" aria-label="code-block-1-17"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Deny"</span><span class="fu">,</span></span>
-<span id="cb1-18"><a href="#cb1-18" tabindex="-1" aria-label="code-block-1-18"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-19"><a href="#cb1-19" tabindex="-1" aria-label="code-block-1-19"></a>        <span class="st">"sagemaker:CreateTrainingJob"</span><span class="ot">,</span></span>
-<span id="cb1-20"><a href="#cb1-20" tabindex="-1" aria-label="code-block-1-20"></a>        <span class="st">"sagemaker:CreateProcessingJob"</span><span class="ot">,</span></span>
-<span id="cb1-21"><a href="#cb1-21" tabindex="-1" aria-label="code-block-1-21"></a>        <span class="st">"sagemaker:CreateHyperParameterTuningJob"</span><span class="ot">,</span></span>
-<span id="cb1-22"><a href="#cb1-22" tabindex="-1" aria-label="code-block-1-22"></a>        <span class="st">"sagemaker:CreateTransformJob"</span><span class="ot">,</span></span>
-<span id="cb1-23"><a href="#cb1-23" tabindex="-1" aria-label="code-block-1-23"></a>        <span class="st">"sagemaker:CreateNotebookInstance"</span><span class="ot">,</span></span>
-<span id="cb1-24"><a href="#cb1-24" tabindex="-1" aria-label="code-block-1-24"></a>        <span class="st">"sagemaker:UpdateNotebookInstance"</span></span>
-<span id="cb1-25"><a href="#cb1-25" tabindex="-1" aria-label="code-block-1-25"></a>      <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1-26"><a href="#cb1-26" tabindex="-1" aria-label="code-block-1-26"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span><span class="fu">,</span></span>
-<span id="cb1-27"><a href="#cb1-27" tabindex="-1" aria-label="code-block-1-27"></a>      <span class="dt">"Condition"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-28"><a href="#cb1-28" tabindex="-1" aria-label="code-block-1-28"></a>        <span class="dt">"ForAnyValue:StringNotEquals"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-29"><a href="#cb1-29" tabindex="-1" aria-label="code-block-1-29"></a>          <span class="dt">"sagemaker:InstanceTypes"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-30"><a href="#cb1-30" tabindex="-1" aria-label="code-block-1-30"></a>            <span class="st">"ml.t3.medium"</span><span class="ot">,</span></span>
-<span id="cb1-31"><a href="#cb1-31" tabindex="-1" aria-label="code-block-1-31"></a>            <span class="st">"ml.m5.large"</span><span class="ot">,</span></span>
-<span id="cb1-32"><a href="#cb1-32" tabindex="-1" aria-label="code-block-1-32"></a>            <span class="st">"ml.m5.xlarge"</span><span class="ot">,</span></span>
-<span id="cb1-33"><a href="#cb1-33" tabindex="-1" aria-label="code-block-1-33"></a>            <span class="st">"ml.g4dn.xlarge"</span><span class="ot">,</span></span>
-<span id="cb1-34"><a href="#cb1-34" tabindex="-1" aria-label="code-block-1-34"></a>            <span class="st">"ml.g5.xlarge"</span><span class="ot">,</span></span>
-<span id="cb1-35"><a href="#cb1-35" tabindex="-1" aria-label="code-block-1-35"></a>            <span class="st">"ml.g6.xlarge"</span><span class="ot">,</span></span>
-<span id="cb1-36"><a href="#cb1-36" tabindex="-1" aria-label="code-block-1-36"></a>            <span class="st">"ml.g6e.xlarge"</span><span class="ot">,</span></span>
-<span id="cb1-37"><a href="#cb1-37" tabindex="-1" aria-label="code-block-1-37"></a>            <span class="st">"ml.g6e.2xlarge"</span></span>
-<span id="cb1-38"><a href="#cb1-38" tabindex="-1" aria-label="code-block-1-38"></a>          <span class="ot">]</span></span>
-<span id="cb1-39"><a href="#cb1-39" tabindex="-1" aria-label="code-block-1-39"></a>        <span class="fu">}</span></span>
-<span id="cb1-40"><a href="#cb1-40" tabindex="-1" aria-label="code-block-1-40"></a>      <span class="fu">}</span></span>
-<span id="cb1-41"><a href="#cb1-41" tabindex="-1" aria-label="code-block-1-41"></a>    <span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb1-42"><a href="#cb1-42" tabindex="-1" aria-label="code-block-1-42"></a>    <span class="fu">{</span></span>
-<span id="cb1-43"><a href="#cb1-43" tabindex="-1" aria-label="code-block-1-43"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"ProjectTagRequired"</span><span class="fu">,</span></span>
-<span id="cb1-44"><a href="#cb1-44" tabindex="-1" aria-label="code-block-1-44"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Deny"</span><span class="fu">,</span></span>
-<span id="cb1-45"><a href="#cb1-45" tabindex="-1" aria-label="code-block-1-45"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-46"><a href="#cb1-46" tabindex="-1" aria-label="code-block-1-46"></a>        <span class="st">"sagemaker:CreateTrainingJob"</span><span class="ot">,</span></span>
-<span id="cb1-47"><a href="#cb1-47" tabindex="-1" aria-label="code-block-1-47"></a>        <span class="st">"sagemaker:CreateProcessingJob"</span><span class="ot">,</span></span>
-<span id="cb1-48"><a href="#cb1-48" tabindex="-1" aria-label="code-block-1-48"></a>        <span class="st">"sagemaker:CreateHyperParameterTuningJob"</span><span class="ot">,</span></span>
-<span id="cb1-49"><a href="#cb1-49" tabindex="-1" aria-label="code-block-1-49"></a>        <span class="st">"sagemaker:CreateNotebookInstance"</span></span>
-<span id="cb1-50"><a href="#cb1-50" tabindex="-1" aria-label="code-block-1-50"></a>      <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1-51"><a href="#cb1-51" tabindex="-1" aria-label="code-block-1-51"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span><span class="fu">,</span></span>
-<span id="cb1-52"><a href="#cb1-52" tabindex="-1" aria-label="code-block-1-52"></a>      <span class="dt">"Condition"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-53"><a href="#cb1-53" tabindex="-1" aria-label="code-block-1-53"></a>        <span class="dt">"Null"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-54"><a href="#cb1-54" tabindex="-1" aria-label="code-block-1-54"></a>          <span class="dt">"aws:RequestTag/Project"</span><span class="fu">:</span> <span class="st">"true"</span></span>
-<span id="cb1-55"><a href="#cb1-55" tabindex="-1" aria-label="code-block-1-55"></a>        <span class="fu">}</span></span>
-<span id="cb1-56"><a href="#cb1-56" tabindex="-1" aria-label="code-block-1-56"></a>      <span class="fu">}</span></span>
-<span id="cb1-57"><a href="#cb1-57" tabindex="-1" aria-label="code-block-1-57"></a>    <span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb1-58"><a href="#cb1-58" tabindex="-1" aria-label="code-block-1-58"></a>    <span class="fu">{</span></span>
-<span id="cb1-59"><a href="#cb1-59" tabindex="-1" aria-label="code-block-1-59"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"NameTagRequired"</span><span class="fu">,</span></span>
-<span id="cb1-60"><a href="#cb1-60" tabindex="-1" aria-label="code-block-1-60"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Deny"</span><span class="fu">,</span></span>
-<span id="cb1-61"><a href="#cb1-61" tabindex="-1" aria-label="code-block-1-61"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-62"><a href="#cb1-62" tabindex="-1" aria-label="code-block-1-62"></a>        <span class="st">"sagemaker:CreateTrainingJob"</span><span class="ot">,</span></span>
-<span id="cb1-63"><a href="#cb1-63" tabindex="-1" aria-label="code-block-1-63"></a>        <span class="st">"sagemaker:CreateProcessingJob"</span><span class="ot">,</span></span>
-<span id="cb1-64"><a href="#cb1-64" tabindex="-1" aria-label="code-block-1-64"></a>        <span class="st">"sagemaker:CreateHyperParameterTuningJob"</span><span class="ot">,</span></span>
-<span id="cb1-65"><a href="#cb1-65" tabindex="-1" aria-label="code-block-1-65"></a>        <span class="st">"sagemaker:CreateNotebookInstance"</span></span>
-<span id="cb1-66"><a href="#cb1-66" tabindex="-1" aria-label="code-block-1-66"></a>      <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1-67"><a href="#cb1-67" tabindex="-1" aria-label="code-block-1-67"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span><span class="fu">,</span></span>
-<span id="cb1-68"><a href="#cb1-68" tabindex="-1" aria-label="code-block-1-68"></a>      <span class="dt">"Condition"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-69"><a href="#cb1-69" tabindex="-1" aria-label="code-block-1-69"></a>        <span class="dt">"Null"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-70"><a href="#cb1-70" tabindex="-1" aria-label="code-block-1-70"></a>          <span class="dt">"aws:RequestTag/Name"</span><span class="fu">:</span> <span class="st">"true"</span></span>
-<span id="cb1-71"><a href="#cb1-71" tabindex="-1" aria-label="code-block-1-71"></a>        <span class="fu">}</span></span>
-<span id="cb1-72"><a href="#cb1-72" tabindex="-1" aria-label="code-block-1-72"></a>      <span class="fu">}</span></span>
-<span id="cb1-73"><a href="#cb1-73" tabindex="-1" aria-label="code-block-1-73"></a>    <span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb1-74"><a href="#cb1-74" tabindex="-1" aria-label="code-block-1-74"></a>    <span class="fu">{</span></span>
-<span id="cb1-75"><a href="#cb1-75" tabindex="-1" aria-label="code-block-1-75"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"PurposeTagRequired"</span><span class="fu">,</span></span>
-<span id="cb1-76"><a href="#cb1-76" tabindex="-1" aria-label="code-block-1-76"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Deny"</span><span class="fu">,</span></span>
-<span id="cb1-77"><a href="#cb1-77" tabindex="-1" aria-label="code-block-1-77"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-78"><a href="#cb1-78" tabindex="-1" aria-label="code-block-1-78"></a>        <span class="st">"sagemaker:CreateTrainingJob"</span><span class="ot">,</span></span>
-<span id="cb1-79"><a href="#cb1-79" tabindex="-1" aria-label="code-block-1-79"></a>        <span class="st">"sagemaker:CreateProcessingJob"</span><span class="ot">,</span></span>
-<span id="cb1-80"><a href="#cb1-80" tabindex="-1" aria-label="code-block-1-80"></a>        <span class="st">"sagemaker:CreateHyperParameterTuningJob"</span><span class="ot">,</span></span>
-<span id="cb1-81"><a href="#cb1-81" tabindex="-1" aria-label="code-block-1-81"></a>        <span class="st">"sagemaker:CreateNotebookInstance"</span></span>
-<span id="cb1-82"><a href="#cb1-82" tabindex="-1" aria-label="code-block-1-82"></a>      <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1-83"><a href="#cb1-83" tabindex="-1" aria-label="code-block-1-83"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span><span class="fu">,</span></span>
-<span id="cb1-84"><a href="#cb1-84" tabindex="-1" aria-label="code-block-1-84"></a>      <span class="dt">"Condition"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-85"><a href="#cb1-85" tabindex="-1" aria-label="code-block-1-85"></a>        <span class="dt">"Null"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-86"><a href="#cb1-86" tabindex="-1" aria-label="code-block-1-86"></a>          <span class="dt">"aws:RequestTag/Purpose"</span><span class="fu">:</span> <span class="st">"true"</span></span>
-<span id="cb1-87"><a href="#cb1-87" tabindex="-1" aria-label="code-block-1-87"></a>        <span class="fu">}</span></span>
-<span id="cb1-88"><a href="#cb1-88" tabindex="-1" aria-label="code-block-1-88"></a>      <span class="fu">}</span></span>
-<span id="cb1-89"><a href="#cb1-89" tabindex="-1" aria-label="code-block-1-89"></a>    <span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb1-90"><a href="#cb1-90" tabindex="-1" aria-label="code-block-1-90"></a>    <span class="fu">{</span></span>
-<span id="cb1-91"><a href="#cb1-91" tabindex="-1" aria-label="code-block-1-91"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"ProjectTagFromTheList"</span><span class="fu">,</span></span>
-<span id="cb1-92"><a href="#cb1-92" tabindex="-1" aria-label="code-block-1-92"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Deny"</span><span class="fu">,</span></span>
-<span id="cb1-93"><a href="#cb1-93" tabindex="-1" aria-label="code-block-1-93"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-94"><a href="#cb1-94" tabindex="-1" aria-label="code-block-1-94"></a>        <span class="st">"sagemaker:CreateTrainingJob"</span><span class="ot">,</span></span>
-<span id="cb1-95"><a href="#cb1-95" tabindex="-1" aria-label="code-block-1-95"></a>        <span class="st">"sagemaker:CreateProcessingJob"</span><span class="ot">,</span></span>
-<span id="cb1-96"><a href="#cb1-96" tabindex="-1" aria-label="code-block-1-96"></a>        <span class="st">"sagemaker:CreateHyperParameterTuningJob"</span><span class="ot">,</span></span>
-<span id="cb1-97"><a href="#cb1-97" tabindex="-1" aria-label="code-block-1-97"></a>        <span class="st">"sagemaker:CreateNotebookInstance"</span></span>
-<span id="cb1-98"><a href="#cb1-98" tabindex="-1" aria-label="code-block-1-98"></a>      <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1-99"><a href="#cb1-99" tabindex="-1" aria-label="code-block-1-99"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span><span class="fu">,</span></span>
-<span id="cb1-100"><a href="#cb1-100" tabindex="-1" aria-label="code-block-1-100"></a>      <span class="dt">"Condition"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-101"><a href="#cb1-101" tabindex="-1" aria-label="code-block-1-101"></a>        <span class="dt">"StringNotLike"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-102"><a href="#cb1-102" tabindex="-1" aria-label="code-block-1-102"></a>          <span class="dt">"aws:RequestTag/Project"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-103"><a href="#cb1-103" tabindex="-1" aria-label="code-block-1-103"></a>            <span class="st">"SinkOrSwim"</span><span class="ot">,</span></span>
-<span id="cb1-104"><a href="#cb1-104" tabindex="-1" aria-label="code-block-1-104"></a>            <span class="st">"WattBot2026"</span><span class="ot">,</span></span>
-<span id="cb1-105"><a href="#cb1-105" tabindex="-1" aria-label="code-block-1-105"></a>            <span class="st">"BadgerScribe"</span><span class="ot">,</span></span>
-<span id="cb1-106"><a href="#cb1-106" tabindex="-1" aria-label="code-block-1-106"></a>            <span class="st">"BadgerCode"</span><span class="ot">,</span></span>
-<span id="cb1-107"><a href="#cb1-107" tabindex="-1" aria-label="code-block-1-107"></a>            <span class="st">"BrainDecoding"</span><span class="ot">,</span></span>
-<span id="cb1-108"><a href="#cb1-108" tabindex="-1" aria-label="code-block-1-108"></a>            <span class="st">"PoisonedWell"</span><span class="ot">,</span></span>
-<span id="cb1-109"><a href="#cb1-109" tabindex="-1" aria-label="code-block-1-109"></a>            <span class="st">"SnapshotWI"</span></span>
-<span id="cb1-110"><a href="#cb1-110" tabindex="-1" aria-label="code-block-1-110"></a>          <span class="ot">]</span></span>
-<span id="cb1-111"><a href="#cb1-111" tabindex="-1" aria-label="code-block-1-111"></a>        <span class="fu">}</span></span>
-<span id="cb1-112"><a href="#cb1-112" tabindex="-1" aria-label="code-block-1-112"></a>      <span class="fu">}</span></span>
-<span id="cb1-113"><a href="#cb1-113" tabindex="-1" aria-label="code-block-1-113"></a>    <span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb1-114"><a href="#cb1-114" tabindex="-1" aria-label="code-block-1-114"></a>    <span class="fu">{</span></span>
-<span id="cb1-115"><a href="#cb1-115" tabindex="-1" aria-label="code-block-1-115"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"NameTagNotBlank"</span><span class="fu">,</span></span>
-<span id="cb1-116"><a href="#cb1-116" tabindex="-1" aria-label="code-block-1-116"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Deny"</span><span class="fu">,</span></span>
-<span id="cb1-117"><a href="#cb1-117" tabindex="-1" aria-label="code-block-1-117"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-118"><a href="#cb1-118" tabindex="-1" aria-label="code-block-1-118"></a>        <span class="st">"sagemaker:CreateTrainingJob"</span><span class="ot">,</span></span>
-<span id="cb1-119"><a href="#cb1-119" tabindex="-1" aria-label="code-block-1-119"></a>        <span class="st">"sagemaker:CreateProcessingJob"</span><span class="ot">,</span></span>
-<span id="cb1-120"><a href="#cb1-120" tabindex="-1" aria-label="code-block-1-120"></a>        <span class="st">"sagemaker:CreateHyperParameterTuningJob"</span><span class="ot">,</span></span>
-<span id="cb1-121"><a href="#cb1-121" tabindex="-1" aria-label="code-block-1-121"></a>        <span class="st">"sagemaker:CreateNotebookInstance"</span></span>
-<span id="cb1-122"><a href="#cb1-122" tabindex="-1" aria-label="code-block-1-122"></a>      <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1-123"><a href="#cb1-123" tabindex="-1" aria-label="code-block-1-123"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span><span class="fu">,</span></span>
-<span id="cb1-124"><a href="#cb1-124" tabindex="-1" aria-label="code-block-1-124"></a>      <span class="dt">"Condition"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-125"><a href="#cb1-125" tabindex="-1" aria-label="code-block-1-125"></a>        <span class="dt">"StringNotLike"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-126"><a href="#cb1-126" tabindex="-1" aria-label="code-block-1-126"></a>          <span class="dt">"aws:RequestTag/Name"</span><span class="fu">:</span> <span class="st">"?*"</span></span>
-<span id="cb1-127"><a href="#cb1-127" tabindex="-1" aria-label="code-block-1-127"></a>        <span class="fu">}</span></span>
-<span id="cb1-128"><a href="#cb1-128" tabindex="-1" aria-label="code-block-1-128"></a>      <span class="fu">}</span></span>
-<span id="cb1-129"><a href="#cb1-129" tabindex="-1" aria-label="code-block-1-129"></a>    <span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb1-130"><a href="#cb1-130" tabindex="-1" aria-label="code-block-1-130"></a>    <span class="fu">{</span></span>
-<span id="cb1-131"><a href="#cb1-131" tabindex="-1" aria-label="code-block-1-131"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"PurposeTagFromTheList"</span><span class="fu">,</span></span>
-<span id="cb1-132"><a href="#cb1-132" tabindex="-1" aria-label="code-block-1-132"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Deny"</span><span class="fu">,</span></span>
-<span id="cb1-133"><a href="#cb1-133" tabindex="-1" aria-label="code-block-1-133"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-134"><a href="#cb1-134" tabindex="-1" aria-label="code-block-1-134"></a>        <span class="st">"sagemaker:CreateTrainingJob"</span><span class="ot">,</span></span>
-<span id="cb1-135"><a href="#cb1-135" tabindex="-1" aria-label="code-block-1-135"></a>        <span class="st">"sagemaker:CreateProcessingJob"</span><span class="ot">,</span></span>
-<span id="cb1-136"><a href="#cb1-136" tabindex="-1" aria-label="code-block-1-136"></a>        <span class="st">"sagemaker:CreateHyperParameterTuningJob"</span><span class="ot">,</span></span>
-<span id="cb1-137"><a href="#cb1-137" tabindex="-1" aria-label="code-block-1-137"></a>        <span class="st">"sagemaker:CreateNotebookInstance"</span></span>
-<span id="cb1-138"><a href="#cb1-138" tabindex="-1" aria-label="code-block-1-138"></a>      <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1-139"><a href="#cb1-139" tabindex="-1" aria-label="code-block-1-139"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span><span class="fu">,</span></span>
-<span id="cb1-140"><a href="#cb1-140" tabindex="-1" aria-label="code-block-1-140"></a>      <span class="dt">"Condition"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-141"><a href="#cb1-141" tabindex="-1" aria-label="code-block-1-141"></a>        <span class="dt">"StringNotLike"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-142"><a href="#cb1-142" tabindex="-1" aria-label="code-block-1-142"></a>          <span class="dt">"aws:RequestTag/Purpose"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-143"><a href="#cb1-143" tabindex="-1" aria-label="code-block-1-143"></a>            <span class="st">"Storage"</span><span class="ot">,</span></span>
-<span id="cb1-144"><a href="#cb1-144" tabindex="-1" aria-label="code-block-1-144"></a>            <span class="st">"Notebook"</span><span class="ot">,</span></span>
-<span id="cb1-145"><a href="#cb1-145" tabindex="-1" aria-label="code-block-1-145"></a>            <span class="st">"Training"</span><span class="ot">,</span></span>
-<span id="cb1-146"><a href="#cb1-146" tabindex="-1" aria-label="code-block-1-146"></a>            <span class="st">"Tuning"</span><span class="ot">,</span></span>
-<span id="cb1-147"><a href="#cb1-147" tabindex="-1" aria-label="code-block-1-147"></a>            <span class="st">"Inference"</span></span>
-<span id="cb1-148"><a href="#cb1-148" tabindex="-1" aria-label="code-block-1-148"></a>          <span class="ot">]</span></span>
-<span id="cb1-149"><a href="#cb1-149" tabindex="-1" aria-label="code-block-1-149"></a>        <span class="fu">}</span></span>
-<span id="cb1-150"><a href="#cb1-150" tabindex="-1" aria-label="code-block-1-150"></a>      <span class="fu">}</span></span>
-<span id="cb1-151"><a href="#cb1-151" tabindex="-1" aria-label="code-block-1-151"></a>    <span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb1-152"><a href="#cb1-152" tabindex="-1" aria-label="code-block-1-152"></a>    <span class="fu">{</span></span>
-<span id="cb1-153"><a href="#cb1-153" tabindex="-1" aria-label="code-block-1-153"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"RuntimeCapAtMost48Hours"</span><span class="fu">,</span></span>
-<span id="cb1-154"><a href="#cb1-154" tabindex="-1" aria-label="code-block-1-154"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Deny"</span><span class="fu">,</span></span>
-<span id="cb1-155"><a href="#cb1-155" tabindex="-1" aria-label="code-block-1-155"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-156"><a href="#cb1-156" tabindex="-1" aria-label="code-block-1-156"></a>        <span class="st">"sagemaker:CreateTrainingJob"</span><span class="ot">,</span></span>
-<span id="cb1-157"><a href="#cb1-157" tabindex="-1" aria-label="code-block-1-157"></a>        <span class="st">"sagemaker:CreateProcessingJob"</span></span>
-<span id="cb1-158"><a href="#cb1-158" tabindex="-1" aria-label="code-block-1-158"></a>      <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1-159"><a href="#cb1-159" tabindex="-1" aria-label="code-block-1-159"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span><span class="fu">,</span></span>
-<span id="cb1-160"><a href="#cb1-160" tabindex="-1" aria-label="code-block-1-160"></a>      <span class="dt">"Condition"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-161"><a href="#cb1-161" tabindex="-1" aria-label="code-block-1-161"></a>        <span class="dt">"NumericGreaterThan"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-162"><a href="#cb1-162" tabindex="-1" aria-label="code-block-1-162"></a>          <span class="dt">"sagemaker:MaxRuntimeInSeconds"</span><span class="fu">:</span> <span class="st">"172800"</span></span>
-<span id="cb1-163"><a href="#cb1-163" tabindex="-1" aria-label="code-block-1-163"></a>        <span class="fu">}</span></span>
-<span id="cb1-164"><a href="#cb1-164" tabindex="-1" aria-label="code-block-1-164"></a>      <span class="fu">}</span></span>
-<span id="cb1-165"><a href="#cb1-165" tabindex="-1" aria-label="code-block-1-165"></a>    <span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb1-166"><a href="#cb1-166" tabindex="-1" aria-label="code-block-1-166"></a>    <span class="fu">{</span></span>
-<span id="cb1-167"><a href="#cb1-167" tabindex="-1" aria-label="code-block-1-167"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"ProcessingJobsNeedACap"</span><span class="fu">,</span></span>
-<span id="cb1-168"><a href="#cb1-168" tabindex="-1" aria-label="code-block-1-168"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Deny"</span><span class="fu">,</span></span>
-<span id="cb1-169"><a href="#cb1-169" tabindex="-1" aria-label="code-block-1-169"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb1-170"><a href="#cb1-170" tabindex="-1" aria-label="code-block-1-170"></a>        <span class="st">"sagemaker:CreateProcessingJob"</span></span>
-<span id="cb1-171"><a href="#cb1-171" tabindex="-1" aria-label="code-block-1-171"></a>      <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb1-172"><a href="#cb1-172" tabindex="-1" aria-label="code-block-1-172"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span><span class="fu">,</span></span>
-<span id="cb1-173"><a href="#cb1-173" tabindex="-1" aria-label="code-block-1-173"></a>      <span class="dt">"Condition"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-174"><a href="#cb1-174" tabindex="-1" aria-label="code-block-1-174"></a>        <span class="dt">"Null"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-175"><a href="#cb1-175" tabindex="-1" aria-label="code-block-1-175"></a>          <span class="dt">"sagemaker:MaxRuntimeInSeconds"</span><span class="fu">:</span> <span class="st">"true"</span></span>
-<span id="cb1-176"><a href="#cb1-176" tabindex="-1" aria-label="code-block-1-176"></a>        <span class="fu">}</span></span>
-<span id="cb1-177"><a href="#cb1-177" tabindex="-1" aria-label="code-block-1-177"></a>      <span class="fu">}</span></span>
-<span id="cb1-178"><a href="#cb1-178" tabindex="-1" aria-label="code-block-1-178"></a>    <span class="fu">}</span></span>
-<span id="cb1-179"><a href="#cb1-179" tabindex="-1" aria-label="code-block-1-179"></a>  <span class="ot">]</span></span>
-<span id="cb1-180"><a href="#cb1-180" tabindex="-1" aria-label="code-block-1-180"></a><span class="fu">}</span></span></code></pre>
+<pre class="sourceCode json" tabindex="0"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" tabindex="-1" aria-label="code-block-2-1"></a><span class="fu">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1" aria-label="code-block-2-2"></a>  <span class="dt">"Version"</span><span class="fu">:</span> <span class="st">"2012-10-17"</span><span class="fu">,</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a>  <span class="dt">"Statement"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a>    <span class="fu">{</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1" aria-label="code-block-2-5"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"NothingThatRunsUntilDeleted"</span><span class="fu">,</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1" aria-label="code-block-2-6"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Deny"</span><span class="fu">,</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1" aria-label="code-block-2-7"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1" aria-label="code-block-2-8"></a>        <span class="st">"sagemaker:CreateEndpoint"</span><span class="ot">,</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1" aria-label="code-block-2-9"></a>        <span class="st">"sagemaker:CreateEndpointConfig"</span><span class="ot">,</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1" aria-label="code-block-2-10"></a>        <span class="st">"sagemaker:CreateInferenceComponent"</span><span class="ot">,</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1" aria-label="code-block-2-11"></a>        <span class="st">"ec2:RunInstances"</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1" aria-label="code-block-2-12"></a>      <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1" aria-label="code-block-2-13"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1" aria-label="code-block-2-14"></a>    <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1" aria-label="code-block-2-15"></a>    <span class="fu">{</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1" aria-label="code-block-2-16"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"OnlyLessonInstanceTypes"</span><span class="fu">,</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1" aria-label="code-block-2-17"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Deny"</span><span class="fu">,</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1" aria-label="code-block-2-18"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1" aria-label="code-block-2-19"></a>        <span class="st">"sagemaker:CreateTrainingJob"</span><span class="ot">,</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1" aria-label="code-block-2-20"></a>        <span class="st">"sagemaker:CreateProcessingJob"</span><span class="ot">,</span></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1" aria-label="code-block-2-21"></a>        <span class="st">"sagemaker:CreateHyperParameterTuningJob"</span><span class="ot">,</span></span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1" aria-label="code-block-2-22"></a>        <span class="st">"sagemaker:CreateTransformJob"</span><span class="ot">,</span></span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1" aria-label="code-block-2-23"></a>        <span class="st">"sagemaker:CreateNotebookInstance"</span><span class="ot">,</span></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1" aria-label="code-block-2-24"></a>        <span class="st">"sagemaker:UpdateNotebookInstance"</span></span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1" aria-label="code-block-2-25"></a>      <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1" aria-label="code-block-2-26"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span><span class="fu">,</span></span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1" aria-label="code-block-2-27"></a>      <span class="dt">"Condition"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1" aria-label="code-block-2-28"></a>        <span class="dt">"ForAnyValue:StringNotEquals"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1" aria-label="code-block-2-29"></a>          <span class="dt">"sagemaker:InstanceTypes"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1" aria-label="code-block-2-30"></a>            <span class="st">"ml.t3.medium"</span><span class="ot">,</span></span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1" aria-label="code-block-2-31"></a>            <span class="st">"ml.m5.large"</span><span class="ot">,</span></span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1" aria-label="code-block-2-32"></a>            <span class="st">"ml.m5.xlarge"</span><span class="ot">,</span></span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1" aria-label="code-block-2-33"></a>            <span class="st">"ml.g4dn.xlarge"</span><span class="ot">,</span></span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1" aria-label="code-block-2-34"></a>            <span class="st">"ml.g5.xlarge"</span><span class="ot">,</span></span>
+<span id="cb2-35"><a href="#cb2-35" tabindex="-1" aria-label="code-block-2-35"></a>            <span class="st">"ml.g6.xlarge"</span><span class="ot">,</span></span>
+<span id="cb2-36"><a href="#cb2-36" tabindex="-1" aria-label="code-block-2-36"></a>            <span class="st">"ml.g6e.xlarge"</span><span class="ot">,</span></span>
+<span id="cb2-37"><a href="#cb2-37" tabindex="-1" aria-label="code-block-2-37"></a>            <span class="st">"ml.g6e.2xlarge"</span></span>
+<span id="cb2-38"><a href="#cb2-38" tabindex="-1" aria-label="code-block-2-38"></a>          <span class="ot">]</span></span>
+<span id="cb2-39"><a href="#cb2-39" tabindex="-1" aria-label="code-block-2-39"></a>        <span class="fu">}</span></span>
+<span id="cb2-40"><a href="#cb2-40" tabindex="-1" aria-label="code-block-2-40"></a>      <span class="fu">}</span></span>
+<span id="cb2-41"><a href="#cb2-41" tabindex="-1" aria-label="code-block-2-41"></a>    <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb2-42"><a href="#cb2-42" tabindex="-1" aria-label="code-block-2-42"></a>    <span class="fu">{</span></span>
+<span id="cb2-43"><a href="#cb2-43" tabindex="-1" aria-label="code-block-2-43"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"ProjectTagRequired"</span><span class="fu">,</span></span>
+<span id="cb2-44"><a href="#cb2-44" tabindex="-1" aria-label="code-block-2-44"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Deny"</span><span class="fu">,</span></span>
+<span id="cb2-45"><a href="#cb2-45" tabindex="-1" aria-label="code-block-2-45"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-46"><a href="#cb2-46" tabindex="-1" aria-label="code-block-2-46"></a>        <span class="st">"sagemaker:CreateTrainingJob"</span><span class="ot">,</span></span>
+<span id="cb2-47"><a href="#cb2-47" tabindex="-1" aria-label="code-block-2-47"></a>        <span class="st">"sagemaker:CreateProcessingJob"</span><span class="ot">,</span></span>
+<span id="cb2-48"><a href="#cb2-48" tabindex="-1" aria-label="code-block-2-48"></a>        <span class="st">"sagemaker:CreateHyperParameterTuningJob"</span><span class="ot">,</span></span>
+<span id="cb2-49"><a href="#cb2-49" tabindex="-1" aria-label="code-block-2-49"></a>        <span class="st">"sagemaker:CreateNotebookInstance"</span></span>
+<span id="cb2-50"><a href="#cb2-50" tabindex="-1" aria-label="code-block-2-50"></a>      <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb2-51"><a href="#cb2-51" tabindex="-1" aria-label="code-block-2-51"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span><span class="fu">,</span></span>
+<span id="cb2-52"><a href="#cb2-52" tabindex="-1" aria-label="code-block-2-52"></a>      <span class="dt">"Condition"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-53"><a href="#cb2-53" tabindex="-1" aria-label="code-block-2-53"></a>        <span class="dt">"Null"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-54"><a href="#cb2-54" tabindex="-1" aria-label="code-block-2-54"></a>          <span class="dt">"aws:RequestTag/Project"</span><span class="fu">:</span> <span class="st">"true"</span></span>
+<span id="cb2-55"><a href="#cb2-55" tabindex="-1" aria-label="code-block-2-55"></a>        <span class="fu">}</span></span>
+<span id="cb2-56"><a href="#cb2-56" tabindex="-1" aria-label="code-block-2-56"></a>      <span class="fu">}</span></span>
+<span id="cb2-57"><a href="#cb2-57" tabindex="-1" aria-label="code-block-2-57"></a>    <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb2-58"><a href="#cb2-58" tabindex="-1" aria-label="code-block-2-58"></a>    <span class="fu">{</span></span>
+<span id="cb2-59"><a href="#cb2-59" tabindex="-1" aria-label="code-block-2-59"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"NameTagRequired"</span><span class="fu">,</span></span>
+<span id="cb2-60"><a href="#cb2-60" tabindex="-1" aria-label="code-block-2-60"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Deny"</span><span class="fu">,</span></span>
+<span id="cb2-61"><a href="#cb2-61" tabindex="-1" aria-label="code-block-2-61"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-62"><a href="#cb2-62" tabindex="-1" aria-label="code-block-2-62"></a>        <span class="st">"sagemaker:CreateTrainingJob"</span><span class="ot">,</span></span>
+<span id="cb2-63"><a href="#cb2-63" tabindex="-1" aria-label="code-block-2-63"></a>        <span class="st">"sagemaker:CreateProcessingJob"</span><span class="ot">,</span></span>
+<span id="cb2-64"><a href="#cb2-64" tabindex="-1" aria-label="code-block-2-64"></a>        <span class="st">"sagemaker:CreateHyperParameterTuningJob"</span><span class="ot">,</span></span>
+<span id="cb2-65"><a href="#cb2-65" tabindex="-1" aria-label="code-block-2-65"></a>        <span class="st">"sagemaker:CreateNotebookInstance"</span></span>
+<span id="cb2-66"><a href="#cb2-66" tabindex="-1" aria-label="code-block-2-66"></a>      <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb2-67"><a href="#cb2-67" tabindex="-1" aria-label="code-block-2-67"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span><span class="fu">,</span></span>
+<span id="cb2-68"><a href="#cb2-68" tabindex="-1" aria-label="code-block-2-68"></a>      <span class="dt">"Condition"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-69"><a href="#cb2-69" tabindex="-1" aria-label="code-block-2-69"></a>        <span class="dt">"Null"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-70"><a href="#cb2-70" tabindex="-1" aria-label="code-block-2-70"></a>          <span class="dt">"aws:RequestTag/Name"</span><span class="fu">:</span> <span class="st">"true"</span></span>
+<span id="cb2-71"><a href="#cb2-71" tabindex="-1" aria-label="code-block-2-71"></a>        <span class="fu">}</span></span>
+<span id="cb2-72"><a href="#cb2-72" tabindex="-1" aria-label="code-block-2-72"></a>      <span class="fu">}</span></span>
+<span id="cb2-73"><a href="#cb2-73" tabindex="-1" aria-label="code-block-2-73"></a>    <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb2-74"><a href="#cb2-74" tabindex="-1" aria-label="code-block-2-74"></a>    <span class="fu">{</span></span>
+<span id="cb2-75"><a href="#cb2-75" tabindex="-1" aria-label="code-block-2-75"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"PurposeTagRequired"</span><span class="fu">,</span></span>
+<span id="cb2-76"><a href="#cb2-76" tabindex="-1" aria-label="code-block-2-76"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Deny"</span><span class="fu">,</span></span>
+<span id="cb2-77"><a href="#cb2-77" tabindex="-1" aria-label="code-block-2-77"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-78"><a href="#cb2-78" tabindex="-1" aria-label="code-block-2-78"></a>        <span class="st">"sagemaker:CreateTrainingJob"</span><span class="ot">,</span></span>
+<span id="cb2-79"><a href="#cb2-79" tabindex="-1" aria-label="code-block-2-79"></a>        <span class="st">"sagemaker:CreateProcessingJob"</span><span class="ot">,</span></span>
+<span id="cb2-80"><a href="#cb2-80" tabindex="-1" aria-label="code-block-2-80"></a>        <span class="st">"sagemaker:CreateHyperParameterTuningJob"</span><span class="ot">,</span></span>
+<span id="cb2-81"><a href="#cb2-81" tabindex="-1" aria-label="code-block-2-81"></a>        <span class="st">"sagemaker:CreateNotebookInstance"</span></span>
+<span id="cb2-82"><a href="#cb2-82" tabindex="-1" aria-label="code-block-2-82"></a>      <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb2-83"><a href="#cb2-83" tabindex="-1" aria-label="code-block-2-83"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span><span class="fu">,</span></span>
+<span id="cb2-84"><a href="#cb2-84" tabindex="-1" aria-label="code-block-2-84"></a>      <span class="dt">"Condition"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-85"><a href="#cb2-85" tabindex="-1" aria-label="code-block-2-85"></a>        <span class="dt">"Null"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-86"><a href="#cb2-86" tabindex="-1" aria-label="code-block-2-86"></a>          <span class="dt">"aws:RequestTag/Purpose"</span><span class="fu">:</span> <span class="st">"true"</span></span>
+<span id="cb2-87"><a href="#cb2-87" tabindex="-1" aria-label="code-block-2-87"></a>        <span class="fu">}</span></span>
+<span id="cb2-88"><a href="#cb2-88" tabindex="-1" aria-label="code-block-2-88"></a>      <span class="fu">}</span></span>
+<span id="cb2-89"><a href="#cb2-89" tabindex="-1" aria-label="code-block-2-89"></a>    <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb2-90"><a href="#cb2-90" tabindex="-1" aria-label="code-block-2-90"></a>    <span class="fu">{</span></span>
+<span id="cb2-91"><a href="#cb2-91" tabindex="-1" aria-label="code-block-2-91"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"ProjectTagFromTheList"</span><span class="fu">,</span></span>
+<span id="cb2-92"><a href="#cb2-92" tabindex="-1" aria-label="code-block-2-92"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Deny"</span><span class="fu">,</span></span>
+<span id="cb2-93"><a href="#cb2-93" tabindex="-1" aria-label="code-block-2-93"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-94"><a href="#cb2-94" tabindex="-1" aria-label="code-block-2-94"></a>        <span class="st">"sagemaker:CreateTrainingJob"</span><span class="ot">,</span></span>
+<span id="cb2-95"><a href="#cb2-95" tabindex="-1" aria-label="code-block-2-95"></a>        <span class="st">"sagemaker:CreateProcessingJob"</span><span class="ot">,</span></span>
+<span id="cb2-96"><a href="#cb2-96" tabindex="-1" aria-label="code-block-2-96"></a>        <span class="st">"sagemaker:CreateHyperParameterTuningJob"</span><span class="ot">,</span></span>
+<span id="cb2-97"><a href="#cb2-97" tabindex="-1" aria-label="code-block-2-97"></a>        <span class="st">"sagemaker:CreateNotebookInstance"</span></span>
+<span id="cb2-98"><a href="#cb2-98" tabindex="-1" aria-label="code-block-2-98"></a>      <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb2-99"><a href="#cb2-99" tabindex="-1" aria-label="code-block-2-99"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span><span class="fu">,</span></span>
+<span id="cb2-100"><a href="#cb2-100" tabindex="-1" aria-label="code-block-2-100"></a>      <span class="dt">"Condition"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-101"><a href="#cb2-101" tabindex="-1" aria-label="code-block-2-101"></a>        <span class="dt">"StringNotLike"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-102"><a href="#cb2-102" tabindex="-1" aria-label="code-block-2-102"></a>          <span class="dt">"aws:RequestTag/Project"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-103"><a href="#cb2-103" tabindex="-1" aria-label="code-block-2-103"></a>            <span class="st">"SinkOrSwim"</span><span class="ot">,</span></span>
+<span id="cb2-104"><a href="#cb2-104" tabindex="-1" aria-label="code-block-2-104"></a>            <span class="st">"WattBot2026"</span><span class="ot">,</span></span>
+<span id="cb2-105"><a href="#cb2-105" tabindex="-1" aria-label="code-block-2-105"></a>            <span class="st">"BadgerScribe"</span><span class="ot">,</span></span>
+<span id="cb2-106"><a href="#cb2-106" tabindex="-1" aria-label="code-block-2-106"></a>            <span class="st">"BadgerCode"</span><span class="ot">,</span></span>
+<span id="cb2-107"><a href="#cb2-107" tabindex="-1" aria-label="code-block-2-107"></a>            <span class="st">"BrainDecoding"</span><span class="ot">,</span></span>
+<span id="cb2-108"><a href="#cb2-108" tabindex="-1" aria-label="code-block-2-108"></a>            <span class="st">"PoisonedWell"</span><span class="ot">,</span></span>
+<span id="cb2-109"><a href="#cb2-109" tabindex="-1" aria-label="code-block-2-109"></a>            <span class="st">"SnapshotWI"</span></span>
+<span id="cb2-110"><a href="#cb2-110" tabindex="-1" aria-label="code-block-2-110"></a>          <span class="ot">]</span></span>
+<span id="cb2-111"><a href="#cb2-111" tabindex="-1" aria-label="code-block-2-111"></a>        <span class="fu">}</span></span>
+<span id="cb2-112"><a href="#cb2-112" tabindex="-1" aria-label="code-block-2-112"></a>      <span class="fu">}</span></span>
+<span id="cb2-113"><a href="#cb2-113" tabindex="-1" aria-label="code-block-2-113"></a>    <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb2-114"><a href="#cb2-114" tabindex="-1" aria-label="code-block-2-114"></a>    <span class="fu">{</span></span>
+<span id="cb2-115"><a href="#cb2-115" tabindex="-1" aria-label="code-block-2-115"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"NameTagNotBlank"</span><span class="fu">,</span></span>
+<span id="cb2-116"><a href="#cb2-116" tabindex="-1" aria-label="code-block-2-116"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Deny"</span><span class="fu">,</span></span>
+<span id="cb2-117"><a href="#cb2-117" tabindex="-1" aria-label="code-block-2-117"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-118"><a href="#cb2-118" tabindex="-1" aria-label="code-block-2-118"></a>        <span class="st">"sagemaker:CreateTrainingJob"</span><span class="ot">,</span></span>
+<span id="cb2-119"><a href="#cb2-119" tabindex="-1" aria-label="code-block-2-119"></a>        <span class="st">"sagemaker:CreateProcessingJob"</span><span class="ot">,</span></span>
+<span id="cb2-120"><a href="#cb2-120" tabindex="-1" aria-label="code-block-2-120"></a>        <span class="st">"sagemaker:CreateHyperParameterTuningJob"</span><span class="ot">,</span></span>
+<span id="cb2-121"><a href="#cb2-121" tabindex="-1" aria-label="code-block-2-121"></a>        <span class="st">"sagemaker:CreateNotebookInstance"</span></span>
+<span id="cb2-122"><a href="#cb2-122" tabindex="-1" aria-label="code-block-2-122"></a>      <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb2-123"><a href="#cb2-123" tabindex="-1" aria-label="code-block-2-123"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span><span class="fu">,</span></span>
+<span id="cb2-124"><a href="#cb2-124" tabindex="-1" aria-label="code-block-2-124"></a>      <span class="dt">"Condition"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-125"><a href="#cb2-125" tabindex="-1" aria-label="code-block-2-125"></a>        <span class="dt">"StringNotLike"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-126"><a href="#cb2-126" tabindex="-1" aria-label="code-block-2-126"></a>          <span class="dt">"aws:RequestTag/Name"</span><span class="fu">:</span> <span class="st">"?*"</span></span>
+<span id="cb2-127"><a href="#cb2-127" tabindex="-1" aria-label="code-block-2-127"></a>        <span class="fu">}</span></span>
+<span id="cb2-128"><a href="#cb2-128" tabindex="-1" aria-label="code-block-2-128"></a>      <span class="fu">}</span></span>
+<span id="cb2-129"><a href="#cb2-129" tabindex="-1" aria-label="code-block-2-129"></a>    <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb2-130"><a href="#cb2-130" tabindex="-1" aria-label="code-block-2-130"></a>    <span class="fu">{</span></span>
+<span id="cb2-131"><a href="#cb2-131" tabindex="-1" aria-label="code-block-2-131"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"PurposeTagFromTheList"</span><span class="fu">,</span></span>
+<span id="cb2-132"><a href="#cb2-132" tabindex="-1" aria-label="code-block-2-132"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Deny"</span><span class="fu">,</span></span>
+<span id="cb2-133"><a href="#cb2-133" tabindex="-1" aria-label="code-block-2-133"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-134"><a href="#cb2-134" tabindex="-1" aria-label="code-block-2-134"></a>        <span class="st">"sagemaker:CreateTrainingJob"</span><span class="ot">,</span></span>
+<span id="cb2-135"><a href="#cb2-135" tabindex="-1" aria-label="code-block-2-135"></a>        <span class="st">"sagemaker:CreateProcessingJob"</span><span class="ot">,</span></span>
+<span id="cb2-136"><a href="#cb2-136" tabindex="-1" aria-label="code-block-2-136"></a>        <span class="st">"sagemaker:CreateHyperParameterTuningJob"</span><span class="ot">,</span></span>
+<span id="cb2-137"><a href="#cb2-137" tabindex="-1" aria-label="code-block-2-137"></a>        <span class="st">"sagemaker:CreateNotebookInstance"</span></span>
+<span id="cb2-138"><a href="#cb2-138" tabindex="-1" aria-label="code-block-2-138"></a>      <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb2-139"><a href="#cb2-139" tabindex="-1" aria-label="code-block-2-139"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span><span class="fu">,</span></span>
+<span id="cb2-140"><a href="#cb2-140" tabindex="-1" aria-label="code-block-2-140"></a>      <span class="dt">"Condition"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-141"><a href="#cb2-141" tabindex="-1" aria-label="code-block-2-141"></a>        <span class="dt">"StringNotLike"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-142"><a href="#cb2-142" tabindex="-1" aria-label="code-block-2-142"></a>          <span class="dt">"aws:RequestTag/Purpose"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-143"><a href="#cb2-143" tabindex="-1" aria-label="code-block-2-143"></a>            <span class="st">"Storage"</span><span class="ot">,</span></span>
+<span id="cb2-144"><a href="#cb2-144" tabindex="-1" aria-label="code-block-2-144"></a>            <span class="st">"Notebook"</span><span class="ot">,</span></span>
+<span id="cb2-145"><a href="#cb2-145" tabindex="-1" aria-label="code-block-2-145"></a>            <span class="st">"Training"</span><span class="ot">,</span></span>
+<span id="cb2-146"><a href="#cb2-146" tabindex="-1" aria-label="code-block-2-146"></a>            <span class="st">"Tuning"</span><span class="ot">,</span></span>
+<span id="cb2-147"><a href="#cb2-147" tabindex="-1" aria-label="code-block-2-147"></a>            <span class="st">"Inference"</span></span>
+<span id="cb2-148"><a href="#cb2-148" tabindex="-1" aria-label="code-block-2-148"></a>          <span class="ot">]</span></span>
+<span id="cb2-149"><a href="#cb2-149" tabindex="-1" aria-label="code-block-2-149"></a>        <span class="fu">}</span></span>
+<span id="cb2-150"><a href="#cb2-150" tabindex="-1" aria-label="code-block-2-150"></a>      <span class="fu">}</span></span>
+<span id="cb2-151"><a href="#cb2-151" tabindex="-1" aria-label="code-block-2-151"></a>    <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb2-152"><a href="#cb2-152" tabindex="-1" aria-label="code-block-2-152"></a>    <span class="fu">{</span></span>
+<span id="cb2-153"><a href="#cb2-153" tabindex="-1" aria-label="code-block-2-153"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"RuntimeCapAtMost48Hours"</span><span class="fu">,</span></span>
+<span id="cb2-154"><a href="#cb2-154" tabindex="-1" aria-label="code-block-2-154"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Deny"</span><span class="fu">,</span></span>
+<span id="cb2-155"><a href="#cb2-155" tabindex="-1" aria-label="code-block-2-155"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-156"><a href="#cb2-156" tabindex="-1" aria-label="code-block-2-156"></a>        <span class="st">"sagemaker:CreateTrainingJob"</span><span class="ot">,</span></span>
+<span id="cb2-157"><a href="#cb2-157" tabindex="-1" aria-label="code-block-2-157"></a>        <span class="st">"sagemaker:CreateProcessingJob"</span></span>
+<span id="cb2-158"><a href="#cb2-158" tabindex="-1" aria-label="code-block-2-158"></a>      <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb2-159"><a href="#cb2-159" tabindex="-1" aria-label="code-block-2-159"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span><span class="fu">,</span></span>
+<span id="cb2-160"><a href="#cb2-160" tabindex="-1" aria-label="code-block-2-160"></a>      <span class="dt">"Condition"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-161"><a href="#cb2-161" tabindex="-1" aria-label="code-block-2-161"></a>        <span class="dt">"NumericGreaterThan"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-162"><a href="#cb2-162" tabindex="-1" aria-label="code-block-2-162"></a>          <span class="dt">"sagemaker:MaxRuntimeInSeconds"</span><span class="fu">:</span> <span class="st">"172800"</span></span>
+<span id="cb2-163"><a href="#cb2-163" tabindex="-1" aria-label="code-block-2-163"></a>        <span class="fu">}</span></span>
+<span id="cb2-164"><a href="#cb2-164" tabindex="-1" aria-label="code-block-2-164"></a>      <span class="fu">}</span></span>
+<span id="cb2-165"><a href="#cb2-165" tabindex="-1" aria-label="code-block-2-165"></a>    <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb2-166"><a href="#cb2-166" tabindex="-1" aria-label="code-block-2-166"></a>    <span class="fu">{</span></span>
+<span id="cb2-167"><a href="#cb2-167" tabindex="-1" aria-label="code-block-2-167"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"ProcessingJobsNeedACap"</span><span class="fu">,</span></span>
+<span id="cb2-168"><a href="#cb2-168" tabindex="-1" aria-label="code-block-2-168"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Deny"</span><span class="fu">,</span></span>
+<span id="cb2-169"><a href="#cb2-169" tabindex="-1" aria-label="code-block-2-169"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-170"><a href="#cb2-170" tabindex="-1" aria-label="code-block-2-170"></a>        <span class="st">"sagemaker:CreateProcessingJob"</span></span>
+<span id="cb2-171"><a href="#cb2-171" tabindex="-1" aria-label="code-block-2-171"></a>      <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb2-172"><a href="#cb2-172" tabindex="-1" aria-label="code-block-2-172"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span><span class="fu">,</span></span>
+<span id="cb2-173"><a href="#cb2-173" tabindex="-1" aria-label="code-block-2-173"></a>      <span class="dt">"Condition"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-174"><a href="#cb2-174" tabindex="-1" aria-label="code-block-2-174"></a>        <span class="dt">"Null"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-175"><a href="#cb2-175" tabindex="-1" aria-label="code-block-2-175"></a>          <span class="dt">"sagemaker:MaxRuntimeInSeconds"</span><span class="fu">:</span> <span class="st">"true"</span></span>
+<span id="cb2-176"><a href="#cb2-176" tabindex="-1" aria-label="code-block-2-176"></a>        <span class="fu">}</span></span>
+<span id="cb2-177"><a href="#cb2-177" tabindex="-1" aria-label="code-block-2-177"></a>      <span class="fu">}</span></span>
+<span id="cb2-178"><a href="#cb2-178" tabindex="-1" aria-label="code-block-2-178"></a>    <span class="fu">}</span></span>
+<span id="cb2-179"><a href="#cb2-179" tabindex="-1" aria-label="code-block-2-179"></a>  <span class="ot">]</span></span>
+<span id="cb2-180"><a href="#cb2-180" tabindex="-1" aria-label="code-block-2-180"></a><span class="fu">}</span></span></code></pre>
 </div>
 <p>What each statement does, and what it costs you:</p>
 <ul><li>
@@ -761,11 +827,11 @@ back from CloudTrail afterwards and does the same, which is what a
 learner (or you, a year on) can run instead of emailing. The second
 needs one more permission on the role, since SageMaker’s managed policy
 does not read CloudTrail:</p>
-<div class="codewrapper sourceCode" id="cb2">
+<div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1" aria-label="code-block-2-1"></a><span class="ex">aws</span> iam put-role-policy <span class="at">--role-name</span> ml-sagemaker-use <span class="at">--policy-name</span> ReadOwnCloudTrail <span class="dt">\\</span></span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1" aria-label="code-block-2-2"></a>  <span class="ex">--policy-document</span> <span class="st">'{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"cloudtrail:LookupEvents","Resource":"*"}]}'</span></span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a><span class="ex">aws</span> iam put-role-policy <span class="at">--role-name</span> ml-sagemaker-use <span class="at">--policy-name</span> ReadOwnCloudTrail <span class="dt">\\</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a>  <span class="ex">--policy-document</span> <span class="st">'{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"cloudtrail:LookupEvents","Resource":"*"}]}'</span></span></code></pre>
 </div>
 <p><code>LookupEvents</code> reads the account’s 90-day management-event
 history, which CloudTrail keeps without a trail being configured, and
@@ -777,32 +843,32 @@ matched, without launching anything. The blank-value and vocabulary
 statements went through two forms before the simulator was used, and the
 first form, <code>StringEquals</code> against an empty string, passed
 blanks in practice:</p>
-<div class="codewrapper sourceCode" id="cb3">
+<div class="codewrapper sourceCode" id="cb4">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1" aria-label="code-block-3-1"></a><span class="va">ROLE</span><span class="op">=</span>arn:aws:iam::<span class="va">$(</span><span class="ex">aws</span> sts get-caller-identity <span class="at">--query</span> Account <span class="at">--output</span> text<span class="va">)</span>:role/ml-sagemaker-use</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1" aria-label="code-block-3-2"></a><span class="fu">sim()</span> <span class="kw">{</span>   <span class="co"># sim &lt;Name&gt; &lt;Project&gt; &lt;Purpose&gt; &lt;instance type&gt;</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1" aria-label="code-block-3-3"></a>  <span class="ex">aws</span> iam simulate-principal-policy <span class="at">--policy-source-arn</span> <span class="va">$ROLE</span> <span class="at">--action-names</span> sagemaker:CreateTrainingJob <span class="dt">\</span></span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a>    <span class="at">--context-entries</span> <span class="st">"ContextKeyName=aws:RequestTag/Name,ContextKeyValues=</span><span class="va">$1</span><span class="st">,ContextKeyType=string"</span> <span class="dt">\</span></span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1" aria-label="code-block-3-5"></a>                      <span class="st">"ContextKeyName=aws:RequestTag/Project,ContextKeyValues=</span><span class="va">$2</span><span class="st">,ContextKeyType=string"</span> <span class="dt">\</span></span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1" aria-label="code-block-3-6"></a>                      <span class="st">"ContextKeyName=aws:RequestTag/Purpose,ContextKeyValues=</span><span class="va">$3</span><span class="st">,ContextKeyType=string"</span> <span class="dt">\</span></span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1" aria-label="code-block-3-7"></a>                      <span class="st">"ContextKeyName=sagemaker:InstanceTypes,ContextKeyValues=</span><span class="va">$4</span><span class="st">,ContextKeyType=stringList"</span> <span class="dt">\</span></span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1" aria-label="code-block-3-8"></a>    <span class="at">--query</span> <span class="st">'EvaluationResults[0].[EvalDecision, MatchedStatements[].SourcePolicyId]'</span> <span class="at">--output</span> text</span>
-<span id="cb3-9"><a href="#cb3-9" tabindex="-1" aria-label="code-block-3-9"></a><span class="kw">}</span></span>
-<span id="cb3-10"><a href="#cb3-10" tabindex="-1" aria-label="code-block-3-10"></a><span class="ex">sim</span> EndemannChris WattBot2026 Training ml.m5.large     <span class="co"># allowed</span></span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1" aria-label="code-block-3-11"></a><span class="ex">sim</span> <span class="st">""</span> WattBot2026 Training ml.m5.large                <span class="co"># explicitDeny: NameTagNotBlank</span></span>
-<span id="cb3-12"><a href="#cb3-12" tabindex="-1" aria-label="code-block-3-12"></a><span class="ex">sim</span> EndemannChris MyProject Training ml.m5.large       <span class="co"># explicitDeny: ProjectTagFromTheList</span></span>
-<span id="cb3-13"><a href="#cb3-13" tabindex="-1" aria-label="code-block-3-13"></a><span class="ex">sim</span> EndemannChris WattBot2026 Testing ml.m5.large      <span class="co"># explicitDeny: PurposeTagFromTheList</span></span>
-<span id="cb3-14"><a href="#cb3-14" tabindex="-1" aria-label="code-block-3-14"></a><span class="ex">sim</span> DoeJohn SinkOrSwim Training ml.m5.large            <span class="co"># allowed: the lesson's example values are on the lists</span></span>
-<span id="cb3-15"><a href="#cb3-15" tabindex="-1" aria-label="code-block-3-15"></a><span class="ex">sim</span> EndemannChris WattBot2026 Training ml.m5.4xlarge   <span class="co"># explicitDeny: OnlyLessonInstanceTypes</span></span>
-<span id="cb3-16"><a href="#cb3-16" tabindex="-1" aria-label="code-block-3-16"></a><span class="kw">```</span> <span class="ex">Every</span> estimator, processor and tuner in the lesson passes all three, and the console<span class="st">'s notebook-instance form has the tags field the S3 and controllers episodes fill in, so nothing in the lesson is affected; a learner who deletes the `tags=` line gets an `AccessDeniedException` instead of an unattributed bill. Tuning-job child jobs are created by the SageMaker service with the tuner'</span>s tags propagated, so they pass.</span>
-<span id="cb3-17"><a href="#cb3-17" tabindex="-1" aria-label="code-block-3-17"></a></span>
-<span id="cb3-18"><a href="#cb3-18" tabindex="-1" aria-label="code-block-3-18"></a><span class="ex">Three</span> cautions. Test the policy with one job of each kind <span class="er">(</span><span class="ex">training,</span> processing, tuning, notebook creation from the console<span class="kw">)</span> <span class="ex">a</span> week before class, from a learner-level sign-in, not an administrator one. Second, the role the notebook instance assumes <span class="er">(</span><span class="kw">`</span><span class="ex">ml-sagemaker-use</span><span class="kw">`)</span> <span class="ex">is</span> a separate identity from the permission set<span class="kw">;</span> <span class="ex">what</span> the SDK does from inside a notebook is governed by that role<span class="st">'s policy, so attach the same denies there, or the guard rail only covers the laptop. On the UW account the policy above, all ten statements, is attached to that role as the inline policy `WorkshopGuardRails` (26 October 2026, with the 2026 challenge list), from a clone of the lesson repository in CloudShell, where the JSON above is kept as `scripts/guardrails.json`:</span></span>
-<span id="cb3-19"><a href="#cb3-19" tabindex="-1" aria-label="code-block-3-19"></a></span>
-<span id="cb3-20"><a href="#cb3-20" tabindex="-1" aria-label="code-block-3-20"></a><span class="st">```bash</span></span>
-<span id="cb3-21"><a href="#cb3-21" tabindex="-1" aria-label="code-block-3-21"></a><span class="st">git clone -q https://github.com/qualiaMachine/ML_with_Amazon_SageMaker.git 2&gt;/dev/null || git -C ML_with_Amazon_SageMaker pull -q</span></span>
-<span id="cb3-22"><a href="#cb3-22" tabindex="-1" aria-label="code-block-3-22"></a><span class="st">aws iam put-role-policy --role-name ml-sagemaker-use --policy-name WorkshopGuardRails \</span></span>
-<span id="cb3-23"><a href="#cb3-23" tabindex="-1" aria-label="code-block-3-23"></a><span class="st">  --policy-document file://ML_with_Amazon_SageMaker/scripts/guardrails.json</span></span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="va">ROLE</span><span class="op">=</span>arn:aws:iam::<span class="va">$(</span><span class="ex">aws</span> sts get-caller-identity <span class="at">--query</span> Account <span class="at">--output</span> text<span class="va">)</span>:role/ml-sagemaker-use</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a><span class="fu">sim()</span> <span class="kw">{</span>   <span class="co"># sim &lt;Name&gt; &lt;Project&gt; &lt;Purpose&gt; &lt;instance type&gt;</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a>  <span class="ex">aws</span> iam simulate-principal-policy <span class="at">--policy-source-arn</span> <span class="va">$ROLE</span> <span class="at">--action-names</span> sagemaker:CreateTrainingJob <span class="dt">\</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a>    <span class="at">--context-entries</span> <span class="st">"ContextKeyName=aws:RequestTag/Name,ContextKeyValues=</span><span class="va">$1</span><span class="st">,ContextKeyType=string"</span> <span class="dt">\</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1" aria-label="code-block-4-5"></a>                      <span class="st">"ContextKeyName=aws:RequestTag/Project,ContextKeyValues=</span><span class="va">$2</span><span class="st">,ContextKeyType=string"</span> <span class="dt">\</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1" aria-label="code-block-4-6"></a>                      <span class="st">"ContextKeyName=aws:RequestTag/Purpose,ContextKeyValues=</span><span class="va">$3</span><span class="st">,ContextKeyType=string"</span> <span class="dt">\</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1" aria-label="code-block-4-7"></a>                      <span class="st">"ContextKeyName=sagemaker:InstanceTypes,ContextKeyValues=</span><span class="va">$4</span><span class="st">,ContextKeyType=stringList"</span> <span class="dt">\</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1" aria-label="code-block-4-8"></a>    <span class="at">--query</span> <span class="st">'EvaluationResults[0].[EvalDecision, MatchedStatements[].SourcePolicyId]'</span> <span class="at">--output</span> text</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1" aria-label="code-block-4-9"></a><span class="kw">}</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1" aria-label="code-block-4-10"></a><span class="ex">sim</span> EndemannChris WattBot2026 Training ml.m5.large     <span class="co"># allowed</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1" aria-label="code-block-4-11"></a><span class="ex">sim</span> <span class="st">""</span> WattBot2026 Training ml.m5.large                <span class="co"># explicitDeny: NameTagNotBlank</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1" aria-label="code-block-4-12"></a><span class="ex">sim</span> EndemannChris MyProject Training ml.m5.large       <span class="co"># explicitDeny: ProjectTagFromTheList</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1" aria-label="code-block-4-13"></a><span class="ex">sim</span> EndemannChris WattBot2026 Testing ml.m5.large      <span class="co"># explicitDeny: PurposeTagFromTheList</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1" aria-label="code-block-4-14"></a><span class="ex">sim</span> DoeJohn SinkOrSwim Training ml.m5.large            <span class="co"># allowed: the lesson's example values are on the lists</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1" aria-label="code-block-4-15"></a><span class="ex">sim</span> EndemannChris WattBot2026 Training ml.m5.4xlarge   <span class="co"># explicitDeny: OnlyLessonInstanceTypes</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1" aria-label="code-block-4-16"></a><span class="kw">```</span> <span class="ex">Every</span> estimator, processor and tuner in the lesson passes all three, and the console<span class="st">'s notebook-instance form has the tags field the S3 and controllers episodes fill in, so nothing in the lesson is affected; a learner who deletes the `tags=` line gets an `AccessDeniedException` instead of an unattributed bill. Tuning-job child jobs are created by the SageMaker service with the tuner'</span>s tags propagated, so they pass.</span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1" aria-label="code-block-4-17"></a></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1" aria-label="code-block-4-18"></a><span class="ex">Three</span> cautions. Test the policy with one job of each kind <span class="er">(</span><span class="ex">training,</span> processing, tuning, notebook creation from the console<span class="kw">)</span> <span class="ex">a</span> week before class, from a learner-level sign-in, not an administrator one. Second, the role the notebook instance assumes <span class="er">(</span><span class="kw">`</span><span class="ex">ml-sagemaker-use</span><span class="kw">`)</span> <span class="ex">is</span> a separate identity from the permission set<span class="kw">;</span> <span class="ex">what</span> the SDK does from inside a notebook is governed by that role<span class="st">'s policy, so attach the same denies there, or the guard rail only covers the laptop. On the UW account the policy above, all ten statements, is attached to that role as the inline policy `WorkshopGuardRails` (26 October 2026, with the 2026 challenge list), from a clone of the lesson repository in CloudShell, where the JSON above is kept as `scripts/guardrails.json`:</span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1" aria-label="code-block-4-19"></a></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1" aria-label="code-block-4-20"></a><span class="st">```bash</span></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1" aria-label="code-block-4-21"></a><span class="st">git clone -q https://github.com/qualiaMachine/ML_with_Amazon_SageMaker.git 2&gt;/dev/null || git -C ML_with_Amazon_SageMaker pull -q</span></span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1" aria-label="code-block-4-22"></a><span class="st">aws iam put-role-policy --role-name ml-sagemaker-use --policy-name WorkshopGuardRails \</span></span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1" aria-label="code-block-4-23"></a><span class="st">  --policy-document file://ML_with_Amazon_SageMaker/scripts/guardrails.json</span></span></code></pre>
 </div>
 <p>The same two commands replace it after any edit. Edit the file, not
 the page: <code>helpers.check_launch</code>, which every episode calls
@@ -831,49 +897,49 @@ first case for good. Training and Processing jobs are untouched, since
 they are not notebook instances, and a learner who needs an instance up
 overnight tags it <code>KeepRunning=yes</code>. The whole thing is one
 Lambda function and one schedule, from an administrative CloudShell:</p>
-<div class="codewrapper sourceCode" id="cb4">
+<div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> stop_notebooks.py <span class="op">&lt;&lt;'PY'</span></span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a><span class="st">import boto3</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a></span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a><span class="st">def handler(event, context):</span></span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1" aria-label="code-block-4-5"></a><span class="st">    sm = boto3.client("sagemaker")</span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1" aria-label="code-block-4-6"></a><span class="st">    stopped = []</span></span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1" aria-label="code-block-4-7"></a><span class="st">    for page in sm.get_paginator("list_notebook_instances").paginate(StatusEquals="InService"):</span></span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1" aria-label="code-block-4-8"></a><span class="st">        for nb in page["NotebookInstances"]:</span></span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1" aria-label="code-block-4-9"></a><span class="st">            tags = {t["Key"]: t["Value"] for t in sm.list_tags(ResourceArn=nb["NotebookInstanceArn"])["Tags"]}</span></span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1" aria-label="code-block-4-10"></a><span class="st">            if tags.get("KeepRunning", "").lower() == "yes":</span></span>
-<span id="cb4-11"><a href="#cb4-11" tabindex="-1" aria-label="code-block-4-11"></a><span class="st">                continue</span></span>
-<span id="cb4-12"><a href="#cb4-12" tabindex="-1" aria-label="code-block-4-12"></a><span class="st">            sm.stop_notebook_instance(NotebookInstanceName=nb["NotebookInstanceName"])</span></span>
-<span id="cb4-13"><a href="#cb4-13" tabindex="-1" aria-label="code-block-4-13"></a><span class="st">            stopped.append(nb["NotebookInstanceName"])</span></span>
-<span id="cb4-14"><a href="#cb4-14" tabindex="-1" aria-label="code-block-4-14"></a><span class="st">    print("stopped:", stopped)</span></span>
-<span id="cb4-15"><a href="#cb4-15" tabindex="-1" aria-label="code-block-4-15"></a><span class="st">    return stopped</span></span>
-<span id="cb4-16"><a href="#cb4-16" tabindex="-1" aria-label="code-block-4-16"></a><span class="op">PY</span></span>
-<span id="cb4-17"><a href="#cb4-17" tabindex="-1" aria-label="code-block-4-17"></a><span class="fu">zip</span> <span class="at">-q</span> stop_notebooks.zip stop_notebooks.py</span>
-<span id="cb4-18"><a href="#cb4-18" tabindex="-1" aria-label="code-block-4-18"></a><span class="va">ACCOUNT</span><span class="op">=</span><span class="va">$(</span><span class="ex">aws</span> sts get-caller-identity <span class="at">--query</span> Account <span class="at">--output</span> text<span class="va">)</span></span>
-<span id="cb4-19"><a href="#cb4-19" tabindex="-1" aria-label="code-block-4-19"></a></span>
-<span id="cb4-20"><a href="#cb4-20" tabindex="-1" aria-label="code-block-4-20"></a><span class="ex">aws</span> iam create-role <span class="at">--role-name</span> nightly-notebook-stop <span class="dt">\</span></span>
-<span id="cb4-21"><a href="#cb4-21" tabindex="-1" aria-label="code-block-4-21"></a>  <span class="at">--assume-role-policy-document</span> <span class="st">'{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"lambda.amazonaws.com"},"Action":"sts:AssumeRole"}]}'</span></span>
-<span id="cb4-22"><a href="#cb4-22" tabindex="-1" aria-label="code-block-4-22"></a><span class="ex">aws</span> iam put-role-policy <span class="at">--role-name</span> nightly-notebook-stop <span class="at">--policy-name</span> StopNotebooks <span class="dt">\</span></span>
-<span id="cb4-23"><a href="#cb4-23" tabindex="-1" aria-label="code-block-4-23"></a>  <span class="at">--policy-document</span> <span class="st">'{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["sagemaker:ListNotebookInstances","sagemaker:ListTags","sagemaker:StopNotebookInstance"],"Resource":"*"},{"Effect":"Allow","Action":["logs:CreateLogGroup","logs:CreateLogStream","logs:PutLogEvents"],"Resource":"*"}]}'</span></span>
-<span id="cb4-24"><a href="#cb4-24" tabindex="-1" aria-label="code-block-4-24"></a><span class="fu">sleep</span> 15   <span class="co"># a new role takes a few seconds to become usable</span></span>
-<span id="cb4-25"><a href="#cb4-25" tabindex="-1" aria-label="code-block-4-25"></a><span class="ex">aws</span> lambda create-function <span class="at">--function-name</span> nightly-notebook-stop <span class="at">--runtime</span> python3.12 <span class="at">--handler</span> stop_notebooks.handler <span class="dt">\</span></span>
-<span id="cb4-26"><a href="#cb4-26" tabindex="-1" aria-label="code-block-4-26"></a>  <span class="at">--zip-file</span> fileb://stop_notebooks.zip <span class="at">--role</span> arn:aws:iam::<span class="va">$ACCOUNT</span>:role/nightly-notebook-stop <span class="at">--timeout</span> 120</span>
-<span id="cb4-27"><a href="#cb4-27" tabindex="-1" aria-label="code-block-4-27"></a></span>
-<span id="cb4-28"><a href="#cb4-28" tabindex="-1" aria-label="code-block-4-28"></a><span class="co"># cron expressions here are UTC: 05:00 UTC is 11 pm Central in winter and midnight in summer</span></span>
-<span id="cb4-29"><a href="#cb4-29" tabindex="-1" aria-label="code-block-4-29"></a><span class="ex">aws</span> events put-rule <span class="at">--name</span> nightly-notebook-stop <span class="at">--schedule-expression</span> <span class="st">"cron(0 5 * * ? *)"</span></span>
-<span id="cb4-30"><a href="#cb4-30" tabindex="-1" aria-label="code-block-4-30"></a><span class="ex">aws</span> lambda add-permission <span class="at">--function-name</span> nightly-notebook-stop <span class="at">--statement-id</span> events <span class="at">--action</span> lambda:InvokeFunction <span class="dt">\</span></span>
-<span id="cb4-31"><a href="#cb4-31" tabindex="-1" aria-label="code-block-4-31"></a>  <span class="at">--principal</span> events.amazonaws.com <span class="at">--source-arn</span> arn:aws:events:us-east-2:<span class="va">$ACCOUNT</span>:rule/nightly-notebook-stop</span>
-<span id="cb4-32"><a href="#cb4-32" tabindex="-1" aria-label="code-block-4-32"></a><span class="ex">aws</span> events put-targets <span class="at">--rule</span> nightly-notebook-stop <span class="at">--targets</span> <span class="st">"Id=1,Arn=arn:aws:lambda:us-east-2:</span><span class="va">$ACCOUNT</span><span class="st">:function:nightly-notebook-stop"</span></span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> stop_notebooks.py <span class="op">&lt;&lt;'PY'</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a><span class="st">import boto3</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1" aria-label="code-block-5-4"></a><span class="st">def handler(event, context):</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1" aria-label="code-block-5-5"></a><span class="st">    sm = boto3.client("sagemaker")</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1" aria-label="code-block-5-6"></a><span class="st">    stopped = []</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1" aria-label="code-block-5-7"></a><span class="st">    for page in sm.get_paginator("list_notebook_instances").paginate(StatusEquals="InService"):</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1" aria-label="code-block-5-8"></a><span class="st">        for nb in page["NotebookInstances"]:</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1" aria-label="code-block-5-9"></a><span class="st">            tags = {t["Key"]: t["Value"] for t in sm.list_tags(ResourceArn=nb["NotebookInstanceArn"])["Tags"]}</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1" aria-label="code-block-5-10"></a><span class="st">            if tags.get("KeepRunning", "").lower() == "yes":</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1" aria-label="code-block-5-11"></a><span class="st">                continue</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1" aria-label="code-block-5-12"></a><span class="st">            sm.stop_notebook_instance(NotebookInstanceName=nb["NotebookInstanceName"])</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1" aria-label="code-block-5-13"></a><span class="st">            stopped.append(nb["NotebookInstanceName"])</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1" aria-label="code-block-5-14"></a><span class="st">    print("stopped:", stopped)</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1" aria-label="code-block-5-15"></a><span class="st">    return stopped</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1" aria-label="code-block-5-16"></a><span class="op">PY</span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1" aria-label="code-block-5-17"></a><span class="fu">zip</span> <span class="at">-q</span> stop_notebooks.zip stop_notebooks.py</span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1" aria-label="code-block-5-18"></a><span class="va">ACCOUNT</span><span class="op">=</span><span class="va">$(</span><span class="ex">aws</span> sts get-caller-identity <span class="at">--query</span> Account <span class="at">--output</span> text<span class="va">)</span></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1" aria-label="code-block-5-19"></a></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1" aria-label="code-block-5-20"></a><span class="ex">aws</span> iam create-role <span class="at">--role-name</span> nightly-notebook-stop <span class="dt">\</span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1" aria-label="code-block-5-21"></a>  <span class="at">--assume-role-policy-document</span> <span class="st">'{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"lambda.amazonaws.com"},"Action":"sts:AssumeRole"}]}'</span></span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1" aria-label="code-block-5-22"></a><span class="ex">aws</span> iam put-role-policy <span class="at">--role-name</span> nightly-notebook-stop <span class="at">--policy-name</span> StopNotebooks <span class="dt">\</span></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1" aria-label="code-block-5-23"></a>  <span class="at">--policy-document</span> <span class="st">'{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["sagemaker:ListNotebookInstances","sagemaker:ListTags","sagemaker:StopNotebookInstance"],"Resource":"*"},{"Effect":"Allow","Action":["logs:CreateLogGroup","logs:CreateLogStream","logs:PutLogEvents"],"Resource":"*"}]}'</span></span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1" aria-label="code-block-5-24"></a><span class="fu">sleep</span> 15   <span class="co"># a new role takes a few seconds to become usable</span></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1" aria-label="code-block-5-25"></a><span class="ex">aws</span> lambda create-function <span class="at">--function-name</span> nightly-notebook-stop <span class="at">--runtime</span> python3.12 <span class="at">--handler</span> stop_notebooks.handler <span class="dt">\</span></span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1" aria-label="code-block-5-26"></a>  <span class="at">--zip-file</span> fileb://stop_notebooks.zip <span class="at">--role</span> arn:aws:iam::<span class="va">$ACCOUNT</span>:role/nightly-notebook-stop <span class="at">--timeout</span> 120</span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1" aria-label="code-block-5-27"></a></span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1" aria-label="code-block-5-28"></a><span class="co"># cron expressions here are UTC: 05:00 UTC is 11 pm Central in winter and midnight in summer</span></span>
+<span id="cb5-29"><a href="#cb5-29" tabindex="-1" aria-label="code-block-5-29"></a><span class="ex">aws</span> events put-rule <span class="at">--name</span> nightly-notebook-stop <span class="at">--schedule-expression</span> <span class="st">"cron(0 5 * * ? *)"</span></span>
+<span id="cb5-30"><a href="#cb5-30" tabindex="-1" aria-label="code-block-5-30"></a><span class="ex">aws</span> lambda add-permission <span class="at">--function-name</span> nightly-notebook-stop <span class="at">--statement-id</span> events <span class="at">--action</span> lambda:InvokeFunction <span class="dt">\</span></span>
+<span id="cb5-31"><a href="#cb5-31" tabindex="-1" aria-label="code-block-5-31"></a>  <span class="at">--principal</span> events.amazonaws.com <span class="at">--source-arn</span> arn:aws:events:us-east-2:<span class="va">$ACCOUNT</span>:rule/nightly-notebook-stop</span>
+<span id="cb5-32"><a href="#cb5-32" tabindex="-1" aria-label="code-block-5-32"></a><span class="ex">aws</span> events put-targets <span class="at">--rule</span> nightly-notebook-stop <span class="at">--targets</span> <span class="st">"Id=1,Arn=arn:aws:lambda:us-east-2:</span><span class="va">$ACCOUNT</span><span class="st">:function:nightly-notebook-stop"</span></span></code></pre>
 </div>
 <p>To test it, run the function once by hand. It stops every running
 instance that is not tagged <code>KeepRunning=yes</code>, your own
 included, so do it when nothing is running:</p>
-<div class="codewrapper sourceCode" id="cb5">
+<div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="ex">aws</span> lambda invoke <span class="at">--function-name</span> nightly-notebook-stop out.json <span class="kw">&amp;&amp;</span> <span class="fu">cat</span> out.json</span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="ex">aws</span> lambda invoke <span class="at">--function-name</span> nightly-notebook-stop out.json <span class="kw">&amp;&amp;</span> <span class="fu">cat</span> out.json</span></code></pre>
 </div>
 <p>Say in the credit-request form and in class that instances stop at 11
 pm, that a running cell is interrupted when they do, and that jobs are
@@ -886,16 +952,16 @@ on the <code>Name</code> tag, at the per-person credit with an alert at
 80%, tells you who is about to run over, a day or two late because of
 Cost Explorer’s lag. From CloudShell, with a file <code>names.txt</code>
 holding one <code>Name</code> tag value per line:</p>
-<div class="codewrapper sourceCode" id="cb6">
+<div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="va">LIMIT</span><span class="op">=</span>50<span class="kw">;</span> <span class="va">EMAIL</span><span class="op">=</span>endemann@wisc.edu</span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a><span class="va">ACCOUNT</span><span class="op">=</span><span class="va">$(</span><span class="ex">aws</span> sts get-caller-identity <span class="at">--query</span> Account <span class="at">--output</span> text<span class="va">)</span></span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a><span class="cf">while</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">NAME</span><span class="kw">;</span> <span class="cf">do</span></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1" aria-label="code-block-6-4"></a>  <span class="ex">aws</span> budgets create-budget <span class="at">--account-id</span> <span class="va">$ACCOUNT</span> <span class="dt">\</span></span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1" aria-label="code-block-6-5"></a>    <span class="at">--budget</span> <span class="st">"{</span><span class="dt">\"</span><span class="st">BudgetName</span><span class="dt">\"</span><span class="st">:</span><span class="dt">\"</span><span class="st">mlm-</span><span class="va">$NAME</span><span class="dt">\"</span><span class="st">,</span><span class="dt">\"</span><span class="st">BudgetLimit</span><span class="dt">\"</span><span class="st">:{</span><span class="dt">\"</span><span class="st">Amount</span><span class="dt">\"</span><span class="st">:</span><span class="dt">\"</span><span class="va">$LIMIT</span><span class="dt">\"</span><span class="st">,</span><span class="dt">\"</span><span class="st">Unit</span><span class="dt">\"</span><span class="st">:</span><span class="dt">\"</span><span class="st">USD</span><span class="dt">\"</span><span class="st">},</span><span class="dt">\"</span><span class="st">TimeUnit</span><span class="dt">\"</span><span class="st">:</span><span class="dt">\"</span><span class="st">MONTHLY</span><span class="dt">\"</span><span class="st">,</span><span class="dt">\"</span><span class="st">BudgetType</span><span class="dt">\"</span><span class="st">:</span><span class="dt">\"</span><span class="st">COST</span><span class="dt">\"</span><span class="st">,</span><span class="dt">\"</span><span class="st">CostFilters</span><span class="dt">\"</span><span class="st">:{</span><span class="dt">\"</span><span class="st">TagKeyValue</span><span class="dt">\"</span><span class="st">:[</span><span class="dt">\"</span><span class="st">user:Name</span><span class="dt">\$</span><span class="va">$NAME</span><span class="dt">\"</span><span class="st">]}}"</span> <span class="dt">\</span></span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1" aria-label="code-block-6-6"></a>    <span class="at">--notifications-with-subscribers</span> <span class="st">"[{</span><span class="dt">\"</span><span class="st">Notification</span><span class="dt">\"</span><span class="st">:{</span><span class="dt">\"</span><span class="st">NotificationType</span><span class="dt">\"</span><span class="st">:</span><span class="dt">\"</span><span class="st">ACTUAL</span><span class="dt">\"</span><span class="st">,</span><span class="dt">\"</span><span class="st">ComparisonOperator</span><span class="dt">\"</span><span class="st">:</span><span class="dt">\"</span><span class="st">GREATER_THAN</span><span class="dt">\"</span><span class="st">,</span><span class="dt">\"</span><span class="st">Threshold</span><span class="dt">\"</span><span class="st">:80},</span><span class="dt">\"</span><span class="st">Subscribers</span><span class="dt">\"</span><span class="st">:[{</span><span class="dt">\"</span><span class="st">SubscriptionType</span><span class="dt">\"</span><span class="st">:</span><span class="dt">\"</span><span class="st">EMAIL</span><span class="dt">\"</span><span class="st">,</span><span class="dt">\"</span><span class="st">Address</span><span class="dt">\"</span><span class="st">:</span><span class="dt">\"</span><span class="va">$EMAIL</span><span class="dt">\"</span><span class="st">}]}]"</span></span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1" aria-label="code-block-6-7"></a><span class="cf">done</span> <span class="op">&lt;</span> names.txt</span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a><span class="va">LIMIT</span><span class="op">=</span>50<span class="kw">;</span> <span class="va">EMAIL</span><span class="op">=</span>endemann@wisc.edu</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1" aria-label="code-block-7-2"></a><span class="va">ACCOUNT</span><span class="op">=</span><span class="va">$(</span><span class="ex">aws</span> sts get-caller-identity <span class="at">--query</span> Account <span class="at">--output</span> text<span class="va">)</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1" aria-label="code-block-7-3"></a><span class="cf">while</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">NAME</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1" aria-label="code-block-7-4"></a>  <span class="ex">aws</span> budgets create-budget <span class="at">--account-id</span> <span class="va">$ACCOUNT</span> <span class="dt">\</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1" aria-label="code-block-7-5"></a>    <span class="at">--budget</span> <span class="st">"{</span><span class="dt">\"</span><span class="st">BudgetName</span><span class="dt">\"</span><span class="st">:</span><span class="dt">\"</span><span class="st">mlm-</span><span class="va">$NAME</span><span class="dt">\"</span><span class="st">,</span><span class="dt">\"</span><span class="st">BudgetLimit</span><span class="dt">\"</span><span class="st">:{</span><span class="dt">\"</span><span class="st">Amount</span><span class="dt">\"</span><span class="st">:</span><span class="dt">\"</span><span class="va">$LIMIT</span><span class="dt">\"</span><span class="st">,</span><span class="dt">\"</span><span class="st">Unit</span><span class="dt">\"</span><span class="st">:</span><span class="dt">\"</span><span class="st">USD</span><span class="dt">\"</span><span class="st">},</span><span class="dt">\"</span><span class="st">TimeUnit</span><span class="dt">\"</span><span class="st">:</span><span class="dt">\"</span><span class="st">MONTHLY</span><span class="dt">\"</span><span class="st">,</span><span class="dt">\"</span><span class="st">BudgetType</span><span class="dt">\"</span><span class="st">:</span><span class="dt">\"</span><span class="st">COST</span><span class="dt">\"</span><span class="st">,</span><span class="dt">\"</span><span class="st">CostFilters</span><span class="dt">\"</span><span class="st">:{</span><span class="dt">\"</span><span class="st">TagKeyValue</span><span class="dt">\"</span><span class="st">:[</span><span class="dt">\"</span><span class="st">user:Name</span><span class="dt">\$</span><span class="va">$NAME</span><span class="dt">\"</span><span class="st">]}}"</span> <span class="dt">\</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1" aria-label="code-block-7-6"></a>    <span class="at">--notifications-with-subscribers</span> <span class="st">"[{</span><span class="dt">\"</span><span class="st">Notification</span><span class="dt">\"</span><span class="st">:{</span><span class="dt">\"</span><span class="st">NotificationType</span><span class="dt">\"</span><span class="st">:</span><span class="dt">\"</span><span class="st">ACTUAL</span><span class="dt">\"</span><span class="st">,</span><span class="dt">\"</span><span class="st">ComparisonOperator</span><span class="dt">\"</span><span class="st">:</span><span class="dt">\"</span><span class="st">GREATER_THAN</span><span class="dt">\"</span><span class="st">,</span><span class="dt">\"</span><span class="st">Threshold</span><span class="dt">\"</span><span class="st">:80},</span><span class="dt">\"</span><span class="st">Subscribers</span><span class="dt">\"</span><span class="st">:[{</span><span class="dt">\"</span><span class="st">SubscriptionType</span><span class="dt">\"</span><span class="st">:</span><span class="dt">\"</span><span class="st">EMAIL</span><span class="dt">\"</span><span class="st">,</span><span class="dt">\"</span><span class="st">Address</span><span class="dt">\"</span><span class="st">:</span><span class="dt">\"</span><span class="va">$EMAIL</span><span class="dt">\"</span><span class="st">}]}]"</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1" aria-label="code-block-7-7"></a><span class="cf">done</span> <span class="op">&lt;</span> names.txt</span></code></pre>
 </div>
 <p>Budgets are free for the first two and about <code>$0.60</code> a
 month each after that. The alert is information, not a block: AWS cannot
@@ -964,40 +1030,40 @@ does it, and a policy change reaches running instances within a minute.
 application inference profile ARN and the underlying foundation-model
 ARN, or calls through the profile are denied;
 <code>DeleteInferenceProfile</code> is for the cleanup episode.</li>
-</ul><div class="codewrapper sourceCode" id="cb7">
+</ul><div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">JSON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode json" tabindex="0"><code class="sourceCode json"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a><span class="fu">{</span></span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1" aria-label="code-block-7-2"></a>  <span class="dt">"Version"</span><span class="fu">:</span> <span class="st">"2012-10-17"</span><span class="fu">,</span></span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1" aria-label="code-block-7-3"></a>  <span class="dt">"Statement"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1" aria-label="code-block-7-4"></a>    <span class="fu">{</span></span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1" aria-label="code-block-7-5"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"BedrockCallModels"</span><span class="fu">,</span></span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1" aria-label="code-block-7-6"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Allow"</span><span class="fu">,</span></span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1" aria-label="code-block-7-7"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"bedrock:InvokeModel"</span><span class="ot">,</span> <span class="st">"bedrock:InvokeModelWithResponseStream"</span><span class="ot">,</span> <span class="st">"bedrock:Converse"</span><span class="ot">,</span> <span class="st">"bedrock:ConverseStream"</span><span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb7-8"><a href="#cb7-8" tabindex="-1" aria-label="code-block-7-8"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb7-9"><a href="#cb7-9" tabindex="-1" aria-label="code-block-7-9"></a>        <span class="st">"arn:aws:bedrock:*::foundation-model/*"</span><span class="ot">,</span></span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1" aria-label="code-block-7-10"></a>        <span class="st">"arn:aws:bedrock:*:&lt;account-id&gt;:application-inference-profile/*"</span><span class="ot">,</span></span>
-<span id="cb7-11"><a href="#cb7-11" tabindex="-1" aria-label="code-block-7-11"></a>        <span class="st">"arn:aws:bedrock:*:&lt;account-id&gt;:inference-profile/*"</span></span>
-<span id="cb7-12"><a href="#cb7-12" tabindex="-1" aria-label="code-block-7-12"></a>      <span class="ot">]</span></span>
-<span id="cb7-13"><a href="#cb7-13" tabindex="-1" aria-label="code-block-7-13"></a>    <span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb7-14"><a href="#cb7-14" tabindex="-1" aria-label="code-block-7-14"></a>    <span class="fu">{</span></span>
-<span id="cb7-15"><a href="#cb7-15" tabindex="-1" aria-label="code-block-7-15"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"BedrockTaggedProfiles"</span><span class="fu">,</span></span>
-<span id="cb7-16"><a href="#cb7-16" tabindex="-1" aria-label="code-block-7-16"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Allow"</span><span class="fu">,</span></span>
-<span id="cb7-17"><a href="#cb7-17" tabindex="-1" aria-label="code-block-7-17"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"bedrock:CreateInferenceProfile"</span><span class="ot">,</span> <span class="st">"bedrock:GetInferenceProfile"</span><span class="ot">,</span> <span class="st">"bedrock:ListInferenceProfiles"</span><span class="ot">,</span></span>
-<span id="cb7-18"><a href="#cb7-18" tabindex="-1" aria-label="code-block-7-18"></a>                 <span class="st">"bedrock:DeleteInferenceProfile"</span><span class="ot">,</span> <span class="st">"bedrock:TagResource"</span><span class="ot">,</span> <span class="st">"bedrock:ListTagsForResource"</span><span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb7-19"><a href="#cb7-19" tabindex="-1" aria-label="code-block-7-19"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb7-20"><a href="#cb7-20" tabindex="-1" aria-label="code-block-7-20"></a>        <span class="st">"arn:aws:bedrock:*:&lt;account-id&gt;:application-inference-profile/*"</span><span class="ot">,</span></span>
-<span id="cb7-21"><a href="#cb7-21" tabindex="-1" aria-label="code-block-7-21"></a>        <span class="st">"arn:aws:bedrock:*:&lt;account-id&gt;:inference-profile/*"</span></span>
-<span id="cb7-22"><a href="#cb7-22" tabindex="-1" aria-label="code-block-7-22"></a>      <span class="ot">]</span></span>
-<span id="cb7-23"><a href="#cb7-23" tabindex="-1" aria-label="code-block-7-23"></a>    <span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb7-24"><a href="#cb7-24" tabindex="-1" aria-label="code-block-7-24"></a>    <span class="fu">{</span></span>
-<span id="cb7-25"><a href="#cb7-25" tabindex="-1" aria-label="code-block-7-25"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"BedrockCatalog"</span><span class="fu">,</span></span>
-<span id="cb7-26"><a href="#cb7-26" tabindex="-1" aria-label="code-block-7-26"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Allow"</span><span class="fu">,</span></span>
-<span id="cb7-27"><a href="#cb7-27" tabindex="-1" aria-label="code-block-7-27"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"bedrock:GetFoundationModel"</span><span class="ot">,</span> <span class="st">"bedrock:ListFoundationModels"</span><span class="ot">,</span> <span class="st">"bedrock:ListInferenceProfiles"</span><span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb7-28"><a href="#cb7-28" tabindex="-1" aria-label="code-block-7-28"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span></span>
-<span id="cb7-29"><a href="#cb7-29" tabindex="-1" aria-label="code-block-7-29"></a>    <span class="fu">}</span></span>
-<span id="cb7-30"><a href="#cb7-30" tabindex="-1" aria-label="code-block-7-30"></a>  <span class="ot">]</span></span>
-<span id="cb7-31"><a href="#cb7-31" tabindex="-1" aria-label="code-block-7-31"></a><span class="fu">}</span></span></code></pre>
+<pre class="sourceCode json" tabindex="0"><code class="sourceCode json"><span id="cb8-1"><a href="#cb8-1" tabindex="-1" aria-label="code-block-8-1"></a><span class="fu">{</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1" aria-label="code-block-8-2"></a>  <span class="dt">"Version"</span><span class="fu">:</span> <span class="st">"2012-10-17"</span><span class="fu">,</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1" aria-label="code-block-8-3"></a>  <span class="dt">"Statement"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1" aria-label="code-block-8-4"></a>    <span class="fu">{</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1" aria-label="code-block-8-5"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"BedrockCallModels"</span><span class="fu">,</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1" aria-label="code-block-8-6"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Allow"</span><span class="fu">,</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1" aria-label="code-block-8-7"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"bedrock:InvokeModel"</span><span class="ot">,</span> <span class="st">"bedrock:InvokeModelWithResponseStream"</span><span class="ot">,</span> <span class="st">"bedrock:Converse"</span><span class="ot">,</span> <span class="st">"bedrock:ConverseStream"</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1" aria-label="code-block-8-8"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1" aria-label="code-block-8-9"></a>        <span class="st">"arn:aws:bedrock:*::foundation-model/*"</span><span class="ot">,</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1" aria-label="code-block-8-10"></a>        <span class="st">"arn:aws:bedrock:*:&lt;account-id&gt;:application-inference-profile/*"</span><span class="ot">,</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1" aria-label="code-block-8-11"></a>        <span class="st">"arn:aws:bedrock:*:&lt;account-id&gt;:inference-profile/*"</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1" aria-label="code-block-8-12"></a>      <span class="ot">]</span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1" aria-label="code-block-8-13"></a>    <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1" aria-label="code-block-8-14"></a>    <span class="fu">{</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1" aria-label="code-block-8-15"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"BedrockTaggedProfiles"</span><span class="fu">,</span></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1" aria-label="code-block-8-16"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Allow"</span><span class="fu">,</span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1" aria-label="code-block-8-17"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"bedrock:CreateInferenceProfile"</span><span class="ot">,</span> <span class="st">"bedrock:GetInferenceProfile"</span><span class="ot">,</span> <span class="st">"bedrock:ListInferenceProfiles"</span><span class="ot">,</span></span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1" aria-label="code-block-8-18"></a>                 <span class="st">"bedrock:DeleteInferenceProfile"</span><span class="ot">,</span> <span class="st">"bedrock:TagResource"</span><span class="ot">,</span> <span class="st">"bedrock:ListTagsForResource"</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1" aria-label="code-block-8-19"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1" aria-label="code-block-8-20"></a>        <span class="st">"arn:aws:bedrock:*:&lt;account-id&gt;:application-inference-profile/*"</span><span class="ot">,</span></span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1" aria-label="code-block-8-21"></a>        <span class="st">"arn:aws:bedrock:*:&lt;account-id&gt;:inference-profile/*"</span></span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1" aria-label="code-block-8-22"></a>      <span class="ot">]</span></span>
+<span id="cb8-23"><a href="#cb8-23" tabindex="-1" aria-label="code-block-8-23"></a>    <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb8-24"><a href="#cb8-24" tabindex="-1" aria-label="code-block-8-24"></a>    <span class="fu">{</span></span>
+<span id="cb8-25"><a href="#cb8-25" tabindex="-1" aria-label="code-block-8-25"></a>      <span class="dt">"Sid"</span><span class="fu">:</span> <span class="st">"BedrockCatalog"</span><span class="fu">,</span></span>
+<span id="cb8-26"><a href="#cb8-26" tabindex="-1" aria-label="code-block-8-26"></a>      <span class="dt">"Effect"</span><span class="fu">:</span> <span class="st">"Allow"</span><span class="fu">,</span></span>
+<span id="cb8-27"><a href="#cb8-27" tabindex="-1" aria-label="code-block-8-27"></a>      <span class="dt">"Action"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"bedrock:GetFoundationModel"</span><span class="ot">,</span> <span class="st">"bedrock:ListFoundationModels"</span><span class="ot">,</span> <span class="st">"bedrock:ListInferenceProfiles"</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb8-28"><a href="#cb8-28" tabindex="-1" aria-label="code-block-8-28"></a>      <span class="dt">"Resource"</span><span class="fu">:</span> <span class="st">"*"</span></span>
+<span id="cb8-29"><a href="#cb8-29" tabindex="-1" aria-label="code-block-8-29"></a>    <span class="fu">}</span></span>
+<span id="cb8-30"><a href="#cb8-30" tabindex="-1" aria-label="code-block-8-30"></a>  <span class="ot">]</span></span>
+<span id="cb8-31"><a href="#cb8-31" tabindex="-1" aria-label="code-block-8-31"></a><span class="fu">}</span></span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="cost-allocation-tags">Cost allocation tags<a class="anchor" aria-label="anchor" href="#cost-allocation-tags"></a></h2>
 <hr class="half-width"><ul><li>Confirm with the Public Cloud team that <code>Name</code>,
@@ -1013,10 +1079,14 @@ fine-tune outputs. Staging commands and the bucket policy: <em>Shared
 data bucket: staging before each term</em>. Learners create one bucket
 each in the S3 episode and write all outputs there.</li>
 </ul></section><section><h2 class="section-heading" id="capacity-fallbacks-to-have-on-a-slide">Capacity fallbacks to have on a slide<a class="anchor" aria-label="anchor" href="#capacity-fallbacks-to-have-on-a-slide"></a></h2>
-<hr class="half-width"><ul><li>Processing Jobs episode: if <code>ml.g6e.xlarge</code> capacity is
-short, <code>ml.g6e.2xlarge</code> (<code>$2.80</code>/h, same GPU) is
-the only same-memory alternative; a 24 GB instance cannot hold the 27B
-model.</li>
+<hr class="half-width"><ul><li>Processing Jobs episode: both jobs run on <code>ml.g5.xlarge</code>;
+if its capacity is short, <code>ml.g6.xlarge</code>
+(<code>$1.13</code>/h, L4, 24 GB) holds the 8B model the same way. Both
+types are on the guard-rail list and need their quotas.</li>
+<li>Optional GPU-notebook episode: if <code>ml.g6e.xlarge</code>
+capacity is short, <code>ml.g6e.2xlarge</code> (<code>$2.80</code>/h,
+same GPU) is the only same-memory alternative; a 24 GB instance cannot
+hold the 27B model.</li>
 <li>Fine-tuning episode: <code>ml.g6.xlarge</code>
 (<code>$1.13</code>/h, L4, 24 GB) runs the mini job at about the same
 speed as <code>ml.g5.xlarge</code>.</li>

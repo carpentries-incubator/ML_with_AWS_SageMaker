@@ -486,13 +486,23 @@ no PyTorch, and on current instances no scikit-learn either.</p>
 <section><h2 class="section-heading" id="test-on-a-small-sample-first-then-scale-up">Test on a small sample first, then scale up<a class="anchor" aria-label="anchor" href="#test-on-a-small-sample-first-then-scale-up"></a></h2>
 <hr class="half-width"><p>The Titanic data trains in a second on the notebook, and nothing
 about it needs the cloud. We use it because the pattern matters more
-than the example. Test the code on a small sample first, where a bug
-costs nothing, and once it works, scale up to a more powerful instance
-when the data or the model calls for one. A SageMaker training job is
-that scale-up step. The notebook describes the job and launches it, and
-SageMaker rents the instance, runs the script on it and releases it when
-the script ends. The fine-tuning episode follows the same two steps with
-a 3B model on a GPU, where the cloud earns its keep.</p>
+than the example. Test the code on a small sample first, on the cheapest
+machine you have, and once it works, scale up to a more powerful
+instance when the data or the model calls for one. The notebook instance
+is that cheap machine here. It is a rental too, at about five cents an
+hour, but a crash on it costs a few seconds of that, where a crash on a
+rented GPU costs the minutes the instance spent starting up, at twenty
+times the rate. A SageMaker training job is that scale-up step. The
+notebook describes the job and launches it, and SageMaker rents the
+instance, runs the script on it and releases it when the script ends.
+The fine-tuning episode follows the same two steps with a 3B model on a
+GPU, where the cloud earns its keep.</p>
+<p>The notebook is not the only way to launch a job. The same launch is
+a few lines of the AWS CLI from a laptop, which the optional <a href="14_CLI-equivalents.html">Same Jobs from the Terminal</a> episode
+shows, and on your own account that is a fine way to work once you know
+the pattern. On the shared account, launch from the notebook. Every job
+then comes from a notebook the administrators can open and read, which
+is what lets them find and fix a problem quickly if one arises.</p>
 <p>This episode walks through both steps once with XGBoost. First the
 script runs on the notebook, to check that it handles the data and the
 arguments. Then the same script runs as a training job, with the data
@@ -537,27 +547,22 @@ Python, with the notebook’s role as the identity.</p>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1" aria-label="code-block-2-1"></a><span class="im">import</span> boto3                          <span class="co"># AWS SDK for Python: low-level access to every AWS service (S3, EC2, ...)</span></span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1" aria-label="code-block-2-2"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a><span class="im">import</span> os</span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a>os.environ[<span class="st">"SAGEMAKER_SUPPRESS_V2_WARNING"</span>] <span class="op">=</span> <span class="st">"1"</span>   <span class="co"># the SDK otherwise prints a deprecation notice on import and on every estimator</span></span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1" aria-label="code-block-2-5"></a><span class="im">import</span> sagemaker                      <span class="co"># SageMaker Python SDK: higher-level API for training jobs, tuning, deployment</span></span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1" aria-label="code-block-2-6"></a><span class="im">import</span> logging</span>
-<span id="cb2-7"><a href="#cb2-7" tabindex="-1" aria-label="code-block-2-7"></a>logging.getLogger(<span class="st">"sagemaker.telemetry.telemetry_logging"</span>).setLevel(logging.WARNING)   <span class="co"># silence the telemetry notice; the "Creating training-job" line still prints</span></span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1" aria-label="code-block-2-8"></a>logging.getLogger(<span class="st">"sagemaker.image_uris"</span>).setLevel(logging.WARNING)</span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1" aria-label="code-block-2-9"></a>logging.getLogger(<span class="st">"sagemaker.config"</span>).addFilter(<span class="kw">lambda</span> record: record.levelno <span class="op">&gt;=</span> logging.WARNING)   <span class="co"># drop the two "Not applying SDK defaults" lines; a filter holds even where the SDK resets the logger's level</span></span>
-<span id="cb2-10"><a href="#cb2-10" tabindex="-1" aria-label="code-block-2-10"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
-<span id="cb2-11"><a href="#cb2-11" tabindex="-1" aria-label="code-block-2-11"></a></span>
-<span id="cb2-12"><a href="#cb2-12" tabindex="-1" aria-label="code-block-2-12"></a><span class="co"># Initialize the SageMaker role (will reflect notebook instance's policy)</span></span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1" aria-label="code-block-2-13"></a>role <span class="op">=</span> sagemaker.get_execution_role()  <span class="co"># the IAM role attached to this notebook instance; every call below acts as this role</span></span>
-<span id="cb2-14"><a href="#cb2-14" tabindex="-1" aria-label="code-block-2-14"></a><span class="bu">print</span>(<span class="ss">f'role = </span><span class="sc">{</span>role<span class="sc">}</span><span class="ss">'</span>)</span>
-<span id="cb2-15"><a href="#cb2-15" tabindex="-1" aria-label="code-block-2-15"></a></span>
-<span id="cb2-16"><a href="#cb2-16" tabindex="-1" aria-label="code-block-2-16"></a><span class="co"># Initialize an S3 client to interact with Amazon S3, allowing operations like uploading, downloading, and managing objects and buckets.</span></span>
-<span id="cb2-17"><a href="#cb2-17" tabindex="-1" aria-label="code-block-2-17"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
-<span id="cb2-18"><a href="#cb2-18" tabindex="-1" aria-label="code-block-2-18"></a></span>
-<span id="cb2-19"><a href="#cb2-19" tabindex="-1" aria-label="code-block-2-19"></a><span class="co"># Define the S3 bucket that we will load from</span></span>
-<span id="cb2-20"><a href="#cb2-20" tabindex="-1" aria-label="code-block-2-20"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn'</span>  <span class="co"># replace with your S3 bucket name</span></span>
-<span id="cb2-21"><a href="#cb2-21" tabindex="-1" aria-label="code-block-2-21"></a></span>
-<span id="cb2-22"><a href="#cb2-22" tabindex="-1" aria-label="code-block-2-22"></a><span class="co"># Define train/test filenames</span></span>
-<span id="cb2-23"><a href="#cb2-23" tabindex="-1" aria-label="code-block-2-23"></a>train_filename <span class="op">=</span> <span class="st">'titanic_train.csv'</span>  <span class="co"># object keys inside the bucket (no prefix: they sit at the bucket root)</span></span>
-<span id="cb2-24"><a href="#cb2-24" tabindex="-1" aria-label="code-block-2-24"></a>test_filename <span class="op">=</span> <span class="st">'titanic_test.csv'</span></span></code></pre>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a><span class="im">import</span> sagemaker                      <span class="co"># SageMaker Python SDK: higher-level API for training jobs, tuning, deployment</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1" aria-label="code-block-2-5"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1" aria-label="code-block-2-6"></a></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1" aria-label="code-block-2-7"></a><span class="co"># Initialize the SageMaker role (will reflect notebook instance's policy)</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1" aria-label="code-block-2-8"></a>role <span class="op">=</span> sagemaker.get_execution_role()  <span class="co"># the IAM role attached to this notebook instance; every call below acts as this role</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1" aria-label="code-block-2-9"></a><span class="bu">print</span>(<span class="ss">f'role = </span><span class="sc">{</span>role<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1" aria-label="code-block-2-10"></a></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1" aria-label="code-block-2-11"></a><span class="co"># Initialize an S3 client to interact with Amazon S3, allowing operations like uploading, downloading, and managing objects and buckets.</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1" aria-label="code-block-2-12"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1" aria-label="code-block-2-13"></a></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1" aria-label="code-block-2-14"></a><span class="co"># Define the S3 bucket that we will load from</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1" aria-label="code-block-2-15"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn'</span>  <span class="co"># replace with your S3 bucket name</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1" aria-label="code-block-2-16"></a></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1" aria-label="code-block-2-17"></a><span class="co"># Define train/test filenames</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1" aria-label="code-block-2-18"></a>train_filename <span class="op">=</span> <span class="st">'titanic_train.csv'</span>  <span class="co"># object keys inside the bucket (no prefix: they sit at the bucket root)</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1" aria-label="code-block-2-19"></a>test_filename <span class="op">=</span> <span class="st">'titanic_test.csv'</span></span></code></pre>
 </div>
 <p>Create a SageMaker session to manage interactions with Amazon
 SageMaker, such as training jobs, model deployments, and data
@@ -577,10 +582,11 @@ same notebook works in any account.</p>
 <hr class="half-width"><p>A training job runs your script on a machine SageMaker rents for it,
 so the script has to work before it is worth renting anything. Run it
 here first, on the notebook instance, on the small Titanic data. If it
-crashes here, it costs nothing. If it crashes as a job, you still pay
-for the minutes the instance spent starting up. Every later episode does
-the same, a few epochs on a subset on the cheapest machine, then the
-real run.</p>
+crashes here, it costs a few seconds of a five-cent-an-hour machine. If
+it crashes as a job, you pay for the minutes the job’s instance spent
+starting up, on a machine that costs more. Every later episode does the
+same, a few epochs on a subset on the cheapest machine, then the real
+run.</p>
 <div id="understanding-the-xgboost-training-script" class="callout challenge">
 <div class="callout-square">
 <i class="callout-icon" data-feather="zap"></i>
@@ -619,7 +625,7 @@ group.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li><p><strong>Data Preprocessing</strong>: The script fills missing
 values (<code>Age</code> with median, <code>Embarked</code> with mode),
@@ -675,6 +681,12 @@ and never uses these local copies.</p>
 <p>We download the data into the notebook to test the code, as a local
 pipeline would. In a pipeline that scales, the data lives in S3 and the
 jobs read it from there.</p>
+<p>The download costs nothing beyond a fraction of a cent in requests.
+The notebook instance and the bucket are in the same region, and
+transfer between AWS services inside a region is free. Pulling the same
+files to a laptop with the AWS CLI is a transfer out of AWS at
+<code>$0.09</code> per GB, which the optional <em>Same Jobs from the
+Terminal</em> episode covers.</p>
 </div>
 </div>
 </div>
@@ -752,8 +764,8 @@ complicated (e.g., hyperparameter tuning on multiple instances)</p>
 <h3 id="local-test">Local test<a class="anchor" aria-label="anchor" href="#local-test"></a></h3>
 <p>Run the training script here in the notebook first, on the small
 data, with the hyperparameters passed in as variables. A local run finds
-bugs for free, and the same script then runs unchanged as a SageMaker
-job.</p>
+bugs on the cheapest machine, and the same script then runs unchanged as
+a SageMaker job.</p>
 <div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -858,7 +870,7 @@ data. Which instance would you pick for the training job, and why?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
 GB of data wants about 32 GB of memory: <code>ml.m5.2xlarge</code> (8
@@ -1351,7 +1363,7 @@ compared with the first job?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
 <p>The status is <code>InProgress</code> if you were quick and
 <code>Completed</code> otherwise. The cost is the same as the first run,
@@ -1389,7 +1401,7 @@ and compare the bill and the accuracy with the script version.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
 <div class="accordion-body">
 <p>The built-in algorithm will not run our
 <code>preprocess_data()</code> for us, and it expects a CSV with no
