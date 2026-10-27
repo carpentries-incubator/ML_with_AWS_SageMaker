@@ -2272,7 +2272,7 @@ task?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>One way to do it:</li>
@@ -2380,9 +2380,6 @@ cleaner version control.</li>
 </div>
 </div>
 </div>
-<section><h2 class="section-heading" id="open-prefilled--ipynb-notebook">Open prefilled .ipynb notebook<a class="anchor" aria-label="anchor" href="#open-prefilled--ipynb-notebook"></a>
-</h2>
-<hr class="half-width">
 <p>Open the notebook from:
 <code>/ML_with_AWS_SageMaker/notebooks/05_Interacting-with-code-repo.ipynb</code>.
 Select the <strong><code>conda_python3</code></strong> kernel.</p>
@@ -2391,7 +2388,7 @@ needed to run the rest of the lesson, but it is the workflow you will
 want once you start writing code of your own in SageMaker. It also
 doubles as a short git refresher. You need a GitHub account for it;
 nothing else in the lesson does.</p>
-</section><section><h2 class="section-heading" id="step-0-what-goes-under-version-control">Step 0: What goes under version control<a class="anchor" aria-label="anchor" href="#step-0-what-goes-under-version-control"></a>
+<section><h2 class="section-heading" id="step-0-what-goes-under-version-control">Step 0: What goes under version control<a class="anchor" aria-label="anchor" href="#step-0-what-goes-under-version-control"></a>
 </h2>
 <hr class="half-width">
 <p>So far every notebook you have run came from the lesson repository,
@@ -2860,37 +2857,33 @@ up on the bill, and read back its billable time afterwards.</li>
 </div>
 </div>
 </div>
-<section><h2 class="section-heading" id="test-locally-then-scale-to-the-cloud">Test locally, then scale to the cloud<a class="anchor" aria-label="anchor" href="#test-locally-then-scale-to-the-cloud"></a>
-</h2>
-<hr class="half-width">
-<p>In the earlier episodes we used the notebook to prepare data and work
-with S3. From here on it has two jobs. It is the place to test code
-“locally”, on its own small CPU, before anything is scaled up, and it is
-the controller that launches training jobs on separate instances
-SageMaker rents for them and releases when they finish. A script that
-fails on a data-loading error costs nothing on the notebook and bills
-its startup minutes as a job, so every episode from here tests first and
-launches second.</p>
-<p>We start with XGBoost on the Titanic data. First we run the training
-script on the notebook to check that it handles the data and the
-arguments. Then we launch the same script as a SageMaker training job,
-with the training data supplied from S3, and look at how the job
-receives its inputs, where it writes its model, how to estimate its cost
-before launching and how to read the billable time afterwards. The
-PyTorch and tuning episodes build on all of it.</p>
-</section><section><h2 class="section-heading" id="initial-setup">Initial setup<a class="anchor" aria-label="anchor" href="#initial-setup"></a>
-</h2>
-<hr class="half-width">
-<div class="section level3">
-<h3 id="open-the-lesson-notebook">Open the lesson notebook<a class="anchor" aria-label="anchor" href="#open-the-lesson-notebook"></a>
-</h3>
 <p>Open the notebook from:
 <code>/ML_with_AWS_SageMaker/notebooks/06_Training-models-in-SageMaker-notebooks.ipynb</code>.
 When asked for a kernel, pick
 <strong><code>conda_pytorch</code></strong>; every notebook from here to
 the end of the lesson uses it. The <code>conda_python3</code> kernel has
 no PyTorch, and on current instances no scikit-learn either.</p>
-</div>
+<section><h2 class="section-heading" id="test-on-a-small-sample-first-then-scale-up">Test on a small sample first, then scale up<a class="anchor" aria-label="anchor" href="#test-on-a-small-sample-first-then-scale-up"></a>
+</h2>
+<hr class="half-width">
+<p>The Titanic data trains in a second on the notebook, and nothing
+about it needs the cloud. We use it because the pattern matters more
+than the example. Test the code on a small sample first, where a bug
+costs nothing, and once it works, scale up to a more powerful instance
+when the data or the model calls for one. A SageMaker training job is
+that scale-up step. The notebook describes the job and launches it, and
+SageMaker rents the instance, runs the script on it and releases it when
+the script ends. The fine-tuning episode follows the same two steps with
+a 3B model on a GPU, where the cloud earns its keep.</p>
+<p>This episode walks through both steps once with XGBoost. First the
+script runs on the notebook, to check that it handles the data and the
+arguments. Then the same script runs as a training job, with the data
+supplied from S3, and we look at how the job receives its inputs, where
+it writes its model, how to estimate its cost before launching and how
+to read the billable time afterwards.</p>
+</section><section><h2 class="section-heading" id="initial-setup">Initial setup<a class="anchor" aria-label="anchor" href="#initial-setup"></a>
+</h2>
+<hr class="half-width">
 <div class="section level3">
 <h3 id="set-up-the-project-folder">Set up the project folder<a class="anchor" aria-label="anchor" href="#set-up-the-project-folder"></a>
 </h3>
@@ -2970,12 +2963,13 @@ same notebook works in any account.</p>
 </section><section><h2 class="section-heading" id="check-the-training-script-before-launching-a-job">Check the training script before launching a job<a class="anchor" aria-label="anchor" href="#check-the-training-script-before-launching-a-job"></a>
 </h2>
 <hr class="half-width">
-<p>A training job is a script run on a machine SageMaker rents for it.
-The script has to work before it is worth renting anything, so run it
-here first, on the notebook instance, on the small Titanic data. A local
-run finds bugs for free; a job that fails on a data-loading error still
-bills its startup minutes. Every later episode does the same: a few
-epochs on a subset on the cheapest machine, then the real run.</p>
+<p>A training job runs your script on a machine SageMaker rents for it,
+so the script has to work before it is worth renting anything. Run it
+here first, on the notebook instance, on the small Titanic data. If it
+crashes here, it costs nothing. If it crashes as a job, you still pay
+for the minutes the instance spent starting up. Every later episode does
+the same, a few epochs on a subset on the cheapest machine, then the
+real run.</p>
 <div id="understanding-the-xgboost-training-script" class="callout challenge">
 <div class="callout-square">
 <i class="callout-icon" data-feather="zap"></i>
@@ -4012,6 +4006,9 @@ determine when each is appropriate in SageMaker.</li>
 </div>
 </div>
 </div>
+<p>Open the notebook from:
+<code>/ML_with_AWS_SageMaker/notebooks/07_Training-models-in-SageMaker-notebooks-part2.ipynb</code>.
+Select the <strong><code>conda_pytorch</code></strong> kernel.</p>
 <section><h2 class="section-heading" id="the-same-pattern-with-a-neural-network">The same pattern with a neural network<a class="anchor" aria-label="anchor" href="#the-same-pattern-with-a-neural-network"></a>
 </h2>
 <hr class="half-width">
@@ -4021,19 +4018,11 @@ same pattern with a small PyTorch neural network on the same Titanic
 prediction task. Keeping the data and the task fixed means that what
 changes between runs is only the instance, so CPU and GPU can be
 compared on their own.</p>
-<p>The question is not only whether a GPU is faster. A GPU costs more
-per hour, and for a network this small the fixed cost of starting a job
-may matter more than the training itself. We prepare the data, test the
-script on the notebook, estimate the cost of a managed run, and compare
-CPU and GPU instances on the actual job records. Then we look at what it
-takes to spread training across more than one machine and why adding an
-instance is not automatically a speedup.</p>
-</section><section><h2 class="section-heading" id="initial-setup">Initial setup<a class="anchor" aria-label="anchor" href="#initial-setup"></a>
-</h2>
-<hr class="half-width">
-<p>Open the notebook from:
-<code>/ML_with_AWS_SageMaker/notebooks/07_Training-models-in-SageMaker-notebooks-part2.ipynb</code>.
-Select the <strong><code>conda_pytorch</code></strong> kernel.</p>
+<p>A GPU costs about six times more per hour than the CPU instance, so
+it has to train the model at least six times faster to be worth it. For
+a network this small, most of a job’s time is startup, not training. We
+run the same job on both and read the bills. Then we try two instances
+instead of one, and see why that does not halve the time.</p>
 </section><section><h2 class="section-heading" id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
 </h2>
 <hr class="half-width">
@@ -4477,7 +4466,7 @@ goes next to it.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>There is no single answer; the solution is the written estimate. One
 worked example for scale: a 7B language model fully fine-tuned on 50,000
@@ -4674,7 +4663,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -7576,13 +7565,10 @@ jobs.</li>
 </div>
 </div>
 </div>
-<section><h2 class="section-heading" id="initial-setup-open-prefilled--ipynb-notebook">Initial setup: open prefilled .ipynb notebook<a class="anchor" aria-label="anchor" href="#initial-setup-open-prefilled--ipynb-notebook"></a>
-</h2>
-<hr class="half-width">
 <p>Open the notebook from:
 <code>/ML_with_AWS_SageMaker/notebooks/09_Hyperparameter-tuning.ipynb</code>.
 Select the <strong><code>conda_pytorch</code></strong> kernel.</p>
-</section><section><h2 class="section-heading" id="hyperparameter-tuning-in-sagemaker">Hyperparameter tuning in SageMaker<a class="anchor" aria-label="anchor" href="#hyperparameter-tuning-in-sagemaker"></a>
+<section><h2 class="section-heading" id="hyperparameter-tuning-in-sagemaker">Hyperparameter tuning in SageMaker<a class="anchor" aria-label="anchor" href="#hyperparameter-tuning-in-sagemaker"></a>
 </h2>
 <hr class="half-width">
 <p>The PyTorch episode trained one neural network with a learning rate
@@ -8385,26 +8371,6 @@ any links that you are not going to use.
 <div class="text-end">
           <button role="button" aria-pressed="false" tabindex="0" id="expand-code" class="pull-right" data-expand="Expand All Solutions " data-collapse="Collapse All Solutions "> Expand All Solutions <i aria-hidden="true" data-feather="plus"></i></button>
         </div>
-<section><h2 class="section-heading" id="retrieval-augmented-generation-rag-on-aws">Retrieval-Augmented Generation (RAG) on AWS<a class="anchor" aria-label="anchor" href="#retrieval-augmented-generation-rag-on-aws"></a>
-</h2>
-<hr class="half-width">
-<p>Retrieval-Augmented Generation (RAG) is a pattern where you
-<strong>retrieve</strong> relevant passages from your own documents and
-then <strong>generate</strong> an answer from them. The model is used,
-not changed. No weights are updated and no training job runs, so the
-documents can change every week and nothing has to be retrained. Using a
-trained model to get an output from it, a prediction, an embedding or an
-answer, is called <strong>inference</strong>, and everything in this
-part of the lesson is inference. The example throughout is <a href="https://www.kaggle.com/competitions/WattBot2026" class="external-link">WattBot</a>, a
-question-answering challenge over a corpus of research papers on AI and
-energy.</p>
-<p>There are four ways to run inference on AWS. Call a model through
-Bedrock’s managed API, run it in a Processing job that ends on its own,
-load it on a GPU notebook instance, or deploy it as an inference
-endpoint. This episode compares the four, says why Bedrock is the one to
-start with, and sets up the episodes that follow, which build the same
-RAG pipeline in three of these ways and weigh the trade-offs of
-each.</p>
 <div class="overview card">
 <h2 class="card-header">Overview</h2>
 <div class="row g-0">
@@ -8444,6 +8410,26 @@ endpoints) is worth it.</li>
 </div>
 </div>
 </div>
+<section><h2 class="section-heading" id="retrieval-augmented-generation-rag-on-aws">Retrieval-Augmented Generation (RAG) on AWS<a class="anchor" aria-label="anchor" href="#retrieval-augmented-generation-rag-on-aws"></a>
+</h2>
+<hr class="half-width">
+<p>Retrieval-Augmented Generation (RAG) is a pattern where you
+<strong>retrieve</strong> relevant passages from your own documents and
+then <strong>generate</strong> an answer from them. The model is used,
+not changed. No weights are updated and no training job runs, so the
+documents can change every week and nothing has to be retrained. Using a
+trained model to get an output from it, a prediction, an embedding or an
+answer, is called <strong>inference</strong>, and everything in this
+part of the lesson is inference. The example throughout is <a href="https://www.kaggle.com/competitions/WattBot2026" class="external-link">WattBot</a>, a
+question-answering challenge over a corpus of research papers on AI and
+energy.</p>
+<p>There are four ways to run inference on AWS. Call a model through
+Bedrock’s managed API, run it in a Processing job that ends on its own,
+load it on a GPU notebook instance, or deploy it as an inference
+endpoint. This episode compares the four, says why Bedrock is the one to
+start with, and sets up the episodes that follow, which build the same
+RAG pipeline in three of these ways and weigh the trade-offs of
+each.</p>
 </section><section><h2 class="section-heading" id="what-is-rag">What is RAG?<a class="anchor" aria-label="anchor" href="#what-is-rag"></a>
 </h2>
 <hr class="half-width">
@@ -9836,7 +9822,7 @@ month’s Bedrock spend by <code>Project</code>?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -10290,7 +10276,7 @@ same questions, <code>$1.41</code> an hour?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>The two prices are from the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
 for DeepSeek on-demand in October 2026; update them for the model and
@@ -10370,7 +10356,7 @@ what moved the score.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <p>Both solution cells start with
 <code>%%script false --no-raise-error</code>, which makes Jupyter skip
@@ -11795,7 +11781,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -11859,7 +11845,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still downloading or
@@ -13390,7 +13376,7 @@ finds something. Then run them against your own resources.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="tabs">
 <nav><div id="nav-tab-5" class="nav nav-tabs" role="tablist">
@@ -13518,15 +13504,15 @@ costs.</li>
 </div>
 </div>
 </div>
-<section><h2 class="section-heading" id="initial-setup">Initial setup<a class="anchor" aria-label="anchor" href="#initial-setup"></a>
-</h2>
-<hr class="half-width">
 <p>Open the notebook from:
 <code>/ML_with_AWS_SageMaker/notebooks/15_Resource-management-cleanup.ipynb</code>.
 Any kernel works; <strong><code>conda_python3</code></strong> is fine.
 This episode is mostly console steps, but the cells below ask AWS what
 is still running or stored under your name, so you can check the list
 against reality before and after you clean up.</p>
+<section><h2 class="section-heading" id="initial-setup">Initial setup<a class="anchor" aria-label="anchor" href="#initial-setup"></a>
+</h2>
+<hr class="half-width">
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13902,7 +13888,7 @@ stopped your notebook instance and walked away?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>A complete list for someone who did every episode, including the
 optional ones:</p>
