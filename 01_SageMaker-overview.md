@@ -70,20 +70,6 @@ Everything in the lesson is one of the four boxes in the diagram. S3 holds your 
 
 Everything the notebook does here can also be done from the AWS command line or from Python on your own machine; the optional episode *The Same Jobs from the Terminal* shows the CLI equivalents.
 
-### Lesson outline
-
-The lesson is in four parts. This episode and the four after it are part 1.
-
-**Part 1, orientation.** What the cloud offers next to the compute you already have, what it costs, and the setup every later episode builds on. Put the Titanic data in an S3 bucket, start a small notebook instance that launches everything else, read and write the bucket from it, and optionally put your notebooks under version control.
-
-**Part 2, SageMaker: training, fine-tuning and tuning.** Train XGBoost and PyTorch models on the Titanic data as training jobs, estimating the cost before each launch and reading the bill after, on CPU and on GPU, on one instance and on two. Fine-tune a 3B vision-language model with LoRA, as a training job with checkpoints and a cap, for transcribing handwritten German letters (Badger Scribe). Then run a tuning job that trains ten models under a budget.
-
-**Part 3, Bedrock: inference and retrieval-augmented generation.** Build a RAG pipeline over energy research papers (WattBot) on Bedrock's hosted models, paid per token through tagged profiles, for cents a run; add multimodal embeddings for the table and figure questions; then run the same pipeline with an open-weight model Bedrock does not serve, as Processing jobs that rent a GPU for the minutes they need.
-
-**Part 4, resource management and cleanup.** What to stop, what to delete, how to read the bill, and the rules the account enforces, with an optional episode on the same jobs from a terminal.
-
-Every job is tagged, capped, estimated before launch and checked against the bill after.
-
 ::::::::::::::::::::::::::::::::::::: keypoints
 
 - The cloud offers the current GPU generation on demand and bills per second while a job runs; on-prem hardware offers full control and a fixed cost but a fixed generation and a queue.
