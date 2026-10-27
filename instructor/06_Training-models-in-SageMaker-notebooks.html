@@ -1014,7 +1014,10 @@ BadgerScribe, BadgerCode, BrainDecoding, PoisonedWell, SnapshotWI,
 <code>Purpose</code> must be Storage, Notebook, Training, Tuning or
 Inference, the instance type must be one the lesson uses, the runtime
 cap must be 48 hours or less, and endpoints and EC2 instances cannot be
-created at all.</p>
+created at all. The instance list is single-GPU types only, and that is
+deliberate: with the 48-hour cap, the most one hung job can bill on the
+largest allowed type is about <code>$125</code>, where a four-GPU box
+would be <code>$340</code> to <code>$1,200</code>.</p>
 <p>The error message does not say which rule was broken. AWS does not
 let an administrator attach an explanation to a refusal. The lesson’s
 helper module does the explaining instead.

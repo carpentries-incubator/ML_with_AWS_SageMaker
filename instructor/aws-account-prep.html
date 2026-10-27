@@ -404,7 +404,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Account preparation checklist (quotas, Bedrock, tags)</h1>
-        <p>Last updated on 2026-10-26 |
+        <p>Last updated on 2026-10-27 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/instructors/aws-account-prep.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -707,7 +707,18 @@ whose instance type is not on the list. The list must match the quota
 table above exactly, including the capacity fallbacks; a type you forget
 here fails for every learner at once, from the console too. Keep
 <code>ml.g6e.xlarge</code> on the list only if you want the optional
-GPU-notebook episode to be possible.</li>
+GPU-notebook episode to be possible. The list is single-GPU on purpose,
+and that is a budget decision rather than a technical one: under the
+48-hour cap, the worst case for one hung job is <code>$125</code> on the
+largest allowed type, against <code>$340</code> on an
+<code>ml.g5.12xlarge</code>, <code>$630</code> on an
+<code>ml.g6e.12xlarge</code> and <code>$1,200</code> on an
+<code>ml.p4d.24xlarge</code>, which is more than a learner’s share of
+the credits. If a term needs a four-GPU type, add it here together with
+a second deny statement that names those types and a shorter cap, four
+hours say; IAM ANDs the conditions in one statement, so single-GPU jobs
+keep the 48-hour ceiling. Those types also start at a quota of zero in a
+new account.</li>
 <li>
 <strong>The three tag statements</strong> refuse a job or notebook
 created without each of the cost-allocation keys.
@@ -1069,7 +1080,7 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/aws-account-prep.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/aws-account-prep.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-26",
+  "dateModified": "2026-10-27",
   "datePublished": "2026-10-27"
 }
 
