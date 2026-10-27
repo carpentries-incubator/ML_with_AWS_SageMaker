@@ -107,7 +107,7 @@ import sagemaker
 import logging
 logging.getLogger("sagemaker.telemetry.telemetry_logging").setLevel(logging.WARNING)   # silence the telemetry notice; the "Creating training-job" line still prints
 logging.getLogger("sagemaker.image_uris").setLevel(logging.WARNING)
-logging.getLogger("sagemaker.config").setLevel(logging.WARNING)   # and the two "Not applying SDK defaults" lines
+logging.getLogger("sagemaker.config").addFilter(lambda record: record.levelno >= logging.WARNING)   # drop the two "Not applying SDK defaults" lines; a filter holds even where the SDK resets the logger's level
 logging.getLogger("sagemaker.estimator").setLevel(logging.ERROR)   # tuner.fit reads estimator.model_data before any job exists and logs a harmless "No finished training job found" warning
 # range types for the search: ContinuousParameter (float range), IntegerParameter (whole-number range), CategoricalParameter (explicit list)
 from sagemaker.tuner import HyperparameterTuner, IntegerParameter, ContinuousParameter, CategoricalParameter
@@ -264,7 +264,7 @@ def tuning_cost_report(tuner, price_per_hour):
         desc = job_cost_report(job_name, price_per_hour)
         total_billable += desc["BillableTimeInSeconds"] * desc["ResourceConfig"]["InstanceCount"]
     total_cost = total_billable / 3600 * price_per_hour
-    print(f"Tuning job {tuner.latest_tuning_job.name}: {len(jobs_df)} training jobs, {total_billable/60:.1f} billable min, ${total_cost:.2f} total")
+    print(f"Tuning job {tuner.latest_tuning_job.name}: {len(jobs_df)} training jobs, {total_billable/60:.1f} billable min, ${total_cost:.3f} total")
 
 tuning_cost_report(tuner, price_per_hour)
 ```
