@@ -908,17 +908,22 @@ training plus the 10 minutes of startup it assumes. The 17 is more than
 the 12 of the hand calculation above because the estimator multiplies
 the FLOPs by 1.5 when gradient checkpointing is on, as it is in our
 script: to save memory, the forward pass is thrown away and recomputed
-during the backward pass, which is half the arithmetic again. That is
-every assumption in it: bytes per parameter from the first table plus 4
-GB of activations for memory; 6 or 4 FLOPs per parameter per token,
-times 1.5 for checkpointing, at a quarter of the GPU’s peak for time; 10
-minutes of startup; and the price list for the bill. The job you launch
-in Step 1 will bill about 32 minutes, and the difference is not an error
-in the rule. The job also scores holdout pages with the base model
-before training and with the adapter after it, which is about 14 minutes
-of GPU time the estimator knows nothing about, because it estimates
-training. Hold on to <code>step0_estimate</code>; Step 2 compares it to
-the job’s own bill.</p>
+during the backward pass, which is half the arithmetic again. Measured,
+the training phase of the class job is about 12 minutes (126 optimizer
+steps at under 6 seconds each, in the job’s log), so the rule without
+the factor landed on the number and the rule with it is a third high:
+the quarter-of-peak utilization is the loosest assumption in the rule,
+and a miss of that size is what it is good for. That is every assumption
+in it: bytes per parameter from the first table plus 4 GB of activations
+for memory; 6 or 4 FLOPs per parameter per token, times 1.5 for
+checkpointing, at a quarter of the GPU’s peak for time; 10 minutes of
+startup; and the price list for the bill. The job you launch in Step 1
+will bill about 32 minutes, and the difference is not an error in the
+rule. The job also scores holdout pages with the base model before
+training and with the adapter after it, which is about 14 minutes of GPU
+time the estimator knows nothing about, because it estimates training.
+Hold on to <code>step0_estimate</code>; Step 2 compares it to the job’s
+own bill.</p>
 <p>The same call for the kind of run a marathon team might weigh, a 7B
 model on 5,000 documents of about 600 words (800 tokens) each, three
 passes, with the eight attempts a project takes:</p>
@@ -966,7 +971,7 @@ project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5: a full fine-tune of a 7B model needs about
 112 GB plus activations, and the g5 has 24 GB. On the p4d, 8 × 40 GB =
@@ -1357,9 +1362,13 @@ is tokens, not words: the model never sees words. The image becomes one
 token per 28 × 28 pixel block once it is resized to
 <code>max_pixels</code>, and the transcription becomes pieces of words,
 more pieces for German and for old spellings than for modern English.
-Count it with the model’s own processor rather than guess it; the
-processor’s files are a few megabytes, so the 7.5 GB of weights stay in
-S3.</p>
+The count depends on the model, so it has to come from this model’s own
+processor: every model has its own tokenizer vocabulary, and every
+vision model its own patch size and resizing rules, so the same page is
+a different number of tokens for a different model. CHURRO’s processor
+is the code the training job will run on every page, so a count from it
+is the job’s count, not an estimate. Its files are a few megabytes, so
+the 7.5 GB of weights stay in S3.</p>
 <div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1453,15 +1462,20 @@ constant.</p>
 <span id="cb17-6"><a href="#cb17-6" tabindex="-1" aria-label="code-block-17-6"></a><span class="bu">print</span>(<span class="ss">f"average tokens per page: </span><span class="sc">{</span>avg_image<span class="sc">:.0f}</span><span class="ss"> image + </span><span class="sc">{</span>n_instructions<span class="sc">}</span><span class="ss"> instruction prompt + </span><span class="sc">{</span>avg_text<span class="sc">:.0f}</span><span class="ss"> transcription = </span><span class="sc">{</span>avg_tokens_per_page<span class="sc">:.0f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <p>That average is the <code>tokens_per_example</code> the estimate
-should have used. Re-run the estimator with it and compare with the
-1,600 guess:</p>
+should have used. Step 0 of this episode ran
+<code>helpers.estimate_finetune_cost</code> with a guess of 1,600 tokens
+per page; run it again with the measured average and compare:</p>
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1" aria-label="code-block-18-1"></a>helpers.estimate_finetune_cost(params_billions<span class="op">=</span><span class="fl">3.75</span>, examples<span class="op">=</span><span class="dv">251</span>, tokens_per_example<span class="op">=</span><span class="bu">int</span>(avg_tokens_per_page), epochs<span class="op">=</span><span class="dv">2</span>,</span>
 <span id="cb18-2"><a href="#cb18-2" tabindex="-1" aria-label="code-block-18-2"></a>                               method<span class="op">=</span><span class="st">"lora"</span>, instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>)<span class="op">;</span></span></code></pre>
 </div>
-<p>Multiply by pages and passes and that is the “tokens seen” in the
+<p>The measured count is a tenth below the guess, and the estimate moves
+with it: 26 minutes and <code>$0.60</code> against 27 and
+<code>$0.64</code>. Step 1 keeps the 27-minute figure; a tenth either
+way is well inside what the rule can tell, which is about a factor of
+two. Multiply by pages and passes and that is the “tokens seen” in the
 cost table. Halve <code>max_pixels</code> and the image count halves
 with it; that is what Exercise 1 changes.</p>
 <p>Now the same run as a full fine-tune. The arithmetic goes up by half,
@@ -1559,7 +1573,7 @@ step. Which, and why are they there?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>Only the language model’s <code>q_proj</code>, <code>k_proj</code>,
 <code>v_proj</code>, <code>o_proj</code>, <code>gate_proj</code>,
@@ -2115,7 +2129,7 @@ will compare it to the bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>Expect about 32 billed minutes. Scoring is the line most likely to
 surprise: at 17 to 21 seconds a page, the two 15-page evaluations and
@@ -2517,7 +2531,7 @@ summaries, and the before/after CER. Did the extra pixels help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -2558,7 +2572,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
 <div class="accordion-body">
 <p>Startup and upload (~6 min, <code>$0.26</code> at
 <code>$2.61</code>/h) do not speed up: the container pull and the S3

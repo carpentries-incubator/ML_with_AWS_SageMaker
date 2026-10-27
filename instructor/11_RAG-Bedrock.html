@@ -2273,23 +2273,28 @@ across the three runs and against the DeepSeek run.</p>
 <h3 class="callout-title">What to expect, and what it cost</h3>
 <div class="callout-content">
 <p>Measured once on this corpus, 50 table and figure questions, Nova 2
-Lite throughout. Retrieval at the paper level was a tie that the text
-index won: 0.94 against 0.89 on table questions, 0.94 against 0.88 on
-figures, and 0.82 against 0.65 on quote-only questions, where a picture
-has nothing to offer. Then reading. Text chunks alone scored 0.64, with
-57% of table answers and 59% of figure answers correct. Chunks plus the
-image index’s top three crops scored 0.75, with 69% of tables and 71% of
-figures correct and citation F1 up from 0.85 to 0.93. Chunks plus the
-crops on the pages behind the top text chunks, the route the paper-level
-hit rate seemed to favour, scored 0.67. Two readings. Showing the model
-the table or figure is worth about ten points on the questions that
-depend on one, tables included, which whole pages at 100 dpi had not
-managed. And finding the paper is not finding the table: the image index
-chose better crops than the text route did, because a question about a
-table matches the picture of that table better than it matches the prose
-on the same page. Fifty questions is a small sample, so read the
-direction, not the decimals. For the bill, every crop is a few hundred
-input tokens at Nova 2 Lite’s rate on the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">pricing page</a>, so a
+Lite throughout. At the paper level the text index wins: a ground-truth
+paper is in its top 8 for 94% of table questions and 94% of figure
+questions, against 77% and 71% for the image index, and for 82% against
+55% of quote-only questions, where a picture has nothing to offer. At
+the crop level the two routes are even: the crop the answer sits in is
+among those shown for 55% of table questions by the text route and 52%
+by the image index, and for 57% against 50% of figure questions. Then
+reading. Text chunks alone scored 0.64, with 57% of table answers and
+59% of figure answers correct. Chunks plus the image index’s top three
+crops scored 0.75, with 69% of tables and 71% of figures correct and
+citation F1 up from 0.85 to 0.93. Chunks plus the crops on the pages
+behind the top text chunks, the route the paper-level hit rate seemed to
+favour, scored 0.67. Two readings. Showing the model the table or figure
+is worth about ten points on the questions that depend on one, tables
+included, which whole pages at 100 dpi had not managed. And the
+crop-level hit rates say where the image index’s lead does not come
+from: it finds the answer’s own crop no more often than the text route
+does. The difference is in what else the model is shown, three crops
+chosen by their similarity to the question against every crop on the
+pages behind the top chunks. Fifty questions is a small sample, so read
+the direction, not the decimals. For the bill, every crop is a few
+hundred input tokens at Nova 2 Lite’s rate on the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">pricing page</a>, so a
 run with images costs two to three times the control and takes three to
 four times as long: 1.6, 4.0 and 3.0 minutes for the three runs here.
 <code>vision_usage</code> holds all three runs’ usage blocks, and the

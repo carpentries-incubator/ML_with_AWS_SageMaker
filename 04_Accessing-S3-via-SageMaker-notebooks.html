@@ -769,18 +769,20 @@ bucket using…</p>
 <span id="cb14-3"><a href="#cb14-3" tabindex="-1" aria-label="code-block-14-3"></a></span>
 <span id="cb14-4"><a href="#cb14-4" tabindex="-1" aria-label="code-block-14-4"></a><span class="co"># Check if there are objects in the bucket</span></span>
 <span id="cb14-5"><a href="#cb14-5" tabindex="-1" aria-label="code-block-14-5"></a><span class="cf">if</span> <span class="st">'Contents'</span> <span class="kw">in</span> response:</span>
-<span id="cb14-6"><a href="#cb14-6" tabindex="-1" aria-label="code-block-14-6"></a>    <span class="cf">for</span> obj <span class="kw">in</span> response[<span class="st">'Contents'</span>]:</span>
-<span id="cb14-7"><a href="#cb14-7" tabindex="-1" aria-label="code-block-14-7"></a>        <span class="bu">print</span>(obj[<span class="st">'Key'</span>])  <span class="co"># Print the object's key (its path in the bucket)</span></span>
-<span id="cb14-8"><a href="#cb14-8" tabindex="-1" aria-label="code-block-14-8"></a><span class="cf">else</span>:</span>
-<span id="cb14-9"><a href="#cb14-9" tabindex="-1" aria-label="code-block-14-9"></a>    <span class="bu">print</span>(<span class="st">"The bucket is empty or does not exist."</span>)</span></code></pre>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1" aria-label="code-block-14-6"></a>    keys <span class="op">=</span> [obj[<span class="st">'Key'</span>] <span class="cf">for</span> obj <span class="kw">in</span> response[<span class="st">'Contents'</span>]]   <span class="co"># each object's key: its path in the bucket</span></span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1" aria-label="code-block-14-7"></a>    <span class="bu">print</span>(<span class="bu">len</span>(keys), <span class="st">"objects; the first 20:"</span>)           <span class="co"># a bucket that has seen a few training jobs holds hundreds of files, so do not print them all</span></span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1" aria-label="code-block-14-8"></a>    <span class="cf">for</span> key <span class="kw">in</span> keys[:<span class="dv">20</span>]:</span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1" aria-label="code-block-14-9"></a>        <span class="bu">print</span>(key)</span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1" aria-label="code-block-14-10"></a><span class="cf">else</span>:</span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1" aria-label="code-block-14-11"></a>    <span class="bu">print</span>(<span class="st">"The bucket is empty or does not exist."</span>)</span></code></pre>
 </div>
 <p>Alternatively, we can substitute this for a helper function call as
 well.</p>
 <div class="codewrapper sourceCode" id="cb15">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a>file_list <span class="op">=</span> helpers.list_S3_objects(bucket_name)</span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a>file_list</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a>file_list <span class="op">=</span> helpers.list_S3_objects(bucket_name)   <span class="co"># every key in the bucket, through the paginator</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a>file_list[:<span class="dv">20</span>]</span></code></pre>
 </div>
 <div id="challenge-before-and-after" class="callout challenge">
 <div class="callout-square">
@@ -808,7 +810,7 @@ task?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>One way to do it:</li>
 </ol><div class="codewrapper sourceCode" id="cb16">
@@ -816,12 +818,14 @@ task?</li>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a>size_before <span class="op">=</span> helpers.get_s3_bucket_size(bucket_name)</span>
 <span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a></span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">"Notes2.txt"</span>, <span class="st">"w"</span>) <span class="im">as</span> f:</span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a>    f.write(<span class="st">"A second note, to see the bucket grow.</span><span class="ch">\n</span><span class="st">"</span> <span class="op">*</span> <span class="dv">20</span>)</span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a>s3.upload_file(<span class="st">"Notes2.txt"</span>, bucket_name, <span class="st">"docs/Notes2.txt"</span>)</span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a></span>
-<span id="cb16-7"><a href="#cb16-7" tabindex="-1" aria-label="code-block-16-7"></a>size_after <span class="op">=</span> helpers.get_s3_bucket_size(bucket_name)</span>
-<span id="cb16-8"><a href="#cb16-8" tabindex="-1" aria-label="code-block-16-8"></a><span class="bu">print</span>(<span class="ss">f"before </span><span class="sc">{</span>size_before[<span class="st">'size_mb'</span>] <span class="op">*</span> <span class="dv">1024</span><span class="sc">:,.1f}</span><span class="ss"> KB, after </span><span class="sc">{</span>size_after[<span class="st">'size_mb'</span>] <span class="op">*</span> <span class="dv">1024</span><span class="sc">:,.1f}</span><span class="ss"> KB: grew by </span><span class="sc">{</span>(size_after[<span class="st">'size_mb'</span>] <span class="op">-</span> size_before[<span class="st">'size_mb'</span>]) <span class="op">*</span> <span class="dv">1024</span><span class="sc">:.1f}</span><span class="ss"> KB"</span>)   <span class="co"># the helper returns a dict with size_mb and size_gb; 0.0 on a rerun, since the same file is overwritten</span></span></code></pre>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a><span class="im">import</span> time</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">"Notes2.txt"</span>, <span class="st">"w"</span>) <span class="im">as</span> f:</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a>    f.write(<span class="st">"A second note, to see the bucket grow.</span><span class="ch">\n</span><span class="st">"</span> <span class="op">*</span> <span class="dv">20</span>)</span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a>notes2_key <span class="op">=</span> <span class="ss">f"docs/Notes2-</span><span class="sc">{</span><span class="bu">int</span>(time.time())<span class="sc">}</span><span class="ss">.txt"</span>   <span class="co"># a new key each run; uploading over an existing key of the same size would show no growth</span></span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1" aria-label="code-block-16-7"></a>s3.upload_file(<span class="st">"Notes2.txt"</span>, bucket_name, notes2_key)</span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1" aria-label="code-block-16-8"></a></span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1" aria-label="code-block-16-9"></a>size_after <span class="op">=</span> helpers.get_s3_bucket_size(bucket_name)</span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1" aria-label="code-block-16-10"></a><span class="bu">print</span>(<span class="ss">f"before </span><span class="sc">{</span>size_before[<span class="st">'size_mb'</span>] <span class="op">*</span> <span class="dv">1024</span><span class="sc">:,.1f}</span><span class="ss"> KB, after </span><span class="sc">{</span>size_after[<span class="st">'size_mb'</span>] <span class="op">*</span> <span class="dv">1024</span><span class="sc">:,.1f}</span><span class="ss"> KB: grew by </span><span class="sc">{</span>(size_after[<span class="st">'size_mb'</span>] <span class="op">-</span> size_before[<span class="st">'size_mb'</span>]) <span class="op">*</span> <span class="dv">1024</span><span class="sc">:.1f}</span><span class="ss"> KB"</span>)   <span class="co"># the helper returns a dict with size_mb and size_gb</span></span></code></pre>
 </div>
 <p>The bucket grows by the size of the file (a few hundred bytes here),
 and at <code>$0.023</code> per GB-month that is well under a thousandth
