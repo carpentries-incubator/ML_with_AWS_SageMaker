@@ -336,7 +336,7 @@
 <div class="accordion accordion-flush" id="accordionFlush9">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading9">
-        <a href="08_Hyperparameter-tuning.html">8. Hyperparameter Tuning in SageMaker: Neural Network Example</a>
+        <a href="08_Finetuning-BadgerScribe.html">8. Fine-tuning a Vision-Language Model with Training Jobs</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -348,7 +348,7 @@
 <div class="accordion accordion-flush" id="accordionFlush10">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading10">
-        <a href="09_Finetuning-BadgerScribe.html">9. Fine-tuning a Vision-Language Model with Training Jobs</a>
+        <a href="09_Hyperparameter-tuning.html">9. Hyperparameter Tuning in SageMaker: Neural Network Example</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -642,7 +642,32 @@ to the gradient exchange</strong>: big model, big batch, fast link.
 <code>helpers.estimate_parallel_speedup</code> gives the speedup and the
 cost ratio before you rent the devices; on 569 rows of tabular data the
 measured result was 0.85x the speed at 2.4x the cost.</li>
-</ul></section><section id="08_Hyperparameter-tuning"><h2 class="section-heading"><a href="08_Hyperparameter-tuning.html">Hyperparameter Tuning in SageMaker: Neural Network Example</a></h2>
+</ul></section><section id="08_Finetuning-BadgerScribe"><h2 class="section-heading"><a href="08_Finetuning-BadgerScribe.html">Fine-tuning a Vision-Language Model with Training Jobs</a></h2>
+<hr class="half-width">
+<ul>
+<li>Fine-tuning cost is GPU-hours × hourly rate, and GPU-hours scale
+with model size × tokens × epochs × attempts. The same recipe runs from
+under a dollar (3B, LoRA, a few hundred pages) to tens of thousands
+(70B, full fine-tune, days on multi-GPU nodes). Starting from a model
+that already knows most of the task is the biggest saving
+available.</li>
+<li>Training jobs, not GPU notebooks, are the safe way to run it: they
+end, <code>max_run</code> guarantees it, a unique <code>job_name</code>
+prevents a second copy launching by accident, and checkpoints synced to
+S3 mean a killed job costs an epoch rather than the run. Interrupting a
+notebook cell does not stop a job.</li>
+<li>Estimate before launching (startup overhead + pages × epochs ×
+seconds per page, at the instance’s rate), then compare to
+<code>BillableTimeInSeconds</code>.</li>
+<li>Image resolution (<code>max_pixels</code>) and epochs change cost by
+multiples; the instance size changes it by 5–45x, which is right when
+the model does not fit on one GPU and waste when it does.</li>
+<li>Score the holdout at the end of every epoch: the curve, not a rule
+of thumb, says how many passes were worth paying for. Measure the gain
+on the same held-out pages before and after, with the task’s own metric,
+and a page-level holdout is optimistic when the real test is split by
+document.</li>
+</ul></section><section id="09_Hyperparameter-tuning"><h2 class="section-heading"><a href="09_Hyperparameter-tuning.html">Hyperparameter Tuning in SageMaker: Neural Network Example</a></h2>
 <hr class="half-width">
 <ul>
 <li>
@@ -672,31 +697,6 @@ number and dominate short jobs.</li>
 Load the saved scaler and pass it to
 <code>preprocess_data(test_df, scaler=scaler)</code>; never refit on
 test data.</li>
-</ul></section><section id="09_Finetuning-BadgerScribe"><h2 class="section-heading"><a href="09_Finetuning-BadgerScribe.html">Fine-tuning a Vision-Language Model with Training Jobs</a></h2>
-<hr class="half-width">
-<ul>
-<li>Fine-tuning cost is GPU-hours × hourly rate, and GPU-hours scale
-with model size × tokens × epochs × attempts. The same recipe runs from
-under a dollar (3B, LoRA, a few hundred pages) to tens of thousands
-(70B, full fine-tune, days on multi-GPU nodes). Starting from a model
-that already knows most of the task is the biggest saving
-available.</li>
-<li>Training jobs, not GPU notebooks, are the safe way to run it: they
-end, <code>max_run</code> guarantees it, a unique <code>job_name</code>
-prevents a second copy launching by accident, and checkpoints synced to
-S3 mean a killed job costs an epoch rather than the run. Interrupting a
-notebook cell does not stop a job.</li>
-<li>Estimate before launching (startup overhead + pages × epochs ×
-seconds per page, at the instance’s rate), then compare to
-<code>BillableTimeInSeconds</code>.</li>
-<li>Image resolution (<code>max_pixels</code>) and epochs change cost by
-multiples; the instance size changes it by 5–45x, which is right when
-the model does not fit on one GPU and waste when it does.</li>
-<li>Score the holdout at the end of every epoch: the curve, not a rule
-of thumb, says how many passes were worth paying for. Measure the gain
-on the same held-out pages before and after, with the task’s own metric,
-and a page-level holdout is optimistic when the real test is split by
-document.</li>
 </ul></section><section id="10_RAG-overview"><h2 class="section-heading"><a href="10_RAG-overview.html">Overview of RAG Workflows on AWS</a></h2>
 <hr class="half-width">
 <ul>

@@ -279,7 +279,7 @@
 <div class="accordion accordion-flush" id="accordionFlush9">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading9">
-        <a href="08_Hyperparameter-tuning.html">8. Hyperparameter Tuning in SageMaker: Neural Network Example</a>
+        <a href="08_Finetuning-BadgerScribe.html">8. Fine-tuning a Vision-Language Model with Training Jobs</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -288,7 +288,7 @@
 <div class="accordion accordion-flush" id="accordionFlush10">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading10">
-        <a href="09_Finetuning-BadgerScribe.html">9. Fine-tuning a Vision-Language Model with Training Jobs</a>
+        <a href="09_Hyperparameter-tuning.html">9. Hyperparameter Tuning in SageMaker: Neural Network Example</a>
     </div><!--/div.accordion-header-->
 
   </div><!--/div.accordion-item-->
@@ -425,8 +425,8 @@ that run on their own and end; <strong>Bedrock</strong> serves hosted
 models by the token, with nothing to start or stop. The four things
 every episode uses, S3, a notebook instance, jobs and Bedrock, and how
 every later episode estimates and checks what a job costs.</p>
-<p><strong>Part 2, SageMaker: data, training, tuning and
-fine-tuning.</strong></p>
+<p><strong>Part 2, SageMaker: data, training, fine-tuning and
+tuning.</strong></p>
 <ul><li>Put the data in an S3 bucket and start a small notebook instance
 that launches everything else. The notebook is the controller, not the
 workhorse: the expensive compute runs on instances SageMaker rents for
@@ -435,12 +435,12 @@ each job and releases when it ends.</li>
 jobs. Estimate the cost before each launch and read the billable seconds
 after, compare a CPU instance with a GPU, and see what two instances buy
 and what they do not.</li>
-<li>Run a hyperparameter tuning job that trains ten models under a
-budget set up front.</li>
 <li>Fine-tune a 3B open-weight vision-language model with LoRA, as a
 training job with checkpoints and a runtime cap, for transcribing
 handwritten German letters (Badger Scribe), scored on held-out pages
 before and after.</li>
+<li>Run a hyperparameter tuning job that trains ten models under a
+budget set up front.</li>
 </ul><p><strong>Part 3, Bedrock: inference and retrieval-augmented
 generation.</strong></p>
 <ul><li>Build a RAG pipeline over a corpus of energy research papers
@@ -658,10 +658,10 @@ notebook first reads your bucket, with the helper that every later data
 step uses.</p>
 <p>If you want to jump ahead to a later episode, do episodes 1 to 4
 first on the instance you will use, and then start wherever you like.
-After that, the training episodes 6 to 8 are a sequence (8 uses the
-files 7 saves), the fine-tuning episode 9 stands on its own, and the RAG
-episodes (10 to 13) are a sequence, since each one reuses what the one
-before it cached in your bucket.</p>
+After that, the training episodes 6, 7 and 9 are a sequence (the tuning
+episode, 9, uses the files 7 saves), the fine-tuning episode 8 stands on
+its own, and the RAG episodes (10 to 13) are a sequence, since each one
+reuses what the one before it cached in your bucket.</p>
 <!--
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.

@@ -336,7 +336,7 @@
 <div class="accordion accordion-flush" id="accordionFlush9">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading9">
-        <a href="08_Hyperparameter-tuning.html">8. Hyperparameter Tuning in SageMaker: Neural Network Example</a>
+        <a href="08_Finetuning-BadgerScribe.html">8. Fine-tuning a Vision-Language Model with Training Jobs</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -348,7 +348,7 @@
 <div class="accordion accordion-flush" id="accordionFlush10">
   <div class="accordion-item">
     <div class="accordion-header" id="flush-heading10">
-        <a href="09_Finetuning-BadgerScribe.html">9. Fine-tuning a Vision-Language Model with Training Jobs</a>
+        <a href="09_Hyperparameter-tuning.html">9. Hyperparameter Tuning in SageMaker: Neural Network Example</a>
     </div>
 <!--/div.accordion-header-->
 
@@ -560,10 +560,9 @@ helper and call it after every job in this lesson.</p>
 dataset and run the whole script independently, same model and twice the
 bill. Right: data parallelism splits the batches across instances and
 syncs gradients each step.</div>
-</figure><hr></section><section id="08_Hyperparameter-tuning"><h2 class="section-heading"><a href="08_Hyperparameter-tuning.html">Hyperparameter Tuning in SageMaker: Neural Network Example</a></h2>
-<hr class="half-width"></section><section id="09_Finetuning-BadgerScribe"><h2 class="section-heading"><a href="09_Finetuning-BadgerScribe.html">Fine-tuning a Vision-Language Model with Training Jobs</a></h2>
+</figure><hr></section><section id="08_Finetuning-BadgerScribe"><h2 class="section-heading"><a href="08_Finetuning-BadgerScribe.html">Fine-tuning a Vision-Language Model with Training Jobs</a></h2>
 <hr class="half-width">
-<h3 id="09_Finetuning-BadgerScribe-figure-1">Figure 1</h3>
+<h3 id="08_Finetuning-BadgerScribe-figure-1">Figure 1</h3>
 <p aria-hidden="true">Image 1 of 1: ‘Dot plot of benchmark scores for three task-specific models against a much larger general model on the same benchmark; the specialist is ahead in each row by 6.5, 2.2 and 1.2 points’</p>
 <figure><img src="../fig/specialists-vs-large-models.png" alt="Dot plot of benchmark scores for three task-specific models against a much larger general model on the same benchmark; the specialist is ahead in each row by 6.5, 2.2 and 1.2 points" class="figure mx-auto d-block"><div class="figcaption">Three research tasks where a small specialist
 model scores above a much larger general one: CHURRO (3B) over Gemini
@@ -571,32 +570,42 @@ model scores above a much larger general one: CHURRO (3B) over Gemini
 DeepSeek-Prover-V2 on formal proofs, MedGemma (27B) over GPT-4o on
 medical questions</div>
 </figure><hr>
-<h3 id="09_Finetuning-BadgerScribe-figure-2">Figure 2</h3>
+<h3 id="08_Finetuning-BadgerScribe-figure-2">Figure 2</h3>
+<p aria-hidden="true">Image 1 of 1: ‘Horizontal bar chart on a logarithmic GPU-hours axis from 0.1 to 10 million. Training from scratch, every weight from random: 460,000 GPU-hours. Full fine-tuning, every weight from a pretrained model: 800 GPU-hours. LoRA fine-tuning, an adapter under one percent of the weights: 0.5 GPU-hours. Each bar is labelled with the GPUs, the time and the electricity. Energy is GPU electricity at the rated draw, a lower bound.’</p>
+<figure><img src="../fig/pretrain-finetune-lora.svg" alt="Horizontal bar chart on a logarithmic GPU-hours axis from 0.1 to 10 million. Training from scratch, every weight from random: 460,000 GPU-hours. Full fine-tuning, every weight from a pretrained model: 800 GPU-hours. LoRA fine-tuning, an adapter under one percent of the weights: 0.5 GPU-hours. Each bar is labelled with the GPUs, the time and the electricity. Energy is GPU electricity at the rated draw, a lower bound." class="figure mx-auto d-block"><div class="figcaption">GPU-hours on a log scale for three ways to get a
+3B model that does a task: training Llama 3.2 3B from scratch, 460,000
+GPU-hours, about a thousand H100s for three weeks and some 300 MWh; the
+full fine-tune that made CHURRO-3B, 800 GPU-hours, eight H100s for four
+days and about 500 kWh; this episode’s LoRA run, half a GPU-hour, one
+A10G for 32 minutes and about 0.2 kWh</div>
+</figure><hr>
+<h3 id="08_Finetuning-BadgerScribe-figure-3">Figure 3</h3>
 <p aria-hidden="true">Image 1 of 1: ‘Left: a d by d weight matrix, all trained, 16 bytes per weight. Right: the same matrix frozen in bf16 plus two thin trained matrices B (d by r) and A (r by d); output is W x plus B A x.’</p>
 <figure><img src="../fig/lora.svg" alt="Left: a d by d weight matrix, all trained, 16 bytes per weight. Right: the same matrix frozen in bf16 plus two thin trained matrices B (d by r) and A (r by d); output is W x plus B A x." class="figure mx-auto d-block"><div class="figcaption">Full fine-tuning updates every entry of a d × d
 weight matrix; LoRA freezes it and trains two thin matrices of rank r
 whose product is added to its output</div>
 </figure><hr>
-<h3 id="09_Finetuning-BadgerScribe-figure-3">Figure 3</h3>
+<h3 id="08_Finetuning-BadgerScribe-figure-4">Figure 4</h3>
 <p aria-hidden="true">Image 1 of 1: ‘Horizontal bar chart on a logarithmic dollar axis: this episode 0.75, homework 1.50, the full Badger Scribe train set 1.20, 7B full fine-tune 140, 70B LoRA 600, CHURRO-3B 6,300, 70B full fine-tune 12,000, with the ten-run sweep shown as a lighter extension of each bar’</p>
 <figure><img src="../fig/finetune-cost-ladder.svg" alt="Horizontal bar chart on a logarithmic dollar axis: this episode 0.75, homework 1.50, the full Badger Scribe train set 1.20, 7B full fine-tune 140, 70B LoRA 600, CHURRO-3B 6,300, 70B full fine-tune 12,000, with the ten-run sweep shown as a lighter extension of each bar" class="figure mx-auto d-block"><div class="figcaption">Cost per run on a log scale, from about a dollar
 for this episode’s LoRA run to twelve thousand dollars for a 70B full
 fine-tune; a ten-run sweep shifts every bar up by one decade</div>
 </figure><hr>
-<h3 id="09_Finetuning-BadgerScribe-figure-4">Figure 4</h3>
+<h3 id="08_Finetuning-BadgerScribe-figure-5">Figure 5</h3>
 <p aria-hidden="true">Image 1 of 1: ‘Stacked bar chart of bytes per parameter for inference versus LoRA versus full fine-tuning’</p>
 <figure><img src="../fig/memory-per-parameter.svg" alt="Stacked bar chart of bytes per parameter for inference versus LoRA versus full fine-tuning" class="figure mx-auto d-block"><div class="figcaption">Bars of GPU memory per parameter: 1 byte for FP8
 inference, 2 for bf16 inference, about 2.5 for a LoRA fine-tune, 16 for
 a full fine-tune made of the weight, its gradient, a 32-bit copy of the
 weight and the two averages Adam keeps</div>
 </figure><hr>
-<h3 id="09_Finetuning-BadgerScribe-figure-5">Figure 5</h3>
+<h3 id="08_Finetuning-BadgerScribe-figure-6">Figure 6</h3>
 <p aria-hidden="true">Image 1 of 1: ‘A layer W with an input arrow, an output arrow, an error arrow going back and an update arrow into W, each labelled 2 FLOPs; a box totals 6 for full fine-tuning and 4 for LoRA’</p>
 <figure><img src="../fig/flops-per-token.svg" alt="A layer W with an input arrow, an output arrow, an error arrow going back and an update arrow into W, each labelled 2 FLOPs; a box totals 6 for full fine-tuning and 4 for LoRA" class="figure mx-auto d-block"><div class="figcaption">Three matrix products per token: forward (2
 FLOPs per weight), error passed back to the inputs (2), and the weight
 update (2); full fine-tuning does all three for 6, LoRA skips the update
 for 4</div>
-</figure><hr></section><section id="10_RAG-overview"><h2 class="section-heading"><a href="10_RAG-overview.html">Overview of RAG Workflows on AWS</a></h2>
+</figure><hr></section><section id="09_Hyperparameter-tuning"><h2 class="section-heading"><a href="09_Hyperparameter-tuning.html">Hyperparameter Tuning in SageMaker: Neural Network Example</a></h2>
+<hr class="half-width"></section><section id="10_RAG-overview"><h2 class="section-heading"><a href="10_RAG-overview.html">Overview of RAG Workflows on AWS</a></h2>
 <hr class="half-width">
 <h3 id="10_RAG-overview-figure-1">Figure 1</h3>
 <p aria-hidden="true">Image 1 of 1: ‘Diagram of the RAG pipeline with the embedder and generator highlighted as the two model calls’</p>
