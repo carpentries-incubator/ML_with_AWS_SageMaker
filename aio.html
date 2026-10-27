@@ -2278,7 +2278,7 @@ task?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>One way to do it:</li>
@@ -5065,11 +5065,11 @@ Select the <strong><code>conda_pytorch</code></strong> kernel.</p>
 </h2>
 <hr class="half-width">
 <p>The training episodes so far trained small models from scratch. This
-episode fine-tunes a large language model with LoRA, the cheap form of
-fine-tuning explained below: a vision-language model with billions of
-parameters, pretrained on more data and compute than any lab could
-repeat. That is what makes it a different kind of job, in what it can do
-and in what it costs.</p>
+episode starts from a large model that someone else has already trained,
+a vision-language model with billions of parameters, and adapts it to
+our data with LoRA, a cheap form of fine-tuning explained below. A model
+like that can do far more than anything we could train ourselves, and it
+costs more to work with, so this is a different kind of job.</p>
 <p>General-purpose models are trained on the average of the internet,
 and research problems are rarely average. A 19th-century German hand, a
 lab’s own annotation conventions, species names, a regional dialect, the
@@ -5107,26 +5107,13 @@ your data. Because the model already knows how to read, write and look
 at images, it needs hundreds of examples to learn your task where
 training from scratch would need millions. Everything it learned before
 stays in the weights; you are adjusting them, not replacing them.</p>
-<p>Where a model’s weights come from sets the bill. Training from
-scratch, the step that makes a foundation model like the ones behind
-ChatGPT, sets every weight from random on trillions of tokens, on
-thousands of GPUs for months, which is why a handful of companies do it:
-Qwen2.5, the family CHURRO descends from, was trained on 18 trillion
-tokens (<a href="https://arxiv.org/abs/2412.15115" class="external-link">technical
-report</a>), and Meta reports about 31 million GPU-hours for Llama 3.1
-405B (<a href="https://huggingface.co/meta-llama/Llama-3.1-405B" class="external-link">model
-card</a>). Fine-tuning starts from those weights and needs a sliver of
-that data, but updating every weight of a model with billions of them is
-still a multi-GPU job for hours or days: CHURRO itself took on the order
-of 800 H100-hours. LoRA fine-tuning freezes the weights and trains a
-small adapter beside them, which brings the same kind of adaptation down
-to one GPU and minutes to hours; this episode’s run is 251 pages, half
-an hour and under a dollar. On one axis the three are six orders of
-magnitude apart, and the electricity follows the GPU-hours: the training
-run draws what thirty homes use in a year, the full fine-tune what one
-home uses in a couple of weeks, the LoRA run what a laptop uses in half
-a day. The rest of this section says what the difference between the
-last two is made of.</p>
+<p>Training a model like the ones behind ChatGPT from scratch takes
+thousands of GPUs for months, which only a few companies can afford.
+Fine-tuning starts from those weights and needs far less data, but
+updating all of a large model’s weights still takes several GPUs for
+hours or days. LoRA fine-tuning freezes the weights and trains a small
+adapter beside them, and that fits on one GPU in under an hour. The
+figure puts the three on one axis.</p>
 <figure><img src="fig/pretrain-finetune-lora.svg" alt="Horizontal bar chart on a logarithmic GPU-hours axis from 0.1 to 10 million. Training from scratch, every weight from random: 460,000 GPU-hours. Full fine-tuning, every weight from a pretrained model: 800 GPU-hours. LoRA fine-tuning, an adapter under one percent of the weights: 0.5 GPU-hours. Each bar is labelled with the GPUs, the time and the electricity. Energy is GPU electricity at the rated draw, a lower bound." class="figure mx-auto d-block"><div class="figcaption">GPU-hours on a log scale for three ways to get a
 3B model that does a task: training Llama 3.2 3B from scratch, 460,000
 GPU-hours, about a thousand H100s for three weeks and some 300 MWh; the
@@ -9765,7 +9752,7 @@ helper wraps:</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -9774,7 +9761,7 @@ helper wraps:</p>
 <span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a>  <span class="at">--tags</span> key=Name,value=DoeJohn key=Project,value=SinkOrSwim key=Purpose,value=Inference</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
+<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
