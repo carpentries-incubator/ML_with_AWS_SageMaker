@@ -340,13 +340,13 @@ The `--per_type 10` argument draws the same stratified sample the Bedrock episod
 - `run_single_qa`: retrieval, the answer call, the hybrid unanswerable rule (retrieval threshold OR the model's own `is_blank`), the explanation call
 - `compute_wattbot_score`: the metric we use at the end
 
-What the batch script adds is the two model callables: `embed_query` wraps the same `gte-large` model and pooling the embedding job used (`hf_embedder.py`) (the question has to be embedded with the same model as the chunks), and `generate_batch` wraps `transformers.generate` on the generator (Qwen3-8B here) with Qwen's thinking mode off, taking several prompts at once. The loop itself is `run_batch_qa`, the batched twin of the `run_single_qa` the Bedrock episode used: the same retrieval, prompts and unanswerable rule, with the model calls grouped eight at a time because a GPU decoding one prompt is idle most of the time. The job writes `wattbot_solutions.csv` in the WattBot submission format.
+What the batch script adds is the two model callables: `embed_query` wraps the same `gte-large` model and pooling the embedding job used (`hf_embedder.py`) (the question has to be embedded with the same model as the chunks), and `generate_batch` wraps `transformers.generate` on the generator (Qwen3-8B here) with Qwen's thinking mode off, taking several prompts at once. The loop itself is `run_batch_qa`, the batched twin of the `run_single_qa` the Bedrock episode used: the same retrieval, prompts and unanswerable rule, with the model calls grouped four at a time because a GPU decoding one prompt is idle most of the time. The group is a trade: more prompts at once is faster, and each one adds its own cache of attention keys and values to the 16 GB the weights already hold, so a group of long prompts can run the 24 GB card out of memory. The script halves the group and retries when that happens, so a long batch costs time rather than the job. The job writes `wattbot_solutions.csv` in the WattBot submission format.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
 ### Why not vLLM?
 
-vLLM is the open-source inference engine most people serve open-weight models with: you give it a model name, it loads the weights onto the GPU and answers chat requests, batching many at once so that throughput scales. That is what you want behind an API with users. This job has about 100 prompts and no users waiting, and `transformers.generate`, already in the container, can decode several prompts at once too: `run_batch_qa` in `wattbot_rag.py` hands them to the model eight at a time (`--batch_size`), which is where most of vLLM's speed on a batch like this comes from, with nothing to install. vLLM's install is several gigabytes of billed GPU time before the first answer. The GPU-notebook episode uses vLLM, where its 8-bit weights are needed to fit a larger model.
+vLLM is the open-source inference engine most people serve open-weight models with: you give it a model name, it loads the weights onto the GPU and answers chat requests, batching many at once so that throughput scales. That is what you want behind an API with users. This job has about 100 prompts and no users waiting, and `transformers.generate`, already in the container, can decode several prompts at once too: `run_batch_qa` in `wattbot_rag.py` hands them to the model four at a time (`--batch_size`), which is where most of vLLM's speed on a batch like this comes from, with nothing to install. vLLM's install is several gigabytes of billed GPU time before the first answer. The GPU-notebook episode uses vLLM, where its 8-bit weights are needed to fit a larger model.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -365,7 +365,7 @@ If the launch is refused with an `AccessDeniedException` ending in `explicit den
 
 This is the first GPU job you launch yourself in this episode (the embedding job above was staged for you in class), so this is what happens when you launch one. You describe a machine and point at a script. SageMaker rents the machine, copies the files you named from S3 onto its disk, runs your script on it, copies whatever the script wrote in its output folder back to S3, and shuts the machine down. The notebook does nothing but wait and show you the script's printed output. Nothing from this notebook's memory goes along: not `chunked_docs`, not `train_df`, not any function defined above. The script sees only the files you copied in and the arguments you gave it, which is why every input is an S3 location and every setting is a command-line flag. That is the same thing `estimator.fit` did in the fine-tuning episode, with one difference: a training job hands back a trained model, a Processing job hands back whatever files the script wrote, here a CSV of answers.
 
-The description is two cells. The first builds a `HuggingFaceProcessor`: which machine, which container image, how long it may run, whose tags it carries. Two of its settings matter more than on the embedding job. `volume_size_in_gb=60` attaches a 60 GB volume to the instance, mounted under `/opt/ml/processing`; the container's own root disk is small, so the 16 GB of model weights must not land there. `env={"HF_HOME": ...}` points Hugging Face's download cache at that volume, which is where the weights go.
+The description is two cells. The first builds a `HuggingFaceProcessor`: which machine, which container image, how long it may run, whose tags it carries. Two of its settings matter more than on the embedding job. `volume_size_in_gb=60` attaches a 60 GB volume to the instance, mounted under `/opt/ml/processing`; the container's own root disk is small, so the 16 GB of model weights must not land there. `env=` sets two environment variables in the container: `HF_HOME` points Hugging Face's download cache at that volume, which is where the weights go, and `PYTORCH_CUDA_ALLOC_CONF` tells PyTorch to reuse freed GPU memory in place rather than leave it fragmented, which matters when a batch of prompts is close to what the card holds.
 
 ```python
 rag_output_prefix = "wattbot/solutions"                       # where this job's output lands in your bucket
@@ -380,7 +380,8 @@ rag_processor = HuggingFaceProcessor(
     instance_type="ml.g5.xlarge",        # 1 x A10G, 24 GB: holds the bf16 8B model plus the KV cache
     instance_count=1,
     volume_size_in_gb=60,                # disk attached to the instance, mounted at /opt/ml/processing; the weights go here
-    env={"HF_HOME": "/opt/ml/processing/hf_cache"},   # environment variable in the container: Hugging Face downloads to this path
+    env={"HF_HOME": "/opt/ml/processing/hf_cache",                  # environment variables in the container: Hugging Face downloads to this path...
+         "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"},   # ...and PyTorch reuses freed GPU memory instead of fragmenting it, which is what a batch of long prompts runs out of
     transformers_version="4.56",         # these three pick the prebuilt container image, the same one the embedding job used
     pytorch_version="2.8",
     py_version="py312",
@@ -429,7 +430,7 @@ rag_processor.run(
         "--top_k", "8",                                        # chunks handed to the model per question
         "--retrieval_threshold", "0.25",                       # best cosine below this => unanswerable
         "--per_type", "10",                                    # the same stratified sample the Bedrock episode scored (seed 0); drop it for all the questions
-        "--batch_size", "8",                                   # prompts decoded together; 1 would be one at a time, several times slower
+        "--batch_size", "4",                                   # prompts decoded together; 1 would be one at a time, several times slower. 8 ran out of GPU memory on long prompts
     ],
 )
 
@@ -522,7 +523,7 @@ Under the caps we set, the worst case for a job that hangs (a stuck download, a 
 
 - Bedrock's catalog is curated and lags releases; when you need a specific open-weight model you rent a GPU and serve it yourself.
 - Of the ways to rent a GPU, a Processing job is the one that cannot be forgotten: it bills while the script runs and ends on its own, with `max_runtime_in_seconds` as the backstop. Use it for batch work; use Bedrock or an endpoint when you need answers in seconds.
-- Inference needs only the weights: Qwen3-8B in bf16 is ~16 GB and fits one 24 GB GPU.
+- Inference needs only the weights: Qwen3-8B in bf16 is ~16 GB and fits one 24 GB GPU, with the rest for the prompts' attention cache; how many prompts decode together is bounded by that remainder.
 - A job's inputs and outputs are S3 prefixes mounted into the container; the notebook only stages files and reads results, so it stays a cheap CPU instance.
 - The pipeline logic (`wattbot_rag.py`) ships with the job unchanged from the Bedrock episode; only the two model callables differ.
 - Tags do not propagate from the notebook: every job gets its own `tags=`.
