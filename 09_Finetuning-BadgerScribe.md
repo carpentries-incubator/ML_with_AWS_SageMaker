@@ -173,7 +173,7 @@ step0_estimate = helpers.estimate_finetune_cost(
 )
 ```
 
-It says about 27 minutes and `$0.64`: 17 minutes of training plus the 10 minutes of startup it assumes. The 17 is more than the 12 of the hand calculation above because the estimator multiplies the FLOPs by 1.5 when gradient checkpointing is on, as it is in our script: to save memory, the forward pass is thrown away and recomputed during the backward pass, which is half the arithmetic again. That is every assumption in it: bytes per parameter from the first table plus 4 GB of activations for memory; 6 or 4 FLOPs per parameter per token, times 1.5 for checkpointing, at a quarter of the GPU's peak for time; 10 minutes of startup; and the price list for the bill. The job you launch in Step 1 will bill about 32 minutes, and the difference is not an error in the rule. The job also scores holdout pages with the base model before training and with the adapter after it, which is about 14 minutes of GPU time the estimator knows nothing about, because it estimates training. Hold on to `step0_estimate`; Step 2 compares it to the job's own bill.
+It says about 27 minutes and `$0.64`: 17 minutes of training plus the 10 minutes of startup it assumes. The 17 is more than the 12 of the hand calculation above because the estimator multiplies the FLOPs by 1.5 when gradient checkpointing is on, as it is in our script: to save memory, the forward pass is thrown away and recomputed during the backward pass, which is half the arithmetic again. Measured, the training phase of the class job is about 12 minutes (126 optimizer steps at under 6 seconds each, in the job's log), so the rule without the factor landed on the number and the rule with it is a third high: the quarter-of-peak utilization is the loosest assumption in the rule, and a miss of that size is what it is good for. That is every assumption in it: bytes per parameter from the first table plus 4 GB of activations for memory; 6 or 4 FLOPs per parameter per token, times 1.5 for checkpointing, at a quarter of the GPU's peak for time; 10 minutes of startup; and the price list for the bill. The job you launch in Step 1 will bill about 32 minutes, and the difference is not an error in the rule. The job also scores holdout pages with the base model before training and with the adapter after it, which is about 14 minutes of GPU time the estimator knows nothing about, because it estimates training. Hold on to `step0_estimate`; Step 2 compares it to the job's own bill.
 
 The same call for the kind of run a marathon team might weigh, a 7B model on 5,000 documents of about 600 words (800 tokens) each, three passes, with the eight attempts a project takes:
 
@@ -414,7 +414,7 @@ display(Image(filename=page_path, width=500))
 
 ### How many tokens is a page?
 
-The cost estimate in Step 0 used 1,600 tokens per page. That number is tokens, not words: the model never sees words. The image becomes one token per 28 × 28 pixel block once it is resized to `max_pixels`, and the transcription becomes pieces of words, more pieces for German and for old spellings than for modern English. Count it with the model's own processor rather than guess it; the processor's files are a few megabytes, so the 7.5 GB of weights stay in S3.
+The cost estimate in Step 0 used 1,600 tokens per page. That number is tokens, not words: the model never sees words. The image becomes one token per 28 × 28 pixel block once it is resized to `max_pixels`, and the transcription becomes pieces of words, more pieces for German and for old spellings than for modern English. The count depends on the model, so it has to come from this model's own processor: every model has its own tokenizer vocabulary, and every vision model its own patch size and resizing rules, so the same page is a different number of tokens for a different model. CHURRO's processor is the code the training job will run on every page, so a count from it is the job's count, not an estimate. Its files are a few megabytes, so the 7.5 GB of weights stay in S3.
 
 ```python
 %pip install -q "transformers>=4.56"   # the processor that turns an image + text into the model's tokens; same version as the training job
@@ -482,14 +482,14 @@ print(f"image tokens per page, {len(image_tokens)} sampled pages: mean {avg_imag
 print(f"average tokens per page: {avg_image:.0f} image + {n_instructions} instruction prompt + {avg_text:.0f} transcription = {avg_tokens_per_page:.0f}")
 ```
 
-That average is the `tokens_per_example` the estimate should have used. Re-run the estimator with it and compare with the 1,600 guess:
+That average is the `tokens_per_example` the estimate should have used. Step 0 of this episode ran `helpers.estimate_finetune_cost` with a guess of 1,600 tokens per page; run it again with the measured average and compare:
 
 ```python
 helpers.estimate_finetune_cost(params_billions=3.75, examples=251, tokens_per_example=int(avg_tokens_per_page), epochs=2,
                                method="lora", instance_type="ml.g5.xlarge");
 ```
 
-Multiply by pages and passes and that is the "tokens seen" in the cost table. Halve `max_pixels` and the image count halves with it; that is what Exercise 1 changes.
+The measured count is a tenth below the guess, and the estimate moves with it: 26 minutes and `$0.60` against 27 and `$0.64`. Step 1 keeps the 27-minute figure; a tenth either way is well inside what the rule can tell, which is about a factor of two. Multiply by pages and passes and that is the "tokens seen" in the cost table. Halve `max_pixels` and the image count halves with it; that is what Exercise 1 changes.
 
 Now the same run as a full fine-tune. The arithmetic goes up by half, 6 FLOPs per parameter per token instead of 4, but that is not what changes the bill:
 
