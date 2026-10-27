@@ -35,13 +35,7 @@ Work from a project folder beside the lesson clone, so downloads and outputs sta
 ```
 
 ```python
-import os
-os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the SDK otherwise prints a deprecation notice on import and on every estimator
 import sagemaker                      # SageMaker Python SDK: higher-level API for training jobs, tuning, deployment
-import logging
-logging.getLogger("sagemaker.telemetry.telemetry_logging").setLevel(logging.WARNING)   # silence the telemetry notice; the "Creating training-job" line still prints
-logging.getLogger("sagemaker.image_uris").setLevel(logging.WARNING)
-logging.getLogger("sagemaker.config").addFilter(lambda record: record.levelno >= logging.WARNING)   # drop the two "Not applying SDK defaults" lines; a filter holds even where the SDK resets the logger's level
 from sagemaker import get_execution_role
 
 role = sagemaker.get_execution_role() # the IAM role attached to this notebook instance; every call below acts as this role
@@ -52,9 +46,9 @@ print(f"AWS Region: {session.boto_region_name}")  # The region of the notebook i
 
 ::::::::::::::::::::::::::::::::::::: callout
 
-### Warnings this cell prints
+### Messages this cell prints
 
-`sagemaker.config INFO - Not applying SDK defaults from location: ...`: an info line, not an error. The SDK looked for an optional defaults file in two standard places and found none.
+The SageMaker SDK prints a few lines of its own when it is imported and when a session is created, and none of them is an error. `sagemaker.config INFO - Not applying SDK defaults from location: ...` means it looked for an optional defaults file in two standard places and found none. A line about telemetry says it reports usage to AWS. A warning that this version of the SDK is deprecated means a newer major version exists. The code in this lesson is written for the version the notebook instances ship. All three appear in later episodes too, and can be ignored.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -101,7 +95,7 @@ train_data.head()
 ```
 
 ### B) Download copy into notebook environment
-`download_file` writes the object to the instance's disk, on the 20 GB `SageMaker/` volume. There is no transfer charge, since the instance and the bucket are in the same region; the same call on a laptop would be a transfer out of AWS at `$0.09` per GB. The file stays until you delete it.
+`download_file` writes the object to the instance's disk, on the 20 GB `SageMaker/` volume. There is no transfer charge, because the instance and the bucket are in the same region, and in-region transfer between AWS services is free. The same call from a laptop, with the AWS CLI or with `boto3`, pulls the data out of AWS at `$0.09` per GB. The optional *Same Jobs from the Terminal* episode covers working from a laptop and when that charge matters. The file stays on the instance until you delete it.
 
 #### Example
 

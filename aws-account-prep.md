@@ -4,6 +4,20 @@ title: 'Account preparation checklist (quotas, Bedrock, tags)'
 
 Everything that has to be requested or configured on the class AWS account before the workshop, sized for a class of up to **100 students** (100 for one-per-student resources, 200 for anything a student can have two of at once). GPU quota increases often take days and sometimes a support exchange, so file them three to four weeks ahead. Instance usage per episode is taken from the code in the episodes; if you change an instance type in an episode, change the quota here.
 
+## In order
+
+Everything below, as a list to work down. The sections that follow have the details and the commands.
+
+1. **Pick the region** and use it for everything after this (next section).
+2. **File the GPU quota increases**, three to four weeks ahead (*SageMaker service quotas*).
+3. **The notebook role.** Make sure `ml-sagemaker-use` exists, then attach its three inline policies from CloudShell: `WorkshopGuardRails` from the repo's `scripts/guardrails.json`, `ReadOwnCloudTrail`, and `BedrockAccess` (*The notebook role*, *Permission set guard rails*, *Bedrock*). Run the policy simulator, then one test job of each kind from a learner sign-in.
+4. **Enable Bedrock model access** for the two models the RAG episode calls, and check their rate quotas (*Bedrock*).
+5. **Cost allocation tags** active on the account, a Budgets alert on the class total (*Cost allocation tags*).
+6. **Stage the shared bucket** from CloudShell, following *Shared data bucket: staging before each term*.
+7. **Add the learners** to the Identity Center group and send the sign-in email (*Learner access*).
+8. **Overnight safeguards**, the nightly notebook stop and the per-learner budgets, if the class runs more than a day (*Overnight safeguards*).
+9. **After class**, lower the GPU quotas and run the cleanup in *Instructor Notes*.
+
 ## Region
 
 The shared workshop account runs in **US East (Ohio), `us-east-2`**. Quotas are per region, so file them there; the nuke config targets it; learners are told the region in the sign-in email and the setup page's access check. The lesson's price tables quote `us-east-1` list prices (the AWS price list of 2026-10-16); Ohio prices are the same or within a few percent, which does not change any decision in the lesson. All notebook code reads the region from the session rather than hard-coding it, so the lesson also works unchanged in any other region a self-paced learner picks.
@@ -17,14 +31,15 @@ Console: **Service Quotas → AWS services → Amazon SageMaker**, in the region
 | `ml.t3.medium for notebook instance usage` | 100 | controller notebook, every episode |
 | `ml.g6e.xlarge for notebook instance usage` | 0 (optional) | only the optional self-study GPU-notebook episode; not needed for class |
 | `Total number of notebook instances` | 100 | one controller per student |
-| `ml.m5.large for training job usage` | 200 | XGBoost episode; PyTorch part 2; tuning (2 parallel jobs each) |
-| `ml.m5.xlarge for training job usage` | 200 | PyTorch part 2 runs `instance_count=2` |
+| `ml.m5.large for training job usage` | 200 | XGBoost episode; PyTorch part 2, including its two-instance data-parallel job; tuning (2 parallel jobs each) |
+| `ml.m5.xlarge for notebook instance usage` | 0 (optional) | the fine-tuning episode allows it as the controller; `ml.t3.medium` is the default |
 | `ml.g4dn.xlarge for training job usage` | 100 | PyTorch part 2 GPU comparison |
 | `ml.g5.xlarge for training job usage` | 100 | fine-tuning episode (one job per student at once) |
 | `ml.g6e.xlarge for training job usage` | 100 | optional: fine-tuning Exercise 2 |
 | `Number of instances across all training jobs` | 250 (already applied) | account-level ceiling; 250 covers 100 students |
 | `ml.g5.xlarge for processing job usage` | 200 | Processing Jobs episode (both jobs) and fine-tuning homework (two jobs per student, possibly at once) |
-| `ml.g6e.xlarge for processing job usage` | 100 (optional) | only the Processing Jobs episode's 27B variant. **Default is usually 0** and the increase takes days; the episode runs Qwen3-8B on `ml.g5.xlarge` without it |
+| `ml.g6.xlarge for training job usage` and `for processing job usage` | 100 each (fallback) | the capacity fallback for `ml.g5.xlarge` at the end of this page; it is on the guard-rail list, and a fallback without a quota is no fallback |
+| `ml.g6e.xlarge for processing job usage` | 0 | no episode uses it; the Processing Jobs episode runs Qwen3-8B on `ml.g5.xlarge`, and the 27B generator runs only in the optional GPU-notebook episode, on a notebook instance |
 | `Number of instances across all processing jobs` | 250 (already applied) | account-level ceiling |
 
 Also check `ml.g5.xlarge for training warm pool usage` is left at its default of 0; the episodes do not use warm pools and a nonzero quota lets a student leave an idle GPU billing.
@@ -32,6 +47,15 @@ Also check `ml.g5.xlarge for training warm pool usage` is left at its default of
 ## Learner access
 
 Learners sign in through IAM Identity Center with their university login. Before the workshop, add every registered user to the group that carries the workshop permission set, then email them the Identity Center console link for that account and permission set (the `.../start/#/console?account_id=...&role_name=...` deep link), together with the account name and region to expect. The link is deliberately not printed in the public lesson: it is not a credential, but a public start URL plus role name is the raw material for a convincing phishing page, and the lesson is reused outside UW. Ask learners to run the "verify your access" steps in the setup page; a missing assignment is the most common day-one problem and it cannot be fixed from the classroom in a hurry.
+
+## The notebook role
+
+Every notebook instance in the lesson runs as the IAM role `ml-sagemaker-use`, which the controllers episode tells learners to pick from the dropdown. The three inline policies below (`WorkshopGuardRails`, `ReadOwnCloudTrail`, `BedrockAccess`) are attached to that role, and each one's command names it. On the UW account the role exists. On a new account, create it first, as a SageMaker execution role (trusted by `sagemaker.amazonaws.com`) with SageMaker permissions and read and write access to the buckets learners create. The managed `AmazonSageMakerFullAccess` policy only reaches buckets with `sagemaker` in the name, and the lesson's buckets are named after the learner, so the role needs S3 access beyond it. To copy the UW role's base permissions onto a new account, list them there first:
+
+```bash
+aws iam list-attached-role-policies --role-name ml-sagemaker-use   # managed policies
+aws iam list-role-policies --role-name ml-sagemaker-use            # inline policies; get-role-policy prints each one
+```
 
 ## Permission set guard rails
 
@@ -389,5 +413,6 @@ Console: **Service Quotas → Amazon Bedrock**, and **Bedrock → Model access**
 
 ## Capacity fallbacks to have on a slide
 
-- Processing Jobs episode: if `ml.g6e.xlarge` capacity is short, `ml.g6e.2xlarge` (`$2.80`/h, same GPU) is the only same-memory alternative; a 24 GB instance cannot hold the 27B model.
+- Processing Jobs episode: both jobs run on `ml.g5.xlarge`; if its capacity is short, `ml.g6.xlarge` (`$1.13`/h, L4, 24 GB) holds the 8B model the same way. Both types are on the guard-rail list and need their quotas.
+- Optional GPU-notebook episode: if `ml.g6e.xlarge` capacity is short, `ml.g6e.2xlarge` (`$2.80`/h, same GPU) is the only same-memory alternative; a 24 GB instance cannot hold the 27B model.
 - Fine-tuning episode: `ml.g6.xlarge` (`$1.13`/h, L4, 24 GB) runs the mini job at about the same speed as `ml.g5.xlarge`.

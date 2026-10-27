@@ -33,6 +33,14 @@ If you are attending this lesson at UW-Madison, the instructors will provide a s
     * Stop (and at the end of the workshop, delete) every notebook instance you create. A GPU notebook left running costs about `$60` a day.
 * The account enforces a short list of rules on every launch (the three cost tags with values from fixed lists, the lesson's instance types, a 48-hour cap, no endpoints). A job that breaks one is refused with an `AccessDenied` message that does not say why; [If a Launch Is Refused](refused-launch.md) does, and the lesson's helper module can tell you before and after the launch. Check there before emailing.
 
+::::::::::::::::::::::::::::::::::::: callout
+
+### Instructors, before the workshop
+
+The rules above are not part of SageMaker. They are policies you attach to the account, and the shared data bucket does not fill itself. Work through the instructor pages before the first session: the [Account preparation checklist](../instructors/aws-account-prep.md) sets the quotas, Bedrock model access, the cost tags and the guard rails, and the [Shared data bucket](../instructors/shared-data-bucket.md) page stages the datasets and model weights the fine-tuning and RAG episodes read. The [Instructor Notes](../instructors/instructor-notes.md) index has the rest, including the end-of-workshop cleanup.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
 ### Your own AWS account
 
 If you are not attending through the shared account, follow these steps:

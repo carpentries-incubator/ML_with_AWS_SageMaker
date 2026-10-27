@@ -89,14 +89,7 @@ Next, we'll configure the baseline estimator that we plan to do hyperparameter s
 Every price in this episode is from the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page, us-east-1 on-demand; the tuning job's cost is that rate times the sum of the child jobs' billable minutes.
 
 ```python
-import os
-os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the SDK otherwise prints a deprecation notice on import and on every estimator
 import sagemaker
-import logging
-logging.getLogger("sagemaker.telemetry.telemetry_logging").setLevel(logging.WARNING)   # silence the telemetry notice; the "Creating training-job" line still prints
-logging.getLogger("sagemaker.image_uris").setLevel(logging.WARNING)
-logging.getLogger("sagemaker.config").addFilter(lambda record: record.levelno >= logging.WARNING)   # drop the two "Not applying SDK defaults" lines; a filter holds even where the SDK resets the logger's level
-logging.getLogger("sagemaker.estimator").setLevel(logging.ERROR)   # tuner.fit reads estimator.model_data before any job exists and logs a harmless "No finished training job found" warning
 # range types for the search: ContinuousParameter (float range), IntegerParameter (whole-number range), CategoricalParameter (explicit list)
 from sagemaker.tuner import HyperparameterTuner, IntegerParameter, ContinuousParameter, CategoricalParameter
 from sagemaker.pytorch import PyTorch
