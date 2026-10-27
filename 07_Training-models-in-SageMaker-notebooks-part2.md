@@ -233,15 +233,6 @@ helpers.estimate_training_cost(
 )
 ```
 
-```output
-Training from scratch of a 0.125B model: 1,000,000 examples x 256 tokens x 3 passes = 768.0M tokens
-memory:     ~6 GB needed; ml.g6.xlarge has 24 GB (1 x L4)
-compute:    8.64e+17 FLOPs at 25% of the 121 TFLOPS peak = 7.93 GPU-hours
-wall-clock: ~486 min including 10 min startup
-cost:       ~$9.15 per run at $1.13/h; ~$9.15 for 1 run(s)
-set max_run=58200  (970 min, about twice the estimate)
-```
-
 Each line:
 
 - **tokens**: examples × tokens per example × epochs. 768 million tokens is the amount of work; everything below is derived from it.
@@ -266,15 +257,6 @@ helpers.estimate_training_cost(
 )
 ```
 
-```output
-Training from scratch of a 1B model: 1,000,000 examples x 2,000 tokens x 1 passes = 2,000.0M tokens
-memory:     ~20 GB needed; ml.g6.xlarge has 24 GB (1 x L4)
-compute:    1.80e+19 FLOPs at 25% of the 121 TFLOPS peak = 165.29 GPU-hours
-wall-clock: ~9927 min including 10 min startup
-cost:       ~$186.97 per run at $1.13/h; ~$186.97 for 1 run(s)
-set max_run=1191300  (19855 min, about twice the estimate)
-```
-
 ```python
 helpers.estimate_training_cost(
     params_billions=7,          # a 7B model, the size most "small" open-weight LLMs are
@@ -282,16 +264,6 @@ helpers.estimate_training_cost(
     tokens_per_example=2000,
     epochs=1,
 )
-```
-
-```output
-Training from scratch of a 7B model: 1,000,000 examples x 2,000 tokens x 1 passes = 2,000.0M tokens
-memory:     ~116 GB needed; ml.g6e.12xlarge has 192 GB (4 x L40S)
-compute:    1.26e+20 FLOPs at 25% of the 362 TFLOPS peak = 386.74 GPU-hours
-wall-clock: ~5811 min including 10 min startup
-cost:       ~$1270.69 per run at $13.12/h; ~$1270.69 for 1 run(s)
-set max_run=697200  (11620 min, about twice the estimate)
-warning:    multi-GPU instance; not allowed on the class account, and more GPUs do not make the run cheaper
 ```
 
 Read the two against the 125M run above. The 1B model still fits on the cheapest GPU, but the arithmetic is 165 GPU-hours: a week of wall-clock on one GPU, `$187`, and a `max_run` of 330 hours, which the account refuses, since no job may run longer than 48 hours. A run like that has to be split into checkpointed jobs of a day or two each, or moved to a four-GPU box, an `ml.g6e.12xlarge`, which finishes in about 14 hours for about `$180`, and which the class account does not allow. The 7B model no longer fits on one GPU at all: 116 GB of weights, gradients and optimizer state need the four-GPU `ml.g6e.12xlarge` at `$13` an hour, four days of it, `$1,270` for one pass over two billion tokens. And two billion tokens is a small corpus; the models on Bedrock were trained on thousands of times more.
@@ -546,11 +518,6 @@ for label, d in [("1 x ml.m5.large", desc_cpu), ("2 x ml.m5.large, data parallel
     print(f"{label:32s} wall-clock {wall:.1f} min, billable {billable:.1f} min on {n} instance(s), ${billable/60*prices['ml.m5.large']:.3f}")
 ```
 
-```output
-1 x ml.m5.large                  wall-clock 3.4 min, billable 2.7 min on 1 instance(s), $0.005
-2 x ml.m5.large, data parallel   wall-clock 4.0 min, billable 6.5 min on 2 instance(s), $0.012
-```
-
 Nothing was gained: the two-instance run took longer and cost twice as much. Each step now ends with a gradient exchange between the two machines, and that exchange has a fixed cost, a network round trip of about a millisecond, plus the gradient's bytes divided by the link's bandwidth. What it saves is the forward and backward pass over the 284 rows the other machine took, which for `TitanicNet` is microseconds. The exchange is a per-step cost that is the same whether the step is tiny or huge; here it is the whole step.
 
 ### When it pays: the arithmetic
@@ -562,38 +529,14 @@ Nothing was gained: the two-instance run took longer and cost twice as much. Eac
 helpers.estimate_parallel_speedup(params_billions=7, tokens_per_step=16 * 2000, instance_type="ml.g6e.xlarge", instance_count=2)
 ```
 
-```output
-2 device(s): 2 x ml.g6e.xlarge (1 x L40S each); 20 Gb/s network between instances
-one device alone:      22276.2 ms per step of 32,000 tokens
-each of 2:             11138.1 ms of computation +  11201.0 ms exchanging 28.000 GB of gradients
-speedup:                  1.00x on 2 devices (ideal 2x); exchange is 50% of the step
-cost per run:             2.01x the one-device cost  (more devices, same work, a bigger bill)
-```
-
 ```python
 # Four GPUs in one box, linked by PCIe
 helpers.estimate_parallel_speedup(params_billions=7, tokens_per_step=16 * 2000, instance_type="ml.g6e.12xlarge")
 ```
 
-```output
-4 device(s): 1 x ml.g6e.12xlarge (4 x L40S each); 32 GB/s GPU link inside the box
-one device alone:      22276.2 ms per step of 32,000 tokens
-each of 4:              5569.1 ms of computation +   1313.5 ms exchanging 28.000 GB of gradients
-speedup:                  3.24x on 4 devices (ideal 4x); exchange is 19% of the step
-cost per run:             1.24x the one-device cost
-```
-
 ```python
 # Eight GPUs in one box, linked by NVLink
 helpers.estimate_parallel_speedup(params_billions=7, tokens_per_step=16 * 2000, instance_type="ml.p4d.24xlarge")
-```
-
-```output
-8 device(s): 1 x ml.p4d.24xlarge (8 x A100 40GB each); 600 GB/s GPU link inside the box
-one device alone:      25846.2 ms per step of 32,000 tokens
-each of 8:              3230.8 ms of computation +     82.7 ms exchanging 28.000 GB of gradients
-speedup:                  7.80x on 8 devices (ideal 8x); exchange is 2% of the step
-cost per run:             1.03x the one-device cost
 ```
 
 Read the three together. Two L40S instances over a 20 Gb/s network spend as long exchanging the 28 GB gradient as computing, so two machines finish in the same time as one and bill twice. Four L40S in one box over PCIe get 3.2 of the ideal 4. Eight A100s over NVLink get 7.8 of 8, which is why the big training boxes are built that way. The same arithmetic on a LoRA fine-tune comes out differently again: the exchanged gradient is only the adapter's, a hundredth of the model, so even the slow links barely show.
