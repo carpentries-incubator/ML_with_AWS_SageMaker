@@ -27,9 +27,9 @@ Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/08_Finetuning-BadgerSc
 
 ## Why fine-tune a model?
 
-In the earlier training episodes, we built relatively small models from scratch. That works when we have a well-defined problem and enough training data, but it isn't practical for tasks that require the broad capabilities of a modern language or vision model. Training one of those models from scratch can require thousands of GPUs and enormous datasets.
+In the earlier training episodes, we built relatively small models from scratch. That works when we have a well-defined problem and enough training data, but it isn't practical for tasks that require the broad capabilities of a modern language or vision model. Training one of those models from scratch can require thousands of GPUs and enormous datasets. The PyTorch episode put numbers on that with `helpers.estimate_training_cost`. One pass of a 7B language model over a million papers came to about `$1,270` on a four-GPU box, and the models behind ChatGPT are far larger and trained on far more.
 
-Fortunately, we don't have to start from scratch. Pretrained models already know how to interpret images, understand language, and generate text. Fine-tuning lets us build on those capabilities by training a model further on examples from our own task.
+Fortunately, we don't have to start from scratch. ***Pretrained*** models already know how to interpret images, understand language, and generate text. ***Fine-tuning*** lets us build on those capabilities by training a model further on examples from our own task.
 
 Consider historical handwriting recognition. A general-purpose vision-language model may be able to transcribe ordinary printed text and modern handwriting, yet struggle with nineteenth-century documents, unfamiliar letterforms, or the conventions used by a particular archive. Giving it better instructions can help, but there are limits to what prompting can accomplish when the model has never learned to recognize the writing itself.
 
@@ -49,9 +49,13 @@ Fine-tuning uses the same basic training process we've already seen. The model m
 
 The difference is where we begin. Rather than initializing the model with random weights, we start with weights learned during an earlier, much larger training process. Our examples don't need to teach the model everything about language or images. They only need to help it adapt what it already knows.
 
-We could update every parameter in the model, which is called full fine-tuning. That's how CHURRO itself was created. But even a relatively small model with 3 billion parameters is expensive to train this way, because training requires much more GPU memory than simply running the model.
+We could update every parameter in the model, which is called ***full fine-tuning***. That's how CHURRO itself was created. But even a relatively small model with 3 billion parameters is expensive to train this way, because training requires much more GPU memory than simply running the model.
 
-During inference, we primarily need to store the model's weights and the intermediate values associated with generating an answer. During full fine-tuning, we also need gradients that tell us how to change those weights, along with the optimizer's running statistics. Those additional values can increase the memory required for the model's parameters from roughly 2 bytes each to 16 bytes each.
+The GPU-hours put the options on one scale. Training from scratch is at the top, the full fine-tune that made CHURRO in the middle, and at the bottom the method this episode uses, explained in the next section.
+
+![GPU-hours on a log scale for three ways to get a 3B model that does a task: training Llama 3.2 3B from scratch, 460,000 GPU-hours, about a thousand H100s for three weeks and some 300 MWh; the full fine-tune that made CHURRO-3B, 800 GPU-hours, eight H100s for four days and about 500 kWh; this episode's LoRA run, half a GPU-hour, one A10G for 32 minutes and about 0.2 kWh](fig/pretrain-finetune-lora.svg){alt="Horizontal bar chart on a logarithmic GPU-hours axis from 0.1 to 10 million. Training from scratch, every weight from random: 460,000 GPU-hours. Full fine-tuning, every weight from a pretrained model: 800 GPU-hours. LoRA fine-tuning, an adapter under one percent of the weights: 0.5 GPU-hours. Each bar is labelled with the GPUs, the time and the electricity. Energy is GPU electricity at the rated draw, a lower bound."}
+
+During ***inference***, we primarily need to store the model's weights and the intermediate values associated with generating an answer. During full fine-tuning, we also need gradients that tell us how to change those weights, along with the optimizer's running statistics. Those additional values can increase the memory required for the model's parameters from roughly 2 bytes each to 16 bytes each.
 
 For a 3B model, that's the difference between about 6 GB and 48 GB just for the parameters and their training state, before accounting for activations and other overhead. A model that runs comfortably on one GPU may therefore require several GPUs to fine-tune.
 
@@ -59,23 +63,21 @@ For our task, that's unnecessary. We can get much of the benefit of fine-tuning 
 
 ### LoRA trains a small part of a large model
 
-Low-rank adaptation, or LoRA, reduces the amount of training by keeping the pretrained weights frozen and adding small sets of trainable parameters to selected layers. Rather than directly changing a large weight matrix, LoRA learns a much smaller adjustment to its output.
+***Low-rank adaptation***, or ***LoRA***, reduces the amount of training by keeping the pretrained weights frozen and adding small sets of trainable parameters to selected layers. Rather than directly changing a large weight matrix, LoRA learns a much smaller adjustment to its output.
 
 ![Full fine-tuning updates every entry of a d × d weight matrix; LoRA freezes it and trains two thin matrices of rank r whose product is added to its output](fig/lora.svg){alt="Left: a d by d weight matrix, all trained, 16 bytes per weight. Right: the same matrix frozen in bf16 plus two thin trained matrices B (d by r) and A (r by d); output is W x plus B A x."}
 
 The result is that we train only a fraction of the model's parameters. We still run the original model during training, but we don't need to calculate and store weight updates for most of it. That saves enough memory to fine-tune CHURRO on a single GPU with 24 GB of memory.
 
-LoRA also produces a relatively small adapter that we can save separately from the original model. To use the fine-tuned model later, we load the pretrained weights together with the adapter.
+LoRA also produces a relatively small ***adapter*** that we can save separately from the original model. To use the fine-tuned model later, we load the pretrained weights together with the adapter.
 
-This makes LoRA particularly useful for research groups. We can take an existing open-weight model, adapt it to a specialized dataset, evaluate whether the adaptation helped, and keep the resulting model without the expense of full fine-tuning. The three options sit far apart on one scale:
-
-![GPU-hours on a log scale for three ways to get a 3B model that does a task: training Llama 3.2 3B from scratch, 460,000 GPU-hours, about a thousand H100s for three weeks and some 300 MWh; the full fine-tune that made CHURRO-3B, 800 GPU-hours, eight H100s for four days and about 500 kWh; this episode's LoRA run, half a GPU-hour, one A10G for 32 minutes and about 0.2 kWh](fig/pretrain-finetune-lora.svg){alt="Horizontal bar chart on a logarithmic GPU-hours axis from 0.1 to 10 million. Training from scratch, every weight from random: 460,000 GPU-hours. Full fine-tuning, every weight from a pretrained model: 800 GPU-hours. LoRA fine-tuning, an adapter under one percent of the weights: 0.5 GPU-hours. Each bar is labelled with the GPUs, the time and the electricity. Energy is GPU electricity at the rated draw, a lower bound."}
+This makes LoRA particularly useful for research groups. We can take an existing open-weight model, adapt it to a specialized dataset, evaluate whether the adaptation helped, and keep the resulting model without the expense of full fine-tuning.
 
 ### Our task, transcribing historical German letters
 
 For this exercise, we'll use the [Badger Scribe](https://www.kaggle.com/competitions/badger-scribe) challenge, which asks participants to produce faithful transcriptions of scanned historical documents. The competition includes several kinds of archival material, but we'll concentrate on letters from the Anna Seifert correspondence, held by the Max Kade Institute, 191 letters and postcards written between 1932 and 1942 by one woman to her son, transcribed by the Institute's Kurrent Transcription Group.
 
-These letters were written in Kurrent, a historical form of German handwriting whose letterforms differ substantially from modern cursive. Even a model trained on historical documents can struggle with it, making this a useful test of whether additional fine-tuning helps.
+These letters were written in ***Kurrent***, a historical form of German handwriting whose letterforms differ substantially from modern cursive. Even a model trained on historical documents can struggle with it, making this a useful test of whether additional fine-tuning helps.
 
 We have 295 labeled pages from this collection. We'll reserve approximately 15% for evaluation and train on the remaining 251, using the corresponding human-produced transcriptions as our targets.
 
@@ -86,7 +88,7 @@ We have 295 labeled pages from this collection. We'll reserve approximately 15% 
 
 Our goal is straightforward. Does fine-tuning CHURRO on these examples improve its ability to transcribe previously unseen pages?
 
-We'll measure that using character error rate (CER), the same metric used by the competition. A lower CER means the transcription contains fewer character-level mistakes.
+We'll measure that using ***character error rate (CER)***, the same metric used by the competition. A lower CER means the transcription contains fewer character-level mistakes.
 
 ### What we'll do, and what it will cost
 
@@ -153,7 +155,7 @@ For the class run, 251 pages at about 1,600 tokens each for 2 passes is 803,000 
 
 ### The same arithmetic as a function
 
-`helpers.estimate_finetune_cost` does both calculations for any model and any data, picks the cheapest instance that fits (or uses the one you name), and prints the memory needed, the GPU-hours, the cost per run and per project, and a `max_run` to set. Its inputs are the quantities in the two rules, with the class run as the example:
+`helpers.estimate_finetune_cost` does both calculations for any model and any data, picks the cheapest instance that fits (or uses the one you name), and prints the memory needed, the GPU-hours, the cost per run and per project, and a `max_run` to set. It is the same function the PyTorch episode used as `estimate_training_cost`, which is this one with every weight trained from scratch, so the assumptions are the same there and here. Bytes per parameter from the first table, 6 or 4 FLOPs per parameter per token, times 1.5 for gradient checkpointing, a quarter of the GPU's peak, and 10 minutes of startup per job. Its inputs are the quantities in the two rules, with the class run as the example:
 
 - `params_billions`: every parameter the model holds, including parts you are not training. CHURRO is a 3B language model plus a vision tower, 3.75B in all.
 - `examples`: one example is one training item, whatever the model is given one at a time. Here it is one page image with its transcription, and there are 251 of them. For a text model it would be one document; for a speech model, one recording.
