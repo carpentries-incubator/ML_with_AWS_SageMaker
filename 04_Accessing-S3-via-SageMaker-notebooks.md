@@ -259,8 +259,10 @@ response = s3.list_objects_v2(Bucket=bucket_name)  # one page (up to 1000 keys);
 
 # Check if there are objects in the bucket
 if 'Contents' in response:
-    for obj in response['Contents']:
-        print(obj['Key'])  # Print the object's key (its path in the bucket)
+    keys = [obj['Key'] for obj in response['Contents']]   # each object's key: its path in the bucket
+    print(len(keys), "objects; the first 20:")           # a bucket that has seen a few training jobs holds hundreds of files, so do not print them all
+    for key in keys[:20]:
+        print(key)
 else:
     print("The bucket is empty or does not exist.")
 
@@ -269,8 +271,8 @@ else:
 Alternatively, we can substitute this for a helper function call as well.
 
 ```python
-file_list = helpers.list_S3_objects(bucket_name)
-file_list
+file_list = helpers.list_S3_objects(bucket_name)   # every key in the bucket, through the paginator
+file_list[:20]
 ```
 
 ::::::::::::::::::::::::::::::::::::: challenge
@@ -287,12 +289,14 @@ file_list
 ```python
 size_before = helpers.get_s3_bucket_size(bucket_name)
 
+import time
 with open("Notes2.txt", "w") as f:
     f.write("A second note, to see the bucket grow.\n" * 20)
-s3.upload_file("Notes2.txt", bucket_name, "docs/Notes2.txt")
+notes2_key = f"docs/Notes2-{int(time.time())}.txt"   # a new key each run; uploading over an existing key of the same size would show no growth
+s3.upload_file("Notes2.txt", bucket_name, notes2_key)
 
 size_after = helpers.get_s3_bucket_size(bucket_name)
-print(f"before {size_before['size_mb'] * 1024:,.1f} KB, after {size_after['size_mb'] * 1024:,.1f} KB: grew by {(size_after['size_mb'] - size_before['size_mb']) * 1024:.1f} KB")   # the helper returns a dict with size_mb and size_gb; 0.0 on a rerun, since the same file is overwritten
+print(f"before {size_before['size_mb'] * 1024:,.1f} KB, after {size_after['size_mb'] * 1024:,.1f} KB: grew by {(size_after['size_mb'] - size_before['size_mb']) * 1024:.1f} KB")   # the helper returns a dict with size_mb and size_gb
 ```
 
 The bucket grows by the size of the file (a few hundred bytes here), and at `$0.023` per GB-month that is well under a thousandth of a cent per month. The same two lines, run before and after a training job, tell you what the job wrote and whether something is accumulating that you should clean up.
