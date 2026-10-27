@@ -1390,7 +1390,7 @@ charge?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -2766,7 +2766,7 @@ commit it, push with your PAT, and verify the change on GitHub.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Still inside
 <code>/home/ec2-user/SageMaker/sagemaker-work</code>:</p>
@@ -4444,7 +4444,7 @@ goes next to it.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>There is no single answer; the solution is the written estimate. One
 worked example for scale: a 7B language model fully fine-tuned on 50,000
@@ -4641,7 +4641,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -8246,7 +8246,7 @@ and the runtime print.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <ul>
 <li>
@@ -8296,7 +8296,7 @@ in the notebook?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>The tuner can only vary what the script reads. Right now
 <code>train_nn.py</code> has no <code>--batch_size</code> argument and
@@ -8404,14 +8404,19 @@ any links that you are not going to use.
 </h2>
 <hr class="half-width">
 <p>Retrieval-Augmented Generation (RAG) is a pattern where you
-<strong>retrieve</strong> relevant context from your data and then
-<strong>generate</strong> an answer using that context. Unlike model
-training, a standard RAG workflow does <strong>not</strong> fine‑tune or
-train a model — it combines retrieval + inference only.</p>
-<p>This episode introduces the major ways to build RAG systems on AWS,
-explains why <strong>Amazon Bedrock should be your default</strong>, and
-prepares us for later episodes where we experiment with each
-approach.</p>
+<strong>retrieve</strong> relevant passages from your own documents and
+then <strong>generate</strong> an answer from them. The model is used,
+not changed. No weights are updated and no training job runs. Using a
+trained model to get an output from it, a prediction, an embedding or an
+answer, is called <strong>inference</strong>, and everything in this
+part of the lesson is inference.</p>
+<p>There are four ways to run inference on AWS. Call a model through
+Bedrock’s managed API, run it in a Processing job that ends on its own,
+load it on a GPU notebook instance, or deploy it as an inference
+endpoint. This episode compares the four, says why Bedrock is the one to
+start with, and sets up the episodes that follow, which build the same
+RAG pipeline in three of these ways and weigh the trade-offs of
+each.</p>
 <div class="overview card">
 <h2 class="card-header">Overview</h2>
 <div class="row g-0">
@@ -8420,12 +8425,13 @@ approach.</p>
 <div class="inner">
 <h3 class="card-title">Questions</h3>
 <ul>
-<li>What is Retrieval‑Augmented Generation (RAG)?</li>
-<li>What are the main architectural options for running RAG on AWS?</li>
-<li>Why is Bedrock the recommended default, and when should you reach
-for SageMaker instead?</li>
-<li>How do the billing models differ, and what does it cost if you
-forget to shut something down?</li>
+<li>What is Retrieval-Augmented Generation (RAG)?</li>
+<li>What are the four ways to run inference on AWS, and which does a RAG
+pipeline need?</li>
+<li>Why is Bedrock the default, and when is SageMaker the right choice
+instead?</li>
+<li>How do the billing models differ, and what does it cost to forget to
+shut something down?</li>
 </ul>
 </div>
 </div>
@@ -8435,17 +8441,15 @@ forget to shut something down?</li>
 <div class="inner bordered">
 <h3 class="card-title">Objectives</h3>
 <ul>
-<li>Understand that RAG does <em>not</em> require training or
-fine‑tuning a model.</li>
-<li>Recognize the major architectural patterns for RAG systems on
-AWS.</li>
-<li>Explain why pay‑per‑token Bedrock inference is the safe default for
-most research RAG work.</li>
-<li>Identify the specific situations where self‑managed GPU compute
-(Processing Jobs, notebook GPUs, or endpoints) is actually worth
-it.</li>
-<li>Understand the core cost and control trade‑offs that drive which
-approach to use.</li>
+<li>Explain that RAG trains nothing, so running one does not need a GPU
+of your own.</li>
+<li>Name the four ways to run inference on AWS and what each one bills
+for.</li>
+<li>Say why pay-per-token Bedrock is the default for most research RAG
+work.</li>
+<li>Say when self-managed GPU compute (Processing jobs, notebook GPUs,
+endpoints) is worth it.</li>
+<li>Weigh the cost and control trade-offs that decide which to use.</li>
 </ul>
 </div>
 </div>
@@ -8460,38 +8464,34 @@ once; per question, the question is embedded, the top-k chunks are
 retrieved by cosine similarity, and a generator answers from question
 plus chunks. The embedder and generator are the only parts that change
 between episodes.</div>
-</figure><p>RAG combines two steps:</p>
+</figure><p>RAG is two steps:</p>
 <ol style="list-style-type: decimal">
 <li>
-<strong>Retrieve</strong>: Search your document store (vector DB or
-FAISS index) to find relevant text.</li>
+<strong>Retrieve</strong>: search your documents for the passages
+most similar to the question.</li>
 <li>
-<strong>Generate</strong>: Provide those retrieved chunks to a large
-language model (LLM) to answer a question.</li>
+<strong>Generate</strong>: give those passages and the question to a
+language model, which writes the answer.</li>
 </ol>
-<p>No model weights are updated. No backprop. No training job.<br>
-RAG is an inference‑only pattern that layers retrieval logic around an
-LLM.</p>
-<p>A RAG pipeline needs only two stateless calls from a model:</p>
-<ul>
-<li>“Turn this text into an embedding vector.”</li>
-<li>“Given this prompt (question + retrieved chunks), generate an
-answer.”</li>
-</ul>
-<p>Neither of those requires you to own a GPU. They are exactly the kind
-of calls that a managed inference API is built to serve.</p>
-</section><section><h2 class="section-heading" id="start-here-bedrock-is-the-default">Start Here: Bedrock Is the Default<a class="anchor" aria-label="anchor" href="#start-here-bedrock-is-the-default"></a>
+<p>No weights are updated and no training job runs. RAG is retrieval
+logic around two model calls.</p>
+<p>The two models are used in two ways. An embedding model maps a piece
+of text to a vector; it is called once per chunk when the corpus is
+indexed and once per question. A generation model is given the question
+and the retrieved chunks and writes the answer. Both are inference with
+no state between calls, so neither needs a GPU of your own. A managed
+inference API serves calls like these.</p>
+</section><section><h2 class="section-heading" id="bedrock-is-the-default-for-inference">Bedrock is the default for inference<a class="anchor" aria-label="anchor" href="#bedrock-is-the-default-for-inference"></a>
 </h2>
 <hr class="half-width">
-<p><strong>For standard RAG inference, use Amazon Bedrock.</strong>
-Bedrock exposes embedding and generation models (Amazon Titan, Anthropic
-Claude, DeepSeek, Meta Llama, and others) as pay‑per‑token APIs. Your
-retrieval code — chunking, indexing, similarity search, reranking,
-evaluation — stays entirely under your control and can run on a cheap
-CPU notebook or your laptop. Only the two model calls above are sent to
-Bedrock.</p>
-<p>The reason this is the default comes down to <strong>how you are
-billed</strong>:</p>
+<p><strong>For most RAG pipelines, and for inference in general, Amazon
+Bedrock is the fastest and most cost-effective starting point on
+AWS.</strong> Bedrock serves embedding and generation models (Amazon
+Titan, Anthropic Claude, DeepSeek, Meta Llama and others) through
+pay-per-token APIs. Your retrieval code, chunking, indexing, similarity
+search, evaluation, stays yours and runs on a cheap CPU notebook or a
+laptop. Only the two model calls go to Bedrock.</p>
+<p>The reason is billing:</p>
 <table class="table">
 <colgroup>
 <col width="33%">
@@ -8512,37 +8512,37 @@ billed</strong>:</p>
 <tr>
 <td><strong>Cost while idle</strong></td>
 <td>
-<code>$0</code> — nothing is running between calls</td>
-<td>Full hourly rate, 24/7, whether or not you use it</td>
+<code>$0</code>: nothing runs between calls</td>
+<td>The full hourly rate, around the clock, used or not</td>
 </tr>
 <tr>
-<td><strong>What you must remember to do</strong></td>
-<td>Know the per-token price before a big batch; route calls through a
-tagged profile</td>
-<td>Stop or delete the instance every time you finish</td>
+<td><strong>What you have to remember</strong></td>
+<td>The per-token price before a big batch; route calls through a tagged
+profile</td>
+<td>Stop or delete the instance, every time</td>
 </tr>
 <tr>
 <td><strong>Model updates</strong></td>
-<td>Managed by AWS / the provider</td>
-<td>Your problem (containers, CUDA, VRAM)</td>
+<td>AWS and the provider</td>
+<td>You: containers, CUDA, GPU memory</td>
 </tr>
 <tr>
 <td><strong>Model choice</strong></td>
-<td>Curated catalog (incl. proprietary models)</td>
-<td>Any open‑weight model you can load</td>
+<td>A curated catalog, proprietary models included</td>
+<td>Any open-weight model you can load</td>
 </tr>
 </tbody>
 </table>
-<p>A GPU instance is a rental that keeps the meter running until
-<em>you</em> turn it off. Forgetting to do so is the single most common
-way research teams burn through cloud budgets. Bedrock has no equivalent
-failure mode: if you stop calling it, you stop paying.</p>
+<p>A GPU instance is a rental whose meter runs until you turn it off,
+and forgetting to is the most common way a research team spends its
+cloud budget on nothing. Bedrock has no such failure. Stop calling it
+and you stop paying.</p>
 <div class="section level3">
-<h3 id="what-forgetting-actually-costs">What forgetting actually costs<a class="anchor" aria-label="anchor" href="#what-forgetting-actually-costs"></a>
+<h3 id="what-forgetting-costs">What forgetting costs<a class="anchor" aria-label="anchor" href="#what-forgetting-costs"></a>
 </h3>
 <p>A GPU notebook instance left running after you close your laptop
-costs this much (on‑demand prices at time of writing; see the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">instances
-page</a>):</p>
+(on-demand prices at the time of writing; the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">instances
+page</a> has the current ones):</p>
 <table style="width:100%;" class="table">
 <colgroup>
 <col width="16%">
@@ -8619,9 +8619,9 @@ page</a>):</p>
 </tr>
 </tbody>
 </table>
-<p>Compare that to running the <strong>entire WattBot pipeline</strong>
-from this lesson on Bedrock. Using DeepSeek V3 (check the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
-for current per‑token prices) and Titan Text Embeddings V2
+<p>Against that, the whole WattBot pipeline of this lesson on Bedrock,
+with DeepSeek V3 for generation (the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
+has current per-token prices) and Titan Text Embeddings V2
 (<code>$0.02</code> per million tokens):</p>
 <table class="table">
 <colgroup>
@@ -8643,7 +8643,7 @@ for current per‑token prices) and Titan Text Embeddings V2
 </tr>
 <tr>
 <td>Answer and explain the 220 answerable training questions (two calls
-each, ~1.5K‑token prompts) with DeepSeek V3</td>
+each, ~1.5K-token prompts) with DeepSeek V3</td>
 <td>650K in / 40K out</td>
 <td>~<code>$0.50</code>
 </td>
@@ -8655,168 +8655,150 @@ each, ~1.5K‑token prompts) with DeepSeek V3</td>
 </tr>
 </tbody>
 </table>
-<p>A single forgotten weekend on the <em>cheapest</em> GPU instance
-costs more than fifty full runs of the pipeline on Bedrock; a forgotten
-weekend on the <code>ml.g6e.xlarge</code> the optional GPU-notebook
-episode uses costs more than a hundred.</p>
-<div id="bedrock-trade-offs-to-know-about" class="callout">
+<p>One forgotten weekend on the cheapest GPU instance costs more than
+fifty full runs of the pipeline on Bedrock; a forgotten weekend on the
+<code>ml.g6e.xlarge</code> the optional GPU-notebook episode uses costs
+more than a hundred.</p>
+<div id="where-bedrock-falls-short" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
 </div>
 <span class="callout-header">Callout</span>
-<div id="bedrock-trade-offs-to-know-about" class="callout-inner">
-<h3 class="callout-title">Bedrock trade-offs to know about</h3>
+<div id="where-bedrock-falls-short" class="callout-inner">
+<h3 class="callout-title">Where Bedrock falls short</h3>
 <div class="callout-content">
-<p>Bedrock’s limits:</p>
 <ul>
 <li>
-<strong>Less control over architecture.</strong> You can only call
-models in the Bedrock catalog. If your research depends on a specific
-open‑weight model, a custom fine‑tune, or hacking on the model
-internals, you’ll need to host it yourself.</li>
+<strong>Model choice.</strong> You can only call models in the
+catalog. If the work depends on a specific open-weight model, your own
+fine-tune, or changes to the model’s internals, you host it
+yourself.</li>
 <li>
-<strong>Per‑token cost can exceed GPU cost for very large offline
-batches.</strong> If you are embedding tens of millions of chunks with a
-small open model, a short‑lived GPU job may be cheaper per unit of work.
-Do the arithmetic before assuming either way.</li>
+<strong>Very large batches.</strong> Embedding tens of millions of
+chunks with a small open model can be cheaper per unit on a short-lived
+GPU job than per token. Do the arithmetic before assuming either
+way.</li>
 <li>
-<strong>Model access and region availability.</strong> Some models
-must be enabled in the console first, and the catalog varies by region.
-Plan for this before a workshop or deadline.</li>
+<strong>Access and regions.</strong> Some models have to be enabled
+in the console first, and the catalog differs by region. Check before a
+workshop or a deadline.</li>
 <li>
-<strong>Quotas.</strong> On‑demand throughput is rate‑limited per
-model and per account. For large batch workloads, use the Bedrock batch
-inference API or request a quota increase rather than hammering the
-on‑demand endpoint.</li>
+<strong>Quotas.</strong> On-demand throughput is rate-limited per
+model and per account. For a large batch, use the batch inference API or
+request a quota increase rather than retrying against the limit.</li>
 <li>
-<strong>Data handling.</strong> Bedrock does not use your prompts to
-train models, and keeps data in the region, or within the US when a
-<code>us.</code> cross-region profile is used, but you should still
-check your institution’s policy before sending sensitive documents to
-any hosted API.</li>
+<strong>Data handling.</strong> Bedrock does not train on your
+prompts and keeps data in the region, or within the US when a
+<code>us.</code> cross-region profile is used; your institution’s policy
+on sending documents to a hosted API still applies.</li>
 <li>
-<strong>Cost tracking needs one extra step.</strong> On‑demand
-Bedrock calls carry no tags. To attribute spend to a project you route
-calls through a tagged <em>application inference profile</em> (see
-“Tagging” below and the Bedrock episode). It is a one‑time setup, but
-skipping it leaves the usage anonymous on the bill.</li>
+<strong>Cost tracking takes one extra step.</strong> On-demand calls
+carry no tags. To attribute spend to a project you route calls through a
+tagged <em>application inference profile</em> (the Tagging section
+below, and the Bedrock episode). Set up once; skip it and the usage is
+anonymous on the bill.</li>
 </ul>
 </div>
 </div>
 </div>
 </div>
-</section><section><h2 class="section-heading" id="approaches-to-running-rag-on-aws">Approaches to Running RAG on AWS<a class="anchor" aria-label="anchor" href="#approaches-to-running-rag-on-aws"></a>
+</section><section><h2 class="section-heading" id="four-ways-to-run-inference-on-aws">Four ways to run inference on AWS<a class="anchor" aria-label="anchor" href="#four-ways-to-run-inference-on-aws"></a>
 </h2>
 <hr class="half-width">
-<p>The main patterns, ordered from “reach for this first” to “only when
-you really need it.”</p>
-<figure><img src="fig/rag-approaches.svg" alt="Comparison table of four ways to run RAG on AWS: Bedrock API (default, pay per token, nothing to shut down), Processing job (batch with open models, bills per second while the job runs, terminates itself), GPU notebook (learning and debugging only, bills per hour until stopped, about $90 if forgotten over a weekend) and Inference endpoint (steady traffic only, bills 24/7, about $1,000 if idle for a month)." class="figure mx-auto d-block"><div class="figcaption">Four columns, Bedrock API, Processing job, GPU
+<p>In the order to try them.</p>
+<figure><img src="fig/rag-approaches.svg" alt="Comparison table of four ways to run inference on AWS: Bedrock API (default, pay per token, nothing to shut down), Processing job (batch with open models, bills per second while the job runs, terminates itself), GPU notebook (learning and debugging only, bills per hour until stopped, about $90 if forgotten over a weekend) and Inference endpoint (steady traffic only, bills 24/7, about $1,000 if idle for a month)." class="figure mx-auto d-block"><div class="figcaption">Four columns, Bedrock API, Processing job, GPU
 notebook and Inference endpoint, compared on where the model runs, what
 runs between calls, billing unit, latency, model choice, what you must
 remember, a cost example and which episode covers it; Bedrock is marked
 as the default and Processing jobs as the safe way to use a GPU</div>
 </figure><div class="section level3">
-<h3 id="amazon-bedrock-managed-embedding-and-generation-apis-default">1. Amazon Bedrock — managed embedding and generation APIs
-(default)<a class="anchor" aria-label="anchor" href="#amazon-bedrock-managed-embedding-and-generation-apis-default"></a>
+<h3 id="amazon-bedrock-the-default">1. Amazon Bedrock, the default<a class="anchor" aria-label="anchor" href="#amazon-bedrock-the-default"></a>
 </h3>
-<p>Call embedding and generation models via API from your RAG pipeline.
-You still own and manage retrieval logic (chunking, indexing, reranking,
-evaluation), but you outsource the heavy model lifecycle work entirely.
-You pay per token, nothing runs between calls, and there is nothing to
-shut down. Bedrock also gives RAG systems access to proprietary models
-(e.g., Claude) that would otherwise need to be purchased and integrated
-separately.</p>
-<p><strong>Use it for:</strong> essentially any RAG system where a model
-in the Bedrock catalog is acceptable — prototyping, research tools,
-course projects, and production chatbots alike.</p>
+<p>Call the embedding and generation models from your pipeline. You keep
+the retrieval logic; AWS keeps the models. You pay per token, nothing
+runs between calls, and there is nothing to shut down. Bedrock is also
+where proprietary models such as Claude are available without a separate
+contract.</p>
+<p><strong>Use it for:</strong> any RAG system where a catalog model
+will do, from prototypes and course projects to research tools and
+production chatbots.</p>
 </div>
 <div class="section level3">
-<h3 id="sagemaker-processing-jobs-short-lived-batch-gpu-compute">2. SageMaker Processing Jobs — short-lived batch GPU compute<a class="anchor" aria-label="anchor" href="#sagemaker-processing-jobs-short-lived-batch-gpu-compute"></a>
+<h3 id="sagemaker-processing-jobs">2. SageMaker Processing jobs<a class="anchor" aria-label="anchor" href="#sagemaker-processing-jobs"></a>
 </h3>
-<p>For large corpora, or when you need a specific open‑weight model that
-Bedrock doesn’t offer, treat parts of the RAG pipeline — especially
-embedding and batch generation — as offline batch jobs rather than a
-live model. You run a short‑lived Hugging Face Processing job that spins
-up a GPU instance, loads your model, processes all the chunked text in
-one shot, saves the results to S3, <strong>and then terminates
-itself</strong>. Because the GPU only exists while the job runs, you get
-self‑managed models <em>without</em> the forgot‑to‑shut‑it‑down risk.
-This is the safest way to use a GPU on SageMaker.</p>
-<p>The trade‑off is latency: starting a Processing job takes several
-minutes, so this pattern is for “compute once, use many times”
-workloads, not per‑query retrieval. Launching a job per user question
-would be far too slow.</p>
-<p><strong>Use it for:</strong> embedding very large corpora with an
-open model, periodic batch regeneration, or research that requires a
-model you can’t get through Bedrock.</p>
+<p>For a large corpus, or for an open-weight model Bedrock does not
+carry, run the embedding and the batch generation as jobs rather than
+against a live model. A Hugging Face Processing job starts a GPU
+instance, loads the model, works through all the chunks or questions,
+writes the results to S3 and ends. The GPU exists only while the job
+runs, so you get a self-managed model without the risk of forgetting to
+stop it. This is the safest way to use a GPU on SageMaker.</p>
+<p>The cost is latency. A job takes several minutes to start, so this is
+for work done once and used many times, not for answering one question
+at a time.</p>
+<p><strong>Use it for:</strong> embedding a large corpus with an open
+model, periodic batch regeneration, or research that needs a model
+Bedrock does not offer.</p>
 </div>
 <div class="section level3">
-<h3 id="a-single-gpu-backed-notebook-instance-for-learning-and-debugging">3. A single GPU-backed notebook instance — for learning and
-debugging<a class="anchor" aria-label="anchor" href="#a-single-gpu-backed-notebook-instance-for-learning-and-debugging"></a>
+<h3 id="a-gpu-notebook-instance">3. A GPU notebook instance<a class="anchor" aria-label="anchor" href="#a-gpu-notebook-instance"></a>
 </h3>
-<p>For small‑ to medium‑sized models (&lt; 70 B), you <em>can</em> pick
-a GPU instance (e.g., <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">ml.g5.xlarge</a>),
-load your embedding and generation models directly in the notebook, and
-run RAG end‑to‑end there. The architecture is the simplest to
-understand, and it’s genuinely the best way to <em>learn</em> what
-happens inside a RAG pipeline, because every step is a line of Python
-you can inspect.</p>
-<p>But it is the <strong>most expensive way to run RAG and the easiest
-one to get wrong</strong>. The GPU bills by the hour from the moment the
-instance starts until you stop it, including the long stretches while
-you download PDFs, chunk text, read results, or go to lunch. It is also
-the route most likely to be forgotten, because a notebook instance looks
-like a workspace rather than a running job. If you use this
-approach:</p>
+<p>For models up to about 70B you can choose a GPU instance (an <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">ml.g5.xlarge</a>,
+say), load the embedding and generation models in the notebook, and run
+RAG end to end there. It is the simplest setup to follow, and the best
+way to learn what happens inside a RAG pipeline, because every step is a
+line of Python you can inspect.</p>
+<p>It is also the most expensive way to run RAG and the easiest to get
+wrong. The GPU bills by the hour from the moment the instance starts
+until you stop it, through every stretch spent downloading PDFs,
+chunking text, reading results or at lunch. It is the route most often
+forgotten, because a notebook instance looks like a workspace rather
+than a running job. If you use it:</p>
 <ul>
-<li>Treat it as a learning exercise, not a deployment pattern.</li>
-<li>Stop the instance the moment you are done, and
-<strong>verify</strong> the status on the <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/notebook-instances" class="external-link">Notebook
+<li>Treat it as a learning exercise, not a way to deploy anything.</li>
+<li>Stop the instance the moment you are done, and check its status on
+the <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/notebook-instances" class="external-link">Notebook
 instances page</a>.</li>
-<li>Set up an <a href="https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html" class="external-link">AWS
-Budget</a> alert and consider a <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/notebook-lifecycle-config.html" class="external-link">lifecycle
-configuration</a> that auto‑stops idle notebooks.</li>
-<li>For larger models the hourly rate (e.g., <code>$25</code>/hour for a
+<li>Set an <a href="https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html" class="external-link">AWS
+Budget</a> alert, and consider a <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/notebook-lifecycle-config.html" class="external-link">lifecycle
+configuration</a> that stops idle notebooks.</li>
+<li>For larger models the hourly rate (<code>$25</code> an hour for a
 p4d.24xlarge; the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
-for ML</a> page has the full list) becomes a limiting factor very
-quickly.</li>
+for ML</a> page has the list) becomes the limit quickly.</li>
 </ul>
-<p><strong>Use it for:</strong> walking through RAG internals step by
-step, debugging a model locally before packaging it as a job, or short
-experiments where you will be at the keyboard the whole time.</p>
+<p><strong>Use it for:</strong> walking through RAG step by step,
+debugging a model before packaging it as a job, or short experiments
+where you stay at the keyboard.</p>
 </div>
 <div class="section level3">
-<h3 id="long-lived-sagemaker-inference-endpoints-self-hosted-interactive-serving">4. Long-lived SageMaker inference endpoints — self-hosted
-interactive serving<a class="anchor" aria-label="anchor" href="#long-lived-sagemaker-inference-endpoints-self-hosted-interactive-serving"></a>
+<h3 id="sagemaker-inference-endpoints">4. SageMaker inference endpoints<a class="anchor" aria-label="anchor" href="#sagemaker-inference-endpoints"></a>
 </h3>
-<p>For applications that need low‑latency, interactive RAG (APIs,
-chatbots, dashboards) <em>and</em> that must use a model you host
-yourself, you can deploy your own embedding and generation models as
-SageMaker inference endpoints and call them from your retrieval service.
-This gives you full control over the model, scaling policies, and
-autoscaling.</p>
-<p>It is also the <strong>most expensive option when traffic is low or
-bursty</strong>, because you are paying for capacity that stays online
-even when nobody is querying the system — the same always‑on problem as
-a notebook GPU, but now intentionally and indefinitely. Before choosing
-this route, ask whether Bedrock already serves an acceptable model: it
-provides exactly this interactive, low‑latency experience with none of
-the idle cost. Endpoints are the right answer only when the model itself
-is the reason Bedrock won’t work.</p>
+<p>For an application that needs interactive, low-latency answers (an
+API, a chatbot, a dashboard) from a model you host yourself, deploy the
+embedding and generation models as SageMaker inference endpoints and
+call them from your retrieval service. You control the model, the
+scaling and the hardware.</p>
+<p>It is also the most expensive option when traffic is low or bursty,
+because you pay for capacity that stays up when nobody is asking, the
+same always-on problem as a notebook GPU, now by design and without end.
+Before choosing it, ask whether Bedrock already serves a model that will
+do; it gives the same interactive latency with no idle cost. Endpoints
+are the answer only when the model itself is why Bedrock will not
+work.</p>
 <p><strong>Use it for:</strong> production systems with steady traffic
-that require a custom or open‑weight model. We do not build one hands‑on
-in this lesson.</p>
+that need a custom or open-weight model. The lesson does not build
+one.</p>
 </div>
-</section><section><h2 class="section-heading" id="tagging-every-billable-resource-needs-its-own-tags">Tagging: Every Billable Resource Needs Its Own Tags<a class="anchor" aria-label="anchor" href="#tagging-every-billable-resource-needs-its-own-tags"></a>
+</section><section><h2 class="section-heading" id="every-billable-resource-needs-its-own-tags">Every billable resource needs its own tags<a class="anchor" aria-label="anchor" href="#every-billable-resource-needs-its-own-tags"></a>
 </h2>
 <hr class="half-width">
-<p>Cost tracking in this workshop relies on three tags —
-<code>Name</code>, <code>Project</code>, <code>Purpose</code> — so that
-Cost Explorer can break the shared bill down by challenge. <strong>Tags
+<p>Cost tracking in this workshop relies on three tags,
+<code>Name</code>, <code>Project</code> and <code>Purpose</code>, so
+that Cost Explorer can split the shared bill by challenge. <strong>Tags
 never propagate.</strong> Tagging your notebook instance tags the
 notebook instance and nothing else. Every other resource you create is a
-separate line item that is anonymous unless you tag it yourself at
-creation time.</p>
+separate line on the bill, anonymous unless you tag it when you create
+it.</p>
 <table class="table">
 <colgroup>
 <col width="33%">
@@ -8863,7 +8845,7 @@ job</strong>
 </td>
 </tr>
 <tr>
-<td>Bedrock on‑demand call</td>
+<td>Bedrock on-demand call</td>
 <td>Per token</td>
 <td>
 <strong>Cannot be tagged directly.</strong> Create an
@@ -8872,31 +8854,30 @@ job</strong>
 </tr>
 </tbody>
 </table>
-<p>Three things follow from this:</p>
+<p>Three things follow:</p>
 <ol style="list-style-type: decimal">
 <li>
 <strong>Each job gets its own tags.</strong> A SageMaker job
 launched from a tagged notebook does not inherit the notebook’s tags.
-Pass <code>tags=job_tags</code> on every estimator, tuner, and
-processor, exactly as the training, tuning, and Processing‑job episodes
-do. Vary <code>Purpose</code> per job so the bill tells you what the
-money went to.</li>
+Pass <code>tags=job_tags</code> on every estimator, tuner and processor,
+as the training, tuning and Processing-job episodes do. Vary
+<code>Purpose</code> per job so the bill says what the money went
+to.</li>
 <li>
 <strong>Bedrock is tagged through a profile, not a call.</strong>
 <code>invoke_model</code> and <code>converse</code> have no tags
-parameter. An application inference profile is a free, model‑specific
-wrapper that carries tags; usage routed through it is attributed to
-those tags. One profile per base model (so one for the embedding model
-and one for the generation model). Bedrock’s tag format is lowercase
-<code>key</code>/<code>value</code>, while SageMaker’s is
-<code>Key</code>/<code>Value</code>; the tag <em>names</em> stay the
-same.</li>
+parameter. An application inference profile is a free wrapper around one
+model that carries tags; usage routed through it is attributed to those
+tags. One profile per base model, so one for the embedding model and one
+for the generation model. Bedrock’s tag format is lowercase
+<code>key</code>/<code>value</code> where SageMaker’s is
+<code>Key</code>/<code>Value</code>; the tag names are the same.</li>
 <li>
 <strong>Only the three approved keys count.</strong>
-<code>Name</code>, <code>Project</code> and <code>Purpose</code>,
-spelled exactly; any other key is ignored by the bill, for the reason
-the S3 episode gives.</li>
-</ol></section><section><h2 class="section-heading" id="when-do-you-use-which-approach">When Do You Use Which Approach?<a class="anchor" aria-label="anchor" href="#when-do-you-use-which-approach"></a>
+<code>Name</code>, <code>Project</code> and <code>Purpose</code>, with
+that spelling and capitalisation; the bill ignores any other key, for
+the reason the S3 episode gives.</li>
+</ol></section><section><h2 class="section-heading" id="which-to-use">Which to use<a class="anchor" aria-label="anchor" href="#which-to-use"></a>
 </h2>
 <hr class="half-width">
 <table class="table">
@@ -8906,12 +8887,12 @@ the S3 episode gives.</li>
 </colgroup>
 <thead><tr>
 <th>Your situation</th>
-<th>Recommended route</th>
+<th>Route</th>
 </tr></thead>
 <tbody>
 <tr>
 <td>You need to embed and query a document collection and a catalog
-model (Titan, Claude, Llama, …) is fine</td>
+model (Titan, Claude, Llama, …) will do</td>
 <td><strong>Bedrock</strong></td>
 </tr>
 <tr>
@@ -8919,48 +8900,46 @@ model (Titan, Claude, Llama, …) is fine</td>
 <td><strong>Bedrock</strong></td>
 </tr>
 <tr>
-<td>You need a specific open‑weight model and the work is batch
+<td>You need a specific open-weight model and the work is batch
 (embedding a corpus, bulk generation)</td>
-<td><strong>Processing Jobs</strong></td>
+<td><strong>Processing jobs</strong></td>
 </tr>
 <tr>
 <td>You are learning how RAG works, or debugging a model step by
 step</td>
 <td>
-<strong>Notebook GPU</strong> — and stop it when you leave</td>
+<strong>Notebook GPU</strong>, stopped when you leave</td>
 </tr>
 <tr>
-<td>You need interactive serving of a model Bedrock doesn’t offer, with
+<td>You need interactive serving of a model Bedrock does not offer, with
 steady traffic</td>
 <td><strong>Inference endpoint</strong></td>
 </tr>
 </tbody>
 </table>
-<p>If you are unsure, pick Bedrock. The worst case is a slightly higher
-per‑token bill; the worst case with the other routes is a four‑figure
-surprise on next month’s invoice.</p>
-<div id="how-the-hands-on-episodes-are-ordered" class="callout">
+<p>If in doubt, Bedrock. Its worst case is a somewhat higher per-token
+bill; the worst case on the other routes is a four-figure invoice next
+month.</p>
+<div id="the-order-of-the-hands-on-episodes" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
 </div>
 <span class="callout-header">Callout</span>
-<div id="how-the-hands-on-episodes-are-ordered" class="callout-inner">
-<h3 class="callout-title">How the hands-on episodes are ordered</h3>
+<div id="the-order-of-the-hands-on-episodes" class="callout-inner">
+<h3 class="callout-title">The order of the hands-on episodes</h3>
 <div class="callout-content">
-<p>The next two episodes walk through RAG on <strong>Bedrock</strong>
-first, then on <strong>Processing Jobs</strong>. The Bedrock episode is
-the one to start from: it builds the whole WattBot pipeline, including
-chunking the corpus, from a cheap CPU notebook with nothing left running
-afterward. The Processing Jobs episode reruns the same pipeline on a
-self-hosted open-weight model that Bedrock does not carry, as jobs that
-end on their own, so you can see what Bedrock abstracts away and what it
-costs to do yourself. An optional self-study episode after them runs the
-same self-hosted pipeline interactively on a GPU notebook instance.
-<strong>Those first two are the defaults. The GPU-notebook episode is
-for the case where you need to poke at a self-hosted model
-interactively, and only if you will remember to stop the
-instance.</strong> All three RAG episodes share one module of pipeline
-code (<code>scripts/wattbot_rag.py</code> in the lesson repository).</p>
+<p>The next two episodes build RAG on <strong>Bedrock</strong> first,
+then on <strong>Processing jobs</strong>. The Bedrock episode is the one
+to start from. It builds the whole WattBot pipeline, chunking the corpus
+included, from a cheap CPU notebook with nothing left running afterward.
+The Processing-jobs episode reruns the same pipeline on an open-weight
+model Bedrock does not carry, as jobs that end on their own, which shows
+what Bedrock does for you and what it costs to do yourself. An optional
+self-study episode runs the same self-hosted pipeline interactively on a
+GPU notebook instance, for the case where you need to work on a
+self-hosted model by hand, and only if you will remember to stop the
+instance. All three share one module of pipeline code,
+<code>scripts/wattbot_rag.py</code> in the lesson repository.</p>
 <p>When you build your own RAG system afterward, start from the Bedrock
 episode.</p>
 </div>
@@ -8974,28 +8953,26 @@ episode.</p>
 <div class="callout-inner">
 <div class="callout-content">
 <ul>
-<li>RAG is an inference‑only workflow: no training or fine‑tuning
-required, so you do not need to own a GPU to run one.</li>
+<li>RAG is inference only. Nothing is trained or fine-tuned, so running
+one does not need a GPU of your own.</li>
 <li>
-<strong>Amazon Bedrock is the default for RAG inference</strong>:
-you pay per token, nothing runs between calls, and there is nothing to
-forget to shut down.</li>
-<li>Self‑managed GPU compute (Processing Jobs, notebook GPUs, inference
-endpoints) is justified when you need a model Bedrock doesn’t offer or
-when very large batch volumes make per‑token pricing uncompetitive — not
-as a starting point.</li>
-<li>Among the GPU options, Processing Jobs are the safest because the
-instance terminates itself; notebook GPUs and endpoints bill by the hour
-until you stop them.</li>
+<strong>Bedrock is the default for inference</strong>: you pay per
+token, nothing runs between calls, and there is nothing to forget to
+shut down.</li>
+<li>Self-managed GPU compute (Processing jobs, notebook GPUs, inference
+endpoints) is for a model Bedrock does not offer, or for batch volumes
+so large that per-token pricing loses; it is not a starting point.</li>
+<li>Of the GPU options, Processing jobs are the safest, because the
+instance ends itself; notebook GPUs and endpoints bill by the hour until
+you stop them.</li>
 <li>A forgotten GPU instance costs tens of dollars overnight and
 hundreds to thousands over a month; a full WattBot run on Bedrock costs
-well under a dollar.</li>
-<li>Tags never propagate: tag every job at launch, and route Bedrock
-calls through a tagged application inference profile, or the spend is
-untraceable.</li>
-<li>The hands‑on episodes start with Bedrock, then show the same
-pipeline on Processing Jobs; the notebook-GPU version is optional
-self-study.</li>
+under a dollar.</li>
+<li>Tags never propagate. Tag every job at launch and route Bedrock
+calls through a tagged application inference profile, or the spend
+cannot be traced.</li>
+<li>The hands-on episodes start with Bedrock, then the same pipeline on
+Processing jobs; the notebook-GPU version is optional self-study.</li>
 </ul>
 </div>
 </div>
@@ -9059,104 +9036,81 @@ questions.</li>
 <p>Open the notebook from:
 <code>/ML_with_AWS_SageMaker/notebooks/11_RAG-Bedrock.ipynb</code>.
 Select the <strong><code>conda_pytorch</code></strong> kernel. This is
-the first hands-on RAG episode, and it starts where the overview told
-you to start: <strong>Amazon Bedrock</strong>. We build a complete RAG
-pipeline for the <a href="https://www.kaggle.com/competitions/WattBot2026" class="external-link">WattBot 2026</a>
-challenge from a small, CPU-only SageMaker notebook. Nothing in this
-episode needs a GPU: the core model work — <strong>both text embeddings
-and answer generation</strong> — runs on Bedrock-hosted models that bill
-per token and leave nothing running between calls. We’ll use:</p>
-<ul>
-<li>an <strong>Amazon Titan Text Embeddings V2</strong> model to turn
-WattBot chunks into vectors, and<br>
-</li>
-<li>a <strong>DeepSeek V3</strong> model hosted on Bedrock to generate
-answers and explanations.</li>
-</ul>
-<p>We also do the corpus preparation here: unpack the WattBot PDF
-corpus, split it into pages and overlapping chunks, and cache the chunks
-on S3. The Processing Jobs episode (and the optional GPU-notebook
-episode) reuse those chunks and run the same retrieval, evaluation, and
-scoring logic on self-hosted models, so you can compare cost, latency,
-and complexity directly.</p>
+the first hands-on RAG episode, and it uses Amazon Bedrock, the default
+the overview recommended. We build the whole RAG pipeline for the <a href="https://www.kaggle.com/competitions/WattBot2026" class="external-link">WattBot 2026</a>
+challenge from a small CPU-only SageMaker notebook. Nothing here needs a
+GPU, because both the text embeddings and the answer generation run on
+Bedrock-hosted models, which bill per token and leave nothing running
+between calls. The two models are <strong>Amazon Titan Text Embeddings
+V2</strong>, which turns WattBot chunks into vectors, and
+<strong>DeepSeek V3</strong>, which writes the answers and
+explanations.</p>
+<p>This episode also prepares the corpus. It unpacks the WattBot PDFs,
+splits them into pages and overlapping chunks, and caches the chunks in
+S3. The Processing-jobs episode and the optional GPU-notebook episode
+reuse those chunks and run the same retrieval, evaluation and scoring on
+self-hosted models, so cost, latency and effort can be compared
+directly.</p>
 <section><h2 class="section-heading" id="why-bedrock-for-wattbot">Why Bedrock for WattBot?<a class="anchor" aria-label="anchor" href="#why-bedrock-for-wattbot"></a>
 </h2>
 <hr class="half-width">
-<p>When you self-host models (as the Processing Jobs episode does next),
-you are responsible for picking a model, managing versions, and making
-sure your instance has enough VRAM. That works for experiments, but it
-can get painful once multiple teams or challenges want to reuse the same
-pipeline.</p>
-<p>Running your <strong>embedding + generation</strong> steps on Amazon
-Bedrock gives you:</p>
+<p>With a self-hosted model, as in the Processing-jobs episode, you
+choose the model, keep its version, and make sure the instance has the
+GPU memory for it. That is fine for an experiment and a burden once
+several teams want the same pipeline. Running the embedding and
+generation steps on Bedrock means:</p>
 <ul>
 <li>
-<strong>Managed, up-to-date models.</strong> You can use
-high‑quality models from Anthropic, Amazon, DeepSeek, and others without
-worrying about container images or CUDA versions.</li>
+<strong>Managed models.</strong> Models from Anthropic, Amazon,
+DeepSeek and others, with no container images or CUDA versions of your
+own.</li>
 <li>
-<strong>Pay for what you use (in tokens).</strong> Instead of paying
-for a GPU instance that might sit idle, you pay per token (input +
-output) when you call the model. For some workloads this is cheaper; for
-large offline batches with smaller models, a dedicated GPU can still
-win.</li>
+<strong>Paying per token.</strong> Instead of a GPU instance that
+may sit idle, you pay for the input and output tokens of each call. For
+most workloads that is cheaper; for a large offline batch with a small
+model, a GPU job can still win.</li>
 <li>
-<strong>Easier sharing and governance.</strong> A team can
-standardize on a small set of Bedrock models across courses, hackathons,
-or labs than to manage many separate GPU instances.</li>
+<strong>One set of models for a group.</strong> A lab or a course
+can agree on a few Bedrock models more easily than on a fleet of GPU
+instances.</li>
 </ul>
-<p>In this notebook, both the <strong>embedding</strong> and
-<strong>answer/explanation</strong> steps run on Bedrock-hosted models.
-The embeddings are saved as <code>embeddings_bedrock.npy</code> so you
-can compare them against the self-hosted run in the Processing Jobs
-episode.</p>
+<p>In this notebook both the embedding step and the answer and
+explanation steps run on Bedrock. The embeddings are saved as
+<code>embeddings_bedrock.npy</code>, so they can be compared with the
+self-hosted run in the Processing-jobs episode.</p>
 <div class="section level3">
 <h3 id="models-used-in-this-episode">Models used in this episode<a class="anchor" aria-label="anchor" href="#models-used-in-this-episode"></a>
 </h3>
-<p>We’ll work with <strong>Amazon Bedrock–hosted foundation
-models</strong> for both embedding and generation:</p>
+<p>Both models are Bedrock-hosted foundation models:</p>
 <ul>
 <li>
-<p><strong>Amazon Titan Text Embeddings V2</strong>
-(<code>amazon.titan-embed-text-v2:0</code>)</p>
-<ul>
-<li>General‑purpose text‑embedding model for semantic search, retrieval,
-clustering, and classification.</li>
-<li>Supports configurable embedding dimensions (256, 512, or 1,024) and
-has presets tuned for retrieval or binary indexing.</li>
-<li>AWS does not publish the exact number of parameters for Titan
-models;</li>
-</ul>
-</li>
+<strong>Amazon Titan Text Embeddings V2</strong>
+(<code>amazon.titan-embed-text-v2:0</code>): a general text-embedding
+model for retrieval, clustering and classification. It returns vectors
+of 256, 512 or 1,024 dimensions, with presets for retrieval. AWS does
+not publish its parameter count.</li>
 <li>
-<p><strong>DeepSeek V3</strong> (<code>deepseek.v3-v1:0</code> via
-Bedrock)</p>
-<ul>
-<li>An open‑weight mixture‑of‑experts model (671B parameters in total,
-about 37B active per token) that Bedrock serves on‑demand, so there is
-no GPU to manage.</li>
-<li>Particularly useful when you want many calls (e.g., one per
-question) and care about low latency and lower per‑token pricing
-compared to flagship models (check the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
-for current rates).</li>
-<li>The same code works for any chat model in the catalog. Bedrock has
-one chat call, <code>converse</code>, that takes the same input for
-every provider (a system prompt and a list of user and assistant
-messages) and returns the reply in the same shape, so switching
-<code>base_generation_model_id</code> to a Claude, Llama, or Mistral
-model ID changes nothing else.</li>
+<strong>DeepSeek V3</strong> (<code>deepseek.v3-v1:0</code>): an
+open-weight mixture-of-experts model, 671B parameters in total and about
+37B active per token, that Bedrock serves on demand, so there is no GPU
+to manage. Its per-token price is well below the flagship models’ (the
+<a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing
+page</a> has current rates), which matters when there is one call per
+question. The same code works for any chat model in the catalog, because
+Bedrock’s one chat call, <code>converse</code>, takes the same input for
+every provider, a system prompt and a list of messages, and returns the
+reply in the same shape, so changing
+<code>base_generation_model_id</code> to a Claude, Llama or Mistral ID
+changes nothing else.</li>
+<li>
+<strong>Multimodal models for tables and figures</strong>: Bedrock
+also serves models that embed or read images. Step 13 uses one, Amazon
+Nova Multimodal Embeddings, on the table and figure questions.</li>
 </ul>
-</li>
-<li><p><strong>Multimodal models for tables and figures</strong>:
-Bedrock also serves models that embed or read images. Step 13 of this
-episode uses one, Amazon Nova Multimodal Embeddings, on the table and
-figure questions.</p></li>
-</ul>
-<p>For the full list of available models (Claude variants, Amazon
-models, and partner models), open the <a href="https://us-east-2.console.aws.amazon.com/bedrock/home?region=us-east-2#/model-catalog" class="external-link">Model
-catalog</a> in the Amazon Bedrock console. Each entry has a model card
-with capabilities and typical use cases, and a link to the pricing page,
-for exploring alternatives for your own RAG system.</p>
+<p>The <a href="https://us-east-2.console.aws.amazon.com/bedrock/home?region=us-east-2#/model-catalog" class="external-link">model
+catalog</a> in the Bedrock console lists every model available in the
+region (Claude variants, Amazon models and partner models), each with a
+model card and a link to its pricing.</p>
 <div id="choosing-the-two-models" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -9190,7 +9144,7 @@ model on them and prices the run from its token counts. Changing
 experiment. A model that wins on a leaderboard and loses on your
 questions has told you something the leaderboard cannot.</li>
 </ul>
-<p>The habit is the same as for instances: pick the cheapest candidate
+<p>The habit is the same as for instances. Pick the cheapest candidate
 that scores well enough, measure it on your data, and move up only when
 the measurement says to.</p>
 </div>
@@ -9296,7 +9250,7 @@ role, printed because the Bedrock calls below run as it.</p>
 <span id="cb1-25"><a href="#cb1-25" tabindex="-1" aria-label="code-block-1-25"></a>role <span class="op">=</span> sagemaker.get_execution_role()</span>
 <span id="cb1-26"><a href="#cb1-26" tabindex="-1" aria-label="code-block-1-26"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)   <span class="co"># the execution role: on the class account it carries the Bedrock permissions; on your own, it must</span></span></code></pre>
 </div>
-<p><strong>The models.</strong> RAG needs two: an embedding model, which
+<p><strong>The models.</strong> RAG needs two, an embedding model, which
 turns a piece of text into a vector so that similar passages land near
 each other, and a generation model, the chat model that writes the
 answer from the passages it is given. Both are catalog models on
@@ -9304,14 +9258,14 @@ Bedrock, named by a model ID; the <a href="https://us-east-2.console.aws.amazon.
 catalog</a> in the console lists everything available in the region with
 its ID; prices are on the pricing page, and the <a href="https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html" class="external-link">supported
 models page</a> in the documentation is the same list as a table. Prices
-are per million tokens on the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>:
-in October 2026, DeepSeek V3 on demand is <code>$0.62</code> in and
+are per million tokens on the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>.
+In October 2026, DeepSeek V3 on demand is <code>$0.62</code> in and
 <code>$1.85</code> out, and Titan Text Embeddings V2 is
 <code>$0.02</code> in, which is why the whole WattBot run below costs
 cents. We write the IDs down now but will not call them by these IDs
-directly: the cost-tracking step below wraps each one in a tagged
-inference profile first, because that is the only way Bedrock spend gets
-attributed to a project.</p>
+directly, because the cost-tracking step below wraps each one in a
+tagged inference profile first, because that is the only way Bedrock
+spend gets attributed to a project.</p>
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -9320,11 +9274,11 @@ attributed to a project.</p>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a>base_generation_model_id <span class="op">=</span> <span class="st">"deepseek.v3-v1:0"</span>             <span class="co"># writes the answers; $0.62 in / $1.85 out per million tokens (Oct 2026)</span></span>
 <span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a>base_embedding_model_id <span class="op">=</span> <span class="st">"amazon.titan-embed-text-v2:0"</span>  <span class="co"># turns text into vectors for retrieval; $0.02 per million tokens</span></span></code></pre>
 </div>
-<p><strong>The files.</strong> The inputs live in the shared bucket: the
+<p><strong>The files.</strong> The inputs in the shared bucket are the
 paper list, the questions with their answers, and the zipped corpus of
 PDFs. Everything this episode derives from them goes to your own bucket,
-under the same <code>wattbot/</code> prefix: the chunked text, the chunk
-embeddings, and the answers the pipeline produces.</p>
+under the same <code>wattbot/</code> prefix, which will hold the chunked
+text, the chunk embeddings, and the answers the pipeline produces.</p>
 <div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -9361,12 +9315,12 @@ episode.</p>
 (<code>converse</code>, the chat call, for answers;
 <code>invoke_model</code>, the raw call with a provider-specific body,
 for embeddings); it is what every answer and every embedding in this
-episode goes through. <code>bedrock</code> is the control plane: listing
-models, creating the inference profiles that carry our tags. The runtime
-client gets a retry setting because on-demand Bedrock throughput is
-rate-limited per model: a loop of a few thousand embedding calls will
-occasionally be throttled, and the adaptive mode backs off and retries
-instead of raising.</p>
+episode goes through. <code>bedrock</code> is the control plane, for
+listing models and creating the inference profiles that carry our tags.
+The runtime client gets a retry setting because on-demand Bedrock
+throughput is rate-limited per model, so a loop of a few thousand
+embedding calls will occasionally be throttled, and the adaptive mode
+backs off and retries instead of raising.</p>
 <div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -9407,16 +9361,16 @@ its jobs).</p>
 <span id="cb7-8"><a href="#cb7-8" tabindex="-1" aria-label="code-block-7-8"></a>)</span></code></pre>
 </div>
 <p>Open <code>wattbot_rag.py</code> in the Jupyter file browser as you
-go: each helper is short.</p>
+go. Each helper is short.</p>
 </div>
 </section><section><h2 class="section-heading" id="step-3-load-the-metadata-and-training-questions">Step 3 – Load the metadata and training questions<a class="anchor" aria-label="anchor" href="#step-3-load-the-metadata-and-training-questions"></a>
 </h2>
 <hr class="half-width">
 <p>Pull the two CSV files from the shared bucket into the notebook and
-inspect them. Two helpers first: <code>download_from_s3</code> copies
-one object from the shared bucket (or any bucket you name) into the
-local data folder, and <code>smart_read_csv</code> reads a CSV by trying
-a few encodings in turn, because author names and titles in
+inspect them. Two helpers come first. <code>download_from_s3</code>
+copies one object from the shared bucket (or any bucket you name) into
+the local data folder, and <code>smart_read_csv</code> reads a CSV by
+trying a few encodings in turn, because author names and titles in
 <code>metadata.csv</code> are not always valid UTF-8.</p>
 <div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -9445,7 +9399,7 @@ a few encodings in turn, because author names and titles in
 <span id="cb8-22"><a href="#cb8-22" tabindex="-1" aria-label="code-block-8-22"></a>        <span class="cf">raise</span> last_error</span>
 <span id="cb8-23"><a href="#cb8-23" tabindex="-1" aria-label="code-block-8-23"></a>    <span class="cf">raise</span> <span class="pp">RuntimeError</span>(<span class="ss">f"Unable to read CSV at </span><span class="sc">{</span>path<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<p>Now the two files: <code>train_QA.csv</code> is the labelled
+<p>Now the two files. <code>train_QA.csv</code> is the labelled
 questions and answers we score against, <code>metadata.csv</code> is one
 row per paper with its id, title and URL.</p>
 <div class="codewrapper sourceCode" id="cb9">
@@ -9473,8 +9427,8 @@ the publishers’ sites is slow and unreliable when fifty notebooks do it
 at once, so the instructors did it once with
 <code>scripts/build_wattbot_corpus.py</code> and staged the result as
 <code>corpus.zip</code> in the shared bucket. We download that one file,
-unpack it, and delete the zip: the instance’s volume is 20 GB, and the
-zip plus the unpacked PDFs are close to 700 MB.</p>
+unpack it, and delete the zip, because the instance’s volume is 20 GB,
+and the zip plus the unpacked PDFs are close to 700 MB.</p>
 <div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -9505,7 +9459,7 @@ reports any URL that failed so the instructor can decide what to do
 about it. If you are working on your own, run it once and upload both
 files to your bucket under <code>wattbot/</code> (with
 <code>shared_bucket = bucket_name</code>, as in the callout above). That
-is the whole difference between “the data” and “a copy of the data”: the
+is the whole difference between “the data” and “a copy of the data”. The
 corpus is built once and read many times.</p>
 </div>
 </div>
@@ -9540,25 +9494,11 @@ overlapping segments for embedding.</p>
 <div class="section level3">
 <h3 id="why-chunks-keep-their-page">Why chunks keep their page<a class="anchor" aria-label="anchor" href="#why-chunks-keep-their-page"></a>
 </h3>
-<p>Chunks keep the page they came from, so that:</p>
-<ul>
-<li>
-<strong>Keeping metadata</strong> (doc ID, URL, page labels) tied to
-the text.<br>
-</li>
-<li>
-<strong>Debugging retrieval</strong> — the page says what the model
-saw.<br>
-</li>
-<li>
-<strong>Cleaning text</strong> before making smaller overlapping
-chunks.<br>
-</li>
-<li>
-<strong>Flexibility later</strong> — once pages are structured, we
-can try different chunk sizes or strategies without re-extracting the
-PDF.</li>
-</ul>
+<p>Every chunk carries the page it came from, so the document id, URL
+and page label stay attached to the text, a retrieved chunk can be
+traced to the page the model saw, the text can be cleaned at the page
+level before chunking, and chunk sizes can be changed later without
+extracting the PDFs again.</p>
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -9566,12 +9506,12 @@ PDF.</li>
 </div>
 <p><code>pdfs_to_page_docs</code> in <code>wattbot_rag.py</code> opens
 each PDF listed in the metadata with <code>pypdf</code> and turns every
-page into one record: its text, the document id, title and URL, and the
-page number. It is forty lines of plain Python with nothing AWS in it;
-open the file to read it. On a CPU notebook it takes several minutes
-over this corpus, so the cell first looks for <code>pages.jsonl</code>,
-the same records written once when the corpus was staged, and runs the
-extraction only if that file is not there.</p>
+page into one record holding its text, the document id, title and URL,
+and the page number. It is forty lines of plain Python with nothing AWS
+in it; open the file to read it. On a CPU notebook it takes several
+minutes over this corpus, so the cell first looks for
+<code>pages.jsonl</code>, the same records written once when the corpus
+was staged, and runs the extraction only if that file is not there.</p>
 <div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -9605,26 +9545,21 @@ questions, which cite nothing, stay.</p>
 </section><section><h2 class="section-heading" id="step-6-text-chunking">Step 6 – Text chunking<a class="anchor" aria-label="anchor" href="#step-6-text-chunking"></a>
 </h2>
 <hr class="half-width">
-<p>RAG systems typically break documents into <strong>chunks</strong> so
-that:</p>
-<ul>
-<li>Each chunk is long enough to carry meaningful context.</li>
-<li>No chunk is so long that it blows up the embedding/LLM context
-window.</li>
-</ul>
-<p>For this workshop we will implement a <strong>simple sliding-window
-chunker</strong> that operates on characters:</p>
+<p>Pages are split into <strong>chunks</strong> because a page is the
+wrong size for retrieval: too long, and one vector has to stand for
+several topics at once; too short, and a chunk carries no context. The
+chunker here is a sliding window over characters:</p>
 <ul>
 <li>
-<code>chunk_size_chars</code>: maximum characters per chunk (e.g.,
-1,000–1,500).</li>
+<code>chunk_size_chars</code>: the most characters in a chunk (1,000
+to 1,500 is usual).</li>
 <li>
-<code>chunk_overlap_chars</code>: overlap between consecutive chunks
-(e.g., 200).</li>
+<code>chunk_overlap_chars</code>: how many characters consecutive
+chunks share (200 here), so a sentence cut by a boundary is whole in one
+of them.</li>
 </ul>
-<p>In your own work, you may wish to plug in more sophisticated
-<em>semantic chunking</em> methods (e.g., splitting on headings, section
-titles, or sentence boundaries).</p>
+<p>In your own work, splitting on headings, sections or sentence
+boundaries, called semantic chunking, is the usual next step.</p>
 <div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -9737,12 +9672,11 @@ every run. We save the chunks locally as <code>data/chunks.jsonl</code>
 <span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a>s3.upload_file(chunks_jsonl_path, bucket_name, chunks_key)</span>
 <span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a><span class="bu">print</span>(<span class="st">"Upload complete."</span>)</span></code></pre>
 </div>
-</section><section><h2 class="section-heading" id="step-7-cost-tracking-bedrock-calls-carry-no-tags-unless-you-route-them-through-a-profile">Step 7 – Cost tracking: Bedrock calls carry no tags unless you route
-them through a profile<a class="anchor" aria-label="anchor" href="#step-7-cost-tracking-bedrock-calls-carry-no-tags-unless-you-route-them-through-a-profile"></a>
+</section><section><h2 class="section-heading" id="step-7-cost-tracking-through-a-tagged-profile">Step 7 – Cost tracking through a tagged profile<a class="anchor" aria-label="anchor" href="#step-7-cost-tracking-through-a-tagged-profile"></a>
 </h2>
 <hr class="half-width">
 <p>Every SageMaker job in this lesson is tagged at launch, because tags
-never propagate from the notebook. Bedrock is stricter still: <strong>an
+never propagate from the notebook. Bedrock is stricter still. <strong>An
 on-demand <code>invoke_model</code> or <code>converse</code> call has no
 tags parameter at all.</strong> If you call
 <code>deepseek.v3-v1:0</code> or
@@ -9753,9 +9687,9 @@ else are irrelevant to it. On a shared account that means nobody can
 tell which team spent what.</p>
 <p>The fix is not a tag on the call; it is a different thing to call. An
 <strong>application inference profile</strong> is a small resource you
-create in your own account: an alias that points at one base model and
+create in your own account, an alias that points at one base model and
 carries your three tags. It has its own ARN, and that ARN goes wherever
-a model ID goes. Nothing else changes: same model, same price per token,
+a model ID goes. Nothing else changes. Same model, same price per token,
 same answers. The only difference is in the bill, where usage made
 through the alias shows up with the alias’s tags.</p>
 <p>Before and after, in the generation call:</p>
@@ -9784,9 +9718,9 @@ through the alias shows up with the alias’s tags.</p>
 </tr>
 </tbody>
 </table>
-<p>So “cost tracking on Bedrock” is: create the alias once per model
-(one for DeepSeek, one for Titan, because an alias points at exactly one
-model), keep its ARN in a variable, and use that variable as
+<p>So cost tracking on Bedrock comes to three things. Create the alias
+once per model (one for DeepSeek, one for Titan, because an alias points
+at a single model), keep its ARN in a variable, and use that variable as
 <code>modelId</code> from then on. The profile is free; you pay only for
 tokens, as before.</p>
 <p>One call per model does all of it. <code>tagged_profile_arn</code> in
@@ -9871,10 +9805,11 @@ duplicates.</p>
 the console’s inference-profile pages list only the system-defined
 profiles.</li>
 <li>The keys must be the three approved ones, <code>Name</code>,
-<code>Project</code> and <code>Purpose</code>, spelled exactly; any
-other key is ignored by the bill (the S3 episode says why).</li>
+<code>Project</code> and <code>Purpose</code>, with that spelling and
+capitalisation; any other key is ignored by the bill (the S3 episode
+says why).</li>
 <li>The profile itself has no hourly or storage charge. You only pay per
-token, exactly as before.</li>
+token, as before.</li>
 </ul>
 </div>
 </div>
@@ -9890,7 +9825,7 @@ token, exactly as before.</li>
 <p>List the application inference profiles in the account and find your
 two. For each, print its name, the model it points at, and its tags
 (<code>bedrock.list_tags_for_resource</code> takes the profile ARN).
-Then answer: if a teammate skipped this step and called
+Then answer this. If a teammate skipped this step and called
 <code>deepseek.v3-v1:0</code> by its raw model ID for the rest of the
 episode, what would Cost Explorer show when the organizers filter the
 month’s Bedrock spend by <code>Project</code>?</p>
@@ -9902,7 +9837,7 @@ month’s Bedrock spend by <code>Project</code>?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -9919,7 +9854,7 @@ month’s Bedrock spend by <code>Project</code>?</p>
 usage that went through a tagged profile. The teammate’s calls are still
 on the bill, under the Bedrock service line for
 <code>deepseek.v3-v1:0</code>, but with no <code>Project</code>,
-<code>Name</code> or <code>Purpose</code> value: in the grouped view
+<code>Name</code> or <code>Purpose</code> value, so in the grouped view
 they fall into the “No tag key: Project” bucket, together with every
 other untagged call in the account. There is no way to attribute them
 after the fact; tags are applied when the usage is metered, not later.
@@ -9932,7 +9867,7 @@ episode.</p>
 </section><section><h2 class="section-heading" id="step-8-embed-the-chunks-with-titan">Step 8 – Embed the chunks with Titan<a class="anchor" aria-label="anchor" href="#step-8-embed-the-chunks-with-titan"></a>
 </h2>
 <hr class="half-width">
-<p>Everything the RAG loop needs is now in memory: the chunks, the
+<p>Everything the RAG loop needs is now in memory, the chunks, the
 questions, and a way to resolve a document id to its URL for the
 <code>ref_url</code> column.</p>
 <div class="codewrapper sourceCode" id="cb21">
@@ -9949,10 +9884,10 @@ questions, and a way to resolve a document id to its URL for the
 <code>invoke_model</code> call and returns a 1,024-dimensional
 normalized vector. <code>embedding_model_id_bedrock</code> is the ARN of
 our tagged profile for it, so every call is attributed to our
-<code>Project</code>/<code>Name</code>/<code>Purpose</code> tags. Three
-cells: where the result is saved, the call that embeds one string, and
-the loop that embeds every chunk once and caches the matrix. First the
-paths.</p>
+<code>Project</code>/<code>Name</code>/<code>Purpose</code> tags. The
+next three cells set where the result is saved, define the call that
+embeds one string, and run the loop that embeds every chunk once and
+caches the matrix. First the paths.</p>
 <div class="codewrapper sourceCode" id="cb22">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -10006,7 +9941,7 @@ minute. This corpus is about 2.4 million tokens, so one notebook alone
 needs ten minutes at the full quota; a room of them shares it, so
 everyone’s loop slows to a crawl of retries. In class, leave
 <code>use_instructor_embeddings</code> in the next cell at
-<code>True</code>: the cache cell then downloads the matrix your
+<code>True</code>. The cache cell then downloads the matrix your
 instructor computed with the same chunks and the same model from the
 shared bucket and skips the calls. Working on your own, set it to
 <code>False</code> and let the loop run; that is the step to
@@ -10021,9 +9956,9 @@ practise.</p>
 <span id="cb24-2"><a href="#cb24-2" tabindex="-1" aria-label="code-block-24-2"></a>shared_embeddings_key <span class="op">=</span> <span class="st">"wattbot/embeddings_bedrock.npy"</span>   <span class="co"># where the instructor staged it in the shared bucket</span></span></code></pre>
 </div>
 <p>One small helper asks S3 whether an object exists, and one checks
-that a cached matrix belongs to these chunks: a matrix from an earlier
-corpus has a different number of rows, and using it would pair every
-question with the wrong passages.</p>
+that a cached matrix belongs to these chunks, since a matrix from an
+earlier corpus has a different number of rows, and using it would pair
+every question with the wrong passages.</p>
 <div class="codewrapper sourceCode" id="cb25">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -10079,15 +10014,16 @@ question with the wrong passages.</p>
 <span id="cb25-50"><a href="#cb25-50" tabindex="-1" aria-label="code-block-25-50"></a><span class="cf">assert</span> chunk_embeddings.shape[<span class="dv">0</span>] <span class="op">==</span> <span class="bu">len</span>(chunked_docs), <span class="st">"embeddings and chunks are out of step; delete the cached files and rerun"</span></span>
 <span id="cb25-51"><a href="#cb25-51" tabindex="-1" aria-label="code-block-25-51"></a><span class="bu">print</span>(<span class="st">"Embeddings shape:"</span>, chunk_embeddings.shape)</span></code></pre>
 </div>
-</section><section><h2 class="section-heading" id="step-9-retrieve-cosine-similarity-over-the-embedding-matrix">Step 9 – Retrieve: cosine similarity over the embedding matrix<a class="anchor" aria-label="anchor" href="#step-9-retrieve-cosine-similarity-over-the-embedding-matrix"></a>
+</section><section><h2 class="section-heading" id="step-9-retrieve-with-cosine-similarity-over-the-embedding-matrix">Step 9 – Retrieve with cosine similarity over the embedding
+matrix<a class="anchor" aria-label="anchor" href="#step-9-retrieve-with-cosine-similarity-over-the-embedding-matrix"></a>
 </h2>
 <hr class="half-width">
-<p>Retrieval is pure NumPy: embed the question with the same model, take
+<p>Retrieval is pure NumPy. Embed the question with the same model, take
 the cosine similarity against every chunk, and keep the top <em>k</em>.
 <code>retrieve_top_k</code> from <code>wattbot_rag.py</code> does that
-(open the file to see it: it is a normalize-and-matrix-multiply). No
-vector database is needed for a few thousand chunks; the optional
-GPU-notebook episode discusses when one becomes worth it.</p>
+(open the file to see it, a normalize and a matrix multiply). No vector
+database is needed for a few thousand chunks; the optional GPU-notebook
+episode discusses when one becomes worth it.</p>
 <div class="codewrapper sourceCode" id="cb26">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -10100,14 +10036,14 @@ GPU-notebook episode discusses when one becomes worth it.</p>
 <span id="cb26-7"><a href="#cb26-7" tabindex="-1" aria-label="code-block-26-7"></a>    snippet <span class="op">=</span> r[<span class="st">"text"</span>].replace(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span>, <span class="st">" "</span>)[:<span class="dv">160</span>]</span>
 <span id="cb26-8"><a href="#cb26-8" tabindex="-1" aria-label="code-block-26-8"></a>    <span class="bu">print</span>(<span class="ss">f"- score=</span><span class="sc">{</span>r[<span class="st">'score'</span>]<span class="sc">:.3f}</span><span class="ss"> | doc_id=</span><span class="sc">{</span>r[<span class="st">'doc_id'</span>]<span class="sc">}</span><span class="ss"> | page=</span><span class="sc">{</span>r[<span class="st">'page_label'</span>]<span class="sc">}</span><span class="ss"> | </span><span class="sc">{</span>snippet<span class="sc">}</span><span class="ss">..."</span>)</span></code></pre>
 </div>
-</section><section><h2 class="section-heading" id="step-10-generate-deepseek-v3-through-the-converse-api">Step 10 – Generate: DeepSeek V3 through the <code>converse</code>
-API<a class="anchor" aria-label="anchor" href="#step-10-generate-deepseek-v3-through-the-converse-api"></a>
+</section><section><h2 class="section-heading" id="step-10-generate-with-deepseek-v3-through-the-converse-api">Step 10 – Generate with DeepSeek V3 through the
+<code>converse</code> API<a class="anchor" aria-label="anchor" href="#step-10-generate-with-deepseek-v3-through-the-converse-api"></a>
 </h2>
 <hr class="half-width">
 <p>Bedrock has two runtime APIs. <code>invoke_model</code> takes a
 provider-specific request body (which is why the Titan call above builds
 a <code>{"inputText": ...}</code> body by hand). <code>converse</code>
-is provider-neutral: a system prompt, a list of messages, and an
+is provider-neutral. It takes a system prompt, a list of messages and an
 <code>inferenceConfig</code>, in the same shape for DeepSeek, Claude,
 Llama and the rest. We use <code>converse</code> for generation so the
 model is a one-line swap. The response carries the generated text and a
@@ -10182,7 +10118,7 @@ generation, and write a <code>wattbot_solutions_bedrock.csv</code> file
 (locally and to your bucket).</p>
 <p><code>train_QA.csv</code> has 245 questions, and at two calls each
 that is about twenty minutes. For class we score a stratified sample
-instead: <code>sample_questions_by_type</code> draws ten questions from
+instead. <code>sample_questions_by_type</code> draws ten questions from
 each evidence type (Quote, Table, Figure, Math, unanswerable,
 cross-paper, reconcile), 53 questions after overlaps and the two missing
 papers, so every row of the breakdown in the next step has something in
@@ -10240,7 +10176,7 @@ explanation phases call local models instead of Bedrock-hosted ones.</p>
 </section><section><h2 class="section-heading" id="step-12-score-against-the-training-answers">Step 12 – Score against the training answers<a class="anchor" aria-label="anchor" href="#step-12-score-against-the-training-answers"></a>
 </h2>
 <hr class="half-width">
-<p>WattBot scores each prediction with three components: 0.75 for
+<p>WattBot scores each prediction with three components, 0.75 for
 <code>answer_value</code> (numeric within ±0.1% relative tolerance,
 categorical match after normalisation, and zero if you answer a question
 the corpus cannot answer), 0.20 for the F1 between your
@@ -10251,22 +10187,23 @@ competition’s own metric file, which <code>compute_wattbot_score</code>
 in <code>wattbot_rag.py</code> calls for the headline score so that what
 you see here is what the leaderboard would report. It also prints the
 share of correct answers by evidence type, the seven flag columns of
-<code>train_QA.csv</code>: <strong>Quote</strong> (the answer is a
-sentence in a paper), <strong>Table</strong>, <strong>Figure</strong>,
-<strong>Math</strong> (a calculation from numbers in the text),
-<strong>is_NA</strong> (the corpus cannot answer it, and the right
-response is <code>is_blank</code>), <strong>CrossPaper</strong> (numbers
-from two papers have to be combined) and <strong>Reconcile</strong> (two
-figures that sound alike but measure different things, such as water
-withdrawn against water consumed, or a popular claim against a measured
-value, and the answer is the ratio or the distinction between them;
-quoting either figure alone is the wrong answer the question is built to
-catch). A question can carry several. Read that table before changing
-anything: figure and table questions failing while quote questions pass
-points at text extraction, which loses figures and flattens tables, not
-at the model. The wrapper adds a per-row score, joins on
-<code>id</code>, and prints the worst-scoring rows so you can see
-<em>why</em> the pipeline lost points.</p>
+<code>train_QA.csv</code>, which are <strong>Quote</strong> (the answer
+is a sentence in a paper), <strong>Table</strong>,
+<strong>Figure</strong>, <strong>Math</strong> (a calculation from
+numbers in the text), <strong>is_NA</strong> (the corpus cannot answer
+it, and the right response is <code>is_blank</code>),
+<strong>CrossPaper</strong> (numbers from two papers have to be
+combined) and <strong>Reconcile</strong> (two figures that sound alike
+but measure different things, such as water withdrawn against water
+consumed, or a popular claim against a measured value, and the answer is
+the ratio or the distinction between them; quoting either figure alone
+is the wrong answer the question is built to catch). A question can
+carry several. Read that table before changing anything. Figure and
+table questions failing while quote questions pass points at text
+extraction, which loses figures and flattens tables, not at the model.
+The wrapper adds a per-row score, joins on <code>id</code>, and prints
+the worst-scoring rows so you can see <em>why</em> the pipeline lost
+points.</p>
 <div class="codewrapper sourceCode" id="cb30">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -10283,7 +10220,7 @@ at the model. The wrapper adds a per-row score, joins on
 different failures look the same in that table. Either retrieval never
 surfaced the right paper, so the model had nothing to work with, or the
 right passage was in front of it and it still declined or misread it.
-The cell below separates them for the lowest-scoring rows: it joins the
+The cell below separates them for the lowest-scoring rows. It joins the
 model’s own explanation and the passages it cited back onto the score,
 then reruns retrieval for the question (one embedding call) and reports
 whether the ground-truth paper was among the top-k chunks and what the
@@ -10311,22 +10248,22 @@ best cosine score was.</p>
 <span id="cb31-18"><a href="#cb31-18" tabindex="-1" aria-label="code-block-31-18"></a>        <span class="bu">print</span>(<span class="ss">f"  passages it cited: </span><span class="sc">{</span><span class="bu">str</span>(by_id.loc[qid, <span class="st">'supporting_materials'</span>])[:<span class="dv">400</span>]<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <p>Read the two lines at the bottom of each block together.
-“Ground-truth paper retrieved: NO” is a retrieval problem: a different
-chunk size, a reranker, or a better embedding model is the fix, and no
-generator will help. “Yes” with <code>is_blank</code> is the model
-declining on evidence it had, which the system prompt and the retrieval
-threshold control. “Yes” with a wrong value is a reading error, and the
-cited passage usually shows what it latched onto: a nearby number, a
-different unit, a different model in the same table. And sometimes the
-explanation shows the model read correctly and the label is the problem:
-a question asking what inference “can account for” labelled 90 where
-three papers in the corpus give 60, 70 and 80 to 90 percent, so a range
-is arguably the better answer, or a fact that appears in several papers
-with the label naming only one of them. Labels are written by people.
-When the explanation convinces you, the fix is to the label, and the
-competition organisers want to hear about it. Each of those is a
-different lever, and the score alone would have you pulling the wrong
-one.</p>
+“Ground-truth paper retrieved: NO” is a retrieval problem, where a
+different chunk size, a reranker, or a better embedding model is the
+fix, and no generator will help. “Yes” with <code>is_blank</code> is the
+model declining on evidence it had, which the system prompt and the
+retrieval threshold control. “Yes” with a wrong value is a reading
+error, and the cited passage usually shows what it latched onto, a
+nearby number, a different unit, a different model in the same table.
+And sometimes the explanation shows the model read correctly and the
+label is the problem, as with a question asking what inference “can
+account for” labelled 90 where three papers in the corpus give 60, 70
+and 80 to 90 percent, so a range is arguably the better answer, or a
+fact that appears in several papers with the label naming only one of
+them. Labels are written by people. When the explanation convinces you,
+the fix is to the label, and the competition organisers want to hear
+about it. Each of those is a different lever, and the score alone would
+have you pulling the wrong one.</p>
 <div id="what-did-that-run-cost" class="callout challenge">
 <div class="callout-square">
 <i class="callout-icon" data-feather="zap"></i>
@@ -10340,7 +10277,7 @@ block, and <code>call_bedrock_chat</code> kept them all in
 <code>bedrock_usage</code>. Sum the input and output tokens over the
 evaluation run and price them at the current on-demand rates for
 DeepSeek V3 on the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
-(fill the two prices in below). Add the embedding step: ~9,000 chunks of
+(fill the two prices in below). Add the embedding step, ~9,000 chunks of
 1,200 characters at Titan Text Embeddings V2’s <code>$0.02</code> per
 million input tokens. How does the total compare with the overview’s
 estimate for “the whole WattBot pipeline on Bedrock”, and with the
@@ -10354,7 +10291,7 @@ same questions, <code>$1.41</code> an hour?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>The two prices are from the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
 for DeepSeek on-demand in October 2026; update them for the model and
@@ -10378,7 +10315,7 @@ region you used. The rest sums the usage blocks and prints the cost.</p>
 <span id="cb32-14"><a href="#cb32-14" tabindex="-1" aria-label="code-block-32-14"></a><span class="bu">print</span>(<span class="ss">f"Total ~$</span><span class="sc">{</span>gen_cost <span class="op">+</span> embed_cost<span class="sc">:.2f}</span><span class="ss">; the Processing Jobs episode rents an ml.g5.xlarge at $1.41 an hour for the same questions"</span>)</span></code></pre>
 </div>
 <p>With 53 questions, two calls each and ~1,500-token prompts, the run
-was 140K input and 9K output tokens: ten cents at DeepSeek V3’s prices,
+was 140K input and 9K output tokens, ten cents at DeepSeek V3’s prices,
 plus five cents of embeddings for the 2.4 million tokens of corpus. All
 245 questions is about half a dollar, which is the overview’s estimate
 for the whole pipeline. The Processing Jobs episode answers the same 53
@@ -10417,7 +10354,7 @@ point of score cost?</li>
 <strong>A different embedder.</strong> Retrieval is the other half.
 The Ohio catalog also lists Cohere Embed v4
 (<code>cohere.embed-v4:0</code>), and its request body is different from
-Titan’s: a list of <code>texts</code> and an <code>input_type</code>
+Titan’s, a list of <code>texts</code> and an <code>input_type</code>
 that is <code>search_document</code> for the corpus and
 <code>search_query</code> for the question. Embed the chunks with it
 under a new file name so the Titan matrix is kept (ten minutes at the
@@ -10434,7 +10371,7 @@ what moved the score.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
 <p>Both solution cells start with
 <code>%%script false --no-raise-error</code>, which makes Jupyter skip
@@ -10483,14 +10420,14 @@ identifier is invalid”:</p>
 </div>
 <p>Cohere’s request takes a list of texts and says whether they are
 documents or a query; its response is a list of vectors, nested under
-the number type asked for. One wrinkle: the catalog lists
+the number type asked for. One wrinkle. The catalog lists
 <code>cohere.embed-v4:0</code> for Ohio, but creating a profile on it
 fails with “does not support On Demand inference”, because in this
 region the model is served only through the US cross-region profile,
 <code>us.cohere.embed-v4:0</code>. <code>tagged_profile_arn</code>
 catches that error and switches to the <code>us.</code> ID itself, which
 is the same thing that happens for Llama 4 and several other models.
-Everything else is Step 8 again: a tagged profile, one call per chunk, a
+Everything else is Step 8 again, a tagged profile, one call per chunk, a
 cached matrix, and a query function that uses the same model.</p>
 <div class="codewrapper sourceCode" id="cb35">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -10522,7 +10459,7 @@ cached matrix, and a query function that uses the same model.</p>
 <code>embed_query=embed_query_cohere</code> and
 <code>chunk_embeddings=cohere_embeddings</code>, DeepSeek unchanged, and
 the scorer. The hit-rate cell from Step 13 is the sharper instrument
-here: compute it for the new matrix before scoring, because an embedder
+here. Compute it for the new matrix before scoring, because an embedder
 that finds the paper less often cannot be rescued by any generator. A
 cheaper variant of the same experiment keeps Titan and adds
 <code>"dimensions": 256</code> to its request body in Step 8, which asks
@@ -10538,22 +10475,22 @@ questions<a class="anchor" aria-label="anchor" href="#step-13-multimodal-embeddi
 <hr class="half-width">
 <p>Look back at the evidence-type table in Step 12. The Table and Figure
 rows are usually the worst, and the reason is upstream of the model.
-<code>pypdf</code> gives us a page’s <em>text</em>: a table comes out as
-a run of numbers with its column headers somewhere else on the page, and
-a figure comes out as its caption and nothing more. A question whose
+<code>pypdf</code> gives us a page’s <em>text</em>, so a table comes out
+as a run of numbers with its column headers somewhere else on the page,
+and a figure comes out as its caption and nothing more. A question whose
 answer is a bar in a plot has nothing in the chunks to find, and a
 question whose answer is a cell in a table is being read from a
 flattened copy.</p>
 <p>A <strong>multimodal embedding model</strong> is one model that maps
 text <em>and</em> images into the same vector space, so a text question
-can be compared with an image directly: the picture of a table lands
-near a sentence about its contents. Bedrock has two from Amazon: <a href="https://aws.amazon.com/blogs/aws/amazon-nova-multimodal-embeddings-now-available-in-amazon-bedrock/" class="external-link">Amazon
+can be compared with an image directly, and the picture of a table lands
+near a sentence about its contents. Bedrock has two from Amazon, <a href="https://aws.amazon.com/blogs/aws/amazon-nova-multimodal-embeddings-now-available-in-amazon-bedrock/" class="external-link">Amazon
 Nova Multimodal Embeddings</a> (text, images, documents, video and
 audio, released 2025) and the older Titan Multimodal Embeddings G1 (text
 and images). Both are per-call, like Titan Text, and billed per image
 plus per text token; the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
 has the rates, on the order of a hundredth of a cent per image. One
-catch: in October 2026 Nova Multimodal Embeddings is offered in
+catch. In October 2026 Nova Multimodal Embeddings is offered in
 <code>us-east-1</code> and not in Ohio (check the <a href="https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/model-catalog" class="external-link">model
 catalog</a> for that region). A Bedrock call is an HTTPS request and the
 region is a parameter, so from Ohio that is a second client pointed at
@@ -10576,16 +10513,16 @@ whatever goes in; the more that goes in, the less of each thing survives
 in it. A page holding two tables, a figure and three paragraphs gets one
 vector that is a blur of all six, and a question about one of the tables
 has to match that blur. A crop of the table gets a vector that is about
-the table. The same holds at generation time: the vision model reads a
+the table. The same holds at generation time. The vision model reads a
 crop at full resolution for a few hundred tokens, where a page costs a
 thousand tokens and shows the table at a quarter of the size. We tried
-whole pages first on this corpus: they helped figure questions a little
+whole pages first on this corpus. They helped figure questions a little
 and tables not at all. The crops, as the callout at the end shows, help
 both.</p>
 <p>A PDF has no table or figure objects to pull out. It stores text
 runs, raster images, and drawing commands (lines, fills, curves), and a
 plot is a few thousand of the last. <a href="https://pymupdf.readthedocs.io/" class="external-link">PyMuPDF</a> ships three detectors
-that turn those back into boxes: <code>find_tables</code> finds tables
+that turn those back into boxes. <code>find_tables</code> finds tables
 from their rulings or their text alignment, <code>get_image_info</code>
 lists the embedded raster images, and <code>cluster_drawings</code>
 groups the drawing commands of a vector figure into one bounding box.
@@ -10644,7 +10581,7 @@ instructor made instead.</p>
 <span id="cb37-32"><a href="#cb37-32" tabindex="-1" aria-label="code-block-37-32"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>n_tables<span class="sc">}</span><span class="ss"> tables and </span><span class="sc">{</span><span class="bu">len</span>(crops) <span class="op">-</span> n_tables<span class="sc">}</span><span class="ss"> figures; </span><span class="sc">{</span>n_pages<span class="sc">}</span><span class="ss"> of them are whole-page fallbacks"</span>)</span>
 <span id="cb37-33"><a href="#cb37-33" tabindex="-1" aria-label="code-block-37-33"></a>crops[:<span class="dv">3</span>]</span></code></pre>
 </div>
-<p>Look at a few before trusting them: a crop that is a logo, a page
+<p>Look at a few before trusting them. A crop that is a logo, a page
 rule, or half a plot tells you which threshold to change.</p>
 <div class="codewrapper sourceCode" id="cb38">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -10660,8 +10597,8 @@ rule, or half a plot tells you which threshold to change.</p>
 <h3 id="embed-the-crops">Embed the crops<a class="anchor" aria-label="anchor" href="#embed-the-crops"></a>
 </h3>
 <p>The embedding model lives in <code>us-east-1</code>, so this is a
-second runtime client pointed there. One difference from the text
-models: Bedrock rejects this model’s request body when it arrives
+second runtime client pointed there. One difference from the text models
+is that Bedrock rejects this model’s request body when it arrives
 through an application inference profile, so these calls use the model
 ID directly and are the one Bedrock spend in this lesson that carries no
 project tags. <code>embed_multimodal</code> builds the model’s request
@@ -10682,7 +10619,7 @@ function handles both.</p>
 <span id="cb39-7"><a href="#cb39-7" tabindex="-1" aria-label="code-block-39-7"></a>v <span class="op">=</span> embed_multimodal(bedrock_runtime_mm, multimodal_model_id, image_png<span class="op">=</span>Path(crops[<span class="dv">0</span>][<span class="st">"png_path"</span>]).read_bytes())</span>
 <span id="cb39-8"><a href="#cb39-8" tabindex="-1" aria-label="code-block-39-8"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>crops[<span class="dv">0</span>][<span class="st">'doc_id'</span>]<span class="sc">}</span><span class="ss"> </span><span class="sc">{</span>crops[<span class="dv">0</span>][<span class="st">'caption'</span>][:<span class="dv">40</span>]<span class="sc">!r}</span><span class="ss"> -&gt; vector of </span><span class="sc">{</span>v<span class="sc">.</span>shape[<span class="dv">0</span>]<span class="sc">}</span><span class="ss"> dimensions"</span>)</span></code></pre>
 </div>
-<p>One call per crop, cached like the text matrix: locally, then in your
+<p>One call per crop, cached like the text matrix, locally, then in your
 bucket, then computed. The loop runs six calls at a time through a
 thread pool and prints every fifty; the 2,213 crops take about four
 minutes. The question side uses the same model with
@@ -10733,9 +10670,9 @@ minutes. The question side uses the same model with
 <p>Retrieval is the same <code>retrieve_top_k</code> as Step 9, over the
 crop matrix instead of the chunk matrix. Two measures, both <strong>hit
 rates</strong>, higher is better, 1.00 meaning every question had it.
-The first is coarse: is a ground-truth <em>paper</em> among the top
+The first is coarse. Is a ground-truth <em>paper</em> among the top
 results? <code>train_QA.csv</code> names the paper for every question.
-The second is the one that matters for this step: is the <em>table or
+The second is the one that matters for this step. Is the <em>table or
 figure the answer sits in</em> among the crops the model would be shown?
 Most table and figure questions name it in
 <code>supporting_materials</code> (“Table 3”, “Fig. 5, upper panel”),
@@ -10781,7 +10718,7 @@ should have no advantage.</p>
 <span id="cb41-31"><a href="#cb41-31" tabindex="-1" aria-label="code-block-41-31"></a>    crop_cols <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>np<span class="sc">.</span>mean(crop_text)<span class="sc">:&gt;14.2f}{</span>np<span class="sc">.</span>mean(crop_image)<span class="sc">:&gt;14.2f}</span><span class="ss">  (of </span><span class="sc">{</span>n_named<span class="sc">}</span><span class="ss"> that name one)"</span> <span class="cf">if</span> n_named <span class="cf">else</span> <span class="ss">f"</span><span class="sc">{</span><span class="st">''</span><span class="sc">:&gt;14}{</span><span class="st">''</span><span class="sc">:&gt;14}</span><span class="ss">"</span></span>
 <span id="cb41-32"><a href="#cb41-32" tabindex="-1" aria-label="code-block-41-32"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">:&lt;12}{</span><span class="bu">len</span>(qs)<span class="sc">:&gt;4}{</span>paper_text<span class="sc">:&gt;14.2f}{</span>paper_image<span class="sc">:&gt;14.2f}{</span>crop_cols<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<p>Read the paper columns first: both indexes find the paper for nearly
+<p>Read the paper columns first. Both indexes find the paper for nearly
 every table and figure question, so at that level there is nothing to
 win, and the image index is behind. The crop columns are the real
 comparison. They say whether the text route, chunks and the crops on
@@ -10790,9 +10727,9 @@ the exact table or figure in front of the model. If the image column is
 higher there while the paper column is lower, the image index is doing a
 different job than the text index, finding the object rather than the
 document, and the next cells show whether the model can use it. If both
-crop columns are low, the fix is upstream, in the extraction: a table
-the detector missed became a whole-page fallback, and a page is a weak
-key.</p>
+crop columns are low, the fix is upstream, in the extraction, where a
+table the detector missed became a whole-page fallback, and a page is a
+weak key.</p>
 </div>
 <div class="section level3">
 <h3 id="let-the-model-see-the-table-or-figure">Let the model see the table or figure<a class="anchor" aria-label="anchor" href="#let-the-model-see-the-table-or-figure"></a>
@@ -10800,12 +10737,12 @@ key.</p>
 <p>Finding the table is half of it; DeepSeek V3 reads text only, so a
 figure retrieved as an image is no use to it. <code>converse</code>
 accepts image blocks in a user message for models that can see, and the
-swap is the model ID: Amazon Nova 2 Lite reads images and documents and
+swap is the model ID. Amazon Nova 2 Lite reads images and documents and
 is in the catalog for Ohio through the cross-region profile below (check
 the <a href="https://us-east-2.console.aws.amazon.com/bedrock/home?region=us-east-2#/model-catalog" class="external-link">model
 catalog</a>; <code>us.amazon.nova-lite-v1:0</code> is the cheaper,
 weaker alternative). <code>call_vision_chat</code> is
-<code>call_bedrock_chat</code> with an <code>images</code> argument: for
+<code>call_bedrock_chat</code> with an <code>images</code> argument. For
 each attached crop it adds a text label naming the paper and the
 caption, then the image, so the model can cite what it reads.</p>
 <div class="codewrapper sourceCode" id="cb42">
@@ -10838,9 +10775,9 @@ caption, then the image, so the model can cite what it reads.</p>
 </div>
 <p>Three runs over the Table and Figure questions, all through the
 vision model, so that the only thing changing between them is what the
-model is shown. The first is the control: text chunks only. The second
+model is shown. The first is the control, text chunks only. The second
 attaches the top three crops from the image index. The third attaches
-the crops from the pages the top text chunks came from: if the hit-rate
+the crops from the pages the top text chunks came from. If the hit-rate
 table says the text index is the better finder, the question is whether
 finding with text and <em>reading</em> with the image is the better
 split. Each run is the same loop as Step 11, so every question costs an
@@ -10916,11 +10853,11 @@ across the three runs and against the DeepSeek run.</p>
 <h3 class="callout-title">What to expect, and what it cost</h3>
 <div class="callout-content">
 <p>Measured once on this corpus, 50 table and figure questions, Nova 2
-Lite throughout. At the paper level the text index wins: a ground-truth
+Lite throughout. At the paper level the text index wins. A ground-truth
 paper is in its top 8 for 94% of table questions and 94% of figure
 questions, against 77% and 71% for the image index, and for 82% against
 55% of quote-only questions, where a picture has nothing to offer. At
-the crop level the two routes are even: the crop the answer sits in is
+the crop level the two routes are even. The crop the answer sits in is
 among those shown for 55% of table questions by the text route and 52%
 by the image index, and for 57% against 50% of figure questions. Then
 reading. Text chunks alone scored 0.64, with 57% of table answers and
@@ -10932,14 +10869,14 @@ favour, scored 0.67. Two readings. Showing the model the table or figure
 is worth about ten points on the questions that depend on one, tables
 included, which whole pages at 100 dpi had not managed. And the
 crop-level hit rates say where the image index’s lead does not come
-from: it finds the answer’s own crop no more often than the text route
+from. It finds the answer’s own crop no more often than the text route
 does. The difference is in what else the model is shown, three crops
 chosen by their similarity to the question against every crop on the
 pages behind the top chunks. Fifty questions is a small sample, so read
 the direction, not the decimals. For the bill, every crop is a few
 hundred input tokens at Nova 2 Lite’s rate on the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">pricing page</a>, so a
 run with images costs two to three times the control and takes three to
-four times as long: 1.6, 4.0 and 3.0 minutes for the three runs here.
+four times as long, 1.6, 4.0 and 3.0 minutes for the three runs here.
 <code>vision_usage</code> holds all three runs’ usage blocks, and the
 embedding of the 2,213 crops is the per-image rate times that count, a
 few cents.</p>
@@ -10947,94 +10884,33 @@ few cents.</p>
 </div>
 </div>
 </div>
-</section><section><h2 class="section-heading" id="wrapup-bedrock-versus-gpubased-runs">Wrap‑up: Bedrock versus GPU‑based runs<a class="anchor" aria-label="anchor" href="#wrapup-bedrock-versus-gpubased-runs"></a>
+</section><section><h2 class="section-heading" id="wrap-up">Wrap-up<a class="anchor" aria-label="anchor" href="#wrap-up"></a>
 </h2>
 <hr class="half-width">
-<p>You now have a complete WattBot evaluation running on Bedrock, with
-per‑token billing and nothing left running. The Processing Jobs episode
-reruns the same evaluation on a self‑hosted model, and the optional
-GPU-notebook episode does it once more interactively, so by the end you
-will have three versions to compare:</p>
-<ol style="list-style-type: decimal">
-<li>
-<strong>Bedrock</strong> (this episode) using hosted embedding and
-generation models with per‑token billing.</li>
-<li>
-<strong>SageMaker Processing job</strong> running an open‑source
-model in batch with on-demand compute.</li>
-<li>
-<strong>Notebook GPU instance</strong> (optional) using the same
-locally loaded open‑source model.</li>
-</ol>
-<p>When deciding between these options in practice:</p>
-<ul>
-<li>Use <strong>Bedrock or other hosted APIs</strong> when:
-<ul>
-<li>You want to try the latest frontier models quickly.<br>
-</li>
-<li>You only need to run a modest number of questions, or you are still
-prototyping.<br>
-</li>
-<li>You prefer a simple, token‑based cost model and don’t want to manage
-GPU capacity.</li>
-</ul>
-</li>
-<li>Use <strong>self‑hosted models on GPU instances</strong> when:
-<ul>
-<li>You need a specific open-weight model that the catalog does not
-carry.<br>
-</li>
-<li>You expect to run large batches repeatedly (e.g., many thousands of
-questions).<br>
-</li>
-<li>You want tight control over which architectures/checkpoints you run
-or fine‑tune.<br>
-</li>
-<li>You already have institutional access to cost‑effective on‑prem or
-cloud GPUs.</li>
-</ul>
-</li>
-</ul>
-<p>The RAG evaluation logic is the same in all three episodes: once you
-have a clean retrieval + normalization pipeline (like WattBot’s, in
-<code>wattbot_rag.py</code>), swapping out the generator is mostly a
-matter of re‑implementing <code>embed_query</code> and
-<code>generate</code> for each compute option you care about.</p>
-</section><section><h2 class="section-heading" id="concluding-remarks-bedrock-models-are-one-piece-of-the-rag-puzzle">Concluding remarks: Bedrock models are one piece of the RAG
-puzzle<a class="anchor" aria-label="anchor" href="#concluding-remarks-bedrock-models-are-one-piece-of-the-rag-puzzle"></a>
-</h2>
-<hr class="half-width">
-<p>In this episode we used Bedrock-hosted models for
-<strong>both</strong> embedding and generation. Larger models help,
-especially on messy real-world questions — but it’s important to
-remember that they are still just <strong>one component</strong> in your
-RAG system.</p>
-<ul>
-<li>
-<strong>Bigger or newer models do not fix weak retrieval.</strong>
-If your chunks are poorly aligned with the questions, a very strong LLM
-will still struggle.</li>
-<li>
-<strong>Most of the long‑term accuracy gains in RAG systems come
-from the plumbing around the LLMs</strong>, including:
-<ul>
-<li>smarter / semantic chunking strategies</li>
-<li>good metadata and filtering</li>
-<li>reranking or multi‑stage retrieval</li>
-<li>domain‑specific heuristics and post‑processing</li>
-</ul>
-</li>
-<li>
-<strong>Cost and latency live in tension with quality.</strong>
-Larger models (or higher token budgets) often improve answers, but at
-the cost of more inference time and higher per‑request spend. Bedrock
-makes it easier to experiment with that tradeoff by switching models
-without rewriting your pipeline.</li>
-</ul>
-<p>As you adapt this notebook to your own projects, treat the LLM choice
-as <strong>one tunable component</strong> in a larger system. Iterating
-on chunking, indexing, and retrieval policies usually gain more than
-swapping between already-good models.</p>
+<p>You now have a complete WattBot evaluation on Bedrock, billed per
+token, with nothing left running. The Processing-jobs episode reruns it
+on a self-hosted model, and the optional GPU-notebook episode once more
+by hand, so by the end there are three versions of the same pipeline to
+compare, Bedrock, a Processing job and a notebook GPU. The code they
+share is the retrieval, prompting and scoring in
+<code>wattbot_rag.py</code>; what each one implements is the two
+callables, <code>embed_query</code> and <code>generate</code>.</p>
+<p>Use Bedrock or another hosted API when a catalog model will do, when
+the number of questions is modest or you are still prototyping, and when
+you would rather pay per token than manage a GPU. Use a self-hosted
+model on a GPU when the work needs a model the catalog does not carry,
+when you will run large batches repeatedly, when you need control over
+the exact checkpoint, or when you already have GPUs you are not paying
+for by the hour.</p>
+<p>The model is one part of a RAG system, and not the part where most of
+the accuracy is won. A bigger or newer model does not fix weak
+retrieval. If the chunks do not match the questions, a strong model
+still has nothing to read. The gains over time come from the work around
+the model, chunking, metadata and filtering, reranking, post-processing,
+and the score breakdown by evidence type in Step 12 says which of them
+to work on. A bigger model or a longer prompt raises the bill per
+question as well as the score, and Bedrock lets you measure that trade
+by changing one model ID.</p>
 <div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
 <i class="callout-icon" data-feather="key"></i>
@@ -11043,7 +10919,7 @@ swapping between already-good models.</p>
 <div class="callout-inner">
 <div class="callout-content">
 <ul>
-<li>A complete RAG pipeline on AWS needs no GPU: a CPU notebook plus
+<li>A complete RAG pipeline on AWS needs no GPU. A CPU notebook plus
 Bedrock-hosted embedding and generation models is enough.</li>
 <li>Corpus preparation (unpacking the staged PDFs, page extraction,
 chunking) is cheap CPU work; cache <code>chunks.jsonl</code> on S3 so
@@ -11120,17 +10996,17 @@ against the Bedrock run.</li>
 <code>/ML_with_AWS_SageMaker/notebooks/12_RAG-Processing-jobs.ipynb</code>.
 Select the <strong><code>conda_pytorch</code></strong> kernel. ## When
 Bedrock does not have your model</p>
-<p>The Bedrock episode is the default for RAG: per-token billing,
-nothing left running, two API calls. Bedrock’s catalog is curated,
+<p>The Bedrock episode is the default for RAG, with per-token billing,
+nothing left running and two API calls. Bedrock’s catalog is curated,
 though. It carries Amazon’s models, Anthropic, Meta, Mistral, DeepSeek,
 and a few others, and within a family only some sizes, usually a
-generation behind: for Qwen, the serverless lineup is still the Qwen3
+generation behind. For Qwen, the serverless lineup is still the Qwen3
 series. Hugging Face hosts well over a million open-weight checkpoints.
 The one you want (the newest release, a specific size, a fine-tune for
 scientific text, a model a paper just published) is usually not on
 Bedrock, and often never will be.</p>
 <p>When that happens you host the model yourself on a GPU you rent, and
-the question becomes <em>how</em>. There are three ways to rent a GPU on
+the question is how. There are three ways to rent a GPU on
 SageMaker:</p>
 <table class="table">
 <colgroup>
@@ -11168,7 +11044,7 @@ SageMaker:</p>
 </tr>
 </tbody>
 </table>
-<p>For research RAG, almost all the work is batch: embed everything
+<p>For research RAG, almost all the work is batch. Embed everything
 once, answer a list of questions, score them. That is a job, and a job
 is the one option that cannot be forgotten. This episode runs the
 WattBot pipeline that way. The notebook itself is a small CPU instance
@@ -11176,18 +11052,18 @@ and never touches the model; it stages data, launches two GPU jobs, and
 reads the results back.</p>
 <p>The generator is <strong>Qwen3-8B</strong>, an 8-billion-parameter
 open-weight model (Apache 2.0). Bedrock serves the 32B and 235B members
-of that family but not this size, which is the usual situation: the size
-you want is the one missing. The job runs it with
+of that family but not this size, which is the usual situation, where
+the size you want is the one missing. The job runs it with
 <code>transformers</code>, the same library the fine-tuning episode
-trained with: <code>from_pretrained</code> downloads the weights onto
+trained with. <code>from_pretrained</code> downloads the weights onto
 the GPU, and <code>generate</code> writes the answer to a chat prompt,
 the self-hosted counterpart of what Bedrock does behind
 <code>converse</code>. Inference needs no gradients, so the weights are
-the memory cost: 8B parameters at two bytes each in bf16 is about 16 GB,
-which fits the 24 GB GPU of an <code>ml.g5.xlarge</code> with room for
-the KV cache. (The fine-tuning episode has the full memory arithmetic;
-the short version is that inference needs only the weights and training
-needs eight times more per parameter.)</p>
+the memory cost, and 8B parameters at two bytes each in bf16 is about 16
+GB, which fits the 24 GB GPU of an <code>ml.g5.xlarge</code> with room
+for the KV cache. (The fine-tuning episode has the full memory
+arithmetic; the short version is that inference needs only the weights
+and training needs eight times more per parameter.)</p>
 <p>Open-weight models that fit one GPU are now close to the frontier on
 the kinds of tasks research code runs, on data that never leaves your
 account. The newest of this family, Qwen3.8-27B, fits one GPU and lands
@@ -11260,9 +11136,9 @@ once the two papers the corpus lacks are dropped); all 220 is about an
 hour of generation, so run that at home. Both jobs carry
 <code>max_runtime_in_seconds</code>, so a hung job costs at most the
 cap. Compare the same pipeline on a GPU notebook instance (the optional
-GPU-notebook episode that follows): the meter runs until someone stops
-it, and a forgotten <code>ml.g5.xlarge</code> is <code>$34</code> a
-day.</p>
+GPU-notebook episode that follows), where the meter runs until someone
+stops it, and a forgotten <code>ml.g5.xlarge</code> is <code>$34</code>
+a day.</p>
 <p>The trade-off is latency. A job takes minutes to start, so this
 pattern is for batch questions, not a chatbot. For interactive use,
 Bedrock answers in seconds; for interactive use of a model Bedrock does
@@ -11275,8 +11151,8 @@ remember to turn off.</p>
 <ul>
 <li>Reuse the chunks cached in your bucket by the Bedrock episode and
 the inputs in the shared bucket.</li>
-<li>Run two short-lived GPU Processing jobs: one computes embeddings for
-all chunks; the second runs Qwen3-8B with <code>transformers</code> and
+<li>Run two short-lived GPU Processing jobs. One computes embeddings for
+all chunks, the second runs Qwen3-8B with <code>transformers</code> and
 the full RAG loop (retrieval + generation) over the same 53-question
 sample as the Bedrock episode.</li>
 <li>Score the result and compare it with the Bedrock run.</li>
@@ -11316,15 +11192,15 @@ scorer) that the Bedrock episode imported too. The batch script imports
 it, so it ships with the job; the notebook imports it for scoring.</li>
 </ul>
 <p>The cell below copies them out of the lesson clone into the project
-folder, one directory per job: <code>code_embed/</code> for the
+folder, one directory per job, <code>code_embed/</code> for the
 embedding job and <code>code_rag/</code> for the RAG job. The split
 follows from how a job gets its code. <code>run(source_dir=...)</code>
 uploads that whole directory into the container, the same way the
 training estimator’s <code>source_dir</code> did in the fine-tuning
-episode, so each directory holds exactly the files its job imports. The
-copies of <code>wattbot_rag.py</code> and <code>Score.py</code> next to
-the notebook are for the scoring step at the end, which runs in the
-notebook, not in a job.</p>
+episode, so each directory holds the files its job imports and nothing
+else. The copies of <code>wattbot_rag.py</code> and
+<code>Score.py</code> next to the notebook are for the scoring step at
+the end, which runs in the notebook, not in a job.</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -11382,13 +11258,13 @@ notebook, not in a job.</p>
 </section><section><h2 class="section-heading" id="step-1-check-the-inputs">Step 1 – Check the inputs<a class="anchor" aria-label="anchor" href="#step-1-check-the-inputs"></a>
 </h2>
 <hr class="half-width">
-<p>The jobs read three files from S3: <code>train_QA.csv</code> and
+<p>The jobs read three files from S3, <code>train_QA.csv</code> and
 <code>metadata.csv</code> from the shared bucket, and
 <code>chunks.jsonl</code> from your bucket, where the Bedrock episode
-cached it. The PDFs themselves are not needed again: chunking was done
-once, and the jobs work from the chunks. We download the three files to
-the notebook only to confirm they exist and to look at them; the jobs
-fetch their own copies from S3.</p>
+cached it. The PDFs themselves are not needed again, because chunking
+was done once, and the jobs work from the chunks. We download the three
+files to the notebook only to confirm they exist and to look at them;
+the jobs fetch their own copies from S3.</p>
 <p>First the keys and the full S3 URIs. The URIs are the form a
 <code>ProcessingInput</code> takes, so they are built here once and
 reused when the jobs are launched.</p>
@@ -11472,9 +11348,9 @@ be pip-installed before it runs; neither job here has one.</p>
 your notebook instance cover the notebook’s hourly cost and nothing
 else. Each Processing job below launches its own GPU instance, which is
 a separate billable resource with no tags unless we pass them at launch,
-exactly as we did for training and tuning jobs earlier in the workshop.
-An untagged job shows up in Cost Explorer as anonymous SageMaker spend
-that nobody can attribute to a team.</p>
+as with the training and tuning jobs earlier in the workshop. An
+untagged job shows up in Cost Explorer as anonymous SageMaker spend that
+nobody can attribute to a team.</p>
 <p>Define the tags once and pass <code>tags=job_tags</code> to
 <strong>every</strong> <code>HuggingFaceProcessor</code> you create. Use
 a distinct <code>Purpose</code> per job so you can tell the embedding
@@ -11508,10 +11384,10 @@ directory, embeds them with whatever Hugging Face model
 <code>--model_id</code> names, through the thirty-line wrapper in
 <code>hf_embedder.py</code>, normalises the vectors so a dot product is
 a cosine similarity, and saves one <code>embeddings.npy</code> to the
-output directory. Nothing in it knows about WattBot: inputs in, outputs
+output directory. Nothing in it knows about WattBot. Inputs in, outputs
 out, no state.</p>
 <p>A <code>HuggingFaceProcessor</code> is the Processing-job counterpart
-of the estimator: the same role, tags, instance type and container
+of the estimator, with the same role, tags, instance type and container
 versions, plus a runtime cap. Its <code>run</code> call names the
 script, mounts the inputs, and says where the output goes. Once it is
 launched, the job appears on the <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs" class="external-link">Processing
@@ -11520,7 +11396,7 @@ preparation</strong> in the left menu), the Processing counterpart of
 the Training jobs page you used earlier.</p>
 <p>In class the instructor has run this job already and staged its
 output. The switch below copies that matrix into your bucket, at the key
-the job would have written, and the launch cell then skips the job: the
+the job would have written, and the launch cell then skips the job. The
 second job, which you do launch, has the same shape and is where the
 class spends its GPU minutes. On your own, set it to <code>False</code>
 and run the job; it is eight minutes.</p>
@@ -11597,14 +11473,13 @@ and run the job; it is eight minutes.</p>
 <div class="section level3">
 <h3 id="check-on-the-running-job-in-the-aws-console">Check on the running job in the AWS Console<a class="anchor" aria-label="anchor" href="#check-on-the-running-job-in-the-aws-console"></a>
 </h3>
-<p>To view the job running from the AWS Console, you can visit SageMaker
-AI, and then find the “Data Preparation” dropdown menu on the left side
-panel. Click that to find “Processing jobs”, or open <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs" class="external-link">this
-link</a> in the class region (change <code>us-east-2</code> in it for
+<p>In the console the job is under <strong>SageMaker AI → Data
+preparation → Processing jobs</strong>, or at <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs" class="external-link">this
+link</a> for the class region (change <code>us-east-2</code> in it for
 another region).</p>
-<p>It takes about 10 minutes in total for the job to complete: a couple
+<p>It takes about 10 minutes in total for the job to complete, a couple
 of provisioning the instance and downloading the embedding model, eight
-of embedding. That startup is the cost of a job, paid once: the
+of embedding. That startup is the cost of a job, paid once. The
 embedding job runs once per corpus, and the GPU bills only while it
 runs.</p>
 </div>
@@ -11661,7 +11536,7 @@ unanswerable rule (retrieval threshold OR the model’s own
 <code>compute_wattbot_score</code>: the metric we use at the
 end</li>
 </ul>
-<p>What the batch script adds is the two model callables:
+<p>What the batch script adds is the two model callables.
 <code>embed_query</code> wraps the same <code>gte-large</code> model and
 pooling the embedding job used (<code>hf_embedder.py</code>) (the
 question has to be embedded with the same model as the chunks), and
@@ -11669,14 +11544,15 @@ question has to be embedded with the same model as the chunks), and
 the generator (Qwen3-8B here) with Qwen’s thinking mode off, taking
 several prompts at once. The loop itself is <code>run_batch_qa</code>,
 the batched twin of the <code>run_single_qa</code> the Bedrock episode
-used: the same retrieval, prompts and unanswerable rule, with the model
-calls grouped four at a time because a GPU decoding one prompt is idle
-most of the time. The group is a trade: more prompts at once is faster,
-and each one adds its own cache of attention keys and values to the 16
-GB the weights already hold, so a group of long prompts can run the 24
-GB card out of memory. The script halves the group and retries when that
-happens, so a long batch costs time rather than the job. The job writes
-<code>wattbot_solutions.csv</code> in the WattBot submission format.</p>
+used, with the same retrieval, prompts and unanswerable rule, with the
+model calls grouped four at a time because a GPU decoding one prompt is
+idle most of the time. The group is a trade. More prompts at once is
+faster, and each one adds its own cache of attention keys and values to
+the 16 GB the weights already hold, so a group of long prompts can run
+the 24 GB card out of memory. The script halves the group and retries
+when that happens, so a long batch costs time rather than the job. The
+job writes <code>wattbot_solutions.csv</code> in the WattBot submission
+format.</p>
 <div id="why-not-vllm" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -11686,12 +11562,12 @@ happens, so a long batch costs time rather than the job. The job writes
 <h3 class="callout-title">Why not vLLM?</h3>
 <div class="callout-content">
 <p>vLLM is the open-source inference engine most people serve
-open-weight models with: you give it a model name, it loads the weights
+open-weight models with. You give it a model name, it loads the weights
 onto the GPU and answers chat requests, batching many at once so that
 throughput scales. That is what you want behind an API with users. This
 job has about 100 prompts and no users waiting, and
 <code>transformers.generate</code>, already in the container, can decode
-several prompts at once too: <code>run_batch_qa</code> in
+several prompts at once too. <code>run_batch_qa</code> in
 <code>wattbot_rag.py</code> hands them to the model four at a time
 (<code>--batch_size</code>), which is where most of vLLM’s speed on a
 batch like this comes from, with nothing to install. vLLM’s install is
@@ -11717,7 +11593,7 @@ cause: a missing tag, an instance type outside the lesson’s list, or a
 resource kind the lesson never creates; the first training episode’s
 callout <em>If the launch is refused</em> says what to look at. If the
 launch below fails at once with <code>ResourceLimitExceeded</code>
-naming an instance type, nothing in the notebook is wrong: the account’s
+naming an instance type, nothing in the notebook is wrong. The account’s
 quota for that type is too low, and the increase is requested in <a href="https://us-east-2.console.aws.amazon.com/servicequotas/home/services/sagemaker/quotas" class="external-link">Service
 Quotas</a> (days, for GPU types). On your own account, request
 <code>ml.g5.xlarge for processing job usage</code> before you start.</p>
@@ -11731,22 +11607,22 @@ script. SageMaker rents the machine, copies the files you named from S3
 onto its disk, runs your script on it, copies whatever the script wrote
 in its output folder back to S3, and shuts the machine down. The
 notebook does nothing but wait and show you the script’s printed output.
-Nothing from this notebook’s memory goes along: not
+Nothing from this notebook’s memory goes along, not
 <code>chunked_docs</code>, not <code>train_df</code>, not any function
 defined above. The script sees only the files you copied in and the
 arguments you gave it, which is why every input is an S3 location and
 every setting is a command-line flag. That is the same thing
 <code>estimator.fit</code> did in the fine-tuning episode, with one
-difference: a training job hands back a trained model, a Processing job
+difference. A training job hands back a trained model, a Processing job
 hands back whatever files the script wrote, here a CSV of answers.</p>
 <p>The description is two cells. The first builds a
-<code>HuggingFaceProcessor</code>: which machine, which container image,
-how long it may run, whose tags it carries. Two of its settings matter
-more than on the embedding job. <code>volume_size_in_gb=60</code>
+<code>HuggingFaceProcessor</code>, saying which machine, which container
+image, how long it may run, whose tags it carries. Two of its settings
+matter more than on the embedding job. <code>volume_size_in_gb=60</code>
 attaches a 60 GB volume to the instance, mounted under
 <code>/opt/ml/processing</code>; the container’s own root disk is small,
 so the 16 GB of model weights must not land there. <code>env=</code>
-sets two environment variables in the container: <code>HF_HOME</code>
+sets two environment variables in the container. <code>HF_HOME</code>
 points Hugging Face’s download cache at that volume, which is where the
 weights go, and <code>PYTORCH_CUDA_ALLOC_CONF</code> tells PyTorch to
 reuse freed GPU memory in place rather than leave it fragmented, which
@@ -11776,7 +11652,7 @@ matters when a batch of prompts is close to what the card holds.</p>
 <span id="cb10-20"><a href="#cb10-20" tabindex="-1" aria-label="code-block-10-20"></a>)</span></code></pre>
 </div>
 <p>The processor is only a description; nothing runs until
-<code>run</code>. Its arguments are the three things a job needs: the
+<code>run</code>. Its arguments are the three things a job needs, the
 code (<code>code</code> and <code>source_dir</code>), the data
 (<code>inputs</code>, each an S3 location and the container path it is
 copied to before the script starts), and where the results go
@@ -11835,7 +11711,7 @@ and click <strong>View logs</strong>. That opens CloudWatch, the AWS
 service that stores every job’s printed output, at a list with one entry
 named after your job; click it. The text is the container’s stdout, kept
 after the job ends, updated while it runs (refresh). You will see, in
-order: <code>Loading model with transformers</code>, the weight download
+order, <code>Loading model with transformers</code>, the weight download
 (16 GB in shards), a line per batch of answers and of explanations, then
 one line per question. The whole job is the 15 minutes in the cost
 callout; the generation is the last six of them.</p>
@@ -11872,10 +11748,10 @@ used, so the two runs compare directly.</p>
 <span id="cb13-7"><a href="#cb13-7" tabindex="-1" aria-label="code-block-13-7"></a>)</span></code></pre>
 </div>
 <p>Compare the overall score with the Bedrock run. The retrieval logic,
-prompts and scoring are identical, so any difference is the two models:
+prompts and scoring are identical, so any difference is the two models,
 <code>gte-large</code> versus Titan for retrieval, Qwen3-8B versus
 DeepSeek V3 for generation. In one run on the same 53 questions,
-Qwen3-8B scored 0.54 against DeepSeek V3’s 0.69: its citations were
+Qwen3-8B scored 0.54 against DeepSeek V3’s 0.69. Its citations were
 better (F1 0.70 against 0.60) and its answers worse (47% against 70%
 correct), with the cross-paper and calculation questions losing the
 most, a fifth of each right against three fifths. An 8B model against a
@@ -11889,7 +11765,7 @@ host yourself on one small GPU.</p>
 <div id="what-did-the-two-jobs-cost" class="callout-inner">
 <h3 class="callout-title">What did the two jobs cost?</h3>
 <div class="callout-content">
-<p>Ask SageMaker what it recorded for each job:
+<p>Ask SageMaker what it recorded for each job.
 <code>session.sagemaker_client.describe_processing_job(ProcessingJobName=...)</code>
 returns <code>CreationTime</code>, <code>ProcessingStartTime</code> and
 <code>ProcessingEndTime</code>. The job names are
@@ -11911,7 +11787,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -11962,9 +11838,9 @@ done</h3>
 <div class="callout-content">
 <p>Both processors set <code>max_runtime_in_seconds=2 * 60 * 60</code>.
 Predict what would happen if the RAG job were launched with
-<code>max_runtime_in_seconds=600</code> instead: what does the job
+<code>max_runtime_in_seconds=600</code> instead. What does the job
 status become, what is in the output prefix, and what did it cost? Then
-compute the most a hung job can bill under each job’s actual cap, and
+compute the most a hung job can bill under the cap each job set, and
 compare it with the cost of an <code>ml.g6e.xlarge</code> notebook
 instance left running over a weekend (64 hours).</p>
 </div>
@@ -11975,7 +11851,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still downloading or
@@ -11983,7 +11859,7 @@ loading the weights. The status becomes <code>Stopped</code> (the
 failure reason reads <code>MaxRuntimeExceeded</code>), the output prefix
 is empty because the script never reached the point of writing
 <code>wattbot_solutions.csv</code>, and the bill is the full 600
-seconds: 600 / 3600 × <code>$1.41</code> ≈ <code>$0.24</code> for
+seconds, 600 / 3600 × <code>$1.41</code> ≈ <code>$0.24</code> for
 nothing. A cap has to leave room for the setup that precedes the work,
 which is why ours is six times the 20-minute estimate rather than ten
 percent over it.</p>
@@ -12008,10 +11884,10 @@ nothing caps it.</p>
 <li>Bedrock’s catalog is curated and lags releases; when you need a
 specific open-weight model you rent a GPU and serve it yourself.</li>
 <li>Of the ways to rent a GPU, a Processing job is the one that cannot
-be forgotten: it bills while the script runs and ends on its own, with
+be forgotten. It bills while the script runs and ends on its own, with
 <code>max_runtime_in_seconds</code> as the backstop. Use it for batch
 work; use Bedrock or an endpoint when you need answers in seconds.</li>
-<li>Inference needs only the weights: Qwen3-8B in bf16 is ~16 GB and
+<li>Inference needs only the weights. Qwen3-8B in bf16 is ~16 GB and
 fits one 24 GB GPU, with the rest for the prompts’ attention cache; how
 many prompts decode together is bounded by that remainder.</li>
 <li>A job’s inputs and outputs are S3 prefixes mounted into the
@@ -12020,7 +11896,7 @@ a cheap CPU instance.</li>
 <li>The pipeline logic (<code>wattbot_rag.py</code>) ships with the job
 unchanged from the Bedrock episode; only the two model callables
 differ.</li>
-<li>Tags do not propagate from the notebook: every job gets its own
+<li>Tags do not propagate from the notebook. Every job gets its own
 <code>tags=</code>.</li>
 </ul>
 </div>
@@ -12097,17 +11973,17 @@ combination.</li>
 <div class="callout-content">
 <p>This episode is not taught in the workshop. <strong>The Bedrock and
 Processing Jobs episodes are the default ways to run RAG; this one is
-for the case where you need to poke at a self-hosted model
-interactively, and only if you will remember to stop the
-instance.</strong> <strong>Do not run this notebook on the controller
-instance from the other episodes. Create a new GPU notebook instance for
-it (Setup below). On a CPU instance the vLLM install and the 27 GB model
-load will exhaust memory and freeze your JupyterLab.</strong> It runs
-the same pipeline as the Processing Jobs episode on a GPU notebook
-instance, which is the right tool for prototyping alone at a keyboard
-and the wrong one for a room of a hundred people with meters running.
-Work through it on your own when you want to see model loading, GPU
-memory and generation as plain Python. Read the cost callout first.</p>
+for the case where you need to work on a self-hosted model by hand, and
+only if you will remember to stop the instance.</strong> <strong>Do not
+run this notebook on the controller instance from the other episodes.
+Create a new GPU notebook instance for it (Setup below). On a CPU
+instance the vLLM install and the 27 GB model load will exhaust memory
+and freeze your JupyterLab.</strong> It runs the same pipeline as the
+Processing Jobs episode on a GPU notebook instance, which is the right
+tool for prototyping alone at a keyboard and the wrong one for a room of
+a hundred people with meters running. Work through it on your own when
+you want to see model loading, GPU memory and generation as plain
+Python. Read the cost callout first.</p>
 </div>
 </div>
 </div>
@@ -12119,14 +11995,14 @@ memory and generation as plain Python. Read the cost callout first.</p>
 inference because it bills per token and leaves nothing running between
 calls. Bedrock’s catalog is curated, though. It has Amazon’s own models,
 Anthropic, Meta, Mistral, DeepSeek, and a handful of others, and even
-within a family it carries a few sizes and lags the releases: for Qwen,
+within a family it carries a few sizes and lags the releases. For Qwen,
 the serverless lineup is still the Qwen3 generation (Qwen3-32B,
 Qwen3-235B and the Qwen3-Coder models). Hugging Face hosts well over a
 million open-weight checkpoints. The one you want (the newest release, a
 specific size, a specific fine-tune, a model tuned on scientific text)
 is usually not on Bedrock, and often never will be.</p>
 <p>When that happens you host the model yourself on a GPU you rent. This
-episode does that in its simplest form: a single GPU notebook instance,
+episode does that in its simplest form, a single GPU notebook instance,
 with <strong>Qwen3.8-27B</strong> as the generator. It is a
 27-billion-parameter open-weight (Apache 2.0) model released in August
 2026 that is not offered on Bedrock, large enough to follow the WattBot
@@ -12224,26 +12100,22 @@ on a training job) guarantees it.</li>
 </div>
 </div>
 </div>
-<p>Self-hosting on a notebook GPU is the simplest form of it:</p>
-<ul>
-<li>Easy to understand on the AWS side (pick a GPU instance, pick a
-model, go)</li>
-<li>Ideal for learning what retrieval and generation do, step by
-step</li>
-<li>The fastest loop for experimenting with prompts and models that
-Bedrock does not carry</li>
-</ul>
+<p>Self-hosting on a notebook GPU is the simplest form of it. Choose a
+GPU instance and a model, and every step of retrieval and generation is
+a cell you can run and change. That makes it the quickest way to learn
+what each step does and to try prompts and models Bedrock does not
+carry.</p>
 <p>The Processing Jobs episode runs this same pipeline as short-lived
 jobs, so the GPU only bills while it is embedding or generating; that is
 the pattern to use for real work.</p>
-</section><section><h2 class="section-heading" id="overview-wattbot-rag-on-a-single-notebook-gpu">Overview: WattBot RAG on a single notebook GPU<a class="anchor" aria-label="anchor" href="#overview-wattbot-rag-on-a-single-notebook-gpu"></a>
+</section><section><h2 class="section-heading" id="wattbot-rag-on-a-single-notebook-gpu">WattBot RAG on a single notebook GPU<a class="anchor" aria-label="anchor" href="#wattbot-rag-on-a-single-notebook-gpu"></a>
 </h2>
 <hr class="half-width">
 <p>In this episode we rerun the <a href="https://www.kaggle.com/competitions/WattBot2026" class="external-link">WattBot 2026</a>
 RAG pipeline from the Bedrock episode, this time entirely from a single
 GPU-backed SageMaker notebook with self-hosted models. The generator is
 Qwen3.8-27B, the newer and larger relative of the Qwen3-8B the
-Processing Jobs episode ran: an open-weight model that fits one 48 GB
+Processing Jobs episode ran, an open-weight model that fits one 48 GB
 GPU in FP8 and sits within a few points of a frontier commercial model
 on agent tasks and science questions (see that episode’s chart), which
 is why it is worth the trouble of hosting.</p>
@@ -12320,10 +12192,10 @@ instance, so it has no copy yet), and open
 Select the <strong><code>conda_pytorch</code></strong> kernel.</p>
 <p>See <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
 for ML</a> for further guidance. This instance bills by the hour from
-the moment it starts, whether or not it is doing anything: <strong>stop
+the moment it starts, whether or not it is doing anything. <strong>Stop
 it when you leave</strong>, and <strong>delete it</strong> when the
 episode is over.</p>
-<p>We reuse the same two buckets as the Bedrock episode: the shared
+<p>We reuse the same two buckets as the Bedrock episode, the shared
 bucket for <code>metadata.csv</code> and <code>train_QA.csv</code>, and
 your own bucket for the <code>wattbot/chunks.jsonl</code> you cached
 there. If you skipped that episode, go back and run its chunking step
@@ -12398,7 +12270,7 @@ Restart</strong>) before continuing.</p>
 </section><section><h2 class="section-heading" id="import-data-from-bucket-into-notebook">Import data from bucket into notebook<a class="anchor" aria-label="anchor" href="#import-data-from-bucket-into-notebook"></a>
 </h2>
 <hr class="half-width">
-<p>The same setup as the Bedrock episode: session, region, role, an S3
+<p>The same setup as the Bedrock episode, session, region, role, an S3
 client, the two bucket names and a local data folder, plus a small
 download helper.</p>
 <div class="codewrapper sourceCode" id="cb4">
@@ -12460,7 +12332,7 @@ download helper.</p>
 </h3>
 <p>The retrieval, prompts, answer parsing, per-question orchestration
 and the scorer are the same code the Bedrock and Processing Jobs
-episodes used: <code>scripts/wattbot_rag.py</code> in the lesson
+episodes used, <code>scripts/wattbot_rag.py</code> in the lesson
 repository. Copy the module next to this notebook. What this episode
 adds is the two model callables, <code>embed_query</code> and
 <code>generate</code>, running on the notebook’s own GPU.</p>
@@ -12469,7 +12341,7 @@ adds is the two model callables, <code>embed_query</code> and
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a><span class="op">!</span>cp <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>wattbot_rag.py <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>hf_embedder.py <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>Score.py .</span></code></pre>
 </div>
-<p>Import the pieces of the shared RAG module we reuse: the prompts, the
+<p>Import the pieces of the shared RAG module we reuse, the prompts, the
 retrieval and scoring functions, and the per-question runner.</p>
 <div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -12582,7 +12454,7 @@ model</strong>:</p>
 <h3 id="thenlpergte-large">
 <code>thenlper/gte-large</code><a class="anchor" aria-label="anchor" href="#thenlpergte-large"></a>
 </h3>
-<p>The embedder the Processing Jobs episode used: 335 million
+<p>The embedder the Processing Jobs episode used has 335 million
 parameters, 0.7 GB in bf16, 1,024-dimensional vectors, and about 1,100
 chunks a minute on an A10G, so the 9,000 chunks here take a few minutes
 on this GPU.</p>
@@ -12595,8 +12467,7 @@ on this GPU.</p>
 <code>chunked_docs</code> list.</li>
 </ol>
 <p>Later, we’ll implement a small retrieval helper that does
-cosine-similarity search over this matrix—no additional indexing library
-required.</p>
+cosine-similarity search over this matrix, with no indexing library.</p>
 <div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -12647,13 +12518,13 @@ one matrix, one row per chunk.</p>
 </h3>
 <p>Retrieval here is cosine similarity between the question’s vector and
 every chunk’s vector, with the top <em>k</em> chunks as context, and
-nothing more: for nine thousand chunks that is one matrix multiply. A
+nothing more. For nine thousand chunks that is one matrix multiply. A
 vector database (FAISS, Chroma, Weaviate) is the same step built for
 millions of chunks or many concurrent users, with approximate search,
 metadata filters and a shared index; swapping it in changes nothing else
 in the pipeline.</p>
 <p><code>retrieve_top_k</code> from <code>wattbot_rag.py</code> is that
-search: normalize the query and the matrix, one matrix multiply for the
+search. Normalize the query and the matrix, one matrix multiply for the
 cosine similarities, <code>argsort</code> for the top <em>k</em>. Open
 the file to see it; it is a dozen lines. <code>embed_query_with</code>
 wraps the embedder as the <code>embed_query(question)</code> callable
@@ -12684,7 +12555,7 @@ the rest of the pipeline expects.</p>
 </div>
 </div>
 <div class="section level3">
-<h3 id="serve-the-generator-qwen3-8-27b-in-fp8-via-vllm">5. Serve the generator: Qwen3.8-27B in FP8, via vLLM<a class="anchor" aria-label="anchor" href="#serve-the-generator-qwen3-8-27b-in-fp8-via-vllm"></a>
+<h3 id="serve-the-generator-qwen3-8-27b-in-fp8-with-vllm">5. Serve the generator, Qwen3.8-27B in FP8, with vLLM<a class="anchor" aria-label="anchor" href="#serve-the-generator-qwen3-8-27b-in-fp8-with-vllm"></a>
 </h3>
 <p>For this episode we use <strong>Qwen3.8-27B</strong>, an open-weight
 model that Bedrock does not carry, in its <strong>FP8</strong> release
@@ -12707,7 +12578,7 @@ the norm (FP8 where the GPU supports it, 4-bit integer where it does not
 or where memory is tighter); bf16 is what you use when you have memory
 to spare and a model small enough not to need it.</p>
 <p><strong>Why vLLM and not <code>transformers.pipeline</code>?</strong>
-vLLM is an inference server: it has the kernels for FP8 and for this
+vLLM is an inference server. It has the kernels for FP8 and for this
 model’s hybrid attention, batches requests, and manages the KV cache so
 long prompts do not run out of memory. It is what you would deploy
 behind an API, and its offline <code>LLM</code> class is a two-line
@@ -12744,7 +12615,7 @@ generate a short explanation (&lt;= 100 characters).</li>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1" aria-label="code-block-18-1"></a><span class="op">!</span>nvidia<span class="op">-</span>smi <span class="op">--</span>query<span class="op">-</span>gpu<span class="op">=</span>memory.used,memory.total <span class="op">--</span><span class="bu">format</span><span class="op">=</span>csv</span></code></pre>
 </div>
-<p>The number above is what you are paying for: a 48 GB GPU, most of it
+<p>The number above is what you are paying for, a 48 GB GPU, most of it
 now holding model weights and a reserved KV cache. It stays allocated,
 and billed, until you stop the instance.</p>
 <div class="codewrapper sourceCode" id="cb19">
@@ -12829,7 +12700,7 @@ parsed rather than trusted.</li>
 <li>Embeds the question and retrieves the top-<em>k</em> chunks.</li>
 <li>Asks Qwen for the answer JSON and parses it (a malformed reply
 counts as unanswerable).</li>
-<li>Decides answerability with a <strong>hybrid rule</strong>: the
+<li>Decides answerability with a <strong>hybrid rule</strong>. The
 question is <code>is_blank</code> if the model said so
 <strong>or</strong> the top retrieval cosine score is below
 <code>retrieval_threshold</code>. Weak retrieval means the model is
@@ -12890,7 +12761,7 @@ makes the explanation call.</li>
 <h3 id="compare-answers-to-ground-truth">Compare answers to ground truth<a class="anchor" aria-label="anchor" href="#compare-answers-to-ground-truth"></a>
 </h3>
 <p>WattBot scores each prediction with the competition’s own
-<code>Score.py</code>: 0.75 for <code>answer_value</code> (numeric
+<code>Score.py</code>, 0.75 for <code>answer_value</code> (numeric
 within ±0.1% relative tolerance, categorical match after normalisation,
 zero if you answer a question the corpus cannot answer), 0.20 for
 citation F1 against the ground-truth <code>ref_id</code> set, and 0.05
@@ -12908,7 +12779,7 @@ worst rows with the model’s explanation.</p>
 <span id="cb23-5"><a href="#cb23-5" tabindex="-1" aria-label="code-block-23-5"></a>)</span></code></pre>
 </div>
 <p>Change <code>retrieval_threshold</code> or <code>top_k</code> in the
-loop above, rerun it, and rescore: with the model loaded, a pass over
+loop above, rerun it, and rescore. With the model loaded, a pass over
 all 245 questions takes tens of minutes, and a <code>max_N</code> of 50
 a few. Then stop the instance.</p>
 </div>
@@ -12929,12 +12800,12 @@ results out to a CSV for later scoring and analysis.</li>
 the system can explicitly say “I don’t know” when the evidence isn’t
 there.</li>
 </ul>
-<p>This is just a first pass at a RAG pipeline: some next steps:</p>
+<p>This is a first pass at a RAG pipeline. Next steps, in rough order of
+what they usually gain:</p>
 <ul>
-<li><p><strong>Increase the size/quality of models used for embedding
-and generation</strong>: Try stronger embedding models (e.g., larger
-sentence-transformers or domain-tuned embeddings) and more capable LLMs
-for answer generation, especially if you have GPU budget.</p></li>
+<li><p><strong>Stronger models</strong>: a larger or domain-tuned
+embedding model, or a more capable generator, if the GPU budget
+allows.</p></li>
 <li><p><strong>Add a reranking step</strong>: Instead of sending the
 top-k raw nearest neighbors directly to the LLM, use a cross-encoder or
 reranker model to re-score those candidates and send only the best
@@ -12961,16 +12832,9 @@ ID, year, or paragraph type. You can:</p>
 from.</li>
 </ul>
 </li>
-<li>
-<p><strong>Look for LLMs tuned for scientific literature</strong>:
-Experiment with models that are explicitly trained or finetuned on
-scientific text (e.g., arXiv / PubMed) so they:</p>
-<ul>
-<li>Parse equations and technical language more reliably.</li>
-<li>Are less likely to hallucinate when reading dense scientific
-prose.</li>
-</ul>
-</li>
+<li><p><strong>Models tuned on scientific text</strong> (arXiv, PubMed),
+which read equations and technical language more reliably and invent
+less when the prose is dense.</p></li>
 </ul>
 <p>Models, retrieval and preprocessing can each be swapped without
 changing the rest of the pipeline.</p>
@@ -13022,17 +12886,17 @@ when you stand up; delete it when the episode is over.</li>
 over the in-memory embedding matrix is enough for a corpus this size; a
 vector database is the same step for a corpus of millions.</li>
 <li>
-<strong>Ground-truth units</strong>: The <code>answer_unit</code>
-column is always copied directly from <code>train_QA.csv</code>, never
-guessed by the LLM.</li>
+<strong>Units come from the data</strong>: <code>answer_unit</code>
+is copied from <code>train_QA.csv</code>, never guessed by the
+model.</li>
 <li>
-<strong>Two-stage LLM use</strong>: One call focuses on
-<em>answering and citing</em>; a second, lighter call produces a short
-explanation tagged with an evidence type.</li>
+<strong>Two calls per question</strong>: one answers and cites; a
+second, shorter one writes the explanation and names the evidence
+type.</li>
 <li>
-<strong>WattBot conventions</strong>: We respect the Kaggle
-competition format, using <code>is_blank</code> for unanswerable
-questions and for missing fields.</li>
+<strong>The competition’s format</strong>: <code>is_blank</code>
+marks unanswerable questions and missing fields, as the scorer
+expects.</li>
 </ul>
 </div>
 </div>
@@ -14063,7 +13927,7 @@ stopped your notebook instance and walked away?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>A complete list for someone who did every episode, including the
 optional ones:</p>
