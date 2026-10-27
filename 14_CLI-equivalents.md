@@ -279,7 +279,7 @@ On the workshop account all three are denied on the notebook role, as is any ins
 
 ::::::::::::::::::::::::::::::::::::: challenge
 
-### Challenge: the Friday-evening check
+### Challenge: what is still running on Friday evening
 
 You are leaving for the weekend and have a terminal, not a browser. Write the commands you would run, in order, to make sure the account is costing nothing until Monday, and the one command to run if each check finds something. Then run them against your own resources.
 

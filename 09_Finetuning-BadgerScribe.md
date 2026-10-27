@@ -146,7 +146,7 @@ Peak FLOPS is on the GPU's data sheet: about 70 trillion per second for an A10G,
 
 For the class run: 251 pages × 1,600 tokens × 2 passes = 803,000 tokens. LoRA on 3.75B parameters: 4 × 3.75e9 × 8.03e5 ≈ 1.2e16 FLOPs. A quarter of an A10G's 70 TFLOPS is 17 TFLOPS, so about 700 seconds, call it 12 minutes. Measured, the same instance trains at 1.45 seconds per page-pass, so 502 page-passes take about 12 minutes. The rule lands on the number.
 
-### The estimator and what its inputs mean
+### Estimating the class run with `helpers.estimate_finetune_cost`
 
 `helpers.estimate_finetune_cost` does the same two calculations for any model and any data, picks the cheapest instance that fits (or uses the one you name), and prints the memory needed, the GPU-hours, the cost per run and per project, and a `max_run` to set. Its inputs are the quantities in the rules above, so it is worth being precise about them, with the class run as the example:
 
@@ -265,7 +265,7 @@ Training time grows linearly with pages × epochs, and roughly linearly with ima
 
 We set `max_run` to about twice the estimate. If a run goes past that, SageMaker kills it and we lose at most a dollar, not a weekend.
 
-### The whole episode
+### What the whole episode costs
 
 | What | Instance | Time | Cost |
 |---|---|---|---|
@@ -431,6 +431,8 @@ os.makedirs(proc_dir, exist_ok=True)
 for fname in ["config.json", "preprocessor_config.json", "tokenizer.json", "tokenizer_config.json", "special_tokens_map.json",
               "added_tokens.json", "vocab.json", "merges.txt", "chat_template.json", "video_preprocessor_config.json"]:
     s3_client.download_file(shared_bucket, f"{data_prefix}/model/churro-3B/{fname}", os.path.join(proc_dir, fname))
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning, module="transformers")   # the pixel limits are passed the way this transformers version wants; the newer form is a FutureWarning it prints on every call
 processor = AutoProcessor.from_pretrained(proc_dir, min_pixels=bc.DEFAULT_MIN_PIXELS, max_pixels=bc.DEFAULT_MAX_PIXELS)
 ```
 
@@ -489,9 +491,18 @@ helpers.estimate_finetune_cost(params_billions=3.75, examples=251, tokens_per_ex
 
 Multiply by pages and passes and that is the "tokens seen" in the cost table. Halve `max_pixels` and the image count halves with it; that is what Exercise 1 changes.
 
-### The scripts
+Now the same run as a full fine-tune. The arithmetic goes up by half, 6 FLOPs per parameter per token instead of 4, but that is not what changes the bill:
 
-Jobs run in containers, so the code they execute has to be shipped with the job. Copy the scripts from the lesson repository into a `code/` directory:
+```python
+helpers.estimate_finetune_cost(params_billions=3.75, examples=251, tokens_per_example=int(avg_tokens_per_page), epochs=2,
+                               method="full");   # no instance_type: the cheapest that holds it
+```
+
+Memory is what changes. The weights, their gradients and the optimizer's state come to 64 GB against 13, so the run no longer fits a 24 GB GPU, and the cheapest instance that holds it is the four-GPU `ml.g5.12xlarge` at `$7.09` an hour, five times the price. The four GPUs share the work, so the job is shorter, and the run comes to about `$1.87` against `$0.60`. On 251 pages that is a dollar; the same jump at 7B is the Step 0 table's `$140` a run, and the two warnings the function prints are the account's rules: no full fine-tune, no multi-GPU instance.
+
+### A code folder for the job
+
+The three scripts the job needs are already on this instance, in the lesson clone. The job cannot use them from there: it runs in a container on another machine, and the only code it gets is the one directory named by `source_dir=` on the estimator, uploaded whole. That directory should hold what the job imports and a `requirements.txt` listing what the container has to install, and nothing else. So make a small `code/` folder here with copies of the three files, rather than pointing `source_dir` at the lesson's `scripts/` directory, which would upload every script in the lesson and need a requirements file written into the repository:
 
 ```python
 import shutil
@@ -517,7 +528,7 @@ print(os.listdir("code"))
 Open `code/finetune_churro_lora.py` in the Jupyter file browser. It is about 400 lines and you are about to launch it on a GPU. Find the answers in the file:
 
 1. Which layers get LoRA weights, and which part of the model gets none? What would the regular expression in `target_modules` also match without its `(?!.*visual)` part?
-2. Roughly how many parameters will train? Work it out from `r=16` and the shapes of the language model's projections (36 layers; `q_proj` and `o_proj` are 2048 × 2048, `k_proj` and `v_proj` are 2048 × 256, and `gate_proj`, `up_proj` and `down_proj` are 2048 × 11008), then compare with the `trainable params:` line in the job's log once it runs.
+2. Roughly how many parameters will train? Work it out from `r=16` and the shapes of the language model's projections, which the cell before the hyperparameters read from `config.json` (36 layers; `q_proj` and `o_proj` are 2048 × 2048, `k_proj` and `v_proj` are 2048 × 256, and `gate_proj`, `up_proj` and `down_proj` are 2048 × 11008), then compare with the `trainable params:` line in the job's log once it runs.
 3. Which tokens does the loss count? Find every place `labels` are set to `-100`.
 4. The script stops itself in two situations before training a single step. Which, and why are they there?
 
@@ -556,7 +567,7 @@ def make_job_tags(purpose: str):   # one of: Storage, Notebook, Training, Tuning
         {"Key": "Purpose", "Value": purpose},
     ])
 
-make_job_tags("Training")   # fails here, with the fix, rather than at the launch
+make_job_tags("Training");   # fails here, with the fix, rather than at the launch; the semicolon keeps Jupyter from also displaying the list
 ```
 
 ## Step 1: Launch the LoRA fine-tune
@@ -595,12 +606,30 @@ print(f"tags:         {make_job_tags('Training')}")
 
 Next, what the script will be told to do. These hyperparameters reach the script as command-line flags (`--epochs 2 --lr 0.0002 ...`), and they are what the Step 0 estimate was built from. Three of them set the cost: the number of pages, the number of passes, and `max_pixels`. The rest shape the training: a LoRA learning rate, the adapter rank, an effective batch of four pages through gradient accumulation, and which holdout pages get scored when.
 
+One of them, `lora_r`, decides how many parameters train, and the model's own `config.json` has what you need to work that out: the number of layers and the width of each projection LoRA attaches to. For any model on Hugging Face it is one click away, under **Files and versions** on the model page ([CHURRO-3B](https://huggingface.co/stanford-oval/churro-3B/tree/main), for this one), and the same page's safetensors viewer lists every weight tensor with its shape; the model card's prose is a quicker glance but not always complete, so read the file when a number matters. Here the file is staged next to the weights in the shared bucket. An adapter on a matrix of shape in × out adds r × (in + out) parameters.
+
+```python
+s3_client.download_file(shared_bucket, f"{data_prefix}/model/churro-3B/config.json", "config.json")   # the model's architecture, from the model card
+with open("config.json") as f:
+    cfg = json.load(f)
+text = cfg.get("text_config", cfg)            # newer configs keep the language model's sizes under text_config, older ones at the top level
+layers, hidden, inter = text["num_hidden_layers"], text["hidden_size"], text["intermediate_size"]
+kv = hidden * text["num_key_value_heads"] // text["num_attention_heads"]   # k_proj and v_proj are narrower: one head group shares a key and a value
+total_params = 3.75e9
+print(f"{layers} layers; q_proj and o_proj {hidden} x {hidden}, k_proj and v_proj {hidden} x {kv}, gate/up/down_proj {hidden} x {inter}")
+for lora_r in (8, 16, 32):
+    per_layer = lora_r * (2 * (hidden + hidden) + 2 * (hidden + kv) + 3 * (hidden + inter))   # r x (in + out), summed over the seven projections
+    print(f"rank {lora_r:>2}: {per_layer * layers / 1e6:5.1f}M trainable parameters, {100 * per_layer * layers / total_params:.2f}% of the model")
+```
+
+Rank 16 is the lesson's choice: about 30 million parameters, under 1% of the model, which the job's log confirms in its `trainable params:` line.
+
 ```python
 hyperparameters = {
     # no model_id: the script reads the base weights from the "model" channel mounted at fit()
     "epochs": 2,                      # two passes over the 251 pages; the per-pass curve below says what each one bought
     "lr": 2e-4,                       # LoRA takes a higher learning rate than a full fine-tune (~1e-5)
-    "lora_r": 16,                     # adapter rank: how many trainable parameters LoRA adds per layer
+    "lora_r": 16,                     # adapter rank: about 30 million trainable parameters, from the cell above; 32 would double that
     "batch_size": 1,
     "grad_accum": 4,                  # effective batch of 4 pages -> ~125 optimizer steps over 2 passes
     "max_pixels": 1280 * 28 * 28,     # ~1 megapixel per page; tokens per page, and so cost, scale with it
@@ -608,6 +637,17 @@ hyperparameters = {
     "eval_before": 1,
     "curve_pages": 8,                 # of those 15, scored again at the end of every epoch: the CER curve
 }
+```
+
+One check of all of it before the estimator exists, as `check_launch` checked the tags. `check_finetune_launch` applies the account's rules to the tags, the instance type and the cap, and then this lesson's own rules for a fine-tune: LoRA and not a full fine-tune, a model of at most 7B, a cap between the estimate and four times it, checkpoints on any run that may pass an hour, a fixed job name, and sane values for the passes and the pixel budget. It raises with every problem named, or prints what the launch is allowed to cost.
+
+```python
+helpers.check_finetune_launch(
+    tags=make_job_tags("Training"), instance_type=instance_type, max_run=max_run_minutes * 60,
+    estimated_minutes=estimated_minutes, price_per_hour=g5_price,
+    params_billions=3.75, method="lora",
+    job_name=training_job_name, checkpoint_s3_uri=checkpoint_s3_uri, hyperparameters=hyperparameters,
+);
 ```
 
 Then the estimator: which script and folder to ship, which prebuilt container to run it in (the three version numbers pick a Hugging Face image with transformers, PyTorch and Python), which instance, the guard rails from above, and where the output and checkpoints go.
@@ -659,9 +699,10 @@ print(f"Wall-clock from launch to finish: {(time.time() - start) / 60:.1f} min (
 
 ### Interrupting the cell does not stop the job
 
-The square "interrupt kernel" button stops the *notebook* from watching the job. The GPU instance keeps running and keeps billing until the script finishes or `max_run` expires. To stop a job, use the console (**SageMaker AI → Training → Training jobs → select → Stop**) or:
+The square "interrupt kernel" button stops the *notebook* from watching the job. The GPU instance keeps running and keeps billing until the script finishes or `max_run` expires. To stop a job, open the [Training jobs page](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training) in the console (**SageMaker AI → Training → Training jobs**), select it and click **Stop**, or run:
 
 ```python
+# Only if you need to stop the job: remove the # from the next line and run the cell
 # session.sagemaker_client.stop_training_job(TrainingJobName=training_job_name)
 ```
 
@@ -859,11 +900,17 @@ Then compare that number to the estimate in Step 0. If you are not within 50%, f
 
 Everything below is the same pattern at a larger scale: about `$1.50` for the LoRA fine-tune and `$0.80` for inference, roughly two hours of wall-clock time that you do not need to sit through. Launch, go do something else, come back.
 
-The cells that launch jobs or read their output are commented out, so that **Run All** in class does not start two hours of GPU work. When you do the homework, uncomment them one at a time.
+::::::::::::::::::::::::::::::::::::: callout
+
+### The homework cells are switched off
+
+Every cell below that launches a job or needs a job's output starts with the line `%%script false --no-raise-error`, which makes Jupyter skip the cell, so **Run All** in class does not start two hours of GPU work. When you do the homework, delete that first line from a cell and run it. Do the cells in order: each one needs the one before it to have finished.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
 
 ### The four-pass LoRA run
 
-Same estimator and the same 251 pages, four passes instead of two, 40 evaluation pages instead of 15, and a 130-minute cap. Write your estimate down first (Step 2's challenge). Launch with `wait=False` here only because you will not be watching: it returns immediately and you poll later. The explicit job name still protects you from a double launch.
+Same estimator and the same 251 pages, four passes instead of two, 40 evaluation pages instead of 15, and a 130-minute cap. Write your estimate down first (Step 2's challenge). Launch with `wait=False` here because you will not be watching: the cell returns immediately, and a later cell checks on the job. The explicit job name still protects you from a double launch.
 
 The same guard rails first: a new job name, its own checkpoint folder, and the cap written down with its worst case.
 
@@ -890,6 +937,16 @@ homework_hyperparameters = {
 }
 ```
 
+The same check as in class, with the homework's cap and name:
+
+```python
+helpers.check_finetune_launch(
+    tags=make_job_tags("Training"), instance_type="ml.g5.xlarge", max_run=130 * 60,
+    estimated_minutes=65, price_per_hour=g5_price, params_billions=3.75, method="lora",
+    job_name=homework_job_name, checkpoint_s3_uri=homework_checkpoint_s3_uri, hyperparameters=homework_hyperparameters,
+);
+```
+
 Same estimator as in class, except for the job name, the checkpoint folder and the 130-minute cap.
 
 ```python
@@ -913,22 +970,26 @@ homework_estimator = HuggingFace(
 )
 ```
 
-Launch and come back later; the next cell polls for it.
+With `wait=False`, the launch cell returns as soon as SageMaker accepts the job. The job runs on its own instance for about an hour, so stop this notebook instance if you like and come back. The cell after it asks SageMaker for the job's status: run it when you are back, and once the status is `Completed` it reads the bill and the location of the adapter the job saved.
 
 ```python
-# # wait=False: returns at once; poll the job with describe_training_job in the next cell
-# homework_estimator.fit({"train": train_s3_uri, "model": model_s3_uri}, job_name=homework_job_name, wait=False)
-# print("launched:", homework_job_name)
+%%script false --no-raise-error
+# homework cell, switched off by the line above: delete that line to run it
+# wait=False: the cell returns as soon as the job is accepted; the job runs regardless of this notebook
+homework_estimator.fit({"train": train_s3_uri, "model": model_s3_uri}, job_name=homework_job_name, wait=False)
+print("launched:", homework_job_name)
 ```
 
 ```python
-# # Come back later and run this until it says Completed. Everything below needs the adapter this run produces.
-# desc = session.sagemaker_client.describe_training_job(TrainingJobName=homework_job_name)
-# print(desc["TrainingJobStatus"], "-", desc.get("SecondaryStatus"))
-# homework_adapter_s3_uri = None
-# if desc["TrainingJobStatus"] == "Completed":
-#     desc = job_cost_report(homework_job_name, g5_price)
-#     homework_adapter_s3_uri = desc["ModelArtifacts"]["S3ModelArtifacts"]
+%%script false --no-raise-error
+# homework cell, switched off by the line above: delete that line to run it
+# Run this when you are back; it prints the job's status. Everything below needs the adapter, so wait for Completed.
+desc = session.sagemaker_client.describe_training_job(TrainingJobName=homework_job_name)
+print(desc["TrainingJobStatus"], "-", desc.get("SecondaryStatus"))
+homework_adapter_s3_uri = None
+if desc["TrainingJobStatus"] == "Completed":
+    desc = job_cost_report(homework_job_name, g5_price)
+    homework_adapter_s3_uri = desc["ModelArtifacts"]["S3ModelArtifacts"]
 ```
 
 ### Base vs. LoRA fine-tuned over the holdout and the test set
@@ -1014,39 +1075,45 @@ def run_transcription_job(label: str, adapter_uri: str = None):
 Launch it twice: once with the base model alone, once with the homework adapter merged in. Not before the four-pass run has finished: the first line checks.
 
 ```python
-# assert homework_adapter_s3_uri, "the four-pass run has not finished; rerun the poll cell above until it says Completed"
-# base_output_uri = run_transcription_job("base")
-# lora_output_uri = run_transcription_job("lora", adapter_uri=homework_adapter_s3_uri)
+%%script false --no-raise-error
+# homework cell, switched off by the line above: delete that line to run it
+assert homework_adapter_s3_uri, "the four-pass run has not finished; rerun the status cell above until it says Completed"
+base_output_uri = run_transcription_job("base")
+lora_output_uri = run_transcription_job("lora", adapter_uri=homework_adapter_s3_uri)
 ```
 
-Both jobs run in parallel on their own GPU, which doubles the instantaneous spend but halves the wall-clock time; the total cost is the same. Watch them under **SageMaker AI → Data preparation → Processing jobs**, and when both are `Completed`, score the holdout rows with `metric.py`, the exact file that scores the leaderboard.
+Both jobs run in parallel on their own GPU, which doubles the instantaneous spend but halves the wall-clock time; the total cost is the same. Watch them on the [Processing jobs page](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs) (**SageMaker AI → Data preparation → Processing jobs**), and when both are `Completed`, score the holdout rows with `metric.py`, the exact file that scores the leaderboard.
 
 ```python
-# import subprocess
-#
-# def fetch_predictions(output_uri: str, label: str) -> pd.DataFrame:
-#     bucket, key = output_uri.replace("s3://", "").split("/", 1)
-#     local = os.path.join(local_data_dir, f"predictions_{label}.csv")
-#     s3_client.download_file(bucket, key + "predictions.csv", local)
-#     return pd.read_csv(local, keep_default_na=False)
-#
-# preds = {label: fetch_predictions(uri, label) for label, uri in [("base", base_output_uri), ("lora", lora_output_uri)]}
+%%script false --no-raise-error
+# homework cell, switched off by the line above: delete that line to run it
+import subprocess
+
+def fetch_predictions(output_uri: str, label: str) -> pd.DataFrame:
+    bucket, key = output_uri.replace("s3://", "").split("/", 1)
+    local = os.path.join(local_data_dir, f"predictions_{label}.csv")
+    s3_client.download_file(bucket, key + "predictions.csv", local)
+    return pd.read_csv(local, keep_default_na=False)
+
+preds = {label: fetch_predictions(uri, label) for label, uri in [("base", base_output_uri), ("lora", lora_output_uri)]}
 ```
 
 Write the holdout answers to a file, keep only the holdout rows of each prediction file, and run `metric.py` on each pair the way Kaggle runs it on a submission.
 
 ```python
-# holdout_solution = train_df[train_df.page_id.isin(holdout_df.page_id)][["page_id", "text", "category"]]
-# holdout_solution.to_csv(os.path.join(local_data_dir, "holdout_solution.csv"), index=False)
-#
-# for label, df in preds.items():
-#     df[df.page_id.isin(holdout_solution.page_id)].to_csv(os.path.join(local_data_dir, f"holdout_pred_{label}.csv"), index=False)
-#     print(f"\n=== {label} ===")
-#     print(subprocess.run(
-#         ["python", os.path.join(local_data_dir, "metric.py"),
-#          "--solution", os.path.join(local_data_dir, "holdout_solution.csv"),
-#          "--submission", os.path.join(local_data_dir, f"holdout_pred_{label}.csv")],
-#         capture_output=True, text=True).stdout)
+%%script false --no-raise-error
+# homework cell, switched off by the line above: delete that line to run it
+holdout_solution = train_df[train_df.page_id.isin(holdout_df.page_id)][["page_id", "text", "category"]]
+holdout_solution.to_csv(os.path.join(local_data_dir, "holdout_solution.csv"), index=False)
+
+for label, df in preds.items():
+    df[df.page_id.isin(holdout_solution.page_id)].to_csv(os.path.join(local_data_dir, f"holdout_pred_{label}.csv"), index=False)
+    print(f"\n=== {label} ===")
+    print(subprocess.run(
+        ["python", os.path.join(local_data_dir, "metric.py"),
+         "--solution", os.path.join(local_data_dir, "holdout_solution.csv"),
+         "--submission", os.path.join(local_data_dir, f"holdout_pred_{label}.csv")],
+        capture_output=True, text=True).stdout)
 ```
 
 ### Submit
@@ -1054,13 +1121,15 @@ Write the holdout answers to a file, keep only the holdout rows of each predicti
 The `lora` prediction file already contains every test page. Keep only those rows, in the order `test.csv` lists them. If you want a leaderboard score, this file is what you upload on the competition's **Submit Prediction** page (two submissions per day; this is the only step that needs a Kaggle account, and it is optional).
 
 ```python
-# submission = test_df[["page_id"]].merge(preds["lora"], on="page_id", how="left").fillna({"text": ""})
-# assert len(submission) == len(test_df) and submission.text.str.len().gt(0).all(), "every test page needs a prediction"
-#
-# submission_path = os.path.join(local_data_dir, "submission_churro_lora.csv")
-# submission.to_csv(submission_path, index=False)
-# s3_client.upload_file(submission_path, bucket_name, f"{data_prefix}/submissions/submission_churro_lora.csv")
-# print("wrote", submission_path, len(submission), "rows")
+%%script false --no-raise-error
+# homework cell, switched off by the line above: delete that line to run it
+submission = test_df[["page_id"]].merge(preds["lora"], on="page_id", how="left").fillna({"text": ""})
+assert len(submission) == len(test_df) and submission.text.str.len().gt(0).all(), "every test page needs a prediction"
+
+submission_path = os.path.join(local_data_dir, "submission_churro_lora.csv")
+submission.to_csv(submission_path, index=False)
+s3_client.upload_file(submission_path, bucket_name, f"{data_prefix}/submissions/submission_churro_lora.csv")
+print("wrote", submission_path, len(submission), "rows")
 ```
 
 Finally, rerun Step 3 and compare the total with the estimate you wrote down before the four-pass run.

@@ -301,7 +301,7 @@ The next unit of work is a list of **page-level records**, one per PDF page. The
 
 Later, we will **chunk these pages** into smaller overlapping segments for embedding.
 
-### Pages first, then chunks
+### Why chunks keep their page
 
 Chunks keep the page they came from, so that:
 

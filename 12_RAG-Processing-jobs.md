@@ -73,9 +73,9 @@ In this episode we will:
 
 ## Setup
 
-### The scripts
+### A code folder for each job
 
-Jobs run in containers, so the code they execute has to be shipped with the job: a Processing job cannot import functions defined in this notebook. The lesson clone has the four files we need as standalone scripts. Copy them:
+The four scripts the jobs need are already on this instance, in the lesson clone, but a job cannot use them from there: it runs in a container on another machine, cannot import anything from this notebook, and the only code it gets is the one directory named by `source_dir=`, uploaded whole. So each job gets a small folder holding just the files it imports, copied out of the clone, rather than `source_dir` pointing at the lesson's whole `scripts/` directory. The four files:
 
 - `scripts/embedding_inference.py`: generic embedding script (JSONL with a `text` field in, `embeddings.npy` out).
 - `scripts/hf_embedder.py`: the embedding model wrapper both jobs use, on plain `transformers` (mean pooling and normalisation, thirty lines), so neither job has to install anything for it.
@@ -504,7 +504,7 @@ Expect the embedding job to bill about 8 minutes (about `$0.20`) and the RAG job
 
 ::::::::::::::::::::::::::::::::::::: challenge
 
-### The runtime cap
+### What a shorter runtime cap would have done
 
 Both processors set `max_runtime_in_seconds=2 * 60 * 60`. Predict what would happen if the RAG job were launched with `max_runtime_in_seconds=600` instead: what does the job status become, what is in the output prefix, and what did it cost? Then compute the most a hung job can bill under each job's actual cap, and compare it with the cost of an `ml.g6e.xlarge` notebook instance left running over a weekend (64 hours).
 
