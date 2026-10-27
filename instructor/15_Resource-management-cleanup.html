@@ -490,18 +490,19 @@ against reality before and after you clean up.</p>
 <span id="cb1-5"><a href="#cb1-5" tabindex="-1" aria-label="code-block-1-5"></a><span class="im">import</span> logging</span>
 <span id="cb1-6"><a href="#cb1-6" tabindex="-1" aria-label="code-block-1-6"></a>logging.getLogger(<span class="st">"sagemaker.telemetry.telemetry_logging"</span>).setLevel(logging.WARNING)   <span class="co"># silence the telemetry notice; the "Creating training-job" line still prints</span></span>
 <span id="cb1-7"><a href="#cb1-7" tabindex="-1" aria-label="code-block-1-7"></a>logging.getLogger(<span class="st">"sagemaker.image_uris"</span>).setLevel(logging.WARNING)</span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1" aria-label="code-block-1-8"></a><span class="im">import</span> sys</span>
-<span id="cb1-9"><a href="#cb1-9" tabindex="-1" aria-label="code-block-1-9"></a></span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1" aria-label="code-block-1-10"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)   <span class="co"># the lesson's helper module, cloned in the controllers episode</span></span>
-<span id="cb1-11"><a href="#cb1-11" tabindex="-1" aria-label="code-block-1-11"></a><span class="im">import</span> helpers</span>
-<span id="cb1-12"><a href="#cb1-12" tabindex="-1" aria-label="code-block-1-12"></a></span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1" aria-label="code-block-1-13"></a>session <span class="op">=</span> sagemaker.Session()</span>
-<span id="cb1-14"><a href="#cb1-14" tabindex="-1" aria-label="code-block-1-14"></a>sm <span class="op">=</span> session.sagemaker_client          <span class="co"># the low-level SageMaker client: list_*, describe_*, stop_* calls</span></span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1" aria-label="code-block-1-15"></a>region <span class="op">=</span> session.boto_region_name      <span class="co"># the region the notebook runs in (us-east-2 on the workshop account)</span></span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1" aria-label="code-block-1-16"></a></span>
-<span id="cb1-17"><a href="#cb1-17" tabindex="-1" aria-label="code-block-1-17"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span>                              <span class="co"># replace with your name, as used in job names and tags</span></span>
-<span id="cb1-18"><a href="#cb1-18" tabindex="-1" aria-label="code-block-1-18"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>   <span class="co"># the Project value used in your Bedrock profile names</span></span>
-<span id="cb1-19"><a href="#cb1-19" tabindex="-1" aria-label="code-block-1-19"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>            <span class="co"># replace with your bucket</span></span></code></pre>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1" aria-label="code-block-1-8"></a>logging.getLogger(<span class="st">"sagemaker.config"</span>).setLevel(logging.WARNING)   <span class="co"># and the two "Not applying SDK defaults" lines</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1" aria-label="code-block-1-9"></a><span class="im">import</span> sys</span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1" aria-label="code-block-1-10"></a></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1" aria-label="code-block-1-11"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)   <span class="co"># the lesson's helper module, cloned in the controllers episode</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1" aria-label="code-block-1-12"></a><span class="im">import</span> helpers</span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1" aria-label="code-block-1-13"></a></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1" aria-label="code-block-1-14"></a>session <span class="op">=</span> sagemaker.Session()</span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1" aria-label="code-block-1-15"></a>sm <span class="op">=</span> session.sagemaker_client          <span class="co"># the low-level SageMaker client: list_*, describe_*, stop_* calls</span></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1" aria-label="code-block-1-16"></a>region <span class="op">=</span> session.boto_region_name      <span class="co"># the region the notebook runs in (us-east-2 on the workshop account)</span></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1" aria-label="code-block-1-17"></a></span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1" aria-label="code-block-1-18"></a>name <span class="op">=</span> <span class="st">"DoeJohn"</span>                              <span class="co"># replace with your name, as used in job names and tags</span></span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1" aria-label="code-block-1-19"></a>project <span class="op">=</span> <span class="st">"SinkOrSwim"</span>   <span class="co"># the Project value used in your Bedrock profile names</span></span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1" aria-label="code-block-1-20"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>            <span class="co"># replace with your bucket</span></span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="what-is-still-running-under-your-name">What is still running under your name?<a class="anchor" aria-label="anchor" href="#what-is-still-running-under-your-name"></a></h2>
 <hr class="half-width"><p>One pass over the three job lists shows every job still running in
@@ -760,7 +761,7 @@ code and checks every launch against it in the notebook first, with
 rule. The <a href="refused-launch.html">If a Launch Is Refused</a> page
 is the same list in one place, for the day a job of your own is
 refused.</p>
-<p>Habits that need no administrator:</p>
+<p>What you can do without an administrator:</p>
 <ul><li>
 <strong>Automate the cleanup you do by hand.</strong> The inventory
 cells at the top of this episode are the SDK calls; a script that runs

@@ -528,21 +528,22 @@ Python, with the notebook’s role as the identity.</p>
 <span id="cb2-6"><a href="#cb2-6" tabindex="-1" aria-label="code-block-2-6"></a><span class="im">import</span> logging</span>
 <span id="cb2-7"><a href="#cb2-7" tabindex="-1" aria-label="code-block-2-7"></a>logging.getLogger(<span class="st">"sagemaker.telemetry.telemetry_logging"</span>).setLevel(logging.WARNING)   <span class="co"># silence the telemetry notice; the "Creating training-job" line still prints</span></span>
 <span id="cb2-8"><a href="#cb2-8" tabindex="-1" aria-label="code-block-2-8"></a>logging.getLogger(<span class="st">"sagemaker.image_uris"</span>).setLevel(logging.WARNING)</span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1" aria-label="code-block-2-9"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
-<span id="cb2-10"><a href="#cb2-10" tabindex="-1" aria-label="code-block-2-10"></a></span>
-<span id="cb2-11"><a href="#cb2-11" tabindex="-1" aria-label="code-block-2-11"></a><span class="co"># Initialize the SageMaker role (will reflect notebook instance's policy)</span></span>
-<span id="cb2-12"><a href="#cb2-12" tabindex="-1" aria-label="code-block-2-12"></a>role <span class="op">=</span> sagemaker.get_execution_role()  <span class="co"># the IAM role attached to this notebook instance; every call below acts as this role</span></span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1" aria-label="code-block-2-13"></a><span class="bu">print</span>(<span class="ss">f'role = </span><span class="sc">{</span>role<span class="sc">}</span><span class="ss">'</span>)</span>
-<span id="cb2-14"><a href="#cb2-14" tabindex="-1" aria-label="code-block-2-14"></a></span>
-<span id="cb2-15"><a href="#cb2-15" tabindex="-1" aria-label="code-block-2-15"></a><span class="co"># Initialize an S3 client to interact with Amazon S3, allowing operations like uploading, downloading, and managing objects and buckets.</span></span>
-<span id="cb2-16"><a href="#cb2-16" tabindex="-1" aria-label="code-block-2-16"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
-<span id="cb2-17"><a href="#cb2-17" tabindex="-1" aria-label="code-block-2-17"></a></span>
-<span id="cb2-18"><a href="#cb2-18" tabindex="-1" aria-label="code-block-2-18"></a><span class="co"># Define the S3 bucket that we will load from</span></span>
-<span id="cb2-19"><a href="#cb2-19" tabindex="-1" aria-label="code-block-2-19"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn'</span>  <span class="co"># replace with your S3 bucket name</span></span>
-<span id="cb2-20"><a href="#cb2-20" tabindex="-1" aria-label="code-block-2-20"></a></span>
-<span id="cb2-21"><a href="#cb2-21" tabindex="-1" aria-label="code-block-2-21"></a><span class="co"># Define train/test filenames</span></span>
-<span id="cb2-22"><a href="#cb2-22" tabindex="-1" aria-label="code-block-2-22"></a>train_filename <span class="op">=</span> <span class="st">'titanic_train.csv'</span>  <span class="co"># object keys inside the bucket (no prefix: they sit at the bucket root)</span></span>
-<span id="cb2-23"><a href="#cb2-23" tabindex="-1" aria-label="code-block-2-23"></a>test_filename <span class="op">=</span> <span class="st">'titanic_test.csv'</span></span></code></pre>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1" aria-label="code-block-2-9"></a>logging.getLogger(<span class="st">"sagemaker.config"</span>).setLevel(logging.WARNING)   <span class="co"># and the two "Not applying SDK defaults" lines</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1" aria-label="code-block-2-10"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1" aria-label="code-block-2-11"></a></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1" aria-label="code-block-2-12"></a><span class="co"># Initialize the SageMaker role (will reflect notebook instance's policy)</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1" aria-label="code-block-2-13"></a>role <span class="op">=</span> sagemaker.get_execution_role()  <span class="co"># the IAM role attached to this notebook instance; every call below acts as this role</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1" aria-label="code-block-2-14"></a><span class="bu">print</span>(<span class="ss">f'role = </span><span class="sc">{</span>role<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1" aria-label="code-block-2-15"></a></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1" aria-label="code-block-2-16"></a><span class="co"># Initialize an S3 client to interact with Amazon S3, allowing operations like uploading, downloading, and managing objects and buckets.</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1" aria-label="code-block-2-17"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1" aria-label="code-block-2-18"></a></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1" aria-label="code-block-2-19"></a><span class="co"># Define the S3 bucket that we will load from</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1" aria-label="code-block-2-20"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn'</span>  <span class="co"># replace with your S3 bucket name</span></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1" aria-label="code-block-2-21"></a></span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1" aria-label="code-block-2-22"></a><span class="co"># Define train/test filenames</span></span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1" aria-label="code-block-2-23"></a>train_filename <span class="op">=</span> <span class="st">'titanic_train.csv'</span>  <span class="co"># object keys inside the bucket (no prefix: they sit at the bucket root)</span></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1" aria-label="code-block-2-24"></a>test_filename <span class="op">=</span> <span class="st">'titanic_test.csv'</span></span></code></pre>
 </div>
 <p>Create a SageMaker session to manage interactions with Amazon
 SageMaker, such as training jobs, model deployments, and data
@@ -1272,10 +1273,10 @@ before.</p>
 <p>Interrupting the cell, restarting the kernel and stopping the
 instance all leave the job running. Only <strong>Stop</strong> on the
 job’s page, or the job’s own cap, ends it. A job you launched and forgot
-bills until one of those happens, which is what the two habits below are
-for.</p>
+bills until one of those happens. Two estimator settings limit what that
+can cost.</p>
 <div class="section level3">
-<h3 id="two-habits-for-any-run-longer-than-half-an-hour">Two habits for any run longer than half an hour<a class="anchor" aria-label="anchor" href="#two-habits-for-any-run-longer-than-half-an-hour"></a></h3>
+<h3 id="for-any-run-longer-than-half-an-hour">For any run longer than half an hour<a class="anchor" aria-label="anchor" href="#for-any-run-longer-than-half-an-hour"></a></h3>
 <p><strong>A cap you chose.</strong> <code>max_run</code> is the most a
 job can bill, in seconds, and every estimator in this lesson sets it.
 Put it a little above your estimate, twice the estimate is a fair
@@ -1495,11 +1496,9 @@ uses with <code>PyTorch</code> and <code>HuggingFace</code>.</li>
 <strong>Training data channels</strong>: <code>TrainingInput</code>
 names the S3 data a job copies onto its instance before the script
 runs.</li>
-<li>
-<strong>Cost habit</strong>: Estimate cost before launching (rate x
-minutes + ~3 minutes startup), then read back
-<code>BillableTimeInSeconds</code> with <code>job_cost_report()</code>
-after every job and compare.</li>
+<li>Estimate the cost before launching (rate × minutes, startup
+included), then read back <code>BillableTimeInSeconds</code> with
+<code>job_cost_report()</code> after every job and compare.</li>
 <li>
 <strong>Long runs</strong>: launch with <code>wait=False</code> and
 carry on, or stop the notebook instance; the job runs and finishes

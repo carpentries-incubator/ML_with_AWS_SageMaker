@@ -493,21 +493,22 @@ filenames.</p>
 <span id="cb1-6"><a href="#cb1-6" tabindex="-1" aria-label="code-block-1-6"></a><span class="im">import</span> logging</span>
 <span id="cb1-7"><a href="#cb1-7" tabindex="-1" aria-label="code-block-1-7"></a>logging.getLogger(<span class="st">"sagemaker.telemetry.telemetry_logging"</span>).setLevel(logging.WARNING)   <span class="co"># silence the telemetry notice; the "Creating training-job" line still prints</span></span>
 <span id="cb1-8"><a href="#cb1-8" tabindex="-1" aria-label="code-block-1-8"></a>logging.getLogger(<span class="st">"sagemaker.image_uris"</span>).setLevel(logging.WARNING)</span>
-<span id="cb1-9"><a href="#cb1-9" tabindex="-1" aria-label="code-block-1-9"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1" aria-label="code-block-1-10"></a></span>
-<span id="cb1-11"><a href="#cb1-11" tabindex="-1" aria-label="code-block-1-11"></a><span class="co"># Initialize the SageMaker role (will reflect notebook instance's policy)</span></span>
-<span id="cb1-12"><a href="#cb1-12" tabindex="-1" aria-label="code-block-1-12"></a>role <span class="op">=</span> sagemaker.get_execution_role()</span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1" aria-label="code-block-1-13"></a><span class="bu">print</span>(<span class="ss">f'role = </span><span class="sc">{</span>role<span class="sc">}</span><span class="ss">'</span>)</span>
-<span id="cb1-14"><a href="#cb1-14" tabindex="-1" aria-label="code-block-1-14"></a></span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1" aria-label="code-block-1-15"></a><span class="co"># Initialize an S3 client to interact with Amazon S3, allowing operations like uploading, downloading, and managing objects and buckets.</span></span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1" aria-label="code-block-1-16"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
-<span id="cb1-17"><a href="#cb1-17" tabindex="-1" aria-label="code-block-1-17"></a></span>
-<span id="cb1-18"><a href="#cb1-18" tabindex="-1" aria-label="code-block-1-18"></a><span class="co"># Define the S3 bucket that we will load from</span></span>
-<span id="cb1-19"><a href="#cb1-19" tabindex="-1" aria-label="code-block-1-19"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn'</span>  <span class="co"># replace with your S3 bucket name</span></span>
-<span id="cb1-20"><a href="#cb1-20" tabindex="-1" aria-label="code-block-1-20"></a></span>
-<span id="cb1-21"><a href="#cb1-21" tabindex="-1" aria-label="code-block-1-21"></a><span class="co"># Define train/test filenames</span></span>
-<span id="cb1-22"><a href="#cb1-22" tabindex="-1" aria-label="code-block-1-22"></a>train_filename <span class="op">=</span> <span class="st">'titanic_train.csv'</span></span>
-<span id="cb1-23"><a href="#cb1-23" tabindex="-1" aria-label="code-block-1-23"></a>test_filename <span class="op">=</span> <span class="st">'titanic_test.csv'</span></span></code></pre>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1" aria-label="code-block-1-9"></a>logging.getLogger(<span class="st">"sagemaker.config"</span>).setLevel(logging.WARNING)   <span class="co"># and the two "Not applying SDK defaults" lines</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1" aria-label="code-block-1-10"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1" aria-label="code-block-1-11"></a></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1" aria-label="code-block-1-12"></a><span class="co"># Initialize the SageMaker role (will reflect notebook instance's policy)</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1" aria-label="code-block-1-13"></a>role <span class="op">=</span> sagemaker.get_execution_role()</span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1" aria-label="code-block-1-14"></a><span class="bu">print</span>(<span class="ss">f'role = </span><span class="sc">{</span>role<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1" aria-label="code-block-1-15"></a></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1" aria-label="code-block-1-16"></a><span class="co"># Initialize an S3 client to interact with Amazon S3, allowing operations like uploading, downloading, and managing objects and buckets.</span></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1" aria-label="code-block-1-17"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1" aria-label="code-block-1-18"></a></span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1" aria-label="code-block-1-19"></a><span class="co"># Define the S3 bucket that we will load from</span></span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1" aria-label="code-block-1-20"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn'</span>  <span class="co"># replace with your S3 bucket name</span></span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1" aria-label="code-block-1-21"></a></span>
+<span id="cb1-22"><a href="#cb1-22" tabindex="-1" aria-label="code-block-1-22"></a><span class="co"># Define train/test filenames</span></span>
+<span id="cb1-23"><a href="#cb1-23" tabindex="-1" aria-label="code-block-1-23"></a>train_filename <span class="op">=</span> <span class="st">'titanic_train.csv'</span></span>
+<span id="cb1-24"><a href="#cb1-24" tabindex="-1" aria-label="code-block-1-24"></a>test_filename <span class="op">=</span> <span class="st">'titanic_test.csv'</span></span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -765,12 +766,12 @@ passes:</p>
 <div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a>helpers.estimate_training_cost(</span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a>helpers.estimate_training_cost(   <span class="co"># the semicolon at the end keeps Jupyter from also displaying the dictionary the function returns</span></span>
 <span id="cb14-2"><a href="#cb14-2" tabindex="-1" aria-label="code-block-14-2"></a>    params_billions<span class="op">=</span><span class="fl">0.125</span>,      <span class="co"># a BERT-base-sized model: 125 million parameters</span></span>
 <span id="cb14-3"><a href="#cb14-3" tabindex="-1" aria-label="code-block-14-3"></a>    examples<span class="op">=</span><span class="dv">1_000_000</span>,         <span class="co"># one example = one abstract; a million of them</span></span>
 <span id="cb14-4"><a href="#cb14-4" tabindex="-1" aria-label="code-block-14-4"></a>    tokens_per_example<span class="op">=</span><span class="dv">256</span>,     <span class="co"># an abstract is about 190 words, 256 tokens</span></span>
 <span id="cb14-5"><a href="#cb14-5" tabindex="-1" aria-label="code-block-14-5"></a>    epochs<span class="op">=</span><span class="dv">3</span>,                   <span class="co"># three passes over the million abstracts</span></span>
-<span id="cb14-6"><a href="#cb14-6" tabindex="-1" aria-label="code-block-14-6"></a>)</span></code></pre>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1" aria-label="code-block-14-6"></a>)<span class="op">;</span></span></code></pre>
 </div>
 <p>Each line:</p>
 <ul><li>
@@ -822,7 +823,7 @@ the function only does the arithmetic.</p>
 <span id="cb15-3"><a href="#cb15-3" tabindex="-1" aria-label="code-block-15-3"></a>    examples<span class="op">=</span><span class="dv">1_000_000</span>,         <span class="co"># one example = one document, a million of them</span></span>
 <span id="cb15-4"><a href="#cb15-4" tabindex="-1" aria-label="code-block-15-4"></a>    tokens_per_example<span class="op">=</span><span class="dv">2000</span>,    <span class="co"># a short paper: about 1,500 words</span></span>
 <span id="cb15-5"><a href="#cb15-5" tabindex="-1" aria-label="code-block-15-5"></a>    epochs<span class="op">=</span><span class="dv">1</span>,                   <span class="co"># one pass</span></span>
-<span id="cb15-6"><a href="#cb15-6" tabindex="-1" aria-label="code-block-15-6"></a>)</span></code></pre>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1" aria-label="code-block-15-6"></a>)<span class="op">;</span></span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -832,7 +833,7 @@ the function only does the arithmetic.</p>
 <span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a>    examples<span class="op">=</span><span class="dv">1_000_000</span>,         <span class="co"># the same million documents</span></span>
 <span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a>    tokens_per_example<span class="op">=</span><span class="dv">2000</span>,</span>
 <span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a>    epochs<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a>)</span></code></pre>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a>)<span class="op">;</span></span></code></pre>
 </div>
 <p>Read the two against the 125M run above. The 1B model still fits on
 the cheapest GPU, but the arithmetic is 165 GPU-hours: a week of
@@ -897,7 +898,7 @@ goes next to it.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>There is no single answer; the solution is the written estimate. One
 worked example for scale: a 7B language model fully fine-tuned on 50,000
@@ -1016,9 +1017,13 @@ for ML page</a> for detailed pricing).</p>
 <p><code>train_nn.py</code> already picks the GPU when there is one and
 moves the model and the tensors to it, which is why the same file runs
 on both instance types:</p>
-<pre class="text"><code>device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = TitanicNet().to(device)
-X_train, y_train = X_train.to(device), y_train.to(device)</code></pre>
+<div class="codewrapper sourceCode" id="cb20">
+<h3 class="code-label">PY<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode py" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1" aria-label="code-block-20-1"></a>device <span class="op">=</span> torch.device(<span class="st">"cuda"</span> <span class="cf">if</span> torch.cuda.is_available() <span class="cf">else</span> <span class="st">"cpu"</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1" aria-label="code-block-20-2"></a>model <span class="op">=</span> TitanicNet().to(device)</span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1" aria-label="code-block-20-3"></a>X_train, y_train <span class="op">=</span> X_train.to(device), y_train.to(device)</span></code></pre>
+</div>
 <div id="cpu-or-gpu-predict-then-measure" class="callout challenge">
 <div class="callout-square">
 <i class="callout-icon" data-feather="zap"></i>
@@ -1084,7 +1089,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -1096,9 +1101,12 @@ and the whole training set is 569 rows, so each full-batch step is tiny
 and the T4 sits almost idle, and the one-time CUDA initialization adds a
 few seconds of its own. Startup dominates both bills, and the GPU bill
 is about 6x higher per minute (0.74 / 0.115), so the GPU costs several
-times more for no speedup. In our run the CPU job billed 2.7 minutes
-(<code>$0.005</code>) and the GPU job 3.6 minutes (<code>$0.045</code>):
-slower, and nine times the price.</p>
+times more for no speedup. In our run the CPU job billed 2.6 minutes
+(<code>$0.005</code>) and the GPU job 3.7 minutes (<code>$0.046</code>):
+slower, and nine times the price. The GPU job’s wall-clock was 8.6
+minutes, because it first sat four and a half minutes in
+<code>Pending - Training job waiting for capacity</code>; GPU instances
+are in shorter supply than CPU ones, and the wait is not billed.</p>
 <p>A GPU pays off when the per-step work is large enough to keep it
 busy: bigger models, bigger batches, or datasets of hundreds of MB and
 up. If you ever do need more GPU than a <code>g4dn.xlarge</code>, the
@@ -1276,48 +1284,38 @@ the step is tiny or huge; here it is the whole step.</p>
 <h3 id="when-it-pays-the-arithmetic">When it pays: the arithmetic<a class="anchor" aria-label="anchor" href="#when-it-pays-the-arithmetic"></a></h3>
 <p><code>helpers.estimate_parallel_speedup</code> puts numbers on that
 for any model and any box, with the same assumptions as the cost
-estimator: 6 FLOPs per parameter per token (4 for LoRA) at a quarter of
-the GPU’s peak, and a gradient of 4 bytes per trainable parameter
-exchanged once per step over the slowest link in use. It does not
-overlap the exchange with the computation, which real runs partly do, so
-its speedup is a floor. The 7B model from the cost section, trained with
-a batch of 16 documents of 2,000 tokens, three ways:</p>
+estimator: 6 FLOPs per parameter per token at a quarter of the GPU’s
+peak, and a gradient of 4 bytes per trainable parameter exchanged once
+per step over the slowest link in use. It does not overlap the exchange
+with the computation, which real runs partly do, so its speedup is a
+floor. The 7B model from the cost section, trained with a batch of 16
+documents of 2,000 tokens, three ways:</p>
 <div class="codewrapper sourceCode" id="cb24">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" tabindex="-1" aria-label="code-block-24-1"></a><span class="co"># Two single-GPU instances over the network: the class-account form of data parallelism</span></span>
-<span id="cb24-2"><a href="#cb24-2" tabindex="-1" aria-label="code-block-24-2"></a>helpers.estimate_parallel_speedup(params_billions<span class="op">=</span><span class="dv">7</span>, tokens_per_step<span class="op">=</span><span class="dv">16</span> <span class="op">*</span> <span class="dv">2000</span>, instance_type<span class="op">=</span><span class="st">"ml.g6e.xlarge"</span>, instance_count<span class="op">=</span><span class="dv">2</span>)</span></code></pre>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1" aria-label="code-block-24-2"></a>helpers.estimate_parallel_speedup(params_billions<span class="op">=</span><span class="dv">7</span>, tokens_per_step<span class="op">=</span><span class="dv">16</span> <span class="op">*</span> <span class="dv">2000</span>, instance_type<span class="op">=</span><span class="st">"ml.g6e.xlarge"</span>, instance_count<span class="op">=</span><span class="dv">2</span>)<span class="op">;</span></span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb25">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" tabindex="-1" aria-label="code-block-25-1"></a><span class="co"># Four GPUs in one box, linked by PCIe</span></span>
-<span id="cb25-2"><a href="#cb25-2" tabindex="-1" aria-label="code-block-25-2"></a>helpers.estimate_parallel_speedup(params_billions<span class="op">=</span><span class="dv">7</span>, tokens_per_step<span class="op">=</span><span class="dv">16</span> <span class="op">*</span> <span class="dv">2000</span>, instance_type<span class="op">=</span><span class="st">"ml.g6e.12xlarge"</span>)</span></code></pre>
+<span id="cb25-2"><a href="#cb25-2" tabindex="-1" aria-label="code-block-25-2"></a>helpers.estimate_parallel_speedup(params_billions<span class="op">=</span><span class="dv">7</span>, tokens_per_step<span class="op">=</span><span class="dv">16</span> <span class="op">*</span> <span class="dv">2000</span>, instance_type<span class="op">=</span><span class="st">"ml.g6e.12xlarge"</span>)<span class="op">;</span></span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb26">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" tabindex="-1" aria-label="code-block-26-1"></a><span class="co"># Eight GPUs in one box, linked by NVLink</span></span>
-<span id="cb26-2"><a href="#cb26-2" tabindex="-1" aria-label="code-block-26-2"></a>helpers.estimate_parallel_speedup(params_billions<span class="op">=</span><span class="dv">7</span>, tokens_per_step<span class="op">=</span><span class="dv">16</span> <span class="op">*</span> <span class="dv">2000</span>, instance_type<span class="op">=</span><span class="st">"ml.p4d.24xlarge"</span>)</span></code></pre>
+<span id="cb26-2"><a href="#cb26-2" tabindex="-1" aria-label="code-block-26-2"></a>helpers.estimate_parallel_speedup(params_billions<span class="op">=</span><span class="dv">7</span>, tokens_per_step<span class="op">=</span><span class="dv">16</span> <span class="op">*</span> <span class="dv">2000</span>, instance_type<span class="op">=</span><span class="st">"ml.p4d.24xlarge"</span>)<span class="op">;</span></span></code></pre>
 </div>
 <p>Read the three together. Two L40S instances over a 20 Gb/s network
 spend as long exchanging the 28 GB gradient as computing, so two
 machines finish in the same time as one and bill twice. Four L40S in one
 box over PCIe get 3.2 of the ideal 4. Eight A100s over NVLink get 7.8 of
-8, which is why the big training boxes are built that way. The same
-arithmetic on a LoRA fine-tune comes out differently again: the
-exchanged gradient is only the adapter’s, a hundredth of the model, so
-even the slow links barely show.</p>
-<div class="codewrapper sourceCode" id="cb27">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" tabindex="-1" aria-label="code-block-27-1"></a><span class="co"># The fine-tuning episode's LoRA run on a four-GPU box: the gradient exchanged is the adapter's, not the model's</span></span>
-<span id="cb27-2"><a href="#cb27-2" tabindex="-1" aria-label="code-block-27-2"></a>helpers.estimate_parallel_speedup(params_billions<span class="op">=</span><span class="fl">3.75</span>, tokens_per_step<span class="op">=</span><span class="dv">4</span> <span class="op">*</span> <span class="dv">1600</span>, instance_type<span class="op">=</span><span class="st">"ml.g5.12xlarge"</span>, method<span class="op">=</span><span class="st">"lora"</span>)</span></code></pre>
-</div>
+8, which is why the big training boxes are built that way.</p>
 <p>The rule, then: data parallelism pays when each step’s computation is
 large next to the exchange, which means a big model, a big batch and a
-fast link, in that order of importance; and the exchange is cheap when
-little is being trained, as with LoRA. Run the function before renting
+fast link, in that order of importance. Run the function before renting
 more than one device, and read the cost line: the speedup is what you
 buy, the cost ratio is what you pay for it.</p>
 </div>

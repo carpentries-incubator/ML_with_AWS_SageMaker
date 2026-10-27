@@ -585,7 +585,7 @@ days.</li>
 discount for a GPU that is loaded and waiting. Loading a 27B model takes
 a few minutes, which tempts people to leave the instance up “so I don’t
 have to reload”. That is the <code>$1,906</code>.</li>
-</ul><p>The habits that keep this safe:</p>
+</ul><p>What keeps this safe:</p>
 <ol style="list-style-type: decimal"><li>
 <strong>Stop the instance when you stand up</strong>, every time,
 from the <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/notebook-instances" class="external-link">Notebook
@@ -775,17 +775,18 @@ download helper.</p>
 <span id="cb4-12"><a href="#cb4-12" tabindex="-1" aria-label="code-block-4-12"></a><span class="im">import</span> logging</span>
 <span id="cb4-13"><a href="#cb4-13" tabindex="-1" aria-label="code-block-4-13"></a>logging.getLogger(<span class="st">"sagemaker.telemetry.telemetry_logging"</span>).setLevel(logging.WARNING)   <span class="co"># silence the telemetry notice; the "Creating training-job" line still prints</span></span>
 <span id="cb4-14"><a href="#cb4-14" tabindex="-1" aria-label="code-block-4-14"></a>logging.getLogger(<span class="st">"sagemaker.image_uris"</span>).setLevel(logging.WARNING)</span>
-<span id="cb4-15"><a href="#cb4-15" tabindex="-1" aria-label="code-block-4-15"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
-<span id="cb4-16"><a href="#cb4-16" tabindex="-1" aria-label="code-block-4-16"></a></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1" aria-label="code-block-4-15"></a>logging.getLogger(<span class="st">"sagemaker.config"</span>).setLevel(logging.WARNING)   <span class="co"># and the two "Not applying SDK defaults" lines</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1" aria-label="code-block-4-16"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
 <span id="cb4-17"><a href="#cb4-17" tabindex="-1" aria-label="code-block-4-17"></a></span>
-<span id="cb4-18"><a href="#cb4-18" tabindex="-1" aria-label="code-block-4-18"></a><span class="co"># Initialize SageMaker + AWS basics</span></span>
-<span id="cb4-19"><a href="#cb4-19" tabindex="-1" aria-label="code-block-4-19"></a>session <span class="op">=</span> sagemaker.Session()</span>
-<span id="cb4-20"><a href="#cb4-20" tabindex="-1" aria-label="code-block-4-20"></a>region <span class="op">=</span> session.boto_region_name</span>
-<span id="cb4-21"><a href="#cb4-21" tabindex="-1" aria-label="code-block-4-21"></a>role <span class="op">=</span> get_execution_role()</span>
-<span id="cb4-22"><a href="#cb4-22" tabindex="-1" aria-label="code-block-4-22"></a>s3_client <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
-<span id="cb4-23"><a href="#cb4-23" tabindex="-1" aria-label="code-block-4-23"></a></span>
-<span id="cb4-24"><a href="#cb4-24" tabindex="-1" aria-label="code-block-4-24"></a><span class="bu">print</span>(<span class="st">"Region:"</span>, region)</span>
-<span id="cb4-25"><a href="#cb4-25" tabindex="-1" aria-label="code-block-4-25"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)</span></code></pre>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1" aria-label="code-block-4-18"></a></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1" aria-label="code-block-4-19"></a><span class="co"># Initialize SageMaker + AWS basics</span></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1" aria-label="code-block-4-20"></a>session <span class="op">=</span> sagemaker.Session()</span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1" aria-label="code-block-4-21"></a>region <span class="op">=</span> session.boto_region_name</span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1" aria-label="code-block-4-22"></a>role <span class="op">=</span> get_execution_role()</span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1" aria-label="code-block-4-23"></a>s3_client <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1" aria-label="code-block-4-24"></a></span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1" aria-label="code-block-4-25"></a><span class="bu">print</span>(<span class="st">"Region:"</span>, region)</span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1" aria-label="code-block-4-26"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)</span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
