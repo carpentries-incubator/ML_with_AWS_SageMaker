@@ -2278,7 +2278,7 @@ task?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>One way to do it:</li>
@@ -2766,7 +2766,7 @@ commit it, push with your PAT, and verify the change on GitHub.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Still inside
 <code>/home/ec2-user/SageMaker/sagemaker-work</code>:</p>
@@ -5133,7 +5133,7 @@ expensive to train this way, because training requires much more GPU
 memory than simply running the model.</p>
 </div>
 <div class="section level3">
-<h3 id="lora-trains-a-small-part-of-a-large-model">LoRA trains a small part of a large model<a class="anchor" aria-label="anchor" href="#lora-trains-a-small-part-of-a-large-model"></a>
+<h3 id="lora-adds-new-small-weights-beside-the-frozen-model">LoRA adds new small weights beside the frozen model<a class="anchor" aria-label="anchor" href="#lora-adds-new-small-weights-beside-the-frozen-model"></a>
 </h3>
 <p><strong><em>Low-rank adaptation</em></strong>, or
 <strong><em>LoRA</em></strong>, reduces the amount of training by
@@ -5143,11 +5143,12 @@ weight matrix, LoRA learns a much smaller adjustment to its output.</p>
 <figure><img src="fig/lora.svg" alt="Left: a d by d weight matrix, all trained, 16 bytes per weight. Right: the same matrix frozen in bf16 plus two thin trained matrices B (d by r) and A (r by d); output is W x plus B A x." class="figure mx-auto d-block"><div class="figcaption">Full fine-tuning updates every entry of a d × d
 weight matrix; LoRA freezes it and trains two thin matrices of rank r
 whose product is added to its output</div>
-</figure><p>The result is that we train only a fraction of the model’s
-parameters. We still run the original model during training, but we
-don’t need to calculate and store weight updates for most of it. That
-saves enough memory to fine-tune CHURRO on a single GPU with 24 GB of
-memory; the next section says how much.</p>
+</figure><p>Nothing in the original model is trained. The trained parameters are
+the new matrices, and they are a small fraction of the model’s size,
+under one percent in this episode. We still run the whole model during
+training, but we only calculate and store weight updates for the new
+matrices. That saves enough memory to fine-tune CHURRO on a single GPU
+with 24 GB of memory; the next section says how much.</p>
 <p>LoRA also produces a relatively small
 <strong><em>adapter</em></strong> that we can save separately from the
 original model. To use the fine-tuned model later, we load the
@@ -5402,31 +5403,38 @@ fits on one 24 GB card.</p>
 <div class="section level3">
 <h3 id="how-long-will-it-run">How long will it run?<a class="anchor" aria-label="anchor" href="#how-long-will-it-run"></a>
 </h3>
-<p>Training time is arithmetic. The unit is the floating-point
-operation, one multiply or add. FLOPs is a count of them; FLOPS, with a
-capital S, is a rate, operations per second, and is how a GPU’s speed is
-quoted. Training on one token costs three matrix products per layer,
-each one multiply and one add per weight, so 2 FLOPs per weight per
-product. A full fine-tune does all three; LoRA skips the weight update
-for the frozen base.</p>
+<p>How long a job runs is how much work it does divided by how fast the
+GPU does it. The work is counted in floating-point operations, FLOPs,
+one multiply or one add on one number. The GPU’s speed is a rate,
+floating-point operations per second, written FLOPS with a capital S,
+and a trillion a second is a TFLOPS, which is how a data sheet quotes a
+GPU.</p>
+<p>The work per token is easy to count, because every parameter does the
+same small amount of it. Running the model forward is one multiply and
+one add per parameter, 2 FLOPs. Passing the error back through the model
+to find what each parameter should have done is another 2. Updating the
+parameters is another 2. A full fine-tune does all three, 6 FLOPs per
+parameter per token. LoRA leaves the base weights alone, so it skips the
+update and does 4.</p>
 <figure><img src="fig/flops-per-token.svg" alt="A layer W with an input arrow, an output arrow, an error arrow going back and an update arrow into W, each labelled 2 FLOPs; a box totals 6 for full fine-tuning and 4 for LoRA" class="figure mx-auto d-block"><div class="figcaption">Three matrix products per token: forward (2
 FLOPs per weight), error passed back to the inputs (2), and the weight
 update (2); full fine-tuning does all three for 6, LoRA skips the update
 for 4</div>
 </figure><pre class="text"><code>tokens      = examples × tokens per example × passes over the data
 FLOPs       = 6 × parameters × tokens      (4 × for LoRA)
-GPU-seconds = FLOPs ÷ (GPU peak FLOPS × 0.25)      a training job reaches about a quarter of the peak on the data sheet</code></pre>
-<p>Peak FLOPS is on the GPU’s data sheet, about 70 trillion per second
-for an A10G, 312 for an A100, 989 for an H100. A training job reaches
-about a quarter of that in practice. Cost is GPU-hours times the hourly
-rate, plus the startup minutes every job spends pulling its container
-and data, which are billed too.</p>
+GPU-seconds = FLOPs ÷ (GPU speed in FLOPS × 0.25)      a training job reaches about a quarter of the speed on the data sheet</code></pre>
+<p>The data sheet quotes a GPU’s peak speed, about 70 TFLOPS for an
+A10G, 312 for an A100, 989 for an H100. A training job reaches about a
+quarter of that, because the GPU spends much of its time waiting for
+data to arrive from memory. Cost is GPU-hours times the hourly rate,
+plus the startup minutes every job spends pulling its container and
+data, which are billed too.</p>
 <p>For the class run, 251 pages at about 1,600 tokens each for 2 passes
-is 803,000 tokens. LoRA on 3.75B parameters is 4 × 3.75e9 × 8.03e5,
-about 1.2e16 FLOPs. A quarter of an A10G’s 70 TFLOPS is 17 TFLOPS, so
-about 700 seconds, call it 12 minutes. Measured, the same instance
-trains at 1.45 seconds per page-pass, so 502 page-passes take about 12
-minutes. The rule lands on the number.</p>
+is 803,000 tokens. LoRA on 3.75B parameters is 4 × 3.75 billion ×
+803,000, about 1.2 × 10¹⁶ FLOPs. A quarter of an A10G’s 70 TFLOPS is 17
+trillion a second, so about 700 seconds, call it 12 minutes. Measured,
+the same instance trains at 1.45 seconds per page-pass, so 502
+page-passes take about 12 minutes. The rule lands on the number.</p>
 </div>
 <div class="section level3">
 <h3 id="the-same-arithmetic-as-a-function">The same arithmetic as a function<a class="anchor" aria-label="anchor" href="#the-same-arithmetic-as-a-function"></a>
@@ -5772,7 +5780,7 @@ project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5, because a full fine-tune of a 7B model
 needs about 112 GB plus activations, and the g5 has 24 GB. On the p4d, 8
@@ -6375,7 +6383,7 @@ step. Which, and why are they there?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Only the language model’s <code>q_proj</code>, <code>k_proj</code>,
@@ -6700,9 +6708,10 @@ launched yesterday fails overnight.</p>
 <code>pages: 295 total -&gt; 251 train / 44 holdout</code>: the
 split.</li>
 <li>
-<code>trainable params: ...</code>: how many of the 3.75B parameters
-LoRA trains, about 30 million. The <code>safeguards:</code> line after
-it means the script’s two checks passed.</li>
+<code>trainable params: ...</code>: how many parameters LoRA trains,
+about 30 million in the adapter, against the 3.75B it leaves frozen. The
+<code>safeguards:</code> line after it means the script’s two checks
+passed.</li>
 <li>
 <code>[eval before] 15 holdout pages in ...s (... s/page) -&gt; macro CER ...</code>:
 the base model’s score, and the time per page one at a time; the
@@ -6958,7 +6967,7 @@ will compare it to the bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Expect about 32 billed minutes. Scoring is the line most likely to
@@ -7376,7 +7385,7 @@ summaries, and the before/after CER. Did the extra pixels help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -7417,7 +7426,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
 <div class="accordion-body">
 <p>Startup and upload (~6 min, <code>$0.26</code> at
 <code>$2.61</code>/h) do not speed up: the container pull and the S3
@@ -8380,10 +8389,13 @@ any links that you are not going to use.
 <p>Retrieval-Augmented Generation (RAG) is a pattern where you
 <strong>retrieve</strong> relevant passages from your own documents and
 then <strong>generate</strong> an answer from them. The model is used,
-not changed. No weights are updated and no training job runs. Using a
+not changed. No weights are updated and no training job runs, so the
+documents can change every week and nothing has to be retrained. Using a
 trained model to get an output from it, a prediction, an embedding or an
 answer, is called <strong>inference</strong>, and everything in this
-part of the lesson is inference.</p>
+part of the lesson is inference. The example throughout is WattBot, a
+question-answering challenge over a corpus of research papers on AI and
+energy.</p>
 <p>There are four ways to run inference on AWS. Call a model through
 Bedrock’s managed API, run it in a Processing job that ends on its own,
 load it on a GPU notebook instance, or deploy it as an inference
@@ -8438,23 +8450,24 @@ once; per question, the question is embedded, the top-k chunks are
 retrieved by cosine similarity, and a generator answers from question
 plus chunks. The embedder and generator are the only parts that change
 between episodes.</div>
-</figure><p>RAG is two steps:</p>
-<ol style="list-style-type: decimal">
-<li>
-<strong>Retrieve</strong>: search your documents for the passages
-most similar to the question.</li>
-<li>
-<strong>Generate</strong>: give those passages and the question to a
-language model, which writes the answer.</li>
-</ol>
-<p>No weights are updated and no training job runs. RAG is retrieval
-logic around two model calls.</p>
-<p>The two models are used in two ways. An embedding model maps a piece
-of text to a vector; it is called once per chunk when the corpus is
-indexed and once per question. A generation model is given the question
-and the retrieved chunks and writes the answer. Both are inference with
-no state between calls, so neither needs a GPU of your own. A managed
-inference API serves calls like these.</p>
+</figure><p>A language model cannot reliably answer questions about documents it
+has never seen. RAG connects the model to a collection of material you
+control. You break the documents into passages, turn each passage into a
+vector with an <strong>embedding model</strong>, and keep the vectors so
+you can search them later. When someone asks a question, you embed the
+question with the same model and find the passages whose vectors are
+most similar. Those passages go to a <strong>generation model</strong>
+together with the question, and it writes an answer grounded in what was
+retrieved, citing the passages that support it. When the evidence is not
+there, a well-built pipeline says so instead of guessing.</p>
+<p>So there are two model calls, and neither is training. The embedding
+model is called once per chunk when the corpus is indexed and once per
+question. The generation model is called once per question. Both are
+inference with no state between calls, so neither needs a GPU of your
+own. The rest of the pipeline, preparing documents, searching vectors,
+assembling prompts and scoring answers, is ordinary Python. That code
+stays the same while the place the models run changes, which is what the
+next three episodes show.</p>
 </section><section><h2 class="section-heading" id="bedrock-is-the-default-for-inference">Bedrock is the default for inference<a class="anchor" aria-label="anchor" href="#bedrock-is-the-default-for-inference"></a>
 </h2>
 <hr class="half-width">
@@ -8465,7 +8478,7 @@ Titan, Anthropic Claude, DeepSeek, Meta Llama and others) through
 pay-per-token APIs. Your retrieval code, chunking, indexing, similarity
 search, evaluation, stays yours and runs on a cheap CPU notebook or a
 laptop. Only the two model calls go to Bedrock.</p>
-<p>The reason is billing:</p>
+<p>The difference is in how each one bills.</p>
 <table class="table">
 <colgroup>
 <col width="33%">
@@ -8507,8 +8520,13 @@ profile</td>
 </tr>
 </tbody>
 </table>
-<p>A GPU instance is a rental whose meter runs until you turn it off,
-and forgetting to is the most common way a research team spends its
+<p>Self-hosting on SageMaker gives you control over the weights, the
+libraries and the hardware, which matters for a specific open-weight
+model or your own fine-tune. The trade is that a rented GPU bills while
+the instance runs, whether or not it is generating answers, and research
+work is mostly occasional experiments rather than a steady stream of
+requests. A GPU instance is a rental whose meter runs until you turn it
+off, and forgetting to is the most common way a research team spends its
 cloud budget on nothing. Bedrock has no such failure. Stop calling it
 and you stop paying.</p>
 <div class="section level3">
@@ -8679,7 +8697,8 @@ anonymous on the bill.</li>
 </section><section><h2 class="section-heading" id="four-ways-to-run-inference-on-aws">Four ways to run inference on AWS<a class="anchor" aria-label="anchor" href="#four-ways-to-run-inference-on-aws"></a>
 </h2>
 <hr class="half-width">
-<p>In the order to try them.</p>
+<p>The four differ less in what the model computes than in how long the
+hardware stays rented. Here they are in the order to try them.</p>
 <figure><img src="fig/rag-approaches.svg" alt="Comparison table of four ways to run inference on AWS: Bedrock API (default, pay per token, nothing to shut down), Processing job (batch with open models, bills per second while the job runs, terminates itself), GPU notebook (learning and debugging only, bills per hour until stopped, about $90 if forgotten over a weekend) and Inference endpoint (steady traffic only, bills 24/7, about $1,000 if idle for a month)." class="figure mx-auto d-block"><div class="figcaption">Four columns, Bedrock API, Processing job, GPU
 notebook and Inference endpoint, compared on where the model runs, what
 runs between calls, billing unit, latency, model choice, what you must
@@ -8762,6 +8781,10 @@ work.</p>
 <p><strong>Use it for:</strong> production systems with steady traffic
 that need a custom or open-weight model. The lesson does not build
 one.</p>
+<p>Bedrock charges per call, a Processing job charges for one finite
+run, and a notebook or an endpoint charges for as long as it is left
+running. Those lifecycles, not the RAG algorithm, decide which to
+use.</p>
 </div>
 </section><section><h2 class="section-heading" id="every-billable-resource-needs-its-own-tags">Every billable resource needs its own tags<a class="anchor" aria-label="anchor" href="#every-billable-resource-needs-its-own-tags"></a>
 </h2>
@@ -9739,7 +9762,7 @@ helper wraps:</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -9748,7 +9771,7 @@ helper wraps:</p>
 <span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a>  <span class="at">--tags</span> key=Name,value=DoeJohn key=Project,value=SinkOrSwim key=Purpose,value=Inference</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
+<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
 <div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -10968,20 +10991,24 @@ against the Bedrock run.</li>
 </div>
 <p>Open the notebook from:
 <code>/ML_with_AWS_SageMaker/notebooks/12_RAG-Processing-jobs.ipynb</code>.
-Select the <strong><code>conda_pytorch</code></strong> kernel. ## When
-Bedrock does not have your model</p>
-<p>The Bedrock episode is the default for RAG, with per-token billing,
-nothing left running and two API calls. Bedrock’s catalog is curated,
-though. It carries Amazon’s models, Anthropic, Meta, Mistral, DeepSeek,
-and a few others, and within a family only some sizes, usually a
-generation behind. For Qwen, the serverless lineup is still the Qwen3
-series. Hugging Face hosts well over a million open-weight checkpoints.
-The one you want (the newest release, a specific size, a fine-tune for
-scientific text, a model a paper just published) is usually not on
-Bedrock, and often never will be.</p>
-<p>When that happens you host the model yourself on a GPU you rent, and
-the question is how. There are three ways to rent a GPU on
-SageMaker:</p>
+Select the <strong><code>conda_pytorch</code></strong> kernel.</p>
+<section><h2 class="section-heading" id="when-bedrock-does-not-have-your-model">When Bedrock does not have your model<a class="anchor" aria-label="anchor" href="#when-bedrock-does-not-have-your-model"></a>
+</h2>
+<hr class="half-width">
+<p>The Bedrock episode built the whole WattBot pipeline without managing
+a GPU, and that stays the simplest choice whenever Bedrock carries a
+model that will do. Research often depends on a particular open-weight
+checkpoint, though. A newly released model, a smaller size, a fine-tune
+for scientific text, a model a paper just published. Bedrock’s catalog
+is curated. It carries Amazon’s models, Anthropic, Meta, Mistral,
+DeepSeek and a few others, and within a family only some sizes, usually
+a generation behind. For Qwen, the serverless lineup is still the Qwen3
+series. Hugging Face hosts well over a million open-weight checkpoints,
+and the one you want is usually not on Bedrock, and often never will
+be.</p>
+<p>In that case you run the model on hardware you rent through
+SageMaker, and the next decision is how long to keep that hardware.
+SageMaker rents a GPU three ways.</p>
 <table class="table">
 <colgroup>
 <col width="25%">
@@ -11020,10 +11047,14 @@ SageMaker:</p>
 </table>
 <p>For research RAG, almost all the work is batch. Embed everything
 once, answer a list of questions, score them. That is a job, and a job
-is the one option that cannot be forgotten. This episode runs the
-WattBot pipeline that way. The notebook itself is a small CPU instance
-and never touches the model; it stages data, launches two GPU jobs, and
-reads the results back.</p>
+is the one option that releases the instance on its own, so it cannot be
+forgotten. This episode runs the WattBot pipeline as two jobs. The first
+turns the cached chunks into embeddings with
+<code>thenlper/gte-large</code>. The second loads the generator,
+retrieves evidence for each question and writes answers in WattBot’s
+submission format. The notebook stays a small CPU instance that never
+touches a model. It stages data, launches the jobs and reads the results
+back.</p>
 <p>The generator is <strong>Qwen3-8B</strong>, an 8-billion-parameter
 open-weight model (Apache 2.0). Bedrock serves the 32B and 235B members
 of that family but not this size, which is the usual situation, where
@@ -11129,22 +11160,25 @@ the inputs in the shared bucket.</li>
 all chunks, the second runs Qwen3-8B with <code>transformers</code> and
 the full RAG loop (retrieval + generation) over the same 53-question
 sample as the Bedrock episode.</li>
-<li>Score the result and compare it with the Bedrock run.</li>
-</ul>
-<section><h2 class="section-heading" id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
+<li>Score the result and compare it with the Bedrock run. The retrieval
+logic, prompts and scorer are unchanged, so the comparison is of the
+models, not of the pipeline.</li>
+</ul></section><section><h2 class="section-heading" id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
 </h2>
 <hr class="half-width">
 <div class="section level3">
 <h3 id="a-code-folder-for-each-job">A code folder for each job<a class="anchor" aria-label="anchor" href="#a-code-folder-for-each-job"></a>
 </h3>
-<p>The four scripts the jobs need are already on this instance, in the
-lesson clone, but a job cannot use them from there: it runs in a
-container on another machine, cannot import anything from this notebook,
-and the only code it gets is the one directory named by
-<code>source_dir=</code>, uploaded whole. So each job gets a small
-folder holding just the files it imports, copied out of the clone,
-rather than <code>source_dir</code> pointing at the lesson’s whole
-<code>scripts/</code> directory. The four files:</p>
+<p>A Processing job runs in a container on a separate machine. It cannot
+see the Python variables or files that exist only in this notebook, and
+the only code it gets is the one directory named by
+<code>source_dir=</code>, uploaded whole, the same way the training
+estimator’s <code>source_dir</code> worked in the fine-tuning episode.
+The four scripts the jobs need are already on this instance, in the
+lesson clone, but pointing <code>source_dir</code> at the lesson’s whole
+<code>scripts/</code> directory would upload every script in the
+workshop. So each job gets a small folder holding just the files it
+imports, copied out of the clone. The four files:</p>
 <ul>
 <li>
 <code>scripts/embedding_inference.py</code>: generic embedding
@@ -11165,16 +11199,12 @@ batch job: loads the inputs, runs the generator, writes
 scorer) that the Bedrock episode imported too. The batch script imports
 it, so it ships with the job; the notebook imports it for scoring.</li>
 </ul>
-<p>The cell below copies them out of the lesson clone into the project
-folder, one directory per job, <code>code_embed/</code> for the
-embedding job and <code>code_rag/</code> for the RAG job. The split
-follows from how a job gets its code. <code>run(source_dir=...)</code>
-uploads that whole directory into the container, the same way the
-training estimator’s <code>source_dir</code> did in the fine-tuning
-episode, so each directory holds the files its job imports and nothing
-else. The copies of <code>wattbot_rag.py</code> and
-<code>Score.py</code> next to the notebook are for the scoring step at
-the end, which runs in the notebook, not in a job.</p>
+<p>The cell below copies them into the project folder,
+<code>code_embed/</code> for the embedding job and
+<code>code_rag/</code> for the RAG job. The copies of
+<code>wattbot_rag.py</code> and <code>Score.py</code> next to the
+notebook are for the scoring step at the end, which runs in the
+notebook, not in a job.</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -11191,7 +11221,9 @@ the end, which runs in the notebook, not in a job.</p>
 <span id="cb1-11"><a href="#cb1-11" tabindex="-1" aria-label="code-block-1-11"></a><span class="op">!</span>cp <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>wattbot_rag.py <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>scripts<span class="op">/</span>Score.py .</span>
 <span id="cb1-12"><a href="#cb1-12" tabindex="-1" aria-label="code-block-1-12"></a><span class="op">!</span>ls code_embed code_rag</span></code></pre>
 </div>
-<p>Next, set up the AWS SDK, SageMaker session, and bucket names.</p>
+<p>Now connect the notebook to SageMaker and S3. The shared bucket holds
+the challenge data. Your own bucket holds the chunks the Bedrock episode
+cached and will receive the job outputs.</p>
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -11761,7 +11793,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -11825,7 +11857,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still downloading or
@@ -11961,31 +11993,33 @@ Python. Read the cost callout first.</p>
 </div>
 </div>
 </div>
-<section><h2 class="section-heading" id="when-bedrock-does-not-have-your-model">When Bedrock does not have your model<a class="anchor" aria-label="anchor" href="#when-bedrock-does-not-have-your-model"></a>
+<section><h2 class="section-heading" id="why-run-rag-on-a-gpu-notebook">Why run RAG on a GPU notebook?<a class="anchor" aria-label="anchor" href="#why-run-rag-on-a-gpu-notebook"></a>
 </h2>
 <hr class="half-width">
-<p>In the Bedrock episode we built the full WattBot pipeline on
-<strong>Amazon Bedrock</strong>, the recommended default for RAG
-inference because it bills per token and leaves nothing running between
-calls. Bedrock’s catalog is curated, though. It has Amazon’s own models,
-Anthropic, Meta, Mistral, DeepSeek, and a handful of others, and even
-within a family it carries a few sizes and lags the releases. For Qwen,
-the serverless lineup is still the Qwen3 generation (Qwen3-32B,
-Qwen3-235B and the Qwen3-Coder models). Hugging Face hosts well over a
-million open-weight checkpoints. The one you want (the newest release, a
-specific size, a specific fine-tune, a model tuned on scientific text)
-is usually not on Bedrock, and often never will be.</p>
-<p>When that happens you host the model yourself on a GPU you rent. This
-episode does that in its simplest form, a single GPU notebook instance,
-with <strong>Qwen3.8-27B</strong> as the generator. It is a
-27-billion-parameter open-weight (Apache 2.0) model released in August
-2026 that is not offered on Bedrock, large enough to follow the WattBot
-answer format reliably, and small enough to fit on one 48 GB GPU once
-its weights are stored in 8-bit floating point. Everything Bedrock
-abstracts away (loading an embedding model, loading a generator, fitting
-both in GPU memory) becomes visible as plain Python. Treat it as a
-learning exercise and a prototyping workbench, not a deployment
-pattern.</p>
+<p>The Bedrock and Processing Jobs episodes are the better patterns for
+most research work. Bedrock serves the models for you, and a Processing
+job rents a GPU only long enough to finish a batch. A notebook GPU gives
+you something different, an interactive place to load a model, watch GPU
+memory, try retrieval strategies and change prompts without repackaging
+a job after every experiment.</p>
+<p>That matters when you need a model Bedrock does not offer and want to
+work on it by hand. This episode runs the WattBot pipeline with
+<strong>Qwen3.8-27B</strong> as the generator, a 27-billion-parameter
+open-weight (Apache 2.0) model released in August 2026 that Bedrock does
+not carry, loaded in FP8 through vLLM beside a local embedding model.
+Everything a managed model API hides, loading an embedding model,
+loading a generator, fitting both in GPU memory, is a cell you can run
+and change.</p>
+<p>A 27B model is large enough that the choice of GPU and weight
+precision matters. At about one byte per weight, FP8 puts the weights
+near 27 GB, and a 48 GB L40S leaves room for the embedding model and the
+attention cache that generation needs. The 24 GB GPU the earlier
+episodes used cannot hold this setup. That makes the notebook a good
+place to learn about model serving, and an expensive place to leave
+idle.</p>
+<p><strong>Treat this as an interactive experiment, not a deployment
+pattern.</strong> Create the separate GPU notebook described below. Do
+not run it on the CPU controller from the other episodes.</p>
 <div id="this-instance-bills-2.61-an-hour-until-you-stop-it-and-nothing-stops-it-for-you" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -12074,66 +12108,31 @@ on a training job) guarantees it.</li>
 </div>
 </div>
 </div>
-<p>Self-hosting on a notebook GPU is the simplest form of it. Choose a
-GPU instance and a model, and every step of retrieval and generation is
-a cell you can run and change. That makes it the quickest way to learn
-what each step does and to try prompts and models Bedrock does not
-carry.</p>
-<p>The Processing Jobs episode runs this same pipeline as short-lived
-jobs, so the GPU only bills while it is embedding or generating; that is
-the pattern to use for real work.</p>
-</section><section><h2 class="section-heading" id="wattbot-rag-on-a-single-notebook-gpu">WattBot RAG on a single notebook GPU<a class="anchor" aria-label="anchor" href="#wattbot-rag-on-a-single-notebook-gpu"></a>
+</section><section><h2 class="section-heading" id="what-well-build">What we’ll build<a class="anchor" aria-label="anchor" href="#what-well-build"></a>
 </h2>
 <hr class="half-width">
-<p>In this episode we rerun the <a href="https://www.kaggle.com/competitions/WattBot2026" class="external-link">WattBot 2026</a>
-RAG pipeline from the Bedrock episode, this time entirely from a single
-GPU-backed SageMaker notebook with self-hosted models. The generator is
-Qwen3.8-27B, the newer and larger relative of the Qwen3-8B the
-Processing Jobs episode ran, an open-weight model that fits one 48 GB
-GPU in FP8 and sits within a few points of a frontier commercial model
-on agent tasks and science questions (see that episode’s chart), which
-is why it is worth the trouble of hosting.</p>
-<p>In this episode we will:</p>
-<ol style="list-style-type: decimal">
-<li>
-<strong>Reuse the WattBot data you prepared in the Bedrock
-episode.</strong>
-<ul>
-<li>Pull <code>train_QA.csv</code> and <code>metadata.csv</code> from
-the shared bucket and the cached <code>chunks.jsonl</code> from your
-own.</li>
-</ul>
-</li>
-<li>
-<strong>Implement the model steps explicitly in code.</strong>
-<ul>
-<li>Embed chunks with an open embedding model
-(<code>thenlper/gte-large</code>) running on the notebook’s GPU.</li>
-<li>Implement cosine-similarity search over the embedding matrix.</li>
-</ul>
-</li>
-<li>
-<strong>Serve an open-weight generator that Bedrock does not
-offer.</strong>
-<ul>
-<li>Load Qwen3.8-27B with FP8 weights through vLLM on a single
-<code>ml.g6e.xlarge</code> GPU.</li>
-<li>Construct WattBot-style answers that we can compare against
-<code>train_QA.csv</code>.</li>
-</ul>
-</li>
-<li>
-<strong>Add an explanation pass.</strong>
-<ul>
-<li>Use an LLM to look at the retrieved evidence, the answer, and
-citations.</li>
-<li>Generate a short explanation and label the <strong>evidence
-type</strong>: <code>[text]</code>, <code>[table]</code>,
-<code>[figure]</code> or a combination such as
-<code>[text+table]</code>.</li>
-</ul>
-</li>
-</ol></section><section><h2 class="section-heading" id="notebook-dataset-setup">Notebook + dataset setup<a class="anchor" aria-label="anchor" href="#notebook-dataset-setup"></a>
+<p>We reuse the <a href="https://www.kaggle.com/competitions/WattBot2026" class="external-link">WattBot 2026</a>
+document chunks and evaluation questions prepared in the Bedrock
+episode. The pipeline keeps its purpose. What changes is that its two
+managed model calls become two models running on this GPU,
+<code>thenlper/gte-large</code> for embeddings and Qwen3.8-27B for
+answers. Qwen3.8-27B is the newer and larger relative of the Qwen3-8B
+the Processing Jobs episode ran, and sits within a few points of a
+frontier commercial model on agent tasks and science questions (see that
+episode’s chart), which is why it is worth the trouble of hosting.</p>
+<p>First we load the cached chunks and embed them into a searchable
+matrix. Then we implement cosine-similarity retrieval so a question
+brings back the most relevant passages. Finally we load Qwen through
+vLLM, pass those passages into the same WattBot prompts, and generate
+answers, citations and short explanations that label the evidence type,
+<code>[text]</code>, <code>[table]</code>, <code>[figure]</code> or a
+combination such as <code>[text+table]</code>. Scoring those answers
+against the competition’s references tells us how the self-hosted
+pipeline performs, not only whether it runs.</p>
+<p>The workflow is kept close to the earlier episodes on purpose. With
+the documents, prompts and scoring the same, the differences in model
+serving are the only thing left to compare.</p>
+</section><section><h2 class="section-heading" id="notebook-dataset-setup">Notebook + dataset setup<a class="anchor" aria-label="anchor" href="#notebook-dataset-setup"></a>
 </h2>
 <hr class="half-width">
 <p>For this episode you need a notebook instance with a GPU that can
@@ -13389,7 +13388,7 @@ finds something. Then run them against your own resources.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <div class="tabs">
 <nav><div id="nav-tab-5" class="nav nav-tabs" role="tablist">

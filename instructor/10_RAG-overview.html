@@ -446,10 +446,13 @@
 <hr class="half-width"><p>Retrieval-Augmented Generation (RAG) is a pattern where you
 <strong>retrieve</strong> relevant passages from your own documents and
 then <strong>generate</strong> an answer from them. The model is used,
-not changed. No weights are updated and no training job runs. Using a
+not changed. No weights are updated and no training job runs, so the
+documents can change every week and nothing has to be retrained. Using a
 trained model to get an output from it, a prediction, an embedding or an
 answer, is called <strong>inference</strong>, and everything in this
-part of the lesson is inference.</p>
+part of the lesson is inference. The example throughout is WattBot, a
+question-answering challenge over a corpus of research papers on AI and
+energy.</p>
 <p>There are four ways to run inference on AWS. Call a model through
 Bedrock’s managed API, run it in a Processing job that ends on its own,
 load it on a GPU notebook instance, or deploy it as an inference
@@ -498,21 +501,24 @@ once; per question, the question is embedded, the top-k chunks are
 retrieved by cosine similarity, and a generator answers from question
 plus chunks. The embedder and generator are the only parts that change
 between episodes.</div>
-</figure><p>RAG is two steps:</p>
-<ol style="list-style-type: decimal"><li>
-<strong>Retrieve</strong>: search your documents for the passages
-most similar to the question.</li>
-<li>
-<strong>Generate</strong>: give those passages and the question to a
-language model, which writes the answer.</li>
-</ol><p>No weights are updated and no training job runs. RAG is retrieval
-logic around two model calls.</p>
-<p>The two models are used in two ways. An embedding model maps a piece
-of text to a vector; it is called once per chunk when the corpus is
-indexed and once per question. A generation model is given the question
-and the retrieved chunks and writes the answer. Both are inference with
-no state between calls, so neither needs a GPU of your own. A managed
-inference API serves calls like these.</p>
+</figure><p>A language model cannot reliably answer questions about documents it
+has never seen. RAG connects the model to a collection of material you
+control. You break the documents into passages, turn each passage into a
+vector with an <strong>embedding model</strong>, and keep the vectors so
+you can search them later. When someone asks a question, you embed the
+question with the same model and find the passages whose vectors are
+most similar. Those passages go to a <strong>generation model</strong>
+together with the question, and it writes an answer grounded in what was
+retrieved, citing the passages that support it. When the evidence is not
+there, a well-built pipeline says so instead of guessing.</p>
+<p>So there are two model calls, and neither is training. The embedding
+model is called once per chunk when the corpus is indexed and once per
+question. The generation model is called once per question. Both are
+inference with no state between calls, so neither needs a GPU of your
+own. The rest of the pipeline, preparing documents, searching vectors,
+assembling prompts and scoring answers, is ordinary Python. That code
+stays the same while the place the models run changes, which is what the
+next three episodes show.</p>
 </section><section><h2 class="section-heading" id="bedrock-is-the-default-for-inference">Bedrock is the default for inference<a class="anchor" aria-label="anchor" href="#bedrock-is-the-default-for-inference"></a></h2>
 <hr class="half-width"><p><strong>For most RAG pipelines, and for inference in general, Amazon
 Bedrock is the fastest and most cost-effective starting point on
@@ -521,7 +527,7 @@ Titan, Anthropic Claude, DeepSeek, Meta Llama and others) through
 pay-per-token APIs. Your retrieval code, chunking, indexing, similarity
 search, evaluation, stays yours and runs on a cheap CPU notebook or a
 laptop. Only the two model calls go to Bedrock.</p>
-<p>The reason is billing:</p>
+<p>The difference is in how each one bills.</p>
 <table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th></th>
 <th>Bedrock (managed API)</th>
 <th>SageMaker GPU instance / endpoint</th>
@@ -542,8 +548,13 @@ profile</td>
 </tr><tr><td><strong>Model choice</strong></td>
 <td>A curated catalog, proprietary models included</td>
 <td>Any open-weight model you can load</td>
-</tr></tbody></table><p>A GPU instance is a rental whose meter runs until you turn it off,
-and forgetting to is the most common way a research team spends its
+</tr></tbody></table><p>Self-hosting on SageMaker gives you control over the weights, the
+libraries and the hardware, which matters for a specific open-weight
+model or your own fine-tune. The trade is that a rented GPU bills while
+the instance runs, whether or not it is generating answers, and research
+work is mostly occasional experiments rather than a steady stream of
+requests. A GPU instance is a rental whose meter runs until you turn it
+off, and forgetting to is the most common way a research team spends its
 cloud budget on nothing. Bedrock has no such failure. Stop calling it
 and you stop paying.</p>
 <div class="section level3">
@@ -668,7 +679,8 @@ anonymous on the bill.</li>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="four-ways-to-run-inference-on-aws">Four ways to run inference on AWS<a class="anchor" aria-label="anchor" href="#four-ways-to-run-inference-on-aws"></a></h2>
-<hr class="half-width"><p>In the order to try them.</p>
+<hr class="half-width"><p>The four differ less in what the model computes than in how long the
+hardware stays rented. Here they are in the order to try them.</p>
 <figure><img src="../fig/rag-approaches.svg" alt="Comparison table of four ways to run inference on AWS: Bedrock API (default, pay per token, nothing to shut down), Processing job (batch with open models, bills per second while the job runs, terminates itself), GPU notebook (learning and debugging only, bills per hour until stopped, about $90 if forgotten over a weekend) and Inference endpoint (steady traffic only, bills 24/7, about $1,000 if idle for a month)." class="figure mx-auto d-block"><div class="figcaption">Four columns, Bedrock API, Processing job, GPU
 notebook and Inference endpoint, compared on where the model runs, what
 runs between calls, billing unit, latency, model choice, what you must
@@ -745,6 +757,10 @@ work.</p>
 <p><strong>Use it for:</strong> production systems with steady traffic
 that need a custom or open-weight model. The lesson does not build
 one.</p>
+<p>Bedrock charges per call, a Processing job charges for one finite
+run, and a notebook or an endpoint charges for as long as it is left
+running. Those lifecycles, not the RAG algorithm, decide which to
+use.</p>
 </div>
 </section><section><h2 class="section-heading" id="every-billable-resource-needs-its-own-tags">Every billable resource needs its own tags<a class="anchor" aria-label="anchor" href="#every-billable-resource-needs-its-own-tags"></a></h2>
 <hr class="half-width"><p>Cost tracking in this workshop relies on three tags,
