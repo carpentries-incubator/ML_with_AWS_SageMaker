@@ -28,7 +28,7 @@ Everything in this lesson went through the SageMaker Python SDK in a notebook. T
 
 The case for the terminal is the notebook instance. Every job in this lesson was launched from an `ml.t3.medium` that bills while it is on, five cents an hour, a dollar a day, and that someone has to remember to stop. A job launched from a laptop needs no instance at all: the request goes from your terminal to SageMaker, the job runs on a machine rented for it and ends, and the model lands in S3. For a project that launches a job a day and otherwise works locally, that is the notebook's whole cost gone and nothing left running overnight. The training episode's `wait=False` pattern gets most of the way there from a notebook; the CLI gets the rest.
 
-What you give up is what the instance did for you. On the instance, its role signs every call, the lesson's helper checks a launch against the account's rules before it goes, and the console shows what you started next to everyone else's work. On a laptop you sign in yourself, the JSON carries no price and no check, and a mistake is not seen until the bill. The rules in the callout, and the request check in section 5, are what make the trade worth it.
+What you give up is what the instance did for you. On the instance, its role signs every call, the lesson's helper checks a launch against the account's rules before it goes, and the console shows what you started next to everyone else's work. On a laptop you sign in yourself, the JSON carries no price and no check, and a mistake is not seen until the bill. The rules in the callout and the request check in section 5 cover that.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
@@ -38,7 +38,7 @@ The CLI, the SDK and the console are the same API. Nothing here is more powerful
 
 1. **Authenticate with `aws sso login` only.** Never `aws configure` with an access key ID and secret. Those are long-lived, and they end up in shell histories and committed files.
 2. **Launch only jobs** (training, processing, tuning), with the same three tags and the same `MaxRuntimeInSeconds` the notebooks always set. Jobs end on their own. **Endpoints, EC2 instances and GPU notebook instances do not**, and the lesson never creates them from the CLI, or at all.
-3. **An `AccessDeniedException` on the commands below is intended.** The workshop account carries a guard-rail policy that denies endpoint and EC2 creation, instance types outside the lesson's list, caps over 48 hours, and any job whose three tags are missing, blank or off the `Project` and `Purpose` lists. Do not look for a workaround. The policy is on the notebook role today, which covers every launch from an instance; a laptop CLI runs under the permission set, which gets the same policy when the Identity Center administrator attaches it, and until then these rules are yours to keep by hand from a laptop. (Instructors: the policy and its status are on the *Account preparation checklist* page.)
+3. **A refused `create` command is the account's rules, not a fault.** The workshop account carries a guard-rail policy that denies endpoint and EC2 creation, instance types outside the lesson's list, caps over 48 hours, and any job whose three tags are missing, blank or off the `Project` and `Purpose` lists. Do not look for a workaround. The policy is on the notebook role today, which covers every launch from an instance; a laptop CLI runs under the permission set, which gets the same policy when the Identity Center administrator attaches it, and until then these rules are yours to keep by hand from a laptop. (Instructors: the policy and its status are on the *Account preparation checklist* page.)
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -50,9 +50,9 @@ This episode runs from your own laptop, a terminal that works when no notebook i
 aws configure sso
 ```
 
-From then on, every session starts with a login, and a check that you are who you think you are, in the account you think you are in:
-
 The commands in this episode are the same in Bash (macOS, Linux, Git Bash on Windows) and in PowerShell; where the shell's own syntax differs, variables, line continuation, writing a file, the two are shown as tabs.
+
+From then on, every session starts with a login, and a check that you are who you think you are, in the account you think you are in:
 
 ::::::::::::::::::::::::::::::::::::: tab
 
@@ -113,7 +113,7 @@ aws sagemaker describe-training-job --training-job-name $JOB `
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-Cost is billable seconds × instance count × the hourly rate, exactly as in the notebooks. Tags are returned by a separate call, which is also how you find the untagged job that will show up as "unallocated" on the bill:
+Cost is billable seconds × instance count × the hourly rate, exactly as in the notebooks. Tags are returned by a separate call, which is also how you find the untagged job that shows on the bill under "No tag key":
 
 ::::::::::::::::::::::::::::::::::::: tab
 
@@ -144,7 +144,7 @@ aws sagemaker stop-hyper-parameter-tuning-job --hyper-parameter-tuning-job-name 
 aws sagemaker stop-notebook-instance --notebook-instance-name <name>
 ```
 
-A stopped job keeps its logs and whatever it had already written to S3; a stopped notebook instance keeps `/home/ec2-user/SageMaker/`. Stopping is never the expensive mistake. Deleting an instance when you are done with it is the step that stops the storage charge too:
+A stopped job keeps its logs and whatever it had already written to S3; a stopped notebook instance keeps `/home/ec2-user/SageMaker/`. Deleting an instance when you are done with it is the step that stops the storage charge too:
 
 ```bash
 aws sagemaker delete-notebook-instance --notebook-instance-name <name>   # only after it reports Stopped
@@ -165,7 +165,7 @@ Downloads to a laptop are a transfer out of AWS (`$0.09` per GB). For anything l
 
 ## 5. Launching a training job from a JSON file
 
-Every `estimator.fit()` in the training episodes assembled a JSON request and sent it to `CreateTrainingJob`. Here is that request. Fill in the five placeholders from your notebook: the image URI (run `print(xgboost_estimator.training_image_uri())` in the training episode's notebook), your role ARN (`print(role)`), your bucket, your tag values, and a job name, which must be unique in the account.
+Every `estimator.fit()` in the training episodes assembled a JSON request and sent it to `CreateTrainingJob`. Here is that request. Fill in the placeholders from your notebook: the image URI (run `print(xgboost_estimator.training_image_uri())` in the training episode's notebook), your role ARN (`print(role)`), your bucket, your tag values, and a job name, which must be unique in the account.
 
 The request is a JSON file. Save it as `train-xgboost.json` with any editor, or from the shell:
 
@@ -241,11 +241,11 @@ JSON
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-Before sending it, check it the way the notebooks did. The lesson repository has the account's rules in `scripts/guardrails.json` and a script that applies them to a request file; a placeholder left in, a wrong `Purpose` or an instance type off the list is named here rather than refused silently by AWS:
+Before sending it, check it the way the notebooks did. The lesson repository has the account's rules in `scripts/guardrails.json` and a script that applies them to a request file; a `Project` or `Purpose` off the lists, an instance type off the list or a cap over 48 hours is named here rather than refused silently by AWS:
 
 ```bash
-git clone -q https://github.com/qualiaMachine/ML_with_Amazon_SageMaker.git   # once, anywhere on the laptop
-python ML_with_Amazon_SageMaker/scripts/check_request.py train-xgboost.json
+git clone -q https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git   # once, anywhere on the laptop
+python ML_with_AWS_SageMaker/scripts/check_request.py train-xgboost.json
 ```
 
 Then send it. This one line is `estimator.fit()`:
@@ -254,7 +254,7 @@ Then send it. This one line is `estimator.fit()`:
 aws sagemaker create-training-job --cli-input-json file://train-xgboost.json
 ```
 
-Three fields to notice. `StoppingCondition.MaxRuntimeInSeconds` is the `max_run` you set on every estimator; the SDK would have sent 24 hours if you had not. `Tags` is the `tags=` argument, and without it the request is refused on the workshop account. `ResourceConfig` sets the instance type and count, which determine the cost; nothing in a JSON file prints a price, so look the type up on the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page before sending it, as you would in a notebook.
+Three fields to notice. `StoppingCondition.MaxRuntimeInSeconds` is the `max_run` you set on every estimator; the SDK would have sent 24 hours if you had not. `Tags` is the `tags=` argument; without it the request is refused when sent from a notebook instance, and nothing checks it from a laptop until the permission set carries the policy. `ResourceConfig` sets the instance type and count, which determine the cost; nothing in a JSON file prints a price, so look the type up on the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page before sending it, as you would in a notebook.
 
 The CLI returns the moment the request is accepted; nothing waits. To follow the job the way `wait=True` did:
 
@@ -270,10 +270,10 @@ Estimate first, compare after, as always: this is the same ~4 minutes billable o
 ### What the lesson never does from the CLI
 
 - `aws sagemaker create-endpoint` / `create-endpoint-config`: an endpoint is a server that runs until you delete it, with no runtime cap. The lesson serves models with processing jobs and Bedrock so that nothing of this kind exists in the account.
-- `aws sagemaker create-notebook-instance` with a GPU type: a GPU notebook is `$60` a day while you are asleep. The optional GPU-notebook episode creates one through the console, where it stays visible, and deletes it the same hour.
+- `aws sagemaker create-notebook-instance` with a GPU type: a GPU notebook is `$60` a day while you are asleep. The optional GPU-notebook episode creates one through the console, where it stays visible, and deletes it the same session.
 - `aws ec2 run-instances`: bare virtual machines have no tags required, no runtime cap and no SageMaker job list to appear in.
 
-On the workshop account all three are denied on the notebook role, as is any instance type outside the lesson's list, any cap over 48 hours and any job whose tags are missing or off the lists; the permission set a laptop uses gets the same policy once the administrator attaches it. The instructor page *Account preparation checklist* has the policy. On your own account, the same denies take about fifteen minutes to set up.
+On the workshop account all three are denied on the notebook role, as is any instance type outside the lesson's list, any cap over 48 hours and any job whose tags are missing or off the lists; the permission set a laptop uses gets the same policy once the administrator attaches it. The instructor page *Account preparation checklist* has the policy. On your own account, the same denies are an afternoon's work.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -309,7 +309,7 @@ aws sagemaker list-notebook-instances --query 'NotebookInstances[?NotebookInstan
 aws sagemaker list-endpoints --query 'Endpoints[].EndpointName'
 ```
 
-For anything the first four print: the matching `stop-...` command from section 3. A job you recognise as yours and expect to finish within its `MaxRuntimeInSeconds` can be left; a job you do not recognise is a question for its owner, and on a shared account the tags (`list-tags`) tell you who that is. For an endpoint: `aws sagemaker delete-endpoint --endpoint-name <name>`, then find out how it was created, because the permission set should have refused it. Buckets cost almost nothing over a weekend and need no action.
+For anything the first four print: the matching `stop-...` command from section 3. A job you recognise as yours and expect to finish within its `MaxRuntimeInSeconds` can be left; a job you do not recognise is a question for its owner, and on a shared account the tags (`list-tags`) tell you who that is. For an endpoint: `aws sagemaker delete-endpoint --endpoint-name <name>`, then find out how it was created, because the notebook role refuses it and the permission set should once the policy is attached. Buckets cost almost nothing over a weekend and need no action.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -321,6 +321,6 @@ For anything the first four print: the matching `stop-...` command from section 
 - Authenticate with `aws sso login` and short-lived credentials; never store an access key.
 - `list-*`, `describe-*` and `stop-*` for training, processing and tuning jobs and notebook instances cover almost every reason to open a terminal.
 - A `create-training-job` JSON is what `estimator.fit()` sent: the same tags, the same `MaxRuntimeInSeconds`, the same instance choice, with no price printed next to it.
-- Endpoints, EC2 instances and GPU notebooks are not jobs and do not end; the workshop account denies creating them, and your own account should too.
+- Endpoints, EC2 instances and GPU notebooks are not jobs and do not end; the workshop account's notebook role denies creating them, and your own account should too.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::

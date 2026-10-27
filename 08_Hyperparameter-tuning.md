@@ -41,16 +41,10 @@ The overall process involves these seven below steps.
 #### Code example for SageMaker hyperparameter tuning with neural networks
 We'll walk through each step in detail by tuning a neural network. Specifically, we will test out different values for our `epochs` and `learning_rate` parameters. We are sticking to just two hyperparameters for demonstration purposes, but you may wish to explore additional parameters in your own work. 
  
-This setup provides:
-
-- **Explicit control** over `epochs` using `CategoricalParameter`, allowing targeted testing of specific values.
-- **Efficient sampling** for `learning_rate` using `ContinuousParameter`, covering a defined range for a balanced approach.
-- **Cost control** by setting moderate `max_jobs` and `max_parallel_jobs`.
-
-By managing these settings and configuring metrics properly, you can achieve a balanced and efficient approach to hyperparameter tuning for neural networks.
+`epochs` is a `CategoricalParameter`, a list of values to try; `learning_rate` a `ContinuousParameter`, a range to sample; `max_jobs` and `max_parallel_jobs` bound the cost.
 
 #### 0. Directory setup
-Just to make sure we are all on the same directory starting point, let's cd to our instance's root directory
+Start in the Titanic project folder, as in the previous episodes:
 
 ```python
 # The Titanic project folder from the S3 episode, beside the lesson clone: downloads and outputs land here, not in the repository
@@ -62,11 +56,11 @@ import helpers
 ```
 
 #### 1. Setup estimator
-To kick off our hyperparameter tuning for a neural network model, we'll start by defining the **SageMaker Estimator**. The estimator setup here is very similar to our previous episode, where we used it to configure and train a model directly. However, this time, rather than directly running a training job with the estimator, we'll be using it as the foundation for **hyperparameter tuning**.
+The tuner needs an estimator first. The estimator setup here is very similar to our previous episode, where we used it to configure and train a model directly. However, this time, rather than directly running a training job with the estimator, we'll be using it as the foundation for **hyperparameter tuning**.
 
 In SageMaker, the estimator serves as a blueprint for each tuning job, specifying the training script, instance type, and key parameters like data paths and metrics. Once defined, this estimator will be passed to a **Hyperparameter Tuner** that manages the creation of multiple training jobs with various hyperparameter combinations, helping us find an optimal configuration.
 
-Here's the setup for our PyTorch estimator, which includes specifying the entry script for training (`train_nn.py`) and defining hyperparameters that will remain fixed across tuning jobs. The hyperparameters we're setting up to tune include `epochs` and `learning_rate`, with a few specific values or ranges defined.
+The PyTorch estimator, which includes specifying the entry script for training (`train_nn.py`) and defining hyperparameters that will remain fixed across tuning jobs. The hyperparameters we're setting up to tune include `epochs` and `learning_rate`, with a few specific values or ranges defined.
 
 We'll use our notebook instance name again to label the training jobs launched in this episode
 
@@ -107,7 +101,12 @@ Next, we'll configure the baseline estimator that we plan to do hyperparameter s
 Every price in this episode is from the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page, us-east-1 on-demand; the tuning job's cost is that rate times the sum of the child jobs' billable minutes.
 
 ```python
+import os
+os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the SDK otherwise prints a deprecation notice on import and on every estimator
 import sagemaker
+import logging
+logging.getLogger("sagemaker.telemetry.telemetry_logging").setLevel(logging.WARNING)   # silence the telemetry notice; the "Creating training-job" line still prints
+logging.getLogger("sagemaker.image_uris").setLevel(logging.WARNING)
 # range types for the search: ContinuousParameter (float range), IntegerParameter (whole-number range), CategoricalParameter (explicit list)
 from sagemaker.tuner import HyperparameterTuner, IntegerParameter, ContinuousParameter, CategoricalParameter
 from sagemaker.pytorch import PyTorch
@@ -127,8 +126,9 @@ instance_type="ml.m5.large"
 instance_count=1 # always start with 1; tuning parallelism comes from max_parallel_jobs, not instance_count
 price_per_hour = 0.115 # ml.m5.large, us-east-1 on-demand (2026-10-16), from the Instances for ML page; check it for your region
 
-# Define max runtime in seconds to ensure you don't use more compute time than expected. Use a generous threshold (2x expected time but < 2 days) so that work isn't interrupted without any gains.
-max_run = 2*60*60 # 2 hours
+# The runtime cap, in seconds: SageMaker stops the job and releases the instance when it is reached. Set it a little above the estimate;
+# the estimate here is three or four minutes, so 20 minutes leaves room for a slow container pull without letting a hung job bill for hours.
+max_run = 20*60 # 20 minutes
 
 # Define the PyTorch estimator with entry script and environment details
 pytorch_estimator = PyTorch(
@@ -149,6 +149,7 @@ pytorch_estimator = PyTorch(
         "epochs": 100, # Placeholder initial value. Will be overridden by the tuning values tested
         "learning_rate": 0.001 # Placeholder initial value. Will be overridden by the tuning values tested
     },
+    output_path=f"s3://{bucket_name}/tuning/",   # every child job's model.tar.gz lands here, in your bucket
     sagemaker_session=session,
 )
 ```
@@ -161,7 +162,7 @@ In SageMaker, you must explicitly define ranges for any hyperparameters you want
    - **`IntegerParameter`** does the same for whole-number settings such as a batch size or layer width.
    - **`CategoricalParameter`** specifies exact values for SageMaker to test, which is useful when you want the model to only try a specific set of options.
 
-By default, SageMaker uses **Bayesian optimization**, adjusting future selections based on previous results to efficiently find optimal values. You can also set the `strategy` to **"Random"** for uniform sampling across the range, which is effective in larger or more exploratory search spaces. Random sampling may end up costing much more in time and resources, however. Generally, we recommend sticking with the default setting.
+By default, SageMaker uses **Bayesian optimization**, adjusting future selections based on previous results to efficiently find optimal values. You can also set the `strategy` to **"Random"** for uniform sampling across the range, which is effective in larger or more exploratory search spaces. Random search usually needs more jobs to find as good a configuration, and the bill is the number of jobs. Generally, we recommend sticking with the default setting.
 
 ```python
 # Hyperparameter tuning ranges
@@ -171,25 +172,6 @@ hyperparameter_ranges = {
 }
 ```
 
-#### Hyperparameter considerations in neural nets
-When tuning hyperparameters in neural networks, it's essential to prioritize parameters that directly impact model performance while remaining mindful of diminishing returns and potential overfitting. Below are some core hyperparameters to consider and general strategies for tuning:
-
-- **Learning Rate**: Often the most impactful parameter, learning rate controls the speed of convergence. A smaller learning rate can lead to more stable, though slower, convergence, while a larger rate may speed things up but risks overshooting optimal values. Testing ranges like `0.0001` to `0.1` with a `ContinuousParameter` is common practice, and `Bayesian` search can help home in on ideal values.
-
-- **Batch Size**: Larger batch sizes often yield faster training times and may improve stability, but this can risk bypassing useful local minima, especially with small datasets. Smaller batch sizes can capture more nuanced updates but are computationally expensive. Ranges from `16` to `256` are worth exploring for most use cases, although, for large datasets or high-capacity models, even larger values may be beneficial.
-
-- **Number of Epochs**: While larger epochs allow the model to learn from data longer, increasing epochs doesn't always equate to better performance and can lead to overfitting. Exploring `CategoricalParameter([50, 100, 500, 1000])` can help balance performance without excessive training costs. 
-
-- **Layer Width and Depth**: Increasing the width or depth (i.e., number of neurons and layers) can improve model capacity but also risks overfitting if the dataset is small or lacks variability. Testing a range of layer sizes or depths (e.g., `32, 64, 128` neurons per layer) can reveal whether additional complexity yields benefits. Notably, understanding *double descent* is essential here, as larger networks may initially seem to overfit before unexpectedly improving in the *second descent*—a phenomenon worth investigating in high-capacity networks.
-
-- **Regularization Parameters**: Regularization techniques, such as dropout rates or weight decay, can help control overfitting by limiting model capacity. For example, dropout rates from `0.1` to `0.5` or weight decay values of `0.0001` to `0.01` often balance underfitting and overfitting effectively. Higher regularization might inhibit learning, especially if the model is relatively small.
-
-- **Early Stopping**: While not a traditional hyperparameter, setting up early stopping based on the validation performance can prevent overfitting without the need to exhaustively test for epoch limits. By allowing the model to halt once performance plateaus or worsens, early stopping can improve efficiency in hyperparameter tuning.
-
-- **Special Phenomena - Grokking and Double Descent**: For certain complex datasets or when tuning particularly large models, keep an eye on phenomena like *grokking* (sudden shifts from poor to excellent generalization) and *double descent* (an unexpected second drop in error after initial overfitting). These behaviors are more likely to appear in models with high capacity and prolonged training periods, potentially requiring longer epochs or lower learning rates to observe. 
-
-In summary, hyperparameter tuning is a balancing act between expanding model capacity and mitigating overfitting. Prioritize parameters that have shown past efficacy in similar problems, and limit the search to a manageable range—often 20–30 model configurations are sufficient to observe gains. This approach keeps resource consumption practical while achieving meaningful improvements in model performance.
-
 #### 3. Set up HyperparameterTuner object
 In step 3, we set up the `HyperparameterTuner`, which controls the tuning process by specifying the...
 
@@ -197,12 +179,12 @@ In step 3, we set up the `HyperparameterTuner`, which controls the tuning proces
 - `objective`: The `metric_definitions` and `objective_metric_name` indicate which metric SageMaker should monitor to find the best-performing model; in this case, we're tracking "validation:accuracy" and aiming to maximize it. We'll show you how to setup your training script to report this information in the next step.
 - `hyperparameter_ranges`: Defined above.
 - `strategy`: SageMaker uses a **Bayesian strategy** by default, which iteratively improves parameter selection based on past performance to find an optimal model more efficiently. Although it's possible to adjust to a "Random" strategy, Bayesian optimization generally provides better results, so it's recommended to keep this setting. 
-- `max_jobs` and `max_parallel_jobs`: Finally, we set `max_jobs` to control the total number of configurations SageMaker will explore and `max_parallel_jobs` to limit the number of jobs that run simultaneously, balancing resource usage and tuning speed. Since SageMaker tests different hyperparameter values dynamically, it's important to limit total parallel jobs to <= 4. 
+- `max_jobs` and `max_parallel_jobs`: Finally, we set `max_jobs` to control the total number of configurations SageMaker will explore and `max_parallel_jobs` to limit the number of jobs that run simultaneously, balancing resource usage and tuning speed. Since SageMaker tests different hyperparameter values dynamically, keep `max_parallel_jobs` at 4 or fewer. 
 
-> **Resource-Conscious Approach**: To control costs and energy-needs, choose efficient instance types and limit the search to impactful parameters at a sensible range, keeping resource consumption in check. Hyperparameter tuning often does yield better performing models, but these gains can be marginal after exhausting a reasonable search window of 20-30 model configurations. As a researcher, it's also important to do some digging on past work to see which parameters may be worthwhile to explore. Make sure you understand what each parameter is doing before you adjust them. 
+> Tuning gains are usually marginal past 20 to 30 configurations, and the search space is where the money goes: a published range for the parameters that matter beats a wide search over all of them. 
 
 **Always start with `max_jobs = 1` and `max_parallel_jobs=1`.**
-Before running the full search, let's test our setup by setting max_jobs = 1. This will test just one possible hyperparameter configuration. This critical step helps ensure our code is functional before attempting to scale up. 
+Before running the full search, let's test our setup by setting max_jobs = 1. This will test just one possible hyperparameter configuration. 
 
 ```python
 # Tuner configuration
@@ -224,7 +206,7 @@ tuner = HyperparameterTuner(
 #### 4. Prepare training script to log metrics
 To prepare `train_nn.py` for hyperparameter tuning, we added code to log validation metrics in a format that SageMaker recognizes for tracking. In the training loop, we added a print statement for the validation accuracy in a specific format that SageMaker can capture. 
 
-**Note**: It's best to use an if statement to only print out metrics periodically (e.g., every 100 epochs), so that your print time does not eat up too much of your training time. It may be a little counter-intuitive that printing can slow things down so dramatically, but it truly does become a significant factor if you're doing it every epoch. On the flipside of this, you don't want to print metrics so infrequently that you lose resolution in the monitored validation accuracy. Choose a number between 100-1000 epochs or divide your total epoch count by ~25 to yield a reasonable range. 
+**Note**: It's best to use an if statement to only print out metrics periodically (e.g., every 100 epochs), so that your print time does not eat up too much of your training time. Printing every epoch is a measurable share of a step this small. On the flipside of this, you don't want to print metrics so infrequently that you lose resolution in the monitored validation accuracy. Choose a number between 100-1000 epochs or divide your total epoch count by ~25 to yield a reasonable range. 
 
 ```text
 if (epoch + 1) % 100 == 0 or epoch == epochs - 1:
@@ -234,9 +216,9 @@ if (epoch + 1) % 100 == 0 or epoch == epochs - 1:
 Paired with this, our `metric_definitions` above uses a regular expression `"validation:accuracy = ([0-9\\.]+)"` to extract the val_accuracy value from each log line. This regex specifically looks for `validation:accuracy =`, followed by a floating-point number, which corresponds to the format of our log statement in `train_nn.py`.
 
 #### 5. Set data paths and launch tuner.fit()
-In step 5, we define the input data paths for the training job and launch the hyperparameter tuning process. Using `TrainingInput`, we specify the S3 paths to our `train_data.npz` and `val_data.npz` files (uploaded in the previous episode). This setup ensures that SageMaker correctly accesses our training and validation data during each job in the tuning process. We then call `tuner.fit` and pass a dictionary mapping each data channel ("train" and "val") to its respective path. This command initiates the tuning job, triggering SageMaker to begin sampling hyperparameter combinations, training the model, and evaluating performance based on our defined objective metric. Once the job is launched, SageMaker handles the tuning process automatically, running the specified number of configurations and keeping track of the best model parameters based on validation accuracy.
+In step 5, we define the input data paths for the training job and launch the hyperparameter tuning process. Using `TrainingInput`, we specify the S3 paths to our `train_data.npz` and `val_data.npz` files (uploaded in the previous episode). We then call `tuner.fit` and pass a dictionary mapping each data channel ("train" and "val") to its respective path. This command initiates the tuning job, triggering SageMaker to begin sampling hyperparameter combinations, training the model, and evaluating performance based on our defined objective metric. Once the job is launched, SageMaker handles the tuning process automatically, running the specified number of configurations and keeping track of the best model parameters based on validation accuracy.
 
-Estimate first: one child job is the same ~1 minute of training plus ~3 minutes of startup we saw in the previous episode, so about `$0.01`.
+Estimate first: one child job is the same three billable minutes as the previous episode's job, almost all of it startup, so about `$0.01`.
 
 If the launch is refused with an `AccessDeniedException` ending in `explicit deny`, the account's checks are the cause: a missing tag, an instance type outside the lesson's list, or a resource kind the lesson never creates; the first training episode's callout *If the launch is refused* says what to look at.
 
@@ -262,6 +244,9 @@ The money is spent by the training jobs the tuner launches, and that is where Sa
 ```python
 def job_cost_report(job_name: str, price_per_hour: float):
     desc = session.sagemaker_client.describe_training_job(TrainingJobName=job_name)
+    if "BillableTimeInSeconds" not in desc:   # the job has not finished: no bill yet
+        print(f"{job_name}: status {desc['TrainingJobStatus']}; billable time and the model path appear once it is Completed")
+        return desc
     n = desc["ResourceConfig"]["InstanceCount"]
     billable = desc["BillableTimeInSeconds"] * n
     wall = (desc["TrainingEndTime"] - desc["CreationTime"]).total_seconds()   # launch request to end, including unbilled provisioning
@@ -288,10 +273,10 @@ If all goes well, we can scale up the experiment with the below code. In this co
 
 With this approach, SageMaker is better able to refine configurations without overloading resources or risking inefficient exploration, making `max_parallel_jobs=2` a solid default for most use cases.
 
-Estimate first: 10 child jobs at roughly 3 billable minutes each is about 30 billable minutes on `ml.m5.large`, so about `$0.06` in total. Wall-clock is five rounds of two jobs, so expect 15-20 minutes. Write both numbers down; the bill below comes in well under them, for a reason worth knowing.
+Estimate first: 10 child jobs at roughly 3 billable minutes each is about 30 billable minutes on `ml.m5.large`, so about `$0.06` in total. Wall-clock is five rounds of two jobs, so expect 15-20 minutes. Write both numbers down; the bill below comes in under them.
 
 ```python
-import time as t # always a good idea to keep a runtime of your experiments 
+import time as t
 
 # Configuration variables
 max_jobs = 10
@@ -337,34 +322,16 @@ tuning_cost_report(tuner, price_per_hour)
 
 Our run finished in 9.3 minutes of wall-clock and billed 14.1 minutes in total, `$0.03`: half the estimate. Read the per-job lines and the reason is visible. The first two child jobs billed about 3 minutes each, like every job so far. The other eight billed about 1 minute each. A tuning job keeps its instances between child jobs, so jobs 3 through 10 ran on the two instances that were already up, with the container pulled and the data downloaded. The startup overhead that dominates a single small job was paid twice, not ten times.
 
-### Can/should we run more instances in parallel?
-Setting max_parallel_jobs to 10 (equal to max_jobs) will indeed launch all 10 jobs in parallel. This approach won't affect the total cost (since cost is based on the number of total jobs, not how many run concurrently), but it can impact the final results and resource usage pattern due to SageMaker's ability to dynamically select hyperparameter values to test to maximize efficiency and improve model performance. This adaptability is especially useful for neural networks, which often have a large hyperparameter space with complex interactions. What this means for neural network training:
+### More jobs in parallel
 
-#### 1. Adaptive Search Strategies
-   - SageMaker offers **Bayesian optimization** for hyperparameter tuning. Instead of purely random sampling, it learns from previous jobs to choose the next set of hyperparameters more likely to improve the objective metric.
-   - For neural networks, this strategy can help converge on better-performing configurations faster by favoring promising areas of the hyperparameter space and discarding poor ones.
-
-#### 2. Effect of `max_parallel_jobs` on adaptive tuning
-   - When using Bayesian optimization, a lower `max_parallel_jobs` (e.g., 2–4) can allow SageMaker to iteratively adjust and improve its choices. Each batch of jobs informs the subsequent batch, which may yield better results over time.
-   - Conversely, if all jobs are run in parallel (e.g., `max_parallel_jobs=10`), SageMaker can't learn and adapt within a single batch, making this setup more like a traditional grid or random search. This approach is still valid, especially for small search spaces, but it gives up the adaptive part.
-
-#### 3. Practical impact on neural network training
-   - **For simpler models** or smaller parameter ranges, running jobs in parallel with a higher `max_parallel_jobs` works well and quickly completes the search.
-   - **For more complex neural networks** or large hyperparameter spaces, an adaptive strategy with a smaller `max_parallel_jobs` may yield a better model with fewer total jobs by fine-tuning hyperparameters over multiple iterations.
-
-#### Summary
-- **For fast, straightforward tuning**: Set `max_parallel_jobs` closer to `max_jobs` for simultaneous testing.
-- **For adaptive, refined tuning**: Use a smaller `max_parallel_jobs` (like 2–4) so that later jobs can learn from earlier ones. 
-
-This balance between exploration and exploitation is particularly impactful in neural network tuning, where training costs can be high and parameters interact in complex ways.
+Bayesian optimization chooses each job's values from the results so far. With `max_parallel_jobs` well below `max_jobs`, later jobs learn from earlier ones; with all ten at once, nothing has finished when the values are chosen, and the search is a random one. The *All at once* challenge below measures what that does to the result, the wall-clock and the bill.
 
 ### Extracting and evaluating the best model after tuning
 
-Tuning takes about 10 minutes to complete — not bad for 10 models! After SageMaker completes the hyperparameter tuning job, the results, including the trained models for each configuration, are stored in an S3 bucket. The steps to locate and evaluate the best model on test data:
+Tuning takes about 10 minutes. After SageMaker completes the hyperparameter tuning job, the results, including the trained models for each configuration, are stored in an S3 bucket. The steps to locate and evaluate the best model on test data:
 
 1. **Understanding the folder structure**:
-   - SageMaker saves each tuning job's results in the specified S3 bucket under a unique prefix.
-   - For the best model, SageMaker stores the model artifact in the format `s3://{bucket}/{job_name}/output/model.tar.gz`. Each model is compressed as a `.tar.gz` file containing the saved model parameters.
+   - Each child job uploads its model to the estimator's `output_path`, under its own job name: `s3://{bucket}/tuning/{job_name}/output/model.tar.gz`. Each model is compressed as a `.tar.gz` file containing the saved model parameters.
 
 2. **Retrieve and load the best model**:
    - Using the `tuner.best_training_job()` method, you can get the name of the best-performing job.
@@ -376,7 +343,7 @@ Tuning takes about 10 minutes to complete — not bad for 10 models! After SageM
 4. **Evaluate the model on test data**:
    - Once extracted, load the saved model weights and evaluate the model on your test dataset to get the final performance metrics.
 
-Here's the code to implement these steps:
+The code:
 
 #### View best model details and storage info
 We can easily view the best hyperparameters from the tuning procedure...
@@ -417,7 +384,7 @@ print("Best model downloaded and extracted.")
 #### Prepare test set as test_data.npz
 In our previous episode, we converted our train dataset into train/validate subsets, and saved them out as .npz files for efficient processing. We'll need to preprocess our test data the same way to evaluate it on our model. 
 
-**Note**: It's always a good idea to keep preprocessing code as a function so you can apply the same exact procedure across datasets with ease. We'll import our preprocessing function from `train_nn.py`, and pass it the scaler that was fit on the training data (saved as `scaler.joblib` in the previous episode). Calling `preprocess_data(test_df)` without the scaler would fit a new one on the test set and transform the features differently from what the model saw in training.
+Preprocessing lives in a function so that the test set is transformed exactly as the training set was. We'll import our preprocessing function from `train_nn.py`, and pass it the scaler that was fit on the training data (saved as `scaler.joblib` in the previous episode). Calling `preprocess_data(test_df)` without the scaler would fit a new one on the test set and transform the features differently from what the model saw in training.
 
 ```python
 !pip install scikit-learn   # train_nn.py imports it; not in the notebook kernels
@@ -470,24 +437,7 @@ with torch.no_grad():
     print(f"Test Accuracy: {accuracy:.4f}")
 ```
 
-### Conclusions
-In about 10 minutes, we produced a model that is 77-80% accurate on the test set. However, this performance does come at a cost (albeit manageable if you've stuck with our advice thus far). This next section will help you assess the total compute time that was used by your tuning job.
-
-Each child job is billed like any training job; the tuning job itself costs nothing. Here's a breakdown of what's happening:
-
-* Billable Time (`BillableTimeInSeconds`): the seconds each child job's instance was yours, from container pull through the script to model upload. The wait for an instance before that is not billed. (`TrainingTimeInSeconds` is the same number on on-demand instances; it only differs on spot.)
-
-* Instance Count: billable seconds are multiplied by the number of instances the job used.
-
-* Per-Second Billing: SageMaker bills per second, with no rounding to minutes or hours. For short jobs like ours, container pull and data download are most of the bill, which is why ten short jobs cost more than one job that trained ten times as long.
-
-For convenience, we have added this as a function in helpers.py
-
-```python
-helpers.calculate_tuning_job_time(tuner, region)  # same per-child-job sum as tuning_cost_report, packaged in helpers.py
-```
-
-::::::::::::::::::::::::::::::::::::::: challenge
+::::::::::::::::::::::::::::::::::::: challenge
 
 ### All at once
 
@@ -557,7 +507,7 @@ for epoch in range(epochs):
 
 3. **In the ranges**: add `"batch_size": IntegerParameter(16, 256)` to `hyperparameter_ranges`.
 
-Two side effects worth anticipating: an epoch now takes several optimizer steps instead of one, so the same `epochs` values train for longer (consider shrinking the `epochs` choices), and the search space has grown, so 10 jobs will cover it less well; 20-30 would be a reasonable budget, which at these prices is still well under a dollar.
+Two side effects: an epoch now takes several optimizer steps instead of one, so the same `epochs` values train for longer (consider shrinking the `epochs` choices), and the search space has grown, so 10 jobs will cover it less well; 20-30 would be a reasonable budget, which at these prices is still well under a dollar.
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -568,7 +518,7 @@ Two side effects worth anticipating: an epoch now takes several optimizer steps 
 - **Tuner = estimator + ranges + objective**: A `HyperparameterTuner` wraps an ordinary estimator; the script only has to print the objective metric in a format the `metric_definitions` regex can capture.
 - **Start with one job**: `max_jobs=1, max_parallel_jobs=1` first, to catch script and configuration errors before paying for a search.
 - **Parallelism buys time, not quality**: Cost is per child training job; `max_parallel_jobs` changes wall-clock time and, with the Bayesian strategy, how much each job can learn from the ones before it. 2-4 parallel jobs is a good default.
-- **Tags propagate from the tuner**: Tags on the tuner are copied to every child training job, the one case in SageMaker where tags are inherited.
+- **Tags propagate from the tuner**: tags on the tuner are copied to every child training job.
 - **Read the bill from the child jobs**: SageMaker bills per second of `BillableTimeInSeconds` x instance count on each training job; container pull and data download are inside that number and dominate short jobs.
 - **Transform the test set with the training scaler**: Load the saved scaler and pass it to `preprocess_data(test_df, scaler=scaler)`; never refit on test data.
 

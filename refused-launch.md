@@ -2,7 +2,7 @@
 title: "If a Launch Is Refused"
 ---
 
-Every launch on the workshop account is checked against a short list of rules before it costs anything. When a job breaks one, AWS refuses it with an `AccessDeniedException` whose message ends in `with an explicit deny in an identity-based policy`, and says nothing else: an IAM refusal cannot carry a custom message, so the error names neither the rule nor the fix. This page is the fix. It applies to any job you launch from this account, during the lesson or in your own notebooks afterwards.
+Every launch from a notebook instance on the workshop account is checked against a short list of rules before it costs anything. (The console and a laptop run under your sign-in's permission set, which does not carry the rules yet.) When a job breaks one, AWS refuses it with an `AccessDeniedException` whose message ends in `with an explicit deny in an identity-based policy`, and says nothing else: an IAM refusal cannot carry a custom message, so the error names neither the rule nor the fix. This page is the fix. It applies to any job you launch from this account, during the lesson or in your own notebooks afterwards.
 
 ## The rules, and what to change
 
@@ -51,8 +51,8 @@ helpers.rules()             # prints the current rules
 helpers.explain_refusal()   # after a refusal: reads the refused requests of the last hour from CloudTrail and names the rule each one broke
 ```
 
-`explain_refusal` works after the fact, on launches made from any code, because AWS logs every API call on the account in CloudTrail, including the refused ones, with the request exactly as it was sent: tags, instance type and cap. The log is 5 to 15 minutes behind, so a refusal made a moment ago may not be there yet. The output lists each refused launch with its job name, so pick out yours by the `Name` tag you sent.
+`explain_refusal` works after the fact, on launches made from any code, because AWS logs every API call on the account in CloudTrail, including the refused ones, with the request exactly as it was sent: tags, instance type and cap. The log is 5 to 15 minutes behind, so a refusal made a moment ago may not be there yet. The output lists each refused launch with its job name, so pick out yours by the job name. The workshop role has the CloudTrail permission this needs; a role on another account may not, and the helper says so if not.
 
 ## Why the rules exist
 
-They are the account administrator's rules, written as an IAM policy on the role every notebook runs as; the cleanup episode shows the policy and how to set the same rules on an account of your own. The three tags are how the bill is split by person and project; the instance list and the cap bound what any one job can cost; the endpoint rule keeps anything from running unnoticed for a month.
+They are the account administrator's rules, written as an IAM policy on the role every notebook runs as; the cleanup episode lists the rules, and the *Account preparation checklist* instructor page has the policy to copy to an account of your own. The three tags are how the bill is split by person and project; the instance list and the cap bound what any one job can cost; the endpoint rule keeps anything from running unnoticed for a month.

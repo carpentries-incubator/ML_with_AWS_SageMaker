@@ -7,7 +7,7 @@ exercises: 20
 :::::::::::::::::::::::::::::::::::::: questions 
 
 - What are the differences between local training and SageMaker-managed training?
-- How do Estimator classes in SageMaker streamline the training process for various frameworks?
+- What is a SageMaker training job, and what does it cost?
 - How do you estimate what a training job will cost before launching it, and check what it cost afterwards?
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
@@ -15,7 +15,7 @@ exercises: 20
 ::::::::::::::::::::::::::::::::::::: objectives
 
 - Understand the difference between training locally in a SageMaker notebook and using SageMaker's managed infrastructure.
-- Learn to configure and use SageMaker's Estimator classes for different frameworks (e.g., XGBoost, PyTorch, SKLearn).
+- Launch a training job with the `XGBoost` estimator: your script, AWS's container, a rented instance.
 - Tell apart the two ways to run XGBoost on SageMaker, your script in AWS's container versus AWS's built-in algorithm in the same container, and know when each fits.
 - Conduct training with data stored in S3 and monitor training job status using the SageMaker console.
 - Estimate the cost of a job before launching it, tag it so it shows up on the bill, and read back its billable time afterwards.
@@ -44,12 +44,17 @@ import helpers  # lesson helper functions; train_xgboost.py lives in the same fo
 This code initializes the AWS SageMaker environment by defining the SageMaker role and S3 client. It also specifies the S3 bucket and key for accessing the Titanic training dataset stored in an S3 bucket.
 
 #### Boto3 API
-> Boto3 is the official AWS SDK for Python, allowing developers to interact programmatically with AWS services like S3, EC2, and Lambda. It provides both high-level and low-level APIs, making it easy to manage AWS resources and automate tasks. With built-in support for paginators, waiters, and session management, Boto3 simplifies working with AWS credentials, regions, and IAM permissions. It's ideal for automating cloud operations and integrating AWS services into Python applications.
+> Boto3 is the AWS SDK for Python: every AWS service, called from Python, with the notebook's role as the identity.
 
 ```python
 import boto3                          # AWS SDK for Python: low-level access to every AWS service (S3, EC2, ...)
 import pandas as pd
+import os
+os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the SDK otherwise prints a deprecation notice on import and on every estimator
 import sagemaker                      # SageMaker Python SDK: higher-level API for training jobs, tuning, deployment
+import logging
+logging.getLogger("sagemaker.telemetry.telemetry_logging").setLevel(logging.WARNING)   # silence the telemetry notice; the "Creating training-job" line still prints
+logging.getLogger("sagemaker.image_uris").setLevel(logging.WARNING)
 from sagemaker import get_execution_role
 
 # Initialize the SageMaker role (will reflect notebook instance's policy)
@@ -76,14 +81,14 @@ sagemaker_client = session.sagemaker_client  # the boto3 SageMaker client inside
 print(f"region = {region}")
 ```
 
-## Testing train.py on this notebook's instance
-A training job is a script run on a machine SageMaker rents for it. The script has to work before it is worth renting anything, so this section runs it here first, on the notebook instance, on the small Titanic data. A local run finds bugs for free; a job that fails on a data-loading error still bills its startup minutes. The habit carries to every later episode: a few epochs on a subset on the cheapest machine, then the real run.
+## Testing train_xgboost.py on this notebook's instance
+A training job is a script run on a machine SageMaker rents for it. The script has to work before it is worth renting anything, so run it here first, on the notebook instance, on the small Titanic data. A local run finds bugs for free; a job that fails on a data-loading error still bills its startup minutes. Every later episode does the same: a few epochs on a subset on the cheapest machine, then the real run.
 
 ::::::::::::::::::::::::::::::::::::::: challenge
 
 ### Understanding the XGBoost Training Script
 
-Take a moment to review the `ML_with_AWS_SageMaker/scripts/train_xgboost.py` script we just cloned into our notebook. This script handles preprocessing, training, and saving an XGBoost model, while also adapting to both local and SageMaker-managed environments.
+Take a moment to review the `ML_with_AWS_SageMaker/scripts/train_xgboost.py` script cloned in the controllers episode. This script handles preprocessing, training, and saving an XGBoost model, while also adapting to both local and SageMaker-managed environments.
 
 Try answering the following questions:
 
@@ -105,7 +110,7 @@ After reviewing, discuss any questions or observations with your group.
 
 1. **Data Preprocessing**: The script fills missing values (`Age` with median, `Embarked` with mode), converts categorical variables (`Sex` and `Embarked`) to numerical values, and removes columns that don't contribute to prediction (`Name`, `Ticket`, `Cabin`).
 
-2. **Training Function**: The `train_model()` function takes the training dataset (`dtrain`), applies XGBoost training with the specified hyperparameters, and prints the training time. Printing training time helps compare different runs and ensures that scaling decisions are based on performance metrics.
+2. **Training Function**: The `train_model()` function takes the training dataset (`dtrain`), applies XGBoost training with the specified hyperparameters, and prints the training time. Printing training time is what the SageMaker runs are compared against.
 
 3. **Command-Line Arguments**: `argparse` allows passing parameters like `max_depth`, `eta`, `num_round`, etc., at runtime without modifying the script. To change the number of training rounds, you would update the `--num_round` argument when running the script:  `python train_xgboost.py --num_round 200`
 
@@ -176,7 +181,7 @@ You can also use the `get_notebook_instance_info()` function found in the lesson
 helpers.get_notebook_instance_info(notebook_instance_name, region)
 ```
 
-Test train.py on this notebook's instance (or when possible, on your own machine) before doing anything more complicated (e.g., hyperparameter tuning on multiple instances)
+Test `train_xgboost.py` on this notebook's instance (or, when possible, on your own machine) before doing anything more complicated (e.g., hyperparameter tuning on multiple instances)
 
 ```python
 !pip install xgboost scikit-learn   # neither notebook kernel ships scikit-learn; the script imports both
@@ -195,7 +200,7 @@ start_time = t.time()
 
 max_depth = 3 # Sets the maximum depth of each tree in the model to 3. Limiting tree depth helps control model complexity and can reduce overfitting, especially on small datasets.
 eta = 0.1 #  Sets the learning rate to 0.1, which scales the contribution of each tree to the final model. A smaller learning rate often requires more rounds to converge but can lead to better performance.
-subsample = 0.8 # Specifies that 80% of the training data will be randomly sampled to build each tree. Subsampling can help with model robustness by preventing overfitting and increasing variance.
+subsample = 0.8 # Specifies that 80% of the training data will be randomly sampled to build each tree. Subsampling adds randomness between trees, which reduces overfitting.
 colsample_bytree = 0.8 # Specifies that 80% of the features will be randomly sampled for each tree, enhancing the model's ability to generalize by reducing feature reliance.
 num_round = 100 # Sets the number of boosting rounds (trees) to 100. More rounds typically allow for a more refined model, but too many rounds can lead to overfitting.
 train_file = 'titanic_train.csv' #  Points to the location of the training data
@@ -210,7 +215,7 @@ print(f"Total local runtime: {t.time() - start_time:.2f} seconds, instance_type 
 The run takes seconds. The script prints its own training time, and the cell prints the total including data loading; both numbers are the baseline the SageMaker runs below are compared with.
 
 ### Sanity check: Quick evaluation on test set
-This section is not SageMaker specific; it checks that the model trained properly by applying it to the test set on the notebook instance.
+Nothing here is SageMaker specific: apply the model to the test set on the notebook instance to check that it trained properly.
 
 Score the model you just trained locally on the test set, reusing the script's own `preprocess_data` so the test rows are transformed exactly as the training rows were.
 
@@ -266,15 +271,15 @@ The table's rule of thumb is RAM of at least 1.5× the dataset, so 20 GB of data
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ### Estimators
-Every training job runs inside a container image. The `XGBoost` class we use below is a *framework estimator*: it looks up AWS's prebuilt XGBoost image for the region and runs your script inside it. `PyTorch`, `SKLearn`, `TensorFlow` and `HuggingFace` are the same idea for other frameworks, each with a `framework_version` that picks the image, and all of them take a `requirements.txt` through `dependencies=` for packages the image lacks. The plain `Estimator` class takes an `image_uri` directly and is for a container of your own, or for one of AWS's built-in algorithms, which train with AWS's code and no script of yours; the optional challenge at the end of this episode runs XGBoost that way for comparison. The [list of prebuilt images](https://docs.aws.amazon.com/sagemaker/latest/dg/pre-built-containers-frameworks-deep-learning.html) says what each one has installed.
+Every training job runs inside a container image. The `XGBoost` class we use below is a *framework estimator*: it looks up AWS's prebuilt XGBoost image for the region and runs your script inside it. `PyTorch`, `SKLearn`, `TensorFlow` and `HuggingFace` are the same idea for other frameworks, each with a `framework_version` that picks the image, and a `requirements.txt` in `source_dir` is pip-installed in the container before the script starts, for packages the image lacks. The plain `Estimator` class takes an `image_uri` directly and is for a container of your own, or for one of AWS's built-in algorithms, which train with AWS's code and no script of yours; the optional challenge at the end of this episode runs XGBoost that way for comparison. The [list of prebuilt images](https://docs.aws.amazon.com/sagemaker/latest/dg/pre-built-containers-frameworks-deep-learning.html) says what each one has installed.
 
-### Deploying to other instances
-For this deployment, we configure the `XGBoost` estimator with a custom training script, `train_xgboost.py`, and define hyperparameters directly within the SageMaker setup. The full code is below, with explanation after it.
+### Launching the training job
+We configure the `XGBoost` estimator with a custom training script, `train_xgboost.py`, and define hyperparameters directly within the SageMaker setup. The full code is below, with explanation after it.
 
 #### Cost tracking
 When you launch a SageMaker training job from a notebook, SageMaker creates new managed resources (EC2 instances, attached storage, logs) on your behalf. These resources do not automatically inherit the notebook instance's tags. 
 
-To avoid this, we explicitly tag each training job at launch time. This ensures that compute usage is traceable to a project, a purpose, and a human-readable name, even after the job has completed.
+So we tag each training job at launch time, with the same three keys as the bucket and the notebook instance.
 
 ```python
 name = "DoeJohn" # replace with your name
@@ -292,9 +297,9 @@ print(f"Name: {name}, Project: {project}, Purpose: {purpose}")
 ```
 
 #### Estimate before you launch
-Estimate the cost of every job *before* you run it: instance rate x expected minutes, plus two or three minutes of startup. Two things happen before your script runs, and only one of them is billed. First SageMaker finds an instance for you: that is *provisioning*, it takes a minute or so, and it is free. Then the instance pulls the training container and downloads your data: that is *startup*, and the meter is running. In this lesson, startup always means the billed part. An `ml.m5.large` costs about `$0.115`/hour (us-east-1 on-demand; see the [Instances for ML page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html)). Our local test finished in under a minute, so the estimate is roughly 1 minute of training + 2-3 minutes of startup = 3-4 billable minutes, or under a cent.
+Estimate the cost of every job *before* you run it: instance rate x expected minutes, plus two or three minutes of startup. Two things happen before your script runs, and only one of them is billed. First SageMaker finds an instance for you: that is *provisioning*, it takes a minute or so, and it is free. Then the instance pulls the training container and downloads your data: that is *startup*, and the meter is running. An `ml.m5.large` costs about `$0.115`/hour (us-east-1 on-demand; see the [Instances for ML page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html)). Our local test finished in under a minute, so the estimate is a few seconds of training plus two or three minutes of startup: about three billable minutes, under a cent.
 
-One thing to watch in the estimator below is `hyperparameters`. It is how values get from this notebook into the script. SageMaker turns the dictionary into command-line flags, `--train titanic_train.csv --max_depth 3 --eta 0.1 ...`, and appends them to the command that starts `train_xgboost.py` inside the container, exactly as `%run` passed them a moment ago; the script's `argparse` block reads them. So the keys must be the script's argument names, and anything the script does not define a flag for is ignored. (The job's log prints the full command, under "Invoking script with the following command", which is the place to look when a value does not seem to arrive.)
+One thing to watch in the estimator below is `hyperparameters`. It is how values get from this notebook into the script. SageMaker turns the dictionary into command-line flags, `--train titanic_train.csv --max_depth 3 --eta 0.1 ...`, and appends them to the command that starts `train_xgboost.py` inside the container, exactly as `%run` passed them a moment ago; the script's `argparse` block reads them. So the keys must be the script's argument names, and a key the script has no flag for makes `argparse` exit with "unrecognized arguments", which fails the job. (The job's log prints the full command, under "Invoking script with the following command", which is the place to look when a value does not seem to arrive.)
 
 ```python
 from sagemaker.inputs import TrainingInput
@@ -302,11 +307,12 @@ from sagemaker.xgboost.estimator import XGBoost   # framework estimator: AWS's X
 
 # Define instance type/count we'll use for training
 instance_type="ml.m5.large"   # the managed machine SageMaker launches for the job, separate from this notebook's instance
-instance_count=1 # always start with 1; the next episode measures what a second instance does
+instance_count=1 # always start with 1; the next episode shows what a second instance does
 price_per_hour = 0.115 # ml.m5.large, us-east-1 on-demand (2026-10-16), from the Instances for ML page; check it for your region
 
-# Define max runtime in seconds to ensure you don't use more compute time than expected. Use a generous threshold (2x expected time but < 2 days) so that work isn't interrupted without any gains.
-max_run = 2*60*60 # 2 hours; SageMaker stops the job and releases the instance when this is reached
+# The runtime cap, in seconds: SageMaker stops the job and releases the instance when it is reached. Set it a little above the estimate;
+# the estimate here is three or four minutes, so 20 minutes leaves room for a slow container pull without letting a hung job bill for hours.
+max_run = 20*60 # 20 minutes
 
 # Define S3 paths for input and output
 train_s3_path = f's3://{bucket_name}/{train_filename}'  # an S3 URI: bucket plus key; SageMaker takes input in this form
@@ -353,7 +359,7 @@ end = t.time()
 print(f"Runtime for training on SageMaker: {end - start:.2f} seconds, instance_type: {instance_type}, instance_count: {instance_count}")
 ```
 
-While a job runs, its status is on the console under [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training). For a job too long to sit through, see "Launching a job and walking away" below: launch with `wait=False` and stop the notebook instance.
+While a job runs, its status is on the console under [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training). For a job too long to sit through, see "Launching a job without waiting for it" below.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
@@ -374,11 +380,14 @@ Additionally, we define a TrainingInput object containing the training data's S3
 #### What did that cost?
 
 ![Timeline of one training job: instance requested (not billed), then container pulled, data downloaded, script runs, outputs uploaded (all billed), instance released](fig/job-billable-time.svg){alt="Timeline of a SageMaker training job showing the unbilled wait for an instance and the billed phases from container pull to model upload"}
-`describe_training_job` returns `BillableTimeInSeconds`: the seconds the instance was yours, from container pull to model upload, per instance. It also returns `TrainingTimeInSeconds`, which on on-demand instances is the same number (it only differs on spot instances), so do not expect it to isolate your script. The minute or so before that, while SageMaker finds an instance, is not billed. SageMaker bills per second, with no rounding, so cost is billable seconds x instance count x hourly rate. We'll wrap this in a small helper and call it after every job in this lesson.
+`describe_training_job` returns `BillableTimeInSeconds`: the seconds the instance was yours, from container pull to model upload, per instance. The minute or so before that, while SageMaker finds an instance, is not billed. (The job's console page also shows a "Training time"; on an on-demand instance it is the same number, and neither one is your script's own training time, which only the script's log has.) SageMaker bills per second, with no rounding, so cost is billable seconds x instance count x hourly rate. We'll wrap this in a small helper and call it after every job in this lesson.
 
 ```python
 def job_cost_report(job_name: str, price_per_hour: float):
     desc = session.sagemaker_client.describe_training_job(TrainingJobName=job_name)  # the job's full record: status, timings, resources, output
+    if "BillableTimeInSeconds" not in desc:   # the job has not finished: no bill yet
+        print(f"{job_name}: status {desc['TrainingJobStatus']}; billable time and the model path appear once it is Completed")
+        return desc
     n = desc["ResourceConfig"]["InstanceCount"]
     billable = desc["BillableTimeInSeconds"] * n   # BillableTimeInSeconds: container pull to model upload, charged per instance
     wall = (desc["TrainingEndTime"] - desc["CreationTime"]).total_seconds()   # from the launch request to the end, including unbilled provisioning
@@ -406,7 +415,7 @@ The listing above is what you would see in the [S3 console](https://us-east-2.co
 In **your bucket**, under `xgboost/<job-name>/` (the prefix from `output_path` plus the job name):
 
 1. `output/model.tar.gz`: the model artifacts, a tarball of whatever the script saved to `SM_MODEL_DIR` (here `xgboost-model.json`). This is the file we download below.
-2. `profiler-output/` and `debug-output/`: small files from SageMaker's built-in profiler, written for every training job. Ignore them; they can be turned off with `disable_profiler=True` on the estimator.
+2. `profiler-output/` and `debug-output/`: small files from SageMaker's profiler and debugger, written for every training job. Ignore them; `disable_profiler=True` and `debugger_hook_config=False` on the estimator turn them off.
 
 The job's log is not in S3. It is in **CloudWatch**, the AWS service that stores the printed output of every job: everything the script prints goes to a CloudWatch *log stream* named after the job, and it stays there after the instance is gone. To read it: open [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training), click the job's name, scroll to **Monitor** and click **View logs**, then click the one stream listed. What you see is the same text `fit()` streamed into the notebook, which is useful the day a job you launched last night failed while the kernel was off.
 
@@ -419,7 +428,7 @@ To evaluate the model on a test set after training, we'll go through these steps
 2. **Load and preprocess** the test dataset. 
 3. **Evaluate** the model on the test data.
 
-Here's how you can implement this in your SageMaker notebook. The following code will:
+The code below:
 
 - Download the `model.tar.gz` file containing the trained model from S3.
 - Load the `titanic_test.csv` data we downloaded earlier and preprocess it as needed.
@@ -476,58 +485,33 @@ print(f"Test Set Accuracy: {accuracy:.4f}")
 
 ## Monitoring training
 
-To view and monitor your SageMaker training job, follow these steps in the AWS Management Console. Since training jobs may be visible to multiple users in your account, it's essential to confirm that you're interacting with your own job before making any changes.
+The job's page in the console has everything the notebook printed and more. Open [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training); the list is the whole account's, so find yours by name, `SinkOrSwim-DoeJohn-xgboost-<timestamp>`, and click it.
 
-1. **Navigate to the SageMaker Console**  
-   - Go to the AWS Management Console and open the **SageMaker** service (can search for it)
+- **Status**: `InProgress`, `Completed`, `Failed` or `Stopped`.
+- **View logs**, under **Monitor**: the job's printed output in CloudWatch, kept after the instance is gone. **Job Metrics** next to it shows CPU, GPU and memory use over the run.
+- **Output**: the S3 path of the model artifact.
+- **Stop**, under **Actions**: ends the job and its billing. Check the name first; the list has other people's jobs in it.
 
-2. **View training jobs**  
-   - In the left-hand navigation menu, select **Training jobs** (or open [this link](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training) in the class region). You'll see a list of recent training jobs, which may include jobs from other users in the account.
+## Launching a job without waiting for it
 
-3. **Verify your training Job**  
-   - Identify your job by looking for the specific name format (e.g., `SinkOrSwim-DoeJohn-YYYY-MM-DD-HH-MM-SS-XXX`) generated when you launched the job.  Click on its name to access detailed information. Cross-check the job details, such as the **Instance Type** and **Input data configuration**, with the parameters you set in your script. 
+Everything `fit()` waited for happened on the job's instance, not this one. Once SageMaker has the request, the job pulls its container, trains, uploads the model to S3 and writes its log to CloudWatch, and none of that needs this notebook. `wait=True`, the default, only makes the cell block and stream the log here, which is fine for a four-minute job. For a run of hours it means sitting on a blocked cell, or leaving a notebook instance running all night so that a cell can watch a log you could read in CloudWatch.
 
-4. **Monitor the job status**  
-   - Once you've verified the correct job, click on its name to access detailed information:
-     - **Status**: Confirms whether the job is `InProgress`, `Completed`, or `Failed`.
-     - **Logs**: the **View logs** link opens the job's output in CloudWatch, the AWS logging service, where it is kept after the job ends; **Job Metrics** shows CPU, GPU and memory use over the run.
-     - **Output Data**: Shows the S3 location with the trained model artifacts.
-
-5. **Stopping a training job**  
-   - Before stopping a job, ensure you've selected the correct one by verifying job details as outlined above.
-   - If you're certain it's your job, go to **Training jobs** in the SageMaker Console, select the job, and choose **Stop** from the **Actions** menu. Confirm your selection, as this action will halt the job and release any associated resources.
-   - **Important**: Avoid stopping jobs you don't own, as this could disrupt other users' work and may have unintended consequences.
-
-Following these steps helps ensure you only interact with and modify jobs you own, reducing the risk of impacting other users' training processes.
-
-## Launching a job and walking away
-
-Everything after `fit()` returned happened on the job's instance, not this one. The notebook is the launcher: once SageMaker has the request, the job pulls its container, trains, uploads the model to S3 and writes its log to CloudWatch whether or not this notebook is still running. `wait=True`, the default, only makes the cell block and stream the log here. That is right for a four-minute job. For a run of hours it means a notebook instance left running all night, five cents an hour on an `ml.t3.medium` and `$63` on a GPU notebook, so that a cell can watch a log you could read in CloudWatch.
-
-The alternative is three steps: launch with `wait=False`, write the job name down, stop the notebook instance. Come back when the job is done, start the instance, and pick the job up by name.
+`wait=False` returns as soon as the job is accepted. Run the next cell, or stop the notebook instance and go home; the job runs the same either way.
 
 ```python
 # Launch and return at once: the cell ends in seconds, and the job runs on its own instance
 xgboost_estimator.fit({'train': train_input}, wait=False)
-job_name = xgboost_estimator.latest_training_job.name   # what you need to come back to this job
+job_name = xgboost_estimator.latest_training_job.name
 print("launched:", job_name)
 ```
 
-Keep the name somewhere outside the kernel: a cell's printed output survives a kernel restart and a stopped instance, a variable does not. If you are leaving, stop the notebook instance from [Notebook instances](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/notebook-instances) (select it, **Actions**, **Stop**). The job keeps running, and its status and log are on its page under [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training) from any browser.
-
-To pick it up again, two calls. `describe_training_job` is the quick look: the status, and the timings once it has finished. `attach` rebuilds the estimator from the job's record: if the job is still running it streams the rest of the log and waits, as `fit()` would have; if it has finished it returns at once. Either way `model_data` then points at the model in S3, so the download-and-evaluate cells above work unchanged.
+While it runs, its status and log are on its page under [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training), from any browser. When it finishes, the model is in S3 under `output_path`, whether or not anything was watching. To read its status and bill from a notebook, the same call as before:
 
 ```python
-from sagemaker.xgboost.estimator import XGBoost
-
-# after a kernel restart or a stopped instance, set job_name = "<the name printed by the launch cell>" first
-status = session.sagemaker_client.describe_training_job(TrainingJobName=job_name)["TrainingJobStatus"]
-print(job_name, status)   # InProgress, Completed, Failed or Stopped
-
-xgboost_estimator = XGBoost.attach(job_name, sagemaker_session=session)   # waits and streams the log if InProgress; returns at once if done
-print("model:", xgboost_estimator.model_data)
-desc = job_cost_report(job_name, price_per_hour)
+desc = job_cost_report(job_name, price_per_hour)   # prints the status while the job runs; the bill and the model path once it is Completed
 ```
+
+If the notebook instance was stopped in between, the kernel's variables are gone, so set `job_name` from the printed output or from the Training jobs list before running that cell. `xgboost_estimator = XGBoost.attach(job_name, sagemaker_session=session)` rebuilds the estimator from the job's record, waiting for the job if it is still running, if you want the evaluate cells above to work as before.
 
 Interrupting the cell, restarting the kernel and stopping the instance all leave the job running. Only **Stop** on the job's page, or the job's own cap, ends it. A job you launched and forgot bills until one of those happens, which is what the two habits below are for.
 
@@ -539,20 +523,20 @@ Interrupting the cell, restarting the kernel and stopping the instance all leave
 
 ::::::::::::::::::::::::::::::::::::: challenge
 
-### Launch, lose the kernel, come back
+### Launch, lose the kernel, read the bill anyway
 
-Do the walk-away sequence once while the job is short, so that it is familiar when the job is long.
+Do this once while the job is short, so that it is familiar when the job is long.
 
-1. Run the `wait=False` launch cell above and note the printed job name.
+1. The `wait=False` cell above launched a job; note the name it printed.
 2. From the Jupyter menu choose **Kernel**, **Restart**. Every variable is gone, which is what a stopped instance would also do to you, without the minutes of waiting for it to start again.
-3. Rerun the setup cells at the top of the episode (the session, bucket and role) and the cell that defines `job_cost_report` and `price_per_hour`.
-4. Set `job_name` to the name you noted and run the pick-up cell.
+3. Rerun the setup cells at the top of the episode (the session, bucket and role), set `price_per_hour = 0.115` again, and rerun the cell that defines `job_cost_report`. Do not rerun the launch cells.
+4. Set `job_name` to the name you noted and run the `job_cost_report` cell.
 
 What was the job's status when you looked, and what did it cost compared with the first job?
 
 :::::::::::::::: solution
 
-The status is `InProgress` if you were quick and `Completed` otherwise; `attach` waits in the first case and returns at once in the second. The cost is the same as the first run, since the job did the same work, and it did not care that the kernel it was launched from no longer existed. The only thing that connected the kernel to the job was the name, and if you lose that too, the [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training) list, filtered by your notebook instance name, has it.
+The status is `InProgress` if you were quick and `Completed` otherwise. The cost is the same as the first run, since the job did the same work, and it did not care that the kernel it was launched from no longer existed. The only thing that connected the kernel to the job was the name, and if you lose that too, the [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training) list, filtered by your notebook instance name, has it.
 
 :::::::::::::::::::::::::
 
@@ -573,14 +557,15 @@ The built-in algorithm will not run our `preprocess_data()` for us, and it expec
 # ^ remove this line to run the cell; the guard keeps Run All from launching the extra job
 from train_xgboost import preprocess_data
 
-# Same preprocessing our script applies: fill missing values, encode Sex/Embarked, drop text columns
-X, y = preprocess_data(pd.read_csv(train_filename))
+# The same titanic_train.csv the script job trained on. The script ran preprocess_data inside the container;
+# the built-in algorithm runs no code of ours, so the same preprocessing is applied here instead
+X, y = preprocess_data(pd.read_csv(train_filename))   # fill missing values, encode Sex/Embarked, drop text columns
 
-# Built-in XGBoost wants: no header, all numeric, label first
+# Same rows, written the way the built-in algorithm requires: no header, all numeric, label first
 builtin_filename = "train_builtin.csv"
 pd.concat([y, X], axis=1).to_csv(builtin_filename, header=False, index=False)
 
-# Upload to a dedicated prefix so it doesn't get confused with the raw CSV
+# Upload under its own prefix so it is not confused with the raw CSV
 builtin_s3_key = f"xgboost/builtin/{builtin_filename}"
 s3.upload_file(builtin_filename, bucket_name, builtin_s3_key)
 builtin_s3_path = f"s3://{bucket_name}/{builtin_s3_key}"
@@ -649,11 +634,11 @@ The next episode asks what to do when a job takes too long: a bigger instance, a
 
 ::::::::::::::::::::::::::::::::::::: keypoints
 
-- **Environment initialization**: Setting up a SageMaker session, defining roles, and specifying the S3 bucket are essential for managing data and running jobs in SageMaker.
+- **Setup**: a SageMaker session, the execution role and the bucket name are what every job needs from the notebook.
 - **Local vs. managed training**: Always test your code locally (on a smaller scale) before scaling things up. This avoids wasting resources on buggy code that doesn't produce reliable results.
 - **Estimators**: `XGBoost(entry_point=...)` is AWS's container running your script, the pattern every later episode uses with `PyTorch` and `HuggingFace`.
-- **Training data channels**: Using `TrainingInput` ensures SageMaker manages data efficiently.
+- **Training data channels**: `TrainingInput` names the S3 data a job copies onto its instance before the script runs.
 - **Cost habit**: Estimate cost before launching (rate x minutes + ~3 minutes startup), then read back `BillableTimeInSeconds` with `job_cost_report()` after every job and compare.
-- **Long runs**: launch with `wait=False`, note the job name, stop the notebook instance; `attach(job_name)` picks the job up later. Set `max_run` a little above the estimate, and checkpoint to S3 on anything longer than half an hour.
+- **Long runs**: launch with `wait=False` and carry on, or stop the notebook instance; the job runs and finishes without it, and `job_cost_report(job_name, ...)` reads its bill later. Set `max_run` a little above the estimate, and checkpoint to S3 on anything longer than half an hour.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::

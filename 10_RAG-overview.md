@@ -56,7 +56,7 @@ The reason this is the default comes down to **how you are billed**:
 
 | | Bedrock (managed API) | SageMaker GPU instance / endpoint |
 |---|---|---|
-| **Billing unit** | Per token processed | Per hour the instance exists |
+| **Billing unit** | Per token processed | Per second while the instance runs, at an hourly rate |
 | **Cost while idle** | `$0` — nothing is running between calls | Full hourly rate, 24/7, whether or not you use it |
 | **What you must remember to do** | Know the per-token price before a big batch; route calls through a tagged profile | Stop or delete the instance every time you finish |
 | **Model updates** | Managed by AWS / the provider | Your problem (containers, CUDA, VRAM) |
@@ -73,37 +73,37 @@ A GPU notebook instance left running after you close your laptop costs this much
 | ml.g4dn.xlarge | 1 × T4 (16 GB) | `$0.74` | ~`$9` | ~`$47` | ~`$540` |
 | ml.g5.xlarge | 1 × A10G (24 GB) | `$1.41` | ~`$17` | ~`$90` | ~`$1,030` |
 | ml.g5.2xlarge | 1 × A10G (24 GB) | `$1.52` | ~`$18` | ~`$97` | ~`$1,110` |
-| ml.g6e.xlarge | 1 × L40S (48 GB) | `$2.61` | ~`$31` | ~`$167` | ~`$1,905` |
+| ml.g6e.xlarge | 1 × L40S (48 GB) | `$2.61` | ~`$31` | ~`$167` | ~`$1,906` |
 | ml.p4d.24xlarge | 8 × A100 (40 GB) | `$25.25` | ~`$303` | ~`$1,616` | ~`$18,430` |
 
 Compare that to running the **entire WattBot pipeline** from this lesson on Bedrock. Using DeepSeek V3 (check the [Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/) for current per‑token prices) and Titan Text Embeddings V2 (`$0.02` per million tokens):
 
 | Step | Rough volume | Cost |
 |---|---|---|
-| Embed ~9,000 chunks (~3M tokens) | 3M input tokens | ~`$0.06` |
-| Answer and explain the 245 training questions (two calls each, ~1.5K‑token prompts) with DeepSeek V3 | 650K in / 40K out | ~`$0.50` |
+| Embed ~9,000 chunks (~2.4M tokens) | 2.4M input tokens | ~`$0.05` |
+| Answer and explain the 220 answerable training questions (two calls each, ~1.5K‑token prompts) with DeepSeek V3 | 650K in / 40K out | ~`$0.50` |
 | **Total** | | **about `$0.55`** |
 
-A single forgotten weekend on the *cheapest* GPU instance costs more than fifty full runs of the pipeline on Bedrock; a forgotten weekend on the `ml.g6e.xlarge` the optional GPU-notebook episode uses costs more than a hundred. That asymmetry is why Bedrock is the default, not just an alternative.
+A single forgotten weekend on the *cheapest* GPU instance costs more than fifty full runs of the pipeline on Bedrock; a forgotten weekend on the `ml.g6e.xlarge` the optional GPU-notebook episode uses costs more than a hundred.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
 ### Bedrock trade-offs to know about
 
-Bedrock is not free of downsides; it's just that none of them are "you forgot and it kept charging you."
+Bedrock's limits:
 
 - **Less control over architecture.** You can only call models in the Bedrock catalog. If your research depends on a specific open‑weight model, a custom fine‑tune, or hacking on the model internals, you'll need to host it yourself.
 - **Per‑token cost can exceed GPU cost for very large offline batches.** If you are embedding tens of millions of chunks with a small open model, a short‑lived GPU job may be cheaper per unit of work. Do the arithmetic before assuming either way.
 - **Model access and region availability.** Some models must be enabled in the console first, and the catalog varies by region. Plan for this before a workshop or deadline.
 - **Quotas.** On‑demand throughput is rate‑limited per model and per account. For large batch workloads, use the Bedrock batch inference API or request a quota increase rather than hammering the on‑demand endpoint.
-- **Data handling.** Bedrock does not use your prompts to train models and keeps data in‑region, but you should still check your institution's policy before sending sensitive documents to any hosted API.
+- **Data handling.** Bedrock does not use your prompts to train models, and keeps data in the region, or within the US when a `us.` cross-region profile is used, but you should still check your institution's policy before sending sensitive documents to any hosted API.
 - **Cost tracking needs one extra step.** On‑demand Bedrock calls carry no tags. To attribute spend to a project you route calls through a tagged *application inference profile* (see "Tagging" below and the Bedrock episode). It is a one‑time setup, but skipping it leaves the usage anonymous on the bill.
 
 :::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## Approaches to Running RAG on AWS
 
-With that framing, here are the main patterns, ordered from "reach for this first" to "only when you really need it."
+The main patterns, ordered from "reach for this first" to "only when you really need it."
 
 ![Four columns, Bedrock API, Processing job, GPU notebook and Inference endpoint, compared on where the model runs, what runs between calls, billing unit, latency, model choice, what you must remember, a cost example and which episode covers it; Bedrock is marked as the default and Processing jobs as the safe way to use a GPU](fig/rag-approaches.svg){alt="Comparison table of four ways to run RAG on AWS: Bedrock API (default, pay per token, nothing to shut down), Processing job (batch with open models, bills per second while the job runs, terminates itself), GPU notebook (learning and debugging only, bills per hour until stopped, about $90 if forgotten over a weekend) and Inference endpoint (steady traffic only, bills 24/7, about $1,000 if idle for a month)."}
 
@@ -144,14 +144,14 @@ It is also the **most expensive option when traffic is low or bursty**, because 
 
 ## Tagging: Every Billable Resource Needs Its Own Tags
 
-Cost tracking in this workshop relies on three tags — `Name`, `Project`, `Purpose` — so that Cost Explorer can break the shared bill down by challenge. The part that trips people up is that **tags never propagate**. Tagging your notebook instance tags the notebook instance and nothing else. Every other resource you create is a separate line item that is anonymous unless you tag it yourself at creation time.
+Cost tracking in this workshop relies on three tags — `Name`, `Project`, `Purpose` — so that Cost Explorer can break the shared bill down by challenge. **Tags never propagate.** Tagging your notebook instance tags the notebook instance and nothing else. Every other resource you create is a separate line item that is anonymous unless you tag it yourself at creation time.
 
 | Resource | What it bills | How it gets tagged |
 |---|---|---|
 | Notebook instance | Hourly, while running | Tags you set in the console when creating it |
 | S3 bucket | Storage + requests | Tags you set in the console when creating it |
-| Training / tuning job | Hourly, while the job runs | `tags=` argument on the estimator or tuner, **every job** |
-| Processing job | Hourly, while the job runs | `tags=` argument on the processor, **every job** |
+| Training / tuning job | Per second while the job runs, at an hourly rate | `tags=` argument on the estimator or tuner, **every job** |
+| Processing job | Per second while the job runs, at an hourly rate | `tags=` argument on the processor, **every job** |
 | Inference endpoint | Hourly, while deployed | `tags=` argument on `deploy()` |
 | Bedrock on‑demand call | Per token | **Cannot be tagged directly.** Create an *application inference profile* with tags and pass its ARN as `modelId` instead of the model ID |
 

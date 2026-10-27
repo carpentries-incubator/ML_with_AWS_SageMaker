@@ -38,10 +38,9 @@ Most researchers already have somewhere to run ML, such as a campus HPC cluster,
   
 - **Support for custom scripts**: Most training and inference scripts can be run using pre-configured *estimators* or *containers* that come with popular ML frameworks such as scikit-learn, PyTorch, TensorFlow, and Hugging Face already installed. In many cases a `requirements.txt` file is enough to add any additional dependencies you need. When you need more control, SageMaker also supports fully custom Docker containers, so you can bring your own code, dependencies, and environments for training, tuning, and inference.
 
-- **Flexible compute options**: SageMaker lets you easily select instance types tailored to your project needs. For exploratory analysis, use a lightweight CPU (e.g., ml.m5.large). For compute-intensive tasks, such as training deep learning models, you can switch to GPU instances for faster processing. We'll cover instances more in-depth throughout the lesson (and how to select them), but here's a preview of the different types:
+- **Flexible compute options**: each notebook and each job runs on an instance type you choose: a small CPU for exploratory work, a GPU for training deep learning models. The kinds this lesson uses:
 
     - **CPU instances (e.g., ml.m5.large — `$0.115`/hour)**: Suitable for general ML workloads, feature engineering, and inference tasks. 
-    - **Memory-optimized instances (e.g., ml.r5.2xlarge — approx. `$0.65`/hour)**: Best for handling large datasets in memory.
     - **GPU instances (e.g., ml.g5.xlarge — `$1.41`/hour)**: Optimized for compute-intensive tasks like deep learning training and fine-tuning, offering accelerated processing. 
     - For more details, check out the supplemental "[Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html)" page. We'll discuss this topic more throughout the lesson. (Prices here and throughout the lesson are us-east-1 on-demand list prices from the AWS price list of 2026-10-16; other regions are the same or within a few percent.)
 
@@ -49,7 +48,7 @@ Most researchers already have somewhere to run ML, such as a campus HPC cluster,
 
 - **Ease of orchestration / Simplified ML pipelines**: Traditional high-performance computing (HPC) or high-throughput computing (HTC) environments often require researchers to break ML workflows into separate batch jobs, manually orchestrating each step (e.g., submitting preprocessing, training, cross-validation, and evaluation as distinct tasks and stitching the results together later). In SageMaker, a training or tuning job is launched from a notebook with the script, the data location and the instance type, and the orchestration is handled for you.
 
-- **Cost tracking**: every job reports its billable seconds, and every resource can be tagged so that the bill can be broken down by project. For many common research workloads SageMaker is cheap. For example, training roughly 100 small to medium-sized models (e.g., logistic regression, random forests, or lightweight deep learning models with a few million parameters) on a small dataset (under 10GB) can cost under `$20,` making it accessible for many research projects.
+- **Cost tracking**: every training job reports its billable seconds, and every resource can be tagged so that the bill can be broken down by project. For many common research workloads SageMaker is cheap. For example, training roughly 100 small to medium-sized models (e.g., logistic regression, random forests, or lightweight deep learning models with a few million parameters) on a small dataset (under 10GB) can cost under `$20`.
 
 **Amazon Bedrock** is the other AWS service this lesson uses. Instead of running your script on a machine, Bedrock serves models that AWS hosts through an API. In practice that means:
 
@@ -65,7 +64,7 @@ Most researchers already have somewhere to run ML, such as a campus HPC cluster,
 
 ![S3 holds data and outputs; a small notebook instance launches SageMaker jobs that read from and write to S3 and end on their own; Bedrock is called as an API per token](fig/aws-ml-ecosystem.svg){alt="Diagram of the lesson's AWS components: S3 buckets at the top, a notebook instance on the left launching SageMaker training, tuning and processing jobs in the center, and Bedrock on the right called as an API"}
 
-Everything in the lesson is one of these four boxes. S3 holds your data and every job's outputs. The notebook instance is where you work; it is small because it only launches things. SageMaker jobs are where compute happens, on an instance that exists only for the job. Bedrock is an API: no instance at all. Everything the notebook does here can also be done from the AWS command line or from Python on your own machine; the optional last episode shows the CLI equivalents.
+Everything in the lesson is one of these four boxes. S3 holds your data and every job's outputs. The notebook instance is where you work; it is small because it only launches things. SageMaker jobs are where compute happens, on an instance that exists only for the job. Bedrock is an API: no instance at all. Everything the notebook does here can also be done from the AWS command line or from Python on your own machine; the optional episode *The Same Jobs from the Terminal* shows the CLI equivalents.
 
 ### Lesson outline
 

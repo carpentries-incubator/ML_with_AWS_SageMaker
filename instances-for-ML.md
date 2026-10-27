@@ -11,7 +11,7 @@ The below table provides general recommendations for selecting AWS SageMaker ins
     - **T4** (16 GB, `g4dn`): the cheapest GPU; fine for small CNNs, inference of models up to a few billion parameters in 4- or 8-bit, and learning the workflow. No bf16 support, so modern LLM fine-tuning is slow or fails on it.
     - **A10G** (24 GB, `g5`): the lesson's workhorse for fine-tuning: bf16, enough memory for a 3B vision-language model with LoRA, or a 7B LLM in 4-bit.
     - **L4** (24 GB, `g6`): the same memory as an A10G at a lower price, somewhat slower for training, good for inference and embeddings.
-    - **L40S** (48 GB, `g6e`): twice the memory of an A10G; what the Processing Jobs episode and the optional GPU-notebook episode use to serve a 27B model in FP8 (27 GB of weights). The `ml.g6e.xlarge` is the GPU notebook instance that costs about `$60` a day if left running.
+    - **L40S** (48 GB, `g6e`): twice the memory of an A10G; what the optional GPU-notebook episode uses to serve a 27B model in FP8 (27 GB of weights). The `ml.g6e.xlarge` is the GPU notebook instance that costs about `$60` a day if left running.
     - **A100 / H100** (`p4d` / `p5`): multi-GPU, 8 per instance, for training or fine-tuning models of tens of billions of parameters. Nothing in this lesson needs one; they are listed so the price is not a surprise.
 - The **g4dn** instances are cost-effective GPU options, suitable for moderate-scale deep learning tasks.
 - **Free Tier Eligibility**: Some smaller instance types, such as `ml.t3.medium`, may be eligible for the AWS Free Tier, which provides limited hours of usage per month. Free Tier eligibility can vary, so check [AWS Free Tier details](https://aws.amazon.com/free/) before launching instances to avoid unexpected costs.
@@ -37,7 +37,7 @@ So "32 H100s for 25 hours" is 800 GPU-hours, which is four `ml.p5.48xlarge` for 
 | < 1 GB | Up to 3 B params | ml.g4dn.xlarge (T4) | 4 | 16 | 1 × T4 (16 GB) | `$0.74` | Cost-effective GPU training for compact DL models |
 | < 1 GB | Up to 3 B params | ml.g6.xlarge (L4) | 4 | 16 | 1 × L4 (24 GB) | `$1.13` | Inference and embeddings; cheaper than g5 for serving |
 | < 1 GB | Up to 8–10 B params | ml.g5.xlarge (A10G) | 4 | 16 | 1 × A10G (24 GB) | `$1.41` | LoRA fine-tuning of 3B models (this lesson); 7B LLM inference in 4-bit |
-| < 1 GB | Up to 13 B params | ml.g6e.xlarge (L40S) | 4 | 32 | 1 × L40S (48 GB) | `$2.61` | 27B model served in FP8 (Processing Jobs episode, optional GPU notebook) |
+| < 1 GB | Up to 13 B params | ml.g6e.xlarge (L40S) | 4 | 32 | 1 × L40S (48 GB) | `$2.61` | 27B model served in FP8 (optional GPU-notebook episode) |
 | 10 GB | Up to 500 M params | ml.c5.2xlarge | 8 | 16 | None | `$0.34` (approx.) | CPU-heavy processing, tabular/ensemble models |
 | 10 GB | Up to 1 B params | ml.m5.2xlarge | 8 | 32 | None | `$0.46` (approx.) | Feature engineering, boosting or linear models |
 | 10 GB | Up to 3–4 B params | ml.g4dn.2xlarge (T4) | 8 | 32 | 1 × T4 | `$0.94` | Moderate-scale DL; training/inference |

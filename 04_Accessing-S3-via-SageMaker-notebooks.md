@@ -25,14 +25,6 @@ Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/04_Accessing-S3-via-Sa
 #### Set up AWS environment
 Each notebook starts by setting up the AWS session it works in:
 
-1. **Define the Role**: We'll use `get_execution_role()` to retrieve the IAM role associated with the SageMaker instance. This role specifies the permissions needed for interacting with AWS services like S3, which allows SageMaker to securely read from and write to storage buckets.
-
-2. **Initialize the SageMaker Session**: Next, we'll create a `sagemaker.Session()` object, which will help manage and track the resources and operations we use in SageMaker, such as training jobs and model artifacts. The session acts as a bridge between the SageMaker SDK commands in our notebook and AWS services.
-
-3. **Set Up an S3 Client using boto3**: Using `boto3`, we'll initialize an S3 client for accessing S3 buckets directly. Boto3 is the official AWS SDK for Python, allowing developers to interact programmatically with AWS services like S3, EC2, and Lambda.
-
-Starting with these initializations prepares our notebook environment to efficiently interact with AWS resources for model development, data management, and deployment.
-
 Start with the role and the session, and print both. The role is the identity every call from this notebook uses. Check the region line against the bucket you made in the S3 episode: the two must match, or the training jobs in later episodes will fail to find their data and anything you do read will be billed as cross-region transfer. If they differ, the fix is a new bucket in this region, not a new notebook instance.
 
 Work from a project folder beside the lesson clone, so downloads and outputs stay out of the repository. The Titanic episodes all use this one; the fine-tuning and RAG episodes make their own.
@@ -43,7 +35,12 @@ Work from a project folder beside the lesson clone, so downloads and outputs sta
 ```
 
 ```python
+import os
+os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the SDK otherwise prints a deprecation notice on import and on every estimator
 import sagemaker                      # SageMaker Python SDK: higher-level API for training jobs, tuning, deployment
+import logging
+logging.getLogger("sagemaker.telemetry.telemetry_logging").setLevel(logging.WARNING)   # silence the telemetry notice; the "Creating training-job" line still prints
+logging.getLogger("sagemaker.image_uris").setLevel(logging.WARNING)
 from sagemaker import get_execution_role
 
 role = sagemaker.get_execution_role() # the IAM role attached to this notebook instance; every call below acts as this role
@@ -57,8 +54,6 @@ print(f"AWS Region: {session.boto_region_name}")  # The region of the notebook i
 ### Warnings this cell prints
 
 `sagemaker.config INFO - Not applying SDK defaults from location: ...`: an info line, not an error. The SDK looked for an optional defaults file in two standard places and found none.
-
-`SageMakerV2DeprecationWarning: You are using the SageMaker Python SDK v2 ...`: the kernels ship SDK v2 and this lesson is written for it. v3 is a rewrite with a different API, so do not install it here. Ignore the warning.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -74,24 +69,12 @@ print(f"Available S3 Buckets: {bucket_names}")  # Every bucket in the account th
 
 ## Reading data from S3
 
-You can either (A) read data from S3 into memory or (B) download a copy of your S3 data into your notebook instance. Since we are using SageMaker notebooks as controllers—rather than performing training or tuning directly in the notebook—the best practice is to **read data directly from S3** whenever possible. However, there are cases where downloading a local copy may be useful. We'll show you both strategies.
+There are two ways to get a file from S3 into a notebook: read it straight into memory with `get_object`, or copy it onto the instance's disk with `download_file`. In memory is the usual choice here, since the notebook only inspects data and the jobs read S3 themselves; a copy on disk is for a file you will read many times in one session, or that another program needs as a file.
 
-### A) Reading data directly from S3 into memory  
-This is the recommended approach for most workflows. By keeping data in S3 and reading it into memory when needed, we avoid local storage constraints and ensure that our data remains accessible for SageMaker training and tuning jobs.
-
-**Pros**:
-
-- **Scalability**: Data remains in S3, allowing multiple training/tuning jobs to access it without duplication.
-- **Efficiency**: No need to manage local copies or manually clean up storage.
-- **Cost-effective**: Avoids unnecessary instance storage usage.
-
-**Cons**:
-
-- **Network dependency**: Requires internet access to S3.
-- **Potential latency**: Reading large datasets repeatedly from S3 may introduce small delays. This approach works best if you only need to load data once or infrequently.
+### A) Reading data directly from S3 into memory
 
 #### Example: Reading data from S3 into memory
-Our data is stored in the S3 bucket you created in the previous episode, named 'challenge-lastnamefirstname' (e.g., sinkorswim-doejohn). We can use the following code to read data directly from S3 into memory in the Jupyter notebook environment, without actually downloading a copy of train.csv as a local file.
+Our data is stored in the S3 bucket you created in the previous episode, named 'challenge-lastnamefirstname' (e.g., sinkorswim-doejohn). We can use the following code to read data directly from S3 into memory in the Jupyter notebook environment, without downloading a copy of `titanic_train.csv` as a local file.
 
 ```python
 import pandas as pd
@@ -117,23 +100,9 @@ train_data.head()
 ```
 
 ### B) Download copy into notebook environment
-In some cases, downloading a local copy of the dataset may be useful, such as when performing repeated reads in an interactive notebook session. This download costs nothing: it moves data from S3 to a SageMaker notebook instance in the same region, which AWS does not bill. The same `download_file` run on your laptop would be a transfer out of AWS at `$0.09` per GB.
-
-**Pros**:
-
-- **Faster access for repeated operations**: Avoids repeated S3 requests.
-- **Works offline**: Useful if running in an environment with limited network access.
-
-**Cons**:
-
-- **Consumes instance storage**: Notebook instances have limited space.
-- **Requires manual cleanup**: Downloaded files remain until deleted.
+`download_file` writes the object to the instance's disk, on the 20 GB `SageMaker/` volume. There is no transfer charge, since the instance and the bucket are in the same region; the same call on a laptop would be a transfer out of AWS at `$0.09` per GB. The file stays until you delete it.
 
 #### Example
-
-```python
-!pwd
-```
 
 
 ```python
@@ -148,11 +117,11 @@ s3.download_file(bucket_name, key, local_file_path)
 
 **Note**: You may need to hit refresh on the file explorer panel to the left to see this file. If you get any permission issues...
 
-* check that you have selected the appropriate policy for this notebook
-* check that your bucket has the appropriate policy permissions
+* the instance's IAM role is `ml-sagemaker-use`
+* the bucket policy from the S3 episode names that role
 
 #### Check the current size and storage costs of bucket
-It's a good idea to periodically check how much storage you have used in your bucket. You can do this from a Jupyter notebook in SageMaker by using the **Boto3** library, which is the AWS SDK for Python. This will allow you to calculate the total size of objects within a specified bucket. 
+Bucket size is what storage is billed on, and the bill is a day or two behind, so read the size from the notebook.
 
 The code below calculates your bucket size. The pieces that matter:
 
@@ -160,7 +129,6 @@ The code below calculates your bucket size. The pieces that matter:
 2. **Size calculation**: We sum the `Size` attribute of each object in the bucket.
 3. **Unit conversion**: The size is given in bytes, so dividing by `1024 ** 2` converts it to megabytes (MB).
 
-> **Note**: If your bucket has very large objects or you want to check specific folders within a bucket, you may want to refine this code to only fetch certain objects or folders.
 
 ```python
 # Initialize the total size counter (bytes)
@@ -190,7 +158,7 @@ print(f"Total size of bucket '{bucket_name}': {total_size_mb:.2f} MB")
 ```
 
 ### Using the lesson's helper functions
-We have added code to calculate bucket size to a helper function called `get_s3_bucket_size(bucket_name)` for your convenience. There are also some other helper functions in `scripts/helpers.py` of the lesson repository, which you cloned to `/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/` in the previous episode.
+The same computation is the helper function `get_s3_bucket_size(bucket_name)`. There are also some other helper functions in `scripts/helpers.py` of the lesson repository, which you cloned to `/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/` in the previous episode.
 
 Tell Python where the lesson's `scripts/` folder is:
 
@@ -202,7 +170,7 @@ import helpers  # the lesson's helper functions (bucket size, cost estimate, obj
 ```
 
 
-Our helpers.py file can be found in `ML_with_AWS_SageMaker/scripts/helpers.py`. With this file downloaded, you can call this function via...
+Then:
 
 ```python
 helpers.get_s3_bucket_size(bucket_name)
@@ -212,11 +180,11 @@ helpers.get_s3_bucket_size(bucket_name)
 ### Check storage costs of bucket
 To estimate the storage cost of your Amazon S3 bucket directly from a Jupyter notebook in SageMaker, you can use the following approach. This method calculates the total size of the bucket and estimates the monthly storage cost based on AWS S3 pricing.
 
-**Note**: AWS S3 pricing varies by region and storage class. The example below uses the S3 Standard storage class pricing for the US East (N. Virginia) region as of November 1, 2024. Please verify the current pricing for your specific region and storage class on the [AWS S3 Pricing page](https://aws.amazon.com/s3/pricing/).
+The rates are S3 Standard in us-east-1 from the AWS price list of 2026-10-16; other regions differ by a few percent and other storage classes by more ([AWS S3 Pricing](https://aws.amazon.com/s3/pricing/)).
 
 ```python
 # AWS S3 Standard Storage pricing for US East (N. Virginia) region
-# Pricing tiers as of November 1, 2024
+# Pricing tiers from the AWS price list of 2026-10-16
 first_50_tb_price_per_gb = 0.023  # per GB for the first 50 TB
 next_450_tb_price_per_gb = 0.022  # per GB for the next 450 TB
 over_500_tb_price_per_gb = 0.021  # per GB for storage over 500 TB
@@ -241,7 +209,7 @@ print(f"Estimated annual storage cost: ${cost*12:.5f}")
 ```
 
 
-For your convenience, we have also added this code to a helper function.
+The same code is a helper function:
 
 
 ```python
@@ -251,16 +219,8 @@ print(f"Estimated annual cost ({storage_size_gb:.4f} GB): ${monthly_cost*12:.5f}
 
 ```
 
-**Important Considerations**:
-
-- **Pricing Tiers**: AWS S3 pricing is tiered. The first 50 TB per month is priced at `$0.023 per GB`, the next 450 TB at `$0.022 per GB`, and storage over 500 TB at `$0.021 per GB`. Ensure you apply the correct pricing tier based on your total storage size.
-- **Region and Storage Class**: Pricing varies by AWS region and storage class. The example above uses the S3 Standard storage class pricing for the US East (N. Virginia) region. Adjust the pricing variables if your bucket is in a different region or uses a different storage class.
-- **Additional Costs**: This estimation covers storage costs only. AWS S3 may have additional charges for requests, data retrievals, and data transfers. For a comprehensive cost analysis, consider these factors as well.
-
-For detailed and up-to-date information on AWS S3 pricing, please refer to the [AWS S3 Pricing page](https://aws.amazon.com/s3/pricing/).
-
 ## Writing output files to S3
-As your analysis generates new files or demands additional documentation, you can upload files to your bucket as demonstrated below. For this demo, we write a small `Notes.txt` file on the instance and check that it exists:
+Uploading is the reverse call. For this demo, we write a small `Notes.txt` file on the instance and check that it exists:
 
 ```python
 notes_file_path = "/home/ec2-user/SageMaker/titanic/Notes.txt"
@@ -306,7 +266,7 @@ file_list
 ### Challenge: before and after
 
 1. Using `helpers.get_s3_bucket_size(bucket_name)`, record the size of your bucket. Then create a second file (say `docs/Notes2.txt` with a few lines of text), upload it under the `docs/` prefix, and measure the bucket size again. By how much did it grow, and what does that cost per month at `$0.023` per GB?
-2. The next episode launches a training job that writes its outputs to your bucket. Why does the lesson keep everything in one bucket, organised with prefixes like `docs/`, rather than creating a bucket per task?
+2. The training episode launches a job that writes its outputs to your bucket. Why does the lesson keep everything in one bucket, organised with prefixes like `docs/`, rather than creating a bucket per task?
 
 :::::::::::::::::::::::::::::::::::: solution
 
@@ -320,7 +280,7 @@ with open("Notes2.txt", "w") as f:
 s3.upload_file("Notes2.txt", bucket_name, "docs/Notes2.txt")
 
 size_after = helpers.get_s3_bucket_size(bucket_name)
-print(size_before, size_after)
+print(f"before {size_before['size_mb'] * 1024:,.1f} KB, after {size_after['size_mb'] * 1024:,.1f} KB: grew by {(size_after['size_mb'] - size_before['size_mb']) * 1024:.1f} KB")   # the helper returns a dict with size_mb and size_gb; 0.0 on a rerun, since the same file is overwritten
 ```
 
 The bucket grows by the size of the file (a few hundred bytes here), and at `$0.023` per GB-month that is well under a thousandth of a cent per month. The same two lines, run before and after a training job, tell you what the job wrote and whether something is accumulating that you should clean up.
@@ -333,9 +293,9 @@ The bucket grows by the size of the file (a few hundred bytes here), and at `$0.
 
 :::::::::::::::::::::::::::::::::::::: keypoints 
 
-- Load data from S3 into memory for efficient storage and processing.
+- Read S3 objects into memory with `get_object`; copy one to the instance's disk with `download_file` only when a program needs it as a file.
 - Periodically check storage usage and costs to manage S3 budgets.
-- Use SageMaker to upload analysis results and maintain an organized workflow.
+- Write outputs back to your bucket under a prefix, and read the bucket's size from the notebook to see what accumulates.
 - The lesson repository lives at `/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/`; every later episode adds its `scripts/` folder to `sys.path` and imports `helpers`.
 
 

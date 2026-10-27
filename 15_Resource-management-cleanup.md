@@ -31,7 +31,12 @@ Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/15_Resource-management
 
 ```python
 import boto3
+import os
+os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the SDK otherwise prints a deprecation notice on import and on every estimator
 import sagemaker
+import logging
+logging.getLogger("sagemaker.telemetry.telemetry_logging").setLevel(logging.WARNING)   # silence the telemetry notice; the "Creating training-job" line still prints
+logging.getLogger("sagemaker.image_uris").setLevel(logging.WARNING)
 import sys
 
 sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")   # the lesson's helper module, cloned in the controllers episode
@@ -48,7 +53,7 @@ bucket_name = "sinkorswim-doejohn"            # replace with your bucket
 
 ## What is still running under your name?
 
-Everything this lesson launched carries your name in its job name or its tags, so one pass over the job lists shows what is still billing. A completed job holds nothing; an InProgress one bills until it ends or hits its cap.
+One pass over the three job lists shows every job still running in the account; yours are the ones with your notebook name in the training jobs and the `WattBot-` Processing jobs you launched. A completed job holds nothing; an InProgress one bills until it ends or hits its cap.
 
 ```python
 # Every notebook instance in the account (the list is shared, so other learners' instances appear too), with its status.
@@ -60,14 +65,14 @@ for nb in sm.list_notebook_instances()["NotebookInstances"]:
 # The three kinds of job, each with its own list call. The call returns a dictionary; the list of jobs is under a key
 # whose name differs per kind ("TrainingJobSummaries", ...), and so does the key holding the job's name, so the loop
 # carries both. StatusEquals keeps only running jobs; NameContains keeps the ones with your name in the job name.
-print("\nJobs still InProgress with your name in them:")
+print("\nJobs still InProgress in the account:")
 running = 0
 for kind, lister, key, name_key in [
     ("training",   sm.list_training_jobs,              "TrainingJobSummaries",            "TrainingJobName"),
     ("tuning",     sm.list_hyper_parameter_tuning_jobs, "HyperParameterTuningJobSummaries", "HyperParameterTuningJobName"),
     ("processing", sm.list_processing_jobs,            "ProcessingJobSummaries",          "ProcessingJobName"),
 ]:
-    for job in lister(StatusEquals="InProgress", NameContains=name, MaxResults=50)[key]:
+    for job in lister(StatusEquals="InProgress", MaxResults=50)[key]:   # every running job in the account; the Processing jobs are not named after you, so no name filter
         print(f"  {kind:<11} {job[name_key]}")
         running += 1
 print("  none" if running == 0 else f"  {running} job(s) still billing: stop them from the console if you no longer need them")
@@ -92,7 +97,7 @@ for p in profiles:
 print("none" if not profiles else f"{len(profiles)} profile(s) with your prefix; the next cell deletes them")
 ```
 
-Deleting them is one call per profile. The cell deletes only the profiles the cell above listed, the ones whose name starts with your project and your name, so nobody else's are touched even though the account's policy would allow it; read the list before you set the flag. The notebook instance needs the Bedrock role from the RAG episodes for this call; on the old role it fails with an access-denied error, and the Bedrock console does the same job by hand (Inference and Assessment → Cross-region inference → Application inference profiles → select → Delete).
+Deleting them is one call per profile. The cell deletes only the profiles the cell above listed, the ones whose name starts with your project and your name, so nobody else's are touched even though the account's policy would allow it; read the list before you set the flag.
 
 ```python
 confirm_delete = False   # set to True after reading the list above
@@ -110,7 +115,7 @@ Now the console steps. Rerun the cells above when you are done; every list shoul
 
 ## Shutting down notebook instances
 
-Notebook instances in SageMaker are billed per second, so it’s essential to stop or delete them when they are no longer needed. Earlier in the **Notebooks as controllers** episode, we discussed using lower-cost instance types like `ml.t3.medium` (approximately `$0.05`/hour) for controlling workflows. While this makes open notebooks less costly than larger instances, it’s still a good habit to stop or delete notebooks to avoid unnecessary spending, especially if left idle for long periods.
+Notebook instances bill per second at an hourly rate while they run, so stop or delete them when they are no longer needed. Earlier in the **Notebooks as controllers** episode, we discussed using lower-cost instance types like `ml.t3.medium` (approximately `$0.05`/hour) for controlling workflows. A small instance left running still bills a dollar a day.
 
 1. **Navigate to SageMaker in the AWS Console.**
 2. In the left-hand menu, click **Notebook instances**.
@@ -118,11 +123,11 @@ Notebook instances in SageMaker are billed per second, so it’s essential to st
 4. Choose **Stop** to shut it down temporarily or **Delete** to permanently remove it.
    > **Tip:** If you plan to reuse the notebook later, stopping it is sufficient. Deleting is recommended if you are finished with the workshop.
 
-A stopped instance stops the compute charge but keeps its storage volume, which bills at about `$0.14` per GB-month. The default 5 GB is cents; the 100 GB volume the optional GPU-notebook episode asks for is `$14` a month. If you enlarged the volume to hold model weights, delete the instance once the episode is done.
+A stopped instance stops the compute charge but keeps its storage volume, which bills at about `$0.14` per GB-month. The 20 GB the controllers episode set is `$2.80` a month; the 100 GB volume the optional GPU-notebook episode asks for is `$14` a month. If you enlarged the volume to hold model weights, delete the instance once the episode is done.
 
 ## Cleaning up S3 storage
 
-While S3 storage is relatively inexpensive, cleaning up unused buckets and files helps keep costs minimal and your workspace organized.
+S3 storage is cheap, and a bucket left behind bills every month until it is deleted.
 
 1. **Navigate to the S3 Console.**
 2. Locate the bucket(s) you created for this workshop.
@@ -132,7 +137,7 @@ While S3 storage is relatively inexpensive, cleaning up unused buckets and files
    - Empty the bucket by selecting **Empty bucket** under **Bucket actions**.
    - Delete the bucket by clicking **Delete bucket**.
 
-> **Reminder:** Earlier in the workshop, we set up tags for S3 buckets. Use these tags to filter and identify workshop-related buckets, ensuring that only unnecessary resources are deleted.
+> **Reminder:** Earlier in the workshop, we set up tags for S3 buckets. Use these tags to filter and identify workshop-related buckets, so that only workshop resources are deleted.
 
 ## Monitoring and stopping active jobs
 
@@ -145,7 +150,7 @@ SageMaker charges for training, tuning and Processing jobs while they run, so st
 
 ## Billing and cost monitoring
 
-Managing your AWS expenses is vital to staying within budget. Follow these steps to monitor and control costs:
+To see what you are spending:
 
 1. **Set up billing alerts:**
    - Go to the AWS **Billing Dashboard**.
@@ -174,9 +179,9 @@ In the shared workshop account, the instructors sweep the account with [aws-nuke
 
 ## Rules the account enforces, and how to set them on your own
 
-Several things you could have done wrong in this workshop were refused before they cost anything: a job launched without the three tags, with a blank name, with a Project that is not on the account's list, with an instance type outside the lesson's list, or with no runtime cap, and any endpoint or EC2 instance at all. None of that is SageMaker's own behaviour. It is a set of rules the account administrator attached to the role your notebook runs as, written in the same IAM policy language that gave the role its permissions, and each one says: refuse this request if it looks like this. An AWS account with no such rules lets a tagged job and an untagged one through alike, and lets a notebook instance run until someone remembers it.
+Several things you could have done wrong in this workshop were refused before they cost anything: a job launched without the three tags, with a blank name, with a Project that is not on the account's list, with an instance type outside the lesson's list, a Processing job with no runtime cap, and any endpoint or EC2 instance at all. None of that is SageMaker's own behaviour. It is a set of rules the account administrator attached to the role your notebook runs as, written in the same IAM policy language that gave the role its permissions, and each one says: refuse this request if it looks like this. An AWS account with no such rules lets a tagged job and an untagged one through alike, and lets a notebook instance run until someone remembers it.
 
-If you administer an account of your own, a lab's or a project's, the same rules are an afternoon's work and they hold across the console, the SDK and the CLI, because all three are the same API. The lesson's *Account preparation checklist* instructor page has the policy as JSON and the one command that attaches it to a role; its *Overnight safeguards* section has the three measures that go with it. In order of what they prevent for what they cost:
+If you administer an account of your own, a lab's or a project's, the same rules are an afternoon's work, and they hold across the console, the SDK and the CLI, because all three are the same API. The lesson's *Account preparation checklist* instructor page has the policy as JSON and the one command that attaches it to a role; its *Overnight safeguards* section has the three measures that go with it. In order of what they prevent for what they cost:
 
 | Rule | What it stops | How it is done |
 |---|---|---|
@@ -184,10 +189,10 @@ If you administer an account of your own, a lab's or a project's, the same rules
 | Only instance types you have priced | the `$63`-an-hour box chosen by accident | an IAM deny when `sagemaker:InstanceTypes` is not on your list |
 | A runtime cap on every job, at most 48 hours | a hung job billing for a week | an IAM deny when `sagemaker:MaxRuntimeInSeconds` is missing or too large |
 | No endpoints, no EC2 | the two resource kinds with no runtime cap at all | an IAM deny on `CreateEndpoint` and `ec2:RunInstances` |
-| Notebook instances stop at 11 pm | the forgotten GPU notebook, `$60` a night | a ten-line scheduled Lambda function |
+| Notebook instances stop at 11 pm | the forgotten GPU notebook, `$63` a night | a ten-line scheduled Lambda function |
 | A budget per person and a brake on the total | a quiet overspend | AWS Budgets on the `Name` tag, with an action that attaches a deny policy at the ceiling |
 
-A deny applies to everyone who uses the role, including you, so your own launches need real tag values and listed instance types too. And the error a refused request gets, `AccessDeniedException ... with an explicit deny in an identity-based policy`, does not say which rule matched, so write the rules down where the people using the account will find them, as the *If the launch is refused* callout in the first training episode does here. A deny cannot carry a custom message either: AWS says `explicit deny in an identity-based policy` and nothing more, which is why this lesson keeps a copy of the policy next to its helper code and checks every launch against it in the notebook first, with `helpers.check_launch`, so the message you get names the rule. The [If a Launch Is Refused](../learners/refused-launch.md) page is the same list in one place, for the day a job of your own is refused.
+A deny applies to everyone who uses the role, including you, so your own launches need real tag values and listed instance types too. And the error a refused request gets, `AccessDeniedException ... with an explicit deny in an identity-based policy`, does not say which rule matched, so write the rules down where the people using the account will find them. A deny cannot carry a custom message either: AWS says `explicit deny in an identity-based policy` and nothing more, which is why this lesson keeps a copy of the policy next to its helper code and checks every launch against it in the notebook first, with `helpers.check_launch`, so the message you get names the rule. The [If a Launch Is Refused](../learners/refused-launch.md) page is the same list in one place, for the day a job of your own is refused.
 
 Habits that need no administrator:
 
@@ -216,7 +221,7 @@ A complete list for someone who did every episode, including the optional ones:
 | GPU notebook instance (`ml.g6e.xlarge`, 100 GB volume) | Optional GPU-notebook episode | Yes: `$2.61`/h InService, `$14`/month for the volume when Stopped | SageMaker → Notebook instances → Delete |
 | GitHub personal access token | Optional PAT episode | No, but it is a credential | GitHub → Settings → Developer settings → revoke |
 
-Stopping the controller and walking away leaves the bucket billing for storage, a stopped GPU instance's volume billing at `$0.14`/GB-month, and any Processing job that had not hit its `max_run` yet. Model artifacts in your bucket are the only thing worth keeping; download them once, then delete the bucket.
+Stopping the controller and walking away leaves the bucket billing for storage, a stopped GPU instance's volume billing at `$0.14`/GB-month, and any Processing job that had not hit its `max_runtime_in_seconds` yet. Model artifacts in your bucket are the only thing worth keeping; download them once, then delete the bucket.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -233,6 +238,5 @@ Stopping the controller and walking away leaves the bucket billing for storage, 
 - Regularly clean up unused S3 buckets and objects to save on storage costs.
 - Monitor your expenses through the AWS Billing Dashboard and set up alerts.
 - Use tags (set up earlier in the workshop) to track and monitor costs by resource.
-- Following best practices for AWS resource management can significantly reduce costs and improve efficiency.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::

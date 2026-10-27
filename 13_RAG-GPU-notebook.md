@@ -16,7 +16,7 @@ exercises: 15
 
 - Verify that our SageMaker notebook instance has a working GPU and compatible Python environment.
 - Reuse the WattBot metadata and questions from the shared bucket, and the `chunks.jsonl` the Bedrock episode cached in your own bucket.
-- Implement a simple, explicit “from scratch” embedding pipeline with a self-hosted embedding model, without relying on FAISS or production vector DBs.
+- Build the embedding matrix and the retrieval step with a self-hosted embedding model, in plain NumPy.
 - Build a small retrieval helper that finds the most relevant chunks for a question using cosine similarity in embedding space.
 - Serve a 27B open-weight generator (Qwen3.8-27B in FP8, via vLLM) on the notebook's GPU and wire it to the retriever to produce WattBot-format answers (including `answer`, `ref_id`, `ref_url`, and `supporting_materials`).
 - Explain why inference uses quantized weights rather than bf16, and what a self-hosted GPU costs per hour, per forgotten weekend, and per forgotten month.
@@ -69,13 +69,13 @@ The habits that keep this safe:
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-Self-hosting on a notebook GPU is nonetheless the right starting point for understanding the alternatives, because it is:
+Self-hosting on a notebook GPU is the simplest form of it:
 
 - Easy to understand on the AWS side (pick a GPU instance, pick a model, go)
 - Ideal for learning what retrieval and generation do, step by step
 - The fastest loop for experimenting with prompts and models that Bedrock does not carry
 
-The Processing Jobs episode runs this same pipeline as short-lived jobs, so the GPU only bills while it is embedding or generating; that is the pattern to use for real work. Later patterns (inference endpoints, batch transform) build on the same idea.
+The Processing Jobs episode runs this same pipeline as short-lived jobs, so the GPU only bills while it is embedding or generating; that is the pattern to use for real work.
 
 
 ## Overview: WattBot RAG on a single notebook GPU
@@ -123,6 +123,8 @@ We reuse the same two buckets as the Bedrock episode: the shared bucket for `met
 
 ```python
 # also verify you have selected the conda_pytorch kernel
+import os
+os.environ["HF_HOME"] = "/home/ec2-user/SageMaker/hf_cache"   # before any Hugging Face import: every model download goes to the volume, not the small root disk
 import torch
 print("torch cuda available:", torch.cuda.is_available())   # False means PyTorch cannot use the GPU even if nvidia-smi sees it
 print("num gpus:", torch.cuda.device_count())
@@ -130,7 +132,7 @@ print("num gpus:", torch.cuda.device_count())
 
 ### Install vLLM first
 
-We install the inference server before loading anything else, because the install may replace PyTorch and then needs a kernel restart; doing it now means nothing is lost by restarting.
+The install may replace PyTorch and then needs a kernel restart, so it comes before anything is loaded.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
@@ -144,7 +146,7 @@ If the install changes PyTorch, restart the kernel (**Kernel → Restart**) befo
 
 ```python
 # Several GB; it may replace torch, so restart the kernel (Kernel -> Restart) if the log says it did
-%pip install -q "vllm>=0.17" "peft>=0.18"   # Qwen3.8 needs vLLM 0.17+, which brings its own PyTorch; peft upgraded to match the transformers it installs
+%pip install -q "vllm>=0.17"   # Qwen3.8 needs vLLM 0.17+, which brings its own PyTorch
 ```
 
 
@@ -161,7 +163,12 @@ import boto3
 import pandas as pd
 import numpy as np
 
+import os
+os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the SDK otherwise prints a deprecation notice on import and on every estimator
 import sagemaker
+import logging
+logging.getLogger("sagemaker.telemetry.telemetry_logging").setLevel(logging.WARNING)   # silence the telemetry notice; the "Creating training-job" line still prints
+logging.getLogger("sagemaker.image_uris").setLevel(logging.WARNING)
 from sagemaker import get_execution_role
 
 
@@ -306,21 +313,12 @@ Each chunk keeps a pointer back to its document and page metadata (`doc_id`, `ti
 
 ## Step 3 – Build an embedding matrix
 
-Now we embed each chunk into a vector using an open **embedding model**. For WattBot, a strong and relatively efficient choice is:
+Now we embed each chunk into a vector with an open **embedding model**:
 
-### `thenlper/gte-large` (Recommended baseline embedder)
+### `thenlper/gte-large`
 
-- Size / parameters:  ~335M parameters, roughly 1.3–1.4 GB in BF16/FP16 when loaded on GPU. Fits cleanly on T4 (16 GB), L4, A10G, A10, A100, and all g5.* instances.  Offers noticeably better retrieval quality than smaller 100M–150M models without requiring high-end GPU memory. Runs comfortably on g4dn.xlarge, g5.xlarge, or g5.2xlarge during workshops. Lets participants see meaningful improvements from chunking and retrieval methods without excessive compute cost.
+The embedder the Processing Jobs episode used: 335 million parameters, 0.7 GB in bf16, 1,024-dimensional vectors, and about 1,100 chunks a minute on an A10G, so the 9,000 chunks here take a few minutes on this GPU.
 
-- Intended use:  General-purpose retrieval and semantic search across academic PDFs, sustainability reports, and mixed-domain long-form documents. Stronger semantic coherence than gte-base or MiniLM, but still lightweight enough for workshop hardware.
-
-- Throughput expectations:
-  - CPU only: workable for small corpora (<2k chunks) but slow for anything larger.  
-  - GPU (T4, L4, A10G, A100) with batch sizes around 64–128:  
-    - 20k–40k chunks/min on L4 or A10G  
-    - 10k–15k chunks/min on T4  
-    - 50k+ chunks/min on A100  
-      
 We will:
 
 1. Load the embedding model on GPU if available.
@@ -334,7 +332,7 @@ Later, we’ll implement a small retrieval helper that does cosine-similarity se
 ```python
 # We'll use a stronger embedding model now that we have a GPU.
 # This model has ~335M parameters and benefits from GPU acceleration,
-# but is still reasonable to run on a single 24 GB GPU.
+# and fits beside the 27B generator on this 48 GB GPU.
 embedding_model_id = "thenlper/gte-large"
 
 print("CUDA available for embeddings:", torch.cuda.is_available())
@@ -362,7 +360,7 @@ def embed_texts(embedder, docs, batch_size: int = 32) -> np.ndarray:
             normalize_embeddings=True,   # unit-length vectors, so a dot product is the cosine similarity
         )
         all_embeddings.append(emb)
-    embeddings = np.vstack(all_embeddings) if all_embeddings else np.zeros((0, 768))
+    embeddings = np.vstack(all_embeddings) if all_embeddings else np.zeros((0, 1024))
     print(f"Computed embeddings for {len(texts)} chunks in {time.time() - start:.1f}s")
     return embeddings
 
@@ -379,54 +377,9 @@ chunk_embeddings.shape
 
 ### 4. Build a simple retrieval step (cosine similarity)
 
-We are **not** using a heavy vector database in this episode.
+Retrieval here is cosine similarity between the question's vector and every chunk's vector, with the top *k* chunks as context, and nothing more: for nine thousand chunks that is one matrix multiply. A vector database (FAISS, Chroma, Weaviate) is the same step built for millions of chunks or many concurrent users, with approximate search, metadata filters and a shared index; swapping it in changes nothing else in the pipeline.
 
-Instead, we:
-
-1. Embed each chunk with `thenlper/gte-large` (done above).
-2. Embed each question.
-3. Compute cosine similarity between the question embedding and all chunk embeddings.
-4. Take the top–k most similar chunks as our retrieved context.
-
-This keeps the retrieval logic completely transparent for teaching, while still matching the *spirit* of
-production systems that use FAISS, Chroma, Weaviate, etc.
-
-#### When might FAISS or a vector database be worth exploring?
-
-For small–to–medium experiments (a few thousand to maybe tens of thousands of chunks), this "plain NumPy + cosine
-similarity" approach is usually enough. You might consider FAISS or a full vector DB when:
-
-- **Your corpus gets big**  
-  Once you’re in the hundreds of thousands to millions of chunks, brute-force similarity search can become slow
-  and memory-hungry. FAISS and friends provide *approximate nearest neighbor* search that scales much better.
-
-- **You need low-latency, repeated queries**  
-  If many users (or a web app) will hit your RAG system concurrently, you’ll want:
-  - fast indexing,
-  - efficient caching, and
-  - sub-second query latency.  
-  Vector DBs are designed for this use case.
-
-- **You need rich filtering or metadata search**  
-  Vector DBs often support:
-  - filtering by metadata (e.g., `paper = "chung2025"`, `year > 2021`),
-  - combining keyword + vector search (“hybrid search”),
-  - role-based access control and multi-tenant setups.
-
-- **You want to share an index across services**  
-  If multiple notebooks, microservices, or teams need to reuse the **same embedding index**, a shared FAISS index or
-  hosted vector DB is much easier to manage than passing around `.npy` files.
-
-- **You need GPU-accelerated or distributed search**  
-  FAISS can use GPUs and sharding to speed up search on very large embedding collections. This is overkill for our
-  teaching demo (and the Wattbot project in general), but very relevant for production-scale systems.
-
-In this episode we deliberately stick with a simple in-memory index so the retrieval step is easy to inspect and
-debug. In your own projects you can **swap out the retrieval layer** for FAISS or a vector DB
-without changing the overall RAG architecture: the model still sees “top–k retrieved chunks” as context.
-
-
-`retrieve_top_k` from `wattbot_rag.py` is that search: normalize the query and the matrix, one matrix multiply for the cosine similarities, `argsort` for the top *k*. Open the file to see it; it is a dozen lines. `embed_query_with` wraps the sentence-transformer as the `embed_query(question)` callable the rest of the pipeline expects.
+`retrieve_top_k` from `wattbot_rag.py` is that search: normalize the query and the matrix, one matrix multiply for the cosine similarities, `argsort` for the top *k*. Open the file to see it; it is a dozen lines. `embed_query_with` wraps the embedder as the `embed_query(question)` callable the rest of the pipeline expects.
 
 ```python
 embed_query = embed_query_with(embedder)   # embed_query(question) -> vector, with the same model that embedded the chunks
@@ -468,7 +421,6 @@ We will:
 ```python
 import os
 # Keep model weights on the notebook's 100 GB volume rather than the small root disk.
-os.environ["HF_HOME"] = "/home/ec2-user/SageMaker/hf_cache"
 
 from vllm import LLM, SamplingParams
 
@@ -554,6 +506,8 @@ For every row of `train_QA.csv`, `run_single_qa`:
 
 ```python
 docid_to_url = build_docid_to_url(metadata_df)
+from wattbot_rag import drop_questions_without_papers
+train_df = drop_questions_without_papers(train_df, {d["doc_id"] for d in chunked_docs})   # as in the other RAG episodes: questions citing papers the corpus lacks are not scored
 
 all_results = []
 max_N = np.inf   # set to e.g. 5 for a smoke test
@@ -603,7 +557,7 @@ results_df = compute_wattbot_score(
 )
 ```
 
-Change `retrieval_threshold` or `top_k` in the loop above, rerun it, and rescore: with the model loaded, a full pass over the training set takes a few minutes, which is what a GPU notebook is for. Then stop the instance.
+Change `retrieval_threshold` or `top_k` in the loop above, rerun it, and rescore: with the model loaded, a pass over all 245 questions takes tens of minutes, and a `max_N` of 50 a few. Then stop the instance.
 
 ## Recap and next steps
 
@@ -614,7 +568,7 @@ In this episode, we:
 - Used an LLM to generate answers from retrieved context and wrote results out to a CSV for later scoring and analysis.
 - Handled unanswerable questions with an `is_blank` flag so the system can explicitly say “I don’t know” when the evidence isn’t there.
 
-This is just a first pass at a RAG pipeline: it works, but there’s a lot of headroom to improve both accuracy and robustness. Some natural next steps:
+This is just a first pass at a RAG pipeline: some next steps:
 
 - **Increase the size/quality of models used for embedding and generation**: Try stronger embedding models (e.g., larger sentence-transformers or domain-tuned embeddings) and more capable LLMs for answer generation, especially if you have GPU budget.
 
@@ -633,7 +587,7 @@ This is just a first pass at a RAG pipeline: it works, but there’s a lot of he
   - Parse equations and technical language more reliably.
   - Are less likely to hallucinate when reading dense scientific prose.
 
-As you iterate, the goal is to treat this notebook as a baseline RAG “workbench”: you can swap in better models, smarter retrieval strategies, and richer document preprocessing without changing the overall pipeline structure.
+Models, retrieval and preprocessing can each be swapped without changing the rest of the pipeline.
 
 ### What did this episode cost?
 
@@ -643,7 +597,7 @@ There is no job record to ask here; the bill is simply the instance's hours. Thi
 g6e_price = 2.61   # $/hour, ml.g6e.xlarge on-demand, from the Instances for ML page
 hours = (time.time() - session_start) / 3600
 print(f"this notebook has been running {hours * 60:.0f} min since the setup cell: ${hours * g6e_price:.2f} so far, and counting")
-print(f"the same pipeline as Processing jobs billed about $0.60 (that episode); on Bedrock, about fifteen cents")
+print(f"the same pipeline on the 53-question sample billed about $0.60 as Processing jobs; on Bedrock, about fifteen cents")
 ```
 
 The Processing Jobs episode does the same work, with the same `wattbot_rag.py`, as short-lived SageMaker jobs, so the GPU only bills while it is embedding or generating. Stop this instance now, and delete it if you are done with the episode.
@@ -653,16 +607,13 @@ The Processing Jobs episode does the same work, with the same `wattbot_rag.py`, 
 ::::::::::::::::::::::::::::::::::::: keypoints
 
 - **Why self-host at all**: Bedrock's catalog is curated and lags releases; most open-weight models (including Qwen3.8-27B) are not on it. When the model you need is not offered, you rent a GPU and serve it yourself.
-- **Inference uses reduced-precision weights**: no gradients means the weights are the memory cost. FP8 puts a 27B model on one 48 GB GPU (`ml.g6e.xlarge`); bf16 would need 54 GB and a multi-GPU instance.
+- **Inference uses reduced-precision weights**: no gradients means the weights are the memory cost. FP8 puts a 27B model on one 48 GB GPU (`ml.g6e.xlarge`); bf16 would need 54 GB, an 80 GB GPU or a multi-GPU instance.
 - **The meter never stops on its own**: `ml.g6e.xlarge` is `$2.61`/h, `$167` per forgotten weekend, `$1,906` per forgotten month, plus `$14`/month for the storage volume even when stopped. Stop it when you stand up; delete it when the episode is over.
-- **Local-first RAG**: For teaching (and small corpora), we avoid an external vector database
-  and instead perform cosine similarity search over in-memory embeddings.
+- **Retrieval is a matrix multiply**: cosine similarity over the in-memory embedding matrix is enough for a corpus this size; a vector database is the same step for a corpus of millions.
 - **Ground-truth units**: The `answer_unit` column is always copied directly
   from `train_QA.csv`, never guessed by the LLM.
 - **Two-stage LLM use**: One call focuses on *answering and citing*; a second,
   lighter call produces a short explanation tagged with an evidence type.
 - **WattBot conventions**: We respect the Kaggle competition format,
   using `is_blank` for unanswerable questions and for missing fields.
-- **Scalability path**: The same logic can later be swapped to FAISS/Chroma
-  and larger models, while preserving the interface used here.
 ::::::::::::::::::::::::::::::::::::::::::::::::

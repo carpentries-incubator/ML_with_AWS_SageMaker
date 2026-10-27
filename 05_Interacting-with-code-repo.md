@@ -49,7 +49,6 @@ Connect it to the repository you just created, replacing `YOUR_GITHUB_USERNAME`:
 ## Step 1: A GitHub personal access token (PAT)
 A notebook instance is a machine that other people may be able to reach (an administrator, or whoever uses it after you) and that you may delete next month. Neither a saved password nor an SSH key belongs on it. GitHub's answer is a **Personal Access Token**: a credential you create with only the permissions you need and an expiry date, use over HTTPS, and revoke in one click. We will enter it with `getpass` each session so that it never appears in a cell or a saved notebook.
 
-> **Important Note**: A PAT is a password with a scope. Give it the minimum permissions, set an expiry, and never paste it into code.
 
 #### Generate the token on GitHub
 1. Go to **Settings** by clicking on your profile picture in the upper-right corner of GitHub.
@@ -62,7 +61,7 @@ A notebook instance is a machine that other people may be able to reach (an admi
    - **For a private repository**: **`repo`**.
 7. Click **Generate token** and **copy it immediately**: you cannot see it again once you leave the page.
 
-> **Caution**: Treat your PAT like a password. Store it in a password manager, not in a file on the instance, and revoke it (same page, **Delete**) when the workshop is over; the cleanup episode's checklist reminds you.
+Treat the token like a password: store it in a password manager, not in a file on the instance, and revoke it (same page, **Delete**) when the workshop is over; the cleanup episode's checklist reminds you.
 
 #### Enter it with `getpass`
 `input()` and `getpass.getpass()` prompt you in the notebook; the token is held in a Python variable for this kernel session and is not written into the notebook file.
@@ -74,14 +73,14 @@ username = input("GitHub Username: ")
 token = getpass.getpass("GitHub Personal Access Token (PAT): ")  # kept in this variable for the kernel session only
 ```
 
-**Note**: when you re-run the whole notebook later, this cell prompts again, because nothing is saved.
+When you re-run the whole notebook later, this cell prompts again, because nothing is saved.
 
 ## Step 2: Configure Git settings
-Git records an author on every commit. Set yours once; `--global` stores it in your home directory on the instance, so it persists across restarts of this instance (not across instances).
+Git records an author on every commit. Set yours in this repository: without `--global` the setting goes into the repository's own `.git/config`, under `SageMaker/`, which survives a stop. (`--global` would write to your home directory, which is reset when the instance stops.)
 
 ```python
-!git config --global user.name "Your name"             # appears as the author in the commit history
-!git config --global user.email your_email@example.edu  # use the email on your GitHub account so commits link to your profile
+!git config user.name "Your name"             # appears as the author in the commit history
+!git config user.email your_email@example.edu  # use the email on your GitHub account so commits link to your profile
 ```
 
 ## Step 3: Convert `.ipynb` to `.py`
@@ -111,20 +110,7 @@ We want our notebook under version control, but a `.ipynb` file is JSON with out
 [jupytext] Writing 04_Accessing-S3-via-SageMaker-notebooks.py
 ```
 
-3. With several notebooks, convert them all in a loop:
-
-```python
-import subprocess
-import os
-
-notebooks = [f for f in os.listdir() if f.endswith('.ipynb')]
-for notebook in notebooks:
-    output_file = notebook.replace('.ipynb', '.py')
-    subprocess.run(["jupytext", "--to", "py", notebook, "--output", output_file])  # the same shell command, run from Python
-    print(f"Converted {notebook} to {output_file}")
-```
-
-The same loop is `helpers.convert_files()` in the lesson's `scripts/helpers.py`. It converts every `.ipynb` in the *current directory*, so run it from inside the folder you mean to convert:
+3. With several notebooks, `helpers.convert_files()` in the lesson's `scripts/helpers.py` converts them all. It converts every `.ipynb` in the *current directory*, so run it from inside the folder you mean to convert:
 
 ```python
 import sys
@@ -136,7 +122,7 @@ helpers.convert_files(direction="notebook_to_python")
 
 ## Step 4: Add and commit the `.py` file
 
-1. Check the status of the repository. Make sure you are in the repository folder first.
+1. Check the status of the repository.
 
 ```python
 %cd /home/ec2-user/SageMaker/sagemaker-work
@@ -159,13 +145,7 @@ helpers.convert_files(direction="notebook_to_python")
 ## Step 5: Ignore notebooks and clutter with `.gitignore`
 A `.gitignore` file lists patterns git should never track. Ignoring `*.ipynb` across the repository means a stray `git add .` cannot commit a notebook by accident.
 
-1. Confirm you are in the repository folder.
-
-```python
-!pwd
-```
-
-2. Create the file (hidden in the file browser because it starts with a dot; `ls -a` shows it) and add the notebook pattern.
+1. Create the file (hidden in the file browser because it starts with a dot; `ls -a` shows it) and add the notebook pattern.
 
 ```python
 with open(".gitignore", "a") as gitignore:   # "a" appends, so re-running the cell keeps earlier rules
@@ -173,7 +153,7 @@ with open(".gitignore", "a") as gitignore:   # "a" appends, so re-running the ce
 !cat .gitignore
 ```
 
-3. While we are here, ignore the usual clutter too: caches and temporary files. (The NumPy archives the training episodes write are the challenge at the end.)
+2. While we are here, ignore the usual clutter too: caches and temporary files. (The NumPy archives the training episodes write are the challenge at the end.)
 
 ```python
 with open(".gitignore", "a") as gitignore:
@@ -181,7 +161,7 @@ with open(".gitignore", "a") as gitignore:
 !cat .gitignore
 ```
 
-4. Add and commit `.gitignore` so the rule travels with the repository.
+3. Add and commit `.gitignore` so the rule travels with the repository.
 
 ```python
 !git add .gitignore   # .gitignore is itself tracked, so everyone who clones gets the same rules
@@ -203,7 +183,7 @@ We use merge. Because our folder and the GitHub repository started separately (o
 ```python
 !git config pull.rebase false   # pull strategy: merge (remote commits come in through a merge commit)
 # pull = fetch origin's main and merge it into ours; the flag is needed only this once, as the two histories share no commit
-!git pull origin main --allow-unrelated-histories --no-edit
+!git pull https://{username}:{token}@github.com/{username}/sagemaker-work.git main --allow-unrelated-histories --no-edit   # the token authenticates the pull too, which a private repository needs
 ```
 
 If git reports a merge conflict, each conflicting file has to be resolved one way or the other and then staged and committed. You will not get one here (the README and your script are different files), but this is what it looks like:
@@ -228,14 +208,13 @@ github_url = f"github.com/{username}/sagemaker-work.git"
 !git push https://{username}:{token}@{github_url} main
 ```
 
-Open `https://github.com/YOUR_GITHUB_USERNAME/sagemaker-work` in a browser: the README, the `.py` file and `.gitignore` should all be there, with your two commits in the history.
+Open `https://github.com/YOUR_GITHUB_USERNAME/sagemaker-work` in a browser: the README, the `.py` file and `.gitignore` should all be there, with four commits in the history: GitHub's initial commit, your two, and the merge the pull made.
 
 ## Step 7: Pulling `.py` files and converting back to notebooks
 Suppose a collaborator edits the `.py` file on GitHub, or you edit it from another machine. Pull as usual:
 
 ```python
-!git config pull.rebase false
-!git pull origin main   # a routine pull: no extra flag now that the histories are joined
+!git pull https://{username}:{token}@github.com/{username}/sagemaker-work.git main   # a routine pull: no extra flag now that the histories are joined
 ```
 
 Then convert the script back to a notebook with Jupytext. The `.ipynb` it writes is ignored by git (Step 5), so the round trip leaves the repository clean.
@@ -245,13 +224,13 @@ Then convert the script back to a notebook with Jupytext. The `.ipynb` it writes
 !jupytext --to notebook 04_Accessing-S3-via-SageMaker-notebooks.py --output 04_Accessing-S3-via-SageMaker-notebooks.ipynb
 ```
 
-To convert every `.py` in the folder back to notebooks, `helpers.convert_files(direction="python_to_notebook")` does the loop; remember it converts *every* `.py` in the current directory, so keep real modules out of that folder.
+To convert every `.py` in the folder back to notebooks, `helpers.convert_files(direction="python_to_notebook")` does the loop; it converts *every* `.py` in the current directory, so keep real modules out of that folder.
 
 ::::::::::::::::::::::::::::::::::::: challenge
 
 ### Challenge: ignore the big files too
 
-The training episodes save NumPy arrays (`.npz`) next to your notebooks. Those are binary and can be large, which makes them a poor fit for git. Add `*.npz` to your repository's `.gitignore`, commit it, push with your PAT, and verify the change on GitHub.
+The PyTorch episode saves NumPy arrays (`.npz`) in its working folder, and your own notebooks will do the same in this one. Those are binary and can be large, which makes them a poor fit for git. Add `*.npz` to your repository's `.gitignore`, commit it, push with your PAT, and verify the change on GitHub.
 
 :::::::::::::::::::::::::::::::::::: solution
 
