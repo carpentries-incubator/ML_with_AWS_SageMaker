@@ -22,12 +22,18 @@ exercises: 20
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-## Initial setup 
+## Test locally, then scale to the cloud
 
-#### 1. Open prefilled .ipynb notebook
+In the earlier episodes we used the notebook to prepare data and work with S3. From here on it has two jobs. It is the place to test code "locally", on its own small CPU, before anything is scaled up, and it is the controller that launches training jobs on separate instances SageMaker rents for them and releases when they finish. A script that fails on a data-loading error costs nothing on the notebook and bills its startup minutes as a job, so every episode from here tests first and launches second.
+
+We start with XGBoost on the Titanic data. First we run the training script on the notebook to check that it handles the data and the arguments. Then we launch the same script as a SageMaker training job, with the training data supplied from S3, and look at how the job receives its inputs, where it writes its model, how to estimate its cost before launching and how to read the billable time afterwards. The PyTorch and tuning episodes build on all of it.
+
+## Initial setup
+
+### Open the lesson notebook
 Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/06_Training-models-in-SageMaker-notebooks.ipynb`. When asked for a kernel, pick **`conda_pytorch`**; every notebook from here to the end of the lesson uses it. The `conda_python3` kernel has no PyTorch, and on current instances no scikit-learn either.
 
-#### 2. Move to the project folder and import the helpers
+### Set up the project folder
 Work from the Titanic project folder the S3 episode created, and make the lesson repository's `scripts/` importable. The training scripts for this episode (`train_xgboost.py`) and the next (`train_nn.py`) are in that folder.
 
 ```python
@@ -40,8 +46,8 @@ sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")
 import helpers  # lesson helper functions; train_xgboost.py lives in the same folder
 ```
 
-#### 3. Initialize SageMaker environment
-This code initializes the AWS SageMaker environment by defining the SageMaker role and S3 client. It also specifies the S3 bucket and key for accessing the Titanic training dataset stored in an S3 bucket.
+### Connect to SageMaker and S3
+The notebook needs two interfaces to AWS. `boto3` reads and writes S3 and inspects resources directly, and the SageMaker SDK provides the higher-level objects that launch training jobs. We also look up the notebook's IAM role, which the jobs use to read their inputs and write their outputs.
 
 #### Boto3 API
 > Boto3 is the AWS SDK for Python: every AWS service, called from Python, with the notebook's role as the identity.
@@ -82,7 +88,7 @@ sagemaker_client = session.sagemaker_client  # the boto3 SageMaker client inside
 print(f"region = {region}")
 ```
 
-## Testing train_xgboost.py on this notebook's instance
+## Check the training script before launching a job
 A training job is a script run on a machine SageMaker rents for it. The script has to work before it is worth renting anything, so run it here first, on the notebook instance, on the small Titanic data. A local run finds bugs for free; a job that fails on a data-loading error still bills its startup minutes. Every later episode does the same: a few epochs on a subset on the cheapest machine, then the real run.
 
 ::::::::::::::::::::::::::::::::::::::: challenge
@@ -124,16 +130,13 @@ After reviewing, discuss any questions or observations with your group.
 :::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 ### Download data into notebook environment
-It can be convenient to have a copy of the data (i.e., one that you store in your notebook's instance) to allow us to test our code before scaling things up. 
+For this test we download copies of the Titanic files from S3 onto the notebook instance. The managed job later reads its own input from S3 and never uses these local copies.
 
 :::: callout
 We download the data into the notebook to test the code, as a local pipeline would. In a pipeline that scales, the data lives in S3 and the jobs read it from there. 
 :::::
 
-Run the next code chunk to download data from S3 to notebook environment. You may need to hit refresh on the file explorer panel to the left to see this file. If you get any permission issues...
-
-* check that you have selected the appropriate policy for this notebook
-* check that your bucket has the appropriate policy permissions
+Run the following cells to download the training and test CSVs. If the files do not appear in the Jupyter file browser, refresh it. A permissions error usually means the notebook role or the bucket policy does not allow the requested S3 operation.
 
 ```python
 # Define the S3 bucket and file location
@@ -251,11 +254,12 @@ print(f"Test Set Accuracy: {accuracy:.4f}")
 
 A reasonably high test set accuracy suggests our code/model is working correctly.
 
-## Training via SageMaker: your script inside AWS's XGBoost container
-Unlike "local" training (using this notebook), this next approach runs the job on an instance SageMaker rents for it, which is where instance count and type come in. By specifying instance parameters, such as instance_count and instance_type, you can control the resources allocated for training.
+## Run the script as a SageMaker training job
+
+Now that the script is checked, we submit it to SageMaker. The notebook sends the job configuration, the training code, the instance type, the S3 location of the data and where the output goes. SageMaker starts a separate instance, runs the script in AWS's XGBoost container, saves the model to S3 and releases the instance when the job ends. The notebook stays free for launching and inspecting jobs. It is not the machine doing the training.
 
 ### Which instance to start with?
-In this example, we start with one ml.m5.large instance, which is suitable for small- to medium-sized datasets and simpler models. Using a single instance is often cost-effective and sufficient for initial testing, allowing for straightforward scaling up to more powerful instance types or multiple instances if training takes too long. See here for further guidance on selecting an appropriate instance for your data/model: [Instances for ML page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html)
+The Titanic data and the XGBoost model are small, so we start with one `ml.m5.large` CPU instance. The point is to learn how job configuration and billing work, not to make this tiny model train faster. For larger datasets, instance memory and CPU count matter, and the [Instances for ML page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) is the place to start choosing.
 
 ::::::::::::::::::::::::::::::::::::: challenge
 
@@ -275,7 +279,7 @@ The table's rule of thumb is RAM of at least 1.5× the dataset, so 20 GB of data
 Every training job runs inside a container image. The `XGBoost` class we use below is a *framework estimator*: it looks up AWS's prebuilt XGBoost image for the region and runs your script inside it. `PyTorch`, `SKLearn`, `TensorFlow` and `HuggingFace` are the same idea for other frameworks, each with a `framework_version` that picks the image, and a `requirements.txt` in `source_dir` is pip-installed in the container before the script starts, for packages the image lacks. The plain `Estimator` class takes an `image_uri` directly and is for a container of your own, or for one of AWS's built-in algorithms, which train with AWS's code and no script of yours; the optional challenge at the end of this episode runs XGBoost that way for comparison. The [list of prebuilt images](https://docs.aws.amazon.com/sagemaker/latest/dg/pre-built-containers-frameworks-deep-learning.html) says what each one has installed.
 
 ### Launching the training job
-We configure the `XGBoost` estimator with a custom training script, `train_xgboost.py`, and define hyperparameters directly within the SageMaker setup. The full code is below, with explanation after it.
+We configure an `XGBoost` estimator to run the same `train_xgboost.py` we tested above. The estimator describes the training environment. Its `hyperparameters` become command-line arguments, and `TrainingInput` tells SageMaker which data to copy from S3. Before launching we set the cost-tracking tags and estimate how long the instance will be billed. The full code is below, with explanation after it.
 
 #### Cost tracking
 When you launch a SageMaker training job from a notebook, SageMaker creates new managed resources (EC2 instances, attached storage, logs) on your behalf. These resources do not automatically inherit the notebook instance's tags. 

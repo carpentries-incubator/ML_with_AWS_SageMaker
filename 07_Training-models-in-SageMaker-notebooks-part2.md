@@ -21,11 +21,17 @@ exercises: 15
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-## Initial setup: open prefilled .ipynb notebook
+## The same pattern with a neural network
+
+The previous episode tested an XGBoost script on the notebook and then launched it as a managed training job. This episode follows the same pattern with a small PyTorch neural network on the same Titanic prediction task. Keeping the data and the task fixed means that what changes between runs is only the instance, so CPU and GPU can be compared on their own.
+
+The question is not only whether a GPU is faster. A GPU costs more per hour, and for a network this small the fixed cost of starting a job may matter more than the training itself. We prepare the data, test the script on the notebook, estimate the cost of a managed run, and compare CPU and GPU instances on the actual job records. Then we look at what it takes to spread training across more than one machine and why adding an instance is not automatically a speedup.
+
+## Initial setup
 Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/07_Training-models-in-SageMaker-notebooks-part2.ipynb`. Select the **`conda_pytorch`** kernel.
 
 ## Setup
-The same setup as the previous episode: role, S3 client, bucket, filenames.
+We use the same controller notebook, SageMaker role, S3 bucket and Titanic files as in the XGBoost episode. The notebook prepares and uploads the data, then launches the training job on the instance we choose.
 
 ```python
 import boto3
@@ -89,10 +95,10 @@ s3.download_file(bucket_name, test_filename, test_filename)
 ```
 
 ## Training a neural network with SageMaker
-The same experiment as the previous episode with a PyTorch network in place of XGBoost: test the script here, run it as a job, and then, the question this episode is for, see what a GPU and a second instance do to the time and the bill.
+The prediction task is unchanged, and only the training framework is different. So the attention goes to the PyTorch training workflow and to what the choice of instance does to runtime and cost.
 
 ### Preparing the data
-The training script reads NumPy arrays from `.npz` files rather than CSVs: one file holds the training features and labels, one the validation ones, already encoded and standardized, so the script does no preprocessing of its own. The cells below make those two files from the Titanic CSV and upload them.
+Unlike the XGBoost script, this PyTorch script expects features and labels already processed into NumPy arrays. We prepare those arrays once, save the training and validation sets as `.npz` files, and upload them to S3. That keeps preprocessing out of the managed job, and every run we compare trains on the same inputs.
 
 Open `ML_with_AWS_SageMaker/scripts/train_nn.py` in the file browser and read it before going on; it is short. Three things to find: `TitanicNet`, a three-layer network with 7 inputs and one output; the training loop in `train()`, which prints `validation:accuracy = ...` once per hundred epochs (the hyperparameter-tuning episode's metric regex reads that line); and the last lines, which save the model to `/opt/ml/model` inside a job and to the working directory otherwise, the same trick as `train_xgboost.py`. Questions now are cheaper than questions once it is running on a billed instance.
 
@@ -138,8 +144,8 @@ for f in [train_file, val_file, scaler_file]:
 print("Files successfully uploaded to S3.")
 ```
 
-## Testing on notebook instance
-A smoke test first, 100 epochs here, to check the script runs and to get a time per epoch.
+## Check the training script
+Before launching a managed job, we run 100 epochs on the controller notebook as a smoke test. It checks the data paths and the training code and gives a rough time per epoch. It is only a local test. The runs we compare are launched as separate SageMaker jobs.
 
 ```python
 import torch
@@ -155,9 +161,9 @@ print(f"Local training time: {local_elapsed:.2f} seconds, instance_type = {local
 ```
 
 ## The network as a SageMaker training job
-Now that we have tested things locally, we can try to train with a larger number of epochs (1000). The job's instance is chosen on the estimator, independently of this `ml.t3.medium` notebook; the first run uses an `ml.m5.large` CPU instance, the same type as the XGBoost job. 
+Now we submit a 1,000-epoch run as a SageMaker job. Its compute is chosen on the estimator, independently of the notebook that launches it. The first run uses the same `ml.m5.large` CPU instance as the XGBoost job, so there is a baseline before trying a GPU.
 
-**Should we use a GPU?**: Since this dataset is fairly small, we don't necessarily need a GPU for training. Considering costs, the m5.large is `$0.115/hour`, while the cheapest GPU instance (ml.g4dn.xlarge) is `$0.74/hour`. However, for larger datasets (> 1 GB) and models, we may want to consider a GPU if training time becomes cumbersome (see [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html)). We'll test that in the exercise below.
+A GPU is not necessarily worth it for this data. The CPU instance costs `$0.115` an hour and an `ml.g4dn.xlarge` GPU instance `$0.74` an hour on the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page. The GPU would have to save enough time to make up that difference, and the model may be too small to keep it busy. We measure it rather than assume that the more powerful hardware is the better choice.
 
 #### Cost tracking
 As in the XGBoost episode, every training job needs its own tags: a job does not inherit the notebook instance's tags, and an untagged job is anonymous on the bill. Define them once here and pass `tags=job_tags` to every estimator below.
@@ -178,9 +184,9 @@ print(f"Name: {name}, Project: {project}, Purpose: {purpose}")
 
 ## Estimating a training job before you launch it
 
-Every job in this lesson gets an estimate written down before `fit()`. There are two ways to make it, and which one applies depends on the size of the model.
+Every job in this lesson gets an estimate written down before `fit()`, a rough figure for how long it will run and what it will cost. There are two ways to make it, and which one applies depends on the size of the model. For a model this small, timing a short test run is more useful than counting the arithmetic, so the measured time comes first and the counted arithmetic, which the larger models later in the workshop need, after it.
 
-**Small models: time a smoke test and scale it.** For a network like `TitanicNet`, the arithmetic is nothing; the time is Python overhead per epoch plus the job's fixed startup. Each epoch costs the same as the last, and the script trains on all the rows in one step per epoch, so training time scales linearly with epochs and with rows. So measure the 100-epoch run you just did, multiply by the epochs and rows you plan, and add the two or three minutes of startup, which are billed and are most of the bill for a job this small:
+**Small models: time a smoke test and scale it.** The 100-epoch test gives a time per epoch. Each epoch costs the same as the last, and the script trains on all the rows in one step per epoch, so training time scales with epochs and with rows. Scale the measured time to 1,000 epochs, then add the two or three minutes of container startup and data download, which are billed and are most of the bill for a job this small. The result is not exact, because the notebook and the training instance are different machines, but it says whether the job will cost cents or dollars:
 
 ```python
 local_seconds_per_epoch = local_elapsed / epochs                 # from the smoke test above: its wall-clock over its 100 epochs
@@ -196,7 +202,7 @@ print(f"estimate: {train_minutes + startup_minutes:.0f} min billed, about ${esti
 
 Expect a couple of minutes of training plus two or three of startup: about a cent. (The `ml.t3.medium` notebook is slower than the `ml.m5.large` the job runs on, so the training part of the estimate is high. Our run billed 2.7 minutes in total, `$0.005`.) If the planned run has ten times the rows, multiply the training minutes by ten; the startup does not change.
 
-**Large models: count the arithmetic.** From a few hundred million parameters up, the training arithmetic takes longer than the job's startup, so compute is the cost, and it can be counted before any instance exists. The unit is the floating-point operation, one multiply or add: FLOPs, plural, is a count of them, and FLOPS with a capital S is a rate, operations per second, which is how a GPU's speed is quoted (an A10G does about 70 trillion per second, 70 TFLOPS). Training one example through a dense network or a transformer costs about 6 FLOPs per parameter (2 forward, 4 backward); multiply by parameters, examples and epochs for the count, and divide by the rate the GPU reaches, about a quarter of its data-sheet peak in practice:
+**Large models: count the arithmetic.** From a few hundred million parameters up, the training arithmetic takes longer than the job's startup, so the arithmetic is the cost, and it can be counted before any instance exists. The work is counted in floating-point operations, FLOPs, one multiply or one add, and a GPU's speed in FLOPS, operations per second, about 70 trillion for an A10G. Training one token through a dense network or a transformer costs about 6 FLOPs per parameter, 2 for the forward pass and 4 for the backward one. Multiply by parameters, examples and epochs for the count, and divide by the speed the GPU reaches, about a quarter of its data-sheet peak in practice. It is a scale estimate, not a runtime prediction:
 
 ```text
 FLOPs       = 6 × parameters × examples × tokens per example × epochs
