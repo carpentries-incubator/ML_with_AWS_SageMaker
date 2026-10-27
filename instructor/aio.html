@@ -2292,7 +2292,7 @@ task?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>One way to do it:</li>
@@ -2882,12 +2882,30 @@ up on the bill, and read back its billable time afterwards.</li>
 </div>
 </div>
 </div>
-<section><h2 class="section-heading" id="initial-setup">Initial setup<a class="anchor" aria-label="anchor" href="#initial-setup"></a>
+<section><h2 class="section-heading" id="test-locally-then-scale-to-the-cloud">Test locally, then scale to the cloud<a class="anchor" aria-label="anchor" href="#test-locally-then-scale-to-the-cloud"></a>
 </h2>
 <hr class="half-width">
-<div class="section level4">
-<h4 id="open-prefilled--ipynb-notebook">1. Open prefilled .ipynb notebook<a class="anchor" aria-label="anchor" href="#open-prefilled--ipynb-notebook"></a>
-</h4>
+<p>In the earlier episodes we used the notebook to prepare data and work
+with S3. From here on it has two jobs. It is the place to test code
+“locally”, on its own small CPU, before anything is scaled up, and it is
+the controller that launches training jobs on separate instances
+SageMaker rents for them and releases when they finish. A script that
+fails on a data-loading error costs nothing on the notebook and bills
+its startup minutes as a job, so every episode from here tests first and
+launches second.</p>
+<p>We start with XGBoost on the Titanic data. First we run the training
+script on the notebook to check that it handles the data and the
+arguments. Then we launch the same script as a SageMaker training job,
+with the training data supplied from S3, and look at how the job
+receives its inputs, where it writes its model, how to estimate its cost
+before launching and how to read the billable time afterwards. The
+PyTorch and tuning episodes build on all of it.</p>
+</section><section><h2 class="section-heading" id="initial-setup">Initial setup<a class="anchor" aria-label="anchor" href="#initial-setup"></a>
+</h2>
+<hr class="half-width">
+<div class="section level3">
+<h3 id="open-the-lesson-notebook">Open the lesson notebook<a class="anchor" aria-label="anchor" href="#open-the-lesson-notebook"></a>
+</h3>
 <p>Open the notebook from:
 <code>/ML_with_AWS_SageMaker/notebooks/06_Training-models-in-SageMaker-notebooks.ipynb</code>.
 When asked for a kernel, pick
@@ -2895,9 +2913,9 @@ When asked for a kernel, pick
 the end of the lesson uses it. The <code>conda_python3</code> kernel has
 no PyTorch, and on current instances no scikit-learn either.</p>
 </div>
-<div class="section level4">
-<h4 id="move-to-the-project-folder-and-import-the-helpers">2. Move to the project folder and import the helpers<a class="anchor" aria-label="anchor" href="#move-to-the-project-folder-and-import-the-helpers"></a>
-</h4>
+<div class="section level3">
+<h3 id="set-up-the-project-folder">Set up the project folder<a class="anchor" aria-label="anchor" href="#set-up-the-project-folder"></a>
+</h3>
 <p>Work from the Titanic project folder the S3 episode created, and make
 the lesson repository’s <code>scripts/</code> importable. The training
 scripts for this episode (<code>train_xgboost.py</code>) and the next
@@ -2914,13 +2932,14 @@ scripts for this episode (<code>train_xgboost.py</code>) and the next
 <span id="cb1-7"><a href="#cb1-7" tabindex="-1" aria-label="code-block-1-7"></a><span class="im">import</span> helpers  <span class="co"># lesson helper functions; train_xgboost.py lives in the same folder</span></span></code></pre>
 </div>
 </div>
-<div class="section level4">
-<h4 id="initialize-sagemaker-environment">3. Initialize SageMaker environment<a class="anchor" aria-label="anchor" href="#initialize-sagemaker-environment"></a>
-</h4>
-<p>This code initializes the AWS SageMaker environment by defining the
-SageMaker role and S3 client. It also specifies the S3 bucket and key
-for accessing the Titanic training dataset stored in an S3 bucket.</p>
-</div>
+<div class="section level3">
+<h3 id="connect-to-sagemaker-and-s3">Connect to SageMaker and S3<a class="anchor" aria-label="anchor" href="#connect-to-sagemaker-and-s3"></a>
+</h3>
+<p>The notebook needs two interfaces to AWS. <code>boto3</code> reads
+and writes S3 and inspects resources directly, and the SageMaker SDK
+provides the higher-level objects that launch training jobs. We also
+look up the notebook’s IAM role, which the jobs use to read their inputs
+and write their outputs.</p>
 <div class="section level4">
 <h4 id="boto3-api">Boto3 API<a class="anchor" aria-label="anchor" href="#boto3-api"></a>
 </h4>
@@ -2969,7 +2988,8 @@ same notebook works in any account.</p>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a><span class="bu">print</span>(<span class="ss">f"region = </span><span class="sc">{</span>region<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 </div>
-</section><section><h2 class="section-heading" id="testing-train_xgboost-py-on-this-notebooks-instance">Testing train_xgboost.py on this notebook’s instance<a class="anchor" aria-label="anchor" href="#testing-train_xgboost-py-on-this-notebooks-instance"></a>
+</div>
+</section><section><h2 class="section-heading" id="check-the-training-script-before-launching-a-job">Check the training script before launching a job<a class="anchor" aria-label="anchor" href="#check-the-training-script-before-launching-a-job"></a>
 </h2>
 <hr class="half-width">
 <p>A training job is a script run on a machine SageMaker rents for it.
@@ -3018,7 +3038,7 @@ group.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li><p><strong>Data Preprocessing</strong>: The script fills missing
@@ -3064,9 +3084,9 @@ kernel do not run the same version.</p></li>
 <div class="section level3">
 <h3 id="download-data-into-notebook-environment">Download data into notebook environment<a class="anchor" aria-label="anchor" href="#download-data-into-notebook-environment"></a>
 </h3>
-<p>It can be convenient to have a copy of the data (i.e., one that you
-store in your notebook’s instance) to allow us to test our code before
-scaling things up.</p>
+<p>For this test we download copies of the Titanic files from S3 onto
+the notebook instance. The managed job later reads its own input from S3
+and never uses these local copies.</p>
 <div id="callout1" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -3080,14 +3100,10 @@ jobs read it from there.</p>
 </div>
 </div>
 </div>
-<p>Run the next code chunk to download data from S3 to notebook
-environment. You may need to hit refresh on the file explorer panel to
-the left to see this file. If you get any permission issues…</p>
-<ul>
-<li>check that you have selected the appropriate policy for this
-notebook</li>
-<li>check that your bucket has the appropriate policy permissions</li>
-</ul>
+<p>Run the following cells to download the training and test CSVs. If
+the files do not appear in the Jupyter file browser, refresh it. A
+permissions error usually means the notebook role or the bucket policy
+does not allow the requested S3 operation.</p>
 <div class="codewrapper sourceCode" id="cb4">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -3230,26 +3246,25 @@ transformed exactly as the training rows were.</p>
 <p>A reasonably high test set accuracy suggests our code/model is
 working correctly.</p>
 </div>
-</section><section><h2 class="section-heading" id="training-via-sagemaker-your-script-inside-awss-xgboost-container">Training via SageMaker: your script inside AWS’s XGBoost
-container<a class="anchor" aria-label="anchor" href="#training-via-sagemaker-your-script-inside-awss-xgboost-container"></a>
+</section><section><h2 class="section-heading" id="run-the-script-as-a-sagemaker-training-job">Run the script as a SageMaker training job<a class="anchor" aria-label="anchor" href="#run-the-script-as-a-sagemaker-training-job"></a>
 </h2>
 <hr class="half-width">
-<p>Unlike “local” training (using this notebook), this next approach
-runs the job on an instance SageMaker rents for it, which is where
-instance count and type come in. By specifying instance parameters, such
-as instance_count and instance_type, you can control the resources
-allocated for training.</p>
+<p>Now that the script is checked, we submit it to SageMaker. The
+notebook sends the job configuration, the training code, the instance
+type, the S3 location of the data and where the output goes. SageMaker
+starts a separate instance, runs the script in AWS’s XGBoost container,
+saves the model to S3 and releases the instance when the job ends. The
+notebook stays free for launching and inspecting jobs. It is not the
+machine doing the training.</p>
 <div class="section level3">
 <h3 id="which-instance-to-start-with">Which instance to start with?<a class="anchor" aria-label="anchor" href="#which-instance-to-start-with"></a>
 </h3>
-<p>In this example, we start with one ml.m5.large instance, which is
-suitable for small- to medium-sized datasets and simpler models. Using a
-single instance is often cost-effective and sufficient for initial
-testing, allowing for straightforward scaling up to more powerful
-instance types or multiple instances if training takes too long. See
-here for further guidance on selecting an appropriate instance for your
-data/model: <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
-for ML page</a></p>
+<p>The Titanic data and the XGBoost model are small, so we start with
+one <code>ml.m5.large</code> CPU instance. The point is to learn how job
+configuration and billing work, not to make this tiny model train
+faster. For larger datasets, instance memory and CPU count matter, and
+the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
+for ML page</a> is the place to start choosing.</p>
 <div id="challenge-pick-an-instance-for-a-bigger-job" class="callout challenge">
 <div class="callout-square">
 <i class="callout-icon" data-feather="zap"></i>
@@ -3272,7 +3287,7 @@ data. Which instance would you pick for the training job, and why?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
 GB of data wants about 32 GB of memory: <code>ml.m5.2xlarge</code> (8
@@ -3308,9 +3323,12 @@ of prebuilt images</a> says what each one has installed.</p>
 <div class="section level3">
 <h3 id="launching-the-training-job">Launching the training job<a class="anchor" aria-label="anchor" href="#launching-the-training-job"></a>
 </h3>
-<p>We configure the <code>XGBoost</code> estimator with a custom
-training script, <code>train_xgboost.py</code>, and define
-hyperparameters directly within the SageMaker setup. The full code is
+<p>We configure an <code>XGBoost</code> estimator to run the same
+<code>train_xgboost.py</code> we tested above. The estimator describes
+the training environment. Its <code>hyperparameters</code> become
+command-line arguments, and <code>TrainingInput</code> tells SageMaker
+which data to copy from S3. Before launching we set the cost-tracking
+tags and estimate how long the instance will be billed. The full code is
 below, with explanation after it.</p>
 <div class="section level4">
 <h4 id="cost-tracking">Cost tracking<a class="anchor" aria-label="anchor" href="#cost-tracking"></a>
@@ -3785,7 +3803,7 @@ compared with the first job?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <p>The status is <code>InProgress</code> if you were quick and
 <code>Completed</code> otherwise. The cost is the same as the first run,
@@ -3823,7 +3841,7 @@ and compare the bill and the accuracy with the script version.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
 <div class="accordion-body">
 <p>The built-in algorithm will not run our
 <code>preprocess_data()</code> for us, and it expects a CSV with no
@@ -4017,7 +4035,23 @@ determine when each is appropriate in SageMaker.</li>
 </div>
 </div>
 </div>
-<section><h2 class="section-heading" id="initial-setup-open-prefilled--ipynb-notebook">Initial setup: open prefilled .ipynb notebook<a class="anchor" aria-label="anchor" href="#initial-setup-open-prefilled--ipynb-notebook"></a>
+<section><h2 class="section-heading" id="the-same-pattern-with-a-neural-network">The same pattern with a neural network<a class="anchor" aria-label="anchor" href="#the-same-pattern-with-a-neural-network"></a>
+</h2>
+<hr class="half-width">
+<p>The previous episode tested an XGBoost script on the notebook and
+then launched it as a managed training job. This episode follows the
+same pattern with a small PyTorch neural network on the same Titanic
+prediction task. Keeping the data and the task fixed means that what
+changes between runs is only the instance, so CPU and GPU can be
+compared on their own.</p>
+<p>The question is not only whether a GPU is faster. A GPU costs more
+per hour, and for a network this small the fixed cost of starting a job
+may matter more than the training itself. We prepare the data, test the
+script on the notebook, estimate the cost of a managed run, and compare
+CPU and GPU instances on the actual job records. Then we look at what it
+takes to spread training across more than one machine and why adding an
+instance is not automatically a speedup.</p>
+</section><section><h2 class="section-heading" id="initial-setup">Initial setup<a class="anchor" aria-label="anchor" href="#initial-setup"></a>
 </h2>
 <hr class="half-width">
 <p>Open the notebook from:
@@ -4026,8 +4060,10 @@ Select the <strong><code>conda_pytorch</code></strong> kernel.</p>
 </section><section><h2 class="section-heading" id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
 </h2>
 <hr class="half-width">
-<p>The same setup as the previous episode: role, S3 client, bucket,
-filenames.</p>
+<p>We use the same controller notebook, SageMaker role, S3 bucket and
+Titanic files as in the XGBoost episode. The notebook prepares and
+uploads the data, then launches the training job on the instance we
+choose.</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -4097,18 +4133,17 @@ Titanic CSVs from S3 again.</p>
 </section><section><h2 class="section-heading" id="training-a-neural-network-with-sagemaker">Training a neural network with SageMaker<a class="anchor" aria-label="anchor" href="#training-a-neural-network-with-sagemaker"></a>
 </h2>
 <hr class="half-width">
-<p>The same experiment as the previous episode with a PyTorch network in
-place of XGBoost: test the script here, run it as a job, and then, the
-question this episode is for, see what a GPU and a second instance do to
-the time and the bill.</p>
+<p>The prediction task is unchanged, and only the training framework is
+different. So the attention goes to the PyTorch training workflow and to
+what the choice of instance does to runtime and cost.</p>
 <div class="section level3">
 <h3 id="preparing-the-data">Preparing the data<a class="anchor" aria-label="anchor" href="#preparing-the-data"></a>
 </h3>
-<p>The training script reads NumPy arrays from <code>.npz</code> files
-rather than CSVs: one file holds the training features and labels, one
-the validation ones, already encoded and standardized, so the script
-does no preprocessing of its own. The cells below make those two files
-from the Titanic CSV and upload them.</p>
+<p>Unlike the XGBoost script, this PyTorch script expects features and
+labels already processed into NumPy arrays. We prepare those arrays
+once, save the training and validation sets as <code>.npz</code> files,
+and upload them to S3. That keeps preprocessing out of the managed job,
+and every run we compare trains on the same inputs.</p>
 <p>Open <code>ML_with_AWS_SageMaker/scripts/train_nn.py</code> in the
 file browser and read it before going on; it is short. Three things to
 find: <code>TitanicNet</code>, a three-layer network with 7 inputs and
@@ -4172,11 +4207,13 @@ copy of a small dataset costs nothing worth counting.</p>
 <span id="cb8-9"><a href="#cb8-9" tabindex="-1" aria-label="code-block-8-9"></a><span class="bu">print</span>(<span class="st">"Files successfully uploaded to S3."</span>)</span></code></pre>
 </div>
 </div>
-</section><section><h2 class="section-heading" id="testing-on-notebook-instance">Testing on notebook instance<a class="anchor" aria-label="anchor" href="#testing-on-notebook-instance"></a>
+</section><section><h2 class="section-heading" id="check-the-training-script">Check the training script<a class="anchor" aria-label="anchor" href="#check-the-training-script"></a>
 </h2>
 <hr class="half-width">
-<p>A smoke test first, 100 epochs here, to check the script runs and to
-get a time per epoch.</p>
+<p>Before launching a managed job, we run 100 epochs on the controller
+notebook as a smoke test. It checks the data paths and the training code
+and gives a rough time per epoch. It is only a local test. The runs we
+compare are launched as separate SageMaker jobs.</p>
 <div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -4194,18 +4231,17 @@ get a time per epoch.</p>
 </section><section><h2 class="section-heading" id="the-network-as-a-sagemaker-training-job">The network as a SageMaker training job<a class="anchor" aria-label="anchor" href="#the-network-as-a-sagemaker-training-job"></a>
 </h2>
 <hr class="half-width">
-<p>Now that we have tested things locally, we can try to train with a
-larger number of epochs (1000). The job’s instance is chosen on the
-estimator, independently of this <code>ml.t3.medium</code> notebook; the
-first run uses an <code>ml.m5.large</code> CPU instance, the same type
-as the XGBoost job.</p>
-<p><strong>Should we use a GPU?</strong>: Since this dataset is fairly
-small, we don’t necessarily need a GPU for training. Considering costs,
-the m5.large is <code>$0.115/hour</code>, while the cheapest GPU
-instance (ml.g4dn.xlarge) is <code>$0.74/hour</code>. However, for
-larger datasets (&gt; 1 GB) and models, we may want to consider a GPU if
-training time becomes cumbersome (see <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
-for ML</a>). We’ll test that in the exercise below.</p>
+<p>Now we submit a 1,000-epoch run as a SageMaker job. Its compute is
+chosen on the estimator, independently of the notebook that launches it.
+The first run uses the same <code>ml.m5.large</code> CPU instance as the
+XGBoost job, so there is a baseline before trying a GPU.</p>
+<p>A GPU is not necessarily worth it for this data. The CPU instance
+costs <code>$0.115</code> an hour and an <code>ml.g4dn.xlarge</code> GPU
+instance <code>$0.74</code> an hour on the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
+for ML</a> page. The GPU would have to save enough time to make up that
+difference, and the model may be too small to keep it busy. We measure
+it rather than assume that the more powerful hardware is the better
+choice.</p>
 <div class="section level4">
 <h4 id="cost-tracking">Cost tracking<a class="anchor" aria-label="anchor" href="#cost-tracking"></a>
 </h4>
@@ -4233,16 +4269,21 @@ is anonymous on the bill. Define them once here and pass
 </h2>
 <hr class="half-width">
 <p>Every job in this lesson gets an estimate written down before
-<code>fit()</code>. There are two ways to make it, and which one applies
-depends on the size of the model.</p>
-<p><strong>Small models: time a smoke test and scale it.</strong> For a
-network like <code>TitanicNet</code>, the arithmetic is nothing; the
-time is Python overhead per epoch plus the job’s fixed startup. Each
-epoch costs the same as the last, and the script trains on all the rows
-in one step per epoch, so training time scales linearly with epochs and
-with rows. So measure the 100-epoch run you just did, multiply by the
-epochs and rows you plan, and add the two or three minutes of startup,
-which are billed and are most of the bill for a job this small:</p>
+<code>fit()</code>, a rough figure for how long it will run and what it
+will cost. There are two ways to make it, and which one applies depends
+on the size of the model. For a model this small, timing a short test
+run is more useful than counting the arithmetic, so the measured time
+comes first and the counted arithmetic, which the larger models later in
+the workshop need, after it.</p>
+<p><strong>Small models: time a smoke test and scale it.</strong> The
+100-epoch test gives a time per epoch. Each epoch costs the same as the
+last, and the script trains on all the rows in one step per epoch, so
+training time scales with epochs and with rows. Scale the measured time
+to 1,000 epochs, then add the two or three minutes of container startup
+and data download, which are billed and are most of the bill for a job
+this small. The result is not exact, because the notebook and the
+training instance are different machines, but it says whether the job
+will cost cents or dollars:</p>
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -4264,15 +4305,15 @@ estimate is high. Our run billed 2.7 minutes in total,
 multiply the training minutes by ten; the startup does not change.</p>
 <p><strong>Large models: count the arithmetic.</strong> From a few
 hundred million parameters up, the training arithmetic takes longer than
-the job’s startup, so compute is the cost, and it can be counted before
-any instance exists. The unit is the floating-point operation, one
-multiply or add: FLOPs, plural, is a count of them, and FLOPS with a
-capital S is a rate, operations per second, which is how a GPU’s speed
-is quoted (an A10G does about 70 trillion per second, 70 TFLOPS).
-Training one example through a dense network or a transformer costs
-about 6 FLOPs per parameter (2 forward, 4 backward); multiply by
-parameters, examples and epochs for the count, and divide by the rate
-the GPU reaches, about a quarter of its data-sheet peak in practice:</p>
+the job’s startup, so the arithmetic is the cost, and it can be counted
+before any instance exists. The work is counted in floating-point
+operations, FLOPs, one multiply or one add, and a GPU’s speed in FLOPS,
+operations per second, about 70 trillion for an A10G. Training one token
+through a dense network or a transformer costs about 6 FLOPs per
+parameter, 2 for the forward pass and 4 for the backward one. Multiply
+by parameters, examples and epochs for the count, and divide by the
+speed the GPU reaches, about a quarter of its data-sheet peak in
+practice. It is a scale estimate, not a runtime prediction:</p>
 <pre class="text"><code>FLOPs       = 6 × parameters × examples × tokens per example × epochs
 GPU-seconds = FLOPs ÷ (GPU peak FLOPS × 0.25)
 cost        = GPU-hours × instance price per hour + startup</code></pre>
@@ -5085,13 +5126,13 @@ Select the <strong><code>conda_pytorch</code></strong> kernel.</p>
 <p>In the earlier training episodes, we built relatively small models
 from scratch. That works when we have a well-defined problem and enough
 training data, but it isn’t practical for tasks that require the broad
-capabilities of a modern language or vision model. Training one of those
-models from scratch can require thousands of GPUs and enormous datasets.
-The PyTorch episode put numbers on that with
-<code>helpers.estimate_training_cost</code>. One pass of a 7B language
-model over a million papers came to about <code>$1,270</code> on a
-four-GPU box, and the models behind ChatGPT are far larger and trained
-on far more.</p>
+capabilities of a modern language or vision model with billions of
+weights. Training one of those models from scratch can require thousands
+of GPUs and enormous datasets. The PyTorch episode put numbers on that
+with <code>helpers.estimate_training_cost</code>. One pass of a 7B
+language model over a million papers came to about <code>$1,270</code>
+on a four-GPU box, and the models behind ChatGPT are far larger and
+trained on far more.</p>
 <p>Fortunately, we don’t have to start from scratch.
 <strong><em>Pretrained</em></strong> models already know how to
 interpret images, understand language, and generate text.
@@ -5802,7 +5843,7 @@ What does a project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5, because a full fine-tune of a 7B model
 needs about 112 GB plus activations, and the g5 has 24 GB. On the p4d, 8
@@ -5992,7 +6033,7 @@ costs one epoch, not the whole bill.</li>
 <button class="accordion-button instructor-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInstructor1" aria-expanded="false" aria-controls="collapseInstructor1">
   <h3 class="accordion-header" id="headingInstructor1">  <div class="note-square"><i aria-hidden="true" class="callout-icon" data-feather="edit-2"></i></div> Before class (instructor checklist) </h3>
 </button>
-<div id="collapseInstructor1" class="accordion-collapse collapse" aria-labelledby="headingInstructor1" data-bs-parent="#accordionInstructor1">
+<div id="collapseInstructor1" class="accordion-collapse collapse" data-bs-parent="#accordionInstructor1" aria-labelledby="headingInstructor1">
 <div class="accordion-body">
 <p>Students never download the data themselves; four things have to be
 in place before the session. Each is written out in the instructor
@@ -6449,7 +6490,7 @@ step. Which, and why are they there?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Only the language model’s <code>q_proj</code>, <code>k_proj</code>,
@@ -7033,7 +7074,7 @@ will compare it to the bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Expect about 32 billed minutes. Scoring is the line most likely to
@@ -7451,7 +7492,7 @@ summaries, and the before/after CER. Did the extra pixels help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -7492,7 +7533,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
 <div class="accordion-body">
 <p>Startup and upload (~6 min, <code>$0.26</code> at
 <code>$2.61</code>/h) do not speed up: the container pull and the S3
@@ -7609,41 +7650,41 @@ Select the <strong><code>conda_pytorch</code></strong> kernel.</p>
 </section><section><h2 class="section-heading" id="hyperparameter-tuning-in-sagemaker">Hyperparameter tuning in SageMaker<a class="anchor" aria-label="anchor" href="#hyperparameter-tuning-in-sagemaker"></a>
 </h2>
 <hr class="half-width">
-<p>SageMaker’s <strong>hyperparameter tuning jobs</strong> search a
-parameter space for any model; what keeps them cheap is the choice of
-ranges and the number of models trained. This episode walks through one
-tuning job with both in view.</p>
+<p>The PyTorch episode trained one neural network with a learning rate
+and an epoch count chosen by hand. Those settings change the result, and
+choosing them by hand means launching a series of experiments and
+keeping track of their scores yourself. SageMaker’s hyperparameter tuner
+does that for us. We say which settings may vary, how a good result is
+measured, and how many training jobs we are willing to pay for.</p>
+<p>Each trial is an ordinary SageMaker training job, launched from the
+controller notebook on its own instance. The tuner changes the
+hyperparameters between trials and compares the validation metric they
+report. That makes the search easier to run, but it does not make it
+free. Ten trials are ten training jobs on the bill, and what keeps a
+tuning job cheap is the choice of ranges and the number of models
+trained. We begin with a single trial to check the configuration before
+paying for a larger search, the same test-first pattern as the training
+episodes.</p>
 <div class="section level3">
-<h3 id="key-steps">Key steps<a class="anchor" aria-label="anchor" href="#key-steps"></a>
+<h3 id="the-experiment">The experiment<a class="anchor" aria-label="anchor" href="#the-experiment"></a>
 </h3>
-<p>The overall process involves these seven below steps.</p>
-<ol style="list-style-type: decimal">
-<li>Setup estimator</li>
-<li>Define parameter ranges</li>
-<li>Set up HyperparameterTuner object</li>
-<li>Prepare training script to log metrics</li>
-<li>Set data paths and launch tuner.fit()</li>
-<li>Monitor tuning job from SageMaker console</li>
-<li>Extract best model for final evaluation</li>
-</ol>
-<div class="section level4">
-<h4 id="code-example-for-sagemaker-hyperparameter-tuning-with-neural-networks">Code example for SageMaker hyperparameter tuning with neural
-networks<a class="anchor" aria-label="anchor" href="#code-example-for-sagemaker-hyperparameter-tuning-with-neural-networks"></a>
-</h4>
-<p>We’ll walk through each step in detail by tuning a neural network.
-Specifically, we will test out different values for our
-<code>epochs</code> and <code>learning_rate</code> parameters. We are
-sticking to just two hyperparameters for demonstration purposes, but you
-may wish to explore additional parameters in your own work.</p>
-<p><code>epochs</code> is a <code>CategoricalParameter</code>, a list of
-values to try; <code>learning_rate</code> a
-<code>ContinuousParameter</code>, a range to sample;
-<code>max_jobs</code> and <code>max_parallel_jobs</code> bound the
-cost.</p>
+<p>We reuse the Titanic network and training data from the PyTorch
+episode and tune two settings, <code>epochs</code> and
+<code>learning_rate</code>. One is picked from a short list of values,
+the other sampled from a continuous range. Two settings are enough to
+see the mechanics without a new dataset or model. In your own work you
+may tune more.</p>
+<p>There are three pieces to connect. An estimator says how each model
+is trained, a search space says what may change, and a validation metric
+tells SageMaker which trials did better. The tuner then bounds the
+search with the total number of trials, <code>max_jobs</code>, and how
+many run at once, <code>max_parallel_jobs</code>. Afterwards we read the
+results, add up the billed compute time, and evaluate the chosen model
+on the test data.</p>
 </div>
-<div class="section level4">
-<h4 id="directory-setup">0. Directory setup<a class="anchor" aria-label="anchor" href="#directory-setup"></a>
-</h4>
+<div class="section level3">
+<h3 id="set-up-the-project-folder">Set up the project folder<a class="anchor" aria-label="anchor" href="#set-up-the-project-folder"></a>
+</h3>
 <p>Start in the Titanic project folder, as in the previous episodes:</p>
 <div class="codewrapper sourceCode" id="cb1">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -7656,25 +7697,14 @@ cost.</p>
 <span id="cb1-6"><a href="#cb1-6" tabindex="-1" aria-label="code-block-1-6"></a><span class="im">import</span> helpers</span></code></pre>
 </div>
 </div>
-<div class="section level4">
-<h4 id="setup-estimator">1. Setup estimator<a class="anchor" aria-label="anchor" href="#setup-estimator"></a>
-</h4>
-<p>The tuner needs an estimator first. The estimator setup here is the
-PyTorch episode’s, where we used it to configure and train a model
-directly. However, this time, rather than directly running a training
-job with the estimator, we’ll be using it as the foundation for
-<strong>hyperparameter tuning</strong>.</p>
-<p>In SageMaker, the estimator serves as a blueprint for each tuning
-job, specifying the training script, instance type, and key parameters
-like data paths and metrics. Once defined, this estimator will be passed
-to a <strong>Hyperparameter Tuner</strong> that manages the creation of
-multiple training jobs with various hyperparameter combinations, helping
-us find an optimal configuration.</p>
-<p>The PyTorch estimator, which includes specifying the entry script for
-training (<code>train_nn.py</code>) and defining hyperparameters that
-will remain fixed across tuning jobs. The hyperparameters we’re setting
-up to tune include <code>epochs</code> and <code>learning_rate</code>,
-with a few specific values or ranges defined.</p>
+<div class="section level3">
+<h3 id="define-the-training-job">Define the training job<a class="anchor" aria-label="anchor" href="#define-the-training-job"></a>
+</h3>
+<p>We begin with a PyTorch estimator like the one in the previous
+episode. It names the training script, the instance, the input paths and
+the metric to record. When it is handed to the tuner, SageMaker uses it
+as the template for every trial and substitutes new values for the
+hyperparameters being searched. The training script does not change.</p>
 <p>We’ll use our notebook instance name again to label the training jobs
 launched in this episode</p>
 <div class="codewrapper sourceCode" id="cb2">
@@ -7780,9 +7810,9 @@ times the sum of the child jobs’ billable minutes.</p>
 <span id="cb4-53"><a href="#cb4-53" tabindex="-1" aria-label="code-block-4-53"></a>)</span></code></pre>
 </div>
 </div>
-<div class="section level4">
-<h4 id="define-hyperparameter-ranges">2. Define hyperparameter ranges<a class="anchor" aria-label="anchor" href="#define-hyperparameter-ranges"></a>
-</h4>
+<div class="section level3">
+<h3 id="define-the-search-space">Define the search space<a class="anchor" aria-label="anchor" href="#define-the-search-space"></a>
+</h3>
 <p>In SageMaker, you must explicitly define ranges for any
 hyperparameters you want to tune. SageMaker supports
 <code>ContinuousParameter</code>, <code>IntegerParameter</code> and
@@ -7821,50 +7851,25 @@ setting.</p>
 <span id="cb5-5"><a href="#cb5-5" tabindex="-1" aria-label="code-block-5-5"></a>}</span></code></pre>
 </div>
 </div>
-<div class="section level4">
-<h4 id="set-up-hyperparametertuner-object">3. Set up HyperparameterTuner object<a class="anchor" aria-label="anchor" href="#set-up-hyperparametertuner-object"></a>
-</h4>
-<p>In step 3, we set up the <code>HyperparameterTuner</code>, which
-controls the tuning process by specifying the…</p>
-<ul>
-<li>
-<code>estimator</code>: Here, we connect the previously defined
-<code>pytorch_estimator</code> to <code>tuner</code>, ensuring that the
-tuning job will run with our PyTorch model configuration.</li>
-<li>
-<code>objective</code>: The <code>metric_definitions</code> and
-<code>objective_metric_name</code> indicate which metric SageMaker
-should monitor to find the best-performing model; in this case, we’re
-tracking “validation:accuracy” and aiming to maximize it. We’ll show you
-how to setup your training script to report this information in the next
-step.</li>
-<li>
-<code>hyperparameter_ranges</code>: Defined above.</li>
-<li>
-<code>strategy</code>: SageMaker uses a <strong>Bayesian
-strategy</strong> by default, which iteratively improves parameter
-selection based on past performance to find an optimal model more
-efficiently. Although it’s possible to adjust to a “Random” strategy,
-Bayesian optimization generally provides better results, so it’s
-recommended to keep this setting.</li>
-<li>
-<code>max_jobs</code> and <code>max_parallel_jobs</code>: Finally,
-we set <code>max_jobs</code> to control the total number of
-configurations SageMaker will explore and <code>max_parallel_jobs</code>
-to limit the number of jobs that run simultaneously, balancing resource
-usage and tuning speed. Since SageMaker tests different hyperparameter
-values dynamically, keep <code>max_parallel_jobs</code> at 4 or
-fewer.</li>
-</ul>
+<div class="section level3">
+<h3 id="configure-the-tuner">Configure the tuner<a class="anchor" aria-label="anchor" href="#configure-the-tuner"></a>
+</h3>
+<p>The <code>HyperparameterTuner</code> brings the estimator and the
+search space together. It also needs an objective. Here it maximizes
+<code>validation:accuracy</code>, which the training script prints and
+SageMaker reads out of the log. The strategy chooses which
+configurations to try, <code>max_jobs</code> caps how many training jobs
+are launched in total, and <code>max_parallel_jobs</code> says how many
+run at once. Parallel trials finish sooner, and each one still bills its
+own instance.</p>
 <blockquote>
 <p>Tuning gains are usually marginal past 20 to 30 configurations, and
 the search space is where the money goes: a published range for the
 parameters that matter beats a wide search over all of them.</p>
 </blockquote>
-<p><strong>Always start with <code>max_jobs = 1</code> and
-<code>max_parallel_jobs=1</code>.</strong> Before running the full
-search, let’s test our setup by setting max_jobs = 1. This will test
-just one possible hyperparameter configuration.</p>
+<p>We first set both limits to one. That single trial checks that the
+script, the metric extraction, the input files and the permissions all
+work before we pay for a search.</p>
 <div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -7884,14 +7889,15 @@ just one possible hyperparameter configuration.</p>
 <span id="cb6-14"><a href="#cb6-14" tabindex="-1" aria-label="code-block-6-14"></a>)</span></code></pre>
 </div>
 </div>
-<div class="section level4">
-<h4 id="prepare-training-script-to-log-metrics">4. Prepare training script to log metrics<a class="anchor" aria-label="anchor" href="#prepare-training-script-to-log-metrics"></a>
-</h4>
-<p>To prepare <code>train_nn.py</code> for hyperparameter tuning, we
-added code to log validation metrics in a format that SageMaker
-recognizes for tracking. In the training loop, we added a print
-statement for the validation accuracy in a specific format that
-SageMaker can capture.</p>
+<div class="section level3">
+<h3 id="check-how-the-objective-metric-is-recorded">Check how the objective metric is recorded<a class="anchor" aria-label="anchor" href="#check-how-the-objective-metric-is-recorded"></a>
+</h3>
+<p>A tuner needs a number from every trial. <code>train_nn.py</code>
+prints the validation accuracy during training, and the estimator’s
+<code>metric_definitions</code> regex pulls that value out of the job’s
+log. The name in the log line, in the metric definition and in the
+tuner’s <code>objective_metric_name</code> have to agree, or SageMaker
+has nothing to compare the trials on.</p>
 <p><strong>Note</strong>: It’s best to use an if statement to only print
 out metrics periodically (e.g., every 100 epochs), so that your print
 time does not eat up too much of your training time. Printing every
@@ -7913,22 +7919,17 @@ specifically looks for <code>validation:accuracy =</code>, followed by a
 floating-point number, which corresponds to the format of our log
 statement in <code>train_nn.py</code>.</p>
 </div>
-<div class="section level4">
-<h4 id="set-data-paths-and-launch-tuner-fit">5. Set data paths and launch tuner.fit()<a class="anchor" aria-label="anchor" href="#set-data-paths-and-launch-tuner-fit"></a>
-</h4>
-<p>In step 5, we define the input data paths for the training job and
-launch the hyperparameter tuning process. Using
-<code>TrainingInput</code>, we specify the S3 paths to our
-<code>train_data.npz</code> and <code>val_data.npz</code> files
-(uploaded in the PyTorch episode). We then call <code>tuner.fit</code>
-and pass a dictionary mapping each data channel (“train” and “val”) to
-its respective path. This command initiates the tuning job, triggering
-SageMaker to begin sampling hyperparameter combinations, training the
-model, and evaluating performance based on our defined objective metric.
-Once the job is launched, SageMaker handles the tuning process
-automatically, running the specified number of configurations and
-keeping track of the best model parameters based on validation
-accuracy.</p>
+<div class="section level3">
+<h3 id="launch-the-first-trial">Launch the first trial<a class="anchor" aria-label="anchor" href="#launch-the-first-trial"></a>
+</h3>
+<p>Now we give the tuner the training and validation <code>.npz</code>
+files the PyTorch episode saved to S3. The two
+<code>TrainingInput</code> channels map those files to the paths
+<code>train_nn.py</code> expects. <code>tuner.fit()</code> starts the
+tuning job. SageMaker launches one training job with one configuration
+from the search space and records the validation metric it reports. With
+<code>max_jobs=1</code> this is a test of the setup, not yet a
+search.</p>
 <p>Estimate first: one child job is the same three billable minutes as
 the PyTorch episode’s CPU job, almost all of it startup, so about
 <code>$0.01</code>.</p>
@@ -7952,13 +7953,12 @@ callout <em>If the launch is refused</em> says what to look at.</p>
 <span id="cb8-10"><a href="#cb8-10" tabindex="-1" aria-label="code-block-8-10"></a><span class="bu">print</span>(<span class="ss">f"Hyperparameter tuning job finished in </span><span class="sc">{</span>t<span class="sc">.</span>time() <span class="op">-</span> start_time<span class="sc">:.1f}</span><span class="ss"> seconds (wall-clock, including instance startup)"</span>)</span></code></pre>
 </div>
 </div>
-<div class="section level4">
-<h4 id="monitor-tuning-job-from-sagemaker-console">6. Monitor tuning job from SageMaker console<a class="anchor" aria-label="anchor" href="#monitor-tuning-job-from-sagemaker-console"></a>
-</h4>
+<div class="section level3">
+<h3 id="monitor-the-tuning-job">Monitor the tuning job<a class="anchor" aria-label="anchor" href="#monitor-the-tuning-job"></a>
+</h3>
 <p>While the above cell runs, we can check on the progress by visiting
 the SageMaker Console and finding the “Training” tab located on the left
 panel. Click “Hyperparameter tuning jobs” to view running jobs.</p>
-</div>
 <div class="section level4">
 <h4 id="what-did-that-cost">What did that cost?<a class="anchor" aria-label="anchor" href="#what-did-that-cost"></a>
 </h4>
@@ -8296,7 +8296,7 @@ and the runtime print.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <ul>
 <li>
@@ -8346,7 +8346,7 @@ in the notebook?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>The tuner can only vary what the script reads. Right now
 <code>train_nn.py</code> has no <code>--batch_size</code> argument and
@@ -9831,7 +9831,7 @@ helper wraps:</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -9840,7 +9840,7 @@ helper wraps:</p>
 <span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a>  <span class="at">--tags</span> key=Name,value=DoeJohn key=Project,value=SinkOrSwim key=Purpose,value=Inference</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
+<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -9903,7 +9903,7 @@ month’s Bedrock spend by <code>Project</code>?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -10357,7 +10357,7 @@ same questions, <code>$1.41</code> an hour?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>The two prices are from the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
 for DeepSeek on-demand in October 2026; update them for the model and
@@ -10437,7 +10437,7 @@ what moved the score.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
 <p>Both solution cells start with
 <code>%%script false --no-raise-error</code>, which makes Jupyter skip
@@ -13973,7 +13973,7 @@ stopped your notebook instance and walked away?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>A complete list for someone who did every episode, including the
 optional ones:</p>
