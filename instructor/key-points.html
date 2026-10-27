@@ -751,7 +751,8 @@ be forgotten: it bills while the script runs and ends on its own, with
 <code>max_runtime_in_seconds</code> as the backstop. Use it for batch
 work; use Bedrock or an endpoint when you need answers in seconds.</li>
 <li>Inference needs only the weights: Qwen3-8B in bf16 is ~16 GB and
-fits one 24 GB GPU.</li>
+fits one 24 GB GPU, with the rest for the prompts’ attention cache; how
+many prompts decode together is bounded by that remainder.</li>
 <li>A job’s inputs and outputs are S3 prefixes mounted into the
 container; the notebook only stages files and reads results, so it stays
 a cheap CPU instance.</li>

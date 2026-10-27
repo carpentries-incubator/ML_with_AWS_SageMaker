@@ -937,21 +937,22 @@ the 12 of the hand calculation above because the estimator multiplies
 the FLOPs by 1.5 when gradient checkpointing is on, as it is in our
 script: to save memory, the forward pass is thrown away and recomputed
 during the backward pass, which is half the arithmetic again. Measured,
-the training phase of the class job is about 12 minutes (126 optimizer
-steps at under 6 seconds each, in the job’s log), so the rule without
-the factor landed on the number and the rule with it is a third high:
-the quarter-of-peak utilization is the loosest assumption in the rule,
-and a miss of that size is what it is good for. That is every assumption
-in it: bytes per parameter from the first table plus 4 GB of activations
-for memory; 6 or 4 FLOPs per parameter per token, times 1.5 for
-checkpointing, at a quarter of the GPU’s peak for time; 10 minutes of
-startup; and the price list for the bill. The job you launch in Step 1
-will bill about 32 minutes, and the difference is not an error in the
-rule. The job also scores holdout pages with the base model before
-training and with the adapter after it, which is about 14 minutes of GPU
-time the estimator knows nothing about, because it estimates training.
-Hold on to <code>step0_estimate</code>; Step 2 compares it to the job’s
-own bill.</p>
+the job’s log says <code>training finished in 16.7 min</code>, and that
+includes the two end-of-pass scorings of 8 pages, 4.6 minutes; the 126
+optimizer steps themselves, at under 6 seconds each, are about 12
+minutes, so the rule without the factor landed on the number and the
+rule with it is a third high: the quarter-of-peak utilization is the
+loosest assumption in the rule, and a miss of that size is what it is
+good for. That is every assumption in it: bytes per parameter from the
+first table plus 4 GB of activations for memory; 6 or 4 FLOPs per
+parameter per token, times 1.5 for checkpointing, at a quarter of the
+GPU’s peak for time; 10 minutes of startup; and the price list for the
+bill. The job you launch in Step 1 will bill about 32 minutes, and the
+difference is not an error in the rule. The job also scores holdout
+pages with the base model before training and with the adapter after it,
+which is about 14 minutes of GPU time the estimator knows nothing about,
+because it estimates training. Hold on to <code>step0_estimate</code>;
+Step 2 compares it to the job’s own bill.</p>
 <p>The same call for the kind of run a marathon team might weigh, a 7B
 model on 5,000 documents of about 600 words (800 tokens) each, three
 passes, with the eight attempts a project takes:</p>
@@ -999,7 +1000,7 @@ project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5: a full fine-tune of a 7B model needs about
 112 GB plus activations, and the g5 has 24 GB. On the p4d, 8 × 40 GB =
@@ -1234,7 +1235,7 @@ costs one epoch, not the whole bill.</li>
 <button class="accordion-button instructor-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInstructor1" aria-expanded="false" aria-controls="collapseInstructor1">
   <h3 class="accordion-header" id="headingInstructor1">  <div class="note-square"><i aria-hidden="true" class="callout-icon" data-feather="edit-2"></i></div> Before class (instructor checklist) </h3>
 </button>
-<div id="collapseInstructor1" class="accordion-collapse collapse" data-bs-parent="#accordionInstructor1" aria-labelledby="headingInstructor1">
+<div id="collapseInstructor1" class="accordion-collapse collapse" aria-labelledby="headingInstructor1" data-bs-parent="#accordionInstructor1">
 <div class="accordion-body">
 <p>Students never download the data themselves; four things have to be
 in place before the session. Each is written out in the instructor
@@ -1681,7 +1682,7 @@ step. Which, and why are they there?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>Only the language model’s <code>q_proj</code>, <code>k_proj</code>,
 <code>v_proj</code>, <code>o_proj</code>, <code>gate_proj</code>,
@@ -2049,11 +2050,13 @@ the billing console.</p>
 land inside it. If it does not, the summary file downloaded next says
 which phase ran long.</p>
 <p>Compare the billable minutes with <code>train_minutes</code> in the
-summary you download next: the difference is the fixed overhead of every
-job, container pull, data download and the 7.5 GB model copy from S3. It
-is the same whether you train for one minute or one hour, which is why a
-small first run is cheap and why batching work into fewer, longer jobs
-is cheaper than many tiny ones.</p>
+summary you download next. In our run the gap was 15 minutes: nine of
+them the two scorings of 15 holdout pages before and after training, and
+the rest the fixed overhead of every job, container pull, data download
+and the 7.5 GB model copy from S3. That overhead is the same whether you
+train for one minute or one hour, which is why a small first run is
+cheap and why batching work into fewer, longer jobs is cheaper than many
+tiny ones.</p>
 <p>The whole output of the job is a <code>model.tar.gz</code> of about
 100 MB: the LoRA adapter, the processor configuration, the holdout list,
 the evaluation files, the loss and CER curves
@@ -2091,10 +2094,13 @@ LoRA fine-tune and nothing else.</p>
 <span id="cb37-7"><a href="#cb37-7" tabindex="-1" aria-label="code-block-37-7"></a><span class="bu">print</span>(comparison.sort_values(<span class="st">"gain"</span>, ascending<span class="op">=</span><span class="va">False</span>).<span class="bu">round</span>(<span class="dv">3</span>).to_string(index<span class="op">=</span><span class="va">False</span>))</span>
 <span id="cb37-8"><a href="#cb37-8" tabindex="-1" aria-label="code-block-37-8"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">mean CER  base: </span><span class="sc">{</span>comparison<span class="sc">.</span>cer_base<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss">   LoRA: </span><span class="sc">{</span>comparison<span class="sc">.</span>cer_lora<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<p>Look at the page that improved most. The LoRA fine-tuned model should
-have picked up the conventions (umlauts and <code>ß</code> as written,
-no modernised spelling, Kurrent <code>s</code> and <code>e</code> forms
-read correctly) as well as this particular writer’s hand.</p>
+<p>Our run went from a mean CER of 0.267 to 0.065 on the 15 pages: a
+quarter of the characters wrong before, one in fifteen after, for 75
+cents of GPU. Look at the page that improved most. The LoRA fine-tuned
+model should have picked up the conventions (umlauts and <code>ß</code>
+as written, no modernised spelling, Kurrent <code>s</code> and
+<code>e</code> forms read correctly) as well as this particular writer’s
+hand.</p>
 <div class="codewrapper sourceCode" id="cb38">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -2237,7 +2243,7 @@ will compare it to the bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>Expect about 32 billed minutes. Scoring is the line most likely to
 surprise: at 17 to 21 seconds a page, the two 15-page evaluations and
@@ -2639,7 +2645,7 @@ summaries, and the before/after CER. Did the extra pixels help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -2680,7 +2686,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
 <div class="accordion-body">
 <p>Startup and upload (~6 min, <code>$0.26</code> at
 <code>$2.61</code>/h) do not speed up: the container pull and the S3

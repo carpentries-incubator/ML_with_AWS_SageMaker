@@ -1402,7 +1402,7 @@ charge?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -2781,7 +2781,7 @@ commit it, push with your PAT, and verify the change on GitHub.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Still inside
 <code>/home/ec2-user/SageMaker/sagemaker-work</code>:</p>
@@ -4461,7 +4461,7 @@ goes next to it.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>There is no single answer; the solution is the written estimate. One
 worked example for scale: a 7B language model fully fine-tuned on 50,000
@@ -4658,7 +4658,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -5633,21 +5633,22 @@ the 12 of the hand calculation above because the estimator multiplies
 the FLOPs by 1.5 when gradient checkpointing is on, as it is in our
 script: to save memory, the forward pass is thrown away and recomputed
 during the backward pass, which is half the arithmetic again. Measured,
-the training phase of the class job is about 12 minutes (126 optimizer
-steps at under 6 seconds each, in the job’s log), so the rule without
-the factor landed on the number and the rule with it is a third high:
-the quarter-of-peak utilization is the loosest assumption in the rule,
-and a miss of that size is what it is good for. That is every assumption
-in it: bytes per parameter from the first table plus 4 GB of activations
-for memory; 6 or 4 FLOPs per parameter per token, times 1.5 for
-checkpointing, at a quarter of the GPU’s peak for time; 10 minutes of
-startup; and the price list for the bill. The job you launch in Step 1
-will bill about 32 minutes, and the difference is not an error in the
-rule. The job also scores holdout pages with the base model before
-training and with the adapter after it, which is about 14 minutes of GPU
-time the estimator knows nothing about, because it estimates training.
-Hold on to <code>step0_estimate</code>; Step 2 compares it to the job’s
-own bill.</p>
+the job’s log says <code>training finished in 16.7 min</code>, and that
+includes the two end-of-pass scorings of 8 pages, 4.6 minutes; the 126
+optimizer steps themselves, at under 6 seconds each, are about 12
+minutes, so the rule without the factor landed on the number and the
+rule with it is a third high: the quarter-of-peak utilization is the
+loosest assumption in the rule, and a miss of that size is what it is
+good for. That is every assumption in it: bytes per parameter from the
+first table plus 4 GB of activations for memory; 6 or 4 FLOPs per
+parameter per token, times 1.5 for checkpointing, at a quarter of the
+GPU’s peak for time; 10 minutes of startup; and the price list for the
+bill. The job you launch in Step 1 will bill about 32 minutes, and the
+difference is not an error in the rule. The job also scores holdout
+pages with the base model before training and with the adapter after it,
+which is about 14 minutes of GPU time the estimator knows nothing about,
+because it estimates training. Hold on to <code>step0_estimate</code>;
+Step 2 compares it to the job’s own bill.</p>
 <p>The same call for the kind of run a marathon team might weigh, a 7B
 model on 5,000 documents of about 600 words (800 tokens) each, three
 passes, with the eight attempts a project takes:</p>
@@ -5695,7 +5696,7 @@ project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5: a full fine-tune of a 7B model needs about
 112 GB plus activations, and the g5 has 24 GB. On the p4d, 8 × 40 GB =
@@ -6005,7 +6006,7 @@ costs one epoch, not the whole bill.</li>
 <button class="accordion-button instructor-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInstructor1" aria-expanded="false" aria-controls="collapseInstructor1">
   <h3 class="accordion-header" id="headingInstructor1">  <div class="note-square"><i aria-hidden="true" class="callout-icon" data-feather="edit-2"></i></div> Before class (instructor checklist) </h3>
 </button>
-<div id="collapseInstructor1" class="accordion-collapse collapse" data-bs-parent="#accordionInstructor1" aria-labelledby="headingInstructor1">
+<div id="collapseInstructor1" class="accordion-collapse collapse" aria-labelledby="headingInstructor1" data-bs-parent="#accordionInstructor1">
 <div class="accordion-body">
 <p>Students never download the data themselves; four things have to be
 in place before the session. Each is written out in the instructor
@@ -6462,7 +6463,7 @@ step. Which, and why are they there?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Only the language model’s <code>q_proj</code>, <code>k_proj</code>,
@@ -6844,11 +6845,13 @@ the billing console.</p>
 land inside it. If it does not, the summary file downloaded next says
 which phase ran long.</p>
 <p>Compare the billable minutes with <code>train_minutes</code> in the
-summary you download next: the difference is the fixed overhead of every
-job, container pull, data download and the 7.5 GB model copy from S3. It
-is the same whether you train for one minute or one hour, which is why a
-small first run is cheap and why batching work into fewer, longer jobs
-is cheaper than many tiny ones.</p>
+summary you download next. In our run the gap was 15 minutes: nine of
+them the two scorings of 15 holdout pages before and after training, and
+the rest the fixed overhead of every job, container pull, data download
+and the 7.5 GB model copy from S3. That overhead is the same whether you
+train for one minute or one hour, which is why a small first run is
+cheap and why batching work into fewer, longer jobs is cheaper than many
+tiny ones.</p>
 <p>The whole output of the job is a <code>model.tar.gz</code> of about
 100 MB: the LoRA adapter, the processor configuration, the holdout list,
 the evaluation files, the loss and CER curves
@@ -6887,10 +6890,13 @@ LoRA fine-tune and nothing else.</p>
 <span id="cb37-7"><a href="#cb37-7" tabindex="-1" aria-label="code-block-37-7"></a><span class="bu">print</span>(comparison.sort_values(<span class="st">"gain"</span>, ascending<span class="op">=</span><span class="va">False</span>).<span class="bu">round</span>(<span class="dv">3</span>).to_string(index<span class="op">=</span><span class="va">False</span>))</span>
 <span id="cb37-8"><a href="#cb37-8" tabindex="-1" aria-label="code-block-37-8"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">mean CER  base: </span><span class="sc">{</span>comparison<span class="sc">.</span>cer_base<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss">   LoRA: </span><span class="sc">{</span>comparison<span class="sc">.</span>cer_lora<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<p>Look at the page that improved most. The LoRA fine-tuned model should
-have picked up the conventions (umlauts and <code>ß</code> as written,
-no modernised spelling, Kurrent <code>s</code> and <code>e</code> forms
-read correctly) as well as this particular writer’s hand.</p>
+<p>Our run went from a mean CER of 0.267 to 0.065 on the 15 pages: a
+quarter of the characters wrong before, one in fifteen after, for 75
+cents of GPU. Look at the page that improved most. The LoRA fine-tuned
+model should have picked up the conventions (umlauts and <code>ß</code>
+as written, no modernised spelling, Kurrent <code>s</code> and
+<code>e</code> forms read correctly) as well as this particular writer’s
+hand.</p>
 <div class="codewrapper sourceCode" id="cb38">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -7040,7 +7046,7 @@ will compare it to the bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Expect about 32 billed minutes. Scoring is the line most likely to
@@ -7458,7 +7464,7 @@ summaries, and the before/after CER. Did the extra pixels help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -7499,7 +7505,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
 <div class="accordion-body">
 <p>Startup and upload (~6 min, <code>$0.26</code> at
 <code>$2.61</code>/h) do not speed up: the container pull and the S3
@@ -8303,7 +8309,7 @@ and the runtime print.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <ul>
 <li>
@@ -8353,7 +8359,7 @@ in the notebook?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>The tuner can only vary what the script reads. Right now
 <code>train_nn.py</code> has no <code>--batch_size</code> argument and
@@ -9890,7 +9896,7 @@ helper wraps:</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -9899,7 +9905,7 @@ helper wraps:</p>
 <span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a>  <span class="at">--tags</span> key=Name,value=DoeJohn key=Project,value=SinkOrSwim key=Purpose,value=Inference</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
+<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
 <div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -9961,7 +9967,7 @@ month’s Bedrock spend by <code>Project</code>?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -10413,7 +10419,7 @@ same questions, <code>$1.41</code> an hour?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>The two prices are from the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
 for DeepSeek on-demand in October 2026; update them for the model and
@@ -10493,7 +10499,7 @@ what moved the score.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <p>Both solution cells start with
 <code>%%script false --no-raise-error</code>, which makes Jupyter skip
@@ -11730,9 +11736,13 @@ the generator (Qwen3-8B here) with Qwen’s thinking mode off, taking
 several prompts at once. The loop itself is <code>run_batch_qa</code>,
 the batched twin of the <code>run_single_qa</code> the Bedrock episode
 used: the same retrieval, prompts and unanswerable rule, with the model
-calls grouped eight at a time because a GPU decoding one prompt is idle
-most of the time. The job writes <code>wattbot_solutions.csv</code> in
-the WattBot submission format.</p>
+calls grouped four at a time because a GPU decoding one prompt is idle
+most of the time. The group is a trade: more prompts at once is faster,
+and each one adds its own cache of attention keys and values to the 16
+GB the weights already hold, so a group of long prompts can run the 24
+GB card out of memory. The script halves the group and retries when that
+happens, so a long batch costs time rather than the job. The job writes
+<code>wattbot_solutions.csv</code> in the WattBot submission format.</p>
 <div id="why-not-vllm" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -11748,7 +11758,7 @@ throughput scales. That is what you want behind an API with users. This
 job has about 100 prompts and no users waiting, and
 <code>transformers.generate</code>, already in the container, can decode
 several prompts at once too: <code>run_batch_qa</code> in
-<code>wattbot_rag.py</code> hands them to the model eight at a time
+<code>wattbot_rag.py</code> hands them to the model four at a time
 (<code>--batch_size</code>), which is where most of vLLM’s speed on a
 batch like this comes from, with nothing to install. vLLM’s install is
 several gigabytes of billed GPU time before the first answer. The
@@ -11801,9 +11811,12 @@ how long it may run, whose tags it carries. Two of its settings matter
 more than on the embedding job. <code>volume_size_in_gb=60</code>
 attaches a 60 GB volume to the instance, mounted under
 <code>/opt/ml/processing</code>; the container’s own root disk is small,
-so the 16 GB of model weights must not land there.
-<code>env={"HF_HOME": ...}</code> points Hugging Face’s download cache
-at that volume, which is where the weights go.</p>
+so the 16 GB of model weights must not land there. <code>env=</code>
+sets two environment variables in the container: <code>HF_HOME</code>
+points Hugging Face’s download cache at that volume, which is where the
+weights go, and <code>PYTORCH_CUDA_ALLOC_CONF</code> tells PyTorch to
+reuse freed GPU memory in place rather than leave it fragmented, which
+matters when a batch of prompts is close to what the card holds.</p>
 <div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -11819,13 +11832,14 @@ at that volume, which is where the weights go.</p>
 <span id="cb10-10"><a href="#cb10-10" tabindex="-1" aria-label="code-block-10-10"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>,        <span class="co"># 1 x A10G, 24 GB: holds the bf16 8B model plus the KV cache</span></span>
 <span id="cb10-11"><a href="#cb10-11" tabindex="-1" aria-label="code-block-10-11"></a>    instance_count<span class="op">=</span><span class="dv">1</span>,</span>
 <span id="cb10-12"><a href="#cb10-12" tabindex="-1" aria-label="code-block-10-12"></a>    volume_size_in_gb<span class="op">=</span><span class="dv">60</span>,                <span class="co"># disk attached to the instance, mounted at /opt/ml/processing; the weights go here</span></span>
-<span id="cb10-13"><a href="#cb10-13" tabindex="-1" aria-label="code-block-10-13"></a>    env<span class="op">=</span>{<span class="st">"HF_HOME"</span>: <span class="st">"/opt/ml/processing/hf_cache"</span>},   <span class="co"># environment variable in the container: Hugging Face downloads to this path</span></span>
-<span id="cb10-14"><a href="#cb10-14" tabindex="-1" aria-label="code-block-10-14"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,         <span class="co"># these three pick the prebuilt container image, the same one the embedding job used</span></span>
-<span id="cb10-15"><a href="#cb10-15" tabindex="-1" aria-label="code-block-10-15"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
-<span id="cb10-16"><a href="#cb10-16" tabindex="-1" aria-label="code-block-10-16"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
-<span id="cb10-17"><a href="#cb10-17" tabindex="-1" aria-label="code-block-10-17"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb10-18"><a href="#cb10-18" tabindex="-1" aria-label="code-block-10-18"></a>    max_runtime_in_seconds<span class="op">=</span><span class="dv">2</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span>,  <span class="co"># the cap: SageMaker kills the job after 2 hours; the estimate is 20 minutes</span></span>
-<span id="cb10-19"><a href="#cb10-19" tabindex="-1" aria-label="code-block-10-19"></a>)</span></code></pre>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1" aria-label="code-block-10-13"></a>    env<span class="op">=</span>{<span class="st">"HF_HOME"</span>: <span class="st">"/opt/ml/processing/hf_cache"</span>,                  <span class="co"># environment variables in the container: Hugging Face downloads to this path...</span></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1" aria-label="code-block-10-14"></a>         <span class="st">"PYTORCH_CUDA_ALLOC_CONF"</span>: <span class="st">"expandable_segments:True"</span>},   <span class="co"># ...and PyTorch reuses freed GPU memory instead of fragmenting it, which is what a batch of long prompts runs out of</span></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1" aria-label="code-block-10-15"></a>    transformers_version<span class="op">=</span><span class="st">"4.56"</span>,         <span class="co"># these three pick the prebuilt container image, the same one the embedding job used</span></span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1" aria-label="code-block-10-16"></a>    pytorch_version<span class="op">=</span><span class="st">"2.8"</span>,</span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1" aria-label="code-block-10-17"></a>    py_version<span class="op">=</span><span class="st">"py312"</span>,</span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1" aria-label="code-block-10-18"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1" aria-label="code-block-10-19"></a>    max_runtime_in_seconds<span class="op">=</span><span class="dv">2</span> <span class="op">*</span> <span class="dv">60</span> <span class="op">*</span> <span class="dv">60</span>,  <span class="co"># the cap: SageMaker kills the job after 2 hours; the estimate is 20 minutes</span></span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1" aria-label="code-block-10-20"></a>)</span></code></pre>
 </div>
 <p>The processor is only a description; nothing runs until
 <code>run</code>. Its arguments are the three things a job needs: the
@@ -11875,7 +11889,7 @@ the form its <code>argparse</code> expects.</p>
 <span id="cb11-35"><a href="#cb11-35" tabindex="-1" aria-label="code-block-11-35"></a>        <span class="st">"--top_k"</span>, <span class="st">"8"</span>,                                        <span class="co"># chunks handed to the model per question</span></span>
 <span id="cb11-36"><a href="#cb11-36" tabindex="-1" aria-label="code-block-11-36"></a>        <span class="st">"--retrieval_threshold"</span>, <span class="st">"0.25"</span>,                       <span class="co"># best cosine below this =&gt; unanswerable</span></span>
 <span id="cb11-37"><a href="#cb11-37" tabindex="-1" aria-label="code-block-11-37"></a>        <span class="st">"--per_type"</span>, <span class="st">"10"</span>,                                    <span class="co"># the same stratified sample the Bedrock episode scored (seed 0); drop it for all the questions</span></span>
-<span id="cb11-38"><a href="#cb11-38" tabindex="-1" aria-label="code-block-11-38"></a>        <span class="st">"--batch_size"</span>, <span class="st">"8"</span>,                                   <span class="co"># prompts decoded together; 1 would be one at a time, several times slower</span></span>
+<span id="cb11-38"><a href="#cb11-38" tabindex="-1" aria-label="code-block-11-38"></a>        <span class="st">"--batch_size"</span>, <span class="st">"4"</span>,                                   <span class="co"># prompts decoded together; 1 would be one at a time, several times slower. 8 ran out of GPU memory on long prompts</span></span>
 <span id="cb11-39"><a href="#cb11-39" tabindex="-1" aria-label="code-block-11-39"></a>    ],</span>
 <span id="cb11-40"><a href="#cb11-40" tabindex="-1" aria-label="code-block-11-40"></a>)</span>
 <span id="cb11-41"><a href="#cb11-41" tabindex="-1" aria-label="code-block-11-41"></a></span>
@@ -11962,7 +11976,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -12026,7 +12040,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still downloading or
@@ -12063,7 +12077,8 @@ be forgotten: it bills while the script runs and ends on its own, with
 <code>max_runtime_in_seconds</code> as the backstop. Use it for batch
 work; use Bedrock or an endpoint when you need answers in seconds.</li>
 <li>Inference needs only the weights: Qwen3-8B in bf16 is ~16 GB and
-fits one 24 GB GPU.</li>
+fits one 24 GB GPU, with the rest for the prompts’ attention cache; how
+many prompts decode together is bounded by that remainder.</li>
 <li>A job’s inputs and outputs are S3 prefixes mounted into the
 container; the notebook only stages files and reads results, so it stays
 a cheap CPU instance.</li>
@@ -13254,7 +13269,7 @@ are who you think you are, in the account you think you are in:</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13263,7 +13278,7 @@ are who you think you are, in the account you think you are in:</p>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a><span class="ex">aws</span> sts get-caller-identity</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
+<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13317,7 +13332,7 @@ download you paid for.</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-2" class="tab-content">
-<div id="nav-tabpanel-2-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-2-1">
+<div id="nav-tabpanel-2-1" class="tab-pane show active" aria-labelledby="nav-tab-2-1" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13326,7 +13341,7 @@ download you paid for.</p>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a>  <span class="at">--query</span> <span class="st">'{status:TrainingJobStatus, instance:ResourceConfig.InstanceType, count:ResourceConfig.InstanceCount, billable_s:BillableTimeInSeconds}'</span></span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-2-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-2-2">
+<div id="nav-tabpanel-2-2" class="tab-pane" aria-labelledby="nav-tab-2-2" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13355,7 +13370,7 @@ key”:</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-3" class="tab-content">
-<div id="nav-tabpanel-3-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-3-1">
+<div id="nav-tabpanel-3-1" class="tab-pane show active" aria-labelledby="nav-tab-3-1" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13363,7 +13378,7 @@ key”:</p>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1" aria-label="code-block-7-2"></a><span class="ex">aws</span> sagemaker list-tags <span class="at">--resource-arn</span> <span class="va">$ARN</span> <span class="at">--query</span> <span class="st">'Tags[].[Key,Value]'</span> <span class="at">--output</span> table</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-3-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-3-2">
+<div id="nav-tabpanel-3-2" class="tab-pane" aria-labelledby="nav-tab-3-2" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13437,7 +13452,7 @@ the account.</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-4" class="tab-content">
-<div id="nav-tabpanel-4-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-4-1">
+<div id="nav-tabpanel-4-1" class="tab-pane show active" aria-labelledby="nav-tab-4-1" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13472,7 +13487,7 @@ the account.</p>
 <span id="cb12-29"><a href="#cb12-29" tabindex="-1" aria-label="code-block-12-29"></a><span class="op">JSON</span></span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-4-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-4-2">
+<div id="nav-tabpanel-4-2" class="tab-pane" aria-labelledby="nav-tab-4-2" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13603,7 +13618,7 @@ finds something. Then run them against your own resources.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <div class="tabs">
 <nav><div id="nav-tab-5" class="nav nav-tabs" role="tablist">
@@ -13619,14 +13634,14 @@ finds something. Then run them against your own resources.</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-5" class="tab-content">
-<div id="nav-tabpanel-5-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-5-1">
+<div id="nav-tabpanel-5-1" class="tab-pane show active" aria-labelledby="nav-tab-5-1" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb17">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" tabindex="-1" aria-label="code-block-17-1"></a><span class="ex">aws</span> sso login <span class="at">--profile</span> workshop <span class="kw">&amp;&amp;</span> <span class="bu">export</span> <span class="va">AWS_PROFILE</span><span class="op">=</span>workshop</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-5-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-5-2">
+<div id="nav-tabpanel-5-2" class="tab-pane" aria-labelledby="nav-tab-5-2" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -14116,7 +14131,7 @@ stopped your notebook instance and walked away?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>A complete list for someone who did every episode, including the
 optional ones:</p>
