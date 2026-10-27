@@ -12,7 +12,7 @@ Every launch from a notebook instance on the workshop account is checked against
 | `Name` is blank | Your last and first name run together, e.g. `DoeJohn`. |
 | `Project` is not on the list | One of `SinkOrSwim`, `WattBot2026`, `BadgerScribe`, `BadgerCode`, `BrainDecoding`, `PoisonedWell`, `SnapshotWI`, spelled exactly, capitals included. |
 | `Purpose` is not on the list | One of `Storage`, `Notebook`, `Training`, `Tuning`, `Inference`. |
-| The instance type is not one the lesson uses | `ml.t3.medium`, `ml.m5.large`, `ml.m5.xlarge`, `ml.g4dn.xlarge`, `ml.g5.xlarge`, `ml.g6.xlarge`, `ml.g6e.xlarge`, `ml.g6e.2xlarge`. Ask the instructor if your work needs another. |
+| The instance type is not one the lesson uses | `ml.t3.medium`, `ml.m5.large`, `ml.m5.xlarge`, `ml.g4dn.xlarge`, `ml.g5.xlarge`, `ml.g6.xlarge`, `ml.g6e.xlarge`, `ml.g6e.2xlarge`: single-GPU types only, so that one hung job under the 48-hour cap stays at about `$125` at most. Ask the instructor if your work needs another. |
 | The runtime cap is over 48 hours | `max_run` (training and tuning jobs) or `max_runtime_in_seconds` (Processing jobs) of at most `172800`. Set it a little above your estimate. |
 | A Processing job has no cap | Processing jobs do not get a default cap; pass `max_runtime_in_seconds=`. |
 | It is an endpoint or an EC2 instance | Nothing that runs until deleted can be created on this account. Use a job, or Bedrock. |
