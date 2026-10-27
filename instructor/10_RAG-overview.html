@@ -428,7 +428,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Overview of RAG Workflows on AWS</h1>
-        <p>Last updated on 2026-10-26 |
+        <p>Last updated on 2026-10-27 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/10_RAG-overview.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -525,7 +525,7 @@ billed</strong>:</p>
 <th>SageMaker GPU instance / endpoint</th>
 </tr></thead><tbody><tr><td><strong>Billing unit</strong></td>
 <td>Per token processed</td>
-<td>Per hour the instance exists</td>
+<td>Per second while the instance runs, at an hourly rate</td>
 </tr><tr><td><strong>Cost while idle</strong></td>
 <td>
 <code>$0</code> — nothing is running between calls</td>
@@ -590,7 +590,7 @@ page</a>):</p>
 </td>
 <td>~<code>$167</code>
 </td>
-<td>~<code>$1,905</code>
+<td>~<code>$1,906</code>
 </td>
 </tr><tr><td>ml.p4d.24xlarge</td>
 <td>8 × A100 (40 GB)</td>
@@ -608,12 +608,12 @@ for current per‑token prices) and Titan Text Embeddings V2
 <table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>Step</th>
 <th>Rough volume</th>
 <th>Cost</th>
-</tr></thead><tbody><tr><td>Embed ~9,000 chunks (~3M tokens)</td>
-<td>3M input tokens</td>
-<td>~<code>$0.06</code>
+</tr></thead><tbody><tr><td>Embed ~9,000 chunks (~2.4M tokens)</td>
+<td>2.4M input tokens</td>
+<td>~<code>$0.05</code>
 </td>
-</tr><tr><td>Answer and explain the 245 training questions (two calls each,
-~1.5K‑token prompts) with DeepSeek V3</td>
+</tr><tr><td>Answer and explain the 220 answerable training questions (two calls
+each, ~1.5K‑token prompts) with DeepSeek V3</td>
 <td>650K in / 40K out</td>
 <td>~<code>$0.50</code>
 </td>
@@ -623,8 +623,7 @@ for current per‑token prices) and Titan Text Embeddings V2
 </tr></tbody></table><p>A single forgotten weekend on the <em>cheapest</em> GPU instance
 costs more than fifty full runs of the pipeline on Bedrock; a forgotten
 weekend on the <code>ml.g6e.xlarge</code> the optional GPU-notebook
-episode uses costs more than a hundred. That asymmetry is why Bedrock is
-the default, not just an alternative.</p>
+episode uses costs more than a hundred.</p>
 <div id="bedrock-trade-offs-to-know-about" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -633,8 +632,7 @@ the default, not just an alternative.</p>
 <div id="bedrock-trade-offs-to-know-about" class="callout-inner">
 <h3 class="callout-title">Bedrock trade-offs to know about</h3>
 <div class="callout-content">
-<p>Bedrock is not free of downsides; it’s just that none of them are
-“you forgot and it kept charging you.”</p>
+<p>Bedrock’s limits:</p>
 <ul><li>
 <strong>Less control over architecture.</strong> You can only call
 models in the Bedrock catalog. If your research depends on a specific
@@ -656,9 +654,10 @@ inference API or request a quota increase rather than hammering the
 on‑demand endpoint.</li>
 <li>
 <strong>Data handling.</strong> Bedrock does not use your prompts to
-train models and keeps data in‑region, but you should still check your
-institution’s policy before sending sensitive documents to any hosted
-API.</li>
+train models, and keeps data in the region, or within the US when a
+<code>us.</code> cross-region profile is used, but you should still
+check your institution’s policy before sending sensitive documents to
+any hosted API.</li>
 <li>
 <strong>Cost tracking needs one extra step.</strong> On‑demand
 Bedrock calls carry no tags. To attribute spend to a project you route
@@ -670,8 +669,8 @@ skipping it leaves the usage anonymous on the bill.</li>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="approaches-to-running-rag-on-aws">Approaches to Running RAG on AWS<a class="anchor" aria-label="anchor" href="#approaches-to-running-rag-on-aws"></a></h2>
-<hr class="half-width"><p>With that framing, here are the main patterns, ordered from “reach
-for this first” to “only when you really need it.”</p>
+<hr class="half-width"><p>The main patterns, ordered from “reach for this first” to “only when
+you really need it.”</p>
 <figure><img src="../fig/rag-approaches.svg" alt="Comparison table of four ways to run RAG on AWS: Bedrock API (default, pay per token, nothing to shut down), Processing job (batch with open models, bills per second while the job runs, terminates itself), GPU notebook (learning and debugging only, bills per hour until stopped, about $90 if forgotten over a weekend) and Inference endpoint (steady traffic only, bills 24/7, about $1,000 if idle for a month)." class="figure mx-auto d-block"><div class="figcaption">Four columns, Bedrock API, Processing job, GPU
 notebook and Inference endpoint, compared on where the model runs, what
 runs between calls, billing unit, latency, model choice, what you must
@@ -766,11 +765,11 @@ in this lesson.</p>
 </section><section><h2 class="section-heading" id="tagging-every-billable-resource-needs-its-own-tags">Tagging: Every Billable Resource Needs Its Own Tags<a class="anchor" aria-label="anchor" href="#tagging-every-billable-resource-needs-its-own-tags"></a></h2>
 <hr class="half-width"><p>Cost tracking in this workshop relies on three tags —
 <code>Name</code>, <code>Project</code>, <code>Purpose</code> — so that
-Cost Explorer can break the shared bill down by challenge. The part that
-trips people up is that <strong>tags never propagate</strong>. Tagging
-your notebook instance tags the notebook instance and nothing else.
-Every other resource you create is a separate line item that is
-anonymous unless you tag it yourself at creation time.</p>
+Cost Explorer can break the shared bill down by challenge. <strong>Tags
+never propagate.</strong> Tagging your notebook instance tags the
+notebook instance and nothing else. Every other resource you create is a
+separate line item that is anonymous unless you tag it yourself at
+creation time.</p>
 <table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>Resource</th>
 <th>What it bills</th>
 <th>How it gets tagged</th>
@@ -781,13 +780,13 @@ anonymous unless you tag it yourself at creation time.</p>
 <td>Storage + requests</td>
 <td>Tags you set in the console when creating it</td>
 </tr><tr><td>Training / tuning job</td>
-<td>Hourly, while the job runs</td>
+<td>Per second while the job runs, at an hourly rate</td>
 <td>
 <code>tags=</code> argument on the estimator or tuner, <strong>every
 job</strong>
 </td>
 </tr><tr><td>Processing job</td>
-<td>Hourly, while the job runs</td>
+<td>Per second while the job runs, at an hourly rate</td>
 <td>
 <code>tags=</code> argument on the processor, <strong>every
 job</strong>
@@ -970,8 +969,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/10_RAG-overview.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/10_RAG-overview.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-26",
-  "datePublished": "2026-10-26"
+  "dateModified": "2026-10-27",
+  "datePublished": "2026-10-27"
 }
 
   </script><script>

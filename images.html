@@ -531,14 +531,14 @@ as an API</div>
 <p aria-hidden="true">Image 1 of 1: ‘Timeline of a SageMaker training job showing the unbilled wait for an instance and the billed phases from container pull to model upload’</p>
 <p><img src="fig/job-billable-time.svg" alt="Timeline of a SageMaker training job showing the unbilled wait for an instance and the billed phases from container pull to model upload" class="figure"><code>describe_training_job</code> returns
 <code>BillableTimeInSeconds</code>: the seconds the instance was yours,
-from container pull to model upload, per instance. It also returns
-<code>TrainingTimeInSeconds</code>, which on on-demand instances is the
-same number (it only differs on spot instances), so do not expect it to
-isolate your script. The minute or so before that, while SageMaker finds
-an instance, is not billed. SageMaker bills per second, with no
-rounding, so cost is billable seconds x instance count x hourly rate.
-We’ll wrap this in a small helper and call it after every job in this
-lesson.</p>
+from container pull to model upload, per instance. The minute or so
+before that, while SageMaker finds an instance, is not billed. (The
+job’s console page also shows a “Training time”; on an on-demand
+instance it is the same number, and neither one is your script’s own
+training time, which only the script’s log has.) SageMaker bills per
+second, with no rounding, so cost is billable seconds x instance count x
+hourly rate. We’ll wrap this in a small helper and call it after every
+job in this lesson.</p>
 <hr></section><section id="07_Training-models-in-SageMaker-notebooks-part2"><h2 class="section-heading"><a href="07_Training-models-in-SageMaker-notebooks-part2.html">Training Models in SageMaker: PyTorch Example</a></h2>
 <hr class="half-width">
 <h3 id="07_Training-models-in-SageMaker-notebooks-part2-figure-1">Figure 1</h3>
@@ -565,8 +565,8 @@ weight matrix; LoRA freezes it and trains two thin matrices of rank r
 whose product is added to its output</div>
 </figure><hr>
 <h3 id="09_Finetuning-BadgerScribe-figure-3">Figure 3</h3>
-<p aria-hidden="true">Image 1 of 1: ‘Horizontal bar chart on a logarithmic dollar axis: this episode 0.95, homework 1.90, the full Badger Scribe train set 2.25, 7B full fine-tune 140, 70B LoRA 600, CHURRO-3B 6,300, 70B full fine-tune 12,000, with the ten-run sweep shown as a lighter extension of each bar’</p>
-<figure><img src="fig/finetune-cost-ladder.svg" alt="Horizontal bar chart on a logarithmic dollar axis: this episode 0.95, homework 1.90, the full Badger Scribe train set 2.25, 7B full fine-tune 140, 70B LoRA 600, CHURRO-3B 6,300, 70B full fine-tune 12,000, with the ten-run sweep shown as a lighter extension of each bar" class="figure mx-auto d-block"><div class="figcaption">Cost per run on a log scale, from about a dollar
+<p aria-hidden="true">Image 1 of 1: ‘Horizontal bar chart on a logarithmic dollar axis: this episode 0.75, homework 1.50, the full Badger Scribe train set 1.20, 7B full fine-tune 140, 70B LoRA 600, CHURRO-3B 6,300, 70B full fine-tune 12,000, with the ten-run sweep shown as a lighter extension of each bar’</p>
+<figure><img src="fig/finetune-cost-ladder.svg" alt="Horizontal bar chart on a logarithmic dollar axis: this episode 0.75, homework 1.50, the full Badger Scribe train set 1.20, 7B full fine-tune 140, 70B LoRA 600, CHURRO-3B 6,300, 70B full fine-tune 12,000, with the ten-run sweep shown as a lighter extension of each bar" class="figure mx-auto d-block"><div class="figcaption">Cost per run on a log scale, from about a dollar
 for this episode’s LoRA run to twelve thousand dollars for a 70B full
 fine-tune; a ten-run sweep shifts every bar up by one decade</div>
 </figure><hr>
@@ -661,8 +661,8 @@ Diamond, 83.7 vs 80.5 on CharXiv reasoning</div>
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/images.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/images.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-26",
-  "datePublished": "2026-10-26"
+  "dateModified": "2026-10-27",
+  "datePublished": "2026-10-27"
 }
 
   </script><script>

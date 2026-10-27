@@ -320,7 +320,7 @@
         <ul><li><a href="#setup">Setup</a></li>
 <li><a href="#step-1-check-the-inputs">Step 1 – Check the inputs</a></li>
 <li><a href="#step-2-processing-job-1-embed-all-chunks-on-a-gpu">Step 2 – Processing Job 1: embed all chunks on a GPU</a></li>
-<li><a href="#step-3-processing-job-2-full-wattbot-rag-over-all-questions">Step 3 – Processing Job 2: full WattBot RAG over all questions</a></li>
+<li><a href="#step-3-processing-job-2-the-wattbot-rag-loop-as-a-job">Step 3 – Processing Job 2: the WattBot RAG loop as a job</a></li>
 <li><a href="#step-4-download-predictions-and-evaluate">Step 4 – Download predictions and evaluate</a></li>
         </ul></div><!--/div.accordion-body-->
     </div><!--/div.accordion-collapse-->
@@ -427,7 +427,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>RAG with Processing Jobs</h1>
-        <p>Last updated on 2026-10-26 |
+        <p>Last updated on 2026-10-27 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/12_RAG-Processing-jobs.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -533,11 +533,10 @@ which fits the 24 GB GPU of an <code>ml.g5.xlarge</code> with room for
 the KV cache. (The fine-tuning episode has the full memory arithmetic;
 the short version is that inference needs only the weights and training
 needs eight times more per parameter.)</p>
-<p>Why bother serving a model yourself when Bedrock is a call away?
-Because open-weight models that fit one GPU are now close to the
-frontier on the kinds of tasks research code runs, on data that never
-leaves your account. The newest of this family, Qwen3.8-27B, fits one
-GPU and lands within a few points of a frontier commercial model:</p>
+<p>Open-weight models that fit one GPU are now close to the frontier on
+the kinds of tasks research code runs, on data that never leaves your
+account. The newest of this family, Qwen3.8-27B, fits one GPU and lands
+within a few points of a frontier commercial model:</p>
 <figure><img src="../fig/qwen27b-vs-opus.png" alt="Paired horizontal bars comparing a 27B open-weight model on one GPU with a frontier commercial model; within a few points on agent tasks and science questions, ahead on chart reasoning" class="figure mx-auto d-block"><div class="figcaption">Qwen3.8-27B against Claude Opus 4.8 on three
 benchmarks: 73.0 vs 74.6 on Terminal-Bench 2.1, 89.2 vs 93.6 on GPQA
 Diamond, 83.7 vs 80.5 on CharXiv reasoning</div>
@@ -587,9 +586,9 @@ once the two papers the corpus lacks are dropped); all 220 is about an
 hour of generation, so run that at home. Both jobs carry
 <code>max_runtime_in_seconds</code>, so a hung job costs at most the
 cap. Compare the same pipeline on a GPU notebook instance (the optional
-GPU-notebook episode at the end of the lesson): the meter runs until
-someone stops it, and a forgotten <code>ml.g5.xlarge</code> is
-<code>$34</code> a day.</p>
+GPU-notebook episode that follows): the meter runs until someone stops
+it, and a forgotten <code>ml.g5.xlarge</code> is <code>$34</code> a
+day.</p>
 <p>The trade-off is latency. A job takes minutes to start, so this
 pattern is for batch questions, not a chatbot. For interactive use,
 Bedrock answers in seconds; for interactive use of a model Bedrock does
@@ -603,16 +602,16 @@ remember to turn off.</p>
 the inputs in the shared bucket.</li>
 <li>Run two short-lived GPU Processing jobs: one computes embeddings for
 all chunks; the second runs Qwen3-8B with <code>transformers</code> and
-the full RAG loop (retrieval + generation) over all training
-questions.</li>
+the full RAG loop (retrieval + generation) over the same 53-question
+sample as the Bedrock episode.</li>
 <li>Score the result and compare it with the Bedrock run.</li>
 </ul><section><h2 class="section-heading" id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a></h2>
 <hr class="half-width"><div class="section level3">
 <h3 id="the-scripts">The scripts<a class="anchor" aria-label="anchor" href="#the-scripts"></a></h3>
 <p>Jobs run in containers, so the code they execute has to be shipped
 with the job: a Processing job cannot import functions defined in this
-notebook. The lesson repository has the three files we need as
-standalone scripts. Clone it:</p>
+notebook. The lesson clone has the four files we need as standalone
+scripts. Copy them:</p>
 <ul><li>
 <code>scripts/embedding_inference.py</code>: generic embedding
 script (JSONL with a <code>text</code> field in,
@@ -668,25 +667,30 @@ notebook, not in a job.</p>
 <span id="cb2-5"><a href="#cb2-5" tabindex="-1" aria-label="code-block-2-5"></a><span class="im">import</span> time</span>
 <span id="cb2-6"><a href="#cb2-6" tabindex="-1" aria-label="code-block-2-6"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb2-7"><a href="#cb2-7" tabindex="-1" aria-label="code-block-2-7"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1" aria-label="code-block-2-8"></a><span class="im">import</span> sagemaker</span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1" aria-label="code-block-2-9"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
-<span id="cb2-10"><a href="#cb2-10" tabindex="-1" aria-label="code-block-2-10"></a><span class="im">from</span> sagemaker.huggingface <span class="im">import</span> HuggingFaceProcessor         <span class="co"># launches a job in the prebuilt Hugging Face container</span></span>
-<span id="cb2-11"><a href="#cb2-11" tabindex="-1" aria-label="code-block-2-11"></a><span class="im">from</span> sagemaker.processing <span class="im">import</span> ProcessingInput, ProcessingOutput   <span class="co"># S3 &lt;-&gt; container path mappings for a job</span></span>
-<span id="cb2-12"><a href="#cb2-12" tabindex="-1" aria-label="code-block-2-12"></a></span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1" aria-label="code-block-2-13"></a>session <span class="op">=</span> sagemaker.Session()</span>
-<span id="cb2-14"><a href="#cb2-14" tabindex="-1" aria-label="code-block-2-14"></a>region <span class="op">=</span> session.boto_region_name</span>
-<span id="cb2-15"><a href="#cb2-15" tabindex="-1" aria-label="code-block-2-15"></a>role <span class="op">=</span> get_execution_role()   <span class="co"># the IAM role the jobs run under to read and write S3</span></span>
-<span id="cb2-16"><a href="#cb2-16" tabindex="-1" aria-label="code-block-2-16"></a></span>
-<span id="cb2-17"><a href="#cb2-17" tabindex="-1" aria-label="code-block-2-17"></a>shared_bucket <span class="op">=</span> <span class="st">"ml-marathon-shared"</span>   <span class="co"># the instructor-staged, read-only bucket with the data and model weights; change only on your own account</span></span>
-<span id="cb2-18"><a href="#cb2-18" tabindex="-1" aria-label="code-block-2-18"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>     <span class="co"># &lt;-- EDIT ME: your own bucket (chunks in, outputs out)</span></span>
-<span id="cb2-19"><a href="#cb2-19" tabindex="-1" aria-label="code-block-2-19"></a>s3_client <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
-<span id="cb2-20"><a href="#cb2-20" tabindex="-1" aria-label="code-block-2-20"></a></span>
-<span id="cb2-21"><a href="#cb2-21" tabindex="-1" aria-label="code-block-2-21"></a>local_data_dir <span class="op">=</span> <span class="st">"./data"</span></span>
-<span id="cb2-22"><a href="#cb2-22" tabindex="-1" aria-label="code-block-2-22"></a>os.makedirs(local_data_dir, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb2-23"><a href="#cb2-23" tabindex="-1" aria-label="code-block-2-23"></a></span>
-<span id="cb2-24"><a href="#cb2-24" tabindex="-1" aria-label="code-block-2-24"></a><span class="bu">print</span>(<span class="st">"Region:"</span>, region)</span>
-<span id="cb2-25"><a href="#cb2-25" tabindex="-1" aria-label="code-block-2-25"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)</span>
-<span id="cb2-26"><a href="#cb2-26" tabindex="-1" aria-label="code-block-2-26"></a><span class="bu">print</span>(<span class="st">"Bucket:"</span>, bucket_name)</span></code></pre>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1" aria-label="code-block-2-8"></a><span class="im">import</span> os</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1" aria-label="code-block-2-9"></a>os.environ[<span class="st">"SAGEMAKER_SUPPRESS_V2_WARNING"</span>] <span class="op">=</span> <span class="st">"1"</span>   <span class="co"># the SDK otherwise prints a deprecation notice on import and on every estimator</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1" aria-label="code-block-2-10"></a><span class="im">import</span> sagemaker</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1" aria-label="code-block-2-11"></a><span class="im">import</span> logging</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1" aria-label="code-block-2-12"></a>logging.getLogger(<span class="st">"sagemaker.telemetry.telemetry_logging"</span>).setLevel(logging.WARNING)   <span class="co"># silence the telemetry notice; the "Creating training-job" line still prints</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1" aria-label="code-block-2-13"></a>logging.getLogger(<span class="st">"sagemaker.image_uris"</span>).setLevel(logging.WARNING)</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1" aria-label="code-block-2-14"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1" aria-label="code-block-2-15"></a><span class="im">from</span> sagemaker.huggingface <span class="im">import</span> HuggingFaceProcessor         <span class="co"># launches a job in the prebuilt Hugging Face container</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1" aria-label="code-block-2-16"></a><span class="im">from</span> sagemaker.processing <span class="im">import</span> ProcessingInput, ProcessingOutput   <span class="co"># S3 &lt;-&gt; container path mappings for a job</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1" aria-label="code-block-2-17"></a></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1" aria-label="code-block-2-18"></a>session <span class="op">=</span> sagemaker.Session()</span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1" aria-label="code-block-2-19"></a>region <span class="op">=</span> session.boto_region_name</span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1" aria-label="code-block-2-20"></a>role <span class="op">=</span> get_execution_role()   <span class="co"># the IAM role the jobs run under to read and write S3</span></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1" aria-label="code-block-2-21"></a></span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1" aria-label="code-block-2-22"></a>shared_bucket <span class="op">=</span> <span class="st">"ml-marathon-shared"</span>   <span class="co"># the instructor-staged, read-only bucket with the data and model weights; change only on your own account</span></span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1" aria-label="code-block-2-23"></a>bucket_name <span class="op">=</span> <span class="st">"sinkorswim-doejohn"</span>     <span class="co"># &lt;-- EDIT ME: your own bucket (chunks in, outputs out)</span></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1" aria-label="code-block-2-24"></a>s3_client <span class="op">=</span> boto3.client(<span class="st">"s3"</span>, region_name<span class="op">=</span>region)</span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1" aria-label="code-block-2-25"></a></span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1" aria-label="code-block-2-26"></a>local_data_dir <span class="op">=</span> <span class="st">"./data"</span></span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1" aria-label="code-block-2-27"></a>os.makedirs(local_data_dir, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1" aria-label="code-block-2-28"></a></span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1" aria-label="code-block-2-29"></a><span class="bu">print</span>(<span class="st">"Region:"</span>, region)</span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1" aria-label="code-block-2-30"></a><span class="bu">print</span>(<span class="st">"Role:"</span>, role)</span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1" aria-label="code-block-2-31"></a><span class="bu">print</span>(<span class="st">"Bucket:"</span>, bucket_name)</span></code></pre>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="step-1-check-the-inputs">Step 1 – Check the inputs<a class="anchor" aria-label="anchor" href="#step-1-check-the-inputs"></a></h2>
@@ -809,8 +813,8 @@ directory, embeds them with whatever Hugging Face model
 <code>--model_id</code> names, through the thirty-line wrapper in
 <code>hf_embedder.py</code>, normalises the vectors so a dot product is
 a cosine similarity, and saves one <code>embeddings.npy</code> to the
-output directory. Nothing in it knows about WattBot, which is the point
-of a Processing job script: inputs in, outputs out, no state.</p>
+output directory. Nothing in it knows about WattBot: inputs in, outputs
+out, no state.</p>
 <p>A <code>HuggingFaceProcessor</code> is the Processing-job counterpart
 of the estimator: the same role, tags, instance type and container
 versions, plus a runtime cap. Its <code>run</code> call names the
@@ -924,7 +928,7 @@ and inspect its shape to confirm the job ran successfully.</p>
 <span id="cb8-7"><a href="#cb8-7" tabindex="-1" aria-label="code-block-8-7"></a><span class="bu">print</span>(<span class="st">"Embeddings shape:"</span>, chunk_embeddings.shape, <span class="st">"for"</span>, <span class="bu">len</span>(chunked_docs), <span class="st">"chunks"</span>)</span></code></pre>
 </div>
 </div>
-</section><section><h2 class="section-heading" id="step-3-processing-job-2-full-wattbot-rag-over-all-questions">Step 3 – Processing Job 2: full WattBot RAG over all questions<a class="anchor" aria-label="anchor" href="#step-3-processing-job-2-full-wattbot-rag-over-all-questions"></a></h2>
+</section><section><h2 class="section-heading" id="step-3-processing-job-2-the-wattbot-rag-loop-as-a-job">Step 3 – Processing Job 2: the WattBot RAG loop as a job<a class="anchor" aria-label="anchor" href="#step-3-processing-job-2-the-wattbot-rag-loop-as-a-job"></a></h2>
 <hr class="half-width"><p>For the second job, we pass four inputs:</p>
 <ul><li>
 <code>chunks.jsonl</code> – serialized chunks (your bucket)</li>
@@ -1119,11 +1123,10 @@ and click <strong>View logs</strong>. That opens CloudWatch, the AWS
 service that stores every job’s printed output, at a list with one entry
 named after your job; click it. The text is the container’s stdout, kept
 after the job ends, updated while it runs (refresh). You will see, in
-order: the weight download (16 GB in shards),
-<code>Loading model with transformers</code>, a line per batch of
-answers and of explanations, then one line per question. The whole job
-is the 20 minutes in the cost callout; the generation is the second half
-of it.</p>
+order: <code>Loading model with transformers</code>, the weight download
+(16 GB in shards), a line per batch of answers and of explanations, then
+one line per question. The whole job is the 20 minutes in the cost
+callout; the generation is the second half of it.</p>
 </div>
 </section><section><h2 class="section-heading" id="step-4-download-predictions-and-evaluate">Step 4 – Download predictions and evaluate<a class="anchor" aria-label="anchor" href="#step-4-download-predictions-and-evaluate"></a></h2>
 <hr class="half-width"><p>Finally, we download <code>wattbot_solutions.csv</code> from S3,
@@ -1222,7 +1225,7 @@ the billed run.</p>
 <p>Expect the embedding job to bill about 8 minutes (about
 <code>$0.20</code>) and the RAG job about 17 minutes (about
 <code>$0.40</code>), so about <code>$0.60</code> of GPU time, the
-callout’s figure. In the RAG job’s log, the first 4 minutes of the
+callout’s GPU figure. In the RAG job’s log, the first 4 minutes of the
 billed window are the download and the model load; the rest is the
 questions, two generation calls each. Setup is a third of what you paid
 for, which is the argument for keeping an <code>HF_HOME</code> cache on
@@ -1271,10 +1274,9 @@ percent over it.</p>
 <p>Under the caps we set, the worst case for a job that hangs (a stuck
 download, a model that never finishes loading) is 2 h ×
 <code>$1.41</code> = <strong><code>$2.82</code></strong> for either job.
-An <code>ml.g5.xlarge</code> notebook instance forgotten over a weekend
-is 64 h × <code>$1.41</code> = <strong><code>$90</code></strong>, and
-nothing caps it. That is the difference between a job and an instance:
-the job’s worst case is a number you chose before you launched it.</p>
+An <code>ml.g6e.xlarge</code> notebook instance forgotten over a weekend
+is 64 h × <code>$2.61</code> = <strong><code>$167</code></strong>, and
+nothing caps it.</p>
 </div>
 </div>
 </div>
@@ -1369,8 +1371,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/12_RAG-Processing-jobs.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/12_RAG-Processing-jobs.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-26",
-  "datePublished": "2026-10-26"
+  "dateModified": "2026-10-27",
+  "datePublished": "2026-10-27"
 }
 
   </script><script>

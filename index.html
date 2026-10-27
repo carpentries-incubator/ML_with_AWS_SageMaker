@@ -502,21 +502,20 @@ any links that you are not going to use.
  -->
 </div>
 </section><section id="setup"><section><h2 class="section-heading" id="setup-complete-before-the-workshop">Setup (Complete Before The Workshop)<a class="anchor" aria-label="anchor" href="#setup-complete-before-the-workshop"></a></h2>
-<hr class="half-width"><p>Before attending this workshop, you’ll need to complete a few setup
-steps to ensure you can follow along smoothly. The main requirements
-are:</p>
+<hr class="half-width"><p>Before the workshop:</p>
 <ol style="list-style-type: decimal"><li>
 <strong>GitHub Account (optional)</strong> – Only needed for the
 optional episode on pushing your own code to GitHub.</li>
 <li>
 <strong>AWS Access</strong> – Use a <strong>shared AWS
-account</strong> (UW-Madison) or sign up for an AWS Free Tier
-account.</li>
+account</strong> (UW-Madison) or an AWS account of your own.</li>
 <li>
 <strong>Data</strong> – Download one small zip.</li>
 <li>
-<strong>Visit Glossary</strong> — Find and briefly review the
-workshop glossary</li>
+<strong>Glossary</strong> — Skim the workshop glossary.</li>
+<li>
+<strong>Episodes 1 to 4 first</strong> — They create the bucket and
+notebook instance every later episode uses.</li>
 </ol><p>Details on each step are outlined below.</p>
 <div class="section level3">
 <h3 id="github-account-optional">1. GitHub Account (optional)<a class="anchor" aria-label="anchor" href="#github-account-optional"></a></h3>
@@ -566,10 +565,7 @@ instructor sent.</li>
 link and sign in. If you see a “no access” or “not assigned” message,
 email the instructor with your username. Check that the account name and
 region in the top-right of the console match the email.</li>
-<li>This setup ensures that all participants have the same environment
-and eliminates concerns about unexpected costs for attendees.</li>
-<li>These shared AWS credits should not be wasted, as we repurpose them
-for additional training events each year. Three rules follow from that:
+<li>Three rules on the shared account:
 <ul><li>Stick to the lesson materials, so that expensive pipelines (e.g.,
 training/tuning LLMs) do not lead to high costs and wasted credits.</li>
 <li>Do not use any tools we do not explicitly cover without discussing
@@ -588,15 +584,14 @@ there before emailing.</li>
 <div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
 <p>If you are not attending through the shared account, follow these
 steps:</p>
-<ol style="list-style-type: decimal"><li>Go to the <a href="https://aws.amazon.com/free/" class="external-link">AWS Free Tier
-page</a> and click <strong>Create a Free Account</strong>.</li>
-<li>Complete the sign-up process. AWS’s free tier covers very little of
-this workshop: SageMaker GPU instances, Bedrock calls and Processing
-jobs are all billed. Following the materials end to end costs about
-<strong><code>$30</code></strong> (the Titanic episodes a few dollars,
-the Bedrock episode cents, the Processing Jobs episode about
-<code>$2,</code> the fine-tuning episode about <code>$1.55</code> in
-class plus about <code>$1.75</code> for the optional homework). The one
+<ol style="list-style-type: decimal"><li>Create an account at <a href="https://aws.amazon.com/" class="external-link">aws.amazon.com</a> on the <strong>paid
+plan</strong>. Since July 2025 new accounts start on a free plan limited
+to a set of free-tier services, which does not cover GPU instances.</li>
+<li>Everything in the workshop is billed. Following the materials end to
+end costs about <strong><code>$10</code></strong>: the Titanic episodes
+a few dollars, the Bedrock episode cents, the Processing Jobs episode
+under a dollar, the fine-tuning episode about <code>$0.75</code> in
+class plus about <code>$1.50</code> for the optional homework. The one
 way to spend much more is to leave a GPU notebook instance running:
 about <code>$60</code> a day. Set a <a href="https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html" class="external-link">Budgets
 alert</a> at <code>$50</code> before you start.</li>
@@ -607,22 +602,20 @@ increases can take weeks. In the console, go to <strong>Service Quotas →
 Amazon SageMaker</strong> and request:
 <code>ml.g5.xlarge for training job usage</code> (1),
 <code>ml.g4dn.xlarge for training job usage</code> (1),
-<code>ml.g5.xlarge for processing job usage</code> (2),
-<code>ml.g6e.xlarge for processing job usage</code> (1), and
+<code>ml.g5.xlarge for processing job usage</code> (2), and
 <code>ml.g6e.xlarge for notebook instance usage</code> (1, optional
 GPU-notebook episode only). A justification like “self-paced machine
 learning workshop” is enough.</li>
-<li>Enable the two Bedrock models the RAG episode uses, under
-<strong>Amazon Bedrock → Model access</strong>: DeepSeek V3 and Titan
-Text Embeddings V2.</li>
+<li>Check under <strong>Amazon Bedrock → Model access</strong> that the
+RAG episode’s models, DeepSeek V3 and Titan Text Embeddings V2, show as
+available in your region. Bedrock enables its serverless models
+automatically; only Anthropic’s need a use-case form.</li>
 <li>Stage the shared datasets yourself, since there is no instructor
 bucket: the WattBot files for the RAG episodes, and the Badger Scribe
 data and the CHURRO-3B weights for the fine-tuning episode. The commands
 are in the lesson’s instructor page <em>Shared data bucket: staging
 before each term</em>; set <code>shared_bucket</code> in those episodes
-to your own bucket. The fine-tuning episode’s Step 3 compares against a
-full run the instructor staged; on your own account, run the homework’s
-full fine-tune yourself instead.</li>
+to your own bucket.</li>
 </ol></div>
 </div>
 </div>
@@ -646,16 +639,9 @@ episode, e.g.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="review-the-workshop-glossary-page">4. Review the Workshop Glossary Page<a class="anchor" aria-label="anchor" href="#review-the-workshop-glossary-page"></a></h3>
-<p>When learning cloud tools for the first time, understanding new
-terminology is half the battle. We encourage learners to <em>briefly
-review</em> the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/reference.html#glossary" class="external-link">Glossary
-page</a> (also accessible from the top menu of each lesson page) before
-the workshop. <em>You don’t need to memorize the terms</em>—just a quick
-read-through will help familiarize you with key concepts. Once we start
-running our own AWS SageMaker experiments, these terms will start to
-make more sense in context. If you feel lost at any point during the
-workshop, please ask the instructor for assistance or refer back to the
-glossary.</p>
+<p>Skim the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/reference.html" class="external-link">Glossary</a>
+before the workshop (it is also in the top menu of every lesson page);
+the terms come up from the first episode.</p>
 </div>
 <div class="section level3">
 <h3 id="episodes-1-to-4-come-first">5. Episodes 1 to 4 come first<a class="anchor" aria-label="anchor" href="#episodes-1-to-4-come-first"></a></h3>
@@ -672,9 +658,10 @@ notebook first reads your bucket, with the helper that every later data
 step uses.</p>
 <p>If you want to jump ahead to a later episode, do episodes 1 to 4
 first on the instance you will use, and then start wherever you like.
-The training and fine-tuning episodes (6 to 9) stand on their own after
-that; the RAG episodes (10 to 13) are a sequence, since each one reuses
-what the one before it cached in your bucket.</p>
+After that, the training episodes 6 to 8 are a sequence (8 uses the
+files 7 saves), the fine-tuning episode 9 stands on its own, and the RAG
+episodes (10 to 13) are a sequence, since each one reuses what the one
+before it cached in your bucket.</p>
 <!--
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
@@ -731,8 +718,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/index.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/index.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-26",
-  "datePublished": "2026-10-26"
+  "dateModified": "2026-10-27",
+  "datePublished": "2026-10-27"
 }
 
   </script><script>

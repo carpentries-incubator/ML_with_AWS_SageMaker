@@ -554,12 +554,13 @@ the workshop is over.</li>
 </ul></section><section id="04_Accessing-S3-via-SageMaker-notebooks"><h2 class="section-heading"><a href="04_Accessing-S3-via-SageMaker-notebooks.html">Accessing and Managing Data in S3 with SageMaker Notebooks</a></h2>
 <hr class="half-width">
 <ul>
-<li>Load data from S3 into memory for efficient storage and
-processing.</li>
+<li>Read S3 objects into memory with <code>get_object</code>; copy one
+to the instance’s disk with <code>download_file</code> only when a
+program needs it as a file.</li>
 <li>Periodically check storage usage and costs to manage S3
 budgets.</li>
-<li>Use SageMaker to upload analysis results and maintain an organized
-workflow.</li>
+<li>Write outputs back to your bucket under a prefix, and read the
+bucket’s size from the notebook to see what accumulates.</li>
 <li>The lesson repository lives at
 <code>/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/</code>; every
 later episode adds its <code>scripts/</code> folder to
@@ -583,9 +584,8 @@ folder needs <code>--allow-unrelated-histories</code>.</li>
 <hr class="half-width">
 <ul>
 <li>
-<strong>Environment initialization</strong>: Setting up a SageMaker
-session, defining roles, and specifying the S3 bucket are essential for
-managing data and running jobs in SageMaker.</li>
+<strong>Setup</strong>: a SageMaker session, the execution role and
+the bucket name are what every job needs from the notebook.</li>
 <li>
 <strong>Local vs. managed training</strong>: Always test your code
 locally (on a smaller scale) before scaling things up. This avoids
@@ -596,20 +596,20 @@ results.</li>
 is AWS’s container running your script, the pattern every later episode
 uses with <code>PyTorch</code> and <code>HuggingFace</code>.</li>
 <li>
-<strong>Training data channels</strong>: Using
-<code>TrainingInput</code> ensures SageMaker manages data
-efficiently.</li>
+<strong>Training data channels</strong>: <code>TrainingInput</code>
+names the S3 data a job copies onto its instance before the script
+runs.</li>
 <li>
 <strong>Cost habit</strong>: Estimate cost before launching (rate x
 minutes + ~3 minutes startup), then read back
 <code>BillableTimeInSeconds</code> with <code>job_cost_report()</code>
 after every job and compare.</li>
 <li>
-<strong>Long runs</strong>: launch with <code>wait=False</code>,
-note the job name, stop the notebook instance;
-<code>attach(job_name)</code> picks the job up later. Set
-<code>max_run</code> a little above the estimate, and checkpoint to S3
-on anything longer than half an hour.</li>
+<strong>Long runs</strong>: launch with <code>wait=False</code> and
+carry on, or stop the notebook instance; the job runs and finishes
+without it, and <code>job_cost_report(job_name, ...)</code> reads its
+bill later. Set <code>max_run</code> a little above the estimate, and
+checkpoint to S3 on anything longer than half an hour.</li>
 </ul></section><section id="07_Training-models-in-SageMaker-notebooks-part2"><h2 class="section-heading"><a href="07_Training-models-in-SageMaker-notebooks-part2.html">Training Models in SageMaker: PyTorch Example</a></h2>
 <hr class="half-width">
 <ul>
@@ -620,41 +620,30 @@ spends one to three minutes on container pull and data download (billed)
 before the script runs; for a job whose script finishes in seconds, that
 overhead is the whole bill.</li>
 <li>
-<strong>GPU training</strong>: While beneficial for larger models or
-datasets, GPUs may introduce overhead for smaller tasks; selecting the
-right instance type is critical for cost-efficiency.</li>
-<li>
-<strong>Data parallelism vs. model parallelism</strong>: Data
-parallelism splits data across instances and synchronizes model weights,
-suitable for typical neural network tasks. Model parallelism, which
-divides model layers, is ideal for very large models that exceed memory
-capacity.</li>
-<li>
-<strong><code>instance_count</code> alone is not distributed
-training</strong>: Without <code>distribution=</code> on the estimator
-and distributed code in the script, <code>instance_count=2</code> runs
-the full script on the full data on each instance and bills twice. Data
-parallelism is three additions to the script (join the process group,
-shard the rows, wrap the model in <code>DistributedDataParallel</code>)
-and one argument on the estimator; <code>train_nn_ddp.py</code> has
-them, and reaches the single-instance run’s loss on half the rows per
-instance.</li>
-<li>
-<strong>SageMaker configuration</strong>: By adjusting instance
-counts and types, SageMaker supports scalable training setups. Starting
-with CPU training and scaling as needed with GPUs or distributed setups
-allows for performance optimization.</li>
-<li>
-<strong>Testing locally first</strong>: Before deploying large-scale
-training in SageMaker, test locally with a smaller setup to ensure code
-correctness and efficient resource usage.</li>
-<li>
 <strong>Estimate before you launch</strong>: for small models, time
 a smoke test and scale it by epochs and rows, plus about three minutes
-of startup; for large ones, 6 FLOPs per parameter per example-token,
-divided by a quarter of the GPU’s peak.
-<code>helpers.estimate_training_cost</code> does the second; write the
-number down and compare it to the bill.</li>
+of startup; for large ones, 6 FLOPs per parameter per token, divided by
+a quarter of the GPU’s peak. <code>helpers.estimate_training_cost</code>
+does the second; write the number down and compare it to the bill.</li>
+<li>
+<strong>GPU or CPU is a measurement</strong>: the same script on an
+<code>ml.g4dn.xlarge</code> was slower and dearer than on an
+<code>ml.m5.large</code> for this network, because the step is too small
+to keep a GPU busy; the GPU pays when the model and batch are
+large.</li>
+<li>
+<strong>More than one machine is the last move</strong>: a faster
+single device first, then more GPUs in one box, then more instances.
+<code>instance_count=2</code> on its own runs the whole job twice and
+bills twice; data parallelism needs <code>distribution=</code> on the
+estimator and, for your own script, three additions: join the process
+group, shard the rows, wrap the model in DDP.</li>
+<li>
+<strong>Parallelism pays when the step’s computation is large next
+to the gradient exchange</strong>: big model, big batch, fast link.
+<code>helpers.estimate_parallel_speedup</code> gives the speedup and the
+cost ratio before you rent the devices; on 569 rows of tabular data the
+measured result was 0.85x the speed at 2.4x the cost.</li>
 </ul></section><section id="08_Hyperparameter-tuning"><h2 class="section-heading"><a href="08_Hyperparameter-tuning.html">Hyperparameter Tuning in SageMaker: Neural Network Example</a></h2>
 <hr class="half-width">
 <ul>
@@ -673,9 +662,8 @@ child training job; <code>max_parallel_jobs</code> changes wall-clock
 time and, with the Bayesian strategy, how much each job can learn from
 the ones before it. 2-4 parallel jobs is a good default.</li>
 <li>
-<strong>Tags propagate from the tuner</strong>: Tags on the tuner
-are copied to every child training job, the one case in SageMaker where
-tags are inherited.</li>
+<strong>Tags propagate from the tuner</strong>: tags on the tuner
+are copied to every child training job.</li>
 <li>
 <strong>Read the bill from the child jobs</strong>: SageMaker bills
 per second of <code>BillableTimeInSeconds</code> x instance count on
@@ -785,8 +773,8 @@ serve it yourself.</li>
 <li>
 <strong>Inference uses reduced-precision weights</strong>: no
 gradients means the weights are the memory cost. FP8 puts a 27B model on
-one 48 GB GPU (<code>ml.g6e.xlarge</code>); bf16 would need 54 GB and a
-multi-GPU instance.</li>
+one 48 GB GPU (<code>ml.g6e.xlarge</code>); bf16 would need 54 GB, an 80
+GB GPU or a multi-GPU instance.</li>
 <li>
 <strong>The meter never stops on its own</strong>:
 <code>ml.g6e.xlarge</code> is <code>$2.61</code>/h, <code>$167</code>
@@ -794,9 +782,9 @@ per forgotten weekend, <code>$1,906</code> per forgotten month, plus
 <code>$14</code>/month for the storage volume even when stopped. Stop it
 when you stand up; delete it when the episode is over.</li>
 <li>
-<strong>Local-first RAG</strong>: For teaching (and small corpora),
-we avoid an external vector database and instead perform cosine
-similarity search over in-memory embeddings.</li>
+<strong>Retrieval is a matrix multiply</strong>: cosine similarity
+over the in-memory embedding matrix is enough for a corpus this size; a
+vector database is the same step for a corpus of millions.</li>
 <li>
 <strong>Ground-truth units</strong>: The <code>answer_unit</code>
 column is always copied directly from <code>train_QA.csv</code>, never
@@ -809,10 +797,6 @@ explanation tagged with an evidence type.</li>
 <strong>WattBot conventions</strong>: We respect the Kaggle
 competition format, using <code>is_blank</code> for unanswerable
 questions and for missing fields.</li>
-<li>
-<strong>Scalability path</strong>: The same logic can later be
-swapped to FAISS/Chroma and larger models, while preserving the
-interface used here.</li>
 </ul></section><section id="14_CLI-equivalents"><h2 class="section-heading"><a href="14_CLI-equivalents.html">(Optional) The Same Jobs from the Terminal</a></h2>
 <hr class="half-width">
 <ul>
@@ -830,8 +814,8 @@ almost every reason to open a terminal.</li>
 <code>MaxRuntimeInSeconds</code>, the same instance choice, with no
 price printed next to it.</li>
 <li>Endpoints, EC2 instances and GPU notebooks are not jobs and do not
-end; the workshop account denies creating them, and your own account
-should too.</li>
+end; the workshop account’s notebook role denies creating them, and your
+own account should too.</li>
 </ul></section><section id="15_Resource-management-cleanup"><h2 class="section-heading"><a href="15_Resource-management-cleanup.html">Resource Management and Monitoring</a></h2>
 <hr class="half-width">
 <ul>
@@ -851,8 +835,6 @@ storage costs.</p></li>
 up alerts.</p></li>
 <li><p>Use tags (set up earlier in the workshop) to track and monitor
 costs by resource.</p></li>
-<li><p>Following best practices for AWS resource management can
-significantly reduce costs and improve efficiency.</p></li>
 </ul></section>
 </div>
     </main>
@@ -903,8 +885,8 @@ significantly reduce costs and improve efficiency.</p></li>
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/key-points.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/key-points.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-26",
-  "datePublished": "2026-10-26"
+  "dateModified": "2026-10-27",
+  "datePublished": "2026-10-27"
 }
 
   </script><script>

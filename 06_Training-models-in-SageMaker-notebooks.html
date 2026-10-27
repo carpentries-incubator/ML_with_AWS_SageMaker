@@ -264,11 +264,11 @@
     <div id="flush-collapsecurrent" class="accordion-collapse collapse show" data-bs-parent="#accordionFlushcurrent">
       <div class="accordion-body">
         <ul><li><a href="#initial-setup">Initial setup</a></li>
-<li><a href="#testing-train.py-on-this-notebooks-instance">Testing train.py on this notebook’s instance</a></li>
+<li><a href="#testing-train_xgboost.py-on-this-notebooks-instance">Testing train_xgboost.py on this notebook’s instance</a></li>
 <li><a href="#training-via-sagemaker-your-script-inside-awss-xgboost-container">Training via SageMaker: your script inside AWS’s XGBoost
 container</a></li>
 <li><a href="#monitoring-training">Monitoring training</a></li>
-<li><a href="#launching-a-job-and-walking-away">Launching a job and walking away</a></li>
+<li><a href="#launching-a-job-without-waiting-for-it">Launching a job without waiting for it</a></li>
         </ul></div><!--/div.accordion-body-->
     </div><!--/div.accordion-collapse-->
 
@@ -428,7 +428,7 @@ container</a></li>
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Training Models in SageMaker: Intro</h1>
-        <p>Last updated on 2026-10-26 |
+        <p>Last updated on 2026-10-27 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/06_Training-models-in-SageMaker-notebooks.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -449,8 +449,7 @@ container</a></li>
 <h3 class="card-title">Questions</h3>
 <ul><li>What are the differences between local training and
 SageMaker-managed training?</li>
-<li>How do Estimator classes in SageMaker streamline the training
-process for various frameworks?</li>
+<li>What is a SageMaker training job, and what does it cost?</li>
 <li>How do you estimate what a training job will cost before launching
 it, and check what it cost afterwards?</li>
 </ul></div>
@@ -462,8 +461,8 @@ it, and check what it cost afterwards?</li>
 <h3 class="card-title">Objectives</h3>
 <ul><li>Understand the difference between training locally in a SageMaker
 notebook and using SageMaker’s managed infrastructure.</li>
-<li>Learn to configure and use SageMaker’s Estimator classes for
-different frameworks (e.g., XGBoost, PyTorch, SKLearn).</li>
+<li>Launch a training job with the <code>XGBoost</code> estimator: your
+script, AWS’s container, a rented instance.</li>
 <li>Tell apart the two ways to run XGBoost on SageMaker, your script in
 AWS’s container versus AWS’s built-in algorithm in the same container,
 and know when each fits.</li>
@@ -513,36 +512,35 @@ for accessing the Titanic training dataset stored in an S3 bucket.</p>
 <div class="section level4">
 <h4 id="boto3-api">Boto3 API<a class="anchor" aria-label="anchor" href="#boto3-api"></a></h4>
 <blockquote>
-<p>Boto3 is the official AWS SDK for Python, allowing developers to
-interact programmatically with AWS services like S3, EC2, and Lambda. It
-provides both high-level and low-level APIs, making it easy to manage
-AWS resources and automate tasks. With built-in support for paginators,
-waiters, and session management, Boto3 simplifies working with AWS
-credentials, regions, and IAM permissions. It’s ideal for automating
-cloud operations and integrating AWS services into Python
-applications.</p>
+<p>Boto3 is the AWS SDK for Python: every AWS service, called from
+Python, with the notebook’s role as the identity.</p>
 </blockquote>
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" tabindex="-1" aria-label="code-block-2-1"></a><span class="im">import</span> boto3                          <span class="co"># AWS SDK for Python: low-level access to every AWS service (S3, EC2, ...)</span></span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1" aria-label="code-block-2-2"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a><span class="im">import</span> sagemaker                      <span class="co"># SageMaker Python SDK: higher-level API for training jobs, tuning, deployment</span></span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1" aria-label="code-block-2-5"></a></span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1" aria-label="code-block-2-6"></a><span class="co"># Initialize the SageMaker role (will reflect notebook instance's policy)</span></span>
-<span id="cb2-7"><a href="#cb2-7" tabindex="-1" aria-label="code-block-2-7"></a>role <span class="op">=</span> sagemaker.get_execution_role()  <span class="co"># the IAM role attached to this notebook instance; every call below acts as this role</span></span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1" aria-label="code-block-2-8"></a><span class="bu">print</span>(<span class="ss">f'role = </span><span class="sc">{</span>role<span class="sc">}</span><span class="ss">'</span>)</span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1" aria-label="code-block-2-9"></a></span>
-<span id="cb2-10"><a href="#cb2-10" tabindex="-1" aria-label="code-block-2-10"></a><span class="co"># Initialize an S3 client to interact with Amazon S3, allowing operations like uploading, downloading, and managing objects and buckets.</span></span>
-<span id="cb2-11"><a href="#cb2-11" tabindex="-1" aria-label="code-block-2-11"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
-<span id="cb2-12"><a href="#cb2-12" tabindex="-1" aria-label="code-block-2-12"></a></span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1" aria-label="code-block-2-13"></a><span class="co"># Define the S3 bucket that we will load from</span></span>
-<span id="cb2-14"><a href="#cb2-14" tabindex="-1" aria-label="code-block-2-14"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn'</span>  <span class="co"># replace with your S3 bucket name</span></span>
-<span id="cb2-15"><a href="#cb2-15" tabindex="-1" aria-label="code-block-2-15"></a></span>
-<span id="cb2-16"><a href="#cb2-16" tabindex="-1" aria-label="code-block-2-16"></a><span class="co"># Define train/test filenames</span></span>
-<span id="cb2-17"><a href="#cb2-17" tabindex="-1" aria-label="code-block-2-17"></a>train_filename <span class="op">=</span> <span class="st">'titanic_train.csv'</span>  <span class="co"># object keys inside the bucket (no prefix: they sit at the bucket root)</span></span>
-<span id="cb2-18"><a href="#cb2-18" tabindex="-1" aria-label="code-block-2-18"></a>test_filename <span class="op">=</span> <span class="st">'titanic_test.csv'</span></span></code></pre>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a><span class="im">import</span> os</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1" aria-label="code-block-2-4"></a>os.environ[<span class="st">"SAGEMAKER_SUPPRESS_V2_WARNING"</span>] <span class="op">=</span> <span class="st">"1"</span>   <span class="co"># the SDK otherwise prints a deprecation notice on import and on every estimator</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1" aria-label="code-block-2-5"></a><span class="im">import</span> sagemaker                      <span class="co"># SageMaker Python SDK: higher-level API for training jobs, tuning, deployment</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1" aria-label="code-block-2-6"></a><span class="im">import</span> logging</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1" aria-label="code-block-2-7"></a>logging.getLogger(<span class="st">"sagemaker.telemetry.telemetry_logging"</span>).setLevel(logging.WARNING)   <span class="co"># silence the telemetry notice; the "Creating training-job" line still prints</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1" aria-label="code-block-2-8"></a>logging.getLogger(<span class="st">"sagemaker.image_uris"</span>).setLevel(logging.WARNING)</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1" aria-label="code-block-2-9"></a><span class="im">from</span> sagemaker <span class="im">import</span> get_execution_role</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1" aria-label="code-block-2-10"></a></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1" aria-label="code-block-2-11"></a><span class="co"># Initialize the SageMaker role (will reflect notebook instance's policy)</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1" aria-label="code-block-2-12"></a>role <span class="op">=</span> sagemaker.get_execution_role()  <span class="co"># the IAM role attached to this notebook instance; every call below acts as this role</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1" aria-label="code-block-2-13"></a><span class="bu">print</span>(<span class="ss">f'role = </span><span class="sc">{</span>role<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1" aria-label="code-block-2-14"></a></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1" aria-label="code-block-2-15"></a><span class="co"># Initialize an S3 client to interact with Amazon S3, allowing operations like uploading, downloading, and managing objects and buckets.</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1" aria-label="code-block-2-16"></a>s3 <span class="op">=</span> boto3.client(<span class="st">'s3'</span>)</span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1" aria-label="code-block-2-17"></a></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1" aria-label="code-block-2-18"></a><span class="co"># Define the S3 bucket that we will load from</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1" aria-label="code-block-2-19"></a>bucket_name <span class="op">=</span> <span class="st">'sinkorswim-doejohn'</span>  <span class="co"># replace with your S3 bucket name</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1" aria-label="code-block-2-20"></a></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1" aria-label="code-block-2-21"></a><span class="co"># Define train/test filenames</span></span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1" aria-label="code-block-2-22"></a>train_filename <span class="op">=</span> <span class="st">'titanic_train.csv'</span>  <span class="co"># object keys inside the bucket (no prefix: they sit at the bucket root)</span></span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1" aria-label="code-block-2-23"></a>test_filename <span class="op">=</span> <span class="st">'titanic_test.csv'</span></span></code></pre>
 </div>
 <p>Create a SageMaker session to manage interactions with Amazon
 SageMaker, such as training jobs, model deployments, and data
@@ -557,14 +555,13 @@ same notebook works in any account.</p>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a><span class="bu">print</span>(<span class="ss">f"region = </span><span class="sc">{</span>region<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 </div>
-</section><section><h2 class="section-heading" id="testing-train-py-on-this-notebooks-instance">Testing train.py on this notebook’s instance<a class="anchor" aria-label="anchor" href="#testing-train-py-on-this-notebooks-instance"></a></h2>
+</section><section><h2 class="section-heading" id="testing-train_xgboost-py-on-this-notebooks-instance">Testing train_xgboost.py on this notebook’s instance<a class="anchor" aria-label="anchor" href="#testing-train_xgboost-py-on-this-notebooks-instance"></a></h2>
 <hr class="half-width"><p>A training job is a script run on a machine SageMaker rents for it.
-The script has to work before it is worth renting anything, so this
-section runs it here first, on the notebook instance, on the small
-Titanic data. A local run finds bugs for free; a job that fails on a
-data-loading error still bills its startup minutes. The habit carries to
-every later episode: a few epochs on a subset on the cheapest machine,
-then the real run.</p>
+The script has to work before it is worth renting anything, so run it
+here first, on the notebook instance, on the small Titanic data. A local
+run finds bugs for free; a job that fails on a data-loading error still
+bills its startup minutes. Every later episode does the same: a few
+epochs on a subset on the cheapest machine, then the real run.</p>
 <div id="understanding-the-xgboost-training-script" class="callout challenge">
 <div class="callout-square">
 <i class="callout-icon" data-feather="zap"></i>
@@ -574,8 +571,8 @@ then the real run.</p>
 <h3 class="callout-title">Understanding the XGBoost Training Script</h3>
 <div class="callout-content">
 <p>Take a moment to review the
-<code>ML_with_AWS_SageMaker/scripts/train_xgboost.py</code> script we
-just cloned into our notebook. This script handles preprocessing,
+<code>ML_with_AWS_SageMaker/scripts/train_xgboost.py</code> script
+cloned in the controllers episode. This script handles preprocessing,
 training, and saving an XGBoost model, while also adapting to both local
 and SageMaker-managed environments.</p>
 <p>Try answering the following questions:</p>
@@ -614,9 +611,8 @@ don’t contribute to prediction (<code>Name</code>, <code>Ticket</code>,
 <li><p><strong>Training Function</strong>: The
 <code>train_model()</code> function takes the training dataset
 (<code>dtrain</code>), applies XGBoost training with the specified
-hyperparameters, and prints the training time. Printing training time
-helps compare different runs and ensures that scaling decisions are
-based on performance metrics.</p></li>
+hyperparameters, and prints the training time. Printing training time is
+what the SageMaker runs are compared against.</p></li>
 <li><p><strong>Command-Line Arguments</strong>: <code>argparse</code>
 allows passing parameters like <code>max_depth</code>, <code>eta</code>,
 <code>num_round</code>, etc., at runtime without modifying the script.
@@ -725,9 +721,9 @@ retrieve this info for your own project.</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a>helpers.get_notebook_instance_info(notebook_instance_name, region)</span></code></pre>
 </div>
-<p>Test train.py on this notebook’s instance (or when possible, on your
-own machine) before doing anything more complicated (e.g.,
-hyperparameter tuning on multiple instances)</p>
+<p>Test <code>train_xgboost.py</code> on this notebook’s instance (or,
+when possible, on your own machine) before doing anything more
+complicated (e.g., hyperparameter tuning on multiple instances)</p>
 <div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -752,7 +748,7 @@ job.</p>
 <span id="cb9-6"><a href="#cb9-6" tabindex="-1" aria-label="code-block-9-6"></a></span>
 <span id="cb9-7"><a href="#cb9-7" tabindex="-1" aria-label="code-block-9-7"></a>max_depth <span class="op">=</span> <span class="dv">3</span> <span class="co"># Sets the maximum depth of each tree in the model to 3. Limiting tree depth helps control model complexity and can reduce overfitting, especially on small datasets.</span></span>
 <span id="cb9-8"><a href="#cb9-8" tabindex="-1" aria-label="code-block-9-8"></a>eta <span class="op">=</span> <span class="fl">0.1</span> <span class="co">#  Sets the learning rate to 0.1, which scales the contribution of each tree to the final model. A smaller learning rate often requires more rounds to converge but can lead to better performance.</span></span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1" aria-label="code-block-9-9"></a>subsample <span class="op">=</span> <span class="fl">0.8</span> <span class="co"># Specifies that 80% of the training data will be randomly sampled to build each tree. Subsampling can help with model robustness by preventing overfitting and increasing variance.</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1" aria-label="code-block-9-9"></a>subsample <span class="op">=</span> <span class="fl">0.8</span> <span class="co"># Specifies that 80% of the training data will be randomly sampled to build each tree. Subsampling adds randomness between trees, which reduces overfitting.</span></span>
 <span id="cb9-10"><a href="#cb9-10" tabindex="-1" aria-label="code-block-9-10"></a>colsample_bytree <span class="op">=</span> <span class="fl">0.8</span> <span class="co"># Specifies that 80% of the features will be randomly sampled for each tree, enhancing the model's ability to generalize by reducing feature reliance.</span></span>
 <span id="cb9-11"><a href="#cb9-11" tabindex="-1" aria-label="code-block-9-11"></a>num_round <span class="op">=</span> <span class="dv">100</span> <span class="co"># Sets the number of boosting rounds (trees) to 100. More rounds typically allow for a more refined model, but too many rounds can lead to overfitting.</span></span>
 <span id="cb9-12"><a href="#cb9-12" tabindex="-1" aria-label="code-block-9-12"></a>train_file <span class="op">=</span> <span class="st">'titanic_train.csv'</span> <span class="co">#  Points to the location of the training data</span></span>
@@ -769,9 +765,8 @@ baseline the SageMaker runs below are compared with.</p>
 </div>
 <div class="section level3">
 <h3 id="sanity-check-quick-evaluation-on-test-set">Sanity check: Quick evaluation on test set<a class="anchor" aria-label="anchor" href="#sanity-check-quick-evaluation-on-test-set"></a></h3>
-<p>This section is not SageMaker specific; it checks that the model
-trained properly by applying it to the test set on the notebook
-instance.</p>
+<p>Nothing here is SageMaker specific: apply the model to the test set
+on the notebook instance to check that it trained properly.</p>
 <p>Score the model you just trained locally on the test set, reusing the
 script’s own <code>preprocess_data</code> so the test rows are
 transformed exactly as the training rows were.</p>
@@ -869,20 +864,20 @@ estimator</em>: it looks up AWS’s prebuilt XGBoost image for the region
 and runs your script inside it. <code>PyTorch</code>,
 <code>SKLearn</code>, <code>TensorFlow</code> and
 <code>HuggingFace</code> are the same idea for other frameworks, each
-with a <code>framework_version</code> that picks the image, and all of
-them take a <code>requirements.txt</code> through
-<code>dependencies=</code> for packages the image lacks. The plain
-<code>Estimator</code> class takes an <code>image_uri</code> directly
-and is for a container of your own, or for one of AWS’s built-in
-algorithms, which train with AWS’s code and no script of yours; the
-optional challenge at the end of this episode runs XGBoost that way for
-comparison. The <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/pre-built-containers-frameworks-deep-learning.html" class="external-link">list
+with a <code>framework_version</code> that picks the image, and a
+<code>requirements.txt</code> in <code>source_dir</code> is
+pip-installed in the container before the script starts, for packages
+the image lacks. The plain <code>Estimator</code> class takes an
+<code>image_uri</code> directly and is for a container of your own, or
+for one of AWS’s built-in algorithms, which train with AWS’s code and no
+script of yours; the optional challenge at the end of this episode runs
+XGBoost that way for comparison. The <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/pre-built-containers-frameworks-deep-learning.html" class="external-link">list
 of prebuilt images</a> says what each one has installed.</p>
 </div>
 <div class="section level3">
-<h3 id="deploying-to-other-instances">Deploying to other instances<a class="anchor" aria-label="anchor" href="#deploying-to-other-instances"></a></h3>
-<p>For this deployment, we configure the <code>XGBoost</code> estimator
-with a custom training script, <code>train_xgboost.py</code>, and define
+<h3 id="launching-the-training-job">Launching the training job<a class="anchor" aria-label="anchor" href="#launching-the-training-job"></a></h3>
+<p>We configure the <code>XGBoost</code> estimator with a custom
+training script, <code>train_xgboost.py</code>, and define
 hyperparameters directly within the SageMaker setup. The full code is
 below, with explanation after it.</p>
 <div class="section level4">
@@ -891,9 +886,8 @@ below, with explanation after it.</p>
 creates new managed resources (EC2 instances, attached storage, logs) on
 your behalf. These resources do not automatically inherit the notebook
 instance’s tags.</p>
-<p>To avoid this, we explicitly tag each training job at launch time.
-This ensures that compute usage is traceable to a project, a purpose,
-and a human-readable name, even after the job has completed.</p>
+<p>So we tag each training job at launch time, with the same three keys
+as the bucket and the notebook instance.</p>
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -919,12 +913,11 @@ things happen before your script runs, and only one of them is billed.
 First SageMaker finds an instance for you: that is
 <em>provisioning</em>, it takes a minute or so, and it is free. Then the
 instance pulls the training container and downloads your data: that is
-<em>startup</em>, and the meter is running. In this lesson, startup
-always means the billed part. An <code>ml.m5.large</code> costs about
-<code>$0.115</code>/hour (us-east-1 on-demand; see the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
+<em>startup</em>, and the meter is running. An <code>ml.m5.large</code>
+costs about <code>$0.115</code>/hour (us-east-1 on-demand; see the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
 for ML page</a>). Our local test finished in under a minute, so the
-estimate is roughly 1 minute of training + 2-3 minutes of startup = 3-4
-billable minutes, or under a cent.</p>
+estimate is a few seconds of training plus two or three minutes of
+startup: about three billable minutes, under a cent.</p>
 <p>One thing to watch in the estimator below is
 <code>hyperparameters</code>. It is how values get from this notebook
 into the script. SageMaker turns the dictionary into command-line flags,
@@ -932,10 +925,11 @@ into the script. SageMaker turns the dictionary into command-line flags,
 appends them to the command that starts <code>train_xgboost.py</code>
 inside the container, exactly as <code>%run</code> passed them a moment
 ago; the script’s <code>argparse</code> block reads them. So the keys
-must be the script’s argument names, and anything the script does not
-define a flag for is ignored. (The job’s log prints the full command,
-under “Invoking script with the following command”, which is the place
-to look when a value does not seem to arrive.)</p>
+must be the script’s argument names, and a key the script has no flag
+for makes <code>argparse</code> exit with “unrecognized arguments”,
+which fails the job. (The job’s log prints the full command, under
+“Invoking script with the following command”, which is the place to look
+when a value does not seem to arrive.)</p>
 <div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -944,60 +938,60 @@ to look when a value does not seem to arrive.)</p>
 <span id="cb12-3"><a href="#cb12-3" tabindex="-1" aria-label="code-block-12-3"></a></span>
 <span id="cb12-4"><a href="#cb12-4" tabindex="-1" aria-label="code-block-12-4"></a><span class="co"># Define instance type/count we'll use for training</span></span>
 <span id="cb12-5"><a href="#cb12-5" tabindex="-1" aria-label="code-block-12-5"></a>instance_type<span class="op">=</span><span class="st">"ml.m5.large"</span>   <span class="co"># the managed machine SageMaker launches for the job, separate from this notebook's instance</span></span>
-<span id="cb12-6"><a href="#cb12-6" tabindex="-1" aria-label="code-block-12-6"></a>instance_count<span class="op">=</span><span class="dv">1</span> <span class="co"># always start with 1; the next episode measures what a second instance does</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1" aria-label="code-block-12-6"></a>instance_count<span class="op">=</span><span class="dv">1</span> <span class="co"># always start with 1; the next episode shows what a second instance does</span></span>
 <span id="cb12-7"><a href="#cb12-7" tabindex="-1" aria-label="code-block-12-7"></a>price_per_hour <span class="op">=</span> <span class="fl">0.115</span> <span class="co"># ml.m5.large, us-east-1 on-demand (2026-10-16), from the Instances for ML page; check it for your region</span></span>
 <span id="cb12-8"><a href="#cb12-8" tabindex="-1" aria-label="code-block-12-8"></a></span>
-<span id="cb12-9"><a href="#cb12-9" tabindex="-1" aria-label="code-block-12-9"></a><span class="co"># Define max runtime in seconds to ensure you don't use more compute time than expected. Use a generous threshold (2x expected time but &lt; 2 days) so that work isn't interrupted without any gains.</span></span>
-<span id="cb12-10"><a href="#cb12-10" tabindex="-1" aria-label="code-block-12-10"></a>max_run <span class="op">=</span> <span class="dv">2</span><span class="op">*</span><span class="dv">60</span><span class="op">*</span><span class="dv">60</span> <span class="co"># 2 hours; SageMaker stops the job and releases the instance when this is reached</span></span>
-<span id="cb12-11"><a href="#cb12-11" tabindex="-1" aria-label="code-block-12-11"></a></span>
-<span id="cb12-12"><a href="#cb12-12" tabindex="-1" aria-label="code-block-12-12"></a><span class="co"># Define S3 paths for input and output</span></span>
-<span id="cb12-13"><a href="#cb12-13" tabindex="-1" aria-label="code-block-12-13"></a>train_s3_path <span class="op">=</span> <span class="ss">f's3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>train_filename<span class="sc">}</span><span class="ss">'</span>  <span class="co"># an S3 URI: bucket plus key; SageMaker takes input in this form</span></span>
-<span id="cb12-14"><a href="#cb12-14" tabindex="-1" aria-label="code-block-12-14"></a></span>
-<span id="cb12-15"><a href="#cb12-15" tabindex="-1" aria-label="code-block-12-15"></a><span class="co"># we'll store all results in a subfolder called xgboost on our bucket. This folder will automatically be created if it doesn't exist already.</span></span>
-<span id="cb12-16"><a href="#cb12-16" tabindex="-1" aria-label="code-block-12-16"></a>output_folder <span class="op">=</span> <span class="st">'xgboost'</span></span>
-<span id="cb12-17"><a href="#cb12-17" tabindex="-1" aria-label="code-block-12-17"></a>output_path <span class="op">=</span> <span class="ss">f's3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>output_folder<span class="sc">}</span><span class="ss">/'</span>   <span class="co"># S3 prefix (a "folder") where SageMaker uploads the job's outputs</span></span>
-<span id="cb12-18"><a href="#cb12-18" tabindex="-1" aria-label="code-block-12-18"></a></span>
-<span id="cb12-19"><a href="#cb12-19" tabindex="-1" aria-label="code-block-12-19"></a>helpers.check_launch(job_tags, instance_type, max_run)   <span class="co"># tags, instance type and cap against the account's rules, before anything is sent</span></span>
-<span id="cb12-20"><a href="#cb12-20" tabindex="-1" aria-label="code-block-12-20"></a></span>
-<span id="cb12-21"><a href="#cb12-21" tabindex="-1" aria-label="code-block-12-21"></a><span class="co"># The XGBoost framework estimator: AWS's XGBoost container, running our script</span></span>
-<span id="cb12-22"><a href="#cb12-22" tabindex="-1" aria-label="code-block-12-22"></a>xgboost_estimator <span class="op">=</span> XGBoost(</span>
-<span id="cb12-23"><a href="#cb12-23" tabindex="-1" aria-label="code-block-12-23"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-xgboost"</span>,   <span class="co"># prefix of the job name: who + which model; SageMaker appends a timestamp to make it unique</span></span>
-<span id="cb12-24"><a href="#cb12-24" tabindex="-1" aria-label="code-block-12-24"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
-<span id="cb12-25"><a href="#cb12-25" tabindex="-1" aria-label="code-block-12-25"></a>    entry_point<span class="op">=</span><span class="st">'train_xgboost.py'</span>,      <span class="co"># the script SageMaker runs inside the container on the training instance</span></span>
-<span id="cb12-26"><a href="#cb12-26" tabindex="-1" aria-label="code-block-12-26"></a>    source_dir<span class="op">=</span><span class="st">'/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts'</span>,  <span class="co"># Directory where your script is located (uploaded to the job with it)</span></span>
-<span id="cb12-27"><a href="#cb12-27" tabindex="-1" aria-label="code-block-12-27"></a>    role<span class="op">=</span>role,                           <span class="co"># the job assumes this role to read its input and write its output in S3</span></span>
-<span id="cb12-28"><a href="#cb12-28" tabindex="-1" aria-label="code-block-12-28"></a>    tags<span class="op">=</span>job_tags,                       <span class="co"># the cost-tracking tags defined above</span></span>
-<span id="cb12-29"><a href="#cb12-29" tabindex="-1" aria-label="code-block-12-29"></a>    instance_count<span class="op">=</span>instance_count,</span>
-<span id="cb12-30"><a href="#cb12-30" tabindex="-1" aria-label="code-block-12-30"></a>    instance_type<span class="op">=</span>instance_type,</span>
-<span id="cb12-31"><a href="#cb12-31" tabindex="-1" aria-label="code-block-12-31"></a>    output_path<span class="op">=</span>output_path,</span>
-<span id="cb12-32"><a href="#cb12-32" tabindex="-1" aria-label="code-block-12-32"></a>    sagemaker_session<span class="op">=</span>session,</span>
-<span id="cb12-33"><a href="#cb12-33" tabindex="-1" aria-label="code-block-12-33"></a>    framework_version<span class="op">=</span><span class="st">"1.7-1"</span>,           <span class="co"># XGBoost container version</span></span>
-<span id="cb12-34"><a href="#cb12-34" tabindex="-1" aria-label="code-block-12-34"></a>    hyperparameters<span class="op">=</span>{                    <span class="co"># passed to the script as command-line arguments: --train ..., --max_depth ...</span></span>
-<span id="cb12-35"><a href="#cb12-35" tabindex="-1" aria-label="code-block-12-35"></a>        <span class="st">'train'</span>: train_file,</span>
-<span id="cb12-36"><a href="#cb12-36" tabindex="-1" aria-label="code-block-12-36"></a>        <span class="st">'max_depth'</span>: max_depth,</span>
-<span id="cb12-37"><a href="#cb12-37" tabindex="-1" aria-label="code-block-12-37"></a>        <span class="st">'eta'</span>: eta,</span>
-<span id="cb12-38"><a href="#cb12-38" tabindex="-1" aria-label="code-block-12-38"></a>        <span class="st">'subsample'</span>: subsample,</span>
-<span id="cb12-39"><a href="#cb12-39" tabindex="-1" aria-label="code-block-12-39"></a>        <span class="st">'colsample_bytree'</span>: colsample_bytree,</span>
-<span id="cb12-40"><a href="#cb12-40" tabindex="-1" aria-label="code-block-12-40"></a>        <span class="st">'num_round'</span>: num_round</span>
-<span id="cb12-41"><a href="#cb12-41" tabindex="-1" aria-label="code-block-12-41"></a>    }</span>
-<span id="cb12-42"><a href="#cb12-42" tabindex="-1" aria-label="code-block-12-42"></a>)</span>
-<span id="cb12-43"><a href="#cb12-43" tabindex="-1" aria-label="code-block-12-43"></a></span>
-<span id="cb12-44"><a href="#cb12-44" tabindex="-1" aria-label="code-block-12-44"></a><span class="co"># Define input data</span></span>
-<span id="cb12-45"><a href="#cb12-45" tabindex="-1" aria-label="code-block-12-45"></a><span class="co"># TrainingInput: where the data is and its format; SageMaker copies it onto the training instance before the script runs</span></span>
-<span id="cb12-46"><a href="#cb12-46" tabindex="-1" aria-label="code-block-12-46"></a>train_input <span class="op">=</span> TrainingInput(train_s3_path, content_type<span class="op">=</span><span class="st">'csv'</span>)</span>
-<span id="cb12-47"><a href="#cb12-47" tabindex="-1" aria-label="code-block-12-47"></a></span>
-<span id="cb12-48"><a href="#cb12-48" tabindex="-1" aria-label="code-block-12-48"></a><span class="co"># Measure and start training time</span></span>
-<span id="cb12-49"><a href="#cb12-49" tabindex="-1" aria-label="code-block-12-49"></a>start <span class="op">=</span> t.time()</span>
-<span id="cb12-50"><a href="#cb12-50" tabindex="-1" aria-label="code-block-12-50"></a><span class="co"># fit() launches the job and blocks until it finishes (wait=False would return at once); the 'train' channel becomes SM_CHANNEL_TRAIN</span></span>
-<span id="cb12-51"><a href="#cb12-51" tabindex="-1" aria-label="code-block-12-51"></a>xgboost_estimator.fit({<span class="st">'train'</span>: train_input})</span>
-<span id="cb12-52"><a href="#cb12-52" tabindex="-1" aria-label="code-block-12-52"></a>end <span class="op">=</span> t.time()</span>
-<span id="cb12-53"><a href="#cb12-53" tabindex="-1" aria-label="code-block-12-53"></a></span>
-<span id="cb12-54"><a href="#cb12-54" tabindex="-1" aria-label="code-block-12-54"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1" aria-label="code-block-12-9"></a><span class="co"># The runtime cap, in seconds: SageMaker stops the job and releases the instance when it is reached. Set it a little above the estimate;</span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1" aria-label="code-block-12-10"></a><span class="co"># the estimate here is three or four minutes, so 20 minutes leaves room for a slow container pull without letting a hung job bill for hours.</span></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1" aria-label="code-block-12-11"></a>max_run <span class="op">=</span> <span class="dv">20</span><span class="op">*</span><span class="dv">60</span> <span class="co"># 20 minutes</span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1" aria-label="code-block-12-12"></a></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1" aria-label="code-block-12-13"></a><span class="co"># Define S3 paths for input and output</span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1" aria-label="code-block-12-14"></a>train_s3_path <span class="op">=</span> <span class="ss">f's3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>train_filename<span class="sc">}</span><span class="ss">'</span>  <span class="co"># an S3 URI: bucket plus key; SageMaker takes input in this form</span></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1" aria-label="code-block-12-15"></a></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1" aria-label="code-block-12-16"></a><span class="co"># we'll store all results in a subfolder called xgboost on our bucket. This folder will automatically be created if it doesn't exist already.</span></span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1" aria-label="code-block-12-17"></a>output_folder <span class="op">=</span> <span class="st">'xgboost'</span></span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1" aria-label="code-block-12-18"></a>output_path <span class="op">=</span> <span class="ss">f's3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>output_folder<span class="sc">}</span><span class="ss">/'</span>   <span class="co"># S3 prefix (a "folder") where SageMaker uploads the job's outputs</span></span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1" aria-label="code-block-12-19"></a></span>
+<span id="cb12-20"><a href="#cb12-20" tabindex="-1" aria-label="code-block-12-20"></a>helpers.check_launch(job_tags, instance_type, max_run)   <span class="co"># tags, instance type and cap against the account's rules, before anything is sent</span></span>
+<span id="cb12-21"><a href="#cb12-21" tabindex="-1" aria-label="code-block-12-21"></a></span>
+<span id="cb12-22"><a href="#cb12-22" tabindex="-1" aria-label="code-block-12-22"></a><span class="co"># The XGBoost framework estimator: AWS's XGBoost container, running our script</span></span>
+<span id="cb12-23"><a href="#cb12-23" tabindex="-1" aria-label="code-block-12-23"></a>xgboost_estimator <span class="op">=</span> XGBoost(</span>
+<span id="cb12-24"><a href="#cb12-24" tabindex="-1" aria-label="code-block-12-24"></a>    base_job_name<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>notebook_instance_name<span class="sc">}</span><span class="ss">-xgboost"</span>,   <span class="co"># prefix of the job name: who + which model; SageMaker appends a timestamp to make it unique</span></span>
+<span id="cb12-25"><a href="#cb12-25" tabindex="-1" aria-label="code-block-12-25"></a>    max_run<span class="op">=</span>max_run, <span class="co"># in seconds; always include (max 48 hours)</span></span>
+<span id="cb12-26"><a href="#cb12-26" tabindex="-1" aria-label="code-block-12-26"></a>    entry_point<span class="op">=</span><span class="st">'train_xgboost.py'</span>,      <span class="co"># the script SageMaker runs inside the container on the training instance</span></span>
+<span id="cb12-27"><a href="#cb12-27" tabindex="-1" aria-label="code-block-12-27"></a>    source_dir<span class="op">=</span><span class="st">'/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts'</span>,  <span class="co"># Directory where your script is located (uploaded to the job with it)</span></span>
+<span id="cb12-28"><a href="#cb12-28" tabindex="-1" aria-label="code-block-12-28"></a>    role<span class="op">=</span>role,                           <span class="co"># the job assumes this role to read its input and write its output in S3</span></span>
+<span id="cb12-29"><a href="#cb12-29" tabindex="-1" aria-label="code-block-12-29"></a>    tags<span class="op">=</span>job_tags,                       <span class="co"># the cost-tracking tags defined above</span></span>
+<span id="cb12-30"><a href="#cb12-30" tabindex="-1" aria-label="code-block-12-30"></a>    instance_count<span class="op">=</span>instance_count,</span>
+<span id="cb12-31"><a href="#cb12-31" tabindex="-1" aria-label="code-block-12-31"></a>    instance_type<span class="op">=</span>instance_type,</span>
+<span id="cb12-32"><a href="#cb12-32" tabindex="-1" aria-label="code-block-12-32"></a>    output_path<span class="op">=</span>output_path,</span>
+<span id="cb12-33"><a href="#cb12-33" tabindex="-1" aria-label="code-block-12-33"></a>    sagemaker_session<span class="op">=</span>session,</span>
+<span id="cb12-34"><a href="#cb12-34" tabindex="-1" aria-label="code-block-12-34"></a>    framework_version<span class="op">=</span><span class="st">"1.7-1"</span>,           <span class="co"># XGBoost container version</span></span>
+<span id="cb12-35"><a href="#cb12-35" tabindex="-1" aria-label="code-block-12-35"></a>    hyperparameters<span class="op">=</span>{                    <span class="co"># passed to the script as command-line arguments: --train ..., --max_depth ...</span></span>
+<span id="cb12-36"><a href="#cb12-36" tabindex="-1" aria-label="code-block-12-36"></a>        <span class="st">'train'</span>: train_file,</span>
+<span id="cb12-37"><a href="#cb12-37" tabindex="-1" aria-label="code-block-12-37"></a>        <span class="st">'max_depth'</span>: max_depth,</span>
+<span id="cb12-38"><a href="#cb12-38" tabindex="-1" aria-label="code-block-12-38"></a>        <span class="st">'eta'</span>: eta,</span>
+<span id="cb12-39"><a href="#cb12-39" tabindex="-1" aria-label="code-block-12-39"></a>        <span class="st">'subsample'</span>: subsample,</span>
+<span id="cb12-40"><a href="#cb12-40" tabindex="-1" aria-label="code-block-12-40"></a>        <span class="st">'colsample_bytree'</span>: colsample_bytree,</span>
+<span id="cb12-41"><a href="#cb12-41" tabindex="-1" aria-label="code-block-12-41"></a>        <span class="st">'num_round'</span>: num_round</span>
+<span id="cb12-42"><a href="#cb12-42" tabindex="-1" aria-label="code-block-12-42"></a>    }</span>
+<span id="cb12-43"><a href="#cb12-43" tabindex="-1" aria-label="code-block-12-43"></a>)</span>
+<span id="cb12-44"><a href="#cb12-44" tabindex="-1" aria-label="code-block-12-44"></a></span>
+<span id="cb12-45"><a href="#cb12-45" tabindex="-1" aria-label="code-block-12-45"></a><span class="co"># Define input data</span></span>
+<span id="cb12-46"><a href="#cb12-46" tabindex="-1" aria-label="code-block-12-46"></a><span class="co"># TrainingInput: where the data is and its format; SageMaker copies it onto the training instance before the script runs</span></span>
+<span id="cb12-47"><a href="#cb12-47" tabindex="-1" aria-label="code-block-12-47"></a>train_input <span class="op">=</span> TrainingInput(train_s3_path, content_type<span class="op">=</span><span class="st">'csv'</span>)</span>
+<span id="cb12-48"><a href="#cb12-48" tabindex="-1" aria-label="code-block-12-48"></a></span>
+<span id="cb12-49"><a href="#cb12-49" tabindex="-1" aria-label="code-block-12-49"></a><span class="co"># Measure and start training time</span></span>
+<span id="cb12-50"><a href="#cb12-50" tabindex="-1" aria-label="code-block-12-50"></a>start <span class="op">=</span> t.time()</span>
+<span id="cb12-51"><a href="#cb12-51" tabindex="-1" aria-label="code-block-12-51"></a><span class="co"># fit() launches the job and blocks until it finishes (wait=False would return at once); the 'train' channel becomes SM_CHANNEL_TRAIN</span></span>
+<span id="cb12-52"><a href="#cb12-52" tabindex="-1" aria-label="code-block-12-52"></a>xgboost_estimator.fit({<span class="st">'train'</span>: train_input})</span>
+<span id="cb12-53"><a href="#cb12-53" tabindex="-1" aria-label="code-block-12-53"></a>end <span class="op">=</span> t.time()</span>
+<span id="cb12-54"><a href="#cb12-54" tabindex="-1" aria-label="code-block-12-54"></a></span>
+<span id="cb12-55"><a href="#cb12-55" tabindex="-1" aria-label="code-block-12-55"></a><span class="bu">print</span>(<span class="ss">f"Runtime for training on SageMaker: </span><span class="sc">{</span>end <span class="op">-</span> start<span class="sc">:.2f}</span><span class="ss"> seconds, instance_type: </span><span class="sc">{</span>instance_type<span class="sc">}</span><span class="ss">, instance_count: </span><span class="sc">{</span>instance_count<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <p>While a job runs, its status is on the console under <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training" class="external-link">Training
-jobs</a>. For a job too long to sit through, see “Launching a job and
-walking away” below: launch with <code>wait=False</code> and stop the
-notebook instance.</p>
+jobs</a>. For a job too long to sit through, see “Launching a job
+without waiting for it” below.</p>
 <div id="if-the-launch-is-refused" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -1062,27 +1056,30 @@ needed.</p>
 <h4 id="what-did-that-cost">What did that cost?<a class="anchor" aria-label="anchor" href="#what-did-that-cost"></a></h4>
 <p><img src="fig/job-billable-time.svg" alt="Timeline of a SageMaker training job showing the unbilled wait for an instance and the billed phases from container pull to model upload" class="figure"><code>describe_training_job</code> returns
 <code>BillableTimeInSeconds</code>: the seconds the instance was yours,
-from container pull to model upload, per instance. It also returns
-<code>TrainingTimeInSeconds</code>, which on on-demand instances is the
-same number (it only differs on spot instances), so do not expect it to
-isolate your script. The minute or so before that, while SageMaker finds
-an instance, is not billed. SageMaker bills per second, with no
-rounding, so cost is billable seconds x instance count x hourly rate.
-We’ll wrap this in a small helper and call it after every job in this
-lesson.</p>
+from container pull to model upload, per instance. The minute or so
+before that, while SageMaker finds an instance, is not billed. (The
+job’s console page also shows a “Training time”; on an on-demand
+instance it is the same number, and neither one is your script’s own
+training time, which only the script’s log has.) SageMaker bills per
+second, with no rounding, so cost is billable seconds x instance count x
+hourly rate. We’ll wrap this in a small helper and call it after every
+job in this lesson.</p>
 <div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1" aria-label="code-block-13-1"></a><span class="kw">def</span> job_cost_report(job_name: <span class="bu">str</span>, price_per_hour: <span class="bu">float</span>):</span>
 <span id="cb13-2"><a href="#cb13-2" tabindex="-1" aria-label="code-block-13-2"></a>    desc <span class="op">=</span> session.sagemaker_client.describe_training_job(TrainingJobName<span class="op">=</span>job_name)  <span class="co"># the job's full record: status, timings, resources, output</span></span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a>    n <span class="op">=</span> desc[<span class="st">"ResourceConfig"</span>][<span class="st">"InstanceCount"</span>]</span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1" aria-label="code-block-13-4"></a>    billable <span class="op">=</span> desc[<span class="st">"BillableTimeInSeconds"</span>] <span class="op">*</span> n   <span class="co"># BillableTimeInSeconds: container pull to model upload, charged per instance</span></span>
-<span id="cb13-5"><a href="#cb13-5" tabindex="-1" aria-label="code-block-13-5"></a>    wall <span class="op">=</span> (desc[<span class="st">"TrainingEndTime"</span>] <span class="op">-</span> desc[<span class="st">"CreationTime"</span>]).total_seconds()   <span class="co"># from the launch request to the end, including unbilled provisioning</span></span>
-<span id="cb13-6"><a href="#cb13-6" tabindex="-1" aria-label="code-block-13-6"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>job_name<span class="sc">}</span><span class="ss">: status </span><span class="sc">{</span>desc[<span class="st">'TrainingJobStatus'</span>]<span class="sc">}</span><span class="ss">, wall-clock </span><span class="sc">{</span>wall<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min, billable </span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min on </span><span class="sc">{</span>n<span class="sc">}</span><span class="ss"> instance(s), cost $</span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">3600</span><span class="op">*</span>price_per_hour<span class="sc">:.3f}</span><span class="ss"> at $</span><span class="sc">{</span>price_per_hour<span class="sc">}</span><span class="ss">/h"</span>)</span>
-<span id="cb13-7"><a href="#cb13-7" tabindex="-1" aria-label="code-block-13-7"></a>    <span class="bu">print</span>(<span class="ss">f"    model: </span><span class="sc">{</span>desc[<span class="st">'ModelArtifacts'</span>][<span class="st">'S3ModelArtifacts'</span>]<span class="sc">}</span><span class="ss">"</span>)   <span class="co"># the model.tar.gz this job uploaded to output_path</span></span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1" aria-label="code-block-13-8"></a>    <span class="cf">return</span> desc</span>
-<span id="cb13-9"><a href="#cb13-9" tabindex="-1" aria-label="code-block-13-9"></a></span>
-<span id="cb13-10"><a href="#cb13-10" tabindex="-1" aria-label="code-block-13-10"></a>desc <span class="op">=</span> job_cost_report(xgboost_estimator.latest_training_job.name, price_per_hour)  <span class="co"># latest_training_job: the job fit() just ran</span></span></code></pre>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a>    <span class="cf">if</span> <span class="st">"BillableTimeInSeconds"</span> <span class="kw">not</span> <span class="kw">in</span> desc:   <span class="co"># the job has not finished: no bill yet</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1" aria-label="code-block-13-4"></a>        <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>job_name<span class="sc">}</span><span class="ss">: status </span><span class="sc">{</span>desc[<span class="st">'TrainingJobStatus'</span>]<span class="sc">}</span><span class="ss">; billable time and the model path appear once it is Completed"</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1" aria-label="code-block-13-5"></a>        <span class="cf">return</span> desc</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1" aria-label="code-block-13-6"></a>    n <span class="op">=</span> desc[<span class="st">"ResourceConfig"</span>][<span class="st">"InstanceCount"</span>]</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1" aria-label="code-block-13-7"></a>    billable <span class="op">=</span> desc[<span class="st">"BillableTimeInSeconds"</span>] <span class="op">*</span> n   <span class="co"># BillableTimeInSeconds: container pull to model upload, charged per instance</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1" aria-label="code-block-13-8"></a>    wall <span class="op">=</span> (desc[<span class="st">"TrainingEndTime"</span>] <span class="op">-</span> desc[<span class="st">"CreationTime"</span>]).total_seconds()   <span class="co"># from the launch request to the end, including unbilled provisioning</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1" aria-label="code-block-13-9"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>job_name<span class="sc">}</span><span class="ss">: status </span><span class="sc">{</span>desc[<span class="st">'TrainingJobStatus'</span>]<span class="sc">}</span><span class="ss">, wall-clock </span><span class="sc">{</span>wall<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min, billable </span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">60</span><span class="sc">:.1f}</span><span class="ss"> min on </span><span class="sc">{</span>n<span class="sc">}</span><span class="ss"> instance(s), cost $</span><span class="sc">{</span>billable<span class="op">/</span><span class="dv">3600</span><span class="op">*</span>price_per_hour<span class="sc">:.3f}</span><span class="ss"> at $</span><span class="sc">{</span>price_per_hour<span class="sc">}</span><span class="ss">/h"</span>)</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1" aria-label="code-block-13-10"></a>    <span class="bu">print</span>(<span class="ss">f"    model: </span><span class="sc">{</span>desc[<span class="st">'ModelArtifacts'</span>][<span class="st">'S3ModelArtifacts'</span>]<span class="sc">}</span><span class="ss">"</span>)   <span class="co"># the model.tar.gz this job uploaded to output_path</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1" aria-label="code-block-13-11"></a>    <span class="cf">return</span> desc</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1" aria-label="code-block-13-12"></a></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1" aria-label="code-block-13-13"></a>desc <span class="op">=</span> job_cost_report(xgboost_estimator.latest_training_job.name, price_per_hour)  <span class="co"># latest_training_job: the job fit() just ran</span></span></code></pre>
 </div>
 <p>The <code>model:</code> line is where the trained model went.
 Everything else the job wrote sits next to it under the same prefix;
@@ -1117,9 +1114,10 @@ whatever the script saved to <code>SM_MODEL_DIR</code> (here
 below.</li>
 <li>
 <code>profiler-output/</code> and <code>debug-output/</code>: small
-files from SageMaker’s built-in profiler, written for every training
-job. Ignore them; they can be turned off with
-<code>disable_profiler=True</code> on the estimator.</li>
+files from SageMaker’s profiler and debugger, written for every training
+job. Ignore them; <code>disable_profiler=True</code> and
+<code>debugger_hook_config=False</code> on the estimator turn them
+off.</li>
 </ol><p>The job’s log is not in S3. It is in <strong>CloudWatch</strong>, the
 AWS service that stores the printed output of every job: everything the
 script prints goes to a CloudWatch <em>log stream</em> named after the
@@ -1152,8 +1150,7 @@ these steps:</p>
 <strong>Load and preprocess</strong> the test dataset.</li>
 <li>
 <strong>Evaluate</strong> the model on the test data.</li>
-</ol><p>Here’s how you can implement this in your SageMaker notebook. The
-following code will:</p>
+</ol><p>The code below:</p>
 <ul><li>Download the <code>model.tar.gz</code> file containing the trained
 model from S3.</li>
 <li>Load the <code>titanic_test.csv</code> data we downloaded earlier
@@ -1213,115 +1210,63 @@ the unpacked archive and score the test set the same way as before.</p>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="monitoring-training">Monitoring training<a class="anchor" aria-label="anchor" href="#monitoring-training"></a></h2>
-<hr class="half-width"><p>To view and monitor your SageMaker training job, follow these steps
-in the AWS Management Console. Since training jobs may be visible to
-multiple users in your account, it’s essential to confirm that you’re
-interacting with your own job before making any changes.</p>
-<ol style="list-style-type: decimal"><li>
-<strong>Navigate to the SageMaker Console</strong>
-<ul><li>Go to the AWS Management Console and open the
-<strong>SageMaker</strong> service (can search for it)</li>
-</ul></li>
-<li>
-<strong>View training jobs</strong>
-<ul><li>In the left-hand navigation menu, select <strong>Training
-jobs</strong> (or open <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training" class="external-link">this
-link</a> in the class region). You’ll see a list of recent training
-jobs, which may include jobs from other users in the account.</li>
-</ul></li>
-<li>
-<strong>Verify your training Job</strong>
-<ul><li>Identify your job by looking for the specific name format (e.g.,
-<code>SinkOrSwim-DoeJohn-YYYY-MM-DD-HH-MM-SS-XXX</code>) generated when
-you launched the job. Click on its name to access detailed information.
-Cross-check the job details, such as the <strong>Instance Type</strong>
-and <strong>Input data configuration</strong>, with the parameters you
-set in your script.</li>
-</ul></li>
-<li>
-<strong>Monitor the job status</strong>
-<ul><li>Once you’ve verified the correct job, click on its name to access
-detailed information:
+<hr class="half-width"><p>The job’s page in the console has everything the notebook printed and
+more. Open <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training" class="external-link">Training
+jobs</a>; the list is the whole account’s, so find yours by name,
+<code>SinkOrSwim-DoeJohn-xgboost-&lt;timestamp&gt;</code>, and click
+it.</p>
 <ul><li>
-<strong>Status</strong>: Confirms whether the job is
-<code>InProgress</code>, <code>Completed</code>, or
-<code>Failed</code>.</li>
+<strong>Status</strong>: <code>InProgress</code>,
+<code>Completed</code>, <code>Failed</code> or
+<code>Stopped</code>.</li>
 <li>
-<strong>Logs</strong>: the <strong>View logs</strong> link opens the
-job’s output in CloudWatch, the AWS logging service, where it is kept
-after the job ends; <strong>Job Metrics</strong> shows CPU, GPU and
-memory use over the run.</li>
+<strong>View logs</strong>, under <strong>Monitor</strong>: the
+job’s printed output in CloudWatch, kept after the instance is gone.
+<strong>Job Metrics</strong> next to it shows CPU, GPU and memory use
+over the run.</li>
 <li>
-<strong>Output Data</strong>: Shows the S3 location with the trained
-model artifacts.</li>
-</ul></li>
-</ul></li>
+<strong>Output</strong>: the S3 path of the model artifact.</li>
 <li>
-<strong>Stopping a training job</strong>
-<ul><li>Before stopping a job, ensure you’ve selected the correct one by
-verifying job details as outlined above.</li>
-<li>If you’re certain it’s your job, go to <strong>Training
-jobs</strong> in the SageMaker Console, select the job, and choose
-<strong>Stop</strong> from the <strong>Actions</strong> menu. Confirm
-your selection, as this action will halt the job and release any
-associated resources.</li>
-<li>
-<strong>Important</strong>: Avoid stopping jobs you don’t own, as
-this could disrupt other users’ work and may have unintended
-consequences.</li>
-</ul></li>
-</ol><p>Following these steps helps ensure you only interact with and modify
-jobs you own, reducing the risk of impacting other users’ training
-processes.</p>
-</section><section><h2 class="section-heading" id="launching-a-job-and-walking-away">Launching a job and walking away<a class="anchor" aria-label="anchor" href="#launching-a-job-and-walking-away"></a></h2>
-<hr class="half-width"><p>Everything after <code>fit()</code> returned happened on the job’s
-instance, not this one. The notebook is the launcher: once SageMaker has
-the request, the job pulls its container, trains, uploads the model to
-S3 and writes its log to CloudWatch whether or not this notebook is
-still running. <code>wait=True</code>, the default, only makes the cell
-block and stream the log here. That is right for a four-minute job. For
-a run of hours it means a notebook instance left running all night, five
-cents an hour on an <code>ml.t3.medium</code> and <code>$63</code> on a
-GPU notebook, so that a cell can watch a log you could read in
+<strong>Stop</strong>, under <strong>Actions</strong>: ends the job
+and its billing. Check the name first; the list has other people’s jobs
+in it.</li>
+</ul></section><section><h2 class="section-heading" id="launching-a-job-without-waiting-for-it">Launching a job without waiting for it<a class="anchor" aria-label="anchor" href="#launching-a-job-without-waiting-for-it"></a></h2>
+<hr class="half-width"><p>Everything <code>fit()</code> waited for happened on the job’s
+instance, not this one. Once SageMaker has the request, the job pulls
+its container, trains, uploads the model to S3 and writes its log to
+CloudWatch, and none of that needs this notebook.
+<code>wait=True</code>, the default, only makes the cell block and
+stream the log here, which is fine for a four-minute job. For a run of
+hours it means sitting on a blocked cell, or leaving a notebook instance
+running all night so that a cell can watch a log you could read in
 CloudWatch.</p>
-<p>The alternative is three steps: launch with <code>wait=False</code>,
-write the job name down, stop the notebook instance. Come back when the
-job is done, start the instance, and pick the job up by name.</p>
+<p><code>wait=False</code> returns as soon as the job is accepted. Run
+the next cell, or stop the notebook instance and go home; the job runs
+the same either way.</p>
 <div class="codewrapper sourceCode" id="cb17">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1" aria-label="code-block-17-1"></a><span class="co"># Launch and return at once: the cell ends in seconds, and the job runs on its own instance</span></span>
 <span id="cb17-2"><a href="#cb17-2" tabindex="-1" aria-label="code-block-17-2"></a>xgboost_estimator.fit({<span class="st">'train'</span>: train_input}, wait<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb17-3"><a href="#cb17-3" tabindex="-1" aria-label="code-block-17-3"></a>job_name <span class="op">=</span> xgboost_estimator.latest_training_job.name   <span class="co"># what you need to come back to this job</span></span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1" aria-label="code-block-17-3"></a>job_name <span class="op">=</span> xgboost_estimator.latest_training_job.name</span>
 <span id="cb17-4"><a href="#cb17-4" tabindex="-1" aria-label="code-block-17-4"></a><span class="bu">print</span>(<span class="st">"launched:"</span>, job_name)</span></code></pre>
 </div>
-<p>Keep the name somewhere outside the kernel: a cell’s printed output
-survives a kernel restart and a stopped instance, a variable does not.
-If you are leaving, stop the notebook instance from <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/notebook-instances" class="external-link">Notebook
-instances</a> (select it, <strong>Actions</strong>,
-<strong>Stop</strong>). The job keeps running, and its status and log
-are on its page under <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training" class="external-link">Training
-jobs</a> from any browser.</p>
-<p>To pick it up again, two calls. <code>describe_training_job</code> is
-the quick look: the status, and the timings once it has finished.
-<code>attach</code> rebuilds the estimator from the job’s record: if the
-job is still running it streams the rest of the log and waits, as
-<code>fit()</code> would have; if it has finished it returns at once.
-Either way <code>model_data</code> then points at the model in S3, so
-the download-and-evaluate cells above work unchanged.</p>
+<p>While it runs, its status and log are on its page under <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training" class="external-link">Training
+jobs</a>, from any browser. When it finishes, the model is in S3 under
+<code>output_path</code>, whether or not anything was watching. To read
+its status and bill from a notebook, the same call as before:</p>
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1" aria-label="code-block-18-1"></a><span class="im">from</span> sagemaker.xgboost.estimator <span class="im">import</span> XGBoost</span>
-<span id="cb18-2"><a href="#cb18-2" tabindex="-1" aria-label="code-block-18-2"></a></span>
-<span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a><span class="co"># after a kernel restart or a stopped instance, set job_name = "&lt;the name printed by the launch cell&gt;" first</span></span>
-<span id="cb18-4"><a href="#cb18-4" tabindex="-1" aria-label="code-block-18-4"></a>status <span class="op">=</span> session.sagemaker_client.describe_training_job(TrainingJobName<span class="op">=</span>job_name)[<span class="st">"TrainingJobStatus"</span>]</span>
-<span id="cb18-5"><a href="#cb18-5" tabindex="-1" aria-label="code-block-18-5"></a><span class="bu">print</span>(job_name, status)   <span class="co"># InProgress, Completed, Failed or Stopped</span></span>
-<span id="cb18-6"><a href="#cb18-6" tabindex="-1" aria-label="code-block-18-6"></a></span>
-<span id="cb18-7"><a href="#cb18-7" tabindex="-1" aria-label="code-block-18-7"></a>xgboost_estimator <span class="op">=</span> XGBoost.attach(job_name, sagemaker_session<span class="op">=</span>session)   <span class="co"># waits and streams the log if InProgress; returns at once if done</span></span>
-<span id="cb18-8"><a href="#cb18-8" tabindex="-1" aria-label="code-block-18-8"></a><span class="bu">print</span>(<span class="st">"model:"</span>, xgboost_estimator.model_data)</span>
-<span id="cb18-9"><a href="#cb18-9" tabindex="-1" aria-label="code-block-18-9"></a>desc <span class="op">=</span> job_cost_report(job_name, price_per_hour)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1" aria-label="code-block-18-1"></a>desc <span class="op">=</span> job_cost_report(job_name, price_per_hour)   <span class="co"># prints the status while the job runs; the bill and the model path once it is Completed</span></span></code></pre>
 </div>
+<p>If the notebook instance was stopped in between, the kernel’s
+variables are gone, so set <code>job_name</code> from the printed output
+or from the Training jobs list before running that cell.
+<code>xgboost_estimator = XGBoost.attach(job_name, sagemaker_session=session)</code>
+rebuilds the estimator from the job’s record, waiting for the job if it
+is still running, if you want the evaluate cells above to work as
+before.</p>
 <p>Interrupting the cell, restarting the kernel and stopping the
 instance all leave the job running. Only <strong>Stop</strong> on the
 job’s page, or the job’s own cap, ends it. A job you launched and forgot
@@ -1348,27 +1293,29 @@ then costs one epoch instead of the run, and a second launch with the
 same <code>checkpoint_s3_uri</code> carries on. It is not worth setting
 up for this one-minute job; the fine-tuning episode’s script does it,
 and its estimator has the two lines to copy.</p>
-<div id="launch-lose-the-kernel-come-back" class="callout challenge">
+<div id="launch-lose-the-kernel-read-the-bill-anyway" class="callout challenge">
 <div class="callout-square">
 <i class="callout-icon" data-feather="zap"></i>
 </div>
 <span class="callout-header">Challenge</span>
-<div id="launch-lose-the-kernel-come-back" class="callout-inner">
-<h3 class="callout-title">Launch, lose the kernel, come back</h3>
+<div id="launch-lose-the-kernel-read-the-bill-anyway" class="callout-inner">
+<h3 class="callout-title">Launch, lose the kernel, read the bill
+anyway</h3>
 <div class="callout-content">
-<p>Do the walk-away sequence once while the job is short, so that it is
-familiar when the job is long.</p>
-<ol style="list-style-type: decimal"><li>Run the <code>wait=False</code> launch cell above and note the
-printed job name.</li>
+<p>Do this once while the job is short, so that it is familiar when the
+job is long.</p>
+<ol style="list-style-type: decimal"><li>The <code>wait=False</code> cell above launched a job; note the name
+it printed.</li>
 <li>From the Jupyter menu choose <strong>Kernel</strong>,
 <strong>Restart</strong>. Every variable is gone, which is what a
 stopped instance would also do to you, without the minutes of waiting
 for it to start again.</li>
 <li>Rerun the setup cells at the top of the episode (the session, bucket
-and role) and the cell that defines <code>job_cost_report</code> and
-<code>price_per_hour</code>.</li>
-<li>Set <code>job_name</code> to the name you noted and run the pick-up
-cell.</li>
+and role), set <code>price_per_hour = 0.115</code> again, and rerun the
+cell that defines <code>job_cost_report</code>. Do not rerun the launch
+cells.</li>
+<li>Set <code>job_name</code> to the name you noted and run the
+<code>job_cost_report</code> cell.</li>
 </ol><p>What was the job’s status when you looked, and what did it cost
 compared with the first job?</p>
 </div>
@@ -1382,12 +1329,10 @@ compared with the first job?</p>
 <div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <p>The status is <code>InProgress</code> if you were quick and
-<code>Completed</code> otherwise; <code>attach</code> waits in the first
-case and returns at once in the second. The cost is the same as the
-first run, since the job did the same work, and it did not care that the
-kernel it was launched from no longer existed. The only thing that
-connected the kernel to the job was the name, and if you lose that too,
-the <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training" class="external-link">Training
+<code>Completed</code> otherwise. The cost is the same as the first run,
+since the job did the same work, and it did not care that the kernel it
+was launched from no longer existed. The only thing that connected the
+kernel to the job was the name, and if you lose that too, the <a href="https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training" class="external-link">Training
 jobs</a> list, filtered by your notebook instance name, has it.</p>
 </div>
 </div>
@@ -1436,18 +1381,19 @@ the expected layout, and upload it to its own prefix in our bucket.</p>
 <span id="cb19-2"><a href="#cb19-2" tabindex="-1" aria-label="code-block-19-2"></a><span class="co"># ^ remove this line to run the cell; the guard keeps Run All from launching the extra job</span></span>
 <span id="cb19-3"><a href="#cb19-3" tabindex="-1" aria-label="code-block-19-3"></a><span class="im">from</span> train_xgboost <span class="im">import</span> preprocess_data</span>
 <span id="cb19-4"><a href="#cb19-4" tabindex="-1" aria-label="code-block-19-4"></a></span>
-<span id="cb19-5"><a href="#cb19-5" tabindex="-1" aria-label="code-block-19-5"></a><span class="co"># Same preprocessing our script applies: fill missing values, encode Sex/Embarked, drop text columns</span></span>
-<span id="cb19-6"><a href="#cb19-6" tabindex="-1" aria-label="code-block-19-6"></a>X, y <span class="op">=</span> preprocess_data(pd.read_csv(train_filename))</span>
-<span id="cb19-7"><a href="#cb19-7" tabindex="-1" aria-label="code-block-19-7"></a></span>
-<span id="cb19-8"><a href="#cb19-8" tabindex="-1" aria-label="code-block-19-8"></a><span class="co"># Built-in XGBoost wants: no header, all numeric, label first</span></span>
-<span id="cb19-9"><a href="#cb19-9" tabindex="-1" aria-label="code-block-19-9"></a>builtin_filename <span class="op">=</span> <span class="st">"train_builtin.csv"</span></span>
-<span id="cb19-10"><a href="#cb19-10" tabindex="-1" aria-label="code-block-19-10"></a>pd.concat([y, X], axis<span class="op">=</span><span class="dv">1</span>).to_csv(builtin_filename, header<span class="op">=</span><span class="va">False</span>, index<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb19-11"><a href="#cb19-11" tabindex="-1" aria-label="code-block-19-11"></a></span>
-<span id="cb19-12"><a href="#cb19-12" tabindex="-1" aria-label="code-block-19-12"></a><span class="co"># Upload to a dedicated prefix so it doesn't get confused with the raw CSV</span></span>
-<span id="cb19-13"><a href="#cb19-13" tabindex="-1" aria-label="code-block-19-13"></a>builtin_s3_key <span class="op">=</span> <span class="ss">f"xgboost/builtin/</span><span class="sc">{</span>builtin_filename<span class="sc">}</span><span class="ss">"</span></span>
-<span id="cb19-14"><a href="#cb19-14" tabindex="-1" aria-label="code-block-19-14"></a>s3.upload_file(builtin_filename, bucket_name, builtin_s3_key)</span>
-<span id="cb19-15"><a href="#cb19-15" tabindex="-1" aria-label="code-block-19-15"></a>builtin_s3_path <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>builtin_s3_key<span class="sc">}</span><span class="ss">"</span></span>
-<span id="cb19-16"><a href="#cb19-16" tabindex="-1" aria-label="code-block-19-16"></a><span class="bu">print</span>(<span class="st">"Uploaded:"</span>, builtin_s3_path)</span></code></pre>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1" aria-label="code-block-19-5"></a><span class="co"># The same titanic_train.csv the script job trained on. The script ran preprocess_data inside the container;</span></span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1" aria-label="code-block-19-6"></a><span class="co"># the built-in algorithm runs no code of ours, so the same preprocessing is applied here instead</span></span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1" aria-label="code-block-19-7"></a>X, y <span class="op">=</span> preprocess_data(pd.read_csv(train_filename))   <span class="co"># fill missing values, encode Sex/Embarked, drop text columns</span></span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1" aria-label="code-block-19-8"></a></span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1" aria-label="code-block-19-9"></a><span class="co"># Same rows, written the way the built-in algorithm requires: no header, all numeric, label first</span></span>
+<span id="cb19-10"><a href="#cb19-10" tabindex="-1" aria-label="code-block-19-10"></a>builtin_filename <span class="op">=</span> <span class="st">"train_builtin.csv"</span></span>
+<span id="cb19-11"><a href="#cb19-11" tabindex="-1" aria-label="code-block-19-11"></a>pd.concat([y, X], axis<span class="op">=</span><span class="dv">1</span>).to_csv(builtin_filename, header<span class="op">=</span><span class="va">False</span>, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb19-12"><a href="#cb19-12" tabindex="-1" aria-label="code-block-19-12"></a></span>
+<span id="cb19-13"><a href="#cb19-13" tabindex="-1" aria-label="code-block-19-13"></a><span class="co"># Upload under its own prefix so it is not confused with the raw CSV</span></span>
+<span id="cb19-14"><a href="#cb19-14" tabindex="-1" aria-label="code-block-19-14"></a>builtin_s3_key <span class="op">=</span> <span class="ss">f"xgboost/builtin/</span><span class="sc">{</span>builtin_filename<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb19-15"><a href="#cb19-15" tabindex="-1" aria-label="code-block-19-15"></a>s3.upload_file(builtin_filename, bucket_name, builtin_s3_key)</span>
+<span id="cb19-16"><a href="#cb19-16" tabindex="-1" aria-label="code-block-19-16"></a>builtin_s3_path <span class="op">=</span> <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>builtin_s3_key<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb19-17"><a href="#cb19-17" tabindex="-1" aria-label="code-block-19-17"></a><span class="bu">print</span>(<span class="st">"Uploaded:"</span>, builtin_s3_path)</span></code></pre>
 </div>
 <p>With our script, the data path was just another flag the script read.
 The built-in algorithm has no flags: the data arrives as a
@@ -1532,9 +1478,8 @@ network.</p>
 <div class="callout-inner">
 <div class="callout-content">
 <ul><li>
-<strong>Environment initialization</strong>: Setting up a SageMaker
-session, defining roles, and specifying the S3 bucket are essential for
-managing data and running jobs in SageMaker.</li>
+<strong>Setup</strong>: a SageMaker session, the execution role and
+the bucket name are what every job needs from the notebook.</li>
 <li>
 <strong>Local vs. managed training</strong>: Always test your code
 locally (on a smaller scale) before scaling things up. This avoids
@@ -1545,20 +1490,20 @@ results.</li>
 is AWS’s container running your script, the pattern every later episode
 uses with <code>PyTorch</code> and <code>HuggingFace</code>.</li>
 <li>
-<strong>Training data channels</strong>: Using
-<code>TrainingInput</code> ensures SageMaker manages data
-efficiently.</li>
+<strong>Training data channels</strong>: <code>TrainingInput</code>
+names the S3 data a job copies onto its instance before the script
+runs.</li>
 <li>
 <strong>Cost habit</strong>: Estimate cost before launching (rate x
 minutes + ~3 minutes startup), then read back
 <code>BillableTimeInSeconds</code> with <code>job_cost_report()</code>
 after every job and compare.</li>
 <li>
-<strong>Long runs</strong>: launch with <code>wait=False</code>,
-note the job name, stop the notebook instance;
-<code>attach(job_name)</code> picks the job up later. Set
-<code>max_run</code> a little above the estimate, and checkpoint to S3
-on anything longer than half an hour.</li>
+<strong>Long runs</strong>: launch with <code>wait=False</code> and
+carry on, or stop the notebook instance; the job runs and finishes
+without it, and <code>job_cost_report(job_name, ...)</code> reads its
+bill later. Set <code>max_run</code> a little above the estimate, and
+checkpoint to S3 on anything longer than half an hour.</li>
 </ul></div>
 </div>
 </div>
@@ -1627,8 +1572,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/06_Training-models-in-SageMaker-notebooks.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/06_Training-models-in-SageMaker-notebooks.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-26",
-  "datePublished": "2026-10-26"
+  "dateModified": "2026-10-27",
+  "datePublished": "2026-10-27"
 }
 
   </script><script>

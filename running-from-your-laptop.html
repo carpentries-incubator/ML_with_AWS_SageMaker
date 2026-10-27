@@ -404,7 +404,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Running this lesson from your own machine</h1>
-        <p>Last updated on 2026-10-26 |
+        <p>Last updated on 2026-10-27 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/learners/running-from-your-laptop.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -483,9 +483,10 @@ groups lose money. If someone hands you a key pair, ask for SSO access
 instead.</p>
 <p>When a session expires mid-episode, a running job keeps running on
 the SageMaker side; only your notebook’s polling fails. Run
-<code>aws sso login</code> again and reattach with
-<code>estimator.attach(job_name)</code> or
-<code>sagemaker.estimator.Estimator.attach(...)</code>.</p>
+<code>aws sso login</code> again and read its record with
+<code>describe_training_job</code>, or rebuild the estimator with
+<code>XGBoost.attach(job_name)</code> (the same classmethod on every
+estimator class).</p>
 </section><section><h2 class="section-heading" id="build-the-environment-once">2. Build the environment once<a class="anchor" aria-label="anchor" href="#build-the-environment-once"></a></h2>
 <hr class="half-width"><p>Python 3.10 or newer, in a virtual environment
 (<code>python -m venv</code>, <code>uv venv</code> or conda), then:</p>
@@ -498,15 +499,16 @@ the SageMaker side; only your notebook’s polling fails. Run
 <p><code>torch</code> and <code>xgboost</code> are only used for the
 local smoke tests in the training episodes; the jobs bring their own
 containers. The Bedrock episode needs nothing extra. The fine-tuning and
-Processing-jobs episodes install their dependencies inside the job.</p>
+Processing-jobs episodes bring their dependencies in the job’s
+container.</p>
 </section><section><h2 class="section-heading" id="the-cells-that-change">3. The cells that change<a class="anchor" aria-label="anchor" href="#the-cells-that-change"></a></h2>
 <hr class="half-width"><table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>Where</th>
 <th>On the notebook instance</th>
 <th>On your laptop</th>
 </tr></thead><tbody><tr><td>Every episode’s setup cell</td>
 <td><code>role = get_execution_role()</code></td>
-<td>Off a SageMaker instance this raises <em>“The current AWS identity
-is not a role”</em>. Set it explicitly:
+<td>With SSO credentials this returns your sign-in’s role, which
+SageMaker cannot assume for a job. Set it explicitly:
 <code>role = "arn:aws:iam::&lt;account-id&gt;:role/&lt;execution-role&gt;"</code>.
 For the workshop account use the execution role your notebook instance
 had (copy its ARN from the instance’s details page in the console, under
@@ -514,13 +516,15 @@ had (copy its ARN from the instance’s details page in the console, under
 must allow <code>iam:PassRole</code> on that role; the workshop’s
 does.</td>
 </tr><tr><td>Every episode’s setup cell</td>
-<td><code>region = boto3.Session().region_name</code></td>
+<td><code>region = session.boto_region_name</code></td>
 <td>Unchanged; it now reads the profile’s default region. If it prints
 <code>None</code>, set <code>AWS_DEFAULT_REGION</code> or re-run
 <code>aws configure sso</code>.</td>
-</tr><tr><td>Accessing S3, PyTorch episodes</td>
+</tr><tr><td>Accessing S3, PyTorch, RAG and cleanup episodes</td>
 <td>
-<code>%cd /home/ec2-user/SageMaker/</code>, paths under it</td>
+<code>%cd /home/ec2-user/SageMaker/...</code>,
+<code>!cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/...</code>,
+paths under it</td>
 <td>Any folder you like; clone the lesson repository there and point the
 <code>sys.path.insert</code> line at its <code>scripts/</code>
 folder.</td>
@@ -545,8 +549,10 @@ version of the same work.</td>
 </tr><tr><td>Resource management</td>
 <td>Stop the notebook instance when you leave</td>
 <td>Nothing to stop; your laptop is the controller. Everything else on
-the cleanup list (buckets, jobs, Bedrock profiles, endpoints) is the
-same.</td>
+the cleanup list (buckets, jobs, Bedrock profiles) is the same. A launch
+from the laptop is not checked by the account’s rules, which are on the
+notebook role; run <code>helpers.check_launch</code> or
+<code>scripts/check_request.py</code> first.</td>
 </tr></tbody></table><p>Everything else, every estimator, processor, tag block,
 <code>max_run</code> cap and cost report, is identical: the SageMaker
 SDK does not care where it is called from.</p>
@@ -615,8 +621,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/running-from-your-laptop.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/running-from-your-laptop.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-26",
-  "datePublished": "2026-10-26"
+  "dateModified": "2026-10-27",
+  "datePublished": "2026-10-27"
 }
 
   </script><script>

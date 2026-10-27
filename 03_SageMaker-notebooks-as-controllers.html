@@ -423,7 +423,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Notebooks as Controllers</h1>
-        <p>Last updated on 2026-10-26 |
+        <p>Last updated on 2026-10-27 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/03_SageMaker-notebooks-as-controllers.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -522,10 +522,10 @@ something breaks or a charge looks wrong there is less to go on.</li>
 <strong>No egress charges.</strong> AWS bills data transfer when it
 leaves AWS, not when it moves within a region. The notebook instance
 sits in the same region as your bucket, so reading or downloading files
-from S3 to the instance is free. Pulling the same files to a laptop
-costs <code>$0.09</code> per GB wherever the laptop is: “region” means
-the AWS data center your resources live in, and a machine outside AWS is
-never in one.</li>
+from S3 to the instance is free. Pulling the same files to a laptop is a
+transfer out of AWS, <code>$0.09</code> per GB, wherever the laptop is:
+“region” means the AWS data center your resources live in, and a machine
+outside AWS is never in one.</li>
 </ul><p>We’ll follow these steps to create our first “SageMaker notebook
 instance”.</p>
 <div class="section level4">
@@ -547,28 +547,24 @@ e.g. <code>SinkOrSwim-DoeJohn</code>. One instance serves the whole
 workshop; the individual <code>.ipynb</code> notebooks inside it are
 where the per-episode work lives. SageMaker allows letters, digits and
 hyphens (no spaces or underscores, up to 63 characters); capitals are
-fine here and in tags, only bucket names must be lowercase. This name is
-also reused as the prefix of every training job you launch from the
-notebook, which is how you will find your jobs in a shared
-account.</p></li>
+fine here and in tags, only bucket names must be lowercase. The Titanic
+episodes reuse this name as the prefix of their training jobs, which is
+how you find your jobs in a shared account.</p></li>
 <li><p><strong>Instance type</strong>: sets the CPU, memory and price of
 the virtual machine. Our notebook is a controller, so pick a small one:
 <code>ml.t3.medium</code> (2 vCPU, 4 GB RAM, <code>$0.05</code>/hour).
 The jobs we launch from it will run on more powerful instances; the
 supplemental <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
 for ML</a> page compares them.</p></li>
-<li><p><strong>Platform identifier</strong>: This is an internal AWS
-setting related to the environment version and underlying platform. You
-can leave this as the default.</p></li>
-<li><p><strong>Additional configuration (leave collapsed)</strong>:
-holds the <strong>Volume size in GB</strong> of the instance’s
-persistent disk, default 5 GB. Expand it and set <strong>20 GB</strong>:
-the RAG episodes unpack about a gigabyte of PDFs and page images, the
-fine-tuning episode keeps its data here, and 5 GB fills up on the second
-run. The disk is the one thing a stopped instance keeps billing for,
-<code>$0.14</code> per GB-month, so 20 GB is <code>$2.80</code> a month
-until the instance is deleted; do not go larger than that without a
-reason.</p></li>
+<li><p><strong>Platform identifier</strong>: leave the default.</p></li>
+<li><p><strong>Additional configuration</strong>: holds the
+<strong>Volume size in GB</strong> of the instance’s persistent disk,
+default 5 GB. Expand it and set <strong>20 GB</strong>: the RAG episodes
+unpack about a gigabyte of PDFs and page images, the fine-tuning episode
+keeps its data here, and 5 GB fills up on the second run. The disk is
+the one thing a stopped instance keeps billing for, <code>$0.14</code>
+per GB-month, so 20 GB is <code>$2.80</code> a month until the instance
+is deleted; do not go larger than that without a reason.</p></li>
 <li>
 <p><strong>Permissions and encryption</strong>:</p>
 <ul><li>
@@ -582,23 +578,18 @@ that includes the <code>AmazonSageMakerFullAccess</code> policy and, for
 Bedrock, the policy in the <em>Account preparation checklist</em>
 instructor page.</li>
 <li>
-<strong>Root access</strong>: Determines whether the user can run
-administrative commands within the notebook instance. You should
-<strong>Enable root access</strong> to allow installing additional
-packages if/when needed.<br></li>
+<strong>Root access</strong>: leave the default.
+<code>pip install</code> into the kernels needs no root; root is for
+system packages, which nothing in the lesson installs.</li>
 <li>
 <strong>Encryption key (skip)</strong>: While we won’t use this
 feature for the workshop, it is possible to specify a KMS key for
 encrypting data at rest if needed.</li>
 </ul></li>
-<li><p><strong>Network (skip)</strong>: Networking settings are
-optional. Configure them if you’re working within a specific VPC or need
-network customization.</p></li>
-<li><p><strong>Git repositories configuration (skip)</strong>: You don’t
-need to complete this configuration. Instead, we’ll run a clone command
-from our notebook later to get our repo setup. This approach is a common
-strategy (allowing some flexiblity in which repo you use for the
-notebook).</p></li>
+<li><p><strong>Network (skip)</strong>: leave the defaults.</p></li>
+<li><p><strong>Git repositories configuration (skip)</strong>: leave it
+empty; the lesson repository is cloned from a notebook cell
+below.</p></li>
 <li>
 <p><strong>Tags (NOT OPTIONAL)</strong>: the same three keys you put
 on your bucket, with the same values except <code>Purpose</code>. Tags
@@ -650,17 +641,14 @@ the plain Python environment is enough).</p>
 <p>The first line prints <code>/home/ec2-user/SageMaker</code>: new
 notebooks start in that folder. The second lists it: the notebook you
 just created, and a folder called <code>lost+found</code>. That folder
-is not yours and holds nothing. Linux creates one at the top of every
-formatted disk, as the place its repair tool would put file fragments
-after a crash; it appears here because <code>SageMaker/</code> is its
-own disk, and it is the sign that you are looking at that disk and not
-the instance’s system drive. Leave it alone. <code>SageMaker/</code> is
-a separate disk, the volume whose size sits under <strong>Additional
-configuration</strong> on the create form (the 20 GB you set). The rest
-of the instance lives on the system disk and is reset when the instance
-stops; <code>SageMaker/</code> is the only place that survives a stop.
-JupyterLab’s file browser opens there for that reason, and it is where
-everything in this lesson goes.</p>
+is not yours and holds nothing: Linux puts one at the top of every
+formatted disk for its repair tool, and <code>SageMaker/</code> is its
+own disk. Leave it alone. That disk is the volume whose size you set
+under <strong>Additional configuration</strong> on the create form (20
+GB). The rest of the instance lives on the system disk and is reset when
+the instance stops; <code>SageMaker/</code> is the only place that
+survives a stop. JupyterLab’s file browser opens there for that reason,
+and it is where everything in this lesson goes.</p>
 <p>Now clone the lesson repository into it:</p>
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">SH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -766,8 +754,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/03_SageMaker-notebooks-as-controllers.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/03_SageMaker-notebooks-as-controllers.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-26",
-  "datePublished": "2026-10-26"
+  "dateModified": "2026-10-27",
+  "datePublished": "2026-10-27"
 }
 
   </script><script>

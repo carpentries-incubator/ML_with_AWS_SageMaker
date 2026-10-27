@@ -427,7 +427,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>(Optional) The Same Jobs from the Terminal</h1>
-        <p>Last updated on 2026-10-26 |
+        <p>Last updated on 2026-10-27 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/14_CLI-equivalents.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -499,8 +499,8 @@ its role signs every call, the lesson’s helper checks a launch against
 the account’s rules before it goes, and the console shows what you
 started next to everyone else’s work. On a laptop you sign in yourself,
 the JSON carries no price and no check, and a mistake is not seen until
-the bill. The rules in the callout, and the request check in section 5,
-are what make the trade worth it.</p>
+the bill. The rules in the callout and the request check in section 5
+cover that.</p>
 <div id="read-this-before-the-first-command" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -529,9 +529,9 @@ the notebooks always set. Jobs end on their own. <strong>Endpoints, EC2
 instances and GPU notebook instances do not</strong>, and the lesson
 never creates them from the CLI, or at all.</li>
 <li>
-<strong>An <code>AccessDeniedException</code> on the commands below
-is intended.</strong> The workshop account carries a guard-rail policy
-that denies endpoint and EC2 creation, instance types outside the
+<strong>A refused <code>create</code> command is the account’s
+rules, not a fault.</strong> The workshop account carries a guard-rail
+policy that denies endpoint and EC2 creation, instance types outside the
 lesson’s list, caps over 48 hours, and any job whose three tags are
 missing, blank or off the <code>Project</code> and <code>Purpose</code>
 lists. Do not look for a workaround. The policy is on the notebook role
@@ -562,12 +562,12 @@ the profile.</p>
 </h3>
 <pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1" aria-label="code-block-1-1"></a><span class="ex">aws</span> configure sso</span></code></pre>
 </div>
-<p>From then on, every session starts with a login, and a check that you
-are who you think you are, in the account you think you are in:</p>
 <p>The commands in this episode are the same in Bash (macOS, Linux, Git
 Bash on Windows) and in PowerShell; where the shell’s own syntax
 differs, variables, line continuation, writing a file, the two are shown
 as tabs.</p>
+<p>From then on, every session starts with a login, and a check that you
+are who you think you are, in the account you think you are in:</p>
 <div class="tabs">
 <nav><div id="nav-tab-1" class="nav nav-tabs" role="tablist">
 <button class="nav-link active" id="nav-tab-1-1" data-bs-toggle="tab" data-bs-target="#nav-tabpanel-1-1" type="button" role="tab" aria-controls="nav-tabpanel-1-1" aria-selected="true">
@@ -665,8 +665,8 @@ download you paid for.</p>
 </div>
 <p>Cost is billable seconds × instance count × the hourly rate, exactly
 as in the notebooks. Tags are returned by a separate call, which is also
-how you find the untagged job that will show up as “unallocated” on the
-bill:</p>
+how you find the untagged job that shows on the bill under “No tag
+key”:</p>
 <div class="tabs">
 <nav><div id="nav-tab-3" class="nav nav-tabs" role="tablist">
 <button class="nav-link active" id="nav-tab-3-1" data-bs-toggle="tab" data-bs-target="#nav-tabpanel-3-1" type="button" role="tab" aria-controls="nav-tabpanel-3-1" aria-selected="true">
@@ -711,9 +711,8 @@ bill:</p>
 </div>
 <p>A stopped job keeps its logs and whatever it had already written to
 S3; a stopped notebook instance keeps
-<code>/home/ec2-user/SageMaker/</code>. Stopping is never the expensive
-mistake. Deleting an instance when you are done with it is the step that
-stops the storage charge too:</p>
+<code>/home/ec2-user/SageMaker/</code>. Deleting an instance when you
+are done with it is the step that stops the storage charge too:</p>
 <div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -737,9 +736,8 @@ in the region and let a job read it, which is the lesson’s pattern.</p>
 </section><section><h2 class="section-heading" id="launching-a-training-job-from-a-json-file">5. Launching a training job from a JSON file<a class="anchor" aria-label="anchor" href="#launching-a-training-job-from-a-json-file"></a></h2>
 <hr class="half-width"><p>Every <code>estimator.fit()</code> in the training episodes assembled
 a JSON request and sent it to <code>CreateTrainingJob</code>. Here is
-that request. Fill in the five placeholders from your notebook: the
-image URI (run
-<code>print(xgboost_estimator.training_image_uri())</code> in the
+that request. Fill in the placeholders from your notebook: the image URI
+(run <code>print(xgboost_estimator.training_image_uri())</code> in the
 training episode’s notebook), your role ARN (<code>print(role)</code>),
 your bucket, your tag values, and a job name, which must be unique in
 the account.</p>
@@ -834,14 +832,14 @@ the account.</p>
 <p>Before sending it, check it the way the notebooks did. The lesson
 repository has the account’s rules in
 <code>scripts/guardrails.json</code> and a script that applies them to a
-request file; a placeholder left in, a wrong <code>Purpose</code> or an
-instance type off the list is named here rather than refused silently by
-AWS:</p>
+request file; a <code>Project</code> or <code>Purpose</code> off the
+lists, an instance type off the list or a cap over 48 hours is named
+here rather than refused silently by AWS:</p>
 <div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a><span class="fu">git</span> clone <span class="at">-q</span> https://github.com/qualiaMachine/ML_with_Amazon_SageMaker.git   <span class="co"># once, anywhere on the laptop</span></span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1" aria-label="code-block-14-2"></a><span class="ex">python</span> ML_with_Amazon_SageMaker/scripts/check_request.py train-xgboost.json</span></code></pre>
+<pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a><span class="fu">git</span> clone <span class="at">-q</span> https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git   <span class="co"># once, anywhere on the laptop</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1" aria-label="code-block-14-2"></a><span class="ex">python</span> ML_with_AWS_SageMaker/scripts/check_request.py train-xgboost.json</span></code></pre>
 </div>
 <p>Then send it. This one line is <code>estimator.fit()</code>:</p>
 <div class="codewrapper sourceCode" id="cb15">
@@ -853,10 +851,11 @@ AWS:</p>
 <code>StoppingCondition.MaxRuntimeInSeconds</code> is the
 <code>max_run</code> you set on every estimator; the SDK would have sent
 24 hours if you had not. <code>Tags</code> is the <code>tags=</code>
-argument, and without it the request is refused on the workshop account.
-<code>ResourceConfig</code> sets the instance type and count, which
-determine the cost; nothing in a JSON file prints a price, so look the
-type up on the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
+argument; without it the request is refused when sent from a notebook
+instance, and nothing checks it from a laptop until the permission set
+carries the policy. <code>ResourceConfig</code> sets the instance type
+and count, which determine the cost; nothing in a JSON file prints a
+price, so look the type up on the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
 for ML</a> page before sending it, as you would in a notebook.</p>
 <p>The CLI returns the moment the request is accepted; nothing waits. To
 follow the job the way <code>wait=True</code> did:</p>
@@ -886,7 +885,7 @@ account.</li>
 <code>aws sagemaker create-notebook-instance</code> with a GPU type:
 a GPU notebook is <code>$60</code> a day while you are asleep. The
 optional GPU-notebook episode creates one through the console, where it
-stays visible, and deletes it the same hour.</li>
+stays visible, and deletes it the same session.</li>
 <li>
 <code>aws ec2 run-instances</code>: bare virtual machines have no
 tags required, no runtime cap and no SageMaker job list to appear
@@ -896,8 +895,8 @@ is any instance type outside the lesson’s list, any cap over 48 hours
 and any job whose tags are missing or off the lists; the permission set
 a laptop uses gets the same policy once the administrator attaches it.
 The instructor page <em>Account preparation checklist</em> has the
-policy. On your own account, the same denies take about fifteen minutes
-to set up.</p>
+policy. On your own account, the same denies are an afternoon’s
+work.</p>
 </div>
 </div>
 </div>
@@ -969,9 +968,9 @@ you do not recognise is a question for its owner, and on a shared
 account the tags (<code>list-tags</code>) tell you who that is. For an
 endpoint:
 <code>aws sagemaker delete-endpoint --endpoint-name &lt;name&gt;</code>,
-then find out how it was created, because the permission set should have
-refused it. Buckets cost almost nothing over a weekend and need no
-action.</p>
+then find out how it was created, because the notebook role refuses it
+and the permission set should once the policy is attached. Buckets cost
+almost nothing over a weekend and need no action.</p>
 </div>
 </div>
 </div>
@@ -997,8 +996,8 @@ almost every reason to open a terminal.</li>
 <code>MaxRuntimeInSeconds</code>, the same instance choice, with no
 price printed next to it.</li>
 <li>Endpoints, EC2 instances and GPU notebooks are not jobs and do not
-end; the workshop account denies creating them, and your own account
-should too.</li>
+end; the workshop account’s notebook role denies creating them, and your
+own account should too.</li>
 </ul></div>
 </div>
 </div>
@@ -1066,8 +1065,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/14_CLI-equivalents.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/14_CLI-equivalents.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-26",
-  "datePublished": "2026-10-26"
+  "dateModified": "2026-10-27",
+  "datePublished": "2026-10-27"
 }
 
   </script><script>

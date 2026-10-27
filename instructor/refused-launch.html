@@ -404,7 +404,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>If a Launch Is Refused</h1>
-        <p>Last updated on 2026-10-26 |
+        <p>Last updated on 2026-10-27 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/learners/refused-launch.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -418,9 +418,11 @@
 
         
 
-<p>Every launch on the workshop account is checked against a short list
-of rules before it costs anything. When a job breaks one, AWS refuses it
-with an <code>AccessDeniedException</code> whose message ends in
+<p>Every launch from a notebook instance on the workshop account is
+checked against a short list of rules before it costs anything. (The
+console and a laptop run under your sign-in’s permission set, which does
+not carry the rules yet.) When a job breaks one, AWS refuses it with an
+<code>AccessDeniedException</code> whose message ends in
 <code>with an explicit deny in an identity-based policy</code>, and says
 nothing else: an IAM refusal cannot carry a custom message, so the error
 names neither the rule nor the fix. This page is the fix. It applies to
@@ -511,14 +513,16 @@ CloudTrail, including the refused ones, with the request exactly as it
 was sent: tags, instance type and cap. The log is 5 to 15 minutes
 behind, so a refusal made a moment ago may not be there yet. The output
 lists each refused launch with its job name, so pick out yours by the
-<code>Name</code> tag you sent.</p>
+job name. The workshop role has the CloudTrail permission this needs; a
+role on another account may not, and the helper says so if not.</p>
 </section><section><h2 class="section-heading" id="why-the-rules-exist">Why the rules exist<a class="anchor" aria-label="anchor" href="#why-the-rules-exist"></a></h2>
 <hr class="half-width"><p>They are the account administrator’s rules, written as an IAM policy
-on the role every notebook runs as; the cleanup episode shows the policy
-and how to set the same rules on an account of your own. The three tags
-are how the bill is split by person and project; the instance list and
-the cap bound what any one job can cost; the endpoint rule keeps
-anything from running unnoticed for a month.</p>
+on the role every notebook runs as; the cleanup episode lists the rules,
+and the <em>Account preparation checklist</em> instructor page has the
+policy to copy to an account of your own. The three tags are how the
+bill is split by person and project; the instance list and the cap bound
+what any one job can cost; the endpoint rule keeps anything from running
+unnoticed for a month.</p>
 <!--
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
@@ -578,8 +582,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/refused-launch.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/refused-launch.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-26",
-  "datePublished": "2026-10-26"
+  "dateModified": "2026-10-27",
+  "datePublished": "2026-10-27"
 }
 
   </script><script>
