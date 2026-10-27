@@ -30,15 +30,15 @@ exercises: 15
 
 ### Optional, self-study episode
 
-This episode is not taught in the workshop. **The Bedrock and Processing Jobs episodes are the default ways to run RAG; this one is for the case where you need to poke at a self-hosted model interactively, and only if you will remember to stop the instance.** **Do not run this notebook on the controller instance from the other episodes. Create a new GPU notebook instance for it (Setup below). On a CPU instance the vLLM install and the 27 GB model load will exhaust memory and freeze your JupyterLab.** It runs the same pipeline as the Processing Jobs episode on a GPU notebook instance, which is the right tool for prototyping alone at a keyboard and the wrong one for a room of a hundred people with meters running. Work through it on your own when you want to see model loading, GPU memory and generation as plain Python. Read the cost callout first.
+This episode is not taught in the workshop. **The Bedrock and Processing Jobs episodes are the default ways to run RAG; this one is for the case where you need to work on a self-hosted model by hand, and only if you will remember to stop the instance.** **Do not run this notebook on the controller instance from the other episodes. Create a new GPU notebook instance for it (Setup below). On a CPU instance the vLLM install and the 27 GB model load will exhaust memory and freeze your JupyterLab.** It runs the same pipeline as the Processing Jobs episode on a GPU notebook instance, which is the right tool for prototyping alone at a keyboard and the wrong one for a room of a hundred people with meters running. Work through it on your own when you want to see model loading, GPU memory and generation as plain Python. Read the cost callout first.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## When Bedrock does not have your model
 
-In the Bedrock episode we built the full WattBot pipeline on **Amazon Bedrock**, the recommended default for RAG inference because it bills per token and leaves nothing running between calls. Bedrock's catalog is curated, though. It has Amazon's own models, Anthropic, Meta, Mistral, DeepSeek, and a handful of others, and even within a family it carries a few sizes and lags the releases: for Qwen, the serverless lineup is still the Qwen3 generation (Qwen3-32B, Qwen3-235B and the Qwen3-Coder models). Hugging Face hosts well over a million open-weight checkpoints. The one you want (the newest release, a specific size, a specific fine-tune, a model tuned on scientific text) is usually not on Bedrock, and often never will be.
+In the Bedrock episode we built the full WattBot pipeline on **Amazon Bedrock**, the recommended default for RAG inference because it bills per token and leaves nothing running between calls. Bedrock's catalog is curated, though. It has Amazon's own models, Anthropic, Meta, Mistral, DeepSeek, and a handful of others, and even within a family it carries a few sizes and lags the releases. For Qwen, the serverless lineup is still the Qwen3 generation (Qwen3-32B, Qwen3-235B and the Qwen3-Coder models). Hugging Face hosts well over a million open-weight checkpoints. The one you want (the newest release, a specific size, a specific fine-tune, a model tuned on scientific text) is usually not on Bedrock, and often never will be.
 
-When that happens you host the model yourself on a GPU you rent. This episode does that in its simplest form: a single GPU notebook instance, with **Qwen3.8-27B** as the generator. It is a 27-billion-parameter open-weight (Apache 2.0) model released in August 2026 that is not offered on Bedrock, large enough to follow the WattBot answer format reliably, and small enough to fit on one 48 GB GPU once its weights are stored in 8-bit floating point. Everything Bedrock abstracts away (loading an embedding model, loading a generator, fitting both in GPU memory) becomes visible as plain Python. Treat it as a learning exercise and a prototyping workbench, not a deployment pattern.
+When that happens you host the model yourself on a GPU you rent. This episode does that in its simplest form, a single GPU notebook instance, with **Qwen3.8-27B** as the generator. It is a 27-billion-parameter open-weight (Apache 2.0) model released in August 2026 that is not offered on Bedrock, large enough to follow the WattBot answer format reliably, and small enough to fit on one 48 GB GPU once its weights are stored in 8-bit floating point. Everything Bedrock abstracts away (loading an embedding model, loading a generator, fitting both in GPU memory) becomes visible as plain Python. Treat it as a learning exercise and a prototyping workbench, not a deployment pattern.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
@@ -69,18 +69,14 @@ What keeps this safe:
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-Self-hosting on a notebook GPU is the simplest form of it:
-
-- Easy to understand on the AWS side (pick a GPU instance, pick a model, go)
-- Ideal for learning what retrieval and generation do, step by step
-- The fastest loop for experimenting with prompts and models that Bedrock does not carry
+Self-hosting on a notebook GPU is the simplest form of it. Choose a GPU instance and a model, and every step of retrieval and generation is a cell you can run and change. That makes it the quickest way to learn what each step does and to try prompts and models Bedrock does not carry.
 
 The Processing Jobs episode runs this same pipeline as short-lived jobs, so the GPU only bills while it is embedding or generating; that is the pattern to use for real work.
 
 
-## Overview: WattBot RAG on a single notebook GPU
+## WattBot RAG on a single notebook GPU
 
-In this episode we rerun the [WattBot 2026](https://www.kaggle.com/competitions/WattBot2026) RAG pipeline from the Bedrock episode, this time entirely from a single GPU-backed SageMaker notebook with self-hosted models. The generator is Qwen3.8-27B, the newer and larger relative of the Qwen3-8B the Processing Jobs episode ran: an open-weight model that fits one 48 GB GPU in FP8 and sits within a few points of a frontier commercial model on agent tasks and science questions (see that episode's chart), which is why it is worth the trouble of hosting.
+In this episode we rerun the [WattBot 2026](https://www.kaggle.com/competitions/WattBot2026) RAG pipeline from the Bedrock episode, this time entirely from a single GPU-backed SageMaker notebook with self-hosted models. The generator is Qwen3.8-27B, the newer and larger relative of the Qwen3-8B the Processing Jobs episode ran, an open-weight model that fits one 48 GB GPU in FP8 and sits within a few points of a frontier commercial model on agent tasks and science questions (see that episode's chart), which is why it is worth the trouble of hosting.
 
 In this episode we will:
 
@@ -107,9 +103,9 @@ For this episode you need a notebook instance with a GPU that can hold the FP8 2
 
 Once it is `InService`, open JupyterLab, clone the lesson repository as in the controller-notebook episode (this is a new instance, so it has no copy yet), and open `/ML_with_AWS_SageMaker/notebooks/13_RAG-GPU-notebook.ipynb`. Select the **`conda_pytorch`** kernel.
 
-See [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for further guidance. This instance bills by the hour from the moment it starts, whether or not it is doing anything: **stop it when you leave**, and **delete it** when the episode is over.
+See [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for further guidance. This instance bills by the hour from the moment it starts, whether or not it is doing anything. **Stop it when you leave**, and **delete it** when the episode is over.
 
-We reuse the same two buckets as the Bedrock episode: the shared bucket for `metadata.csv` and `train_QA.csv`, and your own bucket for the `wattbot/chunks.jsonl` you cached there. If you skipped that episode, go back and run its chunking step first. Your notebook instance carries the tags you gave it when you created it and your bucket carries its own tags, so in this episode those two resources are the only things being billed.
+We reuse the same two buckets as the Bedrock episode, the shared bucket for `metadata.csv` and `train_QA.csv`, and your own bucket for the `wattbot/chunks.jsonl` you cached there. If you skipped that episode, go back and run its chunking step first. Your notebook instance carries the tags you gave it when you created it and your bucket carries its own tags, so in this episode those two resources are the only things being billed.
 
 
 ###  Verify GPU and basic environment
@@ -159,7 +155,7 @@ If the install changes PyTorch, restart the kernel (**Kernel → Restart**) befo
 
 ## Import data from bucket into notebook
 
-The same setup as the Bedrock episode: session, region, role, an S3 client, the two bucket names and a local data folder, plus a small download helper.
+The same setup as the Bedrock episode, session, region, role, an S3 client, the two bucket names and a local data folder, plus a small download helper.
 
 ```python
 import os
@@ -217,13 +213,13 @@ print("Local data dir:", local_data_dir)
 
 ### Get the shared WattBot helpers
 
-The retrieval, prompts, answer parsing, per-question orchestration and the scorer are the same code the Bedrock and Processing Jobs episodes used: `scripts/wattbot_rag.py` in the lesson repository. Copy the module next to this notebook. What this episode adds is the two model callables, `embed_query` and `generate`, running on the notebook's own GPU.
+The retrieval, prompts, answer parsing, per-question orchestration and the scorer are the same code the Bedrock and Processing Jobs episodes used, `scripts/wattbot_rag.py` in the lesson repository. Copy the module next to this notebook. What this episode adds is the two model callables, `embed_query` and `generate`, running on the notebook's own GPU.
 
 ```python
 !cp /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/wattbot_rag.py /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/hf_embedder.py /home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/Score.py .
 ```
 
-Import the pieces of the shared RAG module we reuse: the prompts, the retrieval and scoring functions, and the per-question runner.
+Import the pieces of the shared RAG module we reuse, the prompts, the retrieval and scoring functions, and the per-question runner.
 
 ```python
 from wattbot_rag import (
@@ -325,7 +321,7 @@ Now we embed each chunk into a vector with an open **embedding model**:
 
 ### `thenlper/gte-large`
 
-The embedder the Processing Jobs episode used: 335 million parameters, 0.7 GB in bf16, 1,024-dimensional vectors, and about 1,100 chunks a minute on an A10G, so the 9,000 chunks here take a few minutes on this GPU.
+The embedder the Processing Jobs episode used has 335 million parameters, 0.7 GB in bf16, 1,024-dimensional vectors, and about 1,100 chunks a minute on an A10G, so the 9,000 chunks here take a few minutes on this GPU.
 
 We will:
 
@@ -333,7 +329,7 @@ We will:
 2. Encode all chunks in batches.
 3. Store the resulting matrix as a `torch.Tensor` or `numpy.ndarray` along with the original `chunked_docs` list.
 
-Later, we’ll implement a small retrieval helper that does cosine-similarity search over this matrix—no additional indexing library required.
+Later, we’ll implement a small retrieval helper that does cosine-similarity search over this matrix, with no indexing library.
 
 
 
@@ -385,9 +381,9 @@ chunk_embeddings.shape
 
 ### 4. Build a simple retrieval step (cosine similarity)
 
-Retrieval here is cosine similarity between the question's vector and every chunk's vector, with the top *k* chunks as context, and nothing more: for nine thousand chunks that is one matrix multiply. A vector database (FAISS, Chroma, Weaviate) is the same step built for millions of chunks or many concurrent users, with approximate search, metadata filters and a shared index; swapping it in changes nothing else in the pipeline.
+Retrieval here is cosine similarity between the question's vector and every chunk's vector, with the top *k* chunks as context, and nothing more. For nine thousand chunks that is one matrix multiply. A vector database (FAISS, Chroma, Weaviate) is the same step built for millions of chunks or many concurrent users, with approximate search, metadata filters and a shared index; swapping it in changes nothing else in the pipeline.
 
-`retrieve_top_k` from `wattbot_rag.py` is that search: normalize the query and the matrix, one matrix multiply for the cosine similarities, `argsort` for the top *k*. Open the file to see it; it is a dozen lines. `embed_query_with` wraps the embedder as the `embed_query(question)` callable the rest of the pipeline expects.
+`retrieve_top_k` from `wattbot_rag.py` is that search. Normalize the query and the matrix, one matrix multiply for the cosine similarities, `argsort` for the top *k*. Open the file to see it; it is a dozen lines. `embed_query_with` wraps the embedder as the `embed_query(question)` callable the rest of the pipeline expects.
 
 ```python
 embed_query = embed_query_with(embedder)   # embed_query(question) -> vector, with the same model that embedded the chunks
@@ -413,13 +409,13 @@ for r in test_retrieved:
 ```
 
 
-### 5. Serve the generator: Qwen3.8-27B in FP8, via vLLM
+### 5. Serve the generator, Qwen3.8-27B in FP8, with vLLM
 
 For this episode we use **Qwen3.8-27B**, an open-weight model that Bedrock does not carry, in its **FP8** release (`Qwen/Qwen3.8-27B-FP8`), served with [vLLM](https://docs.vllm.ai/). It is a dense 27B model with a hybrid attention design (most layers use a linear-attention variant with a fixed-size state, so the KV cache stays small even for long prompts), a native 262K context, and a "thinking" mode that is on by default and that we turn off, because WattBot wants a JSON answer, not a reasoning trace.
 
 **Why FP8 weights and not bf16?** Inference is not training. No gradients, no optimizer state, nothing is updated, so the only memory that matters is the weights themselves plus the KV cache for the prompt being processed. A 27B model in bf16 is about 54 GB of weights and does not fit a 48 GB GPU; the same weights in 8-bit floating point are about 27 GB, which fits with room for the embedding model and generation. FP8 is near-lossless for a model this size, and it is faster, because decoding is limited by how fast the GPU can read weights from memory. For inference on rented GPUs, reduced-precision weights are the norm (FP8 where the GPU supports it, 4-bit integer where it does not or where memory is tighter); bf16 is what you use when you have memory to spare and a model small enough not to need it.
 
-**Why vLLM and not `transformers.pipeline`?** vLLM is an inference server: it has the kernels for FP8 and for this model's hybrid attention, batches requests, and manages the KV cache so long prompts do not run out of memory. It is what you would deploy behind an API, and its offline `LLM` class is a two-line replacement for a `transformers.pipeline`.
+**Why vLLM and not `transformers.pipeline`?** vLLM is an inference server. It has the kernels for FP8 and for this model's hybrid attention, batches requests, and manages the KV cache so long prompts do not run out of memory. It is what you would deploy behind an API, and its offline `LLM` class is a two-line replacement for a `transformers.pipeline`.
 
 We will:
 
@@ -449,7 +445,7 @@ print("vLLM engine ready:", qwen_model_id)
 !nvidia-smi --query-gpu=memory.used,memory.total --format=csv
 ```
 
-The number above is what you are paying for: a 48 GB GPU, most of it now holding model weights and a reserved KV cache. It stays allocated, and billed, until you stop the instance.
+The number above is what you are paying for, a 48 GB GPU, most of it now holding model weights and a reserved KV cache. It stays allocated, and billed, until you stop the instance.
 
 ```python
 def call_qwen_chat(system_prompt: str, user_prompt: str, max_new_tokens: int = 384) -> str:
@@ -508,7 +504,7 @@ For every row of `train_QA.csv`, `run_single_qa`:
 
 1. Embeds the question and retrieves the top-*k* chunks.
 2. Asks Qwen for the answer JSON and parses it (a malformed reply counts as unanswerable).
-3. Decides answerability with a **hybrid rule**: the question is `is_blank` if the model said so **or** the top retrieval cosine score is below `retrieval_threshold`. Weak retrieval means the model is about to answer from memory instead of the papers, which is what RAG exists to prevent. A lower threshold marks fewer questions unanswerable, a higher one more; change it, rerun, and rescore to see the trade-off.
+3. Decides answerability with a **hybrid rule**. The question is `is_blank` if the model said so **or** the top retrieval cosine score is below `retrieval_threshold`. Weak retrieval means the model is about to answer from memory instead of the papers, which is what RAG exists to prevent. A lower threshold marks fewer questions unanswerable, a higher one more; change it, rerun, and rescore to see the trade-off.
 4. Copies `answer_unit` from the row (never guessed), maps each `ref_id` to its URL via `metadata.csv`, and makes the explanation call.
 5. Returns one submission-format row; we collect them into `train_solutions_qwen.csv`.
 
@@ -555,7 +551,7 @@ solutions_df.head(20)
 
 ### Compare answers to ground truth
 
-WattBot scores each prediction with the competition's own `Score.py`: 0.75 for `answer_value` (numeric within ±0.1% relative tolerance, categorical match after normalisation, zero if you answer a question the corpus cannot answer), 0.20 for citation F1 against the ground-truth `ref_id` set, and 0.05 for a clean refusal when the answer is `is_blank`. `compute_wattbot_score` from `wattbot_rag.py` calls it for the headline number, adds a per-row score, and prints the worst rows with the model's explanation.
+WattBot scores each prediction with the competition's own `Score.py`, 0.75 for `answer_value` (numeric within ±0.1% relative tolerance, categorical match after normalisation, zero if you answer a question the corpus cannot answer), 0.20 for citation F1 against the ground-truth `ref_id` set, and 0.05 for a clean refusal when the answer is `is_blank`. `compute_wattbot_score` from `wattbot_rag.py` calls it for the headline number, adds a per-row score, and prints the worst rows with the model's explanation.
 
 ```python
 results_df = compute_wattbot_score(
@@ -565,7 +561,7 @@ results_df = compute_wattbot_score(
 )
 ```
 
-Change `retrieval_threshold` or `top_k` in the loop above, rerun it, and rescore: with the model loaded, a pass over all 245 questions takes tens of minutes, and a `max_N` of 50 a few. Then stop the instance.
+Change `retrieval_threshold` or `top_k` in the loop above, rerun it, and rescore. With the model loaded, a pass over all 245 questions takes tens of minutes, and a `max_N` of 50 a few. Then stop the instance.
 
 ## Recap and next steps
 
@@ -576,9 +572,9 @@ In this episode, we:
 - Used an LLM to generate answers from retrieved context and wrote results out to a CSV for later scoring and analysis.
 - Handled unanswerable questions with an `is_blank` flag so the system can explicitly say “I don’t know” when the evidence isn’t there.
 
-This is just a first pass at a RAG pipeline: some next steps:
+This is a first pass at a RAG pipeline. Next steps, in rough order of what they usually gain:
 
-- **Increase the size/quality of models used for embedding and generation**: Try stronger embedding models (e.g., larger sentence-transformers or domain-tuned embeddings) and more capable LLMs for answer generation, especially if you have GPU budget.
+- **Stronger models**: a larger or domain-tuned embedding model, or a more capable generator, if the GPU budget allows.
 
 - **Add a reranking step**: Instead of sending the top-k raw nearest neighbors directly to the LLM, use a cross-encoder or reranker model to re-score those candidates and send only the best ones.
 
@@ -591,9 +587,7 @@ This is just a first pass at a RAG pipeline: some next steps:
   - Filter or boost chunks by metadata at retrieval time.
   - Use metadata in the prompt so the LLM knows where evidence is coming from.
 
-- **Look for LLMs tuned for scientific literature**: Experiment with models that are explicitly trained or finetuned on scientific text (e.g., arXiv / PubMed) so they:
-  - Parse equations and technical language more reliably.
-  - Are less likely to hallucinate when reading dense scientific prose.
+- **Models tuned on scientific text** (arXiv, PubMed), which read equations and technical language more reliably and invent less when the prose is dense.
 
 Models, retrieval and preprocessing can each be swapped without changing the rest of the pipeline.
 
@@ -618,10 +612,7 @@ The Processing Jobs episode does the same work, with the same `wattbot_rag.py`, 
 - **Inference uses reduced-precision weights**: no gradients means the weights are the memory cost. FP8 puts a 27B model on one 48 GB GPU (`ml.g6e.xlarge`); bf16 would need 54 GB, an 80 GB GPU or a multi-GPU instance.
 - **The meter never stops on its own**: `ml.g6e.xlarge` is `$2.61`/h, `$167` per forgotten weekend, `$1,906` per forgotten month, plus `$14`/month for the storage volume even when stopped. Stop it when you stand up; delete it when the episode is over.
 - **Retrieval is a matrix multiply**: cosine similarity over the in-memory embedding matrix is enough for a corpus this size; a vector database is the same step for a corpus of millions.
-- **Ground-truth units**: The `answer_unit` column is always copied directly
-  from `train_QA.csv`, never guessed by the LLM.
-- **Two-stage LLM use**: One call focuses on *answering and citing*; a second,
-  lighter call produces a short explanation tagged with an evidence type.
-- **WattBot conventions**: We respect the Kaggle competition format,
-  using `is_blank` for unanswerable questions and for missing fields.
+- **Units come from the data**: `answer_unit` is copied from `train_QA.csv`, never guessed by the model.
+- **Two calls per question**: one answers and cites; a second, shorter one writes the explanation and names the evidence type.
+- **The competition's format**: `is_blank` marks unanswerable questions and missing fields, as the scorer expects.
 ::::::::::::::::::::::::::::::::::::::::::::::::
