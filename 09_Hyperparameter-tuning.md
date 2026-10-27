@@ -21,7 +21,6 @@ exercises: 15
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-## Initial setup: open prefilled .ipynb notebook
 Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/09_Hyperparameter-tuning.ipynb`. Select the **`conda_pytorch`** kernel.
 
 ## Hyperparameter tuning in SageMaker

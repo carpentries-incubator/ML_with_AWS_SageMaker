@@ -21,14 +21,14 @@ exercises: 15
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/07_Training-models-in-SageMaker-notebooks-part2.ipynb`. Select the **`conda_pytorch`** kernel.
+
 ## The same pattern with a neural network
 
 The previous episode tested an XGBoost script on the notebook and then launched it as a managed training job. This episode follows the same pattern with a small PyTorch neural network on the same Titanic prediction task. Keeping the data and the task fixed means that what changes between runs is only the instance, so CPU and GPU can be compared on their own.
 
-The question is not only whether a GPU is faster. A GPU costs more per hour, and for a network this small the fixed cost of starting a job may matter more than the training itself. We prepare the data, test the script on the notebook, estimate the cost of a managed run, and compare CPU and GPU instances on the actual job records. Then we look at what it takes to spread training across more than one machine and why adding an instance is not automatically a speedup.
+A GPU costs about six times more per hour than the CPU instance, so it has to train the model at least six times faster to be worth it. For a network this small, most of a job's time is startup, not training. We run the same job on both and read the bills. Then we try two instances instead of one, and see why that does not halve the time.
 
-## Initial setup
-Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/07_Training-models-in-SageMaker-notebooks-part2.ipynb`. Select the **`conda_pytorch`** kernel.
 
 ## Setup
 We use the same controller notebook, SageMaker role, S3 bucket and Titanic files as in the XGBoost episode. The notebook prepares and uploads the data, then launches the training job on the instance we choose.

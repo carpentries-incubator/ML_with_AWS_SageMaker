@@ -22,16 +22,16 @@ exercises: 20
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-## Test locally, then scale to the cloud
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/06_Training-models-in-SageMaker-notebooks.ipynb`. When asked for a kernel, pick **`conda_pytorch`**; every notebook from here to the end of the lesson uses it. The `conda_python3` kernel has no PyTorch, and on current instances no scikit-learn either.
 
-In the earlier episodes we used the notebook to prepare data and work with S3. From here on it has two jobs. It is the place to test code "locally", on its own small CPU, before anything is scaled up, and it is the controller that launches training jobs on separate instances SageMaker rents for them and releases when they finish. A script that fails on a data-loading error costs nothing on the notebook and bills its startup minutes as a job, so every episode from here tests first and launches second.
+## Test on a small sample first, then scale up
 
-We start with XGBoost on the Titanic data. First we run the training script on the notebook to check that it handles the data and the arguments. Then we launch the same script as a SageMaker training job, with the training data supplied from S3, and look at how the job receives its inputs, where it writes its model, how to estimate its cost before launching and how to read the billable time afterwards. The PyTorch and tuning episodes build on all of it.
+The Titanic data trains in a second on the notebook, and nothing about it needs the cloud. We use it because the pattern matters more than the example. Test the code on a small sample first, where a bug costs nothing, and once it works, scale up to a more powerful instance when the data or the model calls for one. A SageMaker training job is that scale-up step. The notebook describes the job and launches it, and SageMaker rents the instance, runs the script on it and releases it when the script ends. The fine-tuning episode follows the same two steps with a 3B model on a GPU, where the cloud earns its keep.
+
+This episode walks through both steps once with XGBoost. First the script runs on the notebook, to check that it handles the data and the arguments. Then the same script runs as a training job, with the data supplied from S3, and we look at how the job receives its inputs, where it writes its model, how to estimate its cost before launching and how to read the billable time afterwards.
 
 ## Initial setup
 
-### Open the lesson notebook
-Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/06_Training-models-in-SageMaker-notebooks.ipynb`. When asked for a kernel, pick **`conda_pytorch`**; every notebook from here to the end of the lesson uses it. The `conda_python3` kernel has no PyTorch, and on current instances no scikit-learn either.
 
 ### Set up the project folder
 Work from the Titanic project folder the S3 episode created, and make the lesson repository's `scripts/` importable. The training scripts for this episode (`train_xgboost.py`) and the next (`train_nn.py`) are in that folder.
@@ -89,7 +89,7 @@ print(f"region = {region}")
 ```
 
 ## Check the training script before launching a job
-A training job is a script run on a machine SageMaker rents for it. The script has to work before it is worth renting anything, so run it here first, on the notebook instance, on the small Titanic data. A local run finds bugs for free; a job that fails on a data-loading error still bills its startup minutes. Every later episode does the same: a few epochs on a subset on the cheapest machine, then the real run.
+A training job runs your script on a machine SageMaker rents for it, so the script has to work before it is worth renting anything. Run it here first, on the notebook instance, on the small Titanic data. If it crashes here, it costs nothing. If it crashes as a job, you still pay for the minutes the instance spent starting up. Every later episode does the same, a few epochs on a subset on the cheapest machine, then the real run.
 
 ::::::::::::::::::::::::::::::::::::::: challenge
 

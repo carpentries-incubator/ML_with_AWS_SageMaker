@@ -22,12 +22,13 @@ exercises: 10
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/15_Resource-management-cleanup.ipynb`. Any kernel works; **`conda_python3`** is fine. This episode is mostly console steps, but the cells below ask AWS what is still running or stored under your name, so you can check the list against reality before and after you clean up.
+
 
 
 
 ## Initial setup
 
-Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/15_Resource-management-cleanup.ipynb`. Any kernel works; **`conda_python3`** is fine. This episode is mostly console steps, but the cells below ask AWS what is still running or stored under your name, so you can check the list against reality before and after you clean up.
 
 ```python
 import boto3
