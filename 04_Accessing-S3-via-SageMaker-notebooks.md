@@ -41,6 +41,7 @@ import sagemaker                      # SageMaker Python SDK: higher-level API f
 import logging
 logging.getLogger("sagemaker.telemetry.telemetry_logging").setLevel(logging.WARNING)   # silence the telemetry notice; the "Creating training-job" line still prints
 logging.getLogger("sagemaker.image_uris").setLevel(logging.WARNING)
+logging.getLogger("sagemaker.config").setLevel(logging.WARNING)   # and the two "Not applying SDK defaults" lines
 from sagemaker import get_execution_role
 
 role = sagemaker.get_execution_role() # the IAM role attached to this notebook instance; every call below acts as this role
@@ -175,6 +176,17 @@ Then:
 ```python
 helpers.get_s3_bucket_size(bucket_name)
 ```
+
+### The shared bucket
+
+The S3 episode mentioned a second bucket: the one the instructors staged with the larger datasets, which the fine-tuning and RAG episodes read from. Your role can list it and read from it, and nothing else; an upload to it is refused. Look at what is in it now, so that the names in those episodes are not a surprise. `show_bucket` prints each top-level folder with how many objects it holds and how big they are:
+
+```python
+shared_bucket = "ml-marathon-shared"   # the instructor-staged, read-only bucket; the later episodes have the name filled in
+helpers.show_bucket(shared_bucket)
+```
+
+Each folder is one episode's data: `badger-scribe/` holds the scanned pages and the model weights for the fine-tuning episode, `wattbot/` the papers and questions for the RAG episodes. The same call with a prefix, `helpers.show_bucket(shared_bucket, "wattbot/")`, goes one level down.
 
 
 ### Check storage costs of bucket

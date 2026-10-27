@@ -36,6 +36,7 @@ import sagemaker
 import logging
 logging.getLogger("sagemaker.telemetry.telemetry_logging").setLevel(logging.WARNING)   # silence the telemetry notice; the "Creating training-job" line still prints
 logging.getLogger("sagemaker.image_uris").setLevel(logging.WARNING)
+logging.getLogger("sagemaker.config").setLevel(logging.WARNING)   # and the two "Not applying SDK defaults" lines
 from sagemaker import get_execution_role
 
 # Initialize the SageMaker role (will reflect notebook instance's policy)
@@ -225,12 +226,12 @@ The same rule, in `helpers.estimate_training_cost`, picks an instance and prints
 The three data numbers multiply to the tokens the model trains on. Here it is on a run that does need the rule: a BERT-sized text classifier trained from scratch on a million abstracts, three passes:
 
 ```python
-helpers.estimate_training_cost(
+helpers.estimate_training_cost(   # the semicolon at the end keeps Jupyter from also displaying the dictionary the function returns
     params_billions=0.125,      # a BERT-base-sized model: 125 million parameters
     examples=1_000_000,         # one example = one abstract; a million of them
     tokens_per_example=256,     # an abstract is about 190 words, 256 tokens
     epochs=3,                   # three passes over the million abstracts
-)
+);
 ```
 
 Each line:
@@ -254,7 +255,7 @@ helpers.estimate_training_cost(
     examples=1_000_000,         # one example = one document, a million of them
     tokens_per_example=2000,    # a short paper: about 1,500 words
     epochs=1,                   # one pass
-)
+);
 ```
 
 ```python
@@ -263,7 +264,7 @@ helpers.estimate_training_cost(
     examples=1_000_000,         # the same million documents
     tokens_per_example=2000,
     epochs=1,
-)
+);
 ```
 
 Read the two against the 125M run above. The 1B model still fits on the cheapest GPU, but the arithmetic is 165 GPU-hours: a week of wall-clock on one GPU, `$187`, and a `max_run` of 330 hours, which the account refuses, since no job may run longer than 48 hours. A run like that has to be split into checkpointed jobs of a day or two each, or moved to a four-GPU box, an `ml.g6e.12xlarge`, which finishes in about 14 hours for about `$180`, and which the class account does not allow. The 7B model no longer fits on one GPU at all: 116 GB of weights, gradients and optimizer state need the four-GPU `ml.g6e.12xlarge` at `$13` an hour, four days of it, `$1,270` for one pass over two billion tokens. And two billion tokens is a small corpus; the models on Bedrock were trained on thousands of times more.
@@ -378,7 +379,7 @@ For a small dataset like ours, we don't strictly need a GPU, but for larger data
 #### Nothing changes in the script
 `train_nn.py` already picks the GPU when there is one and moves the model and the tensors to it, which is why the same file runs on both instance types:
 
-```text
+```py
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = TitanicNet().to(device)
 X_train, y_train = X_train.to(device), y_train.to(device)
@@ -436,7 +437,7 @@ for label, d, rate in [("job on ml.m5.large (CPU)", desc_cpu, prices["ml.m5.larg
 
 ### Solution
 
-Typically the CPU run finishes about as fast or faster, and it is several times cheaper. Both jobs spend roughly the same few minutes on startup (pulling the container, downloading data; the unbilled wait for an instance comes before that), and the GPU container is larger, so it often takes a little *longer* to start. The actual training is a few seconds on either instance: the network has about 2,600 parameters and the whole training set is 569 rows, so each full-batch step is tiny and the T4 sits almost idle, and the one-time CUDA initialization adds a few seconds of its own. Startup dominates both bills, and the GPU bill is about 6x higher per minute (0.74 / 0.115), so the GPU costs several times more for no speedup. In our run the CPU job billed 2.7 minutes (`$0.005`) and the GPU job 3.6 minutes (`$0.045`): slower, and nine times the price.
+Typically the CPU run finishes about as fast or faster, and it is several times cheaper. Both jobs spend roughly the same few minutes on startup (pulling the container, downloading data; the unbilled wait for an instance comes before that), and the GPU container is larger, so it often takes a little *longer* to start. The actual training is a few seconds on either instance: the network has about 2,600 parameters and the whole training set is 569 rows, so each full-batch step is tiny and the T4 sits almost idle, and the one-time CUDA initialization adds a few seconds of its own. Startup dominates both bills, and the GPU bill is about 6x higher per minute (0.74 / 0.115), so the GPU costs several times more for no speedup. In our run the CPU job billed 2.6 minutes (`$0.005`) and the GPU job 3.7 minutes (`$0.046`): slower, and nine times the price. The GPU job's wall-clock was 8.6 minutes, because it first sat four and a half minutes in `Pending - Training job waiting for capacity`; GPU instances are in shorter supply than CPU ones, and the wait is not billed.
 
 A GPU pays off when the per-step work is large enough to keep it busy: bigger models, bigger batches, or datasets of hundreds of MB and up. If you ever do need more GPU than a `g4dn.xlarge`, the next sensible step is an `ml.g5.xlarge` (~`$1.41`/hour), not a multi-GPU box.
 
@@ -522,31 +523,26 @@ Nothing was gained: the two-instance run took longer and cost twice as much. Eac
 
 ### When it pays: the arithmetic
 
-`helpers.estimate_parallel_speedup` puts numbers on that for any model and any box, with the same assumptions as the cost estimator: 6 FLOPs per parameter per token (4 for LoRA) at a quarter of the GPU's peak, and a gradient of 4 bytes per trainable parameter exchanged once per step over the slowest link in use. It does not overlap the exchange with the computation, which real runs partly do, so its speedup is a floor. The 7B model from the cost section, trained with a batch of 16 documents of 2,000 tokens, three ways:
+`helpers.estimate_parallel_speedup` puts numbers on that for any model and any box, with the same assumptions as the cost estimator: 6 FLOPs per parameter per token at a quarter of the GPU's peak, and a gradient of 4 bytes per trainable parameter exchanged once per step over the slowest link in use. It does not overlap the exchange with the computation, which real runs partly do, so its speedup is a floor. The 7B model from the cost section, trained with a batch of 16 documents of 2,000 tokens, three ways:
 
 ```python
 # Two single-GPU instances over the network: the class-account form of data parallelism
-helpers.estimate_parallel_speedup(params_billions=7, tokens_per_step=16 * 2000, instance_type="ml.g6e.xlarge", instance_count=2)
+helpers.estimate_parallel_speedup(params_billions=7, tokens_per_step=16 * 2000, instance_type="ml.g6e.xlarge", instance_count=2);
 ```
 
 ```python
 # Four GPUs in one box, linked by PCIe
-helpers.estimate_parallel_speedup(params_billions=7, tokens_per_step=16 * 2000, instance_type="ml.g6e.12xlarge")
+helpers.estimate_parallel_speedup(params_billions=7, tokens_per_step=16 * 2000, instance_type="ml.g6e.12xlarge");
 ```
 
 ```python
 # Eight GPUs in one box, linked by NVLink
-helpers.estimate_parallel_speedup(params_billions=7, tokens_per_step=16 * 2000, instance_type="ml.p4d.24xlarge")
+helpers.estimate_parallel_speedup(params_billions=7, tokens_per_step=16 * 2000, instance_type="ml.p4d.24xlarge");
 ```
 
-Read the three together. Two L40S instances over a 20 Gb/s network spend as long exchanging the 28 GB gradient as computing, so two machines finish in the same time as one and bill twice. Four L40S in one box over PCIe get 3.2 of the ideal 4. Eight A100s over NVLink get 7.8 of 8, which is why the big training boxes are built that way. The same arithmetic on a LoRA fine-tune comes out differently again: the exchanged gradient is only the adapter's, a hundredth of the model, so even the slow links barely show.
+Read the three together. Two L40S instances over a 20 Gb/s network spend as long exchanging the 28 GB gradient as computing, so two machines finish in the same time as one and bill twice. Four L40S in one box over PCIe get 3.2 of the ideal 4. Eight A100s over NVLink get 7.8 of 8, which is why the big training boxes are built that way.
 
-```python
-# The fine-tuning episode's LoRA run on a four-GPU box: the gradient exchanged is the adapter's, not the model's
-helpers.estimate_parallel_speedup(params_billions=3.75, tokens_per_step=4 * 1600, instance_type="ml.g5.12xlarge", method="lora")
-```
-
-The rule, then: data parallelism pays when each step's computation is large next to the exchange, which means a big model, a big batch and a fast link, in that order of importance; and the exchange is cheap when little is being trained, as with LoRA. Run the function before renting more than one device, and read the cost line: the speedup is what you buy, the cost ratio is what you pay for it.
+The rule, then: data parallelism pays when each step's computation is large next to the exchange, which means a big model, a big batch and a fast link, in that order of importance. Run the function before renting more than one device, and read the cost line: the speedup is what you buy, the cost ratio is what you pay for it.
 
 ### How to set it up, for each kind of job
 

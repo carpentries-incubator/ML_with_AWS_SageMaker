@@ -37,6 +37,7 @@ import sagemaker
 import logging
 logging.getLogger("sagemaker.telemetry.telemetry_logging").setLevel(logging.WARNING)   # silence the telemetry notice; the "Creating training-job" line still prints
 logging.getLogger("sagemaker.image_uris").setLevel(logging.WARNING)
+logging.getLogger("sagemaker.config").setLevel(logging.WARNING)   # and the two "Not applying SDK defaults" lines
 import sys
 
 sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")   # the lesson's helper module, cloned in the controllers episode
@@ -194,7 +195,7 @@ If you administer an account of your own, a lab's or a project's, the same rules
 
 A deny applies to everyone who uses the role, including you, so your own launches need real tag values and listed instance types too. And the error a refused request gets, `AccessDeniedException ... with an explicit deny in an identity-based policy`, does not say which rule matched, so write the rules down where the people using the account will find them. A deny cannot carry a custom message either: AWS says `explicit deny in an identity-based policy` and nothing more, which is why this lesson keeps a copy of the policy next to its helper code and checks every launch against it in the notebook first, with `helpers.check_launch`, so the message you get names the rule. The [If a Launch Is Refused](../learners/refused-launch.md) page is the same list in one place, for the day a job of your own is refused.
 
-Habits that need no administrator:
+What you can do without an administrator:
 
 - **Automate the cleanup you do by hand.** The inventory cells at the top of this episode are the SDK calls; a script that runs them and stops what it finds is the Lambda in the table above.
 - **Test on a slice first.** Every expensive run in this lesson was preceded by a small one on the same code: a few epochs, a subset of pages, a handful of questions.

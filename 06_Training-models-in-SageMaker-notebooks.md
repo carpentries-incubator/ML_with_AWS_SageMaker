@@ -55,6 +55,7 @@ import sagemaker                      # SageMaker Python SDK: higher-level API f
 import logging
 logging.getLogger("sagemaker.telemetry.telemetry_logging").setLevel(logging.WARNING)   # silence the telemetry notice; the "Creating training-job" line still prints
 logging.getLogger("sagemaker.image_uris").setLevel(logging.WARNING)
+logging.getLogger("sagemaker.config").setLevel(logging.WARNING)   # and the two "Not applying SDK defaults" lines
 from sagemaker import get_execution_role
 
 # Initialize the SageMaker role (will reflect notebook instance's policy)
@@ -513,9 +514,9 @@ desc = job_cost_report(job_name, price_per_hour)   # prints the status while the
 
 If the notebook instance was stopped in between, the kernel's variables are gone, so set `job_name` from the printed output or from the Training jobs list before running that cell. `xgboost_estimator = XGBoost.attach(job_name, sagemaker_session=session)` rebuilds the estimator from the job's record, waiting for the job if it is still running, if you want the evaluate cells above to work as before.
 
-Interrupting the cell, restarting the kernel and stopping the instance all leave the job running. Only **Stop** on the job's page, or the job's own cap, ends it. A job you launched and forgot bills until one of those happens, which is what the two habits below are for.
+Interrupting the cell, restarting the kernel and stopping the instance all leave the job running. Only **Stop** on the job's page, or the job's own cap, ends it. A job you launched and forgot bills until one of those happens. Two estimator settings limit what that can cost.
 
-### Two habits for any run longer than half an hour
+### For any run longer than half an hour
 
 **A cap you chose.** `max_run` is the most a job can bill, in seconds, and every estimator in this lesson sets it. Put it a little above your estimate, twice the estimate is a fair margin, and never above the account's 48-hour ceiling, which the account refuses. Leave it out and the SDK sends 24 hours, which on an `ml.g5.xlarge` is `$34` for a job that hung in its first minute.
 
@@ -638,7 +639,7 @@ The next episode asks what to do when a job takes too long: a bigger instance, a
 - **Local vs. managed training**: Always test your code locally (on a smaller scale) before scaling things up. This avoids wasting resources on buggy code that doesn't produce reliable results.
 - **Estimators**: `XGBoost(entry_point=...)` is AWS's container running your script, the pattern every later episode uses with `PyTorch` and `HuggingFace`.
 - **Training data channels**: `TrainingInput` names the S3 data a job copies onto its instance before the script runs.
-- **Cost habit**: Estimate cost before launching (rate x minutes + ~3 minutes startup), then read back `BillableTimeInSeconds` with `job_cost_report()` after every job and compare.
+- Estimate the cost before launching (rate × minutes, startup included), then read back `BillableTimeInSeconds` with `job_cost_report()` after every job and compare.
 - **Long runs**: launch with `wait=False` and carry on, or stop the notebook instance; the job runs and finishes without it, and `job_cost_report(job_name, ...)` reads its bill later. Set `max_run` a little above the estimate, and checkpoint to S3 on anything longer than half an hour.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::

@@ -107,6 +107,8 @@ import sagemaker
 import logging
 logging.getLogger("sagemaker.telemetry.telemetry_logging").setLevel(logging.WARNING)   # silence the telemetry notice; the "Creating training-job" line still prints
 logging.getLogger("sagemaker.image_uris").setLevel(logging.WARNING)
+logging.getLogger("sagemaker.config").setLevel(logging.WARNING)   # and the two "Not applying SDK defaults" lines
+logging.getLogger("sagemaker.estimator").setLevel(logging.ERROR)   # tuner.fit reads estimator.model_data before any job exists and logs a harmless "No finished training job found" warning
 # range types for the search: ContinuousParameter (float range), IntegerParameter (whole-number range), CategoricalParameter (explicit list)
 from sagemaker.tuner import HyperparameterTuner, IntegerParameter, ContinuousParameter, CategoricalParameter
 from sagemaker.pytorch import PyTorch
@@ -208,7 +210,7 @@ To prepare `train_nn.py` for hyperparameter tuning, we added code to log validat
 
 **Note**: It's best to use an if statement to only print out metrics periodically (e.g., every 100 epochs), so that your print time does not eat up too much of your training time. Printing every epoch is a measurable share of a step this small. On the flipside of this, you don't want to print metrics so infrequently that you lose resolution in the monitored validation accuracy. Choose a number between 100-1000 epochs or divide your total epoch count by ~25 to yield a reasonable range. 
 
-```text
+```py
 if (epoch + 1) % 100 == 0 or epoch == epochs - 1:
     print(f"validation:accuracy = {val_accuracy:.4f}", flush=True)  # Log for SageMaker metric tracking
 ```
@@ -255,7 +257,7 @@ def job_cost_report(job_name: str, price_per_hour: float):
     return desc
 
 def tuning_cost_report(tuner, price_per_hour):
-    """Call job_cost_report on every training job the tuner launched; return the total cost in dollars."""
+    """Call job_cost_report on every training job the tuner launched and print the total."""
     jobs_df = tuner.analytics().dataframe()  # one row per child training job: its hyperparameters, FinalObjectiveValue and TrainingJobName
     total_billable = 0
     for job_name in jobs_df["TrainingJobName"]:
@@ -263,7 +265,6 @@ def tuning_cost_report(tuner, price_per_hour):
         total_billable += desc["BillableTimeInSeconds"] * desc["ResourceConfig"]["InstanceCount"]
     total_cost = total_billable / 3600 * price_per_hour
     print(f"Tuning job {tuner.latest_tuning_job.name}: {len(jobs_df)} training jobs, {total_billable/60:.1f} billable min, ${total_cost:.2f} total")
-    return total_cost
 
 tuning_cost_report(tuner, price_per_hour)
 ```
@@ -355,7 +356,7 @@ print("Best training job name:", best_job_name)
 
 # 2. Use describe_training_job to retrieve full details, including hyperparameters...
 best_job_desc = session.sagemaker_client.describe_training_job(TrainingJobName=best_job_name)
-best_hyperparameters = best_job_desc["HyperParameters"]
+best_hyperparameters = {k: v for k, v in best_job_desc["HyperParameters"].items() if k in hyperparameter_ranges}   # the record also carries the SDK's own sagemaker_* entries
 print("Best hyperparameters:", best_hyperparameters)
 
 # ...  and model URI (location on S3)
@@ -490,7 +491,7 @@ The tuner can only vary what the script reads. Right now `train_nn.py` has no `-
 
 1. **In `train_nn.py`**: add `parser.add_argument('--batch_size', type=int, default=64)`, pass it to `train()`, and replace the full-batch step with a mini-batch loop, for example by wrapping the tensors in a `TensorDataset` and iterating over a `DataLoader(dataset, batch_size=batch_size, shuffle=True)` inside each epoch (with `optimizer.zero_grad()`, forward, loss, `backward()` and `step()` per batch).
 
-```text
+```py
 parser.add_argument('--batch_size', type=int, default=64)
 ...
 loader = DataLoader(TensorDataset(X_train, y_train), batch_size=batch_size, shuffle=True)

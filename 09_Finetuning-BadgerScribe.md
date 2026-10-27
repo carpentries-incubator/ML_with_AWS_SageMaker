@@ -7,15 +7,15 @@ exercises: 75
 :::::::::::::::::::::::::::::::::::::: questions
 
 - When is fine-tuning worth it?
-- Why does fine-tuning cost anywhere from a dollar to tens of thousands, and how do I estimate where my run falls *before* I launch it?
-- How do I run a GPU fine-tune as a SageMaker training job so the meter stops the moment it finishes?
-- How do I measure whether the fine-tune helped?
+- What does a fine-tuning run cost, and how do I estimate that before launching it?
+- How do I fine-tune a model as a SageMaker training job?
+- How do I tell whether the fine-tune helped?
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ::::::::::::::::::::::::::::::::::::: objectives
 
-- Explain what drives the cost of a fine-tuning run (model size × tokens × epochs × number of attempts) and why the same four habits apply at `$1` and at `$10,000`: a time cap, a small first run, checkpoints, and an estimate written down before launch.
+- Explain what drives the cost of a fine-tuning run (model size × tokens × epochs × number of attempts), and what to do before launching one at any size: set a time cap, run a small slice first, write the estimate down, and checkpoint.
 - Launch a LoRA fine-tune of a 3B vision-language model (CHURRO-3B) as a `HuggingFace` training job on a single 24 GB GPU, with tags, a unique job name and a `max_run` cap.
 - Read a job's billable time and compare it to the estimate.
 - Compare the base model and the fine-tuned model on held-out pages using the competition's own character error rate (CER).
@@ -181,7 +181,7 @@ The same call for the kind of run a marathon team might weigh, a 7B model on 5,0
 helpers.estimate_finetune_cost(
     params_billions=7, examples=5000, tokens_per_example=800, epochs=3,
     method="lora", runs=8,       # no instance_type: the cheapest that fits
-)
+);
 ```
 
 Batch size is not an input, and does not need to be. It changes two things the estimator already has knobs for: a bigger batch keeps the GPU busier, which is the `utilization` argument (0.25 by default; a well-fed GPU reaches 0.35 or so), and it needs more memory for activations, which is `activations_gb`.
@@ -203,10 +203,10 @@ Tokens: 50,000 × 2,000 × 3 = 3 × 10^8. FLOPs: 6 × 7 × 10^9 × 3 × 10^8 ≈
 ```python
 helpers.estimate_finetune_cost(params_billions=7, examples=50_000, tokens_per_example=2000, epochs=3,
                                method="full", instance_type="ml.p4d.24xlarge",
-                               gradient_checkpointing=False, runs=10)
+                               gradient_checkpointing=False, runs=10);
 ```
 
-A project is not one run. The first run finds a data bug, the second a bad learning rate, then two or three are compared, then the one that worked is rerun on the final data: five to ten runs, `$700` to `$1,400`, before anyone touches a hyperparameter sweep. That is the number for the proposal, and the four habits matter more as the model gets bigger.
+A project is not one run. The first run finds a data bug, the second a bad learning rate, then two or three are compared, then the one that worked is rerun on the final data: five to ten runs, `$700` to `$1,400`, before anyone touches a hyperparameter sweep. That is the number for the proposal. The cap, the small first run, the written estimate and the checkpoints are the same at this size; the bill for skipping them is not.
 
 :::::::::::::::::::::::::::::::::
 
@@ -231,6 +231,16 @@ Multi-GPU instances are for jobs that do not fit on one GPU: a full fine-tune of
 ### Scaling the same job to more GPUs
 
 The training script uses Hugging Face `Trainer`, which runs data-parallel across every GPU of a multi-GPU instance when the estimator sets `distribution={"torch_distributed": {"enabled": True}}`; the PyTorch episode's table of setups per kind of job has the details, including sharding the model with `fsdp=` when it does not fit one GPU. **Do not launch a multi-GPU job on the class account.**
+
+The PyTorch episode's rule for when data parallelism pays, a big model, a big batch and a fast link, has a LoRA-specific twist. What the GPUs exchange after every step is the gradient, 4 bytes per *trainable* parameter, and in a LoRA run that is the adapter alone, under 1% of the model. The exchange that made two machines pointless for a full 7B fine-tune is cheap here, so a LoRA run splits well even over slow links. `helpers.estimate_parallel_speedup` takes `method="lora"` for this; the class run on a four-GPU box, as an estimate only:
+
+```python
+# The class run on a 4 × A10G instance: the gradient exchanged is the adapter's, not the model's.
+# An estimate, not a launch: a 12-minute job does not need four GPUs, and the box costs 5x the single one.
+helpers.estimate_parallel_speedup(params_billions=3.75, tokens_per_step=4 * 1600, instance_type="ml.g5.12xlarge", method="lora");
+```
+
+Near 4x on 4 GPUs at about the same total cost, which is the case for a multi-GPU box: a LoRA run on the full Badger Scribe train set, or on a million pages, that has to finish by a deadline. It is not a reason to rent one for a run that finishes in twelve minutes.
 
 **The cost controls do not change with size, but the stakes do.** An `ml.p4d.24xlarge` bills **`$25.25` an hour** and an `ml.p5.48xlarge` **`$63.30` an hour** from the moment the job starts, and a `max_run` of six hours is a **`$150` to `$380`** ceiling on a single launch. Estimate GPU-hours from the Step 0 rules, set `max_run` to about twice that estimate, tag the job, and run a slice of the data on one GPU first so that a bug costs a dollar rather than a few hundred. **Do not launch a multi-GPU job on the class account.**
 
@@ -268,12 +278,12 @@ Compare the classic mistake: doing all of this interactively on a `ml.g5.xlarge`
 
 ::::::::::::::::::::::::::::::::::::: callout
 
-### The four habits
+### Before any fine-tuning run
 
-1. **Cap it.** Every job gets `max_run`. Every notebook GPU instance gets stopped when you stand up.
-2. **Start small.** The first launch of any training script uses a slice of the data and a short cap. The in-class run below *is* that small first run; the homework scales it up only after it has been seen to work.
-3. **Estimate it, then check.** Write the number down. After the run, read `BillableTimeInSeconds` from the job description and compare.
-4. **Checkpoint it.** Save progress to S3 as the job runs, so that a killed, interrupted or crashed run costs one epoch, not the whole bill.
+- Set `max_run` on every job, and stop any notebook GPU instance when you stand up.
+- Make the first launch of a training script a small one: a slice of the data and a short cap. The in-class run below is that small run; the homework scales it up after it has been seen to work.
+- Write the cost estimate down before launching. Afterwards, read `BillableTimeInSeconds` from the job description and compare.
+- Save checkpoints to S3 as the job runs, so a killed or crashed run costs one epoch, not the whole bill.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -319,6 +329,7 @@ import sagemaker
 import logging
 logging.getLogger("sagemaker.telemetry.telemetry_logging").setLevel(logging.WARNING)   # silence the telemetry notice; the "Creating training-job" line still prints
 logging.getLogger("sagemaker.image_uris").setLevel(logging.WARNING)
+logging.getLogger("sagemaker.config").setLevel(logging.WARNING)   # and the two "Not applying SDK defaults" lines
 from sagemaker import get_execution_role
 
 import sys
@@ -349,6 +360,12 @@ model_s3_uri = f"s3://{shared_bucket}/{data_prefix}/model/churro-3B/"  # model c
 
 local_data_dir = "./data"
 os.makedirs(local_data_dir, exist_ok=True)
+```
+
+What the jobs will read, before downloading any of it: the page lists and metadata at the top level, the scanned pages under `images/`, and the staged CHURRO-3B weights under `model/`.
+
+```python
+helpers.show_bucket(shared_bucket, f"{data_prefix}/")   # the shared bucket's folder for this episode: files, and each sub-folder's count and size
 ```
 
 Download the four small files (the two page lists, the metadata and the competition's scoring script) and look at how the training pages split by category and by who transcribed them.
@@ -467,7 +484,7 @@ That average is the `tokens_per_example` the estimate should have used. Re-run t
 
 ```python
 helpers.estimate_finetune_cost(params_billions=3.75, examples=251, tokens_per_example=int(avg_tokens_per_page), epochs=2,
-                               method="lora", instance_type="ml.g5.xlarge")
+                               method="lora", instance_type="ml.g5.xlarge");
 ```
 
 Multiply by pages and passes and that is the "tokens seen" in the cost table. Halve `max_pixels` and the image count halves with it; that is what Exercise 1 changes.
@@ -493,22 +510,31 @@ print(os.listdir("code"))
 - `finetune_churro_lora.py`: the training job entry point. Holds out 15% of pages per category, filters to the categories you ask for, scores a sample of holdout pages with the base model, trains a LoRA adapter, scores the same pages again, and saves everything.
 - `churro_transcribe_batch.py`: used in the homework. Transcribes any list of pages with the base model or with the adapter merged in, and writes `predictions.csv` in the submission format.
 
-Open `code/finetune_churro_lora.py` and read it before launching it. What it does:
+::::::::::::::::::::::::::::::::::::::: challenge
 
-```text
-# Only the language model's projection layers get LoRA weights.
-# The vision tower ("visual") stays frozen.
-lora = LoraConfig(
-    r=16, lora_alpha=32, lora_dropout=0.05, task_type="CAUSAL_LM",
-    target_modules=r"^(?!.*visual).*\.(q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj)$",
-)
+### Read the script before you pay for it
 
-# The loss is computed on the transcription only. Prompt and image tokens
-# are masked to -100 so the model is not graded on repeating the question.
-labels[i, :n_prompt] = -100
-```
+Open `code/finetune_churro_lora.py` in the Jupyter file browser. It is about 400 lines and you are about to launch it on a GPU. Find the answers in the file:
 
-And the one setting that controls cost more than any other:
+1. Which layers get LoRA weights, and which part of the model gets none? What would the regular expression in `target_modules` also match without its `(?!.*visual)` part?
+2. Roughly how many parameters will train? Work it out from `r=16` and the shapes of the language model's projections (36 layers; `q_proj` and `o_proj` are 2048 × 2048, `k_proj` and `v_proj` are 2048 × 256, and `gate_proj`, `up_proj` and `down_proj` are 2048 × 11008), then compare with the `trainable params:` line in the job's log once it runs.
+3. Which tokens does the loss count? Find every place `labels` are set to `-100`.
+4. The script stops itself in two situations before training a single step. Which, and why are they there?
+
+::::::::::::::::::::::::::::::::::::::: solution
+
+### Solution
+
+1. Only the language model's `q_proj`, `k_proj`, `v_proj`, `o_proj`, `gate_proj`, `up_proj` and `down_proj`. Every module in the vision tower has `visual` in its name, and the negative lookahead excludes them. Without it, the vision blocks' own `gate_proj`, `up_proj` and `down_proj` would match too, and the model would be relearning how to see from 251 pages.
+2. A LoRA adapter on a matrix of shape in × out adds r × (in + out) parameters. Per layer: 16 × 4096 × 2 for `q_proj` and `o_proj`, 16 × 2304 × 2 for `k_proj` and `v_proj`, 16 × 13056 × 3 for the MLP, about 831,000; times 36 layers is about 30 million, under 1% of the 3.75 billion. The log line `trainable params: ... || all params: ... || trainable%: ...` should agree. If it said 100%, nothing was frozen and the run is a full fine-tune at a full fine-tune's memory and price.
+3. The transcription only. `labels[enc["attention_mask"] == 0] = -100` drops the padding, `labels[i, :n_prompt] = -100` drops the prompt and the image tokens, and `-100` is the value PyTorch's cross-entropy ignores. The model is graded on what it writes, not on repeating the question.
+4. Right after the adapter is attached: it raises if any trainable tensor is in the vision tower, or if more than 5% of the model is trainable. Either means the job is not the LoRA run that was estimated, so it stops before the GPU-hours are spent; a job that raises there has cost its startup minutes and nothing more.
+
+:::::::::::::::::::::::::::::::::::::::
+
+:::::::::::::::::::::::::::::::::::::::
+
+One more setting, the one that controls cost more than any other:
 
 ```python
 # Every 28x28 block of the page becomes one token. 1280 blocks ~ 1 megapixel.
@@ -650,7 +676,7 @@ Open a second browser tab on the SageMaker console: **SageMaker AI → Training 
 Things to find in the log while you wait:
 
 - `pages: 295 total -> 251 train / 44 holdout`: the split.
-- `trainable params: ...`: what fraction of the 3B parameters LoRA trains.
+- `trainable params: ...`: how many of the 3.75B parameters LoRA trains, about 30 million. The `safeguards:` line after it means the script's two checks passed.
 - `[eval before] 15 holdout pages in ...s (... s/page) -> macro CER ...`: the base model's score, and the time per page one at a time; the homework's inference jobs batch pages and are faster per page.
 - The Trainer's loss lines every 5 steps, and `[eval epoch1] ...` at the end of each epoch: the points of the curve you plot in Step 2.
 

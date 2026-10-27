@@ -61,7 +61,7 @@ Two further charges people do not expect:
 - **A stopped instance still bills for its storage.** We give this notebook a 100 GB volume for model weights. SageMaker charges `$0.14` per GB-month for notebook storage, so a stopped-but-not-deleted instance costs about **`$14` a month** forever. When you are done with the episode, delete the instance, not just stop it, unless you will use it again within days.
 - **Idle is billed the same as busy.** There is no discount for a GPU that is loaded and waiting. Loading a 27B model takes a few minutes, which tempts people to leave the instance up "so I don't have to reload". That is the `$1,906`.
 
-The habits that keep this safe:
+What keeps this safe:
 
 1. **Stop the instance when you stand up**, every time, from the [Notebook instances page](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/notebook-instances) (select it, **Stop**). Then look at the status column until it says `Stopped`.
 2. **Set a reminder** on your phone or calendar before you start the instance, for two hours from now.
@@ -176,6 +176,7 @@ import sagemaker
 import logging
 logging.getLogger("sagemaker.telemetry.telemetry_logging").setLevel(logging.WARNING)   # silence the telemetry notice; the "Creating training-job" line still prints
 logging.getLogger("sagemaker.image_uris").setLevel(logging.WARNING)
+logging.getLogger("sagemaker.config").setLevel(logging.WARNING)   # and the two "Not applying SDK defaults" lines
 from sagemaker import get_execution_role
 
 

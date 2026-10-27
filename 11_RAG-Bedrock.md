@@ -129,12 +129,15 @@ from botocore.config import Config
 from botocore.exceptions import ClientError
 import pandas as pd
 import numpy as np
-import os
+import sys
+sys.path.insert(0, "/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts")   # the lesson's helper module, cloned in the controllers episode
+import helpers
 os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the SDK otherwise prints a deprecation notice on import and on every estimator
 import sagemaker
 import logging
 logging.getLogger("sagemaker.telemetry.telemetry_logging").setLevel(logging.WARNING)   # silence the telemetry notice; the "Creating training-job" line still prints
 logging.getLogger("sagemaker.image_uris").setLevel(logging.WARNING)
+logging.getLogger("sagemaker.config").setLevel(logging.WARNING)   # and the two "Not applying SDK defaults" lines
 
 session = sagemaker.Session()
 region = session.boto_region_name
@@ -173,6 +176,12 @@ solutions_key = "wattbot/solutions/wattbot_solutions_bedrock.csv"  # the pipelin
 
 local_data_dir = "./data"              # working copies on this notebook instance
 os.makedirs(local_data_dir, exist_ok=True)
+```
+
+The inputs, as they sit in the shared bucket. The three files named above are at the top of `wattbot/`; the rest of the folder is what the instructor staged for the caching steps later in the episode.
+
+```python
+helpers.show_bucket(shared_bucket, "wattbot/")   # every file under the prefix, with its size
 ```
 
 **Two Bedrock clients.** Bedrock has two APIs. `bedrock-runtime` is the one that calls models (`converse`, the chat call, for answers; `invoke_model`, the raw call with a provider-specific body, for embeddings); it is what every answer and every embedding in this episode goes through. `bedrock` is the control plane: listing models, creating the inference profiles that carry our tags. The runtime client gets a retry setting because on-demand Bedrock throughput is rate-limited per model: a loop of a few thousand embedding calls will occasionally be throttled, and the adaptive mode backs off and retries instead of raising.

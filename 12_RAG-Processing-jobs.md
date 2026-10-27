@@ -6,7 +6,7 @@ exercises: 20
 
 :::::::::::::::::::::::::::::::::::::: questions
 
-- When does a RAG pipeline need a self-hosted, open-weight model instead of Bedrock, and what is the safest way to rent the GPU for it?
+- When does a RAG pipeline need a self-hosted, open-weight model instead of Bedrock?
 - How do we run the embedding and generation steps of the WattBot pipeline as SageMaker Processing jobs that end on their own?
 - How do we pass data in and out of a job through S3, and tag the job so its cost is traceable?
 
@@ -115,6 +115,7 @@ import sagemaker
 import logging
 logging.getLogger("sagemaker.telemetry.telemetry_logging").setLevel(logging.WARNING)   # silence the telemetry notice; the "Creating training-job" line still prints
 logging.getLogger("sagemaker.image_uris").setLevel(logging.WARNING)
+logging.getLogger("sagemaker.config").setLevel(logging.WARNING)   # and the two "Not applying SDK defaults" lines
 from sagemaker import get_execution_role
 from sagemaker.huggingface import HuggingFaceProcessor         # launches a job in the prebuilt Hugging Face container
 from sagemaker.processing import ProcessingInput, ProcessingOutput   # S3 <-> container path mappings for a job

@@ -6,7 +6,7 @@ site: sandpaper::sandpaper_site
 
 This workshop is about running machine learning and AI work on AWS without losing control of the bill: where the data goes, which machine does what, how a job is launched and paid for, and how to find out what it cost. It is in four parts.
 
-**Part 1, orientation.** What the cloud offers a researcher compared with a laptop or the cluster down the hall, and what it costs. The two services the lesson uses: **SageMaker** rents machines by the second, for a notebook you work in and for jobs that run on their own and end; **Bedrock** serves hosted models by the token, with nothing to start or stop. The four things every episode uses, S3, a notebook instance, jobs and Bedrock, and the cost habits every later episode follows.
+**Part 1, orientation.** What the cloud offers a researcher compared with a laptop or the cluster down the hall, and what it costs. The two services the lesson uses: **SageMaker** rents machines by the second, for a notebook you work in and for jobs that run on their own and end; **Bedrock** serves hosted models by the token, with nothing to start or stop. The four things every episode uses, S3, a notebook instance, jobs and Bedrock, and how every later episode estimates and checks what a job costs.
 
 **Part 2, SageMaker: data, training, tuning and fine-tuning.**
 
