@@ -455,8 +455,8 @@ generation, cost and control.</li>
 </div>
 </div>
 <p>This episode compares cloud compute with the compute researchers
-usually already have, then introduces the three AWS services the lesson
-uses: S3, SageMaker and Bedrock.</p>
+usually already have, then introduces the four things every later
+episode uses, S3, the notebook instance, SageMaker jobs and Bedrock.</p>
 <div class="section level3">
 <h3 id="cloud-vs--the-cluster-down-the-hall">Cloud vs. the cluster down the hall<a class="anchor" aria-label="anchor" href="#cloud-vs--the-cluster-down-the-hall"></a></h3>
 <p>Most researchers already have somewhere to run ML, such as a campus
@@ -494,21 +494,46 @@ Institute’s 2025 survey</a> puts enterprise and colocation data centers
 at 1.58-1.80, where a departmental server room also sits. On the second,
 a GPU is only efficient while it is busy. A lab’s own GPUs idle whenever
 the lab is not training; a campus cluster pools demand across a
-university and keeps its hardware busier; a cloud provider pools demand
-across the world and across time zones, so a GPU that one group releases
-is running someone else’s job minutes later. Providers do not publish
-GPU utilization, so this part is reasoning rather than data, but a
-single institution cannot smooth demand the way a global pool can. (PUE
-figures are self-reported and measure the building, not the GPUs in
-it.)</li>
+university and keeps its hardware busier, and national pools go further
+by sharing across institutions<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>; a cloud provider pools demand across the
+world and across time zones, so a GPU that one group releases is running
+someone else’s job minutes later. Providers do not publish GPU
+utilization, so this part is reasoning rather than data, but a single
+institution cannot smooth demand the way a global pool can. (PUE figures
+are self-reported and measure the building, not the GPUs in it.)</li>
 </ul></div>
 <div class="section level3">
-<h3 id="sagemaker-and-bedrock">SageMaker and Bedrock<a class="anchor" aria-label="anchor" href="#sagemaker-and-bedrock"></a></h3>
+<h3 id="s3-the-notebook-instance-sagemaker-and-bedrock">S3, the notebook instance, SageMaker and Bedrock<a class="anchor" aria-label="anchor" href="#s3-the-notebook-instance-sagemaker-and-bedrock"></a></h3>
+<figure><img src="fig/aws-ml-ecosystem.svg" alt="Diagram of the lesson's AWS components: S3 buckets at the top, a notebook instance on the left launching SageMaker training, tuning and processing jobs in the center, and Bedrock on the right called as an API" class="figure mx-auto d-block"><div class="figcaption">S3 holds data and outputs; a small notebook
+instance launches SageMaker jobs that read from and write to S3 and end
+on their own; Bedrock is called as an API per token</div>
+</figure><p>Everything in the lesson is one of the four boxes in the diagram. S3
+holds your data and every job’s outputs. The notebook instance is where
+you work, and it is small because it only launches things. SageMaker
+jobs are where the compute happens, on an instance that exists only for
+the job. Bedrock is an API, with no instance at all. Each of the four in
+turn.</p>
+<p><strong>Amazon S3</strong> is where data lives. Buckets hold files of
+any size, every SageMaker job reads its inputs from a bucket and writes
+its outputs back to one, and storage costs about two cents per GB per
+month. In this lesson you create one bucket of your own in the next
+episode and use it for the rest of the workshop; the larger datasets are
+in a shared bucket the instructors staged.</p>
+<p><strong>A SageMaker notebook instance</strong> is where you work. It
+is a small machine running JupyterLab that you start at the beginning of
+the workshop and stop at the end, and every notebook in the lesson runs
+on it. It is small on purpose, an <code>ml.t3.medium</code> at about
+five cents an hour, because it does not do the heavy work. It tests
+scripts on small data, launches jobs on bigger instances, and reads the
+results back. The <em>Notebooks as controllers</em> episode creates it,
+and the two after that connect it to S3 and to a copy of the lesson’s
+code.</p>
 <p><strong>Amazon SageMaker</strong> is AWS’s managed service for
 machine learning. You write the training or inference script and pick a
 machine type; SageMaker runs the script on that machine as a
 <em>job</em>, with the ML frameworks already installed, and shuts the
-machine down when the job finishes. In practice that means:</p>
+machine down when the job finishes. The features that matter for
+research work:</p>
 <ul><li><p><strong>High-performance compute only when needed</strong>:
 SageMaker lets you develop interactively in lightweight, inexpensive
 notebook environments (or your own laptop) and then launch training,
@@ -564,9 +589,9 @@ is cheap. For example, training roughly 100 small to medium-sized models
 (e.g., logistic regression, random forests, or lightweight deep learning
 models with a few million parameters) on a small dataset (under 10GB)
 can cost under <code>$20</code>.</p></li>
-</ul><p><strong>Amazon Bedrock</strong> is the other AWS service this lesson
-uses. Instead of running your script on a machine, Bedrock serves models
-that AWS hosts through an API. In practice that means:</p>
+</ul><p><strong>Amazon Bedrock</strong> serves models that AWS hosts through
+an API, instead of running your script on a machine. In practice that
+means:</p>
 <ul><li>
 <strong>Nothing to start or stop</strong>: you call the API and pay
 per token; when you stop calling it, you stop paying. There is no
@@ -577,8 +602,8 @@ Amazon’s own models and others, for generation and for embeddings, each
 selectable by model ID with no download or GPU.</li>
 <li>
 <strong>Cheap at research scale</strong>: embedding a few thousand
-document chunks and answering a few dozen questions costs cents, which
-is why the RAG part of the lesson starts here.</li>
+document chunks and answering a few dozen questions costs cents. The RAG
+episodes build the pipeline on Bedrock first.</li>
 <li>
 <strong>Only the catalog</strong>: if the model you need is not on
 it, Bedrock cannot serve it. That is the one case where the lesson moves
@@ -588,51 +613,9 @@ RAG onto SageMaker.</li>
 carry no tags by default; the lesson routes them through tagged
 application inference profiles so they show up on the bill like
 everything else.</li>
-</ul><p><strong>Amazon S3</strong> is where data lives. Buckets hold files of
-any size, every SageMaker job reads its inputs from a bucket and writes
-its outputs back to one, and storage costs about two cents per GB per
-month. In this lesson you create one bucket of your own in the next
-episode and use it for the rest of the workshop; the larger datasets are
-in a shared bucket the instructors staged.</p>
-</div>
-<div class="section level3">
-<h3 id="the-four-things-you-will-use">The four things you will use<a class="anchor" aria-label="anchor" href="#the-four-things-you-will-use"></a></h3>
-<figure><img src="fig/aws-ml-ecosystem.svg" alt="Diagram of the lesson's AWS components: S3 buckets at the top, a notebook instance on the left launching SageMaker training, tuning and processing jobs in the center, and Bedrock on the right called as an API" class="figure mx-auto d-block"><div class="figcaption">S3 holds data and outputs; a small notebook
-instance launches SageMaker jobs that read from and write to S3 and end
-on their own; Bedrock is called as an API per token</div>
-</figure><p>Everything in the lesson is one of these four boxes. S3 holds your
-data and every job’s outputs. The notebook instance is where you work;
-it is small because it only launches things. SageMaker jobs are where
-compute happens, on an instance that exists only for the job. Bedrock is
-an API: no instance at all. Everything the notebook does here can also
-be done from the AWS command line or from Python on your own machine;
-the optional episode <em>The Same Jobs from the Terminal</em> shows the
-CLI equivalents.</p>
-</div>
-<div class="section level3">
-<h3 id="lesson-outline">Lesson outline<a class="anchor" aria-label="anchor" href="#lesson-outline"></a></h3>
-<p>This episode is part 1 of four: the orientation. The rest is
-hands-on.</p>
-<p><strong>Part 2, SageMaker: data, training, tuning and
-fine-tuning.</strong> Put the Titanic data in an S3 bucket and start a
-small notebook instance as the controller. Train XGBoost and PyTorch
-models as training jobs, estimating the cost before each launch and
-reading the bill after, on CPU and on GPU, on one instance and on two.
-Run a tuning job under a budget. Then fine-tune a 3B vision-language
-model with LoRA, as a training job with checkpoints and a cap, for
-transcribing handwritten German letters (Badger Scribe).</p>
-<p><strong>Part 3, Bedrock: inference and retrieval-augmented
-generation.</strong> Build a RAG pipeline over energy research papers
-(WattBot) on Bedrock’s hosted models, paid per token through tagged
-profiles, for cents a run; add multimodal embeddings for the table and
-figure questions; then run the same pipeline with an open-weight model
-Bedrock does not serve, as Processing jobs that rent a GPU for the
-minutes they need.</p>
-<p><strong>Part 4, resource management and cleanup.</strong> What to
-stop, what to delete, how to read the bill, and the rules the account
-enforces, with an optional episode on the same jobs from a terminal.</p>
-<p>Every job is tagged, capped, estimated before launch and checked
-against the bill after.</p>
+</ul><p>Everything the notebook does here can also be done from the AWS
+command line or from Python on your own machine; the optional episode
+<em>The Same Jobs from the Terminal</em> shows the CLI equivalents.</p>
 <div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
 <i class="callout-icon" data-feather="key"></i>
@@ -658,6 +641,16 @@ Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
  -->
 </div>
+<div class="footnotes footnotes-end-of-document">
+<hr><ol><li id="fn1"><p>Research computing has done this for years. UW-Madison’s
+<a href="https://chtc.cs.wisc.edu/" class="external-link">Center for High Throughput
+Computing</a> (CHTC) pools campus machines and fills their idle time
+with other groups’ jobs, and the <a href="https://osg-htc.org/services/open_science_pool.html" class="external-link">OSPool</a> it
+operates for the NSF does the same across institutions. The <a href="https://nationalresearchplatform.org/" class="external-link">National Research
+Platform</a> (NRP) shares GPUs across universities the same way. These
+are the public counterparts of what the cloud does, and often free for a
+research group.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol></div>
 
 
 
