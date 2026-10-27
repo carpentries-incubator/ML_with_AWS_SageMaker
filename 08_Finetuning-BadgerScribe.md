@@ -350,13 +350,7 @@ import time
 
 import boto3
 import pandas as pd
-import os
-os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the SDK otherwise prints a deprecation notice on import and on every estimator
 import sagemaker
-import logging
-logging.getLogger("sagemaker.telemetry.telemetry_logging").setLevel(logging.WARNING)   # silence the telemetry notice; the "Creating training-job" line still prints
-logging.getLogger("sagemaker.image_uris").setLevel(logging.WARNING)
-logging.getLogger("sagemaker.config").addFilter(lambda record: record.levelno >= logging.WARNING)   # drop the two "Not applying SDK defaults" lines; a filter holds even where the SDK resets the logger's level
 from sagemaker import get_execution_role
 
 import sys
@@ -458,8 +452,6 @@ os.makedirs(proc_dir, exist_ok=True)
 for fname in ["config.json", "preprocessor_config.json", "tokenizer.json", "tokenizer_config.json", "special_tokens_map.json",
               "added_tokens.json", "vocab.json", "merges.txt", "chat_template.json", "video_preprocessor_config.json"]:
     s3_client.download_file(shared_bucket, f"{data_prefix}/model/churro-3B/{fname}", os.path.join(proc_dir, fname))
-import warnings
-warnings.filterwarnings("ignore", category=FutureWarning, module="transformers")   # the pixel limits are passed the way this transformers version wants; the newer form is a FutureWarning it prints on every call
 processor = AutoProcessor.from_pretrained(proc_dir, min_pixels=bc.DEFAULT_MIN_PIXELS, max_pixels=bc.DEFAULT_MAX_PIXELS)
 ```
 

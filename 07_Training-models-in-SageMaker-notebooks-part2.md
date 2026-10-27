@@ -36,13 +36,7 @@ We use the same controller notebook, SageMaker role, S3 bucket and Titanic files
 ```python
 import boto3
 import pandas as pd
-import os
-os.environ["SAGEMAKER_SUPPRESS_V2_WARNING"] = "1"   # the SDK otherwise prints a deprecation notice on import and on every estimator
 import sagemaker
-import logging
-logging.getLogger("sagemaker.telemetry.telemetry_logging").setLevel(logging.WARNING)   # silence the telemetry notice; the "Creating training-job" line still prints
-logging.getLogger("sagemaker.image_uris").setLevel(logging.WARNING)
-logging.getLogger("sagemaker.config").addFilter(lambda record: record.levelno >= logging.WARNING)   # drop the two "Not applying SDK defaults" lines; a filter holds even where the SDK resets the logger's level
 from sagemaker import get_execution_role
 
 # Initialize the SageMaker role (will reflect notebook instance's policy)
