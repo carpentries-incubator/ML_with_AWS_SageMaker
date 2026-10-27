@@ -605,7 +605,7 @@ There is no job record to ask here; the bill is simply the instance's hours. Thi
 g6e_price = 2.61   # $/hour, ml.g6e.xlarge on-demand, from the Instances for ML page
 hours = (time.time() - session_start) / 3600
 print(f"this notebook has been running {hours * 60:.0f} min since the setup cell: ${hours * g6e_price:.2f} so far, and counting")
-print(f"the same pipeline on the 53-question sample billed about $0.60 as Processing jobs; on Bedrock, about fifteen cents")
+print(f"the same pipeline on the 53-question sample billed about $0.50 as Processing jobs; on Bedrock, about fifteen cents")
 ```
 
 The Processing Jobs episode does the same work, with the same `wattbot_rag.py`, as short-lived SageMaker jobs, so the GPU only bills while it is embedding or generating. Stop this instance now, and delete it if you are done with the episode.

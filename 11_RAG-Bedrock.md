@@ -856,7 +856,7 @@ print(f"~{embed_tokens:,.0f} embedding tokens -> ${embed_cost:.3f}")
 print(f"Total ~${gen_cost + embed_cost:.2f}; the Processing Jobs episode rents an ml.g5.xlarge at $1.41 an hour for the same questions")
 ```
 
-With 53 questions, two calls each and ~1,500-token prompts, the run was 140K input and 9K output tokens: ten cents at DeepSeek V3's prices, plus five cents of embeddings for the 2.4 million tokens of corpus. All 245 questions is about half a dollar, which is the overview's estimate for the whole pipeline. The Processing Jobs episode answers the same 53 questions on a rented `ml.g5.xlarge` and bills about `$0.60` of GPU time for them, four times this run, most of it loading a model that Bedrock already has loaded.
+With 53 questions, two calls each and ~1,500-token prompts, the run was 140K input and 9K output tokens: ten cents at DeepSeek V3's prices, plus five cents of embeddings for the 2.4 million tokens of corpus. All 245 questions is about half a dollar, which is the overview's estimate for the whole pipeline. The Processing Jobs episode answers the same 53 questions on a rented `ml.g5.xlarge` and bills about `$0.50` of GPU time for them, three times this run, most of it loading a model that Bedrock already has loaded.
 
 :::::::::::::::::::::::::::::::::
 

@@ -54,10 +54,10 @@ Rates are us-east-1 on-demand from the [Instances for ML](https://carpentries-in
 | Job | Instance | `$`/h | Expected duration | Cost |
 |---|---|---|---|---|
 | Embed ~9,000 chunks | `ml.g5.xlarge` (A10G, 24 GB) | `$1.41` | ~10 min incl. startup | ~`$0.20` |
-| RAG over a 53-question sample with Qwen3-8B | `ml.g5.xlarge` (A10G, 24 GB) | `$1.41` | ~20 min: 1 provisioning, ~4 downloading and loading 16 GB of weights, ~13 generating | ~`$0.40` |
+| RAG over a 53-question sample with Qwen3-8B | `ml.g5.xlarge` (A10G, 24 GB) | `$1.41` | ~15 min: 1 provisioning, ~8 downloading and loading 16 GB of weights, ~6 generating | ~`$0.35` |
 | Controller notebook | `ml.t3.medium` | `$0.05` | 2 h | `$0.10` |
 
-About `$0.70` for the episode, and the GPUs are off the moment each script ends. The RAG job answers the same stratified sample of questions as the Bedrock episode (ten per evidence type, 53 questions once the two papers the corpus lacks are dropped); all 220 is about an hour of generation, so run that at home. Both jobs carry `max_runtime_in_seconds`, so a hung job costs at most the cap. Compare the same pipeline on a GPU notebook instance (the optional GPU-notebook episode that follows): the meter runs until someone stops it, and a forgotten `ml.g5.xlarge` is `$34` a day.
+About `$0.65` for the episode, and the GPUs are off the moment each script ends. The RAG job answers the same stratified sample of questions as the Bedrock episode (ten per evidence type, 53 questions once the two papers the corpus lacks are dropped); all 220 is about an hour of generation, so run that at home. Both jobs carry `max_runtime_in_seconds`, so a hung job costs at most the cap. Compare the same pipeline on a GPU notebook instance (the optional GPU-notebook episode that follows): the meter runs until someone stops it, and a forgotten `ml.g5.xlarge` is `$34` a day.
 
 
 The trade-off is latency. A job takes minutes to start, so this pattern is for batch questions, not a chatbot. For interactive use, Bedrock answers in seconds; for interactive use of a model Bedrock does not have, an inference endpoint does, at an hourly rate you have to remember to turn off.
@@ -437,7 +437,7 @@ rag_processor.run(
 print(f"RAG batch job complete: {(time.time() - start) / 60:.1f} min wall-clock, including instance startup and the weight download")
 ```
 
-While it runs, read what the container is printing. Open the [Processing jobs page](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs), click the job's name, scroll to **Monitor** and click **View logs**. That opens CloudWatch, the AWS service that stores every job's printed output, at a list with one entry named after your job; click it. The text is the container's stdout, kept after the job ends, updated while it runs (refresh). You will see, in order: `Loading model with transformers`, the weight download (16 GB in shards), a line per batch of answers and of explanations, then one line per question. The whole job is the 20 minutes in the cost callout; the generation is the second half of it.
+While it runs, read what the container is printing. Open the [Processing jobs page](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs), click the job's name, scroll to **Monitor** and click **View logs**. That opens CloudWatch, the AWS service that stores every job's printed output, at a list with one entry named after your job; click it. The text is the container's stdout, kept after the job ends, updated while it runs (refresh). You will see, in order: `Loading model with transformers`, the weight download (16 GB in shards), a line per batch of answers and of explanations, then one line per question. The whole job is the 15 minutes in the cost callout; the generation is the last six of them.
 
 
 ## Step 4 – Download predictions and evaluate
@@ -465,7 +465,7 @@ results_df = compute_wattbot_score(
 )
 ```
 
-Compare the overall score with the Bedrock run. The retrieval logic, prompts and scoring are identical, so any difference is the two models: `gte-large` versus Titan for retrieval, Qwen3-8B versus DeepSeek V3 for generation. In one run on the same 53 questions, Qwen3-8B scored 0.57 against DeepSeek V3's 0.66: its citations were better (F1 0.70 against 0.57) and its answers worse (51% against 66% correct), with the cross-paper and calculation questions losing the most. An 8B model against a 671B one is not a fair fight, and the gap is the price of a model you host yourself on one small GPU.
+Compare the overall score with the Bedrock run. The retrieval logic, prompts and scoring are identical, so any difference is the two models: `gte-large` versus Titan for retrieval, Qwen3-8B versus DeepSeek V3 for generation. In one run on the same 53 questions, Qwen3-8B scored 0.54 against DeepSeek V3's 0.69: its citations were better (F1 0.70 against 0.60) and its answers worse (47% against 70% correct), with the cross-paper and calculation questions losing the most, a fifth of each right against three fifths. An 8B model against a 671B one is not a fair fight, and the gap is the price of a model you host yourself on one small GPU.
 
 ::::::::::::::::::::::::::::::::::::: challenge
 
@@ -497,7 +497,7 @@ total += job_cost(rag_processor.latest_job.job_name, 1.41)
 print(f"GPU total for the episode: ${total:.2f}")
 ```
 
-Expect the embedding job to bill about 8 minutes (about `$0.20`) and the RAG job about 17 minutes (about `$0.40`), so about `$0.60` of GPU time, the callout's GPU figure. In the RAG job's log, the first 4 minutes of the billed window are the download and the model load; the rest is the questions, two generation calls each. Setup is a third of what you paid for, which is the argument for keeping an `HF_HOME` cache on S3 (skip the download) once a job is run routinely. The Bedrock run of the same questions cost cents, and the self-hosted route is only justified here because the model is not in the catalog.
+Expect the embedding job to bill about 8 minutes (about `$0.20`) and the RAG job about 14 minutes (about `$0.32`), so about `$0.50` of GPU time, the callout's GPU figure. In the RAG job's log, the first 8 minutes of the billed window are the download and the model load; the last 6 are the questions, two generation calls each. Setup is more than half of what you paid for, which is the argument for keeping an `HF_HOME` cache on S3 (skip the download) once a job is run routinely. The Bedrock run of the same questions cost cents, and the self-hosted route is only justified here because the model is not in the catalog.
 
 :::::::::::::::::::::::::::::::::
 
