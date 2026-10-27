@@ -703,7 +703,7 @@ role, printed because the Bedrock calls below run as it.</p>
 <span id="cb1-17"><a href="#cb1-17" tabindex="-1" aria-label="code-block-1-17"></a><span class="im">import</span> logging</span>
 <span id="cb1-18"><a href="#cb1-18" tabindex="-1" aria-label="code-block-1-18"></a>logging.getLogger(<span class="st">"sagemaker.telemetry.telemetry_logging"</span>).setLevel(logging.WARNING)   <span class="co"># silence the telemetry notice; the "Creating training-job" line still prints</span></span>
 <span id="cb1-19"><a href="#cb1-19" tabindex="-1" aria-label="code-block-1-19"></a>logging.getLogger(<span class="st">"sagemaker.image_uris"</span>).setLevel(logging.WARNING)</span>
-<span id="cb1-20"><a href="#cb1-20" tabindex="-1" aria-label="code-block-1-20"></a>logging.getLogger(<span class="st">"sagemaker.config"</span>).setLevel(logging.WARNING)   <span class="co"># and the two "Not applying SDK defaults" lines</span></span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1" aria-label="code-block-1-20"></a>logging.getLogger(<span class="st">"sagemaker.config"</span>).addFilter(<span class="kw">lambda</span> record: record.levelno <span class="op">&gt;=</span> logging.WARNING)   <span class="co"># drop the two "Not applying SDK defaults" lines; a filter holds even where the SDK resets the logger's level</span></span>
 <span id="cb1-21"><a href="#cb1-21" tabindex="-1" aria-label="code-block-1-21"></a></span>
 <span id="cb1-22"><a href="#cb1-22" tabindex="-1" aria-label="code-block-1-22"></a>session <span class="op">=</span> sagemaker.Session()</span>
 <span id="cb1-23"><a href="#cb1-23" tabindex="-1" aria-label="code-block-1-23"></a>region <span class="op">=</span> session.boto_region_name</span>
