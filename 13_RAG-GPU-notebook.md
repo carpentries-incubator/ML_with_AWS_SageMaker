@@ -117,7 +117,7 @@ We reuse the same two buckets as the Bedrock episode: the shared bucket for `met
 
 ```python
 # nvidia-smi lists the GPU, its memory and the driver; it fails when the instance has no GPU
-!nvidia-smi || echo "No GPU detected – please switch to a GPU-backed instance (ml.g6e.xlarge) before running this notebook."
+!nvidia-smi || echo "No GPU detected; the next cell stops the notebook"
 ```
 
 
@@ -126,8 +126,15 @@ We reuse the same two buckets as the Bedrock episode: the shared bucket for `met
 import os
 os.environ["HF_HOME"] = "/home/ec2-user/SageMaker/hf_cache"   # before any Hugging Face import: every model download goes to the volume, not the small root disk
 import torch
-print("torch cuda available:", torch.cuda.is_available())   # False means PyTorch cannot use the GPU even if nvidia-smi sees it
-print("num gpus:", torch.cuda.device_count())
+
+# Stop here, and so stop a Run All, unless this instance has a GPU big enough for the 27B model:
+# the install below is several gigabytes and the weights are 27 GB, neither worth downloading onto the wrong machine
+if not torch.cuda.is_available():
+    raise RuntimeError("No GPU: this notebook needs an ml.g6e.xlarge notebook instance. Stop this instance and create one as described above.")
+gpu_memory_gb = torch.cuda.get_device_properties(0).total_memory / 1e9
+if gpu_memory_gb < 40:
+    raise RuntimeError(f"GPU has {gpu_memory_gb:.0f} GB; the FP8 27B model needs a 48 GB GPU (ml.g6e.xlarge). Stop this instance and create one as described above.")
+print(f"GPU: {torch.cuda.get_device_name(0)}, {gpu_memory_gb:.0f} GB")
 ```
 
 ### Install vLLM first
