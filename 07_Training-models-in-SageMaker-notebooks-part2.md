@@ -439,7 +439,7 @@ for label, d, rate in [("job on ml.m5.large (CPU)", desc_cpu, prices["ml.m5.larg
 
 Typically the CPU run finishes about as fast or faster, and it is several times cheaper. Both jobs spend roughly the same few minutes on startup (pulling the container, downloading data; the unbilled wait for an instance comes before that), and the GPU container is larger, so it often takes a little *longer* to start. The actual training is a few seconds on either instance: the network has about 2,600 parameters and the whole training set is 569 rows, so each full-batch step is tiny and the T4 sits almost idle, and the one-time CUDA initialization adds a few seconds of its own. Startup dominates both bills, and the GPU bill is about 6x higher per minute (0.74 / 0.115), so the GPU costs several times more for no speedup. In our run the CPU job billed 2.6 minutes (`$0.005`) and the GPU job 3.7 minutes (`$0.046`): slower, and nine times the price. The GPU job's wall-clock was 8.6 minutes, because it first sat four and a half minutes in `Pending - Training job waiting for capacity`; GPU instances are in shorter supply than CPU ones, and the wait is not billed.
 
-A GPU pays off when the per-step work is large enough to keep it busy: bigger models, bigger batches, or datasets of hundreds of MB and up. If you ever do need more GPU than a `g4dn.xlarge`, the next sensible step is an `ml.g5.xlarge` (~`$1.41`/hour), not a multi-GPU box.
+A GPU is worth it when the per-step work is large enough to keep it busy: bigger models, bigger batches, or datasets of hundreds of MB and up. If you ever do need more GPU than a `g4dn.xlarge`, the next sensible step is an `ml.g5.xlarge` (~`$1.41`/hour), not a multi-GPU box.
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -466,7 +466,7 @@ Setting `instance_count=2` on an estimator makes SageMaker start two instances a
 - `train_nn.py` has no distributed code, so each instance trains its own independent copy of the model on all of the data for all 1000 epochs, and each saves a model.
 - SageMaker bills `BillableTimeInSeconds x InstanceCount`.
 
-So without a distribution strategy, two instances means the same job twice, in parallel, at double the cost. There is nothing to launch to see this; we ran it once while writing the episode, and the record is what the bullets predict: the same 3.5 minutes of wall-clock as the single-instance run, 5.5 billable minutes across the two instances, `$0.010`, two CloudWatch log streams, `algo-1` and `algo-2`, each printing all 1000 epochs, and two identical saved models. Nobody wants that job. The one worth launching is below.
+So without a distribution strategy, two instances means the same job twice, in parallel, at double the cost. There is nothing to launch to see this; we ran it once while writing the episode, and the record is what the bullets predict: the same 3.5 minutes of wall-clock as the single-instance run, 5.5 billable minutes across the two instances, `$0.010`, two CloudWatch log streams, `algo-1` and `algo-2`, each printing all 1000 epochs, and two identical saved models. The job worth launching is below.
 
 ### Data parallelism
 
@@ -542,7 +542,7 @@ helpers.estimate_parallel_speedup(params_billions=7, tokens_per_step=16 * 2000, 
 
 Read the three together. Two L40S instances over a 20 Gb/s network spend as long exchanging the 28 GB gradient as computing, so two machines finish in the same time as one and bill twice. Four L40S in one box over PCIe get 3.2 of the ideal 4. Eight A100s over NVLink get 7.8 of 8, which is why the big training boxes are built that way.
 
-The rule, then: data parallelism pays when each step's computation is large next to the exchange, which means a big model, a big batch and a fast link, in that order of importance. Run the function before renting more than one device, and read the cost line: the speedup is what you buy, the cost ratio is what you pay for it.
+Data parallelism helps when each step's computation is large next to the exchange, which means a big model, a big batch and a fast link, in that order of importance. Run the function before renting more than one device, and read the cost line: the speedup is what you buy, the cost ratio is what you pay for it.
 
 ### Setting it up for each kind of job
 

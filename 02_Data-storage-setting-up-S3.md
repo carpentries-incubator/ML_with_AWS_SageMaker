@@ -99,7 +99,7 @@ A SageMaker training or processing job reads only from buckets in its own region
 
 Tag values are case-sensitive, so use capitalised words with no spaces and the same spelling everywhere. `SinkOrSwim` and `sinkorswim` would be two separate rows in Cost Explorer. (The bucket name is lowercase because S3 requires it. Bucket names are not tags.)
 
-The account enforces these tags on every job and notebook instance. A launch with a tag missing, blank or off the lists is refused with `AccessDenied ... explicit deny`, and the message does not say which tag. Buckets are not checked, so take care here. A bucket with a wrong tag is created anyway, and its storage cannot be attributed on the bill. The training episode checks the tags in the notebook before each launch and names the problem, and [If a Launch Is Refused](../learners/refused-launch.md) has the full list of rules and fixes. The rules are not part of SageMaker. The instructor sets them up following the [AWS account preparation](../instructors/aws-account-prep.md) page.
+The account enforces these tags on every job and notebook instance. A launch with a tag missing, blank or off the lists is refused with `AccessDenied ... explicit deny`, and the message does not say which tag. Buckets are not checked. A bucket with a wrong tag is created anyway, and its storage cannot be attributed on the bill. The training episode checks the tags in the notebook before each launch and names the problem, and [If a Launch Is Refused](../learners/refused-launch.md) has the full list of rules and fixes. The rules are not part of SageMaker. The instructor sets them up following the [AWS account preparation](../instructors/aws-account-prep.md) page.
 
 | `Purpose` | Used for |
 |---|---|

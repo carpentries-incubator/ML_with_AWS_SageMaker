@@ -49,7 +49,7 @@ If you are not attending through the shared account, follow these steps:
 
 ### Instructors, before the workshop
 
-The rules above are not part of SageMaker. They are policies you attach to the account, and the shared data bucket does not fill itself. Work through the instructor pages before the first session: the [Account preparation checklist](../instructors/aws-account-prep.md) sets the quotas, Bedrock model access, the cost tags and the guard rails, and the [Shared data bucket](../instructors/shared-data-bucket.md) page stages the datasets and model weights the fine-tuning and RAG episodes read. The [Instructor Notes](../instructors/instructor-notes.md) index has the rest, including the end-of-workshop cleanup.
+The rules above are not part of SageMaker. They are policies you attach to the account, and the shared data bucket has to be staged. Work through the instructor pages before the first session: the [Account preparation checklist](../instructors/aws-account-prep.md) sets the quotas, Bedrock model access, the cost tags and the guard rails, and the [Shared data bucket](../instructors/shared-data-bucket.md) page stages the datasets and model weights the fine-tuning and RAG episodes read. The [Instructor Notes](../instructors/instructor-notes.md) index has the rest, including the end-of-workshop cleanup.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 

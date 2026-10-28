@@ -151,7 +151,7 @@ GPU-seconds = FLOPs ÷ (GPU speed in FLOPS × 0.25)      a training job reaches 
 
 The data sheet quotes a GPU's peak speed, about 70 TFLOPS for an A10G, 312 for an A100, 989 for an H100. A training job reaches about a quarter of that, because the GPU spends much of its time waiting for data to arrive from memory. Cost is GPU-hours times the hourly rate, plus the startup minutes every job spends pulling its container and data, which are billed too.
 
-For the class run, 251 pages at about 1,600 tokens each for 2 passes is 803,000 tokens. LoRA on 3.75B parameters is 4 × 3.75 billion × 803,000, about 1.2 × 10¹⁶ FLOPs. A quarter of an A10G's 70 TFLOPS is 17 trillion a second, so about 700 seconds, call it 12 minutes. Measured, the same instance trains at 1.45 seconds per page-pass, so 502 page-passes take about 12 minutes. The rule lands on the number.
+For the class run, 251 pages at about 1,600 tokens each for 2 passes is 803,000 tokens. LoRA on 3.75B parameters is 4 × 3.75 billion × 803,000, about 1.2 × 10¹⁶ FLOPs. A quarter of an A10G's 70 TFLOPS is 17 trillion a second, so about 700 seconds, call it 12 minutes. Measured, the same instance trains at 1.45 seconds per page-pass, so 502 page-passes take about 12 minutes, the same as the estimate.
 
 ### The same arithmetic as a function
 

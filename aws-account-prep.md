@@ -38,7 +38,7 @@ Console: **Service Quotas → AWS services → Amazon SageMaker**, in the region
 | `ml.g6e.xlarge for training job usage` | 100 | optional: fine-tuning Exercise 2 |
 | `Number of instances across all training jobs` | 250 (already applied) | account-level ceiling; 250 covers 100 students |
 | `ml.g5.xlarge for processing job usage` | 200 | Processing Jobs episode (both jobs) and fine-tuning homework (two jobs per student, possibly at once) |
-| `ml.g6.xlarge for training job usage` and `for processing job usage` | 100 each (fallback) | the capacity fallback for `ml.g5.xlarge` at the end of this page; it is on the guard-rail list, and a fallback without a quota is no fallback |
+| `ml.g6.xlarge for training job usage` and `for processing job usage` | 100 each (fallback) | the capacity fallback for `ml.g5.xlarge` at the end of this page; it is on the guard-rail list, and it needs a quota before it can be used |
 | `ml.g6e.xlarge for processing job usage` | 0 | no episode uses it; the Processing Jobs episode runs Qwen3-8B on `ml.g5.xlarge`, and the 27B generator runs only in the optional GPU-notebook episode, on a notebook instance |
 | `Number of instances across all processing jobs` | 250 (already applied) | account-level ceiling |
 

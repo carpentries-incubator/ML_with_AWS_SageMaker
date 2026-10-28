@@ -169,7 +169,7 @@ Work through this list before you sign off for the last time.
 - **Bedrock application inference profiles**: delete the ones you created, with the two cells at the top of this episode (they list and delete only the profiles named with your project and your name) or from the Bedrock console.
 - **GitHub personal access token**: revoke it on GitHub (Settings → Developer settings → Personal access tokens) if you made one for the optional PAT episode.
 
-Every stop and delete in this list has a one-line CLI equivalent; the optional episode *The Same Jobs from the Terminal* collects them, for the day you need to stop something from a machine with no browser.
+Every stop and delete in this list has a one-line CLI equivalent; the optional episode *The Same Jobs from the Terminal* collects them, for stopping something from a machine with no browser.
 
 In the shared workshop account, the instructors sweep the account with [aws-nuke](https://github.com/ekristen/aws-nuke) after the workshop. That sweep deletes notebook instances and the learner buckets only, so if you forget those, they will still go. It does not touch Bedrock application inference profiles, so those are yours to remove.
 
