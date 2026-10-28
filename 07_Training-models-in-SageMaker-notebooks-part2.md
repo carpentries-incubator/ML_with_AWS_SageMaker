@@ -96,7 +96,7 @@ Unlike the XGBoost script, this PyTorch script expects features and labels alrea
 
 Open `ML_with_AWS_SageMaker/scripts/train_nn.py` in the file browser and read it before going on; it is short. Three things to find: `TitanicNet`, a three-layer network with 7 inputs and one output; the training loop in `train()`, which prints `validation:accuracy = ...` once per hundred epochs (the hyperparameter-tuning episode's metric regex reads that line); and the last lines, which save the model to `/opt/ml/model` inside a job and to the working directory otherwise, the same trick as `train_xgboost.py`. Questions now are cheaper than questions once it is running on a billed instance.
 
-We reuse the `preprocess_data()` function from the lesson's `scripts/train_nn.py` rather than re-typing the preprocessing here: the same function will later be applied to the test set, so train and test are transformed identically. It returns the fitted `StandardScaler`, and we save it with `joblib` so the next episode can load it.
+We reuse the `preprocess_data()` function from the lesson's `scripts/train_nn.py` instead of retyping the preprocessing here: the same function will later be applied to the test set, so train and test are transformed identically. It returns the fitted `StandardScaler`, and we save it with `joblib` so the next episode can load it.
 
 ```python
 !pip install scikit-learn   # the notebook kernels do not ship it; train_nn.py imports it
@@ -157,7 +157,7 @@ print(f"Local training time: {local_elapsed:.2f} seconds, instance_type = {local
 ## The network as a SageMaker training job
 Now we submit a 1,000-epoch run as a SageMaker job. Its compute is chosen on the estimator, independently of the notebook that launches it. The first run uses the same `ml.m5.large` CPU instance as the XGBoost job, so there is a baseline before trying a GPU.
 
-A GPU is not necessarily worth it for this data. The CPU instance costs `$0.115` an hour and an `ml.g4dn.xlarge` GPU instance `$0.74` an hour on the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page. The GPU would have to save enough time to make up that difference, and the model may be too small to keep it busy. We measure it rather than assume that the more powerful hardware is the better choice.
+A GPU is not necessarily worth it for this data. The CPU instance costs `$0.115` an hour and an `ml.g4dn.xlarge` GPU instance `$0.74` an hour on the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page. The GPU would have to save enough time to make up that difference, and the model may be too small to keep it busy. We measure it instead of assuming the more powerful hardware is the better choice.
 
 #### Cost tracking
 As in the XGBoost episode, every training job needs its own tags: a job does not inherit the notebook instance's tags, and an untagged job is anonymous on the bill. Define them once here and pass `tags=job_tags` to every estimator below.
@@ -243,7 +243,7 @@ Each line:
 - **cost**: the wall-clock hours at the instance's price, `$1.13` an hour, so about `$9` a run. The second figure is the same times the number of runs, one here; the hyperparameter-tuning episode is where that multiplier bites.
 - **max_run**: twice the wall-clock estimate, in seconds, ready to paste into the estimator. A job that runs past this is killed, so a hung run costs at most `$18`, not a week.
 
-The function also returns the same numbers as a dictionary, so a notebook can use `max_run_seconds` and `instance_type` directly rather than copying them from the printout.
+The function also returns the same numbers as a dictionary, so a notebook can use `max_run_seconds` and `instance_type` directly, with no copying from the printout.
 
 ### What training a language model would cost
 
@@ -506,7 +506,7 @@ print(f"Data-parallel run: {(t.time() - start) / 60:.1f} min wall-clock on 2 x m
 desc_ddp = job_cost_report(pytorch_estimator_ddp.latest_training_job.name, prices["ml.m5.large"])
 ```
 
-Read the log before the bill. The two CloudWatch streams say different things: each prints `training on 285 of 569 rows` (or 284), and only `algo-1` prints the epochs and saves the model. That is the proof the work was split rather than copied. The run's final numbers are close to the single-instance run but not identical (our run: validation accuracy 0.818 against 0.804, validation loss 0.96 against 1.05): `train_nn.py` sets no random seed and `train_nn_ddp.py` fixes one, so the two runs did not start from the same weights, and a thousand Adam steps on a network that is overfitting by epoch 300 turn any such difference into a visible one. Two runs of `train_nn.py` differ from each other by as much.
+Read the log before the bill. The two CloudWatch streams say different things: each prints `training on 285 of 569 rows` (or 284), and only `algo-1` prints the epochs and saves the model. That is the proof the work was split, not copied. The run's final numbers are close to the single-instance run but not identical (our run: validation accuracy 0.818 against 0.804, validation loss 0.96 against 1.05): `train_nn.py` sets no random seed and `train_nn_ddp.py` fixes one, so the two runs did not start from the same weights, and a thousand Adam steps on a network that is overfitting by epoch 300 turn any such difference into a visible one. Two runs of `train_nn.py` differ from each other by as much.
 
 The comparison with the single-instance job, wall-clock and bill:
 
@@ -552,7 +552,7 @@ A job has one instance type and one count; the count is how many of that type, a
 |---|---|---|---|
 | Your own PyTorch script (this episode) | `distribution={"torch_distributed": {"enabled": True}}` on GPU instances, which starts one process per GPU; `{"mpi": {"enabled": True, "processes_per_host": 1}}` on CPU instances | the three additions in `train_nn_ddp.py`: join the process group, shard the rows, wrap the model in DDP; with a `DataLoader`, a `DistributedSampler` does the sharding | one `.npz` per channel, `FullyReplicated`: every instance downloads it and takes its shard |
 | Hugging Face `Trainer` (the fine-tuning episode) | `distribution={"torch_distributed": {"enabled": True}}` | nothing: `Trainer` detects the processes and does the three things itself; `per_device_train_batch_size` is then per GPU, so the effective batch is that times the device count | as above |
-| A model too large for one GPU's memory | the same launcher | `fsdp=` in the `TrainingArguments` (or DeepSpeed), which shards the weights, gradients and optimizer state across the GPUs so that a model too big for one fits; each GPU still takes its own batch, so it is data parallelism with sharded state, for memory rather than speed, and it only works inside one box or over a fast network | as above |
+| A model too large for one GPU's memory | the same launcher | `fsdp=` in the `TrainingArguments` (or DeepSpeed), which shards the weights, gradients and optimizer state across the GPUs so that a model too big for one fits; each GPU still takes its own batch, so it is data parallelism with sharded state, for memory and not for speed, and it only works inside one box or over a fast network | as above |
 | Built-in XGBoost (the optional challenge in the previous episode) | `instance_count=N`, no `distribution` | nothing: the algorithm trains across instances itself | the CSV split into several objects under one prefix, passed as `TrainingInput(prefix, distribution="ShardedByS3Key")` so each instance downloads only its share |
 | Hyperparameter tuning | `instance_count=1` on the estimator; parallelism is `max_parallel_jobs` on the tuner | nothing | as for a single job |
 

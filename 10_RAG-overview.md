@@ -51,7 +51,7 @@ The difference is in how each one bills.
 | **Model updates** | AWS and the provider | You: containers, CUDA, GPU memory |
 | **Model choice** | A curated catalog, proprietary models included | Any open-weight model you can load |
 
-Self-hosting on SageMaker gives you control over the weights, the libraries and the hardware, which matters for a specific open-weight model or your own fine-tune. The trade is that a rented GPU bills while the instance runs, whether or not it is generating answers, and research work is mostly occasional experiments rather than a steady stream of requests. A GPU instance is a rental whose meter runs until you turn it off, and forgetting to is the most common way a research team spends its cloud budget on nothing. Bedrock has no such failure. Stop calling it and you stop paying.
+Self-hosting on SageMaker gives you control over the weights, the libraries and the hardware, which matters for a specific open-weight model or your own fine-tune. The trade is that a rented GPU bills while the instance runs, whether or not it is generating answers, and research work is mostly occasional experiments, not a steady stream of requests. A GPU instance is a rental whose meter runs until you turn it off, and forgetting to is the most common way a research team spends its cloud budget on nothing. Bedrock has no such failure. Stop calling it and you stop paying.
 
 ### What forgetting costs
 
@@ -82,7 +82,7 @@ One forgotten weekend on the cheapest GPU instance costs more than fifty full ru
 - **Model choice.** You can only call models in the catalog. If the work depends on a specific open-weight model, your own fine-tune, or changes to the model's internals, you host it yourself.
 - **Very large batches.** Embedding tens of millions of chunks with a small open model can be cheaper per unit on a short-lived GPU job than per token. Do the arithmetic before assuming either way.
 - **Access and regions.** Some models have to be enabled in the console first, and the catalog differs by region. Check before a workshop or a deadline.
-- **Quotas.** On-demand throughput is rate-limited per model and per account. For a large batch, use the batch inference API or request a quota increase rather than retrying against the limit.
+- **Quotas.** On-demand throughput is rate-limited per model and per account. For a large batch, use the batch inference API or request a quota increase instead of retrying against the limit.
 - **Data handling.** Bedrock does not train on your prompts and keeps data in the region, or within the US when a `us.` cross-region profile is used; your institution's policy on sending documents to a hosted API still applies.
 - **Cost tracking takes one extra step.** On-demand calls carry no tags. To attribute spend to a project you route calls through a tagged *application inference profile* (the Tagging section below, and the Bedrock episode). Set up once; skip it and the usage is anonymous on the bill.
 
@@ -102,7 +102,7 @@ Call the embedding and generation models from your pipeline. You keep the retrie
 
 ### 2. SageMaker Processing jobs
 
-For a large corpus, or for an open-weight model Bedrock does not carry, run the embedding and the batch generation as jobs rather than against a live model. A Hugging Face Processing job starts a GPU instance, loads the model, works through all the chunks or questions, writes the results to S3 and ends. The GPU exists only while the job runs, so you get a self-managed model without the risk of forgetting to stop it. This is the safest way to use a GPU on SageMaker.
+For a large corpus, or for an open-weight model Bedrock does not carry, run the embedding and the batch generation as jobs instead of against a live model. A Hugging Face Processing job starts a GPU instance, loads the model, works through all the chunks or questions, writes the results to S3 and ends. The GPU exists only while the job runs, so you get a self-managed model without the risk of forgetting to stop it. This is the safest way to use a GPU on SageMaker.
 
 The cost is latency. A job takes several minutes to start, so this is for work done once and used many times, not for answering one question at a time.
 
@@ -112,7 +112,7 @@ The cost is latency. A job takes several minutes to start, so this is for work d
 
 For models up to about 70B you can choose a GPU instance (an [ml.g5.xlarge](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html), say), load the embedding and generation models in the notebook, and run RAG end to end there. It is the simplest setup to follow, and the best way to learn what happens inside a RAG pipeline, because every step is a line of Python you can inspect.
 
-It is also the most expensive way to run RAG and the easiest to get wrong. The GPU bills by the hour from the moment the instance starts until you stop it, through every stretch spent downloading PDFs, chunking text, reading results or at lunch. It is the route most often forgotten, because a notebook instance looks like a workspace rather than a running job. If you use it:
+It is also the most expensive way to run RAG and the easiest to get wrong. The GPU bills by the hour from the moment the instance starts until you stop it, through every stretch spent downloading PDFs, chunking text, reading results or at lunch. It is the route most often forgotten, because a notebook instance looks like a workspace, not a running job. If you use it:
 
 - Treat it as a learning exercise, not a way to deploy anything.
 - Stop the instance the moment you are done, and check its status on the [Notebook instances page](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/notebook-instances).

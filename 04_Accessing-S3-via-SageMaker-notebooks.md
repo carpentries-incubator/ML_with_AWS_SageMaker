@@ -274,7 +274,7 @@ file_list[:20]
 ### Challenge: before and after
 
 1. Using `helpers.get_s3_bucket_size(bucket_name)`, record the size of your bucket. Then create a second file (say `docs/Notes2.txt` with a few lines of text), upload it under the `docs/` prefix, and measure the bucket size again. By how much did it grow, and what does that cost per month at `$0.023` per GB?
-2. The training episode launches a job that writes its outputs to your bucket. Why does the lesson keep everything in one bucket, organised with prefixes like `docs/`, rather than creating a bucket per task?
+2. The training episode launches a job that writes its outputs to your bucket. Why does the lesson keep everything in one bucket, organised with prefixes like `docs/`, instead of creating a bucket per task?
 
 :::::::::::::::::::::::::::::::::::: solution
 

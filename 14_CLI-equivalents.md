@@ -241,7 +241,7 @@ JSON
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-Before sending it, check it the way the notebooks did. The lesson repository has the account's rules in `scripts/guardrails.json` and a script that applies them to a request file; a `Project` or `Purpose` off the lists, an instance type off the list or a cap over 48 hours is named here rather than refused silently by AWS:
+Before sending it, check it the way the notebooks did. The lesson repository has the account's rules in `scripts/guardrails.json` and a script that applies them to a request file; a `Project` or `Purpose` off the lists, an instance type off the list or a cap over 48 hours is named here, where AWS would refuse it silently:
 
 ```bash
 git clone -q https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git   # once, anywhere on the laptop
