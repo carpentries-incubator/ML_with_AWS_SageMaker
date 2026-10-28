@@ -19,7 +19,7 @@ exercises: 0
 
 ::::::::::::::::::::::::::::::::::::::::::::::
 
-Most researchers already have somewhere to run ML, a campus HPC cluster, a departmental GPU server, or their own workstation. The cloud is another option, with its own trade-offs in cost, performance, flexibility and control. This episode compares the options, then introduces the four AWS pieces every later episode uses, S3, a notebook instance, SageMaker jobs and Bedrock.
+Most researchers already have somewhere to run ML, a campus HPC cluster, a departmental GPU server, or their own workstation. The cloud is another option, with its own trade-offs in cost, performance, flexibility and control. This episode compares the options, then introduces the four AWS pieces the lesson is built from, S3, a notebook instance, SageMaker jobs and Bedrock.
 
 ### Cloud vs. the cluster down the hall
 
