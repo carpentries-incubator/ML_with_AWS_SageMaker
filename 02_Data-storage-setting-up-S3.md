@@ -195,7 +195,7 @@ Two buckets appear in this workshop, and this is the only one you create. Your b
 		- `~/Downloads/data/titanic/titanic_train.csv`
 		- `~/Downloads/data/titanic/titanic_test.csv`
 - Navigate to the Objects tab of your bucket, then **Upload**.
-- **Add Files** (`titanic_train.csv`, `titanic_test.csv`) and click **Upload** to complete. These two files are what the next episodes read: the *Accessing S3* episode loads them into a notebook straight from this bucket, and the training and tuning episodes point their jobs at the same two objects.
+- **Add Files** (`titanic_train.csv`, `titanic_test.csv`) and click **Upload** to complete. These two files are what the next episodes read: the [Accessing S3](04_Accessing-S3-via-SageMaker-notebooks.md) episode loads them into a notebook straight from this bucket, and the training and tuning episodes point their jobs at the same two objects.
 
 ##### 6. Take note of S3 URI for your data
 - After uploading a file to S3, click on the file to locate its **Object URI** (e.g., `s3://sinkorswim-doejohn/titanic_train.csv`). The Uniform Resource Identifier (URI) is a unique address that specifies the location of the file within S3. This URI is essential for referencing data in AWS services like SageMaker, where it will be used to load data for processing and model training.

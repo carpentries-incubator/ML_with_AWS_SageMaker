@@ -2,7 +2,7 @@
 title: 'Fine-tuning episode: cost, capacity and setup'
 ---
 
-Planning notes for running the *Fine-tuning a Vision-Language Model with Training Jobs* episode (Badger Scribe, CHURRO-3B LoRA) with a class of about 50 in a 2-hour slot (3 with the bonus exercises) (quotas below are sized for 100). Prices are on-demand SageMaker rates from the AWS price list published 2026-10-16 (`us-east-1` and the class account's `us-east-2` are the same for these instance types); re-check them before the term, since `ml.g5.xlarge` has already moved from `$1.21` to `$1.41` since the RAG episodes were written.
+Planning notes for running the [Fine-tuning a Vision-Language Model with Training Jobs](../episodes/08_Finetuning-BadgerScribe.md) episode (Badger Scribe, CHURRO-3B LoRA) with a class of about 50 in a 2-hour slot (3 with the bonus exercises) (quotas below are sized for 100). Prices are on-demand SageMaker rates from the AWS price list published 2026-10-16 (`us-east-1` and the class account's `us-east-2` are the same for these instance types); re-check them before the term, since `ml.g5.xlarge` has already moved from `$1.21` to `$1.41` since the RAG episodes were written.
 
 ## The in-class design
 
@@ -63,7 +63,7 @@ New accounts often have these at 0 to 4. Quota increases for GPU instances can t
 
 **Capacity.** Fifty `ml.g5.xlarge` launches within the same minute in one region can fail with `InsufficientCapacity` even when the quota allows it. Mitigations, in order: launch the class jobs in waves (table by table), and have `ml.g6.xlarge` (L4, 24 GB, `$1.13`/h; somewhat slower on this workload, with half the memory bandwidth, but still well within `max_run`) ready as a documented fallback instance type.
 
-**Model download.** The base weights (`stanford-oval/churro-3B`, ~7.5 GB) are *not* pulled from Hugging Face by the jobs. They are staged once in the shared bucket under `badger-scribe/model/churro-3B/` (step on the *Shared data bucket* page) and every estimator passes that prefix as a `model` channel; the Processing jobs mount the same prefix and pass it as `--model_id`. SageMaker copies it from S3 in ~1–2 minutes per job, and a hundred jobs starting in the same minute hit S3, which is built for that, rather than one Hugging Face repository. The scripts fall back to the Hub only when no `model` channel is given (self-paced learners who skipped the staging step), in which case the instance needs internet access (default outside a VPC). The CHURRO weights carry the Qwen research license (non-commercial), which is fine for a class.
+**Model download.** The base weights (`stanford-oval/churro-3B`, ~7.5 GB) are *not* pulled from Hugging Face by the jobs. They are staged once in the shared bucket under `badger-scribe/model/churro-3B/` (step on the [Shared data bucket](shared-data-bucket.md) page) and every estimator passes that prefix as a `model` channel; the Processing jobs mount the same prefix and pass it as `--model_id`. SageMaker copies it from S3 in ~1–2 minutes per job, and a hundred jobs starting in the same minute hit S3, which is built for that, rather than one Hugging Face repository. The scripts fall back to the Hub only when no `model` channel is given (self-paced learners who skipped the staging step), in which case the instance needs internet access (default outside a VPC). The CHURRO weights carry the Qwen research license (non-commercial), which is fine for a class.
 
 **Warm pools.** `keep_alive_period_in_seconds` on the estimator keeps the instance for the next job, which would let a relaunch skip the startup overhead. It needs its own quota (`ml.g5.xlarge for training warm pool usage`) and it bills for the idle time at the full rate, so for a class it adds a way to leave meters running. Leave it off.
 
@@ -71,7 +71,7 @@ New accounts often have these at 0 to 4. Quota increases for GPU instances can t
 
 ### 1. Stage the data in the shared read-only bucket
 
-Students do not create a bucket or upload anything for this episode. The data lives as a release on the lesson repository (`badger-scribe-data-v1`, ~130 MB) and is staged once per term under `badger-scribe/` in the shared bucket, next to the WattBot data. The CHURRO-3B weights (~7.5 GB) are staged once under `badger-scribe/model/churro-3B/` in the same bucket, from a laptop or a notebook instance rather than CloudShell. The bucket policy, layout and exact commands are on the *Shared data bucket: staging before each term* page.
+Students do not create a bucket or upload anything for this episode. The data lives as a release on the lesson repository (`badger-scribe-data-v1`, ~130 MB) and is staged once per term under `badger-scribe/` in the shared bucket, next to the WattBot data. The CHURRO-3B weights (~7.5 GB) are staged once under `badger-scribe/model/churro-3B/` in the same bucket, from a laptop or a notebook instance rather than CloudShell. The bucket policy, layout and exact commands are on the [Shared data bucket: staging before each term](shared-data-bucket.md) page.
 
 ### 2. The rest
 

@@ -55,9 +55,9 @@ The workflow is the diagram. Datasets and results live in S3. We work from a sma
 
 ### Notebook instance
 
-**The SageMaker notebook instance is where you work.** It is a small machine running JupyterLab, started at the beginning of the workshop and stopped at the end, and every notebook in the lesson runs on it. It is where code is written, scripts are tested on small data, jobs are launched and results are read back. It needs little power, because the expensive work runs elsewhere, so it is an `ml.t3.medium` at about five cents an hour. The cheap notebook stays up while you work, and the larger instances are paid for only while a job needs them. The *Notebooks as Controllers* episode creates it, and the two after that connect it to S3 and to a copy of the lesson's code.
+**The SageMaker notebook instance is where you work.** It is a small machine running JupyterLab, started at the beginning of the workshop and stopped at the end, and every notebook in the lesson runs on it. It is where code is written, scripts are tested on small data, jobs are launched and results are read back. It needs little power, because the expensive work runs elsewhere, so it is an `ml.t3.medium` at about five cents an hour. The cheap notebook stays up while you work, and the larger instances are paid for only while a job needs them. The [Notebooks as Controllers](03_SageMaker-notebooks-as-controllers.md) episode creates it, and the two after that connect it to S3 and to a copy of the lesson's code.
 
-The notebook instance is not the only way to drive AWS. Everything it does can be done from the AWS CLI on your own computer, which the optional [Same Jobs from the Terminal](14_CLI-equivalents.md) episode shows. We start with the notebook for two reasons. It is one more AWS tool worth knowing, and on the shared account it keeps every launched job visible, in a notebook the instructors can open, which is how a problem gets tracked down fast when a learner hits one.
+The notebook instance is not the only way to drive AWS. Everything it does can be done from the AWS CLI on your own computer, which the optional [The Same Jobs from the Terminal](14_CLI-equivalents.md) episode shows. We start with the notebook for two reasons. It is one more AWS tool worth knowing, and on the shared account it keeps every launched job visible, in a notebook the instructors can open, which is how a problem gets tracked down fast when a learner hits one.
 
 ### SageMaker
 
@@ -85,7 +85,7 @@ The difference between SageMaker and Bedrock is control against convenience. Sag
 
 Through the workshop, code is written in JupyterLab, datasets and results go to S3, training and other heavy jobs go to SageMaker, and Bedrock is called when a hosted model is enough.
 
-None of this needs the notebook instance. Everything here can be done from Python on your own computer or from the AWS command line, and the optional *The Same Jobs from the Terminal* episode shows how.
+None of this needs the notebook instance. Everything here can be done from Python on your own computer or from the AWS command line, and the optional [The Same Jobs from the Terminal](14_CLI-equivalents.md) episode shows how.
 
 ::::::::::::::::::::::::::::::::::::: keypoints
 

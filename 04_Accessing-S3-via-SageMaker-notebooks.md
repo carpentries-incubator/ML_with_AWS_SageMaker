@@ -95,7 +95,7 @@ train_data.head()
 ```
 
 ### B) Download copy into notebook environment
-`download_file` writes the object to the instance's disk, on the 20 GB `SageMaker/` volume. There is no transfer charge, because the instance and the bucket are in the same region, and in-region transfer between AWS services is free. The same call from a laptop, with the AWS CLI or with `boto3`, pulls the data out of AWS at `$0.09` per GB. The optional *Same Jobs from the Terminal* episode covers working from a laptop and when that charge matters. The file stays on the instance until you delete it.
+`download_file` writes the object to the instance's disk, on the 20 GB `SageMaker/` volume. There is no transfer charge, because the instance and the bucket are in the same region, and in-region transfer between AWS services is free. The same call from a laptop, with the AWS CLI or with `boto3`, pulls the data out of AWS at `$0.09` per GB. The optional [The Same Jobs from the Terminal](14_CLI-equivalents.md) episode covers working from a laptop and when that charge matters. The file stays on the instance until you delete it.
 
 #### Example
 

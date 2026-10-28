@@ -28,7 +28,7 @@ Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/06_Training-models-in-
 
 The Titanic data trains in a second on the notebook, and nothing about it needs the cloud. What it shows is the pattern. Test the code on a small sample first, on the cheapest machine you have, and once it works, scale up to a more powerful instance when the data or the model calls for one. The notebook instance is that cheap machine here. It is a rental too, at about five cents an hour, but a crash on it costs a few seconds of that, where a crash on a rented GPU costs the minutes the instance spent starting up, at twenty times the rate. A SageMaker training job is that scale-up step. The notebook describes the job and launches it, and SageMaker rents the instance, runs the script on it and releases it when the script ends. The fine-tuning episode follows the same two steps with a 3B model on a GPU, which does need the cloud.
 
-The notebook is not the only way to launch a job. The same launch is a few lines of the AWS CLI from a laptop, which the optional [Same Jobs from the Terminal](14_CLI-equivalents.md) episode shows, and on your own account that is a fine way to work once you know the pattern. On the shared account, launch from the notebook. Every job then comes from a notebook the administrators can open and read, which is what lets them find and fix a problem quickly if one arises.
+The notebook is not the only way to launch a job. The same launch is a few lines of the AWS CLI from a laptop, which the optional [The Same Jobs from the Terminal](14_CLI-equivalents.md) episode shows, and on your own account that is a fine way to work once you know the pattern. On the shared account, launch from the notebook. Every job then comes from a notebook the administrators can open and read, which is what lets them find and fix a problem quickly if one arises.
 
 This episode walks through both steps once with XGBoost. First the script runs on the notebook, to check that it handles the data and the arguments. Then the same script runs as a training job, with the data supplied from S3, and we look at how the job receives its inputs, where it writes its model, how to estimate its cost before launching and how to read the billable time afterwards.
 
@@ -132,7 +132,7 @@ For this test we download copies of the Titanic files from S3 onto the notebook 
 :::: callout
 We download the data into the notebook to test the code, as a local pipeline would. In a pipeline that scales, the data lives in S3 and the jobs read it from there.
 
-The download costs nothing beyond a fraction of a cent in requests. The notebook instance and the bucket are in the same region, and transfer between AWS services inside a region is free. Pulling the same files to a laptop with the AWS CLI is a transfer out of AWS at `$0.09` per GB, which the optional *Same Jobs from the Terminal* episode covers.
+The download costs nothing beyond a fraction of a cent in requests. The notebook instance and the bucket are in the same region, and transfer between AWS services inside a region is free. Pulling the same files to a laptop with the AWS CLI is a transfer out of AWS at `$0.09` per GB, which the optional [The Same Jobs from the Terminal](14_CLI-equivalents.md) episode covers.
 :::::
 
 Run the following cells to download the training and test CSVs. If the files do not appear in the Jupyter file browser, refresh it. A permissions error usually means the notebook role or the bucket policy does not allow the requested S3 operation.

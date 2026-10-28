@@ -2,7 +2,7 @@
 title: 'Running this lesson from your own machine'
 ---
 
-Every episode in this lesson runs on a SageMaker notebook instance, and the *Notebooks as Controllers* episode explains why: the instance's role is the identity, so no credential is installed on anyone's machine, and everyone has the same environment. If you later want to run the same cells from JupyterLab on your own computer, this page lists what changes. It is short, because the *jobs* do the work and the controller is cheap: a laptop is just another controller.
+Every episode in this lesson runs on a SageMaker notebook instance, and the [Notebooks as Controllers](../episodes/03_SageMaker-notebooks-as-controllers.md) episode explains why: the instance's role is the identity, so no credential is installed on anyone's machine, and everyone has the same environment. If you later want to run the same cells from JupyterLab on your own computer, this page lists what changes. It is short, because the *jobs* do the work and the controller is cheap: a laptop is just another controller.
 
 ## 1. Authenticate with short-lived credentials, never with access keys
 

@@ -27,7 +27,7 @@ Do this whenever the competition data changes (new pages pass review, labels are
 
    The script checks that every page id in the CSVs has an image, writes the three zips to `release/`, prints their sizes, and prints the publish command.
 3. Write `release_notes_v1.md` (template below) and run the printed `gh release create ...` command, logged in to the GitHub CLI with write access to the repository that hosts the release (`carpentries-incubator/ML_with_AWS_SageMaker`; pass `--repo` to the build script to publish elsewhere, e.g. on a fork while developing). The three zips of the German-letter release total ~130 MB and upload in under a minute.
-4. Update the version number (`V=1`) in the episode's self-paced callout and in step 4 of the *Shared data bucket* page. Earlier releases stay available, so a learner mid-way through an old version is not broken.
+4. Update the version number (`V=1`) in the episode's self-paced callout and in step 4 of the [Shared data bucket](shared-data-bucket.md) page. Earlier releases stay available, so a learner mid-way through an old version is not broken.
 
 The lesson's URLs point at the release on `carpentries-incubator/ML_with_AWS_SageMaker`. A copy of the same release also exists on the `qualiaMachine/ML_with_Amazon_SageMaker` fork, where it was first published; the zips are byte-identical, so either URL serves the same data.
 
@@ -57,7 +57,7 @@ Not for redistribution or commercial use; do not crawl the UWDC catalogs.
 
 ## Staging the release in the shared bucket
 
-Done once per term together with the WattBot data; the commands and the read-only bucket policy are on the *Shared data bucket: staging before each term* page.
+Done once per term together with the WattBot data; the commands and the read-only bucket policy are on the [Shared data bucket: staging before each term](shared-data-bucket.md) page.
 
 ## Self-paced learners
 
