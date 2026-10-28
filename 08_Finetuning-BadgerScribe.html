@@ -955,14 +955,22 @@ fit one GPU. LoRA splits across GPUs better than a full fine-tune does,
 because what the GPUs exchange after every step is the gradient, and in
 a LoRA run that is the adapter alone, under 1% of the model.
 <code>helpers.estimate_parallel_speedup</code> takes
-<code>method="lora"</code> for this; the class run on a four-GPU box, as
-an estimate only:</p>
+<code>method="lora"</code> for this. As in the PyTorch episode, it takes
+one step instead of the whole run, <code>tokens_per_step</code>, the
+batch size times the tokens per example, because the exchange it prices
+happens once per step. The class run on a four-GPU box, as an estimate
+only:</p>
 <div class="codewrapper sourceCode" id="cb4">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="co"># The class run on a 4 × A10G instance: the gradient exchanged is the adapter's, not the model's.</span></span>
 <span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a><span class="co"># An estimate, not a launch: a 12-minute job does not need four GPUs, and the box costs 5x the single one.</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a>helpers.estimate_parallel_speedup(params_billions<span class="op">=</span><span class="fl">3.75</span>, tokens_per_step<span class="op">=</span><span class="dv">4</span> <span class="op">*</span> <span class="dv">1600</span>, instance_type<span class="op">=</span><span class="st">"ml.g5.12xlarge"</span>, method<span class="op">=</span><span class="st">"lora"</span>)<span class="op">;</span></span></code></pre>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1" aria-label="code-block-4-3"></a>helpers.estimate_parallel_speedup(</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1" aria-label="code-block-4-4"></a>    params_billions<span class="op">=</span><span class="fl">3.75</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1" aria-label="code-block-4-5"></a>    tokens_per_step<span class="op">=</span><span class="dv">4</span> <span class="op">*</span> <span class="dv">1600</span>,        <span class="co"># one step, not the run: the job trains 1 page per GPU, so 4 pages on 4 GPUs, x 1,600 tokens a page</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1" aria-label="code-block-4-6"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.12xlarge"</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1" aria-label="code-block-4-7"></a>    method<span class="op">=</span><span class="st">"lora"</span>,</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1" aria-label="code-block-4-8"></a>)<span class="op">;</span></span></code></pre>
 </div>
 <p>Near 4x on 4 GPUs at about the same total cost, which is the case for
 a multi-GPU box when a LoRA run on a million pages has to finish by a
