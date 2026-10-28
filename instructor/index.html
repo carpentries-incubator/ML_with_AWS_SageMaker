@@ -413,10 +413,18 @@
     </nav><main id="main-content" class="main-content"><h1 class="schedule-heading">Summary and Schedule</h1>
       
 <section><h2 class="section-heading" id="workshop-overview">Workshop Overview<a class="anchor" aria-label="anchor" href="#workshop-overview"></a></h2>
-<hr class="half-width"><p>This workshop teaches how to run machine learning and AI work on AWS
-and keep the cost under control. It covers where the data goes, which
-machine does what, how a job is launched and paid for, and how to find
-out what it cost. It is in four parts.</p>
+<hr class="half-width"><p>This workshop teaches researchers how to run machine learning and AI
+work on AWS without losing track of what it costs. It works through the
+practical decisions, where to store the data, which compute to use, how
+to launch and monitor a job, and how to estimate and manage the
+cost.</p>
+<p>We use Amazon SageMaker to train, fine-tune and run our own models,
+and Amazon Bedrock to call models AWS hosts through an API. Throughout,
+we work from a small SageMaker notebook instance that acts as the
+controller. The demanding work runs on separate instances that SageMaker
+starts for each job and releases when the job finishes.</p>
+<p>The workshop is in four parts, from AWS basics to training, inference
+and resource management.</p>
 <div class="tabs">
 <nav><div id="nav-tab-1" class="nav nav-tabs" role="tablist">
 <button class="nav-link active" id="nav-tab-1-1" data-bs-toggle="tab" data-bs-target="#nav-tabpanel-1-1" type="button" role="tab" aria-controls="nav-tabpanel-1-1" aria-selected="true">
@@ -442,107 +450,129 @@ out what it cost. It is in four parts.</p>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
 <div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
-<p>What the cloud offers a researcher compared with a laptop or the
-cluster down the hall, what it costs, and the setup every later episode
-builds on.</p>
-<ul><li>The two services the lesson uses. <strong>SageMaker</strong> rents
-machines by the second, for a notebook you work in and for jobs that run
-on their own and end. <strong>Bedrock</strong> serves hosted models by
-the token, with nothing to start or stop.</li>
-<li>The four things every episode uses, S3, a notebook instance, jobs
-and Bedrock, and how every later episode estimates and checks what a job
-costs.</li>
-<li>Put the data in an S3 bucket, start a small notebook instance that
-launches everything else, read and write the bucket from it, and
-optionally put your notebooks under version control. The notebook is the
-controller, not the workhorse. The expensive compute runs on instances
-SageMaker rents for each job and releases when it ends.</li>
+<p>What cloud computing offers a researcher, when AWS makes sense next
+to a laptop or a campus cluster, and how its pricing works. Then the
+setup every later episode uses.</p>
+<ul><li>
+<strong>AWS services and pricing.</strong> What SageMaker, Bedrock
+and S3 each do, and the difference between paying for compute time and
+paying per token.</li>
+<li>
+<strong>Working environment.</strong> Create an S3 bucket for data
+and results, launch a small SageMaker notebook instance, and read and
+write files in S3 from Python. Optionally, put your notebooks under
+version control.</li>
+<li>
+<strong>Cost management.</strong> Choose compute to fit the job,
+estimate the cost before launching, and track spending across the
+resources you create.</li>
 </ul></div>
 <div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
-<p><strong>Training, fine-tuning and tuning.</strong> Every model in
-this part is trained by a SageMaker job on a rented instance that ends
-when the script does, launched from the small notebook, with the cost
-estimated before the launch and read back after it.</p>
-<ul><li>Train XGBoost and PyTorch models on the Titanic data as training
-jobs. Estimate the cost before each launch and read the billable seconds
-after, compare a CPU instance with a GPU, and see what two instances buy
-and what they do not.</li>
-<li>Fine-tune a 3B open-weight vision-language model with LoRA, as a
-training job with checkpoints and a runtime cap, for transcribing
-handwritten German letters (Badger Scribe), scored on held-out pages
-before and after.</li>
-<li>Run a hyperparameter tuning job that trains ten models under a
-budget set up front.</li>
+<p>Training, fine-tuning and hyperparameter tuning. SageMaker runs the
+training scripts on separate compute instances, starting with small
+models and ending with a vision-language model of billions of
+parameters. Along the way we compare hardware choices and see how
+training time, model size and the number of experiments set the
+cost.</p>
+<ul><li>
+<strong>Model training.</strong> Train XGBoost and PyTorch models on
+the Titanic data. Launch the training jobs from the notebook, compare
+CPU and GPU, and see when more than one instance helps.</li>
+<li>
+<strong>Fine-tuning.</strong> Adapt CHURRO-3B, an open-weight
+vision-language model, to transcribe historical German handwriting from
+the Badger Scribe challenge. Use LoRA to cut the GPU memory needed,
+estimate the run’s cost, and measure transcription accuracy before and
+after.</li>
+<li>
+<strong>Hyperparameter tuning.</strong> Set up a search over
+learning rates and epochs, let SageMaker run the training jobs, and
+compare the results under a cost ceiling.</li>
 </ul></div>
 <div id="nav-tabpanel-1-3" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-3">
-<p><strong>Inference and retrieval-augmented generation.</strong>
-Nothing is trained here. A RAG pipeline is built three ways, on
-Bedrock’s per-token models, as GPU jobs, and on a GPU notebook, and the
-three are compared on cost, speed and what they can run.</p>
-<ul><li>Build a RAG pipeline over a corpus of energy research papers
-(WattBot): embed the papers, retrieve, generate, score. The models are
-Bedrock’s, paid per token through tagged inference profiles so the spend
-has an owner, and the whole run costs cents.</li>
-<li>Add multimodal embeddings for the questions whose answers live in
-tables and figures, and measure what they change.</li>
-<li>Run the same pipeline with an open-weight model Bedrock does not
-serve, as SageMaker Processing jobs that rent a GPU for the minutes they
-need; optionally, the same on a notebook GPU, as the comparison.</li>
+<p>Inference and retrieval-augmented generation (RAG). Training changes
+a model’s parameters. Inference uses a model that is already trained. We
+build a RAG pipeline that retrieves passages from research papers and
+has a language model answer questions from that evidence, then build it
+again with open-weight models on SageMaker, on the same problem, to
+compare cost, performance and flexibility.</p>
+<ul><li>
+<strong>RAG with Bedrock.</strong> Build the pipeline for WattBot, a
+challenge of questions about the environmental impact of AI. Split
+research papers into searchable passages, embed them, retrieve the
+relevant evidence, and produce answers with citations. The models are
+Bedrock’s, with usage tracked through tagged inference profiles.</li>
+<li>
+<strong>Multimodal retrieval.</strong> Extend the pipeline to
+retrieve from figures and tables as well as text, and measure whether
+that improves the answers.</li>
+<li>
+<strong>RAG with SageMaker.</strong> Run the embedding and
+generation models yourself, as GPU Processing jobs that shut down when
+they finish, and compare the results and the costs with Bedrock. An
+optional episode runs the same pipeline interactively on a GPU notebook,
+to see model loading and inference step by step.</li>
 </ul></div>
 <div id="nav-tabpanel-1-4" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-4">
-<p><strong>Resource management and cleanup.</strong> What is still
-billing when the work is done, and how to make sure nothing is.</p>
-<ul><li>List what is running and stored under your name, then stop the
-notebook instance, delete the bucket, and remove the Bedrock
-profiles.</li>
-<li>Read the bill in Cost Explorer by the tags every resource
-carried.</li>
-<li>The rules the account enforced on every launch, and how to set the
-same rules on an account of your own.</li>
-<li>Optionally, the same jobs and cleanup from a terminal with the AWS
-CLI.</li>
+<p>Resource management and cost tracking. Cloud resources keep billing
+after you stop using them, notebook instances and stored data above all.
+We finish by reviewing what was created, checking what it cost, and
+cleaning up the account.</p>
+<ul><li>Find the running resources and stored data, stop the notebook
+instance, and remove what is no longer needed, including S3 buckets and
+Bedrock inference profiles.</li>
+<li>Use Cost Explorer and the resource tags to see where the workshop’s
+spending went.</li>
+<li>Review the account rules that kept costs in check during the
+workshop, and how to set the same safeguards on an AWS account of your
+own.</li>
+<li>Optionally, launch and manage the same resources from a terminal
+with the AWS CLI.</li>
 </ul></div>
 </div>
 </div>
 <div class="section level3">
 <h3 id="who-this-workshop-is-for">Who this workshop is for<a class="anchor" aria-label="anchor" href="#who-this-workshop-is-for"></a></h3>
-<p>Researchers and students who use ML or AI in their work and want or
-need to run it in the cloud. The lesson assumes a basic machine learning
-background: you know what training, hyperparameter tuning, fine-tuning,
-embeddings and retrieval-augmented generation are. It does not teach
-these concepts; instructors may briefly review some of them depending on
-the audience, but the default schedule does not include that time.
-Python and Jupyter are used throughout; no prior AWS experience is
-needed.</p>
+<p>Researchers and students who already use machine learning or AI and
+want to run that work in the cloud. You should be comfortable with
+Python and Jupyter and know the basics of model training, hyperparameter
+tuning, fine-tuning, embeddings and RAG. The emphasis is on using AWS,
+not on teaching those methods. Instructors may review some of them
+briefly depending on the audience, but the workshop assumes the
+background. No previous AWS experience is needed.</p>
 </div>
 <div class="section level3">
 <h3 id="cost-controls">Cost controls<a class="anchor" aria-label="anchor" href="#cost-controls"></a></h3>
-<p>The cloud does cost money, but far less than most researchers assume,
-and for most research projects it is cheap. Run as written, the whole
-workshop, training jobs, a tuning job, a LoRA fine-tune on a GPU and two
-RAG pipelines, costs each learner a few dollars. Every episode tags its
-resources, caps job runtime, estimates the cost before launching, checks
-the bill after, and cleans up, and the final episode covers monitoring,
-cleanup and the rules a shared account can enforce.</p>
+<p>One of the workshop’s main points is that cloud computing is
+affordable for research when the resources are chosen and managed with
+care. Run as written, the exercises cost each learner a few dollars, CPU
+and GPU training jobs, hyperparameter tuning, a LoRA fine-tune and RAG
+inference included.</p>
+<p>We estimate the cost before launching a job, set a limit on how long
+it can run, and check its billable time afterwards. Resources are tagged
+so that spending can be attributed to each learner and project. We also
+look at how fast the cost grows when a GPU instance is left running or
+an experiment is scaled up without checking what it needs.</p>
+<p>The workshop uses a shared AWS account with restrictions that block
+the expensive mistakes. The final part looks at those safeguards and how
+to set the same ones on an account of your own.</p>
 </div>
 <div class="section level3">
-<h3 id="what-this-workshop-does-not-cover">What This Workshop Does Not Cover<a class="anchor" aria-label="anchor" href="#what-this-workshop-does-not-cover"></a></h3>
+<h3 id="what-this-workshop-does-not-cover">What this workshop does not cover<a class="anchor" aria-label="anchor" href="#what-this-workshop-does-not-cover"></a></h3>
 <ul><li>
-<strong>General ML/AI concepts</strong>: the focus is on moving
-existing ML and AI work to the cloud, not on teaching training,
-fine-tuning or RAG themselves.</li>
+<strong>General ML/AI instruction.</strong> The focus is on running
+existing ML and AI workflows on AWS, not on teaching the
+algorithms.</li>
 <li>
-<strong>Deploying models as endpoints</strong>: serving a trained or
-fine-tuned model behind an always-on API.</li>
+<strong>Model deployment.</strong> We do not deploy trained or
+fine-tuned models as always-on inference endpoints.</li>
 <li>
-<strong>Agents and tool use</strong>: LLM applications that call
-tools or chain multiple model calls (e.g., Bedrock Agents).</li>
-</ul><p>If there’s a specific ML or AI workflow or AWS service you’d like to
-see included in this curriculum, please let us know! We’re happy to
-develop additional content to meet the needs of researchers, students,
-and ML/AI practitioners. Please <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/issues" class="external-link">post
-an issue on the lesson GitHub</a> or contact <a href="mailto:endemann@wisc.edu">endemann@wisc.edu</a> with suggestions
-or requests.</p>
+<strong>AI agents and tool use.</strong> We do not cover agent
+frameworks or applications that let a language model call external
+tools.</li>
+</ul><p>If there is another ML or AI workflow you would like to see covered,
+we welcome suggestions. <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/issues" class="external-link">Open
+an issue on the lesson GitHub</a> or email <a href="mailto:endemann@wisc.edu">endemann@wisc.edu</a>.</p>
 <!--
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
@@ -797,7 +827,7 @@ choose.</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
 <p>If you are attending this lesson at UW-Madison, the instructors will
 provide a shared AWS account for all attendees. You do not need to set
 up your own AWS account. What to expect:</p>
@@ -836,7 +866,7 @@ with an <code>AccessDenied</code> message that does not say why; <a href="refuse
 lesson’s helper module can tell you before and after the launch. Check
 there before emailing.</li>
 </ul></div>
-<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
+<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
 <p>If you are not attending through the shared account, follow these
 steps:</p>
 <ol style="list-style-type: decimal"><li>Create an account at <a href="https://aws.amazon.com/" class="external-link">aws.amazon.com</a> on the <strong>paid
