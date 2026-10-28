@@ -90,7 +90,7 @@ We'll measure that using ***character error rate (CER)***, the same metric used 
 
 ### What we'll do, and what it will cost
 
-We'll run the training on AWS SageMaker, using a managed training job rather than keeping an interactive GPU notebook running. SageMaker will provision the GPU, run our training script, save the model adapter and evaluation results, and shut down the instance when the job finishes.
+We'll run the training on AWS SageMaker, as a managed training job, with no interactive GPU notebook left running. SageMaker will provision the GPU, run our training script, save the model adapter and evaluation results, and shut down the instance when the job finishes.
 
 The entire run, including evaluation before and after fine-tuning, takes about 33 minutes on an `ml.g5.xlarge` instance and costs approximately `$0.75`, based on our measured October 2026 run.
 
@@ -159,7 +159,7 @@ For the class run, 251 pages at about 1,600 tokens each for 2 passes is 803,000 
 
 - `params_billions`: every parameter the model holds, including parts you are not training. CHURRO is a 3B language model plus a vision tower, 3.75B in all.
 - `examples`: one example is one training item, whatever the model is given one at a time. Here it is one page image with its transcription, and there are 251 of them. For a text model it would be one document; for a speech model, one recording.
-- `tokens_per_example`: how many tokens the model sees for one of those items. Tokens, not words, because the model never sees words. English text is about 1.3 tokens per word, more for German and for old spellings. An image on a Qwen-VL style model becomes one token per 28 × 28 pixel block after resizing, about 1,300 for a megapixel. For a page here that is about 1,300 for the image plus about 300 for the transcription, 1,600; the Setup section counts it with the model's own processor rather than guessing.
+- `tokens_per_example`: how many tokens the model sees for one of those items. Tokens, not words, because the model never sees words. English text is about 1.3 tokens per word, more for German and for old spellings. An image on a Qwen-VL style model becomes one token per 28 × 28 pixel block after resizing, about 1,300 for a megapixel. For a page here that is about 1,300 for the image plus about 300 for the transcription, 1,600; the Setup section counts it with the model's own processor, so it is not a guess.
 - `epochs`: passes over the data. The three numbers multiply to the tokens the model sees, 251 × 1,600 × 2, about 800,000. If you know the total tokens and not the breakdown, put the total in `examples` and 1 in `tokens_per_example`; the arithmetic is the same.
 - `method`: `"lora"` or `"full"`, which sets the bytes per parameter and the FLOPs per token.
 - `instance_type`: one of the boxes in the price list; leave it out and the cheapest one that fits is chosen.
@@ -245,7 +245,7 @@ The class row is measured. The homework and team rows take that run's seconds pe
 
 ![Cost per run on a log scale, from about a dollar for this episode's LoRA run to twelve thousand dollars for a 70B full fine-tune; a ten-run sweep shifts every bar up by one decade](fig/finetune-cost-ladder.svg){alt="Horizontal bar chart on a logarithmic dollar axis: this episode 0.75, homework 1.50, the full Badger Scribe train set 1.20, 7B full fine-tune 140, 70B LoRA 600, CHURRO-3B 6,300, 70B full fine-tune 12,000, with the ten-run sweep shown as a lighter extension of each bar"}
 
-The CHURRO bar is the model you are about to fine-tune. Stanford spent on the order of 800 H100-hours making it, and you get the benefit for a dollar because you are adapting it rather than retraining it. Starting from a model that already knows most of your task is the biggest saving available, and it is decided before any GPU is involved. The sweep extension is the one that surprises research groups. A first run is rarely the last, so a `$140` full fine-tune is usually a `$700` to `$1,400` project.
+The CHURRO bar is the model you are about to fine-tune. Stanford spent on the order of 800 H100-hours making it, and you get the benefit for a dollar because you are adapting it, not retraining it. Starting from a model that already knows most of your task is the biggest saving available, and it is decided before any GPU is involved. The sweep extension is the one that surprises research groups. A first run is rarely the last, so a `$140` full fine-tune is usually a `$700` to `$1,400` project.
 
 The number of passes is a choice. Two passes for the class run is a budget decision for a 33-minute job, not advice. Large instruction-tuning corpora usually get one to three passes, and a few hundred examples usually get three to five. Each extra pass adds the same amount again, so ten passes over the whole train set is about `$5`. Step 2 shows how to read the per-pass curve and decide.
 
@@ -288,7 +288,7 @@ A training job bills from the moment its instance is ready until the job ends, i
 | Save and upload the adapter | ~1 min | `$0.02` |
 | **One run** | **~33 min wall-clock, ~32 min billed** | **`$0.75`** |
 
-Every row is measured, from this job as run on 2026-10-21, 32.5 minutes from launch to finish, 31.7 billed, `$0.75`. Scoring a page takes 17 to 21 seconds, so the two 15-page evaluations and the curve points are 14 of the 32 minutes. Nearly half the bill goes to measuring rather than training.
+Every row is measured, from this job as run on 2026-10-21, 32.5 minutes from launch to finish, 31.7 billed, `$0.75`. Scoring a page takes 17 to 21 seconds, so the two 15-page evaluations and the curve points are 14 of the 32 minutes. Nearly half the bill goes to measuring, not training.
 
 Training time grows linearly with pages × epochs, and roughly linearly with image resolution, since every 28 × 28 pixel block of the page becomes one token in the model's sequence. Doubling `max_pixels` doubles the time; doubling epochs doubles it again. Those two settings, left at careless values, are why the estimate gets written down before the first run and compared to the `BillableTimeInSeconds` the job reports after it. We set `max_run` to about twice the estimate. If a run goes past that, SageMaker kills it and we lose at most a dollar, not a weekend.
 
@@ -365,7 +365,7 @@ print("Region:", region)
 print("Role:", role)
 ```
 
-Now the names, after moving into a project folder of our own under the instance root. Everything this episode downloads or stages (`data/`, `code/`) goes there, beside the lesson clone rather than inside it. Two buckets: the shared one the jobs read from, and your own, where everything they write lands. Your username goes into job names, which SageMaker requires to be unique in the account. The two S3 prefixes at the end are what the estimator mounts into the job as its `train` and `model` input channels.
+Now the names, after moving into a project folder of our own under the instance root. Everything this episode downloads or stages (`data/`, `code/`) goes there, beside the lesson clone and not inside it. Two buckets: the shared one the jobs read from, and your own, where everything they write lands. Your username goes into job names, which SageMaker requires to be unique in the account. The two S3 prefixes at the end are what the estimator mounts into the job as its `train` and `model` input channels.
 
 ```python
 !mkdir -p /home/ec2-user/SageMaker/badger-scribe   # a project folder beside the lesson clone, so data and job code stay out of the repository
@@ -539,11 +539,11 @@ helpers.estimate_finetune_cost(params_billions=70, examples=251, tokens_per_exam
                                instance_type="ml.p5.48xlarge");   # the largest box on the list: 8 x H100, 640 GB
 ```
 
-A 7B LoRA still fits one GPU, 22 GB on a 24 GB L4, for about `$0.50`; the full fine-tune of the same model needs 116 GB, a four-GPU box at `$13` an hour, and the account refuses it. At 70B the LoRA needs 179 GB, so even the adapter run is a four-GPU job the account refuses, and the full fine-tune needs 1,124 GB: nothing on the list holds it, and the function says what the largest box would do, start, bill ten minutes of startup at `$63` an hour, and die out of memory. That run is two or more such boxes with the model sharded across them, which is the `$12,000` row in the cost table once the data is a real corpus rather than 251 pages. On 251 pages the arithmetic is minutes everywhere, so these bills are mostly each box's price for ten minutes of startup; what the four runs show is the box a model forces you onto, which is the first thing to find out about a fine-tune, before the data or the epochs.
+A 7B LoRA still fits one GPU, 22 GB on a 24 GB L4, for about `$0.50`; the full fine-tune of the same model needs 116 GB, a four-GPU box at `$13` an hour, and the account refuses it. At 70B the LoRA needs 179 GB, so even the adapter run is a four-GPU job the account refuses, and the full fine-tune needs 1,124 GB: nothing on the list holds it, and the function says what the largest box would do, start, bill ten minutes of startup at `$63` an hour, and die out of memory. That run is two or more such boxes with the model sharded across them, which is the `$12,000` row in the cost table once the data is a real corpus and not 251 pages. On 251 pages the arithmetic is minutes everywhere, so these bills are mostly each box's price for ten minutes of startup; what the four runs show is the box a model forces you onto, which is the first thing to find out about a fine-tune, before the data or the epochs.
 
 ### A code folder for the job
 
-The three scripts the job needs are already on this instance, in the lesson clone. The job cannot use them from there: it runs in a container on another machine, and the only code it gets is the one directory named by `source_dir=` on the estimator, uploaded whole. That directory should hold what the job imports and a `requirements.txt` listing what the container has to install, and nothing else. So make a small `code/` folder here with copies of the three files, rather than pointing `source_dir` at the lesson's `scripts/` directory, which would upload every script in the lesson and need a requirements file written into the repository:
+The three scripts the job needs are already on this instance, in the lesson clone. The job cannot use them from there: it runs in a container on another machine, and the only code it gets is the one directory named by `source_dir=` on the estimator, uploaded whole. That directory should hold what the job imports and a `requirements.txt` listing what the container has to install, and nothing else. So make a small `code/` folder here with copies of the three files, instead of pointing `source_dir` at the lesson's `scripts/` directory, which would upload every script in the lesson and need a requirements file written into the repository:
 
 ```python
 import shutil
@@ -608,7 +608,7 @@ def make_job_tags(purpose: str):   # one of: Storage, Notebook, Training, Tuning
         {"Key": "Purpose", "Value": purpose},
     ])
 
-make_job_tags("Training");   # fails here, with the fix, rather than at the launch; the semicolon keeps Jupyter from also displaying the list
+make_job_tags("Training");   # fails here, with the fix, and not at the launch; the semicolon keeps Jupyter from also displaying the list
 ```
 
 ## Step 1: Launch the LoRA fine-tune
@@ -822,7 +822,7 @@ print(json.dumps(summary, indent=2))
 Both evaluations ran on the same 15 pages, so the difference is the LoRA fine-tune and nothing else.
 
 ```python
-before = pd.read_csv(os.path.join(run_dir, "eval_before.csv"), keep_default_na=False)   # empty predictions stay "" rather than NaN
+before = pd.read_csv(os.path.join(run_dir, "eval_before.csv"), keep_default_na=False)   # empty predictions stay "", not NaN
 after = pd.read_csv(os.path.join(run_dir, "eval_after.csv"), keep_default_na=False)
 
 # cer = character error rate per page: edits / characters in the reference, lower is better
@@ -1222,7 +1222,7 @@ Compare the cost per run, not the hourly rate: the fixed overhead is a larger sh
 ::::::::::::::::::::::::::::::::::::: keypoints
 
 - Fine-tuning cost is GPU-hours × hourly rate, and GPU-hours scale with model size × tokens × epochs × attempts. The same recipe runs from under a dollar (3B, LoRA, a few hundred pages) to tens of thousands (70B, full fine-tune, days on multi-GPU nodes). Starting from a model that already knows most of the task is the biggest saving available.
-- Training jobs, not GPU notebooks, are the safe way to run it: they end, `max_run` guarantees it, a unique `job_name` prevents a second copy launching by accident, and checkpoints synced to S3 mean a killed job costs an epoch rather than the run. Interrupting a notebook cell does not stop a job.
+- Training jobs, not GPU notebooks, are the safe way to run it: they end, `max_run` guarantees it, a unique `job_name` prevents a second copy launching by accident, and checkpoints synced to S3 mean a killed job costs an epoch, not the run. Interrupting a notebook cell does not stop a job.
 - Estimate before launching (startup overhead + pages × epochs × seconds per page, at the instance's rate), then compare to `BillableTimeInSeconds`.
 - Image resolution (`max_pixels`) and epochs change cost by multiples; the instance size changes it by 5–45x, which is right when the model does not fit on one GPU and waste when it does.
 - Score the holdout at the end of every epoch: the curve, not a rule of thumb, says how many passes were worth paying for. Measure the gain on the same held-out pages before and after, with the task's own metric, and a page-level holdout is optimistic when the real test is split by document.

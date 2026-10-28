@@ -66,7 +66,7 @@ The habit is the same as for instances. Pick the cheapest candidate that scores 
 
 ## Notebook + dataset setup
 
-For this episode you need a SageMaker notebook instance, but **not a GPU one**. A small CPU instance such as `ml.t3.medium` is enough, because the models run on Bedrock rather than in the notebook. The notebook's execution role must allow Bedrock access, which a default SageMaker role does not. On the class account both roles the console offers carry it. On your own account, attach the Bedrock policy from the *Account preparation checklist* instructor page to your role before starting; the first Bedrock call fails with an access-denied error naming the role until it is there.
+For this episode you need a SageMaker notebook instance, but **not a GPU one**. A small CPU instance such as `ml.t3.medium` is enough, because the models run on Bedrock, not in the notebook. The notebook's execution role must allow Bedrock access, which a default SageMaker role does not. On the class account both roles the console offers carry it. On your own account, attach the Bedrock policy from the *Account preparation checklist* instructor page to your role before starting; the first Bedrock call fails with an access-denied error naming the role until it is there.
 
 See [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for further guidance on instance types.
 
@@ -296,7 +296,7 @@ except ClientError:
 page_docs[0] if page_docs else None
 ```
 
-A paper whose PDF the corpus build could not download has no pages here, and a question that cites it can only score zero, which would measure the download rather than the pipeline. `drop_questions_without_papers` removes those questions from the evaluation set and says which papers were missing; the unanswerable questions, which cite nothing, stay.
+A paper whose PDF the corpus build could not download has no pages here, and a question that cites it can only score zero, which would measure the download, not the pipeline. `drop_questions_without_papers` removes those questions from the evaluation set and says which papers were missing; the unanswerable questions, which cite nothing, stay.
 
 ```python
 from wattbot_rag import drop_questions_without_papers
@@ -913,7 +913,7 @@ This step cuts the tables and figures out of the PDFs as images, builds a second
 
 ### Extract the tables and figures
 
-Why cut them out at all, rather than hand the embedding model a whole page, or the PDF itself (Nova accepts documents as input)? For the same reason Step 6 cut the text into chunks instead of embedding each paper whole. An embedding is a fixed-length vector, a thousand numbers, whatever goes in; the more that goes in, the less of each thing survives in it. A page holding two tables, a figure and three paragraphs gets one vector that is a blur of all six, and a question about one of the tables has to match that blur. A crop of the table gets a vector that is about the table. The same holds at generation time. The vision model reads a crop at full resolution for a few hundred tokens, where a page costs a thousand tokens and shows the table at a quarter of the size. We tried whole pages first on this corpus. They helped figure questions a little and tables not at all. The crops, as the callout at the end shows, help both.
+Why cut them out at all, instead of handing the embedding model a whole page, or the PDF itself (Nova accepts documents as input)? For the same reason Step 6 cut the text into chunks instead of embedding each paper whole. An embedding is a fixed-length vector, a thousand numbers, whatever goes in; the more that goes in, the less of each thing survives in it. A page holding two tables, a figure and three paragraphs gets one vector that is a blur of all six, and a question about one of the tables has to match that blur. A crop of the table gets a vector that is about the table. The same holds at generation time. The vision model reads a crop at full resolution for a few hundred tokens, where a page costs a thousand tokens and shows the table at a quarter of the size. We tried whole pages first on this corpus. They helped figure questions a little and tables not at all. The crops, as the callout at the end shows, help both.
 
 A PDF has no table or figure objects to pull out. It stores text runs, raster images, and drawing commands (lines, fills, curves), and a plot is a few thousand of the last. [PyMuPDF](https://pymupdf.readthedocs.io/) ships three detectors that turn those back into boxes. `find_tables` finds tables from their rulings or their text alignment, `get_image_info` lists the embedded raster images, and `cluster_drawings` groups the drawing commands of a vector figure into one bounding box. `extract_figures_and_tables` in `wattbot_rag.py` runs the three on every page, drops page-sized background fills, rules and logos, pairs each box with the nearest caption line starting "Table N" or "Figure N" (tables are captioned above, figures below) and widens the crop to include that caption, so the image carries the identifier a question will use. A caption whose box no detector found falls back to the whole page, so nothing the text mentions is missed. Open the function; it is about eighty lines, and every rule in it is a line you can change. The detectors are the slow part, a second or two per page on this instance, so the cell runs them only on the pages whose text carries a caption, under half of the corpus; in class, with `use_instructor_embeddings` set, it downloads the crops your instructor made instead.
 
@@ -969,7 +969,7 @@ for c in [c for c in crops if c["kind"] == "table"][:2] + [c for c in crops if c
 
 ### Embed the crops
 
-The embedding model lives in `us-east-1`, so this is a second runtime client pointed there. One difference from the text models is that Bedrock rejects this model's request body when it arrives through an application inference profile, so these calls use the model ID directly and are the one Bedrock spend in this lesson that carries no project tags. `embed_multimodal` builds the model's request body (Nova's says whether a vector is for the index or for a query, and that the image is a document rather than a photo) and returns a unit vector. Set `multimodal_model_id` to `amazon.titan-embed-image-v1` to try the older model; the function handles both.
+The embedding model lives in `us-east-1`, so this is a second runtime client pointed there. One difference from the text models is that Bedrock rejects this model's request body when it arrives through an application inference profile, so these calls use the model ID directly and are the one Bedrock spend in this lesson that carries no project tags. `embed_multimodal` builds the model's request body (Nova's says whether a vector is for the index or for a query, and that the image is a document, not a photo) and returns a unit vector. Set `multimodal_model_id` to `amazon.titan-embed-image-v1` to try the older model; the function handles both.
 
 ```python
 multimodal_region = "us-east-1"
@@ -1061,7 +1061,7 @@ for label, qs in groups.items():
     print(f"{label:<12}{len(qs):>4}{paper_text:>14.2f}{paper_image:>14.2f}{crop_cols}")
 ```
 
-Read the paper columns first. Both indexes find the paper for nearly every table and figure question, so at that level there is nothing to win, and the image index is behind. The crop columns are the real comparison. They say whether the text route, chunks and the crops on their pages, or the image route, the crops themselves, more often puts the exact table or figure in front of the model. If the image column is higher there while the paper column is lower, the image index is doing a different job than the text index, finding the object rather than the document, and the next cells show whether the model can use it. If both crop columns are low, the fix is upstream, in the extraction, where a table the detector missed became a whole-page fallback, and a page is a weak key.
+Read the paper columns first. Both indexes find the paper for nearly every table and figure question, so at that level there is nothing to win, and the image index is behind. The crop columns are the real comparison. They say whether the text route, chunks and the crops on their pages, or the image route, the crops themselves, more often puts the exact table or figure in front of the model. If the image column is higher there while the paper column is lower, the image index is doing a different job than the text index, finding the object, not the document, and the next cells show whether the model can use it. If both crop columns are low, the fix is upstream, in the extraction, where a table the detector missed became a whole-page fallback, and a page is a weak key.
 
 ### Let the model see the table or figure
 

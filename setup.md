@@ -25,7 +25,7 @@ There are two ways to get access to AWS for this lesson. Please wait for a pre-w
 
 If you are attending this lesson at UW-Madison, the instructors will provide a shared AWS account for all attendees. You do not need to set up your own AWS account. What to expect:
 
-* Before the workshop, the instructor adds you to the shared account and emails you a **sign-in link**. It opens the AWS console directly in the workshop account and role after you sign in with your UW–Madison NetID. Bookmark it; it is the link you will use every session. The link is sent by email rather than posted here on purpose: treat it like any other sign-in page and only use the one your instructor sent.
+* Before the workshop, the instructor adds you to the shared account and emails you a **sign-in link**. It opens the AWS console directly in the workshop account and role after you sign in with your UW–Madison NetID. Bookmark it; it is the link you will use every session. The link is sent by email and not posted here on purpose: treat it like any other sign-in page and only use the one your instructor sent.
 * **Verify your access before the workshop**: open the link and sign in. If you see a "no access" or "not assigned" message, email the instructor with your username. Check that the account name and region in the top-right of the console match the email.
 * Three rules on the shared account:
     * Stick to the lesson materials, so that expensive pipelines (e.g., training/tuning LLMs) do not lead to high costs and wasted credits.
@@ -70,6 +70,6 @@ Skim the [Glossary](https://carpentries-incubator.github.io/ML_with_AWS_SageMake
 
 ### 5. Episodes 1 to 4 come first
 
-The first four episodes are the setup for everything after them, and the instructor walks through them with the class rather than leaving them as reading. Episode 2 creates the S3 bucket that every later episode writes to, and episode 3 creates the notebook instance and clones this lesson's repository onto it, which is where the prefilled notebooks for every episode come from: each later episode opens with "Open the notebook from `/ML_with_AWS_SageMaker/notebooks/...`", and that folder exists only once episode 3 has been done. Episode 4 is where the notebook first reads your bucket, with the helper that every later data step uses.
+Do episodes 1 to 4 before anything else. Episode 2 creates your S3 bucket, episode 3 creates the notebook instance and clones the lesson onto it, which is where every later episode's notebook comes from, and episode 4 is the first read of your bucket from the notebook.
 
-If you want to jump ahead to a later episode, do episodes 1 to 4 first on the instance you will use, and then start wherever you like. After that, the training episodes 6, 7 and 9 are a sequence (the tuning episode, 9, uses the files 7 saves), the fine-tuning episode 8 stands on its own, and the RAG episodes (10 to 13) are a sequence, since each one reuses what the one before it cached in your bucket.
+After that, the order is loose. Episodes 6, 7 and 9 are a sequence (9 uses files 7 saves). Episode 8 stands on its own. Episodes 10 to 13 are a sequence, since each reuses what the one before cached in your bucket.

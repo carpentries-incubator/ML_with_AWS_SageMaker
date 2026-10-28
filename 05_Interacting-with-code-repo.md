@@ -128,7 +128,7 @@ helpers.convert_files(direction="notebook_to_python")
 !git status   # shows the untracked files (the .ipynb and the .py); nothing is staged yet
 ```
 
-2. Add and commit. We add the `.py` by name rather than `git add .`, so the `.ipynb` copy is never tracked (Step 5 ignores it for good).
+2. Add and commit. We add the `.py` by name, not with `git add .`, so the `.ipynb` copy is never tracked (Step 5 ignores it for good).
 
 ```python
 !git add 04_Accessing-S3-via-SageMaker-notebooks.py   # stage: mark this file to go into the next commit
@@ -168,7 +168,7 @@ with open(".gitignore", "a") as gitignore:
 ```
 
 ## Step 6: Pull, then push
-Before pushing, pull: the remote already has the README that GitHub created, and in a shared repository it may have your collaborators' commits. Pulling first means your push is a simple addition rather than a rejected one.
+Before pushing, pull: the remote already has the README that GitHub created, and in a shared repository it may have your collaborators' commits. Pulling first means your push adds to the remote instead of being rejected.
 
 #### Which pull strategy
 Git has to decide how to combine your local commits with remote ones. The three options:

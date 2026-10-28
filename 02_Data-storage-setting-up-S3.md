@@ -91,17 +91,15 @@ A SageMaker training or processing job reads only from buckets in its own region
 
 **Bucket Versioning**: leave **Disable** (the default). Versioning keeps every overwritten copy and raises storage costs; it is useful for datasets that change over time, not for this workshop.
 
-**Tags (NOT OPTIONAL)**: tags are how the bill is broken down by project, person and purpose; this is the one section you must fill in. Add the following three keys, spelled exactly (they are the account's approved cost-allocation keys, see [KB 72454](https://kb.wisc.edu/72454)). You will put the same three keys on every resource you create in this lesson.
+**Tags**: tags are how the bill is broken down by project, person and purpose. Add these three keys, spelled exactly as shown (they are the account's approved cost-allocation keys, see [KB 72454](https://kb.wisc.edu/72454)), and use the same three on every resource you create in this lesson.
 
-- **Project**: your challenge, one of `WattBot2026`, `BadgerScribe`, `BadgerCode`, `BrainDecoding`, `PoisonedWell`, `SnapshotWI`, spelled exactly like that, or `SinkOrSwim`, the workshop's own project, if you are not on a challenge yet. The account refuses a job tagged with any other Project value, so a typo is caught at the first launch rather than on the bill.
+- **Project**: your challenge, one of `WattBot2026`, `BadgerScribe`, `BadgerCode`, `BrainDecoding`, `PoisonedWell`, `SnapshotWI`, or `SinkOrSwim`, the workshop's own project, if you are not on a challenge yet.
 - **Name**: your last and first name run together, e.g. `DoeJohn`
 - **Purpose**: one of five fixed values, here `Storage`
 
-AWS allows tag values of up to 256 characters made of letters, digits, spaces and `+ - = . _ : / @`, and they are case-sensitive. We use capitalised words with no spaces, and the same spelling on every resource. `SinkOrSwim` and `sinkorswim` would be separate rows in Cost Explorer, and the account accepts only the first: the `Project` and `Purpose` lists are case-sensitive, so a job tagged `sinkorswim` or `training` is refused. (The bucket name is lowercase because S3 requires it; bucket names are not tags.)
+Tag values are case-sensitive, so use capitalised words with no spaces and the same spelling everywhere. `SinkOrSwim` and `sinkorswim` would be two separate rows in Cost Explorer. (The bucket name is lowercase because S3 requires it. Bucket names are not tags.)
 
-`Purpose` takes one of five values, so that the bill can be summed by kind of work rather than by individual job. Which job it was is already in the job's name.
-
-These lists are enforced: the account refuses a job whose tags are missing, blank or off the lists, and the refusal says only `AccessDenied ... explicit deny`, not which tag. The training episode checks the tags in the notebook before each launch and names the problem; [If a Launch Is Refused](../learners/refused-launch.md) is the full list of rules and fixes, for later. The rules are not part of SageMaker: the instructor sets them from the account's administrator view, and an instructor running this lesson on a new account sets them up following the [AWS account preparation](../instructors/aws-account-prep.md) page before class.
+The account enforces these tags on every job and notebook instance. A launch with a tag missing, blank or off the lists is refused with `AccessDenied ... explicit deny`, and the message does not say which tag. Buckets are not checked, so take care here. A bucket with a wrong tag is created anyway, and its storage cannot be attributed on the bill. The training episode checks the tags in the notebook before each launch and names the problem, and [If a Launch Is Refused](../learners/refused-launch.md) has the full list of rules and fixes. The rules are not part of SageMaker. The instructor sets them up following the [AWS account preparation](../instructors/aws-account-prep.md) page.
 
 | `Purpose` | Used for |
 |---|---|

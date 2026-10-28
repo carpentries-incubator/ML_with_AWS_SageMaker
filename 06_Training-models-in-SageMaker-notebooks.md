@@ -576,7 +576,7 @@ builtin_s3_path = f"s3://{bucket_name}/{builtin_s3_key}"
 print("Uploaded:", builtin_s3_path)
 ```
 
-With our script, the data path was just another flag the script read. The built-in algorithm has no flags: the data arrives as a `TrainingInput` channel it knows to look for. Here there is no script of ours in the container, so the dictionary goes to AWS's own training code, which reads it as XGBoost's parameters: the keys must be XGBoost's parameter names (`max_depth`, `eta`, `num_round`), not flags we invented, and there is no `train` key because the data arrives as a channel. We also add `objective`, because the built-in algorithm's default objective is regression rather than binary classification.
+With our script, the data path was just another flag the script read. The built-in algorithm has no flags: the data arrives as a `TrainingInput` channel it knows to look for. Here there is no script of ours in the container, so the dictionary goes to AWS's own training code, which reads it as XGBoost's parameters: the keys must be XGBoost's parameter names (`max_depth`, `eta`, `num_round`), not flags we invented, and there is no `train` key because the data arrives as a channel. We also add `objective`, because the built-in algorithm's default objective is regression, and we are classifying.
 
 ```python
 %%script false --no-raise-error
@@ -628,7 +628,7 @@ Then the cost report:
 desc = job_cost_report(xgboost_estimator_builtin.latest_training_job.name, price_per_hour)
 ```
 
-The bill is the same two or three billable minutes, since both jobs spend their time on startup rather than on the fraction of a second of training, and the accuracy matches to within the randomness of subsampling. The built-in route saves writing a script and costs the preprocessing step and every bit of logic of your own. Every later episode uses the script route, because every later job has such logic.
+The bill is the same two or three billable minutes, since both jobs spend their time on startup and a fraction of a second on training, and the accuracy matches to within the randomness of subsampling. The built-in route saves writing a script and costs the preprocessing step and every bit of logic of your own. Every later episode uses the script route, because every later job has such logic.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 

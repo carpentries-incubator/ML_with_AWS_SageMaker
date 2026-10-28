@@ -19,7 +19,7 @@ exercises: 15
 - Build the embedding matrix and the retrieval step with a self-hosted embedding model, in plain NumPy.
 - Build a small retrieval helper that finds the most relevant chunks for a question using cosine similarity in embedding space.
 - Serve a 27B open-weight generator (Qwen3.8-27B in FP8, via vLLM) on the notebook's GPU and wire it to the retriever to produce WattBot-format answers (including `answer`, `ref_id`, `ref_url`, and `supporting_materials`).
-- Explain why inference uses quantized weights rather than bf16, and what a self-hosted GPU costs per hour, per forgotten weekend, and per forgotten month.
+- Explain why inference uses quantized weights instead of bf16, and what a self-hosted GPU costs per hour, per forgotten weekend, and per forgotten month.
 - Add a second LLM pass that generates short explanations and marks whether the evidence comes from text, figures, tables, or a combination.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
@@ -407,7 +407,7 @@ We will:
 
 ```python
 import os
-# Keep model weights on the notebook's 100 GB volume rather than the small root disk.
+# Keep model weights on the notebook's 100 GB volume, not the small root disk.
 
 from vllm import LLM, SamplingParams
 
@@ -473,7 +473,7 @@ print(f"Generator ({qwen_model_id}) test response: {test_response}")
 `call_qwen_chat` has the signature the shared pipeline expects, `generate(system_prompt, user_prompt, max_new_tokens) -> str`, and `embed_query` has the other one. `run_single_qa` in `wattbot_rag.py` makes two calls per question with them:
 
 - The first asks for a JSON object with `answer`, `answer_value` (normalized scalar, range or category), `answer_unit`, `ref_id` (list of document ids), `is_blank` and `supporting_materials`. The retrieved chunks go in the user turn, labelled `[doc_id, page N]` so the model can cite them, along with the expected `answer_unit` from `train_QA.csv` as a hint, so the number comes back in the unit the ground truth uses.
-- The second, made only when the first produced an answer, asks for a short explanation. With `with_evidence_type=True` it also asks the model to name the **main type of evidence** (`text`, `table`, `figure`, or a combination) in the strict format `evidence_type: explanation`, and the code turns that into `[evidence_type] explanation` for the CSV, so the tag is parsed rather than trusted.
+- The second, made only when the first produced an answer, asks for a short explanation. With `with_evidence_type=True` it also asks the model to name the **main type of evidence** (`text`, `table`, `figure`, or a combination) in the strict format `evidence_type: explanation`, and the code turns that into `[evidence_type] explanation` for the CSV, so the tag is parsed, not trusted.
 
 ```python
 print(ANSWER_SYSTEM_PROMPT)
