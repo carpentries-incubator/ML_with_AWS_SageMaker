@@ -10,7 +10,7 @@ Everything below, as a list to work down. The sections that follow have the deta
 
 1. **Pick the region** and use it for everything after this (next section).
 2. **File the GPU quota increases**, three to four weeks ahead (*SageMaker service quotas*).
-3. **The notebook role.** Make sure `ml-sagemaker-use` exists, then attach its three inline policies from CloudShell: `WorkshopGuardRails` from the repo's `scripts/guardrails.json`, `ReadOwnCloudTrail`, and `BedrockAccess` (*The notebook role*, *Permission set guard rails*, *Bedrock*). Run the policy simulator, then one test job of each kind from a learner sign-in.
+3. **The notebook role.** Create `ml-sagemaker-use` if the account does not have it, then attach its three inline policies from CloudShell: `WorkshopGuardRails` from the repo's `scripts/guardrails.json`, `ReadOwnCloudTrail`, and `BedrockAccess` (*The notebook role*, *Permission set guard rails*, *Bedrock*). Run the policy simulator, then one test job of each kind from a learner sign-in.
 4. **Enable Bedrock model access** for the two models the RAG episode calls, and check their rate quotas (*Bedrock*).
 5. **Cost allocation tags** active on the account, a Budgets alert on the class total (*Cost allocation tags*).
 6. **Stage the shared bucket** from CloudShell, following *Shared data bucket: staging before each term*.
@@ -50,7 +50,28 @@ Learners sign in through IAM Identity Center with their university login. Before
 
 ## The notebook role
 
-Every notebook instance in the lesson runs as the IAM role `ml-sagemaker-use`, which the controllers episode tells learners to pick from the dropdown. The three inline policies below (`WorkshopGuardRails`, `ReadOwnCloudTrail`, `BedrockAccess`) are attached to that role, and each one's command names it. On the UW account the role exists. On a new account, create it first, as a SageMaker execution role (trusted by `sagemaker.amazonaws.com`) with SageMaker permissions and read and write access to the buckets learners create. The managed `AmazonSageMakerFullAccess` policy only reaches buckets with `sagemaker` in the name, and the lesson's buckets are named after the learner, so the role needs S3 access beyond it. To copy the UW role's base permissions onto a new account, list them there first:
+Every notebook instance in the lesson runs as the IAM role `ml-sagemaker-use`, which the controllers episode tells learners to pick from the dropdown, and every job a notebook launches runs as the same role. Everything the lesson does on AWS is governed by what this role may do, so it has to exist before anything else on this page, and the three inline policies below (`WorkshopGuardRails`, `ReadOwnCloudTrail`, `BedrockAccess`) are attached to it. On the UW account the role exists. On a new account, create it from CloudShell as follows.
+
+First the role itself, trusted by the SageMaker service, with AWS's managed SageMaker policy:
+
+```bash
+ROLE=ml-sagemaker-use
+cat > /tmp/trust.json <<'JSON'
+{"Version": "2012-10-17", "Statement": [{"Effect": "Allow", "Principal": {"Service": "sagemaker.amazonaws.com"}, "Action": "sts:AssumeRole"}]}
+JSON
+aws iam create-role --role-name $ROLE --assume-role-policy-document file:///tmp/trust.json
+aws iam attach-role-policy --role-name $ROLE --policy-arn arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
+```
+
+`AmazonSageMakerFullAccess` reaches S3 only in buckets with `sagemaker` in the name. The lesson's buckets are named after the learner, so the role needs its own S3 permission. This is the same grant the console's "Any S3 bucket" option makes when it creates an execution role:
+
+```bash
+aws iam put-role-policy --role-name $ROLE --policy-name S3AnyBucket --policy-document '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject","s3:PutObject","s3:DeleteObject","s3:ListBucket","s3:GetBucketLocation"],"Resource":"*"}]}'
+```
+
+Then the three inline policies, in the sections that follow: `WorkshopGuardRails` from the repository's `scripts/guardrails.json`, `ReadOwnCloudTrail`, and `BedrockAccess`. All three commands name `ml-sagemaker-use`. If you name the role differently, change the name in those commands, in the shared bucket's policy (*Shared data bucket: staging before each term*, step 2) and in the controllers episode, which tells learners which role to pick.
+
+The role is one of two identities a learner uses. The other is the Identity Center permission set they sign in with, which governs the console and a laptop CLI. It has to let a learner create a notebook instance with this role, which means `iam:PassRole` on the role's ARN as well as the SageMaker, S3 and Bedrock console permissions, and it is set by the Identity Center administrator in the management account. The UW permission set predates this lesson and its contents are not recorded here. To see what the UW role itself carries, for copying onto another account:
 
 ```bash
 aws iam list-attached-role-policies --role-name ml-sagemaker-use   # managed policies

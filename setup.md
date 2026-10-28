@@ -23,7 +23,7 @@ There are two ways to get access to AWS for this lesson. Please wait for a pre-w
 
 ### Shared account (UW-Madison)
 
-If you are attending this lesson at UW-Madison, the instructors will provide a shared AWS account for all attendees. You do not need to set up your own AWS account. What to expect:
+If you are attending this lesson at UW-Madison (ML Marathon or Research Bazaar), the instructors will provide a shared AWS account for all attendees. You do not need to set up your own AWS account. What to expect:
 
 * Before the workshop, the instructor adds you to the shared account and emails you a **sign-in link**. It opens the AWS console directly in the workshop account and role after you sign in with your UW–Madison NetID. Bookmark it; it is the link you will use every session. The link is sent by email and not posted here on purpose: treat it like any other sign-in page and only use the one your instructor sent.
 * **Verify your access before the workshop**: open the link and sign in. If you see a "no access" or "not assigned" message, email the instructor with your username. Check that the account name and region in the top-right of the console match the email.
