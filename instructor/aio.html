@@ -672,7 +672,7 @@ hosts can do, we call Bedrock instead.</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
 <p><strong>Amazon S3 stores the data and the results.</strong> <a href="https://aws.amazon.com/s3/" class="external-link">S3</a> is object storage, organised in
 <em>buckets</em>. Datasets stay in a bucket instead of on the notebook
 instance, every SageMaker job reads its inputs from a bucket and writes
@@ -681,7 +681,7 @@ month. You create a bucket of your own in the next episode and use it
 for the rest of the workshop. The larger datasets are already in a
 shared bucket the instructors staged.</p>
 </div>
-<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
+<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
 <p><strong>The SageMaker notebook instance is where you work.</strong>
 It is a small machine running JupyterLab, started at the beginning of
 the workshop and stopped at the end, and every notebook in the lesson
@@ -702,7 +702,7 @@ keeps every launched job visible, in a notebook the instructors can
 open, which is how a problem gets tracked down fast when a learner hits
 one.</p>
 </div>
-<div id="nav-tabpanel-1-3" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-3">
+<div id="nav-tabpanel-1-3" class="tab-pane" aria-labelledby="nav-tab-1-3" role="tabpanel">
 <p><strong>Amazon SageMaker runs the ML jobs.</strong> <a href="https://aws.amazon.com/sagemaker/" class="external-link">SageMaker</a> is AWS’s managed
 machine learning service. You give it a training or inference script,
 the input data and an instance type. It starts that instance, runs the
@@ -731,7 +731,7 @@ seconds, and tags split the bill by project. Training a hundred small
 models on a dataset under 10 GB costs under <code>$20</code>.</li>
 </ul>
 </div>
-<div id="nav-tabpanel-1-4" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-4">
+<div id="nav-tabpanel-1-4" class="tab-pane" aria-labelledby="nav-tab-1-4" role="tabpanel">
 <p><strong>Amazon Bedrock serves hosted models.</strong> Sometimes there
 is no model to train or host. You want to send a model a prompt and get
 a response. <a href="https://aws.amazon.com/bedrock/" class="external-link">Bedrock</a> gives
@@ -1601,7 +1601,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-03_SageMaker-notebooks-as-controllers"><p>Content from <a href="03_SageMaker-notebooks-as-controllers.html">Notebooks as Controllers</a></p>
 <hr>
-<p>Last updated on 2026-10-27 |
+<p>Last updated on 2026-10-28 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/03_SageMaker-notebooks-as-controllers.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 20 minutes</p>
@@ -1753,7 +1753,17 @@ unpack about a gigabyte of PDFs and page images, the fine-tuning episode
 keeps its data here, and 5 GB fills up on the second run. The disk is
 the one thing a stopped instance keeps billing for, <code>$0.14</code>
 per GB-month, so 20 GB is <code>$2.80</code> a month until the instance
-is deleted; do not go larger than that without a reason.</p></li>
+is deleted. Do not go larger than that without a reason, and the reason
+is rarely your dataset. The disk only has to hold what the notebook
+itself opens. A dataset a training job reads stays in S3 and is copied
+onto the job’s own instance, which has its own disk, set per job, so a
+50 GB dataset needs no change here. What cannot go through this notebook
+at all is anything bigger than its memory, 4 GB on an
+<code>ml.t3.medium</code>. The Accessing S3 episode says what to do with
+a file that size, and the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
+for ML</a> page sizes the job instances by dataset. If the disk does
+fill, stop the instance, choose <strong>Edit</strong>, and raise the
+volume size. It can grow, not shrink.</p></li>
 <li>
 <p><strong>Permissions and encryption</strong>:</p>
 <ul>
@@ -2095,6 +2105,50 @@ issues…</p>
 </li>
 <li>the bucket policy from the S3 episode names that role</li>
 </ul>
+<div id="when-the-file-is-bigger-than-the-notebook" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<span class="callout-header">Callout</span>
+<div id="when-the-file-is-bigger-than-the-notebook" class="callout-inner">
+<h3 class="callout-title">When the file is bigger than the notebook</h3>
+<div class="callout-content">
+<p>Both methods above assume the object fits. The notebook instance has
+a 20 GB disk and, on an <code>ml.t3.medium</code>, 4 GB of memory, and a
+model checkpoint or an image archive can be larger than either. A
+learner in a past class uploaded a multi-gigabyte PyTorch
+<code>.pth</code> file, found <code>download_file</code> could not fit
+it on the disk, and found that the stream from <code>get_object</code>
+could not be handed to <code>torch.load</code> either, because a
+<code>.pth</code> is a zip archive and <code>torch.load</code> needs to
+seek inside it, which a stream does not allow. In order of what to
+try:</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>Check the size first.</strong> <code>show_bucket</code>,
+below, prints every object’s size, so you know before you copy.</li>
+<li>
+<strong>If it fits in memory, read it into memory.</strong>
+<code>get_object</code> gives bytes, and <code>io.BytesIO(bytes)</code>
+wraps them as a seekable file that <code>torch.load</code>,
+<code>zipfile</code> and <code>pandas</code> all accept. That is fine up
+to about a gigabyte on this instance.</li>
+<li>
+<strong>If it does not fit the notebook, do not bring it
+here.</strong> Give it to the job that needs it as an input channel, and
+SageMaker copies it onto the job’s instance, which has the disk and
+memory the job was sized for. That is how the fine-tuning episode passes
+7.5 GB of model weights, which never touch the controller.</li>
+<li>A library such as <code>s3fs</code> can present an S3 object as a
+seekable file, so <code>torch.load</code> works on it directly, but it
+reads by range requests and is slow for a checkpoint. Use it to read a
+slice of a large file, not to load a model.</li>
+</ol>
+<p>The rule the lesson follows is that the notebook holds what the
+notebook opens, and everything else goes from S3 to a job.</p>
+</div>
+</div>
+</div>
 </div>
 <div class="section level4">
 <h4 id="check-the-current-size-and-storage-costs-of-bucket">Check the current size and storage costs of bucket<a class="anchor" aria-label="anchor" href="#check-the-current-size-and-storage-costs-of-bucket"></a>
@@ -2534,6 +2588,30 @@ session and is not written into the notebook file.</p>
 <p>When you re-run the whole notebook later, this cell prompts again,
 because nothing is saved.</p>
 </div>
+<div class="section level4">
+<h4 id="the-same-token-clones-a-private-repository">The same token clones a private repository<a class="anchor" aria-label="anchor" href="#the-same-token-clones-a-private-repository"></a>
+</h4>
+<p>The lesson repository was public, so <code>git clone</code> in the
+controllers episode needed no credentials. A private repository, your
+own or a collaborator’s, needs the token at clone time as well as at
+push time, and the way to supply it without writing it to disk is to put
+it in the URL for that one command, from the variable you just set. The
+<code>repo</code> scope on the token covers it.</p>
+<div class="codewrapper sourceCode" id="cb4">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="co"># Clone a private repository with the token in the URL for this command only; nothing is written to disk</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a><span class="op">!</span>git clone https:<span class="op">//</span>{username}:{token}<span class="op">@</span>github.com<span class="op">/</span>YOUR_GITHUB_USERNAME<span class="op">/</span>your<span class="op">-</span>private<span class="op">-</span>repo.git <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>your<span class="op">-</span>private<span class="op">-</span>repo</span></code></pre>
+</div>
+<p>Git stores the URL, token included, in that clone’s
+<code>.git/config</code>, which is on the instance’s disk. Either strip
+it after cloning,
+<code>git remote set-url origin https://github.com/YOUR_GITHUB_USERNAME/your-private-repo.git</code>,
+and supply the token the same way on each later <code>pull</code>, or
+revoke the token when you are done, as the cleanup episode’s checklist
+says. Do not paste a token into a cell as text. The notebook file would
+then carry it.</p>
+</div>
 </section><section><h2 class="section-heading" id="step-2-configure-git-settings">Step 2: Configure Git settings<a class="anchor" aria-label="anchor" href="#step-2-configure-git-settings"></a>
 </h2>
 <hr class="half-width">
@@ -2542,11 +2620,11 @@ without <code>--global</code> the setting goes into the repository’s own
 <code>.git/config</code>, under <code>SageMaker/</code>, which survives
 a stop. (<code>--global</code> would write to your home directory, which
 is reset when the instance stops.)</p>
-<div class="codewrapper sourceCode" id="cb4">
+<div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="op">!</span>git config user.name <span class="st">"Your name"</span>             <span class="co"># appears as the author in the commit history</span></span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a><span class="op">!</span>git config user.email your_email<span class="op">@</span>example.edu  <span class="co"># use the email on your GitHub account so commits link to your profile</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="op">!</span>git config user.name <span class="st">"Your name"</span>             <span class="co"># appears as the author in the commit history</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a><span class="op">!</span>git config user.email your_email<span class="op">@</span>example.edu  <span class="co"># use the email on your GitHub account so commits link to your profile</span></span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="step-3-convert--ipynb-to--py">Step 3: Convert <code>.ipynb</code> to <code>.py</code>
 <a class="anchor" aria-label="anchor" href="#step-3-convert--ipynb-to--py"></a>
@@ -2573,10 +2651,10 @@ metadata.</li>
 <ol style="list-style-type: decimal">
 <li>Install Jupytext, which converts in both directions.</li>
 </ol>
-<div class="codewrapper sourceCode" id="cb5">
+<div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="op">!</span>pip install jupytext   <span class="co"># converts between .ipynb and .py in both directions</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="op">!</span>pip install jupytext   <span class="co"># converts between .ipynb and .py in both directions</span></span></code></pre>
 </div>
 <ol start="2" style="list-style-type: decimal">
 <li>Copy the notebook from the Accessing S3 episode into our repository
@@ -2585,12 +2663,12 @@ folder (we are still in
 there. Copying keeps the lesson clone untouched and puts the
 <code>.py</code> file where git will see it.</li>
 </ol>
-<div class="codewrapper sourceCode" id="cb6">
+<div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="co"># Copy the notebook into the repository folder ("." is the current directory); the lesson clone stays untouched</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a><span class="op">!</span>cp <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>notebooks<span class="op">/</span><span class="dv">0</span><span class="er">4_Accessing</span><span class="op">-</span>S3<span class="op">-</span>via<span class="op">-</span>SageMaker<span class="op">-</span>notebooks.ipynb .</span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a><span class="op">!</span>jupytext <span class="op">--</span>to py <span class="dv">0</span><span class="er">4_Accessing</span><span class="op">-</span>S3<span class="op">-</span>via<span class="op">-</span>SageMaker<span class="op">-</span>notebooks.ipynb   <span class="co"># writes a .py next to it: code and markdown, no outputs</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a><span class="co"># Copy the notebook into the repository folder ("." is the current directory); the lesson clone stays untouched</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1" aria-label="code-block-7-2"></a><span class="op">!</span>cp <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>notebooks<span class="op">/</span><span class="dv">0</span><span class="er">4_Accessing</span><span class="op">-</span>S3<span class="op">-</span>via<span class="op">-</span>SageMaker<span class="op">-</span>notebooks.ipynb .</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1" aria-label="code-block-7-3"></a><span class="op">!</span>jupytext <span class="op">--</span>to py <span class="dv">0</span><span class="er">4_Accessing</span><span class="op">-</span>S3<span class="op">-</span>via<span class="op">-</span>SageMaker<span class="op">-</span>notebooks.ipynb   <span class="co"># writes a .py next to it: code and markdown, no outputs</span></span></code></pre>
 </div>
 <pre class="text"><code>[jupytext] Reading 04_Accessing-S3-via-SageMaker-notebooks.ipynb in format ipynb
 [jupytext] Writing 04_Accessing-S3-via-SageMaker-notebooks.py</code></pre>
@@ -2600,14 +2678,14 @@ lesson’s <code>scripts/helpers.py</code> converts them all. It converts
 every <code>.ipynb</code> in the <em>current directory</em>, so run it
 from inside the folder you mean to convert:</li>
 </ol>
-<div class="codewrapper sourceCode" id="cb8">
+<div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" tabindex="-1" aria-label="code-block-8-1"></a><span class="im">import</span> sys</span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1" aria-label="code-block-8-2"></a><span class="co"># Put the lesson's scripts/ folder on Python's import path, as in the Accessing S3 episode</span></span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1" aria-label="code-block-8-3"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)</span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1" aria-label="code-block-8-4"></a><span class="im">import</span> helpers</span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1" aria-label="code-block-8-5"></a>helpers.convert_files(direction<span class="op">=</span><span class="st">"notebook_to_python"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a><span class="im">import</span> sys</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a><span class="co"># Put the lesson's scripts/ folder on Python's import path, as in the Accessing S3 episode</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1" aria-label="code-block-9-3"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a><span class="im">import</span> helpers</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a>helpers.convert_files(direction<span class="op">=</span><span class="st">"notebook_to_python"</span>)</span></code></pre>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="step-4-add-and-commit-the--py-file">Step 4: Add and commit the <code>.py</code> file<a class="anchor" aria-label="anchor" href="#step-4-add-and-commit-the--py-file"></a>
@@ -2616,30 +2694,30 @@ from inside the folder you mean to convert:</li>
 <ol style="list-style-type: decimal">
 <li>Check the status of the repository.</li>
 </ol>
-<div class="codewrapper sourceCode" id="cb9">
+<div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>sagemaker<span class="op">-</span>work</span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a><span class="op">!</span>git status   <span class="co"># shows the untracked files (the .ipynb and the .py); nothing is staged yet</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>sagemaker<span class="op">-</span>work</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a><span class="op">!</span>git status   <span class="co"># shows the untracked files (the .ipynb and the .py); nothing is staged yet</span></span></code></pre>
 </div>
 <ol start="2" style="list-style-type: decimal">
 <li>Add and commit. We add the <code>.py</code> by name, not with
 <code>git add .</code>, so the <code>.ipynb</code> copy is never tracked
 (Step 5 ignores it for good).</li>
 </ol>
-<div class="codewrapper sourceCode" id="cb10">
+<div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a><span class="op">!</span>git add <span class="dv">0</span><span class="er">4_Accessing</span><span class="op">-</span>S3<span class="op">-</span>via<span class="op">-</span>SageMaker<span class="op">-</span>notebooks.py   <span class="co"># stage: mark this file to go into the next commit</span></span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Add Accessing-S3 notebook as a script"</span>   <span class="co"># a commit is a snapshot of the staged files; the message says what changed, specifically</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a><span class="op">!</span>git add <span class="dv">0</span><span class="er">4_Accessing</span><span class="op">-</span>S3<span class="op">-</span>via<span class="op">-</span>SageMaker<span class="op">-</span>notebooks.py   <span class="co"># stage: mark this file to go into the next commit</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Add Accessing-S3 notebook as a script"</span>   <span class="co"># a commit is a snapshot of the staged files; the message says what changed, specifically</span></span></code></pre>
 </div>
 <ol start="3" style="list-style-type: decimal">
 <li>Check the status again.</li>
 </ol>
-<div class="codewrapper sourceCode" id="cb11">
+<div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a><span class="op">!</span>git status   <span class="co"># the .py is committed; only the untracked .ipynb remains, which Step 5 ignores</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1" aria-label="code-block-12-1"></a><span class="op">!</span>git status   <span class="co"># the .py is committed; only the untracked .ipynb remains, which Step 5 ignores</span></span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="step-5-ignore-notebooks-and-clutter-with--gitignore">Step 5: Ignore notebooks and clutter with
 <code>.gitignore</code>
@@ -2653,34 +2731,34 @@ Ignoring <code>*.ipynb</code> across the repository means a stray
 <li>Create the file (hidden in the file browser because it starts with a
 dot; <code>ls -a</code> shows it) and add the notebook pattern.</li>
 </ol>
-<div class="codewrapper sourceCode" id="cb12">
+<div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1" aria-label="code-block-12-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">".gitignore"</span>, <span class="st">"a"</span>) <span class="im">as</span> gitignore:   <span class="co"># "a" appends, so re-running the cell keeps earlier rules</span></span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1" aria-label="code-block-12-2"></a>    gitignore.write(<span class="st">"# Jupyter notebooks: we version the .py copies instead</span><span class="ch">\n</span><span class="st">*.ipynb</span><span class="ch">\n</span><span class="st">"</span>)  <span class="co"># one pattern per line; * matches any name</span></span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1" aria-label="code-block-12-3"></a><span class="op">!</span>cat .gitignore</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1" aria-label="code-block-13-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">".gitignore"</span>, <span class="st">"a"</span>) <span class="im">as</span> gitignore:   <span class="co"># "a" appends, so re-running the cell keeps earlier rules</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1" aria-label="code-block-13-2"></a>    gitignore.write(<span class="st">"# Jupyter notebooks: we version the .py copies instead</span><span class="ch">\n</span><span class="st">*.ipynb</span><span class="ch">\n</span><span class="st">"</span>)  <span class="co"># one pattern per line; * matches any name</span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a><span class="op">!</span>cat .gitignore</span></code></pre>
 </div>
 <ol start="2" style="list-style-type: decimal">
 <li>While we are here, ignore the usual clutter too: caches and
 temporary files. (The NumPy archives the training episodes write are the
 challenge at the end.)</li>
 </ol>
-<div class="codewrapper sourceCode" id="cb13">
+<div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1" aria-label="code-block-13-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">".gitignore"</span>, <span class="st">"a"</span>) <span class="im">as</span> gitignore:</span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1" aria-label="code-block-13-2"></a>    gitignore.write(<span class="st">"</span><span class="ch">\n</span><span class="st"># Cache and temp files</span><span class="ch">\n</span><span class="st">__pycache__/</span><span class="ch">\n</span><span class="st">*.tmp</span><span class="ch">\n</span><span class="st">*.log</span><span class="ch">\n</span><span class="st">"</span>)</span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a><span class="op">!</span>cat .gitignore</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">".gitignore"</span>, <span class="st">"a"</span>) <span class="im">as</span> gitignore:</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1" aria-label="code-block-14-2"></a>    gitignore.write(<span class="st">"</span><span class="ch">\n</span><span class="st"># Cache and temp files</span><span class="ch">\n</span><span class="st">__pycache__/</span><span class="ch">\n</span><span class="st">*.tmp</span><span class="ch">\n</span><span class="st">*.log</span><span class="ch">\n</span><span class="st">"</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1" aria-label="code-block-14-3"></a><span class="op">!</span>cat .gitignore</span></code></pre>
 </div>
 <ol start="3" style="list-style-type: decimal">
 <li>Add and commit <code>.gitignore</code> so the rule travels with the
 repository.</li>
 </ol>
-<div class="codewrapper sourceCode" id="cb14">
+<div class="codewrapper sourceCode" id="cb15">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a><span class="op">!</span>git add .gitignore   <span class="co"># .gitignore is itself tracked, so everyone who clones gets the same rules</span></span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1" aria-label="code-block-14-2"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Ignore notebooks, caches and temp files"</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a><span class="op">!</span>git add .gitignore   <span class="co"># .gitignore is itself tracked, so everyone who clones gets the same rules</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Ignore notebooks, caches and temp files"</span></span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="step-6-pull-then-push">Step 6: Pull, then push<a class="anchor" aria-label="anchor" href="#step-6-pull-then-push"></a>
 </h2>
@@ -2713,28 +2791,28 @@ separately (one from <code>git init</code>, one from <strong>Create
 repository</strong>), git also needs
 <code>--allow-unrelated-histories</code> for this very first pull; never
 again after that.</p>
-<div class="codewrapper sourceCode" id="cb15">
+<div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a><span class="op">!</span>git config pull.rebase false   <span class="co"># pull strategy: merge (remote commits come in through a merge commit)</span></span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a><span class="co"># pull = fetch origin's main and merge it into ours; the flag is needed only this once, as the two histories share no commit</span></span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1" aria-label="code-block-15-3"></a><span class="op">!</span>git pull https:<span class="op">//</span>{username}:{token}<span class="op">@</span>github.com<span class="op">/</span>{username}<span class="op">/</span>sagemaker<span class="op">-</span>work.git main <span class="op">--</span>allow<span class="op">-</span>unrelated<span class="op">-</span>histories <span class="op">--</span>no<span class="op">-</span>edit   <span class="co"># the token authenticates the pull too, which a private repository needs</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a><span class="op">!</span>git config pull.rebase false   <span class="co"># pull strategy: merge (remote commits come in through a merge commit)</span></span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a><span class="co"># pull = fetch origin's main and merge it into ours; the flag is needed only this once, as the two histories share no commit</span></span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a><span class="op">!</span>git pull https:<span class="op">//</span>{username}:{token}<span class="op">@</span>github.com<span class="op">/</span>{username}<span class="op">/</span>sagemaker<span class="op">-</span>work.git main <span class="op">--</span>allow<span class="op">-</span>unrelated<span class="op">-</span>histories <span class="op">--</span>no<span class="op">-</span>edit   <span class="co"># the token authenticates the pull too, which a private repository needs</span></span></code></pre>
 </div>
 <p>If git reports a merge conflict, each conflicting file has to be
 resolved one way or the other and then staged and committed. You will
 not get one here (the README and your script are different files), but
 this is what it looks like:</p>
-<div class="codewrapper sourceCode" id="cb16">
+<div class="codewrapper sourceCode" id="cb17">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a><span class="co"># Example only.</span></span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a><span class="co"># Keep YOUR version of a file:</span></span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a><span class="co"># !git checkout --ours 04_Accessing-S3-via-SageMaker-notebooks.py</span></span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a><span class="co"># Keep the REMOTE version of a file:</span></span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a><span class="co"># !git checkout --theirs README.md</span></span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a><span class="co"># Then stage and commit the resolution:</span></span>
-<span id="cb16-7"><a href="#cb16-7" tabindex="-1" aria-label="code-block-16-7"></a><span class="co"># !git add 04_Accessing-S3-via-SageMaker-notebooks.py README.md</span></span>
-<span id="cb16-8"><a href="#cb16-8" tabindex="-1" aria-label="code-block-16-8"></a><span class="co"># !git commit -m "Resolve merge conflicts"</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1" aria-label="code-block-17-1"></a><span class="co"># Example only.</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1" aria-label="code-block-17-2"></a><span class="co"># Keep YOUR version of a file:</span></span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1" aria-label="code-block-17-3"></a><span class="co"># !git checkout --ours 04_Accessing-S3-via-SageMaker-notebooks.py</span></span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1" aria-label="code-block-17-4"></a><span class="co"># Keep the REMOTE version of a file:</span></span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1" aria-label="code-block-17-5"></a><span class="co"># !git checkout --theirs README.md</span></span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1" aria-label="code-block-17-6"></a><span class="co"># Then stage and commit the resolution:</span></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1" aria-label="code-block-17-7"></a><span class="co"># !git add 04_Accessing-S3-via-SageMaker-notebooks.py README.md</span></span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1" aria-label="code-block-17-8"></a><span class="co"># !git commit -m "Resolve merge conflicts"</span></span></code></pre>
 </div>
 </div>
 <div class="section level4">
@@ -2743,12 +2821,12 @@ this is what it looks like:</p>
 <p>The token goes into the URL for this one command, built from the
 variables <code>getpass</code> filled. It is not stored by git and does
 not appear in the notebook.</p>
-<div class="codewrapper sourceCode" id="cb17">
+<div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1" aria-label="code-block-17-1"></a>github_url <span class="op">=</span> <span class="ss">f"github.com/</span><span class="sc">{</span>username<span class="sc">}</span><span class="ss">/sagemaker-work.git"</span></span>
-<span id="cb17-2"><a href="#cb17-2" tabindex="-1" aria-label="code-block-17-2"></a><span class="co"># IPython substitutes the Python variables in {braces}; user:token@ in an HTTPS URL authenticates this one push and is not stored</span></span>
-<span id="cb17-3"><a href="#cb17-3" tabindex="-1" aria-label="code-block-17-3"></a><span class="op">!</span>git push https:<span class="op">//</span>{username}:{token}<span class="op">@</span>{github_url} main</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1" aria-label="code-block-18-1"></a>github_url <span class="op">=</span> <span class="ss">f"github.com/</span><span class="sc">{</span>username<span class="sc">}</span><span class="ss">/sagemaker-work.git"</span></span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1" aria-label="code-block-18-2"></a><span class="co"># IPython substitutes the Python variables in {braces}; user:token@ in an HTTPS URL authenticates this one push and is not stored</span></span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a><span class="op">!</span>git push https:<span class="op">//</span>{username}:{token}<span class="op">@</span>{github_url} main</span></code></pre>
 </div>
 <p>Open
 <code>https://github.com/YOUR_GITHUB_USERNAME/sagemaker-work</code> in a
@@ -2763,19 +2841,19 @@ notebooks<a class="anchor" aria-label="anchor" href="#step-7-pulling--py-files-a
 <hr class="half-width">
 <p>Suppose a collaborator edits the <code>.py</code> file on GitHub, or
 you edit it from another machine. Pull as usual:</p>
-<div class="codewrapper sourceCode" id="cb18">
+<div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1" aria-label="code-block-18-1"></a><span class="op">!</span>git pull https:<span class="op">//</span>{username}:{token}<span class="op">@</span>github.com<span class="op">/</span>{username}<span class="op">/</span>sagemaker<span class="op">-</span>work.git main   <span class="co"># a routine pull: no extra flag now that the histories are joined</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1" aria-label="code-block-19-1"></a><span class="op">!</span>git pull https:<span class="op">//</span>{username}:{token}<span class="op">@</span>github.com<span class="op">/</span>{username}<span class="op">/</span>sagemaker<span class="op">-</span>work.git main   <span class="co"># a routine pull: no extra flag now that the histories are joined</span></span></code></pre>
 </div>
 <p>Then convert the script back to a notebook with Jupytext. The
 <code>.ipynb</code> it writes is ignored by git (Step 5), so the round
 trip leaves the repository clean.</p>
-<div class="codewrapper sourceCode" id="cb19">
+<div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1" aria-label="code-block-19-1"></a><span class="co"># --to notebook converts the other way; the .ipynb it writes matches the *.ipynb rule in .gitignore</span></span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1" aria-label="code-block-19-2"></a><span class="op">!</span>jupytext <span class="op">--</span>to notebook <span class="dv">0</span><span class="er">4_Accessing</span><span class="op">-</span>S3<span class="op">-</span>via<span class="op">-</span>SageMaker<span class="op">-</span>notebooks.py <span class="op">--</span>output <span class="dv">0</span><span class="er">4_Accessing</span><span class="op">-</span>S3<span class="op">-</span>via<span class="op">-</span>SageMaker<span class="op">-</span>notebooks.ipynb</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1" aria-label="code-block-20-1"></a><span class="co"># --to notebook converts the other way; the .ipynb it writes matches the *.ipynb rule in .gitignore</span></span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1" aria-label="code-block-20-2"></a><span class="op">!</span>jupytext <span class="op">--</span>to notebook <span class="dv">0</span><span class="er">4_Accessing</span><span class="op">-</span>S3<span class="op">-</span>via<span class="op">-</span>SageMaker<span class="op">-</span>notebooks.py <span class="op">--</span>output <span class="dv">0</span><span class="er">4_Accessing</span><span class="op">-</span>S3<span class="op">-</span>via<span class="op">-</span>SageMaker<span class="op">-</span>notebooks.ipynb</span></code></pre>
 </div>
 <p>To convert every <code>.py</code> in the folder back to notebooks,
 <code>helpers.convert_files(direction="python_to_notebook")</code> does
@@ -2806,15 +2884,15 @@ commit it, push with your PAT, and verify the change on GitHub.</p>
 <div class="accordion-body">
 <p>Still inside
 <code>/home/ec2-user/SageMaker/sagemaker-work</code>:</p>
-<div class="codewrapper sourceCode" id="cb20">
+<div class="codewrapper sourceCode" id="cb21">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1" aria-label="code-block-20-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">".gitignore"</span>, <span class="st">"a"</span>) <span class="im">as</span> gitignore:</span>
-<span id="cb20-2"><a href="#cb20-2" tabindex="-1" aria-label="code-block-20-2"></a>    gitignore.write(<span class="st">"</span><span class="ch">\n</span><span class="st"># NumPy archives saved by the training episodes</span><span class="ch">\n</span><span class="st">*.npz</span><span class="ch">\n</span><span class="st">"</span>)</span>
-<span id="cb20-3"><a href="#cb20-3" tabindex="-1" aria-label="code-block-20-3"></a><span class="op">!</span>cat .gitignore</span>
-<span id="cb20-4"><a href="#cb20-4" tabindex="-1" aria-label="code-block-20-4"></a><span class="op">!</span>git add .gitignore</span>
-<span id="cb20-5"><a href="#cb20-5" tabindex="-1" aria-label="code-block-20-5"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Ignore .npz arrays"</span></span>
-<span id="cb20-6"><a href="#cb20-6" tabindex="-1" aria-label="code-block-20-6"></a><span class="op">!</span>git push https:<span class="op">//</span>{username}:{token}<span class="op">@</span>github.com<span class="op">/</span>{username}<span class="op">/</span>sagemaker<span class="op">-</span>work.git main</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" tabindex="-1" aria-label="code-block-21-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">".gitignore"</span>, <span class="st">"a"</span>) <span class="im">as</span> gitignore:</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1" aria-label="code-block-21-2"></a>    gitignore.write(<span class="st">"</span><span class="ch">\n</span><span class="st"># NumPy archives saved by the training episodes</span><span class="ch">\n</span><span class="st">*.npz</span><span class="ch">\n</span><span class="st">"</span>)</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1" aria-label="code-block-21-3"></a><span class="op">!</span>cat .gitignore</span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1" aria-label="code-block-21-4"></a><span class="op">!</span>git add .gitignore</span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1" aria-label="code-block-21-5"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Ignore .npz arrays"</span></span>
+<span id="cb21-6"><a href="#cb21-6" tabindex="-1" aria-label="code-block-21-6"></a><span class="op">!</span>git push https:<span class="op">//</span>{username}:{token}<span class="op">@</span>github.com<span class="op">/</span>{username}<span class="op">/</span>sagemaker<span class="op">-</span>work.git main</span></code></pre>
 </div>
 <p>Then open
 <code>https://github.com/YOUR_GITHUB_USERNAME/sagemaker-work/blob/main/.gitignore</code>
@@ -3062,7 +3140,7 @@ group.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li><p><strong>Data Preprocessing</strong>: The script fills missing
@@ -3317,7 +3395,7 @@ data. Which instance would you pick for the training job, and why?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
 GB of data wants about 32 GB of memory: <code>ml.m5.2xlarge</code> (8
@@ -3833,7 +3911,7 @@ compared with the first job?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <p>The status is <code>InProgress</code> if you were quick and
 <code>Completed</code> otherwise. The cost is the same as the first run,
@@ -3871,7 +3949,7 @@ and compare the bill and the accuracy with the script version.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
 <div class="accordion-body">
 <p>The built-in algorithm will not run our
 <code>preprocess_data()</code> for us, and it expects a CSV with no
@@ -4518,7 +4596,7 @@ goes next to it.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>There is no single answer; the solution is the written estimate. One
 worked example for scale: a 7B language model fully fine-tuned on 50,000
@@ -4715,7 +4793,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -5893,7 +5971,7 @@ What does a project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5, because a full fine-tune of a 7B model
 needs about 112 GB plus activations, and the g5 has 24 GB. On the p4d, 8
@@ -6083,7 +6161,7 @@ costs one epoch, not the whole bill.</li>
 <button class="accordion-button instructor-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInstructor1" aria-expanded="false" aria-controls="collapseInstructor1">
   <h3 class="accordion-header" id="headingInstructor1">  <div class="note-square"><i aria-hidden="true" class="callout-icon" data-feather="edit-2"></i></div> Before class (instructor checklist) </h3>
 </button>
-<div id="collapseInstructor1" class="accordion-collapse collapse" data-bs-parent="#accordionInstructor1" aria-labelledby="headingInstructor1">
+<div id="collapseInstructor1" class="accordion-collapse collapse" aria-labelledby="headingInstructor1" data-bs-parent="#accordionInstructor1">
 <div class="accordion-body">
 <p>Students never download the data themselves; four things have to be
 in place before the session. Each is written out in the instructor
@@ -6207,7 +6285,11 @@ S3 prefixes at the end are what the estimator mounts into the job as its
 <p>What the jobs will read, before downloading any of it: the page lists
 and metadata at the top level, the scanned pages under
 <code>images/</code>, and the staged CHURRO-3B weights under
-<code>model/</code>.</p>
+<code>model/</code>. The weights are 7.5 GB and never come to this
+notebook. They go to each job as its <code>model</code> channel, and
+SageMaker copies them onto the job’s instance, which is the pattern the
+Accessing S3 episode’s callout gives for any file bigger than the
+controller.</p>
 <div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -6531,7 +6613,7 @@ step. Which, and why are they there?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Only the language model’s <code>q_proj</code>, <code>k_proj</code>,
@@ -7115,7 +7197,7 @@ will compare it to the bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Expect about 32 billed minutes. Scoring is the line most likely to
@@ -7533,7 +7615,7 @@ summaries, and the before/after CER. Did the extra pixels help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -7574,7 +7656,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
 <div class="accordion-body">
 <p>Startup and upload (~6 min, <code>$0.26</code> at
 <code>$2.61</code>/h) do not speed up: the container pull and the S3
@@ -8386,7 +8468,7 @@ of the search. Then run it and check (a) and (b) with
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ul>
 <li>
@@ -8438,7 +8520,7 @@ in the notebook?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>The tuner can only vary what the script reads. Right now
 <code>train_nn.py</code> has no <code>--batch_size</code> argument and
@@ -11948,7 +12030,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -12012,7 +12094,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still downloading or
@@ -13325,7 +13407,7 @@ are who you think you are, in the account you think you are in:</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13334,7 +13416,7 @@ are who you think you are, in the account you think you are in:</p>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a><span class="ex">aws</span> sts get-caller-identity</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
+<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13393,7 +13475,7 @@ without the status filter.</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-2" class="tab-content">
-<div id="nav-tabpanel-2-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-2-1">
+<div id="nav-tabpanel-2-1" class="tab-pane show active" aria-labelledby="nav-tab-2-1" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13402,7 +13484,7 @@ without the status filter.</p>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a>  <span class="at">--query</span> <span class="st">'{status:TrainingJobStatus, instance:ResourceConfig.InstanceType, count:ResourceConfig.InstanceCount, billable_s:BillableTimeInSeconds, created:CreationTime, ended:TrainingEndTime, model:ModelArtifacts.S3ModelArtifacts}'</span></span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-2-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-2-2">
+<div id="nav-tabpanel-2-2" class="tab-pane" aria-labelledby="nav-tab-2-2" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13446,7 +13528,7 @@ untagged job that shows on the bill under “No tag key”:</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-3" class="tab-content">
-<div id="nav-tabpanel-3-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-3-1">
+<div id="nav-tabpanel-3-1" class="tab-pane show active" aria-labelledby="nav-tab-3-1" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13454,7 +13536,7 @@ untagged job that shows on the bill under “No tag key”:</p>
 <span id="cb8-2"><a href="#cb8-2" tabindex="-1" aria-label="code-block-8-2"></a><span class="ex">aws</span> sagemaker list-tags <span class="at">--resource-arn</span> <span class="va">$ARN</span> <span class="at">--query</span> <span class="st">'Tags[].[Key,Value]'</span> <span class="at">--output</span> table</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-3-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-3-2">
+<div id="nav-tabpanel-3-2" class="tab-pane" aria-labelledby="nav-tab-3-2" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13536,7 +13618,7 @@ under their API names.</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-4" class="tab-content">
-<div id="nav-tabpanel-4-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-4-1">
+<div id="nav-tabpanel-4-1" class="tab-pane show active" aria-labelledby="nav-tab-4-1" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13545,7 +13627,7 @@ under their API names.</p>
 <span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a><span class="st">  --query '</span>{image:AlgorithmSpecification.TrainingImage, role:RoleArn, code:HyperParameters.sagemaker_submit_directory}<span class="st">'</span></span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-4-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-4-2">
+<div id="nav-tabpanel-4-2" class="tab-pane" aria-labelledby="nav-tab-4-2" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13580,7 +13662,7 @@ account:</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-5" class="tab-content">
-<div id="nav-tabpanel-5-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-5-1">
+<div id="nav-tabpanel-5-1" class="tab-pane show active" aria-labelledby="nav-tab-5-1" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb15">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13626,7 +13708,7 @@ account:</p>
 <span id="cb15-40"><a href="#cb15-40" tabindex="-1" aria-label="code-block-15-40"></a><span class="op">JSON</span></span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-5-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-5-2">
+<div id="nav-tabpanel-5-2" class="tab-pane" aria-labelledby="nav-tab-5-2" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13880,14 +13962,14 @@ finds something. Then run them against your own resources.</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-6" class="tab-content">
-<div id="nav-tabpanel-6-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-6-1">
+<div id="nav-tabpanel-6-1" class="tab-pane show active" aria-labelledby="nav-tab-6-1" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" tabindex="-1" aria-label="code-block-20-1"></a><span class="ex">aws</span> sso login <span class="at">--profile</span> workshop <span class="kw">&amp;&amp;</span> <span class="bu">export</span> <span class="va">AWS_PROFILE</span><span class="op">=</span>workshop</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-6-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-6-2">
+<div id="nav-tabpanel-6-2" class="tab-pane" aria-labelledby="nav-tab-6-2" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb21">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>

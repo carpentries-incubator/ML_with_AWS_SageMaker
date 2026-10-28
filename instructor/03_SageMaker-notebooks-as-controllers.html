@@ -423,7 +423,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Notebooks as Controllers</h1>
-        <p>Last updated on 2026-10-27 |
+        <p>Last updated on 2026-10-28 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/03_SageMaker-notebooks-as-controllers.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -566,7 +566,17 @@ unpack about a gigabyte of PDFs and page images, the fine-tuning episode
 keeps its data here, and 5 GB fills up on the second run. The disk is
 the one thing a stopped instance keeps billing for, <code>$0.14</code>
 per GB-month, so 20 GB is <code>$2.80</code> a month until the instance
-is deleted; do not go larger than that without a reason.</p></li>
+is deleted. Do not go larger than that without a reason, and the reason
+is rarely your dataset. The disk only has to hold what the notebook
+itself opens. A dataset a training job reads stays in S3 and is copied
+onto the job’s own instance, which has its own disk, set per job, so a
+50 GB dataset needs no change here. What cannot go through this notebook
+at all is anything bigger than its memory, 4 GB on an
+<code>ml.t3.medium</code>. The Accessing S3 episode says what to do with
+a file that size, and the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
+for ML</a> page sizes the job instances by dataset. If the disk does
+fill, stop the instance, choose <strong>Edit</strong>, and raise the
+volume size. It can grow, not shrink.</p></li>
 <li>
 <p><strong>Permissions and encryption</strong>:</p>
 <ul><li>
@@ -756,7 +766,7 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/03_SageMaker-notebooks-as-controllers.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/03_SageMaker-notebooks-as-controllers.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-27",
+  "dateModified": "2026-10-28",
   "datePublished": "2026-10-28"
 }
 

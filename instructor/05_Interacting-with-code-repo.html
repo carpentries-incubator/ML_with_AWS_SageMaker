@@ -575,17 +575,40 @@ session and is not written into the notebook file.</p>
 <p>When you re-run the whole notebook later, this cell prompts again,
 because nothing is saved.</p>
 </div>
+<div class="section level4">
+<h4 id="the-same-token-clones-a-private-repository">The same token clones a private repository<a class="anchor" aria-label="anchor" href="#the-same-token-clones-a-private-repository"></a></h4>
+<p>The lesson repository was public, so <code>git clone</code> in the
+controllers episode needed no credentials. A private repository, your
+own or a collaborator’s, needs the token at clone time as well as at
+push time, and the way to supply it without writing it to disk is to put
+it in the URL for that one command, from the variable you just set. The
+<code>repo</code> scope on the token covers it.</p>
+<div class="codewrapper sourceCode" id="cb4">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="co"># Clone a private repository with the token in the URL for this command only; nothing is written to disk</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a><span class="op">!</span>git clone https:<span class="op">//</span>{username}:{token}<span class="op">@</span>github.com<span class="op">/</span>YOUR_GITHUB_USERNAME<span class="op">/</span>your<span class="op">-</span>private<span class="op">-</span>repo.git <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>your<span class="op">-</span>private<span class="op">-</span>repo</span></code></pre>
+</div>
+<p>Git stores the URL, token included, in that clone’s
+<code>.git/config</code>, which is on the instance’s disk. Either strip
+it after cloning,
+<code>git remote set-url origin https://github.com/YOUR_GITHUB_USERNAME/your-private-repo.git</code>,
+and supply the token the same way on each later <code>pull</code>, or
+revoke the token when you are done, as the cleanup episode’s checklist
+says. Do not paste a token into a cell as text. The notebook file would
+then carry it.</p>
+</div>
 </section><section><h2 class="section-heading" id="step-2-configure-git-settings">Step 2: Configure Git settings<a class="anchor" aria-label="anchor" href="#step-2-configure-git-settings"></a></h2>
 <hr class="half-width"><p>Git records an author on every commit. Set yours in this repository:
 without <code>--global</code> the setting goes into the repository’s own
 <code>.git/config</code>, under <code>SageMaker/</code>, which survives
 a stop. (<code>--global</code> would write to your home directory, which
 is reset when the instance stops.)</p>
-<div class="codewrapper sourceCode" id="cb4">
+<div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" tabindex="-1" aria-label="code-block-4-1"></a><span class="op">!</span>git config user.name <span class="st">"Your name"</span>             <span class="co"># appears as the author in the commit history</span></span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1" aria-label="code-block-4-2"></a><span class="op">!</span>git config user.email your_email<span class="op">@</span>example.edu  <span class="co"># use the email on your GitHub account so commits link to your profile</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="op">!</span>git config user.name <span class="st">"Your name"</span>             <span class="co"># appears as the author in the commit history</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a><span class="op">!</span>git config user.email your_email<span class="op">@</span>example.edu  <span class="co"># use the email on your GitHub account so commits link to your profile</span></span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="step-3-convert--ipynb-to--py">Step 3: Convert <code>.ipynb</code> to <code>.py</code>
 <a class="anchor" aria-label="anchor" href="#step-3-convert--ipynb-to--py"></a></h2>
@@ -605,22 +628,22 @@ from the command line and imports as a module.</li>
 <strong>Smaller repository</strong>: no outputs, no images, no cell
 metadata.</li>
 </ul><ol style="list-style-type: decimal"><li>Install Jupytext, which converts in both directions.</li>
-</ol><div class="codewrapper sourceCode" id="cb5">
+</ol><div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="op">!</span>pip install jupytext   <span class="co"># converts between .ipynb and .py in both directions</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="op">!</span>pip install jupytext   <span class="co"># converts between .ipynb and .py in both directions</span></span></code></pre>
 </div>
 <ol start="2" style="list-style-type: decimal"><li>Copy the notebook from the Accessing S3 episode into our repository
 folder (we are still in
 <code>/home/ec2-user/SageMaker/sagemaker-work</code>) and convert it
 there. Copying keeps the lesson clone untouched and puts the
 <code>.py</code> file where git will see it.</li>
-</ol><div class="codewrapper sourceCode" id="cb6">
+</ol><div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" tabindex="-1" aria-label="code-block-6-1"></a><span class="co"># Copy the notebook into the repository folder ("." is the current directory); the lesson clone stays untouched</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1" aria-label="code-block-6-2"></a><span class="op">!</span>cp <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>notebooks<span class="op">/</span><span class="dv">0</span><span class="er">4_Accessing</span><span class="op">-</span>S3<span class="op">-</span>via<span class="op">-</span>SageMaker<span class="op">-</span>notebooks.ipynb .</span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1" aria-label="code-block-6-3"></a><span class="op">!</span>jupytext <span class="op">--</span>to py <span class="dv">0</span><span class="er">4_Accessing</span><span class="op">-</span>S3<span class="op">-</span>via<span class="op">-</span>SageMaker<span class="op">-</span>notebooks.ipynb   <span class="co"># writes a .py next to it: code and markdown, no outputs</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" tabindex="-1" aria-label="code-block-7-1"></a><span class="co"># Copy the notebook into the repository folder ("." is the current directory); the lesson clone stays untouched</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1" aria-label="code-block-7-2"></a><span class="op">!</span>cp <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>ML_with_AWS_SageMaker<span class="op">/</span>notebooks<span class="op">/</span><span class="dv">0</span><span class="er">4_Accessing</span><span class="op">-</span>S3<span class="op">-</span>via<span class="op">-</span>SageMaker<span class="op">-</span>notebooks.ipynb .</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1" aria-label="code-block-7-3"></a><span class="op">!</span>jupytext <span class="op">--</span>to py <span class="dv">0</span><span class="er">4_Accessing</span><span class="op">-</span>S3<span class="op">-</span>via<span class="op">-</span>SageMaker<span class="op">-</span>notebooks.ipynb   <span class="co"># writes a .py next to it: code and markdown, no outputs</span></span></code></pre>
 </div>
 <pre class="text"><code>[jupytext] Reading 04_Accessing-S3-via-SageMaker-notebooks.ipynb in format ipynb
 [jupytext] Writing 04_Accessing-S3-via-SageMaker-notebooks.py</code></pre>
@@ -628,38 +651,38 @@ there. Copying keeps the lesson clone untouched and puts the
 lesson’s <code>scripts/helpers.py</code> converts them all. It converts
 every <code>.ipynb</code> in the <em>current directory</em>, so run it
 from inside the folder you mean to convert:</li>
-</ol><div class="codewrapper sourceCode" id="cb8">
+</ol><div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" tabindex="-1" aria-label="code-block-8-1"></a><span class="im">import</span> sys</span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1" aria-label="code-block-8-2"></a><span class="co"># Put the lesson's scripts/ folder on Python's import path, as in the Accessing S3 episode</span></span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1" aria-label="code-block-8-3"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)</span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1" aria-label="code-block-8-4"></a><span class="im">import</span> helpers</span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1" aria-label="code-block-8-5"></a>helpers.convert_files(direction<span class="op">=</span><span class="st">"notebook_to_python"</span>)</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a><span class="im">import</span> sys</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a><span class="co"># Put the lesson's scripts/ folder on Python's import path, as in the Accessing S3 episode</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1" aria-label="code-block-9-3"></a>sys.path.insert(<span class="dv">0</span>, <span class="st">"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts"</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a><span class="im">import</span> helpers</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a>helpers.convert_files(direction<span class="op">=</span><span class="st">"notebook_to_python"</span>)</span></code></pre>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="step-4-add-and-commit-the--py-file">Step 4: Add and commit the <code>.py</code> file<a class="anchor" aria-label="anchor" href="#step-4-add-and-commit-the--py-file"></a></h2>
 <hr class="half-width"><ol style="list-style-type: decimal"><li>Check the status of the repository.</li>
-</ol><div class="codewrapper sourceCode" id="cb9">
+</ol><div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>sagemaker<span class="op">-</span>work</span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a><span class="op">!</span>git status   <span class="co"># shows the untracked files (the .ipynb and the .py); nothing is staged yet</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a><span class="op">%</span>cd <span class="op">/</span>home<span class="op">/</span>ec2<span class="op">-</span>user<span class="op">/</span>SageMaker<span class="op">/</span>sagemaker<span class="op">-</span>work</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a><span class="op">!</span>git status   <span class="co"># shows the untracked files (the .ipynb and the .py); nothing is staged yet</span></span></code></pre>
 </div>
 <ol start="2" style="list-style-type: decimal"><li>Add and commit. We add the <code>.py</code> by name, not with
 <code>git add .</code>, so the <code>.ipynb</code> copy is never tracked
 (Step 5 ignores it for good).</li>
-</ol><div class="codewrapper sourceCode" id="cb10">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" tabindex="-1" aria-label="code-block-10-1"></a><span class="op">!</span>git add <span class="dv">0</span><span class="er">4_Accessing</span><span class="op">-</span>S3<span class="op">-</span>via<span class="op">-</span>SageMaker<span class="op">-</span>notebooks.py   <span class="co"># stage: mark this file to go into the next commit</span></span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1" aria-label="code-block-10-2"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Add Accessing-S3 notebook as a script"</span>   <span class="co"># a commit is a snapshot of the staged files; the message says what changed, specifically</span></span></code></pre>
-</div>
-<ol start="3" style="list-style-type: decimal"><li>Check the status again.</li>
 </ol><div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a><span class="op">!</span>git status   <span class="co"># the .py is committed; only the untracked .ipynb remains, which Step 5 ignores</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a><span class="op">!</span>git add <span class="dv">0</span><span class="er">4_Accessing</span><span class="op">-</span>S3<span class="op">-</span>via<span class="op">-</span>SageMaker<span class="op">-</span>notebooks.py   <span class="co"># stage: mark this file to go into the next commit</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Add Accessing-S3 notebook as a script"</span>   <span class="co"># a commit is a snapshot of the staged files; the message says what changed, specifically</span></span></code></pre>
+</div>
+<ol start="3" style="list-style-type: decimal"><li>Check the status again.</li>
+</ol><div class="codewrapper sourceCode" id="cb12">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1" aria-label="code-block-12-1"></a><span class="op">!</span>git status   <span class="co"># the .py is committed; only the untracked .ipynb remains, which Step 5 ignores</span></span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="step-5-ignore-notebooks-and-clutter-with--gitignore">Step 5: Ignore notebooks and clutter with
 <code>.gitignore</code>
@@ -669,30 +692,30 @@ Ignoring <code>*.ipynb</code> across the repository means a stray
 <code>git add .</code> cannot commit a notebook by accident.</p>
 <ol style="list-style-type: decimal"><li>Create the file (hidden in the file browser because it starts with a
 dot; <code>ls -a</code> shows it) and add the notebook pattern.</li>
-</ol><div class="codewrapper sourceCode" id="cb12">
+</ol><div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" tabindex="-1" aria-label="code-block-12-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">".gitignore"</span>, <span class="st">"a"</span>) <span class="im">as</span> gitignore:   <span class="co"># "a" appends, so re-running the cell keeps earlier rules</span></span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1" aria-label="code-block-12-2"></a>    gitignore.write(<span class="st">"# Jupyter notebooks: we version the .py copies instead</span><span class="ch">\n</span><span class="st">*.ipynb</span><span class="ch">\n</span><span class="st">"</span>)  <span class="co"># one pattern per line; * matches any name</span></span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1" aria-label="code-block-12-3"></a><span class="op">!</span>cat .gitignore</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1" aria-label="code-block-13-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">".gitignore"</span>, <span class="st">"a"</span>) <span class="im">as</span> gitignore:   <span class="co"># "a" appends, so re-running the cell keeps earlier rules</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1" aria-label="code-block-13-2"></a>    gitignore.write(<span class="st">"# Jupyter notebooks: we version the .py copies instead</span><span class="ch">\n</span><span class="st">*.ipynb</span><span class="ch">\n</span><span class="st">"</span>)  <span class="co"># one pattern per line; * matches any name</span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a><span class="op">!</span>cat .gitignore</span></code></pre>
 </div>
 <ol start="2" style="list-style-type: decimal"><li>While we are here, ignore the usual clutter too: caches and
 temporary files. (The NumPy archives the training episodes write are the
 challenge at the end.)</li>
-</ol><div class="codewrapper sourceCode" id="cb13">
-<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
-</h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" tabindex="-1" aria-label="code-block-13-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">".gitignore"</span>, <span class="st">"a"</span>) <span class="im">as</span> gitignore:</span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1" aria-label="code-block-13-2"></a>    gitignore.write(<span class="st">"</span><span class="ch">\n</span><span class="st"># Cache and temp files</span><span class="ch">\n</span><span class="st">__pycache__/</span><span class="ch">\n</span><span class="st">*.tmp</span><span class="ch">\n</span><span class="st">*.log</span><span class="ch">\n</span><span class="st">"</span>)</span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1" aria-label="code-block-13-3"></a><span class="op">!</span>cat .gitignore</span></code></pre>
-</div>
-<ol start="3" style="list-style-type: decimal"><li>Add and commit <code>.gitignore</code> so the rule travels with the
-repository.</li>
 </ol><div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a><span class="op">!</span>git add .gitignore   <span class="co"># .gitignore is itself tracked, so everyone who clones gets the same rules</span></span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1" aria-label="code-block-14-2"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Ignore notebooks, caches and temp files"</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" tabindex="-1" aria-label="code-block-14-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">".gitignore"</span>, <span class="st">"a"</span>) <span class="im">as</span> gitignore:</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1" aria-label="code-block-14-2"></a>    gitignore.write(<span class="st">"</span><span class="ch">\n</span><span class="st"># Cache and temp files</span><span class="ch">\n</span><span class="st">__pycache__/</span><span class="ch">\n</span><span class="st">*.tmp</span><span class="ch">\n</span><span class="st">*.log</span><span class="ch">\n</span><span class="st">"</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1" aria-label="code-block-14-3"></a><span class="op">!</span>cat .gitignore</span></code></pre>
+</div>
+<ol start="3" style="list-style-type: decimal"><li>Add and commit <code>.gitignore</code> so the rule travels with the
+repository.</li>
+</ol><div class="codewrapper sourceCode" id="cb15">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a><span class="op">!</span>git add .gitignore   <span class="co"># .gitignore is itself tracked, so everyone who clones gets the same rules</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Ignore notebooks, caches and temp files"</span></span></code></pre>
 </div>
 </section><section><h2 class="section-heading" id="step-6-pull-then-push">Step 6: Pull, then push<a class="anchor" aria-label="anchor" href="#step-6-pull-then-push"></a></h2>
 <hr class="half-width"><p>Before pushing, pull: the remote already has the README that GitHub
@@ -720,28 +743,28 @@ separately (one from <code>git init</code>, one from <strong>Create
 repository</strong>), git also needs
 <code>--allow-unrelated-histories</code> for this very first pull; never
 again after that.</p>
-<div class="codewrapper sourceCode" id="cb15">
+<div class="codewrapper sourceCode" id="cb16">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" tabindex="-1" aria-label="code-block-15-1"></a><span class="op">!</span>git config pull.rebase false   <span class="co"># pull strategy: merge (remote commits come in through a merge commit)</span></span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1" aria-label="code-block-15-2"></a><span class="co"># pull = fetch origin's main and merge it into ours; the flag is needed only this once, as the two histories share no commit</span></span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1" aria-label="code-block-15-3"></a><span class="op">!</span>git pull https:<span class="op">//</span>{username}:{token}<span class="op">@</span>github.com<span class="op">/</span>{username}<span class="op">/</span>sagemaker<span class="op">-</span>work.git main <span class="op">--</span>allow<span class="op">-</span>unrelated<span class="op">-</span>histories <span class="op">--</span>no<span class="op">-</span>edit   <span class="co"># the token authenticates the pull too, which a private repository needs</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a><span class="op">!</span>git config pull.rebase false   <span class="co"># pull strategy: merge (remote commits come in through a merge commit)</span></span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a><span class="co"># pull = fetch origin's main and merge it into ours; the flag is needed only this once, as the two histories share no commit</span></span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a><span class="op">!</span>git pull https:<span class="op">//</span>{username}:{token}<span class="op">@</span>github.com<span class="op">/</span>{username}<span class="op">/</span>sagemaker<span class="op">-</span>work.git main <span class="op">--</span>allow<span class="op">-</span>unrelated<span class="op">-</span>histories <span class="op">--</span>no<span class="op">-</span>edit   <span class="co"># the token authenticates the pull too, which a private repository needs</span></span></code></pre>
 </div>
 <p>If git reports a merge conflict, each conflicting file has to be
 resolved one way or the other and then staged and committed. You will
 not get one here (the README and your script are different files), but
 this is what it looks like:</p>
-<div class="codewrapper sourceCode" id="cb16">
+<div class="codewrapper sourceCode" id="cb17">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" tabindex="-1" aria-label="code-block-16-1"></a><span class="co"># Example only.</span></span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1" aria-label="code-block-16-2"></a><span class="co"># Keep YOUR version of a file:</span></span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1" aria-label="code-block-16-3"></a><span class="co"># !git checkout --ours 04_Accessing-S3-via-SageMaker-notebooks.py</span></span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1" aria-label="code-block-16-4"></a><span class="co"># Keep the REMOTE version of a file:</span></span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1" aria-label="code-block-16-5"></a><span class="co"># !git checkout --theirs README.md</span></span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1" aria-label="code-block-16-6"></a><span class="co"># Then stage and commit the resolution:</span></span>
-<span id="cb16-7"><a href="#cb16-7" tabindex="-1" aria-label="code-block-16-7"></a><span class="co"># !git add 04_Accessing-S3-via-SageMaker-notebooks.py README.md</span></span>
-<span id="cb16-8"><a href="#cb16-8" tabindex="-1" aria-label="code-block-16-8"></a><span class="co"># !git commit -m "Resolve merge conflicts"</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1" aria-label="code-block-17-1"></a><span class="co"># Example only.</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1" aria-label="code-block-17-2"></a><span class="co"># Keep YOUR version of a file:</span></span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1" aria-label="code-block-17-3"></a><span class="co"># !git checkout --ours 04_Accessing-S3-via-SageMaker-notebooks.py</span></span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1" aria-label="code-block-17-4"></a><span class="co"># Keep the REMOTE version of a file:</span></span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1" aria-label="code-block-17-5"></a><span class="co"># !git checkout --theirs README.md</span></span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1" aria-label="code-block-17-6"></a><span class="co"># Then stage and commit the resolution:</span></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1" aria-label="code-block-17-7"></a><span class="co"># !git add 04_Accessing-S3-via-SageMaker-notebooks.py README.md</span></span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1" aria-label="code-block-17-8"></a><span class="co"># !git commit -m "Resolve merge conflicts"</span></span></code></pre>
 </div>
 </div>
 <div class="section level4">
@@ -749,12 +772,12 @@ this is what it looks like:</p>
 <p>The token goes into the URL for this one command, built from the
 variables <code>getpass</code> filled. It is not stored by git and does
 not appear in the notebook.</p>
-<div class="codewrapper sourceCode" id="cb17">
+<div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1" aria-label="code-block-17-1"></a>github_url <span class="op">=</span> <span class="ss">f"github.com/</span><span class="sc">{</span>username<span class="sc">}</span><span class="ss">/sagemaker-work.git"</span></span>
-<span id="cb17-2"><a href="#cb17-2" tabindex="-1" aria-label="code-block-17-2"></a><span class="co"># IPython substitutes the Python variables in {braces}; user:token@ in an HTTPS URL authenticates this one push and is not stored</span></span>
-<span id="cb17-3"><a href="#cb17-3" tabindex="-1" aria-label="code-block-17-3"></a><span class="op">!</span>git push https:<span class="op">//</span>{username}:{token}<span class="op">@</span>{github_url} main</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1" aria-label="code-block-18-1"></a>github_url <span class="op">=</span> <span class="ss">f"github.com/</span><span class="sc">{</span>username<span class="sc">}</span><span class="ss">/sagemaker-work.git"</span></span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1" aria-label="code-block-18-2"></a><span class="co"># IPython substitutes the Python variables in {braces}; user:token@ in an HTTPS URL authenticates this one push and is not stored</span></span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a><span class="op">!</span>git push https:<span class="op">//</span>{username}:{token}<span class="op">@</span>{github_url} main</span></code></pre>
 </div>
 <p>Open
 <code>https://github.com/YOUR_GITHUB_USERNAME/sagemaker-work</code> in a
@@ -767,19 +790,19 @@ made.</p>
 notebooks<a class="anchor" aria-label="anchor" href="#step-7-pulling--py-files-and-converting-back-to-notebooks"></a></h2>
 <hr class="half-width"><p>Suppose a collaborator edits the <code>.py</code> file on GitHub, or
 you edit it from another machine. Pull as usual:</p>
-<div class="codewrapper sourceCode" id="cb18">
+<div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" tabindex="-1" aria-label="code-block-18-1"></a><span class="op">!</span>git pull https:<span class="op">//</span>{username}:{token}<span class="op">@</span>github.com<span class="op">/</span>{username}<span class="op">/</span>sagemaker<span class="op">-</span>work.git main   <span class="co"># a routine pull: no extra flag now that the histories are joined</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1" aria-label="code-block-19-1"></a><span class="op">!</span>git pull https:<span class="op">//</span>{username}:{token}<span class="op">@</span>github.com<span class="op">/</span>{username}<span class="op">/</span>sagemaker<span class="op">-</span>work.git main   <span class="co"># a routine pull: no extra flag now that the histories are joined</span></span></code></pre>
 </div>
 <p>Then convert the script back to a notebook with Jupytext. The
 <code>.ipynb</code> it writes is ignored by git (Step 5), so the round
 trip leaves the repository clean.</p>
-<div class="codewrapper sourceCode" id="cb19">
+<div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1" aria-label="code-block-19-1"></a><span class="co"># --to notebook converts the other way; the .ipynb it writes matches the *.ipynb rule in .gitignore</span></span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1" aria-label="code-block-19-2"></a><span class="op">!</span>jupytext <span class="op">--</span>to notebook <span class="dv">0</span><span class="er">4_Accessing</span><span class="op">-</span>S3<span class="op">-</span>via<span class="op">-</span>SageMaker<span class="op">-</span>notebooks.py <span class="op">--</span>output <span class="dv">0</span><span class="er">4_Accessing</span><span class="op">-</span>S3<span class="op">-</span>via<span class="op">-</span>SageMaker<span class="op">-</span>notebooks.ipynb</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1" aria-label="code-block-20-1"></a><span class="co"># --to notebook converts the other way; the .ipynb it writes matches the *.ipynb rule in .gitignore</span></span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1" aria-label="code-block-20-2"></a><span class="op">!</span>jupytext <span class="op">--</span>to notebook <span class="dv">0</span><span class="er">4_Accessing</span><span class="op">-</span>S3<span class="op">-</span>via<span class="op">-</span>SageMaker<span class="op">-</span>notebooks.py <span class="op">--</span>output <span class="dv">0</span><span class="er">4_Accessing</span><span class="op">-</span>S3<span class="op">-</span>via<span class="op">-</span>SageMaker<span class="op">-</span>notebooks.ipynb</span></code></pre>
 </div>
 <p>To convert every <code>.py</code> in the folder back to notebooks,
 <code>helpers.convert_files(direction="python_to_notebook")</code> does
@@ -810,15 +833,15 @@ commit it, push with your PAT, and verify the change on GitHub.</p>
 <div class="accordion-body">
 <p>Still inside
 <code>/home/ec2-user/SageMaker/sagemaker-work</code>:</p>
-<div class="codewrapper sourceCode" id="cb20">
+<div class="codewrapper sourceCode" id="cb21">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" tabindex="-1" aria-label="code-block-20-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">".gitignore"</span>, <span class="st">"a"</span>) <span class="im">as</span> gitignore:</span>
-<span id="cb20-2"><a href="#cb20-2" tabindex="-1" aria-label="code-block-20-2"></a>    gitignore.write(<span class="st">"</span><span class="ch">\n</span><span class="st"># NumPy archives saved by the training episodes</span><span class="ch">\n</span><span class="st">*.npz</span><span class="ch">\n</span><span class="st">"</span>)</span>
-<span id="cb20-3"><a href="#cb20-3" tabindex="-1" aria-label="code-block-20-3"></a><span class="op">!</span>cat .gitignore</span>
-<span id="cb20-4"><a href="#cb20-4" tabindex="-1" aria-label="code-block-20-4"></a><span class="op">!</span>git add .gitignore</span>
-<span id="cb20-5"><a href="#cb20-5" tabindex="-1" aria-label="code-block-20-5"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Ignore .npz arrays"</span></span>
-<span id="cb20-6"><a href="#cb20-6" tabindex="-1" aria-label="code-block-20-6"></a><span class="op">!</span>git push https:<span class="op">//</span>{username}:{token}<span class="op">@</span>github.com<span class="op">/</span>{username}<span class="op">/</span>sagemaker<span class="op">-</span>work.git main</span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" tabindex="-1" aria-label="code-block-21-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">".gitignore"</span>, <span class="st">"a"</span>) <span class="im">as</span> gitignore:</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1" aria-label="code-block-21-2"></a>    gitignore.write(<span class="st">"</span><span class="ch">\n</span><span class="st"># NumPy archives saved by the training episodes</span><span class="ch">\n</span><span class="st">*.npz</span><span class="ch">\n</span><span class="st">"</span>)</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1" aria-label="code-block-21-3"></a><span class="op">!</span>cat .gitignore</span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1" aria-label="code-block-21-4"></a><span class="op">!</span>git add .gitignore</span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1" aria-label="code-block-21-5"></a><span class="op">!</span>git commit <span class="op">-</span>m <span class="st">"Ignore .npz arrays"</span></span>
+<span id="cb21-6"><a href="#cb21-6" tabindex="-1" aria-label="code-block-21-6"></a><span class="op">!</span>git push https:<span class="op">//</span>{username}:{token}<span class="op">@</span>github.com<span class="op">/</span>{username}<span class="op">/</span>sagemaker<span class="op">-</span>work.git main</span></code></pre>
 </div>
 <p>Then open
 <code>https://github.com/YOUR_GITHUB_USERNAME/sagemaker-work/blob/main/.gitignore</code>

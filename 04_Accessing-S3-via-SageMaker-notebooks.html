@@ -602,7 +602,49 @@ issues…</p>
 <ul><li>the instance’s IAM role is <code>ml-sagemaker-use</code>
 </li>
 <li>the bucket policy from the S3 episode names that role</li>
-</ul></div>
+</ul><div id="when-the-file-is-bigger-than-the-notebook" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<span class="callout-header">Callout</span>
+<div id="when-the-file-is-bigger-than-the-notebook" class="callout-inner">
+<h3 class="callout-title">When the file is bigger than the notebook</h3>
+<div class="callout-content">
+<p>Both methods above assume the object fits. The notebook instance has
+a 20 GB disk and, on an <code>ml.t3.medium</code>, 4 GB of memory, and a
+model checkpoint or an image archive can be larger than either. A
+learner in a past class uploaded a multi-gigabyte PyTorch
+<code>.pth</code> file, found <code>download_file</code> could not fit
+it on the disk, and found that the stream from <code>get_object</code>
+could not be handed to <code>torch.load</code> either, because a
+<code>.pth</code> is a zip archive and <code>torch.load</code> needs to
+seek inside it, which a stream does not allow. In order of what to
+try:</p>
+<ol style="list-style-type: decimal"><li>
+<strong>Check the size first.</strong> <code>show_bucket</code>,
+below, prints every object’s size, so you know before you copy.</li>
+<li>
+<strong>If it fits in memory, read it into memory.</strong>
+<code>get_object</code> gives bytes, and <code>io.BytesIO(bytes)</code>
+wraps them as a seekable file that <code>torch.load</code>,
+<code>zipfile</code> and <code>pandas</code> all accept. That is fine up
+to about a gigabyte on this instance.</li>
+<li>
+<strong>If it does not fit the notebook, do not bring it
+here.</strong> Give it to the job that needs it as an input channel, and
+SageMaker copies it onto the job’s instance, which has the disk and
+memory the job was sized for. That is how the fine-tuning episode passes
+7.5 GB of model weights, which never touch the controller.</li>
+<li>A library such as <code>s3fs</code> can present an S3 object as a
+seekable file, so <code>torch.load</code> works on it directly, but it
+reads by range requests and is slow for a checkpoint. Use it to read a
+slice of a large file, not to load a model.</li>
+</ol><p>The rule the lesson follows is that the notebook holds what the
+notebook opens, and everything else goes from S3 to a job.</p>
+</div>
+</div>
+</div>
+</div>
 <div class="section level4">
 <h4 id="check-the-current-size-and-storage-costs-of-bucket">Check the current size and storage costs of bucket<a class="anchor" aria-label="anchor" href="#check-the-current-size-and-storage-costs-of-bucket"></a></h4>
 <p>Bucket size is what storage is billed on, and the bill is a day or
