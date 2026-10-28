@@ -594,10 +594,10 @@ scheduler that knows nothing about any of them. A managed service does
 that part. In SageMaker a job is a script, a container with the
 framework installed, an instance type and the data’s location, launched
 from Python. The service starts the machine, runs the script, saves the
-outputs and shuts the machine down, and a tuning job launches and tracks
-dozens of training jobs on its own. For a researcher without a sysadmin,
-that is often the strongest reason to use the cloud, and it is what most
-of this lesson is about.</p></li>
+outputs and shuts the machine down, and a hyperparameter tuning job
+launches and tracks dozens of training jobs on its own. For a researcher
+without a sysadmin, that is often the strongest reason to use the cloud,
+and it is what most of this lesson is about.</p></li>
 <li>
 <p><strong>Energy efficiency.</strong> The comparison depends on the
 hardware and on how well it is shared. Two things matter most.</p>
@@ -693,6 +693,14 @@ notebook stays up while you work, and the larger instances are paid for
 only while a job needs them. The <em>Notebooks as Controllers</em>
 episode creates it, and the two after that connect it to S3 and to a
 copy of the lesson’s code.</p>
+<p>The notebook instance is not the only way to drive AWS. Everything it
+does can be done from the AWS CLI on your own computer, which the
+optional <a href="14_CLI-equivalents.html">Same Jobs from the
+Terminal</a> episode shows. We start with the notebook for two reasons.
+It is one more AWS tool worth knowing, and on the shared account it
+keeps every launched job visible, in a notebook the instructors can
+open, which is how a problem gets tracked down fast when a learner hits
+one.</p>
 </div>
 <div id="nav-tabpanel-1-3" class="tab-pane" aria-labelledby="nav-tab-1-3" role="tabpanel">
 <p><strong>Amazon SageMaker runs the ML jobs.</strong> <a href="https://aws.amazon.com/sagemaker/" class="external-link">SageMaker</a> is AWS’s managed
@@ -715,8 +723,8 @@ scikit-learn, PyTorch, TensorFlow and Hugging Face. A script and a
 <code>requirements.txt</code> are usually all you supply.</li>
 <li>
 <strong>Jobs that manage themselves.</strong> No batch scripts and
-no queue. A job is launched from Python, and a tuning job launches and
-tracks many training jobs on its own.</li>
+no queue. A job is launched from Python, and a hyperparameter tuning job
+launches and tracks many training jobs on its own.</li>
 <li>
 <strong>A bill you can read.</strong> Every job reports its billable
 seconds, and tags split the bill by project. Training a hundred small
@@ -1434,7 +1442,7 @@ charge?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -4528,7 +4536,7 @@ goes next to it.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>There is no single answer; the solution is the written estimate. One
 worked example for scale: a 7B language model fully fine-tuned on 50,000
@@ -4725,7 +4733,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -5873,7 +5881,7 @@ What does a project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5, because a full fine-tune of a 7B model
 needs about 112 GB plus activations, and the g5 has 24 GB. On the p4d, 8
@@ -6063,7 +6071,7 @@ costs one epoch, not the whole bill.</li>
 <button class="accordion-button instructor-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInstructor1" aria-expanded="false" aria-controls="collapseInstructor1">
   <h3 class="accordion-header" id="headingInstructor1">  <div class="note-square"><i aria-hidden="true" class="callout-icon" data-feather="edit-2"></i></div> Before class (instructor checklist) </h3>
 </button>
-<div id="collapseInstructor1" class="accordion-collapse collapse" aria-labelledby="headingInstructor1" data-bs-parent="#accordionInstructor1">
+<div id="collapseInstructor1" class="accordion-collapse collapse" data-bs-parent="#accordionInstructor1" aria-labelledby="headingInstructor1">
 <div class="accordion-body">
 <p>Students never download the data themselves; four things have to be
 in place before the session. Each is written out in the instructor
@@ -6511,7 +6519,7 @@ step. Which, and why are they there?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Only the language model’s <code>q_proj</code>, <code>k_proj</code>,
@@ -7095,7 +7103,7 @@ will compare it to the bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Expect about 32 billed minutes. Scoring is the line most likely to
@@ -7513,7 +7521,7 @@ summaries, and the before/after CER. Did the extra pixels help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -7554,7 +7562,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
 <div class="accordion-body">
 <p>Startup and upload (~6 min, <code>$0.26</code> at
 <code>$2.61</code>/h) do not speed up: the container pull and the S3
@@ -9836,7 +9844,7 @@ helper wraps:</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -9845,7 +9853,7 @@ helper wraps:</p>
 <span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a>  <span class="at">--tags</span> key=Name,value=DoeJohn key=Project,value=SinkOrSwim key=Purpose,value=Inference</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
+<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
 <div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>

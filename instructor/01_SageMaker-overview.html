@@ -499,10 +499,10 @@ scheduler that knows nothing about any of them. A managed service does
 that part. In SageMaker a job is a script, a container with the
 framework installed, an instance type and the data’s location, launched
 from Python. The service starts the machine, runs the script, saves the
-outputs and shuts the machine down, and a tuning job launches and tracks
-dozens of training jobs on its own. For a researcher without a sysadmin,
-that is often the strongest reason to use the cloud, and it is what most
-of this lesson is about.</p></li>
+outputs and shuts the machine down, and a hyperparameter tuning job
+launches and tracks dozens of training jobs on its own. For a researcher
+without a sysadmin, that is often the strongest reason to use the cloud,
+and it is what most of this lesson is about.</p></li>
 <li>
 <p><strong>Energy efficiency.</strong> The comparison depends on the
 hardware and on how well it is shared. Two things matter most.</p>
@@ -594,6 +594,14 @@ notebook stays up while you work, and the larger instances are paid for
 only while a job needs them. The <em>Notebooks as Controllers</em>
 episode creates it, and the two after that connect it to S3 and to a
 copy of the lesson’s code.</p>
+<p>The notebook instance is not the only way to drive AWS. Everything it
+does can be done from the AWS CLI on your own computer, which the
+optional <a href="14_CLI-equivalents.html">Same Jobs from the
+Terminal</a> episode shows. We start with the notebook for two reasons.
+It is one more AWS tool worth knowing, and on the shared account it
+keeps every launched job visible, in a notebook the instructors can
+open, which is how a problem gets tracked down fast when a learner hits
+one.</p>
 </div>
 <div id="nav-tabpanel-1-3" class="tab-pane" aria-labelledby="nav-tab-1-3" role="tabpanel">
 <p><strong>Amazon SageMaker runs the ML jobs.</strong> <a href="https://aws.amazon.com/sagemaker/" class="external-link">SageMaker</a> is AWS’s managed
@@ -615,8 +623,8 @@ scikit-learn, PyTorch, TensorFlow and Hugging Face. A script and a
 <code>requirements.txt</code> are usually all you supply.</li>
 <li>
 <strong>Jobs that manage themselves.</strong> No batch scripts and
-no queue. A job is launched from Python, and a tuning job launches and
-tracks many training jobs on its own.</li>
+no queue. A job is launched from Python, and a hyperparameter tuning job
+launches and tracks many training jobs on its own.</li>
 <li>
 <strong>A bill you can read.</strong> Every job reports its billable
 seconds, and tags split the bill by project. Training a hundred small
