@@ -689,6 +689,11 @@ the ones before it. 2-4 parallel jobs is a good default.</li>
 <strong>Tags propagate from the tuner</strong>: tags on the tuner
 are copied to every child training job.</li>
 <li>
+<strong>Estimate the whole search before launching it</strong>:
+<code>helpers.estimate_tuning_cost</code> takes the tuner’s own limits
+and one child job’s billable minutes; startup is paid once per parallel
+slot, which is why two at a time is cheaper than ten at once.</li>
+<li>
 <strong>Read the bill from the child jobs</strong>: SageMaker bills
 per second of <code>BillableTimeInSeconds</code> x instance count on
 each training job; container pull and data download are inside that
