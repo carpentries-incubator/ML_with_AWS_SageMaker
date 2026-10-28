@@ -17,7 +17,7 @@ exercises: 15
 - Define `ContinuousParameter` and `CategoricalParameter` for targeted tuning.
 - Log and capture objective metrics for evaluating tuning success.
 - Optimize tuning setup to balance cost and efficiency, including parallelization.
-- Read back what a whole tuning job cost from its child training jobs.
+- Estimate a tuning job's cost from `max_jobs`, `max_parallel_jobs` and one child job's minutes with `helpers.estimate_tuning_cost`, and read back what it cost from its child training jobs.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -197,7 +197,26 @@ Paired with this, our `metric_definitions` above uses a regular expression `"val
 
 Now we give the tuner the training and validation `.npz` files the PyTorch episode saved to S3. The two `TrainingInput` channels map those files to the paths `train_nn.py` expects. `tuner.fit()` starts the tuning job. SageMaker launches one training job with one configuration from the search space and records the validation metric it reports. With `max_jobs=1` this is a test of the setup, not yet a search.
 
-Estimate first: one child job is the same three billable minutes as the PyTorch episode's CPU job, almost all of it startup, so about `$0.01`.
+Estimate first, as before every launch. The training episodes estimated one job. A tuning job is many, and `helpers.estimate_tuning_cost` does the arithmetic from the same numbers the tuner takes. Its first input is the minutes one child job bills after its startup, which the PyTorch episode's CPU job measured: about 3 billable minutes, 2 of them startup, so about 1 minute of training, evaluation and model upload. The tuner keeps each instance between child jobs, so startup is paid once per parallel slot and every later job on that slot bills only its own minute. Its inputs are the numbers the tuner takes plus one measurement:
+
+- `train_minutes_per_job`: the billable minutes one child job spends after its startup, on training, evaluation and the model upload. For a small model, time a smoke test and scale it, as the PyTorch episode did. For a large one, `helpers.estimate_training_cost` gives it. Here it is about 1 minute.
+- `price_per_hour`: the instance's rate from the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page, the same variable the estimator cell above set.
+- `max_jobs`: how many child jobs the tuner may launch in total, the same `max_jobs` you give the tuner.
+- `max_parallel_jobs`: how many run at once, the same `max_parallel_jobs`. This is the number of instances the tuner keeps up, so it is the number of times startup is paid.
+- `startup_minutes`: the container pull and data download, 2 by default, from the training episodes' measured jobs.
+
+It prints the billable minutes with their breakdown, the cost, the wall-clock before the unbilled provisioning, and a `max_run` for each child job, twice one job's estimate, to set on the estimator. The whole search, as a dictionary, comes back too.
+
+```python
+helpers.estimate_tuning_cost(
+    train_minutes_per_job=1,     # a child job's billable minutes after startup, from the PyTorch episode's CPU job
+    price_per_hour=price_per_hour,   # ml.m5.large, set with the estimator above
+    max_jobs=1,                  # the tuner's max_jobs: one child job, to test the setup
+    max_parallel_jobs=1,         # the tuner's max_parallel_jobs: one instance, so startup is paid once
+);
+```
+
+One child job, about 3 billable minutes, about `$0.01`.
 
 If the launch is refused with an `AccessDeniedException` ending in `explicit deny`, the account's checks are the cause: a missing tag, an instance type outside the lesson's list, or a resource kind the lesson never creates; the first training episode's callout *If the launch is refused* says what to look at.
 
@@ -251,7 +270,18 @@ If all goes well, we can scale up the experiment with the below code. In this co
 
 With this approach, SageMaker is better able to refine configurations without overloading resources or risking inefficient exploration, making `max_parallel_jobs=2` a solid default for most use cases.
 
-Estimate first: 10 child jobs at roughly 3 billable minutes each is about 30 billable minutes on `ml.m5.large`, so about `$0.06` in total. Wall-clock is five rounds of two jobs, so expect 15-20 minutes. Write both numbers down; the bill below comes in under them.
+Estimate first. The same call with the new limits:
+
+```python
+helpers.estimate_tuning_cost(
+    train_minutes_per_job=1,     # unchanged: the child jobs are the same job
+    price_per_hour=price_per_hour,
+    max_jobs=10,                 # ten child jobs
+    max_parallel_jobs=2,         # two at a time, so startup is paid twice and the other eight jobs reuse warm instances
+);
+```
+
+About 14 billable minutes, `$0.03`, and about 7 minutes of wall-clock plus provisioning. Startup is paid twice, once per slot, not ten times. Write the numbers down and compare them with the bill below.
 
 ```python
 import time as t
@@ -298,7 +328,7 @@ Once it has finished, the cost report for all 10 child jobs:
 tuning_cost_report(tuner, price_per_hour)
 ```
 
-Our run finished in 9.3 minutes of wall-clock and billed 14.1 minutes in total, `$0.03`: half the estimate. Read the per-job lines and the reason is visible. The first two child jobs billed about 3 minutes each, like every job so far. The other eight billed about 1 minute each. A tuning job keeps its instances between child jobs, so jobs 3 through 10 ran on the two instances that were already up, with the container pulled and the data downloaded. The startup overhead that dominates a single small job was paid twice, not ten times.
+Our run finished in 9.3 minutes of wall-clock and billed 14.1 minutes in total, `$0.03`, the estimate's 14. Read the per-job lines and the reason the estimate counts startup per slot is visible. The first two child jobs billed about 3 minutes each, like every job so far. The other eight billed about 1 minute each. A tuning job keeps its instances between child jobs, so jobs 3 through 10 ran on the two instances that were already up, with the container pulled and the data downloaded. The startup overhead that dominates a single small job was paid twice, not ten times.
 
 ### More jobs in parallel
 
@@ -419,7 +449,7 @@ with torch.no_grad():
 
 ### All at once
 
-Rerun the 10-job search with `max_parallel_jobs=10` (equal to `max_jobs`). Before you launch it, predict what changes in (a) total cost, (b) wall-clock time, and (c) the quality of the search. Then run it and check (a) and (b) with `tuning_cost_report()` and the runtime print.
+Rerun the 10-job search with `max_parallel_jobs=10` (equal to `max_jobs`). Before you launch it, run `helpers.estimate_tuning_cost` with the new limit and predict what changes in (a) total cost, (b) wall-clock time, and (c) the quality of the search. Then run it and check (a) and (b) with `tuning_cost_report()` and the runtime print.
 
 ```python
 tuner_parallel = HyperparameterTuner(
@@ -446,7 +476,7 @@ print("Best objective, all-parallel run:  ", tuner_parallel.analytics().datafram
 
 ### Solution
 
-- **Cost**: higher, not the same. Our all-parallel run billed 27.5 minutes (`$0.05`) against 14.1 minutes (`$0.03`) for the two-at-a-time run. Ten instances each pull the container and download the data, so the startup overhead is paid ten times; with two at a time it was paid twice and the other eight child jobs reused warm instances. (If your account has a quota on concurrent `ml.m5.large` training instances, the request may be rejected or throttled, which is the practical limit on this approach.)
+- **Cost**: higher, not the same. The estimator says 30 billable minutes, ten slots' startup plus ten jobs, against 14 for two slots. Our all-parallel run billed 27.5 minutes (`$0.05`) against 14.1 minutes (`$0.03`) for the two-at-a-time run. Ten instances each pull the container and download the data, so the startup overhead is paid ten times; with two at a time it was paid twice and the other eight child jobs reused warm instances. (If your account has a quota on concurrent `ml.m5.large` training instances, the request may be rejected or throttled, which is the practical limit on this approach.)
 - **Wall-clock**: roughly one job's duration. Our run took 4.3 minutes against 9.3, so about twice as fast, not five times: the two-at-a-time run's later jobs were short because they skipped startup.
 - **Search quality**: with all 10 launched at once, the Bayesian strategy has no completed results to learn from, so the 10 configurations are effectively a random sample of the space. On a 2-parameter problem this small you will usually see a similar best objective either way; on a larger search space with more jobs, the sequential-ish run tends to find a better configuration for the same number of jobs.
 
@@ -497,6 +527,7 @@ Two side effects: an epoch now takes several optimizer steps instead of one, so 
 - **Start with one job**: `max_jobs=1, max_parallel_jobs=1` first, to catch script and configuration errors before paying for a search.
 - **Parallelism buys time, not quality**: Cost is per child training job; `max_parallel_jobs` changes wall-clock time and, with the Bayesian strategy, how much each job can learn from the ones before it. 2-4 parallel jobs is a good default.
 - **Tags propagate from the tuner**: tags on the tuner are copied to every child training job.
+- **Estimate the whole search before launching it**: `helpers.estimate_tuning_cost` takes the tuner's own limits and one child job's billable minutes; startup is paid once per parallel slot, which is why two at a time is cheaper than ten at once.
 - **Read the bill from the child jobs**: SageMaker bills per second of `BillableTimeInSeconds` x instance count on each training job; container pull and data download are inside that number and dominate short jobs.
 - **Transform the test set with the training scaler**: Load the saved scaler and pass it to `preprocess_data(test_df, scaler=scaler)`; never refit on test data.
 
