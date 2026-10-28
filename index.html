@@ -607,19 +607,19 @@ for a pre-workshop email from the instructor to confirm which option to
 choose.</p>
 <div class="tabs">
 <nav><div id="nav-tab-1" class="nav nav-tabs" role="tablist">
-<button class="nav-link active" id="nav-tab-1-1" data-bs-toggle="tab" data-bs-target="#nav-tabpanel-1-1" type="button" role="tab" aria-controls="nav-tabpanel-1-1" aria-selected="true">
-  <h3 class="tab-header" id="nav-tab-heading-1-1">
+<button class="nav-link active" id="nav-tab-1-SharedaccountUW-Madison" name="SharedaccountUW-Madison" data-bs-toggle="tab" data-bs-target="#nav-tabpanel-1-SharedaccountUW-Madison" type="button" role="tab" aria-controls="nav-tabpanel-1-SharedaccountUW-Madison" aria-selected="true">
+  <h3 class="tab-header" id="nav-tab-heading-1-SharedaccountUW-Madison">
   Shared account (UW-Madison)
   </h3>
 </button>
-<button class="nav-link" id="nav-tab-1-2" data-bs-toggle="tab" data-bs-target="#nav-tabpanel-1-2" type="button" role="tab" aria-controls="nav-tabpanel-1-2" aria-selected="false">
-  <h3 class="tab-header" id="nav-tab-heading-1-2">
+<button class="nav-link" id="nav-tab-1-YourownAWSaccount" name="YourownAWSaccount" data-bs-toggle="tab" data-bs-target="#nav-tabpanel-1-YourownAWSaccount" type="button" role="tab" aria-controls="nav-tabpanel-1-YourownAWSaccount" aria-selected="false">
+  <h3 class="tab-header" id="nav-tab-heading-1-YourownAWSaccount">
   Your own AWS account
   </h3>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
+<div id="nav-tabpanel-1-SharedaccountUW-Madison" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-SharedaccountUW-Madison">
 <p>If you are attending this lesson at UW-Madison (ML Marathon or
 Research Bazaar), the instructors will provide a shared AWS account for
 all attendees. You do not need to set up your own AWS account. What to
@@ -649,7 +649,7 @@ with an <code>AccessDenied</code> message that does not say why; <a href="refuse
 lesson’s helper module can tell you before and after the launch. Check
 there before emailing.</li>
 </ul></div>
-<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
+<div id="nav-tabpanel-1-YourownAWSaccount" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-YourownAWSaccount">
 <p>If you are not attending through the shared account, follow these
 steps:</p>
 <ol style="list-style-type: decimal"><li>Create an account at <a href="https://aws.amazon.com/" class="external-link">aws.amazon.com</a> on the <strong>paid
@@ -678,13 +678,25 @@ learning workshop” is enough.</li>
 RAG episode’s models, DeepSeek V3 and Titan Text Embeddings V2, show as
 available in your region. Bedrock enables its serverless models
 automatically; only Anthropic’s need a use-case form.</li>
-<li>Stage the shared datasets yourself, since there is no instructor
-bucket: the WattBot files for the RAG episodes, and the Badger Scribe
-data and the CHURRO-3B weights for the fine-tuning episode. The commands
-are in the lesson’s instructor page <em>Shared data bucket: staging
-before each term</em>; set <code>shared_bucket</code> in those episodes
-to your own bucket.</li>
-</ol></div>
+<li>
+<strong>Create the notebook role.</strong> Every notebook and job in
+the lesson runs as an IAM role named <code>ml-sagemaker-use</code>,
+which the controllers episode tells you to pick. On your own account you
+create it, with the Bedrock permissions the RAG episodes need. The
+commands are under <em>The notebook role</em> and <em>Bedrock</em> on
+the <a href="aws-account-prep.html">Account preparation checklist</a>.
+The guard rails on that page are optional on an account of your own, and
+worth setting if other people will use it.</li>
+<li>
+<strong>Stage the shared datasets yourself</strong>, since there is
+no instructor bucket: the WattBot files for the RAG episodes, and the
+Badger Scribe data and the CHURRO-3B weights for the fine-tuning
+episode. The commands are on the <a href="shared-data-bucket.html">Shared data bucket</a> page. Set
+<code>shared_bucket</code> in those episodes to your own bucket.</li>
+</ol><p>Steps 3 to 6 need administrator rights on the account, which you have
+on an account you created. On an institutional account, ask its
+administrator.</p>
+</div>
 </div>
 </div>
 <div id="instructors-before-the-workshop" class="callout">
