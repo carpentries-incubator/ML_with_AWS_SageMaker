@@ -8,7 +8,7 @@ This workshop teaches how to run machine learning and AI work on AWS and keep th
 
 ::::::::::::::::::::::::::::::::::::: tab
 
-### Part 1, orientation
+### 1 Orientation
 
 What the cloud offers a researcher compared with a laptop or the cluster down the hall, what it costs, and the setup every later episode builds on.
 
@@ -16,7 +16,7 @@ What the cloud offers a researcher compared with a laptop or the cluster down th
 - The four things every episode uses, S3, a notebook instance, jobs and Bedrock, and how every later episode estimates and checks what a job costs.
 - Put the data in an S3 bucket, start a small notebook instance that launches everything else, read and write the bucket from it, and optionally put your notebooks under version control. The notebook is the controller, not the workhorse. The expensive compute runs on instances SageMaker rents for each job and releases when it ends.
 
-### Part 2, SageMaker
+### 2 SageMaker
 
 **Training, fine-tuning and tuning.** Every model in this part is trained by a SageMaker job on a rented instance that ends when the script does, launched from the small notebook, with the cost estimated before the launch and read back after it.
 
@@ -24,7 +24,7 @@ What the cloud offers a researcher compared with a laptop or the cluster down th
 - Fine-tune a 3B open-weight vision-language model with LoRA, as a training job with checkpoints and a runtime cap, for transcribing handwritten German letters (Badger Scribe), scored on held-out pages before and after.
 - Run a hyperparameter tuning job that trains ten models under a budget set up front.
 
-### Part 3, Bedrock
+### 3 Bedrock
 
 **Inference and retrieval-augmented generation.** Nothing is trained here. A RAG pipeline is built three ways, on Bedrock's per-token models, as GPU jobs, and on a GPU notebook, and the three are compared on cost, speed and what they can run.
 
@@ -32,7 +32,7 @@ What the cloud offers a researcher compared with a laptop or the cluster down th
 - Add multimodal embeddings for the questions whose answers live in tables and figures, and measure what they change.
 - Run the same pipeline with an open-weight model Bedrock does not serve, as SageMaker Processing jobs that rent a GPU for the minutes they need; optionally, the same on a notebook GPU, as the comparison.
 
-### Part 4, cleanup
+### 4 Cleanup
 
 **Resource management and cleanup.** What is still billing when the work is done, and how to make sure nothing is.
 
