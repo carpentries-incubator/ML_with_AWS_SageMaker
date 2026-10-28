@@ -449,7 +449,7 @@ and resource management.</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
 <p>What cloud computing offers a researcher, when AWS makes sense next
 to a laptop or a campus cluster, and how its pricing works. Then the
 setup every later episode uses.</p>
@@ -467,7 +467,7 @@ version control.</li>
 estimate the cost before launching, and track spending across the
 resources you create.</li>
 </ul></div>
-<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
+<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
 <p>Training, fine-tuning and hyperparameter tuning. SageMaker runs the
 training scripts on separate compute instances, starting with small
 models and ending with a vision-language model of billions of
@@ -489,7 +489,7 @@ after.</li>
 learning rates and epochs, let SageMaker run the training jobs, and
 compare the results under a cost ceiling.</li>
 </ul></div>
-<div id="nav-tabpanel-1-3" class="tab-pane" aria-labelledby="nav-tab-1-3" role="tabpanel">
+<div id="nav-tabpanel-1-3" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-3">
 <p>Inference and retrieval-augmented generation (RAG). Training changes
 a model’s parameters. Inference uses a model that is already trained. We
 build a RAG pipeline that retrieves passages from research papers and
@@ -513,7 +513,7 @@ they finish, and compare the results and the costs with Bedrock. An
 optional episode runs the same pipeline interactively on a GPU notebook,
 to see model loading and inference step by step.</li>
 </ul></div>
-<div id="nav-tabpanel-1-4" class="tab-pane" aria-labelledby="nav-tab-1-4" role="tabpanel">
+<div id="nav-tabpanel-1-4" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-4">
 <p>Resource management and cost tracking. Cloud resources keep billing
 after you stop using them, notebook instances and stored data above all.
 We finish by reviewing what was created, checking what it cost, and
@@ -831,14 +831,7 @@ choose.</p>
 <p>If you are attending this lesson at UW-Madison, the instructors will
 provide a shared AWS account for all attendees. You do not need to set
 up your own AWS account. What to expect:</p>
-<ul><li>Stick to the lesson materials, so that expensive pipelines (e.g.,
-training/tuning LLMs) do not lead to high costs and wasted credits.</li>
-<li>Do not use any tools we do not explicitly cover without discussing
-with the instructors first.</li>
-<li>Stop (and at the end of the workshop, delete) every notebook
-instance you create. A GPU notebook left running costs about
-<code>$60</code> a day.</li>
-</ul><ul><li>Before the workshop, the instructor adds you to the shared account
+<ul><li>Before the workshop, the instructor adds you to the shared account
 and emails you a <strong>sign-in link</strong>. It opens the AWS console
 directly in the workshop account and role after you sign in with your
 UW–Madison NetID. Bookmark it; it is the link you will use every
@@ -850,15 +843,12 @@ sent.</li>
 link and sign in. If you see a “no access” or “not assigned” message,
 email the instructor with your username. Check that the account name and
 region in the top-right of the console match the email.</li>
-<li>Three rules on the shared account:
-<ul><li>Stick to the lesson materials, so that expensive pipelines (e.g.,
-training/tuning LLMs) do not lead to high costs and wasted credits.</li>
-<li>Do not use any tools we do not explicitly cover without discussing
-with the instructors first.</li>
-<li>Stop (and at the end of the workshop, delete) every notebook
-instance you create. A GPU notebook left running costs about
-<code>$60</code> a day.</li>
-</ul></li>
+<li>Three rules on the shared account. Stick to the lesson materials, so
+that expensive pipelines such as training or tuning an LLM do not burn
+the credits. Do not use any tools the lesson does not cover without
+asking the instructors first. Stop, and at the end of the workshop
+delete, every notebook instance you create. A GPU notebook left running
+costs about <code>$60</code> a day.</li>
 <li>The account enforces a short list of rules on every launch (the
 three cost tags with values from fixed lists, the lesson’s instance
 types, a 48-hour cap, no endpoints). A job that breaks one is refused
@@ -912,11 +902,12 @@ to your own bucket.</li>
 <div id="instructors-before-the-workshop" class="callout-inner">
 <h3 class="callout-title">Instructors, before the workshop</h3>
 <div class="callout-content">
-<p>The rules above are not part of SageMaker. They are policies you
-attach to the account, and the shared data bucket has to be staged. Work
-through the instructor pages before the first session: the <a href="aws-account-prep.html">Account preparation checklist</a> sets the
-quotas, Bedrock model access, the cost tags and the guard rails, and the
-<a href="shared-data-bucket.html">Shared data bucket</a> page stages the
+<p>The launch rules the shared-account tab describes are not part of
+SageMaker. They are policies you attach to the account, and the shared
+data bucket has to be staged. Work through the instructor pages before
+the first session: the <a href="aws-account-prep.html">Account
+preparation checklist</a> sets the quotas, Bedrock model access, the
+cost tags and the guard rails, and the <a href="shared-data-bucket.html">Shared data bucket</a> page stages the
 datasets and model weights the fine-tuning and RAG episodes read. The <a href="instructor-notes.html">Instructor Notes</a> index has the rest,
 including the end-of-workshop cleanup.</p>
 </div>
@@ -952,10 +943,9 @@ the terms come up from the first episode.</p>
 bucket, episode 3 creates the notebook instance and clones the lesson
 onto it, which is where every later episode’s notebook comes from, and
 episode 4 is the first read of your bucket from the notebook.</p>
-<p>After that, the order is loose. Episodes 6, 7 and 9 are a sequence (9
-uses files 7 saves). Episode 8 stands on its own. Episodes 10 to 13 are
-a sequence, since each reuses what the one before cached in your
-bucket.</p>
+<p>After that, do episodes 6 to 9 in order. Episode 8 can be skipped,
+and 9 needs the files 7 saves. Episodes 10 to 13 also go in order, since
+each reuses what the one before cached in your bucket.</p>
 <!--
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.

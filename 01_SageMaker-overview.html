@@ -571,7 +571,7 @@ hosts can do, we call Bedrock instead.</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
 <p><strong>Amazon S3 stores the data and the results.</strong> <a href="https://aws.amazon.com/s3/" class="external-link">S3</a> is object storage, organised in
 <em>buckets</em>. Datasets stay in a bucket instead of on the notebook
 instance, every SageMaker job reads its inputs from a bucket and writes
@@ -580,7 +580,7 @@ month. You create a bucket of your own in the next episode and use it
 for the rest of the workshop. The larger datasets are already in a
 shared bucket the instructors staged.</p>
 </div>
-<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
+<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
 <p><strong>The SageMaker notebook instance is where you work.</strong>
 It is a small machine running JupyterLab, started at the beginning of
 the workshop and stopped at the end, and every notebook in the lesson
@@ -601,7 +601,7 @@ keeps every launched job visible, in a notebook the instructors can
 open, which is how a problem gets tracked down fast when a learner hits
 one.</p>
 </div>
-<div id="nav-tabpanel-1-3" class="tab-pane" aria-labelledby="nav-tab-1-3" role="tabpanel">
+<div id="nav-tabpanel-1-3" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-3">
 <p><strong>Amazon SageMaker runs the ML jobs.</strong> <a href="https://aws.amazon.com/sagemaker/" class="external-link">SageMaker</a> is AWS’s managed
 machine learning service. You give it a training or inference script,
 the input data and an instance type. It starts that instance, runs the
@@ -628,48 +628,28 @@ launches and tracks many training jobs on its own.</li>
 seconds, and tags split the bill by project. Training a hundred small
 models on a dataset under 10 GB costs under <code>$20</code>.</li>
 </ul></div>
-<div id="nav-tabpanel-1-4" class="tab-pane" aria-labelledby="nav-tab-1-4" role="tabpanel">
+<div id="nav-tabpanel-1-4" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-4">
 <p><strong>Amazon Bedrock serves hosted models.</strong> Sometimes there
 is no model to train or host. You want to send a model a prompt and get
 a response. <a href="https://aws.amazon.com/bedrock/" class="external-link">Bedrock</a> gives
 API access to models AWS already hosts, with no GPU instance to
-provision. What that means in practice:</p>
-<p><strong>Nothing to manage.</strong> You call the model through an API
-and pay for what you use, by the number of input and output tokens.
-There is no instance to size, start or shut down.</p>
-<p><strong>A catalog of models.</strong> Bedrock hosts models from
-Anthropic, DeepSeek, Amazon and others, for text generation and for
-embeddings. You pick one by its ID, with nothing to download or
-deploy.</p>
-<p><strong>Cheap for small experiments.</strong> Embedding a few
-thousand document chunks and answering a few dozen questions costs
-cents. The RAG episodes build the pipeline on Bedrock first.</p>
-<p><strong>Only the catalog.</strong> Bedrock serves only the models in
-its catalog. For a model it does not carry, or for control of how a
-model is served, SageMaker is the alternative. The RAG episodes make
-that move, from Bedrock to a model you run yourself.</p>
-<p><strong>Cost attribution.</strong> Bedrock calls carry no resource
-tags by default. The lesson routes them through tagged application
-inference profiles so they show up on the bill under the right
-project.</p>
-<ul><li><p><strong>Nothing to manage.</strong> You call the model through an
-API and pay for what you use, by the number of input and output tokens.
-There is no instance to size, start or shut down.</p></li>
-<li><p><strong>A catalog of models.</strong> Bedrock hosts models from
-Anthropic, DeepSeek, Amazon and others, for text generation and for
-embeddings. You pick one by its ID, with nothing to download or
-deploy.</p></li>
-<li><p><strong>Cheap for small experiments.</strong> Embedding a few
-thousand document chunks and answering a few dozen questions costs
-cents. The RAG episodes build the pipeline on Bedrock first.</p></li>
-<li><p><strong>Only the catalog.</strong> Bedrock serves only the models
-in its catalog. For a model it does not carry, or for control of how a
-model is served, SageMaker is the alternative. The RAG episodes make
-that move, from Bedrock to a model you run yourself.</p></li>
-<li><p><strong>Cost attribution.</strong> Bedrock calls carry no
-resource tags by default. The lesson routes them through tagged
-application inference profiles so they show up on the bill under the
-right project.</p></li>
+provision. What that gives a researcher:</p>
+<ul><li>
+<strong>Nothing to manage.</strong> You call the model through an
+API and pay per token. There is no instance to size, start or shut
+down.</li>
+<li>
+<strong>A catalog of models, and only the catalog.</strong>
+Anthropic, DeepSeek, Amazon and others, for generation and embeddings,
+picked by ID. A model Bedrock does not carry has to run on SageMaker,
+which the RAG episodes show.</li>
+<li>
+<strong>Cheap at research scale.</strong> Embedding a few thousand
+document chunks and answering a few dozen questions costs cents.</li>
+<li>
+<strong>A bill you can read.</strong> Bedrock calls carry no tags,
+so the lesson routes them through tagged inference profiles that put the
+spend under the right project.</li>
 </ul></div>
 </div>
 </div>
