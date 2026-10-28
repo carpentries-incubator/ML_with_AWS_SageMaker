@@ -523,21 +523,35 @@ Nothing was gained: the two-instance run took longer and cost twice as much. Eac
 
 ### When a second machine helps
 
-`helpers.estimate_parallel_speedup` puts numbers on that for any model and any box, with the same assumptions as the cost estimator: 6 FLOPs per parameter per token at a quarter of the GPU's peak, and a gradient of 4 bytes per trainable parameter exchanged once per step over the slowest link in use. It does not overlap the exchange with the computation, which real runs partly do, so its speedup is a floor. The 7B model from the cost section, trained with a batch of 16 documents of 2,000 tokens, three ways:
+`helpers.estimate_parallel_speedup` puts numbers on that for any model and any box, with the same assumptions as the cost estimator: 6 FLOPs per parameter per token at a quarter of the GPU's peak, and a gradient of 4 bytes per trainable parameter exchanged once per step over the slowest link in use. It does not overlap the exchange with the computation, which real runs partly do, so its speedup is a floor.
+
+Its inputs differ from the cost estimator's in one way. The cost estimator takes the whole run, `examples` × `tokens_per_example` × `epochs`, because the bill is the total work. This one takes a single step, `tokens_per_step`, because the exchange happens once per step and the speedup is the same for every step, so the length of the run does not enter. A step is one batch, so `tokens_per_step` is the batch size times the tokens per example, the same two numbers as the cost estimator's with the batch in place of the dataset. The 7B model from the cost section, trained with a batch of 16 documents of 2,000 tokens each, three ways:
 
 ```python
 # Two single-GPU instances over the network: the class-account form of data parallelism
-helpers.estimate_parallel_speedup(params_billions=7, tokens_per_step=16 * 2000, instance_type="ml.g6e.xlarge", instance_count=2);
+helpers.estimate_parallel_speedup(
+    params_billions=7,
+    tokens_per_step=16 * 2000,       # one step: a batch of 16 documents x 2,000 tokens each
+    instance_type="ml.g6e.xlarge", instance_count=2,
+);
 ```
 
 ```python
 # Four GPUs in one box, linked by PCIe
-helpers.estimate_parallel_speedup(params_billions=7, tokens_per_step=16 * 2000, instance_type="ml.g6e.12xlarge");
+helpers.estimate_parallel_speedup(
+    params_billions=7,
+    tokens_per_step=16 * 2000,       # one step: a batch of 16 documents x 2,000 tokens each
+    instance_type="ml.g6e.12xlarge",
+);
 ```
 
 ```python
 # Eight GPUs in one box, linked by NVLink
-helpers.estimate_parallel_speedup(params_billions=7, tokens_per_step=16 * 2000, instance_type="ml.p4d.24xlarge");
+helpers.estimate_parallel_speedup(
+    params_billions=7,
+    tokens_per_step=16 * 2000,       # one step: a batch of 16 documents x 2,000 tokens each
+    instance_type="ml.p4d.24xlarge",
+);
 ```
 
 Read the three together. Two L40S instances over a 20 Gb/s network spend as long exchanging the 28 GB gradient as computing, so two machines finish in the same time as one and bill twice. Four L40S in one box over PCIe get 3.2 of the ideal 4. Eight A100s over NVLink get 7.8 of 8, which is why the big training boxes are built that way.
