@@ -115,6 +115,21 @@ s3.download_file(bucket_name, key, local_file_path)
 * the instance's IAM role is `ml-sagemaker-use`
 * the bucket policy from the S3 episode names that role
 
+::::::::::::::::::::::::::::::::::::: callout
+
+### When the file is bigger than the notebook
+
+Both methods above assume the object fits. The notebook instance has a 20 GB disk and, on an `ml.t3.medium`, 4 GB of memory, and a model checkpoint or an image archive can be larger than either. A learner in a past class uploaded a multi-gigabyte PyTorch `.pth` file, found `download_file` could not fit it on the disk, and found that the stream from `get_object` could not be handed to `torch.load` either, because a `.pth` is a zip archive and `torch.load` needs to seek inside it, which a stream does not allow. In order of what to try:
+
+1. **Check the size first.** `show_bucket`, below, prints every object's size, so you know before you copy.
+2. **If it fits in memory, read it into memory.** `get_object` gives bytes, and `io.BytesIO(bytes)` wraps them as a seekable file that `torch.load`, `zipfile` and `pandas` all accept. That is fine up to about a gigabyte on this instance.
+3. **If it does not fit the notebook, do not bring it here.** Give it to the job that needs it as an input channel, and SageMaker copies it onto the job's instance, which has the disk and memory the job was sized for. That is how the fine-tuning episode passes 7.5 GB of model weights, which never touch the controller.
+4. A library such as `s3fs` can present an S3 object as a seekable file, so `torch.load` works on it directly, but it reads by range requests and is slow for a checkpoint. Use it to read a slice of a large file, not to load a model.
+
+The rule the lesson follows is that the notebook holds what the notebook opens, and everything else goes from S3 to a job.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
 #### Check the current size and storage costs of bucket
 Bucket size is what storage is billed on, and the bill is a day or two behind, so read the size from the notebook.
 

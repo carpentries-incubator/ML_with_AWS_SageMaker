@@ -62,7 +62,7 @@ The workshop uses a shared AWS account with restrictions that block the expensiv
 ### What this workshop does not cover
 
 - **General ML/AI instruction.** The focus is on running existing ML and AI workflows on AWS, not on teaching the algorithms.
-- **Model deployment.** We do not deploy trained or fine-tuned models as always-on inference endpoints.
+- **Model deployment.** We do not deploy trained or fine-tuned models as always-on inference endpoints. A model trained elsewhere, on a campus cluster say, can still be used here. Upload its weights to S3 and run inference over a dataset as a Processing job, which is what the RAG with Processing Jobs episode does with an open-weight model. Serving it to an application behind an endpoint is the part the lesson leaves out, and the RAG overview says when that is the right tool.
 - **AI agents and tool use.** We do not cover agent frameworks or applications that let a language model call external tools.
 
 If there is another ML or AI workflow you would like to see covered, we welcome suggestions. [Open an issue on the lesson GitHub](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/issues) or email [endemann@wisc.edu](mailto:endemann@wisc.edu).

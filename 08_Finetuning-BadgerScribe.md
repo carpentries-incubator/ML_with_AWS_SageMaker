@@ -388,7 +388,7 @@ local_data_dir = "./data"
 os.makedirs(local_data_dir, exist_ok=True)
 ```
 
-What the jobs will read, before downloading any of it: the page lists and metadata at the top level, the scanned pages under `images/`, and the staged CHURRO-3B weights under `model/`.
+What the jobs will read, before downloading any of it: the page lists and metadata at the top level, the scanned pages under `images/`, and the staged CHURRO-3B weights under `model/`. The weights are 7.5 GB and never come to this notebook. They go to each job as its `model` channel, and SageMaker copies them onto the job's instance, which is the pattern the Accessing S3 episode's callout gives for any file bigger than the controller.
 
 ```python
 helpers.show_bucket(shared_bucket, f"{data_prefix}/")   # the shared bucket's folder for this episode: files, and each sub-folder's count and size

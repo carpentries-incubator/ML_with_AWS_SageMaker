@@ -74,6 +74,16 @@ token = getpass.getpass("GitHub Personal Access Token (PAT): ")  # kept in this 
 
 When you re-run the whole notebook later, this cell prompts again, because nothing is saved.
 
+#### The same token clones a private repository
+The lesson repository was public, so `git clone` in the controllers episode needed no credentials. A private repository, your own or a collaborator's, needs the token at clone time as well as at push time, and the way to supply it without writing it to disk is to put it in the URL for that one command, from the variable you just set. The `repo` scope on the token covers it.
+
+```python
+# Clone a private repository with the token in the URL for this command only; nothing is written to disk
+!git clone https://{username}:{token}@github.com/YOUR_GITHUB_USERNAME/your-private-repo.git /home/ec2-user/SageMaker/your-private-repo
+```
+
+Git stores the URL, token included, in that clone's `.git/config`, which is on the instance's disk. Either strip it after cloning, `git remote set-url origin https://github.com/YOUR_GITHUB_USERNAME/your-private-repo.git`, and supply the token the same way on each later `pull`, or revoke the token when you are done, as the cleanup episode's checklist says. Do not paste a token into a cell as text. The notebook file would then carry it.
+
 ## Step 2: Configure Git settings
 Git records an author on every commit. Set yours in this repository: without `--global` the setting goes into the repository's own `.git/config`, under `SageMaker/`, which survives a stop. (`--global` would write to your home directory, which is reset when the instance stops.)
 

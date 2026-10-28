@@ -25,15 +25,15 @@ After that the lesson opens up. Learners pick the episodes closest to their own 
 
 This format worked for the 2026 Marathon class in three hours. It needs participants who are willing to ask questions and work through things on their own, which is the audience the lesson assumes: intermediate, comfortable in Python and Jupyter, knowing what training, tuning, fine-tuning and RAG are, with no AWS experience required. With a group that expects to be walked through every cell, keep the lockstep going through the PyTorch episode and the Bedrock episode and leave the rest as homework.
 
+The 2026 class's feedback said the setup was easy to follow and could have gone faster, and that the bulk of the content was skimmed. The setup page now tells learners to do episodes 1 to 4 before anything else, so the next run can assign episodes 2 to 4 as pre-work, with the instructor checking in the first half hour that everyone has a bucket, a running instance and the cloned repository, and start the live session at the first training episode. That buys the training and RAG episodes the hour the setup took.
+
 ## Cleaning the account with aws-nuke
 
-Hello all! In this document, we will show you how to run an AWS Nuke script within the ML-Marathon Sagemaker server. As you progress through the Sagemaker
-workshop, towards the end of the workshop you'll be tasked to remove and empty your notebooks \& buckets. However, depending on the size of your data, it can take a long time to remove them altogether.
+This is the cleanup after class. The cleanup episode has every learner stop their notebook instance, delete their bucket and remove their Bedrock profiles. In a class of a hundred, some do not, and a notebook instance left stopped still bills for its volume and a bucket for its storage, forever. This section is the sweep an instructor runs once, after the workshop's last session, to remove what was left behind.
 
-This is where the AWS Nuke script comes in handy, instead of removing your notebooks and buckets one-by-one, the script automates this process and removes
-it for you!
+[aws-nuke](https://github.com/ekristen/aws-nuke) is an open-source tool that deletes resources from an AWS account. On its own it deletes everything, which is what it is for, and why it refuses to run without a config file that says which account, which regions and which resource types. The lesson's config, [instructors/nuke-config.yml](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/instructors/nuke-config.yml), narrows it to the two kinds of resource learners leave behind that keep billing, S3 buckets and SageMaker notebook instances, in the class region only, on the workshop account only, and it keeps the shared data bucket by name. Training, processing and tuning jobs have ended by then and hold nothing billable, so they are not listed. Bedrock application inference profiles cost nothing and are not listed either, which is why the cleanup episode tells learners to remove their own. The production account's ID is on the config's blocklist, so a run against it stops before anything is deleted.
 
-Here are the following steps on how to launch and run the AWS-Nuke Script:
+Three rules. It runs from CloudShell as the administrator's own identity, not from a notebook instance, whose role cannot delete other learners' resources. It runs after the last session, once learners have had their chance to clean up themselves. And it runs as a dry run first, every time, with the list of what it would delete read before the real run. The steps:
 
 ### 1\. Open CloudShell in the correct AWS account
 
@@ -42,7 +42,7 @@ Here are the following steps on how to launch and run the AWS-Nuke Script:
 to live. In this case, we will choose US-East-2 (OHIO) since that's where we
 store our servers.
 3. Open CloudShell from the console toolbar.
-4. Verify exactly which account/role you are using:
+4. Verify which account and role you are using. The account ID must be the workshop account's, the one in the config:
 
 ```bash
 aws sts get-caller-identity
@@ -121,7 +121,7 @@ prompt enabled as an additional safeguard.
 
 ### If the dry run stops on "account doesn't have an alias"
 
-Oftentimes when running the dry run, you will run into an error stating:
+The dry run may stop with this error:
 
 ```
 WARN[0000] 'targets' is deprecated. Please use 'includes' instead.
@@ -130,11 +130,9 @@ FATA[0000] specified account doesn't have an alias. For safety reasons you need
 to specify an account alias. Your production account should contain the term 'prod'
 ```
 
-Do not panic, this isn't related to CloudShell or credentials. Rather, it connected to AWS successfully but stopped abruptly since the account you are trying to target has **no AWS account alias.** By default, aws-nuke requires
-an alias so you must visually confirm a recognizable account name before proceeding. It also blocks aliases containing prod by default.
+This is not a credentials problem. aws-nuke connected and then refused, because the account has **no account alias**. It requires one so that a human sees a recognisable account name before anything is deleted, and it refuses any alias containing `prod`.
 
-Recommended: create a non-production account alias.
-First, verify the exact account:
+Create a non-production alias once. First confirm the account:
 
 ```bash
 aws sts get-caller-identity
@@ -154,6 +152,4 @@ Then run the dry-run again:
 aws-nuke run --config "$HOME/nuke-config.yml"
 ```
 
-Congratulations, you have reached the end of this tutorial! By now, all scripts
-should work and the specified notebooks/buckets you wanted to clean should
-now be all empty!
+After the real run, the notebook-instances page and the S3 bucket list should show only the shared bucket and whatever you chose to keep. Spot-check both in the console. GitHub tokens the class created are outside AWS, and the cleanup episode asked learners to revoke their own.
