@@ -19,7 +19,7 @@ Only needed for the optional episode on pushing your notebooks to GitHub. [Sign 
 ### 2. AWS Account 
 There are two ways to get access to AWS for this lesson. Please wait for a pre-workshop email from the instructor to confirm which option to choose.
 
-::::::::::::::::::::::::::::::::::::: tab
+::::::::::::::::::::::::::::::::::::: group-tab
 
 ### Shared account (UW-Madison)
 
