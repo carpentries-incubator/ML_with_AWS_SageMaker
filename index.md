@@ -49,7 +49,7 @@ Researchers and students who use ML or AI in their work and want or need to run 
 
 ### Cost controls
 
-The cloud does cost money, but far less than most researchers assume, and for most research projects it is cheap. Run as written, the whole workshop, training jobs, a tuning job, a LoRA fine-tune on a GPU and two RAG pipelines, costs each learner a few dollars. What makes that true is habit, not luck. Every episode tags its resources, caps job runtime, estimates the cost before launching, checks the bill after, and cleans up, and the final episode covers monitoring, cleanup and the rules a shared account can enforce.
+The cloud does cost money, but far less than most researchers assume, and for most research projects it is cheap. Run as written, the whole workshop, training jobs, a tuning job, a LoRA fine-tune on a GPU and two RAG pipelines, costs each learner a few dollars. Every episode tags its resources, caps job runtime, estimates the cost before launching, checks the bill after, and cleans up, and the final episode covers monitoring, cleanup and the rules a shared account can enforce.
 
 ### What This Workshop Does Not Cover
 
