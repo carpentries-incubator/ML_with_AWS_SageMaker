@@ -404,7 +404,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Fine-tuning episode: cost, capacity and setup</h1>
-        <p>Last updated on 2026-10-21 |
+        <p>Last updated on 2026-10-28 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/instructors/finetuning-episode-cost-estimate.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -418,8 +418,8 @@
 
         
 
-<p>Planning notes for running the <em>Fine-tuning a Vision-Language
-Model with Training Jobs</em> episode (Badger Scribe, CHURRO-3B LoRA)
+<p>Planning notes for running the <a href="08_Finetuning-BadgerScribe.html">Fine-tuning a Vision-Language
+Model with Training Jobs</a> episode (Badger Scribe, CHURRO-3B LoRA)
 with a class of about 50 in a 2-hour slot (3 with the bonus exercises)
 (quotas below are sized for 100). Prices are on-demand SageMaker rates
 from the AWS price list published 2026-10-16 (<code>us-east-1</code> and
@@ -586,17 +586,17 @@ instance type.</p>
 <p><strong>Model download.</strong> The base weights
 (<code>stanford-oval/churro-3B</code>, ~7.5 GB) are <em>not</em> pulled
 from Hugging Face by the jobs. They are staged once in the shared bucket
-under <code>badger-scribe/model/churro-3B/</code> (step on the
-<em>Shared data bucket</em> page) and every estimator passes that prefix
-as a <code>model</code> channel; the Processing jobs mount the same
-prefix and pass it as <code>--model_id</code>. SageMaker copies it from
-S3 in ~1–2 minutes per job, and a hundred jobs starting in the same
-minute hit S3, which is built for that, rather than one Hugging Face
-repository. The scripts fall back to the Hub only when no
-<code>model</code> channel is given (self-paced learners who skipped the
-staging step), in which case the instance needs internet access (default
-outside a VPC). The CHURRO weights carry the Qwen research license
-(non-commercial), which is fine for a class.</p>
+under <code>badger-scribe/model/churro-3B/</code> (step on the <a href="shared-data-bucket.html">Shared data bucket</a> page) and every
+estimator passes that prefix as a <code>model</code> channel; the
+Processing jobs mount the same prefix and pass it as
+<code>--model_id</code>. SageMaker copies it from S3 in ~1–2 minutes per
+job, and a hundred jobs starting in the same minute hit S3, which is
+built for that, rather than one Hugging Face repository. The scripts
+fall back to the Hub only when no <code>model</code> channel is given
+(self-paced learners who skipped the staging step), in which case the
+instance needs internet access (default outside a VPC). The CHURRO
+weights carry the Qwen research license (non-commercial), which is fine
+for a class.</p>
 <p><strong>Warm pools.</strong>
 <code>keep_alive_period_in_seconds</code> on the estimator keeps the
 instance for the next job, which would let a relaunch skip the startup
@@ -614,8 +614,8 @@ term under <code>badger-scribe/</code> in the shared bucket, next to the
 WattBot data. The CHURRO-3B weights (~7.5 GB) are staged once under
 <code>badger-scribe/model/churro-3B/</code> in the same bucket, from a
 laptop or a notebook instance rather than CloudShell. The bucket policy,
-layout and exact commands are on the <em>Shared data bucket: staging
-before each term</em> page.</p>
+layout and exact commands are on the <a href="shared-data-bucket.html">Shared data bucket: staging before each
+term</a> page.</p>
 </div>
 <div class="section level3">
 <h3 id="the-rest">2. The rest<a class="anchor" aria-label="anchor" href="#the-rest"></a></h3>
@@ -700,7 +700,7 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/finetuning-episode-cost-estimate.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/finetuning-episode-cost-estimate.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-28",
   "datePublished": "2026-10-28"
 }
 

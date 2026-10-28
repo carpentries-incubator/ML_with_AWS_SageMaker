@@ -788,21 +788,23 @@ expects.</li>
 </ul></section><section id="14_CLI-equivalents"><h2 class="section-heading"><a href="14_CLI-equivalents.html">(Optional) The Same Jobs from the Terminal</a></h2>
 <hr class="half-width">
 <ul>
-<li>The CLI, the SDK and the console are one API; the CLI shows you
-nothing you do not ask for, so its first use is to look and to stop, not
-to launch.</li>
+<li>The CLI, the SDK and the console are one API. Every call the
+notebooks made has a CLI command with the same name and fields, and
+<code>describe-*</code> on a job you ran prints the request the SDK
+built.</li>
+<li>The CLI shows you nothing you do not ask for, so its first use is to
+look and to stop, not to launch.</li>
 <li>Authenticate with <code>aws sso login</code> and short-lived
-credentials; never store an access key.</li>
+credentials. Never store an access key.</li>
 <li>
-<code>list-*</code>, <code>describe-*</code> and <code>stop-*</code>
-for training, processing and tuning jobs and notebook instances cover
-almost every reason to open a terminal.</li>
+<code>describe-training-job</code> is
+<code>job_cost_report()</code>. Cost is billable seconds × instance
+count × the hourly rate, and you do the multiplication.</li>
 <li>A <code>create-training-job</code> JSON is what
-<code>estimator.fit()</code> sent: the same tags, the same
-<code>MaxRuntimeInSeconds</code>, the same instance choice, with no
-price printed next to it.</li>
+<code>estimator.fit()</code> sent, the same script, hyperparameters,
+channel, cap and tags, with no price printed next to it.</li>
 <li>Endpoints, EC2 instances and GPU notebooks are not jobs and do not
-end; the workshop account’s notebook role denies creating them, and your
+end. The workshop account’s notebook role denies creating them, and your
 own account should too.</li>
 </ul></section><section id="15_Resource-management-cleanup"><h2 class="section-heading"><a href="15_Resource-management-cleanup.html">Resource Management and Monitoring</a></h2>
 <hr class="half-width">

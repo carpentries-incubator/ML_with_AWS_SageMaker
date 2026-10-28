@@ -571,7 +571,7 @@ hosts can do, we call Bedrock instead.</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
 <p><strong>Amazon S3 stores the data and the results.</strong> <a href="https://aws.amazon.com/s3/" class="external-link">S3</a> is object storage, organised in
 <em>buckets</em>. Datasets stay in a bucket instead of on the notebook
 instance, every SageMaker job reads its inputs from a bucket and writes
@@ -580,7 +580,7 @@ month. You create a bucket of your own in the next episode and use it
 for the rest of the workshop. The larger datasets are already in a
 shared bucket the instructors staged.</p>
 </div>
-<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
+<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
 <p><strong>The SageMaker notebook instance is where you work.</strong>
 It is a small machine running JupyterLab, started at the beginning of
 the workshop and stopped at the end, and every notebook in the lesson
@@ -589,19 +589,19 @@ data, jobs are launched and results are read back. It needs little
 power, because the expensive work runs elsewhere, so it is an
 <code>ml.t3.medium</code> at about five cents an hour. The cheap
 notebook stays up while you work, and the larger instances are paid for
-only while a job needs them. The <em>Notebooks as Controllers</em>
-episode creates it, and the two after that connect it to S3 and to a
-copy of the lesson’s code.</p>
+only while a job needs them. The <a href="03_SageMaker-notebooks-as-controllers.html">Notebooks as
+Controllers</a> episode creates it, and the two after that connect it to
+S3 and to a copy of the lesson’s code.</p>
 <p>The notebook instance is not the only way to drive AWS. Everything it
 does can be done from the AWS CLI on your own computer, which the
-optional <a href="14_CLI-equivalents.html">Same Jobs from the
+optional <a href="14_CLI-equivalents.html">The Same Jobs from the
 Terminal</a> episode shows. We start with the notebook for two reasons.
 It is one more AWS tool worth knowing, and on the shared account it
 keeps every launched job visible, in a notebook the instructors can
 open, which is how a problem gets tracked down fast when a learner hits
 one.</p>
 </div>
-<div id="nav-tabpanel-1-3" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-3">
+<div id="nav-tabpanel-1-3" class="tab-pane" aria-labelledby="nav-tab-1-3" role="tabpanel">
 <p><strong>Amazon SageMaker runs the ML jobs.</strong> <a href="https://aws.amazon.com/sagemaker/" class="external-link">SageMaker</a> is AWS’s managed
 machine learning service. You give it a training or inference script,
 the input data and an instance type. It starts that instance, runs the
@@ -628,7 +628,7 @@ launches and tracks many training jobs on its own.</li>
 seconds, and tags split the bill by project. Training a hundred small
 models on a dataset under 10 GB costs under <code>$20</code>.</li>
 </ul></div>
-<div id="nav-tabpanel-1-4" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-4">
+<div id="nav-tabpanel-1-4" class="tab-pane" aria-labelledby="nav-tab-1-4" role="tabpanel">
 <p><strong>Amazon Bedrock serves hosted models.</strong> Sometimes there
 is no model to train or host. You want to send a model a prompt and get
 a response. <a href="https://aws.amazon.com/bedrock/" class="external-link">Bedrock</a> gives
@@ -664,7 +664,8 @@ results go to S3, training and other heavy jobs go to SageMaker, and
 Bedrock is called when a hosted model is enough.</p>
 <p>None of this needs the notebook instance. Everything here can be done
 from Python on your own computer or from the AWS command line, and the
-optional <em>The Same Jobs from the Terminal</em> episode shows how.</p>
+optional <a href="14_CLI-equivalents.html">The Same Jobs from the
+Terminal</a> episode shows how.</p>
 <div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
 <i class="callout-icon" data-feather="key"></i>
