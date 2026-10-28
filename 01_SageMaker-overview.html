@@ -468,7 +468,12 @@ cluster or lab server is bought once, maintained by someone, and used
 for five or more years with whatever GPUs were current at purchase.
 Cloud providers offer each new generation soon after release (Blackwell
 B200 and GB200 today, Vera Rubin announced for cloud deployment in
-2026), billed per second and only while a job runs. The largest systems
+2026), billed per second and only while a job runs. Each generation is
+faster, has more memory and uses less energy per unit of work. The B200
+of 2024 does about seven times the bf16 arithmetic of the A100 of 2020
+on two and a half times the power, with more than twice the memory, so
+the energy per unit of training work roughly halved with each of the two
+generations between them (NVIDIA data sheets). The largest systems
 (72-GPU GB200 racks) are liquid-cooled; most campus data centers are
 air-cooled and cannot host them without a facility upgrade. Owned
 hardware costs the same busy or idle, so for GPUs that stay busy owning
@@ -483,24 +488,31 @@ a runtime cap.</li>
 <li>
 <strong>Efficiency comes from sharing.</strong> Two things decide
 the energy per unit of useful work: how much of the facility’s power
-reaches the hardware, and how much of the time the hardware is busy. On
-the first, power usage effectiveness (PUE, total facility power over IT
-power, 1.0 is perfect) tracks facility scale: AWS reports a global
-average of <a href="https://aws.amazon.com/sustainability/" class="external-link">1.14 for
-2025</a>, a <a href="https://arxiv.org/html/2506.19019v1" class="external-link">2025 survey of
-US research HPC</a> puts TACC at about 1.15 and MGHPCC near 1.14, while
-the <a href="https://datacenter.uptimeinstitute.com/rs/711-RIA-145/images/2025.Annual.Survey.Report.pdf?version=0" class="external-link">Uptime
-Institute’s 2025 survey</a> puts enterprise and colocation data centers
-at 1.58-1.80, where a departmental server room also sits. On the second,
-a GPU is only efficient while it is busy. A lab’s own GPUs idle whenever
-the lab is not training; a campus cluster pools demand across a
-university and keeps its hardware busier, and national pools go further
-by sharing across institutions<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>; a cloud provider pools demand across the
-world and across time zones, so a GPU that one group releases is running
-someone else’s job minutes later. Providers do not publish GPU
-utilization, so this part is reasoning, not data, but a single
-institution cannot smooth demand the way a global pool can. (PUE figures
-are self-reported and measure the building, not the GPUs in it.)</li>
+reaches the hardware, and how much of the time the hardware is busy.
+<ul><li>
+<strong>How much of the power reaches the hardware.</strong> The
+rest goes to cooling and power distribution. A large data center, <a href="https://aws.amazon.com/sustainability/" class="external-link">AWS’s</a> or a <a href="https://arxiv.org/html/2506.19019v1" class="external-link">national HPC center’s</a>,
+spends about 15% on top of what the hardware draws. A typical enterprise
+or departmental server room spends 60 to 80% on top (<a href="https://datacenter.uptimeinstitute.com/rs/711-RIA-145/images/2025.Annual.Survey.Report.pdf?version=0" class="external-link">Uptime
+Institute, 2025</a>). The liquid cooling the newest GPU racks need is
+part of how the large centers keep that overhead low. These figures are
+self-reported and measure the building, not the GPUs in it.</li>
+<li>
+<strong>How much of the time the hardware is busy.</strong> A GPU is
+only efficient while it is busy. A lab’s own GPUs idle whenever the lab
+is not training. A single institution’s cluster does better, because it
+pools demand across every group on campus, and the national pools (like
+<a href="https://chtc.cs.wisc.edu/" class="external-link">CHTC</a>‘s <a href="https://osg-htc.org/services/open_science_pool.html" class="external-link">OSPool</a>
+and the <a href="https://nationalresearchplatform.org/" class="external-link">NRP</a>, often
+free for a research group) do better still, because they pool it across
+institutions. At that scale they are close to what a cloud provider
+does, which is to pool demand across the world and across time zones, so
+a GPU one group releases is running someone else’s job minutes later.
+Providers do not publish GPU utilization, so this part is reasoning, not
+data. What the research pools do not have is the cloud providers’
+budget, so their hardware is a generation or two behind the newest the
+cloud rents.</li>
+</ul></li>
 </ul></div>
 <div class="section level3">
 <h3 id="s3-the-notebook-instance-sagemaker-and-bedrock">S3, the notebook instance, SageMaker and Bedrock<a class="anchor" aria-label="anchor" href="#s3-the-notebook-instance-sagemaker-and-bedrock"></a></h3>
@@ -641,16 +653,6 @@ Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
  -->
 </div>
-<div class="footnotes footnotes-end-of-document">
-<hr><ol><li id="fn1"><p>Research computing has done this for years. UW-Madison’s
-<a href="https://chtc.cs.wisc.edu/" class="external-link">Center for High Throughput
-Computing</a> (CHTC) pools campus machines and fills their idle time
-with other groups’ jobs, and the <a href="https://osg-htc.org/services/open_science_pool.html" class="external-link">OSPool</a> it
-operates for the NSF does the same across institutions. The <a href="https://nationalresearchplatform.org/" class="external-link">National Research
-Platform</a> (NRP) shares GPUs across universities the same way. These
-are the public counterparts of what the cloud does, and often free for a
-research group.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-</ol></div>
 
 
 

@@ -554,7 +554,12 @@ cluster or lab server is bought once, maintained by someone, and used
 for five or more years with whatever GPUs were current at purchase.
 Cloud providers offer each new generation soon after release (Blackwell
 B200 and GB200 today, Vera Rubin announced for cloud deployment in
-2026), billed per second and only while a job runs. The largest systems
+2026), billed per second and only while a job runs. Each generation is
+faster, has more memory and uses less energy per unit of work. The B200
+of 2024 does about seven times the bf16 arithmetic of the A100 of 2020
+on two and a half times the power, with more than twice the memory, so
+the energy per unit of training work roughly halved with each of the two
+generations between them (NVIDIA data sheets). The largest systems
 (72-GPU GB200 racks) are liquid-cooled; most campus data centers are
 air-cooled and cannot host them without a facility upgrade. Owned
 hardware costs the same busy or idle, so for GPUs that stay busy owning
@@ -569,24 +574,33 @@ a runtime cap.</li>
 <li>
 <strong>Efficiency comes from sharing.</strong> Two things decide
 the energy per unit of useful work: how much of the facility’s power
-reaches the hardware, and how much of the time the hardware is busy. On
-the first, power usage effectiveness (PUE, total facility power over IT
-power, 1.0 is perfect) tracks facility scale: AWS reports a global
-average of <a href="https://aws.amazon.com/sustainability/" class="external-link">1.14 for
-2025</a>, a <a href="https://arxiv.org/html/2506.19019v1" class="external-link">2025 survey of
-US research HPC</a> puts TACC at about 1.15 and MGHPCC near 1.14, while
-the <a href="https://datacenter.uptimeinstitute.com/rs/711-RIA-145/images/2025.Annual.Survey.Report.pdf?version=0" class="external-link">Uptime
-Institute’s 2025 survey</a> puts enterprise and colocation data centers
-at 1.58-1.80, where a departmental server room also sits. On the second,
-a GPU is only efficient while it is busy. A lab’s own GPUs idle whenever
-the lab is not training; a campus cluster pools demand across a
-university and keeps its hardware busier, and national pools go further
-by sharing across institutions<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>; a cloud provider pools demand across the
-world and across time zones, so a GPU that one group releases is running
-someone else’s job minutes later. Providers do not publish GPU
-utilization, so this part is reasoning, not data, but a single
-institution cannot smooth demand the way a global pool can. (PUE figures
-are self-reported and measure the building, not the GPUs in it.)</li>
+reaches the hardware, and how much of the time the hardware is busy.
+<ul>
+<li>
+<strong>How much of the power reaches the hardware.</strong> The
+rest goes to cooling and power distribution. A large data center, <a href="https://aws.amazon.com/sustainability/" class="external-link">AWS’s</a> or a <a href="https://arxiv.org/html/2506.19019v1" class="external-link">national HPC center’s</a>,
+spends about 15% on top of what the hardware draws. A typical enterprise
+or departmental server room spends 60 to 80% on top (<a href="https://datacenter.uptimeinstitute.com/rs/711-RIA-145/images/2025.Annual.Survey.Report.pdf?version=0" class="external-link">Uptime
+Institute, 2025</a>). The liquid cooling the newest GPU racks need is
+part of how the large centers keep that overhead low. These figures are
+self-reported and measure the building, not the GPUs in it.</li>
+<li>
+<strong>How much of the time the hardware is busy.</strong> A GPU is
+only efficient while it is busy. A lab’s own GPUs idle whenever the lab
+is not training. A single institution’s cluster does better, because it
+pools demand across every group on campus, and the national pools (like
+<a href="https://chtc.cs.wisc.edu/" class="external-link">CHTC</a>‘s <a href="https://osg-htc.org/services/open_science_pool.html" class="external-link">OSPool</a>
+and the <a href="https://nationalresearchplatform.org/" class="external-link">NRP</a>, often
+free for a research group) do better still, because they pool it across
+institutions. At that scale they are close to what a cloud provider
+does, which is to pool demand across the world and across time zones, so
+a GPU one group releases is running someone else’s job minutes later.
+Providers do not publish GPU utilization, so this part is reasoning, not
+data. What the research pools do not have is the cloud providers’
+budget, so their hardware is a generation or two behind the newest the
+cloud rents.</li>
+</ul>
+</li>
 </ul>
 </div>
 <div class="section level3">
@@ -736,19 +750,6 @@ models per token with nothing to start or stop.</li>
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
  -->
-</div>
-<div class="footnotes footnotes-end-of-document">
-<hr>
-<ol>
-<li id="fn1"><p>Research computing has done this for years. UW-Madison’s
-<a href="https://chtc.cs.wisc.edu/" class="external-link">Center for High Throughput
-Computing</a> (CHTC) pools campus machines and fills their idle time
-with other groups’ jobs, and the <a href="https://osg-htc.org/services/open_science_pool.html" class="external-link">OSPool</a> it
-operates for the NSF does the same across institutions. The <a href="https://nationalresearchplatform.org/" class="external-link">National Research
-Platform</a> (NRP) shares GPUs across universities the same way. These
-are the public counterparts of what the cloud does, and often free for a
-research group.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-</ol>
 </div></section><section id="aio-02_Data-storage-setting-up-S3"><p>Content from <a href="02_Data-storage-setting-up-S3.html">Data Storage: Setting up S3</a></p>
 <hr>
 <p>Last updated on 2026-10-28 |
@@ -1008,12 +1009,12 @@ not tags.)</p>
 <p>The account enforces these tags on every job and notebook instance. A
 launch with a tag missing, blank or off the lists is refused with
 <code>AccessDenied ... explicit deny</code>, and the message does not
-say which tag. Buckets are not checked, so take care here. A bucket with
-a wrong tag is created anyway, and its storage cannot be attributed on
-the bill. The training episode checks the tags in the notebook before
-each launch and names the problem, and <a href="refused-launch.html">If
-a Launch Is Refused</a> has the full list of rules and fixes. The rules
-are not part of SageMaker. The instructor sets them up following the <a href="aws-account-prep.html">AWS account preparation</a> page.</p>
+say which tag. Buckets are not checked. A bucket with a wrong tag is
+created anyway, and its storage cannot be attributed on the bill. The
+training episode checks the tags in the notebook before each launch and
+names the problem, and <a href="refused-launch.html">If a Launch Is
+Refused</a> has the full list of rules and fixes. The rules are not part
+of SageMaker. The instructor sets them up following the <a href="aws-account-prep.html">AWS account preparation</a> page.</p>
 <table class="table">
 <thead><tr>
 <th><code>Purpose</code></th>
@@ -2748,7 +2749,7 @@ commit it, push with your PAT, and verify the change on GitHub.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Still inside
 <code>/home/ec2-user/SageMaker/sagemaker-work</code>:</p>
@@ -2858,18 +2859,17 @@ no PyTorch, and on current instances no scikit-learn either.</p>
 </h2>
 <hr class="half-width">
 <p>The Titanic data trains in a second on the notebook, and nothing
-about it needs the cloud. We use it because the pattern matters more
-than the example. Test the code on a small sample first, on the cheapest
-machine you have, and once it works, scale up to a more powerful
-instance when the data or the model calls for one. The notebook instance
-is that cheap machine here. It is a rental too, at about five cents an
-hour, but a crash on it costs a few seconds of that, where a crash on a
-rented GPU costs the minutes the instance spent starting up, at twenty
-times the rate. A SageMaker training job is that scale-up step. The
-notebook describes the job and launches it, and SageMaker rents the
-instance, runs the script on it and releases it when the script ends.
-The fine-tuning episode follows the same two steps with a 3B model on a
-GPU, where the cloud earns its keep.</p>
+about it needs the cloud. What it shows is the pattern. Test the code on
+a small sample first, on the cheapest machine you have, and once it
+works, scale up to a more powerful instance when the data or the model
+calls for one. The notebook instance is that cheap machine here. It is a
+rental too, at about five cents an hour, but a crash on it costs a few
+seconds of that, where a crash on a rented GPU costs the minutes the
+instance spent starting up, at twenty times the rate. A SageMaker
+training job is that scale-up step. The notebook describes the job and
+launches it, and SageMaker rents the instance, runs the script on it and
+releases it when the script ends. The fine-tuning episode follows the
+same two steps with a 3B model on a GPU, which does need the cloud.</p>
 <p>The notebook is not the only way to launch a job. The same launch is
 a few lines of the AWS CLI from a laptop, which the optional <a href="14_CLI-equivalents.html">Same Jobs from the Terminal</a> episode
 shows, and on your own account that is a fine way to work once you know
@@ -3007,7 +3007,7 @@ group.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li><p><strong>Data Preprocessing</strong>: The script fills missing
@@ -3262,7 +3262,7 @@ data. Which instance would you pick for the training job, and why?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
 GB of data wants about 32 GB of memory: <code>ml.m5.2xlarge</code> (8
@@ -3778,7 +3778,7 @@ compared with the first job?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
 <p>The status is <code>InProgress</code> if you were quick and
 <code>Completed</code> otherwise. The cost is the same as the first run,
@@ -3816,7 +3816,7 @@ and compare the bill and the accuracy with the script version.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
 <div class="accordion-body">
 <p>The built-in algorithm will not run our
 <code>preprocess_data()</code> for us, and it expects a CSV with no
@@ -4677,7 +4677,7 @@ slower, and nine times the price. The GPU job’s wall-clock was 8.6
 minutes, because it first sat four and a half minutes in
 <code>Pending - Training job waiting for capacity</code>; GPU instances
 are in shorter supply than CPU ones, and the wait is not billed.</p>
-<p>A GPU pays off when the per-step work is large enough to keep it
+<p>A GPU is worth it when the per-step work is large enough to keep it
 busy: bigger models, bigger batches, or datasets of hundreds of MB and
 up. If you ever do need more GPU than a <code>g4dn.xlarge</code>, the
 next sensible step is an <code>ml.g5.xlarge</code>
@@ -4746,8 +4746,7 @@ what the bullets predict: the same 3.5 minutes of wall-clock as the
 single-instance run, 5.5 billable minutes across the two instances,
 <code>$0.010</code>, two CloudWatch log streams, <code>algo-1</code> and
 <code>algo-2</code>, each printing all 1000 epochs, and two identical
-saved models. Nobody wants that job. The one worth launching is
-below.</p>
+saved models. The job worth launching is below.</p>
 </div>
 <div class="section level3">
 <h3 id="data-parallelism">Data parallelism<a class="anchor" aria-label="anchor" href="#data-parallelism"></a>
@@ -4894,11 +4893,11 @@ spend as long exchanging the 28 GB gradient as computing, so two
 machines finish in the same time as one and bill twice. Four L40S in one
 box over PCIe get 3.2 of the ideal 4. Eight A100s over NVLink get 7.8 of
 8, which is why the big training boxes are built that way.</p>
-<p>The rule, then: data parallelism pays when each step’s computation is
-large next to the exchange, which means a big model, a big batch and a
-fast link, in that order of importance. Run the function before renting
-more than one device, and read the cost line: the speedup is what you
-buy, the cost ratio is what you pay for it.</p>
+<p>Data parallelism helps when each step’s computation is large next to
+the exchange, which means a big model, a big batch and a fast link, in
+that order of importance. Run the function before renting more than one
+device, and read the cost line: the speedup is what you buy, the cost
+ratio is what you pay for it.</p>
 </div>
 <div class="section level3">
 <h3 id="setting-it-up-for-each-kind-of-job">Setting it up for each kind of job<a class="anchor" aria-label="anchor" href="#setting-it-up-for-each-kind-of-job"></a>
@@ -5455,7 +5454,7 @@ is 803,000 tokens. LoRA on 3.75B parameters is 4 × 3.75 billion ×
 803,000, about 1.2 × 10¹⁶ FLOPs. A quarter of an A10G’s 70 TFLOPS is 17
 trillion a second, so about 700 seconds, call it 12 minutes. Measured,
 the same instance trains at 1.45 seconds per page-pass, so 502
-page-passes take about 12 minutes. The rule lands on the number.</p>
+page-passes take about 12 minutes, the same as the estimate.</p>
 </div>
 <div class="section level3">
 <h3 id="the-same-arithmetic-as-a-function">The same arithmetic as a function<a class="anchor" aria-label="anchor" href="#the-same-arithmetic-as-a-function"></a>
@@ -5807,7 +5806,7 @@ What does a project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5, because a full fine-tune of a 7B model
 needs about 112 GB plus activations, and the g5 has 24 GB. On the p4d, 8
@@ -6401,7 +6400,7 @@ step. Which, and why are they there?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Only the language model’s <code>q_proj</code>, <code>k_proj</code>,
@@ -6985,7 +6984,7 @@ will compare it to the bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Expect about 32 billed minutes. Scoring is the line most likely to
@@ -7403,7 +7402,7 @@ summaries, and the before/after CER. Did the extra pixels help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -7444,7 +7443,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
 <div class="accordion-body">
 <p>Startup and upload (~6 min, <code>$0.26</code> at
 <code>$2.61</code>/h) do not speed up: the container pull and the S3
@@ -8196,7 +8195,7 @@ and the runtime print.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ul>
 <li>
@@ -8246,7 +8245,7 @@ in the notebook?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>The tuner can only vary what the script reads. Right now
 <code>train_nn.py</code> has no <code>--batch_size</code> argument and
@@ -9723,7 +9722,7 @@ helper wraps:</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -9732,7 +9731,7 @@ helper wraps:</p>
 <span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a>  <span class="at">--tags</span> key=Name,value=DoeJohn key=Project,value=SinkOrSwim key=Purpose,value=Inference</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
+<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -12988,7 +12987,7 @@ are who you think you are, in the account you think you are in:</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -12997,7 +12996,7 @@ are who you think you are, in the account you think you are in:</p>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a><span class="ex">aws</span> sts get-caller-identity</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
+<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
 <div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13051,7 +13050,7 @@ download you paid for.</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-2" class="tab-content">
-<div id="nav-tabpanel-2-1" class="tab-pane show active" aria-labelledby="nav-tab-2-1" role="tabpanel">
+<div id="nav-tabpanel-2-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-2-1">
 <div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13060,7 +13059,7 @@ download you paid for.</p>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a>  <span class="at">--query</span> <span class="st">'{status:TrainingJobStatus, instance:ResourceConfig.InstanceType, count:ResourceConfig.InstanceCount, billable_s:BillableTimeInSeconds}'</span></span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-2-2" class="tab-pane" aria-labelledby="nav-tab-2-2" role="tabpanel">
+<div id="nav-tabpanel-2-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-2-2">
 <div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13089,7 +13088,7 @@ key”:</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-3" class="tab-content">
-<div id="nav-tabpanel-3-1" class="tab-pane show active" aria-labelledby="nav-tab-3-1" role="tabpanel">
+<div id="nav-tabpanel-3-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-3-1">
 <div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13097,7 +13096,7 @@ key”:</p>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1" aria-label="code-block-7-2"></a><span class="ex">aws</span> sagemaker list-tags <span class="at">--resource-arn</span> <span class="va">$ARN</span> <span class="at">--query</span> <span class="st">'Tags[].[Key,Value]'</span> <span class="at">--output</span> table</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-3-2" class="tab-pane" aria-labelledby="nav-tab-3-2" role="tabpanel">
+<div id="nav-tabpanel-3-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-3-2">
 <div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13171,7 +13170,7 @@ the account.</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-4" class="tab-content">
-<div id="nav-tabpanel-4-1" class="tab-pane show active" aria-labelledby="nav-tab-4-1" role="tabpanel">
+<div id="nav-tabpanel-4-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-4-1">
 <div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13206,7 +13205,7 @@ the account.</p>
 <span id="cb12-29"><a href="#cb12-29" tabindex="-1" aria-label="code-block-12-29"></a><span class="op">JSON</span></span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-4-2" class="tab-pane" aria-labelledby="nav-tab-4-2" role="tabpanel">
+<div id="nav-tabpanel-4-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-4-2">
 <div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13353,14 +13352,14 @@ finds something. Then run them against your own resources.</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-5" class="tab-content">
-<div id="nav-tabpanel-5-1" class="tab-pane show active" aria-labelledby="nav-tab-5-1" role="tabpanel">
+<div id="nav-tabpanel-5-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-5-1">
 <div class="codewrapper sourceCode" id="cb17">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" tabindex="-1" aria-label="code-block-17-1"></a><span class="ex">aws</span> sso login <span class="at">--profile</span> workshop <span class="kw">&amp;&amp;</span> <span class="bu">export</span> <span class="va">AWS_PROFILE</span><span class="op">=</span>workshop</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-5-2" class="tab-pane" aria-labelledby="nav-tab-5-2" role="tabpanel">
+<div id="nav-tabpanel-5-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-5-2">
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13426,7 +13425,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-15_Resource-management-cleanup"><p>Content from <a href="15_Resource-management-cleanup.html">Resource Management and Monitoring</a></p>
 <hr>
-<p>Last updated on 2026-10-27 |
+<p>Last updated on 2026-10-28 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/15_Resource-management-cleanup.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <div class="text-end">
@@ -13707,8 +13706,7 @@ for the optional PAT episode.</li>
 </ul>
 <p>Every stop and delete in this list has a one-line CLI equivalent; the
 optional episode <em>The Same Jobs from the Terminal</em> collects them,
-for the day you need to stop something from a machine with no
-browser.</p>
+for stopping something from a machine with no browser.</p>
 <p>In the shared workshop account, the instructors sweep the account
 with <a href="https://github.com/ekristen/aws-nuke" class="external-link">aws-nuke</a> after
 the workshop. That sweep deletes notebook instances and the learner

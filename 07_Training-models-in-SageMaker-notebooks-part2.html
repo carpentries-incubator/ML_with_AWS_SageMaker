@@ -1117,7 +1117,7 @@ slower, and nine times the price. The GPU job’s wall-clock was 8.6
 minutes, because it first sat four and a half minutes in
 <code>Pending - Training job waiting for capacity</code>; GPU instances
 are in shorter supply than CPU ones, and the wait is not billed.</p>
-<p>A GPU pays off when the per-step work is large enough to keep it
+<p>A GPU is worth it when the per-step work is large enough to keep it
 busy: bigger models, bigger batches, or datasets of hundreds of MB and
 up. If you ever do need more GPU than a <code>g4dn.xlarge</code>, the
 next sensible step is an <code>ml.g5.xlarge</code>
@@ -1179,8 +1179,7 @@ what the bullets predict: the same 3.5 minutes of wall-clock as the
 single-instance run, 5.5 billable minutes across the two instances,
 <code>$0.010</code>, two CloudWatch log streams, <code>algo-1</code> and
 <code>algo-2</code>, each printing all 1000 epochs, and two identical
-saved models. Nobody wants that job. The one worth launching is
-below.</p>
+saved models. The job worth launching is below.</p>
 </div>
 <div class="section level3">
 <h3 id="data-parallelism">Data parallelism<a class="anchor" aria-label="anchor" href="#data-parallelism"></a></h3>
@@ -1323,11 +1322,11 @@ spend as long exchanging the 28 GB gradient as computing, so two
 machines finish in the same time as one and bill twice. Four L40S in one
 box over PCIe get 3.2 of the ideal 4. Eight A100s over NVLink get 7.8 of
 8, which is why the big training boxes are built that way.</p>
-<p>The rule, then: data parallelism pays when each step’s computation is
-large next to the exchange, which means a big model, a big batch and a
-fast link, in that order of importance. Run the function before renting
-more than one device, and read the cost line: the speedup is what you
-buy, the cost ratio is what you pay for it.</p>
+<p>Data parallelism helps when each step’s computation is large next to
+the exchange, which means a big model, a big batch and a fast link, in
+that order of importance. Run the function before renting more than one
+device, and read the cost line: the speedup is what you buy, the cost
+ratio is what you pay for it.</p>
 </div>
 <div class="section level3">
 <h3 id="setting-it-up-for-each-kind-of-job">Setting it up for each kind of job<a class="anchor" aria-label="anchor" href="#setting-it-up-for-each-kind-of-job"></a></h3>

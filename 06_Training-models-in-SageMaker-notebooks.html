@@ -483,18 +483,17 @@ the end of the lesson uses it. The <code>conda_python3</code> kernel has
 no PyTorch, and on current instances no scikit-learn either.</p>
 <section><h2 class="section-heading" id="test-on-a-small-sample-first-then-scale-up">Test on a small sample first, then scale up<a class="anchor" aria-label="anchor" href="#test-on-a-small-sample-first-then-scale-up"></a></h2>
 <hr class="half-width"><p>The Titanic data trains in a second on the notebook, and nothing
-about it needs the cloud. We use it because the pattern matters more
-than the example. Test the code on a small sample first, on the cheapest
-machine you have, and once it works, scale up to a more powerful
-instance when the data or the model calls for one. The notebook instance
-is that cheap machine here. It is a rental too, at about five cents an
-hour, but a crash on it costs a few seconds of that, where a crash on a
-rented GPU costs the minutes the instance spent starting up, at twenty
-times the rate. A SageMaker training job is that scale-up step. The
-notebook describes the job and launches it, and SageMaker rents the
-instance, runs the script on it and releases it when the script ends.
-The fine-tuning episode follows the same two steps with a 3B model on a
-GPU, where the cloud earns its keep.</p>
+about it needs the cloud. What it shows is the pattern. Test the code on
+a small sample first, on the cheapest machine you have, and once it
+works, scale up to a more powerful instance when the data or the model
+calls for one. The notebook instance is that cheap machine here. It is a
+rental too, at about five cents an hour, but a crash on it costs a few
+seconds of that, where a crash on a rented GPU costs the minutes the
+instance spent starting up, at twenty times the rate. A SageMaker
+training job is that scale-up step. The notebook describes the job and
+launches it, and SageMaker rents the instance, runs the script on it and
+releases it when the script ends. The fine-tuning episode follows the
+same two steps with a 3B model on a GPU, which does need the cloud.</p>
 <p>The notebook is not the only way to launch a job. The same launch is
 a few lines of the AWS CLI from a laptop, which the optional <a href="14_CLI-equivalents.html">Same Jobs from the Terminal</a> episode
 shows, and on your own account that is a fine way to work once you know
@@ -623,7 +622,7 @@ group.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li><p><strong>Data Preprocessing</strong>: The script fills missing
 values (<code>Age</code> with median, <code>Embarked</code> with mode),
@@ -868,7 +867,7 @@ data. Which instance would you pick for the training job, and why?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>The table’s rule of thumb is RAM of at least 1.5× the dataset, so 20
 GB of data wants about 32 GB of memory: <code>ml.m5.2xlarge</code> (8
@@ -1361,7 +1360,7 @@ compared with the first job?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
 <p>The status is <code>InProgress</code> if you were quick and
 <code>Completed</code> otherwise. The cost is the same as the first run,
@@ -1399,7 +1398,7 @@ and compare the bill and the accuracy with the script version.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
 <div class="accordion-body">
 <p>The built-in algorithm will not run our
 <code>preprocess_data()</code> for us, and it expects a CSV with no
