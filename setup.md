@@ -27,10 +27,7 @@ If you are attending this lesson at UW-Madison, the instructors will provide a s
 
 * Before the workshop, the instructor adds you to the shared account and emails you a **sign-in link**. It opens the AWS console directly in the workshop account and role after you sign in with your UW–Madison NetID. Bookmark it; it is the link you will use every session. The link is sent by email and not posted here on purpose: treat it like any other sign-in page and only use the one your instructor sent.
 * **Verify your access before the workshop**: open the link and sign in. If you see a "no access" or "not assigned" message, email the instructor with your username. Check that the account name and region in the top-right of the console match the email.
-* Three rules on the shared account:
-    * Stick to the lesson materials, so that expensive pipelines (e.g., training/tuning LLMs) do not lead to high costs and wasted credits.
-    * Do not use any tools we do not explicitly cover without discussing with the instructors first.
-    * Stop (and at the end of the workshop, delete) every notebook instance you create. A GPU notebook left running costs about `$60` a day.
+* Three rules on the shared account. Stick to the lesson materials, so that expensive pipelines such as training or tuning an LLM do not burn the credits. Do not use any tools the lesson does not cover without asking the instructors first. Stop, and at the end of the workshop delete, every notebook instance you create. A GPU notebook left running costs about `$60` a day.
 * The account enforces a short list of rules on every launch (the three cost tags with values from fixed lists, the lesson's instance types, a 48-hour cap, no endpoints). A job that breaks one is refused with an `AccessDenied` message that does not say why; [If a Launch Is Refused](refused-launch.md) does, and the lesson's helper module can tell you before and after the launch. Check there before emailing.
 
 ### Your own AWS account
@@ -49,7 +46,7 @@ If you are not attending through the shared account, follow these steps:
 
 ### Instructors, before the workshop
 
-The rules above are not part of SageMaker. They are policies you attach to the account, and the shared data bucket has to be staged. Work through the instructor pages before the first session: the [Account preparation checklist](../instructors/aws-account-prep.md) sets the quotas, Bedrock model access, the cost tags and the guard rails, and the [Shared data bucket](../instructors/shared-data-bucket.md) page stages the datasets and model weights the fine-tuning and RAG episodes read. The [Instructor Notes](../instructors/instructor-notes.md) index has the rest, including the end-of-workshop cleanup.
+The launch rules the shared-account tab describes are not part of SageMaker. They are policies you attach to the account, and the shared data bucket has to be staged. Work through the instructor pages before the first session: the [Account preparation checklist](../instructors/aws-account-prep.md) sets the quotas, Bedrock model access, the cost tags and the guard rails, and the [Shared data bucket](../instructors/shared-data-bucket.md) page stages the datasets and model weights the fine-tuning and RAG episodes read. The [Instructor Notes](../instructors/instructor-notes.md) index has the rest, including the end-of-workshop cleanup.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -72,4 +69,4 @@ Skim the [Glossary](https://carpentries-incubator.github.io/ML_with_AWS_SageMake
 
 Do episodes 1 to 4 before anything else. Episode 2 creates your S3 bucket, episode 3 creates the notebook instance and clones the lesson onto it, which is where every later episode's notebook comes from, and episode 4 is the first read of your bucket from the notebook.
 
-After that, the order is loose. Episodes 6, 7 and 9 are a sequence (9 uses files 7 saves). Episode 8 stands on its own. Episodes 10 to 13 are a sequence, since each reuses what the one before cached in your bucket.
+After that, do episodes 6 to 9 in order. Episode 8 can be skipped, and 9 needs the files 7 saves. Episodes 10 to 13 also go in order, since each reuses what the one before cached in your bucket.
