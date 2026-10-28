@@ -432,7 +432,7 @@ submission</a></li>
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Fine-tuning a Vision-Language Model with Training Jobs</h1>
-        <p>Last updated on 2026-10-27 |
+        <p>Last updated on 2026-10-28 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/08_Finetuning-BadgerScribe.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -641,11 +641,10 @@ CER means the transcription contains fewer character-level mistakes.</p>
 </div>
 <div class="section level3">
 <h3 id="what-well-do-and-what-it-will-cost">What we’ll do, and what it will cost<a class="anchor" aria-label="anchor" href="#what-well-do-and-what-it-will-cost"></a></h3>
-<p>We’ll run the training on AWS SageMaker, using a managed training job
-rather than keeping an interactive GPU notebook running. SageMaker will
-provision the GPU, run our training script, save the model adapter and
-evaluation results, and shut down the instance when the job
-finishes.</p>
+<p>We’ll run the training on AWS SageMaker, as a managed training job,
+with no interactive GPU notebook left running. SageMaker will provision
+the GPU, run our training script, save the model adapter and evaluation
+results, and shut down the instance when the job finishes.</p>
 <p>The entire run, including evaluation before and after fine-tuning,
 takes about 33 minutes on an <code>ml.g5.xlarge</code> instance and
 costs approximately <code>$0.75</code>, based on our measured October
@@ -824,7 +823,7 @@ for old spellings. An image on a Qwen-VL style model becomes one token
 per 28 × 28 pixel block after resizing, about 1,300 for a megapixel. For
 a page here that is about 1,300 for the image plus about 300 for the
 transcription, 1,600; the Setup section counts it with the model’s own
-processor rather than guessing.</li>
+processor, so it is not a guess.</li>
 <li>
 <code>epochs</code>: passes over the data. The three numbers
 multiply to the tokens the model sees, 251 × 1,600 × 2, about 800,000.
@@ -1050,12 +1049,12 @@ for this episode’s LoRA run to twelve thousand dollars for a 70B full
 fine-tune; a ten-run sweep shifts every bar up by one decade</div>
 </figure><p>The CHURRO bar is the model you are about to fine-tune. Stanford
 spent on the order of 800 H100-hours making it, and you get the benefit
-for a dollar because you are adapting it rather than retraining it.
-Starting from a model that already knows most of your task is the
-biggest saving available, and it is decided before any GPU is involved.
-The sweep extension is the one that surprises research groups. A first
-run is rarely the last, so a <code>$140</code> full fine-tune is usually
-a <code>$700</code> to <code>$1,400</code> project.</p>
+for a dollar because you are adapting it, not retraining it. Starting
+from a model that already knows most of your task is the biggest saving
+available, and it is decided before any GPU is involved. The sweep
+extension is the one that surprises research groups. A first run is
+rarely the last, so a <code>$140</code> full fine-tune is usually a
+<code>$700</code> to <code>$1,400</code> project.</p>
 <p>The number of passes is a choice. Two passes for the class run is a
 budget decision for a 33-minute job, not advice. Large
 instruction-tuning corpora usually get one to three passes, and a few
@@ -1161,7 +1160,7 @@ each</td>
 minutes from launch to finish, 31.7 billed, <code>$0.75</code>. Scoring
 a page takes 17 to 21 seconds, so the two 15-page evaluations and the
 curve points are 14 of the 32 minutes. Nearly half the bill goes to
-measuring rather than training.</p>
+measuring, not training.</p>
 <p>Training time grows linearly with pages × epochs, and roughly
 linearly with image resolution, since every 28 × 28 pixel block of the
 page becomes one token in the model’s sequence. Doubling
@@ -1280,12 +1279,11 @@ input channels.</p>
 <p>Now the names, after moving into a project folder of our own under
 the instance root. Everything this episode downloads or stages
 (<code>data/</code>, <code>code/</code>) goes there, beside the lesson
-clone rather than inside it. Two buckets: the shared one the jobs read
-from, and your own, where everything they write lands. Your username
-goes into job names, which SageMaker requires to be unique in the
-account. The two S3 prefixes at the end are what the estimator mounts
-into the job as its <code>train</code> and <code>model</code> input
-channels.</p>
+clone and not inside it. Two buckets: the shared one the jobs read from,
+and your own, where everything they write lands. Your username goes into
+job names, which SageMaker requires to be unique in the account. The two
+S3 prefixes at the end are what the estimator mounts into the job as its
+<code>train</code> and <code>model</code> input channels.</p>
 <div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1542,7 +1540,7 @@ list holds it, and the function says what the largest box would do,
 start, bill ten minutes of startup at <code>$63</code> an hour, and die
 out of memory. That run is two or more such boxes with the model sharded
 across them, which is the <code>$12,000</code> row in the cost table
-once the data is a real corpus rather than 251 pages. On 251 pages the
+once the data is a real corpus and not 251 pages. On 251 pages the
 arithmetic is minutes everywhere, so these bills are mostly each box’s
 price for ten minutes of startup; what the four runs show is the box a
 model forces you onto, which is the first thing to find out about a
@@ -1557,7 +1555,7 @@ by <code>source_dir=</code> on the estimator, uploaded whole. That
 directory should hold what the job imports and a
 <code>requirements.txt</code> listing what the container has to install,
 and nothing else. So make a small <code>code/</code> folder here with
-copies of the three files, rather than pointing <code>source_dir</code>
+copies of the three files, instead of pointing <code>source_dir</code>
 at the lesson’s <code>scripts/</code> directory, which would upload
 every script in the lesson and need a requirements file written into the
 repository:</p>
@@ -1682,7 +1680,7 @@ jobs it launches. Pass them to every estimator.</p>
 <span id="cb26-8"><a href="#cb26-8" tabindex="-1" aria-label="code-block-26-8"></a>        {<span class="st">"Key"</span>: <span class="st">"Purpose"</span>, <span class="st">"Value"</span>: purpose},</span>
 <span id="cb26-9"><a href="#cb26-9" tabindex="-1" aria-label="code-block-26-9"></a>    ])</span>
 <span id="cb26-10"><a href="#cb26-10" tabindex="-1" aria-label="code-block-26-10"></a></span>
-<span id="cb26-11"><a href="#cb26-11" tabindex="-1" aria-label="code-block-26-11"></a>make_job_tags(<span class="st">"Training"</span>)<span class="op">;</span>   <span class="co"># fails here, with the fix, rather than at the launch; the semicolon keeps Jupyter from also displaying the list</span></span></code></pre>
+<span id="cb26-11"><a href="#cb26-11" tabindex="-1" aria-label="code-block-26-11"></a>make_job_tags(<span class="st">"Training"</span>)<span class="op">;</span>   <span class="co"># fails here, with the fix, and not at the launch; the semicolon keeps Jupyter from also displaying the list</span></span></code></pre>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="step-1-launch-the-lora-fine-tune">Step 1: Launch the LoRA fine-tune<a class="anchor" aria-label="anchor" href="#step-1-launch-the-lora-fine-tune"></a></h2>
@@ -2028,7 +2026,7 @@ LoRA fine-tune and nothing else.</p>
 <div class="codewrapper sourceCode" id="cb37">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" tabindex="-1" aria-label="code-block-37-1"></a>before <span class="op">=</span> pd.read_csv(os.path.join(run_dir, <span class="st">"eval_before.csv"</span>), keep_default_na<span class="op">=</span><span class="va">False</span>)   <span class="co"># empty predictions stay "" rather than NaN</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" tabindex="-1" aria-label="code-block-37-1"></a>before <span class="op">=</span> pd.read_csv(os.path.join(run_dir, <span class="st">"eval_before.csv"</span>), keep_default_na<span class="op">=</span><span class="va">False</span>)   <span class="co"># empty predictions stay "", not NaN</span></span>
 <span id="cb37-2"><a href="#cb37-2" tabindex="-1" aria-label="code-block-37-2"></a>after <span class="op">=</span> pd.read_csv(os.path.join(run_dir, <span class="st">"eval_after.csv"</span>), keep_default_na<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb37-3"><a href="#cb37-3" tabindex="-1" aria-label="code-block-37-3"></a></span>
 <span id="cb37-4"><a href="#cb37-4" tabindex="-1" aria-label="code-block-37-4"></a><span class="co"># cer = character error rate per page: edits / characters in the reference, lower is better</span></span>
@@ -2670,7 +2668,7 @@ available.</li>
 <li>Training jobs, not GPU notebooks, are the safe way to run it: they
 end, <code>max_run</code> guarantees it, a unique <code>job_name</code>
 prevents a second copy launching by accident, and checkpoints synced to
-S3 mean a killed job costs an epoch rather than the run. Interrupting a
+S3 mean a killed job costs an epoch, not the run. Interrupting a
 notebook cell does not stop a job.</li>
 <li>Estimate before launching (startup overhead + pages × epochs ×
 seconds per page, at the instance’s rate), then compare to
@@ -2750,7 +2748,7 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/08_Finetuning-BadgerScribe.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/08_Finetuning-BadgerScribe.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-27",
+  "dateModified": "2026-10-28",
   "datePublished": "2026-10-28"
 }
 

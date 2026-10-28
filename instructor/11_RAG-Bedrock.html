@@ -439,7 +439,7 @@ questions</a></li>
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>RAG with Bedrock</h1>
-        <p>Last updated on 2026-10-27 |
+        <p>Last updated on 2026-10-28 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/11_RAG-Bedrock.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -605,14 +605,13 @@ the measurement says to.</p>
 </section><section><h2 class="section-heading" id="notebook-dataset-setup">Notebook + dataset setup<a class="anchor" aria-label="anchor" href="#notebook-dataset-setup"></a></h2>
 <hr class="half-width"><p>For this episode you need a SageMaker notebook instance, but
 <strong>not a GPU one</strong>. A small CPU instance such as
-<code>ml.t3.medium</code> is enough, because the models run on Bedrock
-rather than in the notebook. The notebook’s execution role must allow
-Bedrock access, which a default SageMaker role does not. On the class
-account both roles the console offers carry it. On your own account,
-attach the Bedrock policy from the <em>Account preparation
-checklist</em> instructor page to your role before starting; the first
-Bedrock call fails with an access-denied error naming the role until it
-is there.</p>
+<code>ml.t3.medium</code> is enough, because the models run on Bedrock,
+not in the notebook. The notebook’s execution role must allow Bedrock
+access, which a default SageMaker role does not. On the class account
+both roles the console offers carry it. On your own account, attach the
+Bedrock policy from the <em>Account preparation checklist</em>
+instructor page to your role before starting; the first Bedrock call
+fails with an access-denied error naming the role until it is there.</p>
 <p>See <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
 for ML</a> for further guidance on instance types.</p>
 <div class="section level3">
@@ -959,7 +958,7 @@ was staged, and runs the extraction only if that file is not there.</p>
 </div>
 <p>A paper whose PDF the corpus build could not download has no pages
 here, and a question that cites it can only score zero, which would
-measure the download rather than the pipeline.
+measure the download, not the pipeline.
 <code>drop_questions_without_papers</code> removes those questions from
 the evaluation set and says which papers were missing; the unanswerable
 questions, which cite nothing, stay.</p>
@@ -1174,7 +1173,7 @@ helper wraps:</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1183,7 +1182,7 @@ helper wraps:</p>
 <span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a>  <span class="at">--tags</span> key=Name,value=DoeJohn key=Project,value=SinkOrSwim key=Purpose,value=Inference</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
+<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
 <div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1895,10 +1894,10 @@ then hands the images to a model that can look at them. Each cell is
 short because the plumbing is in <code>wattbot_rag.py</code>.</p>
 <div class="section level3">
 <h3 id="extract-the-tables-and-figures">Extract the tables and figures<a class="anchor" aria-label="anchor" href="#extract-the-tables-and-figures"></a></h3>
-<p>Why cut them out at all, rather than hand the embedding model a whole
-page, or the PDF itself (Nova accepts documents as input)? For the same
-reason Step 6 cut the text into chunks instead of embedding each paper
-whole. An embedding is a fixed-length vector, a thousand numbers,
+<p>Why cut them out at all, instead of handing the embedding model a
+whole page, or the PDF itself (Nova accepts documents as input)? For the
+same reason Step 6 cut the text into chunks instead of embedding each
+paper whole. An embedding is a fixed-length vector, a thousand numbers,
 whatever goes in; the more that goes in, the less of each thing survives
 in it. A page holding two tables, a figure and three paragraphs gets one
 vector that is a blur of all six, and a question about one of the tables
@@ -1992,8 +1991,8 @@ through an application inference profile, so these calls use the model
 ID directly and are the one Bedrock spend in this lesson that carries no
 project tags. <code>embed_multimodal</code> builds the model’s request
 body (Nova’s says whether a vector is for the index or for a query, and
-that the image is a document rather than a photo) and returns a unit
-vector. Set <code>multimodal_model_id</code> to
+that the image is a document, not a photo) and returns a unit vector.
+Set <code>multimodal_model_id</code> to
 <code>amazon.titan-embed-image-v1</code> to try the older model; the
 function handles both.</p>
 <div class="codewrapper sourceCode" id="cb39">
@@ -2113,11 +2112,11 @@ comparison. They say whether the text route, chunks and the crops on
 their pages, or the image route, the crops themselves, more often puts
 the exact table or figure in front of the model. If the image column is
 higher there while the paper column is lower, the image index is doing a
-different job than the text index, finding the object rather than the
-document, and the next cells show whether the model can use it. If both
-crop columns are low, the fix is upstream, in the extraction, where a
-table the detector missed became a whole-page fallback, and a page is a
-weak key.</p>
+different job than the text index, finding the object, not the document,
+and the next cells show whether the model can use it. If both crop
+columns are low, the fix is upstream, in the extraction, where a table
+the detector missed became a whole-page fallback, and a page is a weak
+key.</p>
 </div>
 <div class="section level3">
 <h3 id="let-the-model-see-the-table-or-figure">Let the model see the table or figure<a class="anchor" aria-label="anchor" href="#let-the-model-see-the-table-or-figure"></a></h3>
@@ -2386,7 +2385,7 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/11_RAG-Bedrock.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/11_RAG-Bedrock.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-27",
+  "dateModified": "2026-10-28",
   "datePublished": "2026-10-28"
 }
 

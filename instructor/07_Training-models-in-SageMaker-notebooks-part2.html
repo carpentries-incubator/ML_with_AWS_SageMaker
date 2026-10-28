@@ -430,7 +430,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Training Models in SageMaker: PyTorch Example</h1>
-        <p>Last updated on 2026-10-27 |
+        <p>Last updated on 2026-10-28 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/07_Training-models-in-SageMaker-notebooks-part2.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -579,7 +579,7 @@ job and to the working directory otherwise, the same trick as
 <code>train_xgboost.py</code>. Questions now are cheaper than questions
 once it is running on a billed instance.</p>
 <p>We reuse the <code>preprocess_data()</code> function from the
-lesson’s <code>scripts/train_nn.py</code> rather than re-typing the
+lesson’s <code>scripts/train_nn.py</code> instead of retyping the
 preprocessing here: the same function will later be applied to the test
 set, so train and test are transformed identically. It returns the
 fitted <code>StandardScaler</code>, and we save it with
@@ -660,7 +660,7 @@ costs <code>$0.115</code> an hour and an <code>ml.g4dn.xlarge</code> GPU
 instance <code>$0.74</code> an hour on the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
 for ML</a> page. The GPU would have to save enough time to make up that
 difference, and the model may be too small to keep it busy. We measure
-it rather than assume that the more powerful hardware is the better
+it instead of assuming the more powerful hardware is the better
 choice.</p>
 <div class="section level4">
 <h4 id="cost-tracking">Cost tracking<a class="anchor" aria-label="anchor" href="#cost-tracking"></a></h4>
@@ -821,7 +821,7 @@ ready to paste into the estimator. A job that runs past this is killed,
 so a hung run costs at most <code>$18</code>, not a week.</li>
 </ul><p>The function also returns the same numbers as a dictionary, so a
 notebook can use <code>max_run_seconds</code> and
-<code>instance_type</code> directly rather than copying them from the
+<code>instance_type</code> directly, with no copying from the
 printout.</p>
 <div class="section level3">
 <h3 id="what-training-a-language-model-would-cost">What training a language model would cost<a class="anchor" aria-label="anchor" href="#what-training-a-language-model-would-cost"></a></h3>
@@ -910,7 +910,7 @@ goes next to it.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>There is no single answer; the solution is the written estimate. One
 worked example for scale: a 7B language model fully fine-tuned on 50,000
@@ -1101,7 +1101,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -1263,13 +1263,13 @@ else is the single-instance estimator with
 <p>Read the log before the bill. The two CloudWatch streams say
 different things: each prints <code>training on 285 of 569 rows</code>
 (or 284), and only <code>algo-1</code> prints the epochs and saves the
-model. That is the proof the work was split rather than copied. The
-run’s final numbers are close to the single-instance run but not
-identical (our run: validation accuracy 0.818 against 0.804, validation
-loss 0.96 against 1.05): <code>train_nn.py</code> sets no random seed
-and <code>train_nn_ddp.py</code> fixes one, so the two runs did not
-start from the same weights, and a thousand Adam steps on a network that
-is overfitting by epoch 300 turn any such difference into a visible one.
+model. That is the proof the work was split, not copied. The run’s final
+numbers are close to the single-instance run but not identical (our run:
+validation accuracy 0.818 against 0.804, validation loss 0.96 against
+1.05): <code>train_nn.py</code> sets no random seed and
+<code>train_nn_ddp.py</code> fixes one, so the two runs did not start
+from the same weights, and a thousand Adam steps on a network that is
+overfitting by epoch 300 turn any such difference into a visible one.
 Two runs of <code>train_nn.py</code> differ from each other by as
 much.</p>
 <p>The comparison with the single-instance job, wall-clock and bill:</p>
@@ -1365,7 +1365,7 @@ per GPU, so the effective batch is that times the device count</td>
 DeepSpeed), which shards the weights, gradients and optimizer state
 across the GPUs so that a model too big for one fits; each GPU still
 takes its own batch, so it is data parallelism with sharded state, for
-memory rather than speed, and it only works inside one box or over a
+memory and not for speed, and it only works inside one box or over a
 fast network</td>
 <td>as above</td>
 </tr><tr><td>Built-in XGBoost (the optional challenge in the previous
@@ -1494,7 +1494,7 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/07_Training-models-in-SageMaker-notebooks-part2.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/07_Training-models-in-SageMaker-notebooks-part2.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-27",
+  "dateModified": "2026-10-28",
   "datePublished": "2026-10-28"
 }
 

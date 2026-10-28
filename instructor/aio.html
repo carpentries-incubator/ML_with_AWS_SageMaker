@@ -512,7 +512,7 @@
         
 <section id="aio-01_SageMaker-overview"><p>Content from <a href="01_SageMaker-overview.html">Overview: ML on AWS</a></p>
 <hr>
-<p>Last updated on 2026-10-27 |
+<p>Last updated on 2026-10-28 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/01_SageMaker-overview.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 15 minutes</p>
@@ -595,7 +595,7 @@ university and keeps its hardware busier, and national pools go further
 by sharing across institutions<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>; a cloud provider pools demand across the
 world and across time zones, so a GPU that one group releases is running
 someone else’s job minutes later. Providers do not publish GPU
-utilization, so this part is reasoning rather than data, but a single
+utilization, so this part is reasoning, not data, but a single
 institution cannot smooth demand the way a global pool can. (PUE figures
 are self-reported and measure the building, not the GPUs in it.)</li>
 </ul>
@@ -762,7 +762,7 @@ research group.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div></section><section id="aio-02_Data-storage-setting-up-S3"><p>Content from <a href="02_Data-storage-setting-up-S3.html">Data Storage: Setting up S3</a></p>
 <hr>
-<p>Last updated on 2026-10-27 |
+<p>Last updated on 2026-10-28 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/02_Data-storage-setting-up-S3.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 20 minutes</p>
@@ -991,21 +991,18 @@ signed URL instead of opening the bucket.</p>
 (the default). Versioning keeps every overwritten copy and raises
 storage costs; it is useful for datasets that change over time, not for
 this workshop.</p>
-<p><strong>Tags (NOT OPTIONAL)</strong>: tags are how the bill is broken
-down by project, person and purpose; this is the one section you must
-fill in. Add the following three keys, spelled exactly (they are the
-account’s approved cost-allocation keys, see <a href="https://kb.wisc.edu/72454" class="external-link">KB 72454</a>). You will put the same
-three keys on every resource you create in this lesson.</p>
+<p><strong>Tags</strong>: tags are how the bill is broken down by
+project, person and purpose. Add these three keys, spelled exactly as
+shown (they are the account’s approved cost-allocation keys, see <a href="https://kb.wisc.edu/72454" class="external-link">KB 72454</a>), and use the same three
+on every resource you create in this lesson.</p>
 <ul>
 <li>
 <strong>Project</strong>: your challenge, one of
 <code>WattBot2026</code>, <code>BadgerScribe</code>,
 <code>BadgerCode</code>, <code>BrainDecoding</code>,
-<code>PoisonedWell</code>, <code>SnapshotWI</code>, spelled exactly like
-that, or <code>SinkOrSwim</code>, the workshop’s own project, if you are
-not on a challenge yet. The account refuses a job tagged with any other
-Project value, so a typo is caught at the first launch rather than on
-the bill.</li>
+<code>PoisonedWell</code>, <code>SnapshotWI</code>, or
+<code>SinkOrSwim</code>, the workshop’s own project, if you are not on a
+challenge yet.</li>
 <li>
 <strong>Name</strong>: your last and first name run together,
 e.g. <code>DoeJohn</code>
@@ -1015,29 +1012,20 @@ e.g. <code>DoeJohn</code>
 <code>Storage</code>
 </li>
 </ul>
-<p>AWS allows tag values of up to 256 characters made of letters,
-digits, spaces and <code>+ - = . _ : / @</code>, and they are
-case-sensitive. We use capitalised words with no spaces, and the same
-spelling on every resource. <code>SinkOrSwim</code> and
-<code>sinkorswim</code> would be separate rows in Cost Explorer, and the
-account accepts only the first: the <code>Project</code> and
-<code>Purpose</code> lists are case-sensitive, so a job tagged
-<code>sinkorswim</code> or <code>training</code> is refused. (The bucket
-name is lowercase because S3 requires it; bucket names are not
-tags.)</p>
-<p><code>Purpose</code> takes one of five values, so that the bill can
-be summed by kind of work rather than by individual job. Which job it
-was is already in the job’s name.</p>
-<p>These lists are enforced: the account refuses a job whose tags are
-missing, blank or off the lists, and the refusal says only
-<code>AccessDenied ... explicit deny</code>, not which tag. The training
-episode checks the tags in the notebook before each launch and names the
-problem; <a href="refused-launch.html">If a Launch Is Refused</a> is the
-full list of rules and fixes, for later. The rules are not part of
-SageMaker: the instructor sets them from the account’s administrator
-view, and an instructor running this lesson on a new account sets them
-up following the <a href="aws-account-prep.html">AWS account
-preparation</a> page before class.</p>
+<p>Tag values are case-sensitive, so use capitalised words with no
+spaces and the same spelling everywhere. <code>SinkOrSwim</code> and
+<code>sinkorswim</code> would be two separate rows in Cost Explorer.
+(The bucket name is lowercase because S3 requires it. Bucket names are
+not tags.)</p>
+<p>The account enforces these tags on every job and notebook instance. A
+launch with a tag missing, blank or off the lists is refused with
+<code>AccessDenied ... explicit deny</code>, and the message does not
+say which tag. Buckets are not checked, so take care here. A bucket with
+a wrong tag is created anyway, and its storage cannot be attributed on
+the bill. The training episode checks the tags in the notebook before
+each launch and names the problem, and <a href="refused-launch.html">If
+a Launch Is Refused</a> has the full list of rules and fixes. The rules
+are not part of SageMaker. The instructor sets them up following the <a href="aws-account-prep.html">AWS account preparation</a> page.</p>
 <table class="table">
 <thead><tr>
 <th><code>Purpose</code></th>
@@ -1882,7 +1870,7 @@ any links that you are not going to use.
 </div>
 </section></section><section id="aio-04_Accessing-S3-via-SageMaker-notebooks"><p>Content from <a href="04_Accessing-S3-via-SageMaker-notebooks.html">Accessing and Managing Data in S3 with SageMaker Notebooks</a></p>
 <hr>
-<p>Last updated on 2026-10-27 |
+<p>Last updated on 2026-10-28 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/04_Accessing-S3-via-SageMaker-notebooks.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 30 minutes</p>
@@ -2278,7 +2266,7 @@ much did it grow, and what does that cost per month at
 <code>$0.023</code> per GB?</li>
 <li>The training episode launches a job that writes its outputs to your
 bucket. Why does the lesson keep everything in one bucket, organised
-with prefixes like <code>docs/</code>, rather than creating a bucket per
+with prefixes like <code>docs/</code>, instead of creating a bucket per
 task?</li>
 </ol>
 </div>
@@ -2355,7 +2343,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-05_Interacting-with-code-repo"><p>Content from <a href="05_Interacting-with-code-repo.html">(Optional) Pushing Your Notebooks to GitHub from SageMaker</a></p>
 <hr>
-<p>Last updated on 2026-10-27 |
+<p>Last updated on 2026-10-28 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/05_Interacting-with-code-repo.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 35 minutes</p>
@@ -2596,7 +2584,7 @@ from inside the folder you mean to convert:</li>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a><span class="op">!</span>git status   <span class="co"># shows the untracked files (the .ipynb and the .py); nothing is staged yet</span></span></code></pre>
 </div>
 <ol start="2" style="list-style-type: decimal">
-<li>Add and commit. We add the <code>.py</code> by name rather than
+<li>Add and commit. We add the <code>.py</code> by name, not with
 <code>git add .</code>, so the <code>.ipynb</code> copy is never tracked
 (Step 5 ignores it for good).</li>
 </ol>
@@ -2660,8 +2648,8 @@ repository.</li>
 <hr class="half-width">
 <p>Before pushing, pull: the remote already has the README that GitHub
 created, and in a shared repository it may have your collaborators’
-commits. Pulling first means your push is a simple addition rather than
-a rejected one.</p>
+commits. Pulling first means your push adds to the remote instead of
+being rejected.</p>
 <div class="section level4">
 <h4 id="which-pull-strategy">Which pull strategy<a class="anchor" aria-label="anchor" href="#which-pull-strategy"></a>
 </h4>
@@ -2830,7 +2818,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-06_Training-models-in-SageMaker-notebooks"><p>Content from <a href="06_Training-models-in-SageMaker-notebooks.html">Training Models in SageMaker: Intro</a></p>
 <hr>
-<p>Last updated on 2026-10-27 |
+<p>Last updated on 2026-10-28 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/06_Training-models-in-SageMaker-notebooks.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 65 minutes</p>
@@ -3884,7 +3872,7 @@ XGBoost’s parameter names (<code>max_depth</code>, <code>eta</code>,
 <code>num_round</code>), not flags we invented, and there is no
 <code>train</code> key because the data arrives as a channel. We also
 add <code>objective</code>, because the built-in algorithm’s default
-objective is regression rather than binary classification.</p>
+objective is regression, and we are classifying.</p>
 <div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -3937,12 +3925,11 @@ objective is regression rather than binary classification.</p>
 <span id="cb21-3"><a href="#cb21-3" tabindex="-1" aria-label="code-block-21-3"></a>desc <span class="op">=</span> job_cost_report(xgboost_estimator_builtin.latest_training_job.name, price_per_hour)</span></code></pre>
 </div>
 <p>The bill is the same two or three billable minutes, since both jobs
-spend their time on startup rather than on the fraction of a second of
-training, and the accuracy matches to within the randomness of
-subsampling. The built-in route saves writing a script and costs the
-preprocessing step and every bit of logic of your own. Every later
-episode uses the script route, because every later job has such
-logic.</p>
+spend their time on startup and a fraction of a second on training, and
+the accuracy matches to within the randomness of subsampling. The
+built-in route saves writing a script and costs the preprocessing step
+and every bit of logic of your own. Every later episode uses the script
+route, because every later job has such logic.</p>
 </div>
 </div>
 </div>
@@ -3994,7 +3981,7 @@ any links that you are not going to use.
 </div>
 </section></section><section id="aio-07_Training-models-in-SageMaker-notebooks-part2"><p>Content from <a href="07_Training-models-in-SageMaker-notebooks-part2.html">Training Models in SageMaker: PyTorch Example</a></p>
 <hr>
-<p>Last updated on 2026-10-27 |
+<p>Last updated on 2026-10-28 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/07_Training-models-in-SageMaker-notebooks-part2.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 50 minutes</p>
@@ -4147,7 +4134,7 @@ job and to the working directory otherwise, the same trick as
 <code>train_xgboost.py</code>. Questions now are cheaper than questions
 once it is running on a billed instance.</p>
 <p>We reuse the <code>preprocess_data()</code> function from the
-lesson’s <code>scripts/train_nn.py</code> rather than re-typing the
+lesson’s <code>scripts/train_nn.py</code> instead of retyping the
 preprocessing here: the same function will later be applied to the test
 set, so train and test are transformed identically. It returns the
 fitted <code>StandardScaler</code>, and we save it with
@@ -4232,7 +4219,7 @@ costs <code>$0.115</code> an hour and an <code>ml.g4dn.xlarge</code> GPU
 instance <code>$0.74</code> an hour on the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
 for ML</a> page. The GPU would have to save enough time to make up that
 difference, and the model may be too small to keep it busy. We measure
-it rather than assume that the more powerful hardware is the better
+it instead of assuming the more powerful hardware is the better
 choice.</p>
 <div class="section level4">
 <h4 id="cost-tracking">Cost tracking<a class="anchor" aria-label="anchor" href="#cost-tracking"></a>
@@ -4400,7 +4387,7 @@ so a hung run costs at most <code>$18</code>, not a week.</li>
 </ul>
 <p>The function also returns the same numbers as a dictionary, so a
 notebook can use <code>max_run_seconds</code> and
-<code>instance_type</code> directly rather than copying them from the
+<code>instance_type</code> directly, with no copying from the
 printout.</p>
 <div class="section level3">
 <h3 id="what-training-a-language-model-would-cost">What training a language model would cost<a class="anchor" aria-label="anchor" href="#what-training-a-language-model-would-cost"></a>
@@ -4492,7 +4479,7 @@ goes next to it.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>There is no single answer; the solution is the written estimate. One
 worked example for scale: a 7B language model fully fine-tuned on 50,000
@@ -4689,7 +4676,7 @@ Explain the result.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>Typically the CPU run finishes about as fast or faster, and it is
 several times cheaper. Both jobs spend roughly the same few minutes on
@@ -4861,13 +4848,13 @@ else is the single-instance estimator with
 <p>Read the log before the bill. The two CloudWatch streams say
 different things: each prints <code>training on 285 of 569 rows</code>
 (or 284), and only <code>algo-1</code> prints the epochs and saves the
-model. That is the proof the work was split rather than copied. The
-run’s final numbers are close to the single-instance run but not
-identical (our run: validation accuracy 0.818 against 0.804, validation
-loss 0.96 against 1.05): <code>train_nn.py</code> sets no random seed
-and <code>train_nn_ddp.py</code> fixes one, so the two runs did not
-start from the same weights, and a thousand Adam steps on a network that
-is overfitting by epoch 300 turn any such difference into a visible one.
+model. That is the proof the work was split, not copied. The run’s final
+numbers are close to the single-instance run but not identical (our run:
+validation accuracy 0.818 against 0.804, validation loss 0.96 against
+1.05): <code>train_nn.py</code> sets no random seed and
+<code>train_nn_ddp.py</code> fixes one, so the two runs did not start
+from the same weights, and a thousand Adam steps on a network that is
+overfitting by epoch 300 turn any such difference into a visible one.
 Two runs of <code>train_nn.py</code> differ from each other by as
 much.</p>
 <p>The comparison with the single-instance job, wall-clock and bill:</p>
@@ -4980,7 +4967,7 @@ per GPU, so the effective batch is that times the device count</td>
 DeepSpeed), which shards the weights, gradients and optimizer state
 across the GPUs so that a model too big for one fits; each GPU still
 takes its own batch, so it is data parallelism with sharded state, for
-memory rather than speed, and it only works inside one box or over a
+memory and not for speed, and it only works inside one box or over a
 fast network</td>
 <td>as above</td>
 </tr>
@@ -5060,7 +5047,7 @@ any links that you are not going to use.
 </div>
 </section></section><section id="aio-08_Finetuning-BadgerScribe"><p>Content from <a href="08_Finetuning-BadgerScribe.html">Fine-tuning a Vision-Language Model with Training Jobs</a></p>
 <hr>
-<p>Last updated on 2026-10-27 |
+<p>Last updated on 2026-10-28 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/08_Finetuning-BadgerScribe.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 180 minutes</p>
@@ -5291,11 +5278,10 @@ CER means the transcription contains fewer character-level mistakes.</p>
 <div class="section level3">
 <h3 id="what-well-do-and-what-it-will-cost">What we’ll do, and what it will cost<a class="anchor" aria-label="anchor" href="#what-well-do-and-what-it-will-cost"></a>
 </h3>
-<p>We’ll run the training on AWS SageMaker, using a managed training job
-rather than keeping an interactive GPU notebook running. SageMaker will
-provision the GPU, run our training script, save the model adapter and
-evaluation results, and shut down the instance when the job
-finishes.</p>
+<p>We’ll run the training on AWS SageMaker, as a managed training job,
+with no interactive GPU notebook left running. SageMaker will provision
+the GPU, run our training script, save the model adapter and evaluation
+results, and shut down the instance when the job finishes.</p>
 <p>The entire run, including evaluation before and after fine-tuning,
 takes about 33 minutes on an <code>ml.g5.xlarge</code> instance and
 costs approximately <code>$0.75</code>, based on our measured October
@@ -5521,7 +5507,7 @@ for old spellings. An image on a Qwen-VL style model becomes one token
 per 28 × 28 pixel block after resizing, about 1,300 for a megapixel. For
 a page here that is about 1,300 for the image plus about 300 for the
 transcription, 1,600; the Setup section counts it with the model’s own
-processor rather than guessing.</li>
+processor, so it is not a guess.</li>
 <li>
 <code>epochs</code>: passes over the data. The three numbers
 multiply to the tokens the model sees, 251 × 1,600 × 2, about 800,000.
@@ -5800,12 +5786,12 @@ for this episode’s LoRA run to twelve thousand dollars for a 70B full
 fine-tune; a ten-run sweep shifts every bar up by one decade</div>
 </figure><p>The CHURRO bar is the model you are about to fine-tune. Stanford
 spent on the order of 800 H100-hours making it, and you get the benefit
-for a dollar because you are adapting it rather than retraining it.
-Starting from a model that already knows most of your task is the
-biggest saving available, and it is decided before any GPU is involved.
-The sweep extension is the one that surprises research groups. A first
-run is rarely the last, so a <code>$140</code> full fine-tune is usually
-a <code>$700</code> to <code>$1,400</code> project.</p>
+for a dollar because you are adapting it, not retraining it. Starting
+from a model that already knows most of your task is the biggest saving
+available, and it is decided before any GPU is involved. The sweep
+extension is the one that surprises research groups. A first run is
+rarely the last, so a <code>$140</code> full fine-tune is usually a
+<code>$700</code> to <code>$1,400</code> project.</p>
 <p>The number of passes is a choice. Two passes for the class run is a
 budget decision for a 33-minute job, not advice. Large
 instruction-tuning corpora usually get one to three passes, and a few
@@ -5939,7 +5925,7 @@ each</td>
 minutes from launch to finish, 31.7 billed, <code>$0.75</code>. Scoring
 a page takes 17 to 21 seconds, so the two 15-page evaluations and the
 curve points are 14 of the 32 minutes. Nearly half the bill goes to
-measuring rather than training.</p>
+measuring, not training.</p>
 <p>Training time grows linearly with pages × epochs, and roughly
 linearly with image resolution, since every 28 × 28 pixel block of the
 page becomes one token in the model’s sequence. Doubling
@@ -6128,12 +6114,11 @@ input channels.</p>
 <p>Now the names, after moving into a project folder of our own under
 the instance root. Everything this episode downloads or stages
 (<code>data/</code>, <code>code/</code>) goes there, beside the lesson
-clone rather than inside it. Two buckets: the shared one the jobs read
-from, and your own, where everything they write lands. Your username
-goes into job names, which SageMaker requires to be unique in the
-account. The two S3 prefixes at the end are what the estimator mounts
-into the job as its <code>train</code> and <code>model</code> input
-channels.</p>
+clone and not inside it. Two buckets: the shared one the jobs read from,
+and your own, where everything they write lands. Your username goes into
+job names, which SageMaker requires to be unique in the account. The two
+S3 prefixes at the end are what the estimator mounts into the job as its
+<code>train</code> and <code>model</code> input channels.</p>
 <div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -6391,7 +6376,7 @@ list holds it, and the function says what the largest box would do,
 start, bill ten minutes of startup at <code>$63</code> an hour, and die
 out of memory. That run is two or more such boxes with the model sharded
 across them, which is the <code>$12,000</code> row in the cost table
-once the data is a real corpus rather than 251 pages. On 251 pages the
+once the data is a real corpus and not 251 pages. On 251 pages the
 arithmetic is minutes everywhere, so these bills are mostly each box’s
 price for ten minutes of startup; what the four runs show is the box a
 model forces you onto, which is the first thing to find out about a
@@ -6407,7 +6392,7 @@ by <code>source_dir=</code> on the estimator, uploaded whole. That
 directory should hold what the job imports and a
 <code>requirements.txt</code> listing what the container has to install,
 and nothing else. So make a small <code>code/</code> folder here with
-copies of the three files, rather than pointing <code>source_dir</code>
+copies of the three files, instead of pointing <code>source_dir</code>
 at the lesson’s <code>scripts/</code> directory, which would upload
 every script in the lesson and need a requirements file written into the
 repository:</p>
@@ -6539,7 +6524,7 @@ jobs it launches. Pass them to every estimator.</p>
 <span id="cb26-8"><a href="#cb26-8" tabindex="-1" aria-label="code-block-26-8"></a>        {<span class="st">"Key"</span>: <span class="st">"Purpose"</span>, <span class="st">"Value"</span>: purpose},</span>
 <span id="cb26-9"><a href="#cb26-9" tabindex="-1" aria-label="code-block-26-9"></a>    ])</span>
 <span id="cb26-10"><a href="#cb26-10" tabindex="-1" aria-label="code-block-26-10"></a></span>
-<span id="cb26-11"><a href="#cb26-11" tabindex="-1" aria-label="code-block-26-11"></a>make_job_tags(<span class="st">"Training"</span>)<span class="op">;</span>   <span class="co"># fails here, with the fix, rather than at the launch; the semicolon keeps Jupyter from also displaying the list</span></span></code></pre>
+<span id="cb26-11"><a href="#cb26-11" tabindex="-1" aria-label="code-block-26-11"></a>make_job_tags(<span class="st">"Training"</span>)<span class="op">;</span>   <span class="co"># fails here, with the fix, and not at the launch; the semicolon keeps Jupyter from also displaying the list</span></span></code></pre>
 </div>
 </div>
 </section><section><h2 class="section-heading" id="step-1-launch-the-lora-fine-tune">Step 1: Launch the LoRA fine-tune<a class="anchor" aria-label="anchor" href="#step-1-launch-the-lora-fine-tune"></a>
@@ -6897,7 +6882,7 @@ LoRA fine-tune and nothing else.</p>
 <div class="codewrapper sourceCode" id="cb37">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" tabindex="-1" aria-label="code-block-37-1"></a>before <span class="op">=</span> pd.read_csv(os.path.join(run_dir, <span class="st">"eval_before.csv"</span>), keep_default_na<span class="op">=</span><span class="va">False</span>)   <span class="co"># empty predictions stay "" rather than NaN</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" tabindex="-1" aria-label="code-block-37-1"></a>before <span class="op">=</span> pd.read_csv(os.path.join(run_dir, <span class="st">"eval_before.csv"</span>), keep_default_na<span class="op">=</span><span class="va">False</span>)   <span class="co"># empty predictions stay "", not NaN</span></span>
 <span id="cb37-2"><a href="#cb37-2" tabindex="-1" aria-label="code-block-37-2"></a>after <span class="op">=</span> pd.read_csv(os.path.join(run_dir, <span class="st">"eval_after.csv"</span>), keep_default_na<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb37-3"><a href="#cb37-3" tabindex="-1" aria-label="code-block-37-3"></a></span>
 <span id="cb37-4"><a href="#cb37-4" tabindex="-1" aria-label="code-block-37-4"></a><span class="co"># cer = character error rate per page: edits / characters in the reference, lower is better</span></span>
@@ -7563,7 +7548,7 @@ available.</li>
 <li>Training jobs, not GPU notebooks, are the safe way to run it: they
 end, <code>max_run</code> guarantees it, a unique <code>job_name</code>
 prevents a second copy launching by accident, and checkpoints synced to
-S3 mean a killed job costs an epoch rather than the run. Interrupting a
+S3 mean a killed job costs an epoch, not the run. Interrupting a
 notebook cell does not stop a job.</li>
 <li>Estimate before launching (startup overhead + pages × epochs ×
 seconds per page, at the instance’s rate), then compare to
@@ -8274,7 +8259,7 @@ and the runtime print.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <ul>
 <li>
@@ -8324,7 +8309,7 @@ in the notebook?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>The tuner can only vary what the script reads. Right now
 <code>train_nn.py</code> has no <code>--batch_size</code> argument and
@@ -8422,7 +8407,7 @@ any links that you are not going to use.
 </div>
 </section></section><section id="aio-10_RAG-overview"><p>Content from <a href="10_RAG-overview.html">Overview of RAG Workflows on AWS</a></p>
 <hr>
-<p>Last updated on 2026-10-27 |
+<p>Last updated on 2026-10-28 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/10_RAG-overview.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 15 minutes</p>
@@ -8570,11 +8555,11 @@ profile</td>
 libraries and the hardware, which matters for a specific open-weight
 model or your own fine-tune. The trade is that a rented GPU bills while
 the instance runs, whether or not it is generating answers, and research
-work is mostly occasional experiments rather than a steady stream of
-requests. A GPU instance is a rental whose meter runs until you turn it
-off, and forgetting to is the most common way a research team spends its
-cloud budget on nothing. Bedrock has no such failure. Stop calling it
-and you stop paying.</p>
+work is mostly occasional experiments, not a steady stream of requests.
+A GPU instance is a rental whose meter runs until you turn it off, and
+forgetting to is the most common way a research team spends its cloud
+budget on nothing. Bedrock has no such failure. Stop calling it and you
+stop paying.</p>
 <div class="section level3">
 <h3 id="what-forgetting-costs">What forgetting costs<a class="anchor" aria-label="anchor" href="#what-forgetting-costs"></a>
 </h3>
@@ -8723,7 +8708,7 @@ workshop or a deadline.</li>
 <li>
 <strong>Quotas.</strong> On-demand throughput is rate-limited per
 model and per account. For a large batch, use the batch inference API or
-request a quota increase rather than retrying against the limit.</li>
+request a quota increase instead of retrying against the limit.</li>
 <li>
 <strong>Data handling.</strong> Bedrock does not train on your
 prompts and keeps data in the region, or within the US when a
@@ -8766,7 +8751,7 @@ production chatbots.</p>
 <h3 id="sagemaker-processing-jobs">2. SageMaker Processing jobs<a class="anchor" aria-label="anchor" href="#sagemaker-processing-jobs"></a>
 </h3>
 <p>For a large corpus, or for an open-weight model Bedrock does not
-carry, run the embedding and the batch generation as jobs rather than
+carry, run the embedding and the batch generation as jobs instead of
 against a live model. A Hugging Face Processing job starts a GPU
 instance, loads the model, works through all the chunks or questions,
 writes the results to S3 and ends. The GPU exists only while the job
@@ -8791,8 +8776,8 @@ line of Python you can inspect.</p>
 wrong. The GPU bills by the hour from the moment the instance starts
 until you stop it, through every stretch spent downloading PDFs,
 chunking text, reading results or at lunch. It is the route most often
-forgotten, because a notebook instance looks like a workspace rather
-than a running job. If you use it:</p>
+forgotten, because a notebook instance looks like a workspace, not a
+running job. If you use it:</p>
 <ul>
 <li>Treat it as a learning exercise, not a way to deploy anything.</li>
 <li>Stop the instance the moment you are done, and check its status on
@@ -9026,7 +9011,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-11_RAG-Bedrock"><p>Content from <a href="11_RAG-Bedrock.html">RAG with Bedrock</a></p>
 <hr>
-<p>Last updated on 2026-10-27 |
+<p>Last updated on 2026-10-28 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/11_RAG-Bedrock.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 50 minutes</p>
@@ -9200,14 +9185,13 @@ the measurement says to.</p>
 <hr class="half-width">
 <p>For this episode you need a SageMaker notebook instance, but
 <strong>not a GPU one</strong>. A small CPU instance such as
-<code>ml.t3.medium</code> is enough, because the models run on Bedrock
-rather than in the notebook. The notebook’s execution role must allow
-Bedrock access, which a default SageMaker role does not. On the class
-account both roles the console offers carry it. On your own account,
-attach the Bedrock policy from the <em>Account preparation
-checklist</em> instructor page to your role before starting; the first
-Bedrock call fails with an access-denied error naming the role until it
-is there.</p>
+<code>ml.t3.medium</code> is enough, because the models run on Bedrock,
+not in the notebook. The notebook’s execution role must allow Bedrock
+access, which a default SageMaker role does not. On the class account
+both roles the console offers carry it. On your own account, attach the
+Bedrock policy from the <em>Account preparation checklist</em>
+instructor page to your role before starting; the first Bedrock call
+fails with an access-denied error naming the role until it is there.</p>
 <p>See <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
 for ML</a> for further guidance on instance types.</p>
 <div class="section level3">
@@ -9568,7 +9552,7 @@ was staged, and runs the extraction only if that file is not there.</p>
 </div>
 <p>A paper whose PDF the corpus build could not download has no pages
 here, and a question that cites it can only score zero, which would
-measure the download rather than the pipeline.
+measure the download, not the pipeline.
 <code>drop_questions_without_papers</code> removes those questions from
 the evaluation set and says which papers were missing; the unanswerable
 questions, which cite nothing, stay.</p>
@@ -9804,7 +9788,7 @@ helper wraps:</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -9813,7 +9797,7 @@ helper wraps:</p>
 <span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a>  <span class="at">--tags</span> key=Name,value=DoeJohn key=Project,value=SinkOrSwim key=Purpose,value=Inference</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
+<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
 <div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -10544,10 +10528,10 @@ short because the plumbing is in <code>wattbot_rag.py</code>.</p>
 <div class="section level3">
 <h3 id="extract-the-tables-and-figures">Extract the tables and figures<a class="anchor" aria-label="anchor" href="#extract-the-tables-and-figures"></a>
 </h3>
-<p>Why cut them out at all, rather than hand the embedding model a whole
-page, or the PDF itself (Nova accepts documents as input)? For the same
-reason Step 6 cut the text into chunks instead of embedding each paper
-whole. An embedding is a fixed-length vector, a thousand numbers,
+<p>Why cut them out at all, instead of handing the embedding model a
+whole page, or the PDF itself (Nova accepts documents as input)? For the
+same reason Step 6 cut the text into chunks instead of embedding each
+paper whole. An embedding is a fixed-length vector, a thousand numbers,
 whatever goes in; the more that goes in, the less of each thing survives
 in it. A page holding two tables, a figure and three paragraphs gets one
 vector that is a blur of all six, and a question about one of the tables
@@ -10642,8 +10626,8 @@ through an application inference profile, so these calls use the model
 ID directly and are the one Bedrock spend in this lesson that carries no
 project tags. <code>embed_multimodal</code> builds the model’s request
 body (Nova’s says whether a vector is for the index or for a query, and
-that the image is a document rather than a photo) and returns a unit
-vector. Set <code>multimodal_model_id</code> to
+that the image is a document, not a photo) and returns a unit vector.
+Set <code>multimodal_model_id</code> to
 <code>amazon.titan-embed-image-v1</code> to try the older model; the
 function handles both.</p>
 <div class="codewrapper sourceCode" id="cb39">
@@ -10764,11 +10748,11 @@ comparison. They say whether the text route, chunks and the crops on
 their pages, or the image route, the crops themselves, more often puts
 the exact table or figure in front of the model. If the image column is
 higher there while the paper column is lower, the image index is doing a
-different job than the text index, finding the object rather than the
-document, and the next cells show whether the model can use it. If both
-crop columns are low, the fix is upstream, in the extraction, where a
-table the detector missed became a whole-page fallback, and a page is a
-weak key.</p>
+different job than the text index, finding the object, not the document,
+and the next cells show whether the model can use it. If both crop
+columns are low, the fix is upstream, in the extraction, where a table
+the detector missed became a whole-page fallback, and a page is a weak
+key.</p>
 </div>
 <div class="section level3">
 <h3 id="let-the-model-see-the-table-or-figure">Let the model see the table or figure<a class="anchor" aria-label="anchor" href="#let-the-model-see-the-table-or-figure"></a>
@@ -10984,7 +10968,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-12_RAG-Processing-jobs"><p>Content from <a href="12_RAG-Processing-jobs.html">RAG with Processing Jobs</a></p>
 <hr>
-<p>Last updated on 2026-10-27 |
+<p>Last updated on 2026-10-28 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/12_RAG-Processing-jobs.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 50 minutes</p>
@@ -11593,8 +11577,8 @@ idle most of the time. The group is a trade. More prompts at once is
 faster, and each one adds its own cache of attention keys and values to
 the 16 GB the weights already hold, so a group of long prompts can run
 the 24 GB card out of memory. The script halves the group and retries
-when that happens, so a long batch costs time rather than the job. The
-job writes <code>wattbot_solutions.csv</code> in the WattBot submission
+when that happens, so a long batch costs time, not the job. The job
+writes <code>wattbot_solutions.csv</code> in the WattBot submission
 format.</p>
 <div id="why-not-vllm" class="callout">
 <div class="callout-square">
@@ -11668,7 +11652,7 @@ so the 16 GB of model weights must not land there. <code>env=</code>
 sets two environment variables in the container. <code>HF_HOME</code>
 points Hugging Face’s download cache at that volume, which is where the
 weights go, and <code>PYTORCH_CUDA_ALLOC_CONF</code> tells PyTorch to
-reuse freed GPU memory in place rather than leave it fragmented, which
+reuse freed GPU memory in place instead of leaving it fragmented, which
 matters when a batch of prompts is close to what the card holds.</p>
 <div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -11904,8 +11888,8 @@ is empty because the script never reached the point of writing
 <code>wattbot_solutions.csv</code>, and the bill is the full 600
 seconds, 600 / 3600 × <code>$1.41</code> ≈ <code>$0.24</code> for
 nothing. A cap has to leave room for the setup that precedes the work,
-which is why ours is six times the 20-minute estimate rather than ten
-percent over it.</p>
+which is why ours is six times the 20-minute estimate, not ten percent
+over it.</p>
 <p>Under the caps we set, the worst case for a job that hangs (a stuck
 download, a model that never finishes loading) is 2 h ×
 <code>$1.41</code> = <strong><code>$2.82</code></strong> for either job.
@@ -11951,7 +11935,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-13_RAG-GPU-notebook"><p>Content from <a href="13_RAG-GPU-notebook.html">(Optional) RAG with a Notebook GPU</a></p>
 <hr>
-<p>Last updated on 2026-10-27 |
+<p>Last updated on 2026-10-28 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/13_RAG-GPU-notebook.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 45 minutes</p>
@@ -11995,7 +11979,7 @@ the notebook’s GPU and wire it to the retriever to produce
 WattBot-format answers (including <code>answer</code>,
 <code>ref_id</code>, <code>ref_url</code>, and
 <code>supporting_materials</code>).</li>
-<li>Explain why inference uses quantized weights rather than bf16, and
+<li>Explain why inference uses quantized weights instead of bf16, and
 what a self-hosted GPU costs per hour, per forgotten weekend, and per
 forgotten month.</li>
 <li>Add a second LLM pass that generates short explanations and marks
@@ -12599,7 +12583,7 @@ generate a short explanation (&lt;= 100 characters).</li>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" tabindex="-1" aria-label="code-block-17-1"></a><span class="im">import</span> os</span>
-<span id="cb17-2"><a href="#cb17-2" tabindex="-1" aria-label="code-block-17-2"></a><span class="co"># Keep model weights on the notebook's 100 GB volume rather than the small root disk.</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1" aria-label="code-block-17-2"></a><span class="co"># Keep model weights on the notebook's 100 GB volume, not the small root disk.</span></span>
 <span id="cb17-3"><a href="#cb17-3" tabindex="-1" aria-label="code-block-17-3"></a></span>
 <span id="cb17-4"><a href="#cb17-4" tabindex="-1" aria-label="code-block-17-4"></a><span class="im">from</span> vllm <span class="im">import</span> LLM, SamplingParams</span>
 <span id="cb17-5"><a href="#cb17-5" tabindex="-1" aria-label="code-block-17-5"></a></span>
@@ -12686,7 +12670,7 @@ asks the model to name the <strong>main type of evidence</strong>
 combination) in the strict format
 <code>evidence_type: explanation</code>, and the code turns that into
 <code>[evidence_type] explanation</code> for the CSV, so the tag is
-parsed rather than trusted.</li>
+parsed, not trusted.</li>
 </ul>
 <div class="codewrapper sourceCode" id="cb21">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -12913,7 +12897,7 @@ any links that you are not going to use.
 </div>
 </section></section><section id="aio-14_CLI-equivalents"><p>Content from <a href="14_CLI-equivalents.html">(Optional) The Same Jobs from the Terminal</a></p>
 <hr>
-<p>Last updated on 2026-10-27 |
+<p>Last updated on 2026-10-28 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/14_CLI-equivalents.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <p>Estimated time: <i aria-hidden="true" data-feather="clock"></i> 30 minutes</p>
@@ -13072,7 +13056,7 @@ are who you think you are, in the account you think you are in:</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb2">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13081,7 +13065,7 @@ are who you think you are, in the account you think you are in:</p>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1" aria-label="code-block-2-3"></a><span class="ex">aws</span> sts get-caller-identity</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
+<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb3">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13135,7 +13119,7 @@ download you paid for.</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-2" class="tab-content">
-<div id="nav-tabpanel-2-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-2-1">
+<div id="nav-tabpanel-2-1" class="tab-pane show active" aria-labelledby="nav-tab-2-1" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13144,7 +13128,7 @@ download you paid for.</p>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a>  <span class="at">--query</span> <span class="st">'{status:TrainingJobStatus, instance:ResourceConfig.InstanceType, count:ResourceConfig.InstanceCount, billable_s:BillableTimeInSeconds}'</span></span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-2-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-2-2">
+<div id="nav-tabpanel-2-2" class="tab-pane" aria-labelledby="nav-tab-2-2" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb6">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13173,7 +13157,7 @@ key”:</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-3" class="tab-content">
-<div id="nav-tabpanel-3-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-3-1">
+<div id="nav-tabpanel-3-1" class="tab-pane show active" aria-labelledby="nav-tab-3-1" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb7">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13181,7 +13165,7 @@ key”:</p>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1" aria-label="code-block-7-2"></a><span class="ex">aws</span> sagemaker list-tags <span class="at">--resource-arn</span> <span class="va">$ARN</span> <span class="at">--query</span> <span class="st">'Tags[].[Key,Value]'</span> <span class="at">--output</span> table</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-3-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-3-2">
+<div id="nav-tabpanel-3-2" class="tab-pane" aria-labelledby="nav-tab-3-2" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb8">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13255,7 +13239,7 @@ the account.</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-4" class="tab-content">
-<div id="nav-tabpanel-4-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-4-1">
+<div id="nav-tabpanel-4-1" class="tab-pane show active" aria-labelledby="nav-tab-4-1" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb12">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13290,7 +13274,7 @@ the account.</p>
 <span id="cb12-29"><a href="#cb12-29" tabindex="-1" aria-label="code-block-12-29"></a><span class="op">JSON</span></span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-4-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-4-2">
+<div id="nav-tabpanel-4-2" class="tab-pane" aria-labelledby="nav-tab-4-2" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13332,7 +13316,7 @@ repository has the account’s rules in
 <code>scripts/guardrails.json</code> and a script that applies them to a
 request file; a <code>Project</code> or <code>Purpose</code> off the
 lists, an instance type off the list or a cap over 48 hours is named
-here rather than refused silently by AWS:</p>
+here, where AWS would refuse it silently:</p>
 <div class="codewrapper sourceCode" id="cb14">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -13437,14 +13421,14 @@ finds something. Then run them against your own resources.</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-5" class="tab-content">
-<div id="nav-tabpanel-5-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-5-1">
+<div id="nav-tabpanel-5-1" class="tab-pane show active" aria-labelledby="nav-tab-5-1" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb17">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" tabindex="-1" aria-label="code-block-17-1"></a><span class="ex">aws</span> sso login <span class="at">--profile</span> workshop <span class="kw">&amp;&amp;</span> <span class="bu">export</span> <span class="va">AWS_PROFILE</span><span class="op">=</span>workshop</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-5-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-5-2">
+<div id="nav-tabpanel-5-2" class="tab-pane" aria-labelledby="nav-tab-5-2" role="tabpanel">
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>

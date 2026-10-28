@@ -428,7 +428,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>RAG with Processing Jobs</h1>
-        <p>Last updated on 2026-10-27 |
+        <p>Last updated on 2026-10-28 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/12_RAG-Processing-jobs.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -978,8 +978,8 @@ idle most of the time. The group is a trade. More prompts at once is
 faster, and each one adds its own cache of attention keys and values to
 the 16 GB the weights already hold, so a group of long prompts can run
 the 24 GB card out of memory. The script halves the group and retries
-when that happens, so a long batch costs time rather than the job. The
-job writes <code>wattbot_solutions.csv</code> in the WattBot submission
+when that happens, so a long batch costs time, not the job. The job
+writes <code>wattbot_solutions.csv</code> in the WattBot submission
 format.</p>
 <div id="why-not-vllm" class="callout">
 <div class="callout-square">
@@ -1052,7 +1052,7 @@ so the 16 GB of model weights must not land there. <code>env=</code>
 sets two environment variables in the container. <code>HF_HOME</code>
 points Hugging Face’s download cache at that volume, which is where the
 weights go, and <code>PYTORCH_CUDA_ALLOC_CONF</code> tells PyTorch to
-reuse freed GPU memory in place rather than leave it fragmented, which
+reuse freed GPU memory in place instead of leaving it fragmented, which
 matters when a batch of prompts is close to what the card holds.</p>
 <div class="codewrapper sourceCode" id="cb10">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -1286,8 +1286,8 @@ is empty because the script never reached the point of writing
 <code>wattbot_solutions.csv</code>, and the bill is the full 600
 seconds, 600 / 3600 × <code>$1.41</code> ≈ <code>$0.24</code> for
 nothing. A cap has to leave room for the setup that precedes the work,
-which is why ours is six times the 20-minute estimate rather than ten
-percent over it.</p>
+which is why ours is six times the 20-minute estimate, not ten percent
+over it.</p>
 <p>Under the caps we set, the worst case for a job that hangs (a stuck
 download, a model that never finishes loading) is 2 h ×
 <code>$1.41</code> = <strong><code>$2.82</code></strong> for either job.
@@ -1389,7 +1389,7 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/12_RAG-Processing-jobs.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/12_RAG-Processing-jobs.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-27",
+  "dateModified": "2026-10-28",
   "datePublished": "2026-10-28"
 }
 
