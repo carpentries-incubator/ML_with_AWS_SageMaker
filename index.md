@@ -4,7 +4,7 @@ site: sandpaper::sandpaper_site
 
 ## Workshop Overview
 
-This workshop teaches researchers how to run machine learning and AI work on AWS without losing track of what it costs. It works through the practical decisions, where to store the data, which compute to use, how to launch and monitor a job, and how to estimate and manage the cost.
+This workshop teaches researchers how to run machine learning and AI work on AWS. It works through the practical decisions, where to store the data, which compute to use, how to launch and monitor a job, and how to estimate and manage the cost.
 
 We use Amazon SageMaker to train, fine-tune and run our own models, and Amazon Bedrock to call models AWS hosts through an API. Throughout, we work from a small SageMaker notebook instance that acts as the controller. The demanding work runs on separate instances that SageMaker starts for each job and releases when the job finishes.
 
