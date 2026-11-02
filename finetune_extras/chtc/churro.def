@@ -1,0 +1,18 @@
+Bootstrap: docker
+From: pytorch/pytorch:2.8.0-cuda12.8-cudnn9-runtime
+
+# The software the fine-tuning script needs, on top of PyTorch 2.8 with CUDA 12.8.
+# These are the same versions the lesson's SageMaker container ships, so the job
+# behaves the same way here as there. Build it once with build.sub, then keep the
+# .sif in /staging and point every job's container_image at it.
+
+%post
+    chmod 777 /tmp
+    pip install --no-cache-dir "transformers>=4.56" "peft>=0.14" accelerate pillow pandas huggingface_hub
+
+%environment
+    export TOKENIZERS_PARALLELISM=false
+    export HF_HUB_DISABLE_TELEMETRY=1
+
+%labels
+    Purpose "LoRA fine-tune of CHURRO-3B on Badger Scribe, from the ML on AWS lesson"

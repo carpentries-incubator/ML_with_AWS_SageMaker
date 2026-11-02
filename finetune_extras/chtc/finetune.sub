@@ -1,0 +1,35 @@
+# The LoRA fine-tune of CHURRO-3B as a CHTC GPU job. Edit NETID, then
+#     condor_submit finetune.sub
+# Every setting the script takes can be changed on the arguments line without
+# touching the script, the same flags the lesson's SageMaker job used.
+
+NETID = bbadger
+STAGING = osdf:///chtc/staging/$SUBSTR(NETID,0,1)/$(NETID)
+
+# --- what runs: the container, the wrapper script, and the script's flags ---
+container_image = $(STAGING)/churro.sif
+executable = finetune.sh
+arguments = --epochs 2 --lr 2e-4 --lora_r 16 --batch_size 1 --grad_accum 4 --eval_pages 15 --eval_before 1 --curve_pages 8
+
+# --- what goes in: the two Python files, the data (small, from /home) and the model (large, from /staging) ---
+transfer_input_files = finetune_churro_lora.py, badger_common.py, badger-scribe-data.tar.gz, $(STAGING)/churro-3B.tar
+
+# --- what comes back to the submit directory in /home: the adapter and the scores, about 100 MB ---
+transfer_output_files = adapter.tar.gz, output/data
+
+log = finetune_$(Cluster).log
+output = finetune_$(Cluster).out
+error = finetune_$(Cluster).err
+
+# --- the machine: one GPU with at least 20 GB of memory and bf16 support (capability 8.0 is Ampere and newer) ---
+request_gpus = 1
++WantGPULab = true
++GPUJobLength = "short"          # under 12 hours; this job is about an hour
+gpus_minimum_memory = 20000      # MB; the memory rule says a 3B LoRA needs about 12 GB, with room for the before/after scoring
+gpus_minimum_capability = 8.0    # bf16, which the script trains in by default
+
+request_cpus = 4
+request_memory = 32GB            # peak is loading the 7.5 GB model into CPU memory before it moves to the GPU
+request_disk = 40GB              # the 7.5 GB tar plus its unpacked copy, the data, the container's working files and the outputs
+
+queue
