@@ -450,7 +450,7 @@ print("Generator model and helper loaded.")
 
 ```
 
-One throwaway question, to confirm the generator answers before spending time on the real ones.
+One throwaway question, to confirm the generator answers before spending time on the full set.
 
 ```python
 

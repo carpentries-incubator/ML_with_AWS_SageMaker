@@ -35,7 +35,7 @@ if [ $status -eq 124 ]; then                        # timeout's own exit code: t
     echo "two hours up at $(date); exiting 85 so HTCondor keeps output/ckpt and requeues the job"
     exit 85
 fi
-[ $status -eq 0 ] || exit $status                   # a real failure: HTCondor reports it and keeps nothing
+[ $status -eq 0 ] || exit $status                   # the script failed: HTCondor reports it and keeps nothing
 
 # The adapter and its processor files, holdout list, scores and curves, as one archive
 tar czf adapter.tar.gz -C output model
