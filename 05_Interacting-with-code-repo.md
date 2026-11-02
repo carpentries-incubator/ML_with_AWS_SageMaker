@@ -266,6 +266,6 @@ Then open `https://github.com/YOUR_GITHUB_USERNAME/sagemaker-work/blob/main/.git
 - Your own work belongs in your own repository: create one on GitHub, `git init` a folder under `/home/ec2-user/SageMaker/`, and connect the two with `git remote add`.
 - Authenticate over HTTPS with a scoped, expiring Personal Access Token entered through `getpass`; nothing is saved on the instance, and the token is revoked when you are done.
 - Version `.py` copies of notebooks (Jupytext converts both ways) and ignore `*.ipynb`, caches and data archives in `.gitignore`.
-- Pull before you push; the first pull into a freshly initialised folder needs `--allow-unrelated-histories`.
+- Pull before you push; the first pull into a freshly initialized folder needs `--allow-unrelated-histories`.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
