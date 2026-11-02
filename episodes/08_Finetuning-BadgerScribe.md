@@ -103,9 +103,9 @@ This episode runs the fine-tune as a SageMaker job. The same model, data and scr
 |---|---|---|---|
 | Who can use it | Anyone with an AWS account and a card or credits | Anyone with a Google account | UW-Madison researchers and students, with a faculty sponsor |
 | Cost of this run | About `$0.75` | Free | Free |
-| GPU | A10G, 24 GB, bf16 | T4, 16 GB, no bf16, so the frozen weights go to 4-bit | A100, L40 or H100, 40 to 80 GB, bf16 |
+| GPU | A10G, 24 GB, bf16 | T4, 16 GB, no bf16, so the frozen weights go to 4-bit | L40S, A100, H100 or H200, 48 to 141 GB, bf16; NVLink on the A100, H100 and H200 servers |
 | Time for this run | 33 minutes, starts in a minute | About an hour, starts at once if a GPU is free | About 20 minutes, after a queue wait of minutes to hours |
-| Largest LoRA fine-tune on one card | about 7B with the weights in bf16, about 13B in 4-bit | about 7B in 4-bit | about 27B in bf16, about 70B in 4-bit, and larger across several cards |
+| Largest LoRA fine-tune on one card | about 7B with the weights in bf16, about 13B in 4-bit | about 7B in 4-bit | about 27B in bf16 on an 80 GB card, about 50B on an H200, a 70B in 4-bit, and larger across the cards of one server |
 | Getting started | Account and quotas take days on a new account | Open the notebook | Account takes two or three business days, then a container and staged weights, an afternoon |
 | What ends a runaway job | `max_run`, a cap you set | The session's 12-hour limit | The job-length lane, 12 hours for short jobs |
 | What you learn beyond the fine-tune | Estimating and reading a bill, tags, job guard rails | Fitting a model into a small GPU | Describing a job for a scheduler, containers, staging data |
