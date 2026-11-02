@@ -488,12 +488,13 @@ Select the <strong><code>conda_pytorch</code></strong> kernel.</p>
 from scratch. That works when we have a well-defined problem and enough
 training data, but it isn’t practical for tasks that require the broad
 capabilities of a modern language or vision model with billions of
-weights. Training one of those models from scratch can require thousands
-of GPUs and enormous datasets. The PyTorch episode put numbers on that
-with <code>helpers.estimate_training_cost</code>. One pass of a 7B
-language model over a million papers came to about <code>$1,270</code>
-on a four-GPU box, and the models behind ChatGPT are far larger and
-trained on far more.</p>
+weights. Training one of those models from scratch takes thousands of
+GPUs running for months, tens of millions of GPU-hours, and enormous
+datasets. The PyTorch episode put numbers on that with
+<code>helpers.estimate_training_cost</code>. One pass of a 7B language
+model over a million papers came to about <code>$1,270</code> on a
+four-GPU box, and the models behind ChatGPT are far larger and trained
+on far more.</p>
 <p>Fortunately, we don’t have to start from scratch.
 <strong><em>Pretrained</em></strong> models already know how to
 interpret images, understand language, and generate text.
@@ -656,7 +657,8 @@ Center for High Throughput Computing, as two standalone versions in the
 lesson repository’s <code>finetune_extras/</code> folder. Pick by what
 you have and what you want to learn.</p>
 <table class="table"><colgroup><col width="25%"><col width="25%"><col width="25%"><col width="25%"></colgroup><thead><tr><th></th>
-<th><a href="#">AWS SageMaker</a></th>
+<th><a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/08_Finetuning-BadgerScribe.html" class="external-link">AWS
+SageMaker</a></th>
 <th><a href="https://colab.research.google.com/github/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/finetune_extras/colab/LoRA-finetuning-on-a-free-GPU.ipynb" class="external-link">Google
 Colab</a></th>
 <th><a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/tree/main/finetune_extras/chtc" class="external-link">CHTC</a></th>
@@ -679,12 +681,14 @@ H100 and H200 servers</td>
 <td>About an hour, starts at once if a GPU is free</td>
 <td>About 20 minutes, after a queue wait of minutes to hours</td>
 </tr><tr><td>Largest LoRA fine-tune</td>
-<td>about 7B in bf16, about 13B in 4-bit, on one 24 GB card</td>
+<td>No hard limit, only cost. 7B on the lesson’s <code>$1.41</code>/h
+card, 70B at <code>$13</code>/h</td>
 <td>about 7B, in 4-bit</td>
 <td>about 50B in bf16 on an H200, a 70B in 4-bit on one 80 GB card,
 larger across a server’s cards</td>
 </tr><tr><td>Largest full fine-tune</td>
-<td>a 70B, on two 8-GPU instances at <code>$127</code>/h</td>
+<td>No hard limit, only cost. 3B at <code>$7</code>/h, 70B at
+<code>$127</code>/h</td>
 <td>none, a 3B needs 60 GB</td>
 <td>a 7B on one H200, a 70B across the H100 or H200 servers’ cards</td>
 </tr><tr><td>What you learn beyond the fine-tune</td>
