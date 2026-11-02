@@ -4,7 +4,7 @@
 set -euo pipefail
 
 export HF_HOME="$PWD/hf_cache"                      # keep the download cache in the job's own directory
-huggingface-cli download stanford-oval/churro-3B --local-dir churro-3B
+python -c "from huggingface_hub import snapshot_download; snapshot_download('stanford-oval/churro-3B', local_dir='churro-3B')"
 rm -rf hf_cache
 du -sh churro-3B
 tar cf churro-3B.tar churro-3B                      # no compression: safetensors do not compress, and the tar is faster to make and to unpack
