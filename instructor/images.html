@@ -514,25 +514,23 @@
 <hr class="half-width">
 <h3 id="01_SageMaker-overview-figure-1">Figure 1</h3>
 <p aria-hidden="true">Image 1 of 1: ‘Diagram of the lesson's AWS components: S3 buckets at the top, a notebook instance on the left launching SageMaker training, tuning and processing jobs in the center, and Bedrock on the right called as an API’</p>
-<figure><img src="../fig/aws-ml-ecosystem.svg" alt="Diagram of the lesson's AWS components: S3 buckets at the top, a notebook instance on the left launching SageMaker training, tuning and processing jobs in the center, and Bedrock on the right called as an API" class="figure mx-auto d-block"><div class="figcaption">S3 holds data and outputs; a small notebook
-instance launches SageMaker jobs that read from and write to S3 and end
-on their own; Bedrock is called as an API per token</div>
+<figure><img src="../fig/aws-ml-ecosystem.svg" alt="Diagram of the lesson's AWS components: S3 buckets at the top, a notebook instance on the left launching SageMaker training, tuning and processing jobs in the center, and Bedrock on the right called as an API" class="figure mx-auto d-block"><div class="figcaption"><em>The four pieces the lesson uses, and what
+moves between them</em></div>
 </figure><hr></section><section id="02_Data-storage-setting-up-S3"><h2 class="section-heading"><a href="02_Data-storage-setting-up-S3.html">Data Storage: Setting up S3</a></h2>
 <hr class="half-width">
 <h3 id="02_Data-storage-setting-up-S3-figure-1">Figure 1</h3>
 <p aria-hidden="true">Image 1 of 1: ‘Screenshot showing required tags for an S3 bucket’</p>
-<figure><img src="../fig/bucket_tags2.png" alt="Screenshot showing required tags for an S3 bucket" class="figure mx-auto d-block"><div class="figcaption">Example of Tags for an S3 Bucket</div>
+<figure><img src="../fig/bucket_tags2.png" alt="Screenshot showing required tags for an S3 bucket" class="figure mx-auto d-block"><div class="figcaption"><em>Example of Tags for an S3 Bucket</em></div>
 </figure><hr></section><section id="03_SageMaker-notebooks-as-controllers"><h2 class="section-heading"><a href="03_SageMaker-notebooks-as-controllers.html">Notebooks as Controllers</a></h2>
 <hr class="half-width">
 <h3 id="03_SageMaker-notebooks-as-controllers-figure-1">Figure 1</h3>
 <p aria-hidden="true">Image 1 of 1: ‘Diagram from the overview episode: S3 buckets at the top, the notebook instance on the left launching SageMaker training, tuning and processing jobs, and Bedrock on the right’</p>
-<figure><img src="../fig/aws-ml-ecosystem.svg" alt="Diagram from the overview episode: S3 buckets at the top, the notebook instance on the left launching SageMaker training, tuning and processing jobs, and Bedrock on the right" class="figure mx-auto d-block"><div class="figcaption">The notebook instance launches SageMaker jobs
-that read from and write to S3 and end on their own, and calls Bedrock
-as an API</div>
+<figure><img src="../fig/aws-ml-ecosystem.svg" alt="Diagram from the overview episode: S3 buckets at the top, the notebook instance on the left launching SageMaker training, tuning and processing jobs, and Bedrock on the right" class="figure mx-auto d-block"><div class="figcaption"><em>The notebook instance launches jobs and
+calls Bedrock; S3 holds the data and the outputs</em></div>
 </figure><hr>
 <h3 id="03_SageMaker-notebooks-as-controllers-figure-2">Figure 2</h3>
 <p aria-hidden="true">Image 1 of 1: ‘Screenshot showing the three required tags on a SageMaker notebook instance’</p>
-<figure><img src="../fig/notebook_tags.PNG" alt="Screenshot showing the three required tags on a SageMaker notebook instance" class="figure mx-auto d-block"><div class="figcaption">Tag Setup Example</div>
+<figure><img src="../fig/notebook_tags.PNG" alt="Screenshot showing the three required tags on a SageMaker notebook instance" class="figure mx-auto d-block"><div class="figcaption"><em>Tag Setup Example</em></div>
 </figure><hr></section><section id="04_Accessing-S3-via-SageMaker-notebooks"><h2 class="section-heading"><a href="04_Accessing-S3-via-SageMaker-notebooks.html">Accessing and Managing Data in S3 with SageMaker Notebooks</a></h2>
 <hr class="half-width"></section><section id="05_Interacting-with-code-repo"><h2 class="section-heading"><a href="05_Interacting-with-code-repo.html">(Optional) Pushing Your Notebooks to GitHub from SageMaker</a></h2>
 <hr class="half-width"></section><section id="06_Training-models-in-SageMaker-notebooks"><h2 class="section-heading"><a href="06_Training-models-in-SageMaker-notebooks.html">Training Models in SageMaker: Intro</a></h2>
@@ -556,80 +554,64 @@ helper and call it after every job in this lesson.</p>
 <hr class="half-width">
 <h3 id="07_Training-models-in-SageMaker-notebooks-part2-figure-1">Figure 1</h3>
 <p aria-hidden="true">Image 1 of 1: ‘Two panels comparing instance_count=2 without distribution, where each instance trains on the full data, with data parallelism, where batches are split and gradients synced’</p>
-<figure><img src="../fig/instance-count-vs-data-parallel.svg" alt="Two panels comparing instance_count=2 without distribution, where each instance trains on the full data, with data parallelism, where batches are split and gradients synced" class="figure mx-auto d-block"><div class="figcaption">Left: two instances each receive the full
-dataset and run the whole script independently, same model and twice the
-bill. Right: data parallelism splits the batches across instances and
-syncs gradients each step.</div>
+<figure><img src="../fig/instance-count-vs-data-parallel.svg" alt="Two panels comparing instance_count=2 without distribution, where each instance trains on the full data, with data parallelism, where batches are split and gradients synced" class="figure mx-auto d-block"><div class="figcaption"><em>Two instances without a distribution
+strategy run the whole job twice; with data parallelism they split the
+batches and share gradients</em></div>
 </figure><hr></section><section id="08_Finetuning-BadgerScribe"><h2 class="section-heading"><a href="08_Finetuning-BadgerScribe.html">Fine-tuning a Vision-Language Model with Training Jobs</a></h2>
 <hr class="half-width">
 <h3 id="08_Finetuning-BadgerScribe-figure-1">Figure 1</h3>
 <p aria-hidden="true">Image 1 of 1: ‘Dot plot of benchmark scores for three task-specific models against a much larger general model on the same benchmark; the specialist is ahead in each row by 6.5, 2.2 and 1.2 points’</p>
-<figure><img src="../fig/specialists-vs-large-models.png" alt="Dot plot of benchmark scores for three task-specific models against a much larger general model on the same benchmark; the specialist is ahead in each row by 6.5, 2.2 and 1.2 points" class="figure mx-auto d-block"><div class="figcaption">Three research tasks where a small specialist
-model scores above a much larger general one: CHURRO (3B) over Gemini
-2.5 Pro on historical handwriting, Goedel-Prover-V2 (8B) over
-DeepSeek-Prover-V2 on formal proofs, MedGemma (27B) over GPT-4o on
-medical questions</div>
+<figure><img src="../fig/specialists-vs-large-models.png" alt="Dot plot of benchmark scores for three task-specific models against a much larger general model on the same benchmark; the specialist is ahead in each row by 6.5, 2.2 and 1.2 points" class="figure mx-auto d-block"><div class="figcaption"><em>Three specialist models against much larger
+general ones, on each task’s own benchmark. Sources: <a href="https://arxiv.org/abs/2509.19768" class="external-link">CHURRO, EMNLP 2025</a>; <a href="https://arxiv.org/abs/2508.03613" class="external-link">Goedel-Prover-V2, ICLR 2026</a>;
+<a href="https://arxiv.org/abs/2507.05201" class="external-link">MedGemma technical report,
+2025</a>. Scores as reported by each model’s authors.</em></div>
 </figure><hr>
 <h3 id="08_Finetuning-BadgerScribe-figure-2">Figure 2</h3>
 <p aria-hidden="true">Image 1 of 1: ‘Left: a d by d weight matrix, all trained, 16 bytes per weight. Right: the same matrix frozen in bf16 plus two thin trained matrices B (d by r) and A (r by d); output is W x plus B A x.’</p>
-<figure><img src="../fig/lora.svg" alt="Left: a d by d weight matrix, all trained, 16 bytes per weight. Right: the same matrix frozen in bf16 plus two thin trained matrices B (d by r) and A (r by d); output is W x plus B A x." class="figure mx-auto d-block"><div class="figcaption">Full fine-tuning updates every entry of a d × d
-weight matrix; LoRA freezes it and trains two thin matrices of rank r
-whose product is added to its output</div>
+<figure><img src="../fig/lora.svg" alt="Left: a d by d weight matrix, all trained, 16 bytes per weight. Right: the same matrix frozen in bf16 plus two thin trained matrices B (d by r) and A (r by d); output is W x plus B A x." class="figure mx-auto d-block"><div class="figcaption"><em>Full fine-tuning updates the whole weight
+matrix; LoRA freezes it and trains two thin matrices beside
+it</em></div>
 </figure><hr>
 <h3 id="08_Finetuning-BadgerScribe-figure-3">Figure 3</h3>
 <p aria-hidden="true">Image 1 of 1: ‘Horizontal bar chart on a logarithmic GPU-hours axis from 0.1 to 10 million. Training from scratch, every weight from random: 460,000 GPU-hours. Full fine-tuning, every weight from a pretrained model: 800 GPU-hours. LoRA fine-tuning, an adapter under one percent of the weights: 0.5 GPU-hours. Each bar is labelled with the GPUs, the time and the electricity. Energy is GPU electricity at the rated draw, a lower bound.’</p>
-<figure><img src="../fig/pretrain-finetune-lora.svg" alt="Horizontal bar chart on a logarithmic GPU-hours axis from 0.1 to 10 million. Training from scratch, every weight from random: 460,000 GPU-hours. Full fine-tuning, every weight from a pretrained model: 800 GPU-hours. LoRA fine-tuning, an adapter under one percent of the weights: 0.5 GPU-hours. Each bar is labelled with the GPUs, the time and the electricity. Energy is GPU electricity at the rated draw, a lower bound." class="figure mx-auto d-block"><div class="figcaption">GPU-hours on a log scale for three ways to get a
-3B model that does a task: training Llama 3.2 3B from scratch, 460,000
-GPU-hours, about a thousand H100s for three weeks and some 300 MWh; the
-full fine-tune that made CHURRO-3B, 800 GPU-hours, eight H100s for four
-days and about 500 kWh; this episode’s LoRA run, half a GPU-hour, one
-A10G for 32 minutes and about 0.2 kWh</div>
+<figure><img src="../fig/pretrain-finetune-lora.svg" alt="Horizontal bar chart on a logarithmic GPU-hours axis from 0.1 to 10 million. Training from scratch, every weight from random: 460,000 GPU-hours. Full fine-tuning, every weight from a pretrained model: 800 GPU-hours. LoRA fine-tuning, an adapter under one percent of the weights: 0.5 GPU-hours. Each bar is labelled with the GPUs, the time and the electricity. Energy is GPU electricity at the rated draw, a lower bound." class="figure mx-auto d-block"><div class="figcaption"><em>GPU-hours, on a log scale, to train a 3B
+model from scratch, to fully fine-tune it, and to LoRA fine-tune
+it</em></div>
 </figure><hr>
 <h3 id="08_Finetuning-BadgerScribe-figure-4">Figure 4</h3>
 <p aria-hidden="true">Image 1 of 1: ‘Stacked bar chart of bytes per parameter for inference versus LoRA versus full fine-tuning’</p>
-<figure><img src="../fig/memory-per-parameter.svg" alt="Stacked bar chart of bytes per parameter for inference versus LoRA versus full fine-tuning" class="figure mx-auto d-block"><div class="figcaption">Bars of GPU memory per parameter: 1 byte for FP8
-inference, 2 for bf16 inference, about 2.5 for a LoRA fine-tune, 16 for
-a full fine-tune made of the weight, its gradient, a 32-bit copy of the
-weight and the two averages Adam keeps</div>
+<figure><img src="../fig/memory-per-parameter.svg" alt="Stacked bar chart of bytes per parameter for inference versus LoRA versus full fine-tuning" class="figure mx-auto d-block"><div class="figcaption"><em>GPU memory per parameter: inference, a LoRA
+fine-tune, and a full fine-tune</em></div>
 </figure><hr>
 <h3 id="08_Finetuning-BadgerScribe-figure-5">Figure 5</h3>
 <p aria-hidden="true">Image 1 of 1: ‘A layer W with an input arrow, an output arrow, an error arrow going back and an update arrow into W, each labelled 2 FLOPs; a box totals 6 for full fine-tuning and 4 for LoRA’</p>
-<figure><img src="../fig/flops-per-token.svg" alt="A layer W with an input arrow, an output arrow, an error arrow going back and an update arrow into W, each labelled 2 FLOPs; a box totals 6 for full fine-tuning and 4 for LoRA" class="figure mx-auto d-block"><div class="figcaption">Three matrix products per token: forward (2
-FLOPs per weight), error passed back to the inputs (2), and the weight
-update (2); full fine-tuning does all three for 6, LoRA skips the update
-for 4</div>
+<figure><img src="../fig/flops-per-token.svg" alt="A layer W with an input arrow, an output arrow, an error arrow going back and an update arrow into W, each labelled 2 FLOPs; a box totals 6 for full fine-tuning and 4 for LoRA" class="figure mx-auto d-block"><div class="figcaption"><em>The three matrix products per token; a full
+fine-tune does all three, LoRA skips the weight update</em></div>
 </figure><hr>
 <h3 id="08_Finetuning-BadgerScribe-figure-6">Figure 6</h3>
 <p aria-hidden="true">Image 1 of 1: ‘Horizontal bar chart on a logarithmic dollar axis: this episode 0.75, homework 1.50, the full Badger Scribe train set 1.20, 7B full fine-tune 140, 70B LoRA 600, CHURRO-3B 6,300, 70B full fine-tune 12,000, with the ten-run sweep shown as a lighter extension of each bar’</p>
-<figure><img src="../fig/finetune-cost-ladder.svg" alt="Horizontal bar chart on a logarithmic dollar axis: this episode 0.75, homework 1.50, the full Badger Scribe train set 1.20, 7B full fine-tune 140, 70B LoRA 600, CHURRO-3B 6,300, 70B full fine-tune 12,000, with the ten-run sweep shown as a lighter extension of each bar" class="figure mx-auto d-block"><div class="figcaption">Cost per run on a log scale, from about a dollar
-for this episode’s LoRA run to twelve thousand dollars for a 70B full
-fine-tune; a ten-run sweep shifts every bar up by one decade</div>
+<figure><img src="../fig/finetune-cost-ladder.svg" alt="Horizontal bar chart on a logarithmic dollar axis: this episode 0.75, homework 1.50, the full Badger Scribe train set 1.20, 7B full fine-tune 140, 70B LoRA 600, CHURRO-3B 6,300, 70B full fine-tune 12,000, with the ten-run sweep shown as a lighter extension of each bar" class="figure mx-auto d-block"><div class="figcaption"><em>Cost per run, on a log scale, from this
+episode’s LoRA run to a 70B full fine-tune; the lighter extension is a
+ten-run sweep</em></div>
 </figure><hr></section><section id="09_Hyperparameter-tuning"><h2 class="section-heading"><a href="09_Hyperparameter-tuning.html">Hyperparameter Tuning in SageMaker: Neural Network Example</a></h2>
 <hr class="half-width"></section><section id="10_RAG-overview"><h2 class="section-heading"><a href="10_RAG-overview.html">Overview of RAG Workflows on AWS</a></h2>
 <hr class="half-width">
 <h3 id="10_RAG-overview-figure-1">Figure 1</h3>
 <p aria-hidden="true">Image 1 of 1: ‘Diagram of the RAG pipeline with the embedder and generator highlighted as the two model calls’</p>
-<figure><img src="../fig/rag-pipeline.svg" alt="Diagram of the RAG pipeline with the embedder and generator highlighted as the two model calls" class="figure mx-auto d-block"><div class="figcaption">RAG pipeline: PDFs are chunked and embedded
-once; per question, the question is embedded, the top-k chunks are
-retrieved by cosine similarity, and a generator answers from question
-plus chunks. The embedder and generator are the only parts that change
-between episodes.</div>
+<figure><img src="../fig/rag-pipeline.svg" alt="Diagram of the RAG pipeline with the embedder and generator highlighted as the two model calls" class="figure mx-auto d-block"><div class="figcaption"><em>The RAG pipeline; the embedder and the
+generator are the only parts that change between episodes</em></div>
 </figure><hr>
 <h3 id="10_RAG-overview-figure-2">Figure 2</h3>
 <p aria-hidden="true">Image 1 of 1: ‘Comparison table of four ways to run inference on AWS: Bedrock API (default, pay per token, nothing to shut down), Processing job (batch with open models, bills per second while the job runs, terminates itself), GPU notebook (learning and debugging only, bills per hour until stopped, about $90 if forgotten over a weekend) and Inference endpoint (steady traffic only, bills 24/7, about $1,000 if idle for a month).’</p>
-<figure><img src="../fig/rag-approaches.svg" alt="Comparison table of four ways to run inference on AWS: Bedrock API (default, pay per token, nothing to shut down), Processing job (batch with open models, bills per second while the job runs, terminates itself), GPU notebook (learning and debugging only, bills per hour until stopped, about $90 if forgotten over a weekend) and Inference endpoint (steady traffic only, bills 24/7, about $1,000 if idle for a month)." class="figure mx-auto d-block"><div class="figcaption">Four columns, Bedrock API, Processing job, GPU
-notebook and Inference endpoint, compared on where the model runs, what
-runs between calls, billing unit, latency, model choice, what you must
-remember, a cost example and which episode covers it; Bedrock is marked
-as the default and Processing jobs as the safe way to use a GPU</div>
+<figure><img src="../fig/rag-approaches.svg" alt="Comparison table of four ways to run inference on AWS: Bedrock API (default, pay per token, nothing to shut down), Processing job (batch with open models, bills per second while the job runs, terminates itself), GPU notebook (learning and debugging only, bills per hour until stopped, about $90 if forgotten over a weekend) and Inference endpoint (steady traffic only, bills 24/7, about $1,000 if idle for a month)." class="figure mx-auto d-block"><div class="figcaption"><em>Four ways to run inference on AWS,
+compared</em></div>
 </figure><hr></section><section id="11_RAG-Bedrock"><h2 class="section-heading"><a href="11_RAG-Bedrock.html">RAG with Bedrock</a></h2>
 <hr class="half-width"></section><section id="12_RAG-Processing-jobs"><h2 class="section-heading"><a href="12_RAG-Processing-jobs.html">RAG with Processing Jobs</a></h2>
 <hr class="half-width">
 <h3 id="12_RAG-Processing-jobs-figure-1">Figure 1</h3>
 <p aria-hidden="true">Image 1 of 1: ‘Paired horizontal bars comparing a 27B open-weight model on one GPU with a frontier commercial model; within a few points on agent tasks and science questions, ahead on chart reasoning’</p>
-<figure><img src="../fig/qwen27b-vs-opus.png" alt="Paired horizontal bars comparing a 27B open-weight model on one GPU with a frontier commercial model; within a few points on agent tasks and science questions, ahead on chart reasoning" class="figure mx-auto d-block"><div class="figcaption">Qwen3.8-27B against Claude Opus 4.8 on three
-benchmarks: 73.0 vs 74.6 on Terminal-Bench 2.1, 89.2 vs 93.6 on GPQA
-Diamond, 83.7 vs 80.5 on CharXiv reasoning</div>
+<figure><img src="../fig/qwen27b-vs-opus.png" alt="Paired horizontal bars comparing a 27B open-weight model on one GPU with a frontier commercial model; within a few points on agent tasks and science questions, ahead on chart reasoning" class="figure mx-auto d-block"><div class="figcaption"><em>Qwen3.8-27B against Claude Opus 4.8 on three
+benchmarks, as reported by each model’s authors</em></div>
 </figure><hr></section><section id="13_RAG-GPU-notebook"><h2 class="section-heading"><a href="13_RAG-GPU-notebook.html">(Optional) RAG with a Notebook GPU</a></h2>
 <hr class="half-width"></section><section id="14_CLI-equivalents"><h2 class="section-heading"><a href="14_CLI-equivalents.html">(Optional) The Same Jobs from the Terminal</a></h2>
 <hr class="half-width"></section><section id="15_Resource-management-cleanup"><h2 class="section-heading"><a href="15_Resource-management-cleanup.html">Resource Management and Monitoring</a></h2>
@@ -683,8 +665,8 @@ Diamond, 83.7 vs 80.5 on CharXiv reasoning</div>
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/images.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/images.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-29",
-  "datePublished": "2026-10-29"
+  "dateModified": "2026-11-02",
+  "datePublished": "2026-11-02"
 }
 
   </script><script>

@@ -428,7 +428,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>RAG with Processing Jobs</h1>
-        <p>Last updated on 2026-10-28 |
+        <p>Last updated on 2026-11-02 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/12_RAG-Processing-jobs.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -532,18 +532,20 @@ trained with. <code>from_pretrained</code> downloads the weights onto
 the GPU, and <code>generate</code> writes the answer to a chat prompt,
 the self-hosted counterpart of what Bedrock does behind
 <code>converse</code>. Inference needs no gradients, so the weights are
-the memory cost, and 8B parameters at two bytes each in bf16 is about 16
-GB, which fits the 24 GB GPU of an <code>ml.g5.xlarge</code> with room
-for the KV cache. (The fine-tuning episode has the full memory
-arithmetic; the short version is that inference needs only the weights
-and training needs eight times more per parameter.)</p>
+the memory cost. An 8B model is small enough to run unquantized, 8B
+parameters at two bytes each in bf16, about 16 GB, which fits the 24 GB
+GPU of an <code>ml.g5.xlarge</code> with room for the KV cache. Larger
+models are quantized for inference, to one byte per parameter or less,
+which is how the GPU-notebook episode fits a 27B model on one card. (The
+fine-tuning episode has the full memory arithmetic; the short version is
+that inference needs only the weights and training needs eight times
+more per parameter.)</p>
 <p>Open-weight models that fit one GPU are now close to the frontier on
 the kinds of tasks research code runs, on data that never leaves your
 account. The newest of this family, Qwen3.8-27B, fits one GPU and lands
 within a few points of a frontier commercial model:</p>
-<figure><img src="fig/qwen27b-vs-opus.png" alt="Paired horizontal bars comparing a 27B open-weight model on one GPU with a frontier commercial model; within a few points on agent tasks and science questions, ahead on chart reasoning" class="figure mx-auto d-block"><div class="figcaption">Qwen3.8-27B against Claude Opus 4.8 on three
-benchmarks: 73.0 vs 74.6 on Terminal-Bench 2.1, 89.2 vs 93.6 on GPQA
-Diamond, 83.7 vs 80.5 on CharXiv reasoning</div>
+<figure><img src="fig/qwen27b-vs-opus.png" alt="Paired horizontal bars comparing a 27B open-weight model on one GPU with a frontier commercial model; within a few points on agent tasks and science questions, ahead on chart reasoning" class="figure mx-auto d-block"><div class="figcaption"><em>Qwen3.8-27B against Claude Opus 4.8 on three
+benchmarks, as reported by each model’s authors</em></div>
 </figure><p>Qwen figures are from the Qwen3.8-27B model card and were not
 reproduced here; Opus 4.8 figures are from its published
 evaluations.</p>
@@ -1309,9 +1311,10 @@ specific open-weight model you rent a GPU and serve it yourself.</li>
 be forgotten. It bills while the script runs and ends on its own, with
 <code>max_runtime_in_seconds</code> as the backstop. Use it for batch
 work; use Bedrock or an endpoint when you need answers in seconds.</li>
-<li>Inference needs only the weights. Qwen3-8B in bf16 is ~16 GB and
-fits one 24 GB GPU, with the rest for the prompts’ attention cache; how
-many prompts decode together is bounded by that remainder.</li>
+<li>Inference needs only the weights. Qwen3-8B is small enough to run
+unquantized, ~16 GB in bf16 on one 24 GB GPU, with the rest for the
+prompts’ attention cache; how many prompts decode together is bounded by
+that remainder. Larger models are quantized to fit.</li>
 <li>A job’s inputs and outputs are S3 prefixes mounted into the
 container; the notebook only stages files and reads results, so it stays
 a cheap CPU instance.</li>
@@ -1387,8 +1390,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/12_RAG-Processing-jobs.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/12_RAG-Processing-jobs.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-28",
-  "datePublished": "2026-10-29"
+  "dateModified": "2026-11-02",
+  "datePublished": "2026-11-02"
 }
 
   </script><script>

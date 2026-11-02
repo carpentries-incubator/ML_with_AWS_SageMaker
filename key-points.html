@@ -744,9 +744,10 @@ specific open-weight model you rent a GPU and serve it yourself.</li>
 be forgotten. It bills while the script runs and ends on its own, with
 <code>max_runtime_in_seconds</code> as the backstop. Use it for batch
 work; use Bedrock or an endpoint when you need answers in seconds.</li>
-<li>Inference needs only the weights. Qwen3-8B in bf16 is ~16 GB and
-fits one 24 GB GPU, with the rest for the prompts’ attention cache; how
-many prompts decode together is bounded by that remainder.</li>
+<li>Inference needs only the weights. Qwen3-8B is small enough to run
+unquantized, ~16 GB in bf16 on one 24 GB GPU, with the rest for the
+prompts’ attention cache; how many prompts decode together is bounded by
+that remainder. Larger models are quantized to fit.</li>
 <li>A job’s inputs and outputs are S3 prefixes mounted into the
 container; the notebook only stages files and reads results, so it stays
 a cheap CPU instance.</li>
@@ -880,8 +881,8 @@ costs by resource.</p></li>
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/key-points.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/key-points.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-29",
-  "datePublished": "2026-10-29"
+  "dateModified": "2026-11-02",
+  "datePublished": "2026-11-02"
 }
 
   </script><script>

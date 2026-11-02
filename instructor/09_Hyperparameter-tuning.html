@@ -423,7 +423,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Hyperparameter Tuning in SageMaker: Neural Network Example</h1>
-        <p>Last updated on 2026-10-28 |
+        <p>Last updated on 2026-11-02 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/09_Hyperparameter-tuning.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -570,8 +570,7 @@ too).</p>
 <span id="cb3-11"><a href="#cb3-11" tabindex="-1" aria-label="code-block-3-11"></a><span class="bu">print</span>(<span class="ss">f"Name: </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">, Project: </span><span class="sc">{</span>project<span class="sc">}</span><span class="ss">, Purpose: </span><span class="sc">{</span>purpose<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <p>Next, we’ll configure the baseline estimator that we plan to do
-hyperparameter search on.</p>
-<p>Every price in this episode is from the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
+hyperparameter search on. Every price in this episode is from the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
 for ML</a> page, us-east-1 on-demand; the tuning job’s cost is that rate
 times the sum of the child jobs’ billable minutes.</p>
 <div class="codewrapper sourceCode" id="cb4">
@@ -783,13 +782,12 @@ The whole search, as a dictionary, comes back too.</p>
 <span id="cb8-5"><a href="#cb8-5" tabindex="-1" aria-label="code-block-8-5"></a>    max_parallel_jobs<span class="op">=</span><span class="dv">1</span>,         <span class="co"># the tuner's max_parallel_jobs: one instance, so startup is paid once</span></span>
 <span id="cb8-6"><a href="#cb8-6" tabindex="-1" aria-label="code-block-8-6"></a>)<span class="op">;</span></span></code></pre>
 </div>
-<p>One child job, about 3 billable minutes, about
-<code>$0.01</code>.</p>
-<p>If the launch is refused with an <code>AccessDeniedException</code>
-ending in <code>explicit deny</code>, the account’s checks are the
-cause: a missing tag, an instance type outside the lesson’s list, or a
-resource kind the lesson never creates; the first training episode’s
-callout <em>If the launch is refused</em> says what to look at.</p>
+<p>One child job, about 3 billable minutes, about <code>$0.01</code>. If
+the launch is refused with an <code>AccessDeniedException</code> ending
+in <code>explicit deny</code>, the account’s checks are the cause: a
+missing tag, an instance type outside the lesson’s list, or a resource
+kind the lesson never creates; the first training episode’s callout
+<em>If the launch is refused</em> says what to look at.</p>
 <div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -861,10 +859,7 @@ completed trials to choose the next ones, so it spends fewer jobs on
 unpromising combinations. <strong>Setting <code>max_parallel_jobs</code>
 higher than 2-4 reduces tuning efficiency, as SageMaker’s ability to
 learn from completed jobs decreases when too many jobs run
-simultaneously.</strong></p>
-<p>With this approach, SageMaker is better able to refine configurations
-without overloading resources or risking inefficient exploration, making
-<code>max_parallel_jobs=2</code> a solid default for most use cases.</p>
+simultaneously.</strong> Two at a time is a good default.</p>
 <p>Estimate first. The same call with the new limits:</p>
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -1343,8 +1338,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/09_Hyperparameter-tuning.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/09_Hyperparameter-tuning.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-28",
-  "datePublished": "2026-10-29"
+  "dateModified": "2026-11-02",
+  "datePublished": "2026-11-02"
 }
 
   </script><script>

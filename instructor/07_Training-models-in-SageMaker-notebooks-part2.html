@@ -430,7 +430,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Training Models in SageMaker: PyTorch Example</h1>
-        <p>Last updated on 2026-10-28 |
+        <p>Last updated on 2026-11-02 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/07_Training-models-in-SageMaker-notebooks-part2.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -945,12 +945,12 @@ to use.</p>
 <span id="cb17-14"><a href="#cb17-14" tabindex="-1" aria-label="code-block-17-14"></a>prices <span class="op">=</span> {<span class="st">"ml.m5.large"</span>: <span class="fl">0.115</span>, <span class="st">"ml.g4dn.xlarge"</span>: <span class="fl">0.74</span>}</span></code></pre>
 </div>
 <p>Set up the estimator for a longer run: the epochs, the instance,
-where the output goes, and a two-hour <code>max_run</code> cap.</p>
-<p>If the launch is refused with an <code>AccessDeniedException</code>
-ending in <code>explicit deny</code>, the account’s checks are the
-cause: a missing tag, an instance type outside the lesson’s list, or a
-resource kind the lesson never creates; the first training episode’s
-callout <em>If the launch is refused</em> says what to look at.</p>
+where the output goes, and a two-hour <code>max_run</code> cap. If the
+launch is refused with an <code>AccessDeniedException</code> ending in
+<code>explicit deny</code>, the account’s checks are the cause: a
+missing tag, an instance type outside the lesson’s list, or a resource
+kind the lesson never creates; the first training episode’s callout
+<em>If the launch is refused</em> says what to look at.</p>
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -1157,10 +1157,9 @@ instances, where it costs cents, then estimates when it helps and shows
 the setup for each kind of job.</p>
 <div class="section level3">
 <h3 id="what-instance_count2-does-on-its-own">What <code>instance_count=2</code> does on its own<a class="anchor" aria-label="anchor" href="#what-instance_count2-does-on-its-own"></a></h3>
-<figure><img src="../fig/instance-count-vs-data-parallel.svg" alt="Two panels comparing instance_count=2 without distribution, where each instance trains on the full data, with data parallelism, where batches are split and gradients synced" class="figure mx-auto d-block"><div class="figcaption">Left: two instances each receive the full
-dataset and run the whole script independently, same model and twice the
-bill. Right: data parallelism splits the batches across instances and
-syncs gradients each step.</div>
+<figure><img src="../fig/instance-count-vs-data-parallel.svg" alt="Two panels comparing instance_count=2 without distribution, where each instance trains on the full data, with data parallelism, where batches are split and gradients synced" class="figure mx-auto d-block"><div class="figcaption"><em>Two instances without a distribution
+strategy run the whole job twice; with data parallelism they split the
+batches and share gradients</em></div>
 </figure><p>Setting <code>instance_count=2</code> on an estimator makes SageMaker
 start two instances and run <strong>the full training script on each of
 them</strong>. Nothing is split:</p>
@@ -1515,8 +1514,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/07_Training-models-in-SageMaker-notebooks-part2.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/07_Training-models-in-SageMaker-notebooks-part2.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-10-28",
-  "datePublished": "2026-10-29"
+  "dateModified": "2026-11-02",
+  "datePublished": "2026-11-02"
 }
 
   </script><script>
