@@ -589,8 +589,8 @@ mid-priced model often reads as well as a flagship at a tenth of the
 cost.</li>
 <li>
 <strong>Your own questions</strong>: the benchmarks rank models on
-other people’s data. <code>train_QA.csv</code> has labelled questions
-for this corpus, and the evaluation at the end of this episode scores a
+other people’s data. <code>train_QA.csv</code> has labeled questions for
+this corpus, and the evaluation at the end of this episode scores a
 model on them and prices the run from its token counts. Changing
 <code>base_generation_model_id</code> and rerunning is the whole
 experiment. A model that wins on a leaderboard and loses on your
@@ -622,7 +622,7 @@ here:</p>
 <strong>The shared bucket</strong>, <code>ml-marathon-shared</code>,
 already set in the setup cells below, holds the WattBot inputs under
 <code>wattbot/</code>: <code>metadata.csv</code> (the index of papers),
-<code>train_QA.csv</code> (labelled questions and answers),
+<code>train_QA.csv</code> (labeled questions and answers),
 <code>corpus.zip</code> (the PDFs) and <code>pages.jsonl</code> (the
 text of every PDF page, extracted once). It is read-only and there is
 one copy for the whole class.</li>
@@ -835,13 +835,13 @@ trying a few encodings in turn, because author names and titles in
 <span id="cb8-22"><a href="#cb8-22" tabindex="-1" aria-label="code-block-8-22"></a>        <span class="cf">raise</span> last_error</span>
 <span id="cb8-23"><a href="#cb8-23" tabindex="-1" aria-label="code-block-8-23"></a>    <span class="cf">raise</span> <span class="pp">RuntimeError</span>(<span class="ss">f"Unable to read CSV at </span><span class="sc">{</span>path<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
 </div>
-<p>Now the two files. <code>train_QA.csv</code> is the labelled
-questions and answers we score against, <code>metadata.csv</code> is one
-row per paper with its id, title and URL.</p>
+<p>Now the two files. <code>train_QA.csv</code> is the labeled questions
+and answers we score against, <code>metadata.csv</code> is one row per
+paper with its id, title and URL.</p>
 <div class="codewrapper sourceCode" id="cb9">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a>train_qa_path <span class="op">=</span> download_from_s3(train_key, <span class="st">"train_QA.csv"</span>)      <span class="co"># labelled questions + answers: what we score against</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a>train_qa_path <span class="op">=</span> download_from_s3(train_key, <span class="st">"train_QA.csv"</span>)      <span class="co"># labeled questions + answers: what we score against</span></span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a>metadata_path <span class="op">=</span> download_from_s3(metadata_key, <span class="st">"metadata.csv"</span>)   <span class="co"># one row per paper (id, title, url): the corpus index</span></span>
 <span id="cb9-3"><a href="#cb9-3" tabindex="-1" aria-label="code-block-9-3"></a></span>
 <span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a>train_df <span class="op">=</span> smart_read_csv(train_qa_path)</span>
@@ -1213,7 +1213,7 @@ the console’s inference-profile pages list only the system-defined
 profiles.</li>
 <li>The keys must be the three approved ones, <code>Name</code>,
 <code>Project</code> and <code>Purpose</code>, with that spelling and
-capitalisation; any other key is ignored by the bill (the S3 episode
+capitalization; any other key is ignored by the bill (the S3 episode
 says why).</li>
 <li>The profile itself has no hourly or storage charge. You only pay per
 token, as before.</li>
@@ -1349,7 +1349,7 @@ everyone’s loop slows to a crawl of retries. In class, leave
 instructor computed with the same chunks and the same model from the
 shared bucket and skips the calls. Working on your own, set it to
 <code>False</code> and let the loop run; that is the step to
-practise.</p>
+practice.</p>
 </div>
 </div>
 </div>
@@ -1573,7 +1573,7 @@ explanation phases call local models instead of Bedrock-hosted ones.</p>
 </section><section><h2 class="section-heading" id="step-12-score-against-the-training-answers">Step 12 – Score against the training answers<a class="anchor" aria-label="anchor" href="#step-12-score-against-the-training-answers"></a></h2>
 <hr class="half-width"><p>WattBot scores each prediction with three components, 0.75 for
 <code>answer_value</code> (numeric within ±0.1% relative tolerance,
-categorical match after normalisation, and zero if you answer a question
+categorical match after normalization, and zero if you answer a question
 the corpus cannot answer), 0.20 for the F1 between your
 <code>ref_id</code> set and the ground-truth citations, and 0.05 for
 refusing cleanly, with every evidence field blank, when the answer is
@@ -1651,13 +1651,13 @@ error, and the cited passage usually shows what it latched onto, a
 nearby number, a different unit, a different model in the same table.
 And sometimes the explanation shows the model read correctly and the
 label is the problem, as with a question asking what inference “can
-account for” labelled 90 where three papers in the corpus give 60, 70
-and 80 to 90 percent, so a range is arguably the better answer, or a
-fact that appears in several papers with the label naming only one of
-them. Labels are written by people. When the explanation convinces you,
-the fix is to the label, and the competition organisers want to hear
-about it. Each of those is a different lever, and the score alone would
-have you pulling the wrong one.</p>
+account for” labeled 90 where three papers in the corpus give 60, 70 and
+80 to 90 percent, so a range is arguably the better answer, or a fact
+that appears in several papers with the label naming only one of them.
+Labels are written by people. When the explanation convinces you, the
+fix is to the label, and the competition organizers want to hear about
+it. Each of those is a different lever, and the score alone would have
+you pulling the wrong one.</p>
 <div id="what-did-that-run-cost" class="callout challenge">
 <div class="callout-square">
 <i class="callout-icon" data-feather="zap"></i>
@@ -2251,7 +2251,7 @@ reading. Text chunks alone scored 0.64, with 57% of table answers and
 crops scored 0.75, with 69% of tables and 71% of figures correct and
 citation F1 up from 0.85 to 0.93. Chunks plus the crops on the pages
 behind the top text chunks, the route the paper-level hit rate seemed to
-favour, scored 0.67. Two readings. Showing the model the table or figure
+favor, scored 0.67. Two readings. Showing the model the table or figure
 is worth about ten points on the questions that depend on one, tables
 included, which whole pages at 100 dpi had not managed. And the
 crop-level hit rates say where the image index’s lead does not come
