@@ -6,8 +6,12 @@ import nbformat
 from nbformat.v4 import new_notebook, new_markdown_cell, new_code_cell
 
 # Paths
-episodes_dir = "episodes"
-notebooks_dir = "notebooks"
+import sys
+# Default: episodes/*.md -> notebooks/*.ipynb. With two arguments, convert another folder's
+# Markdown into notebooks beside it, e.g. `python3 scripts/md_to_ipynb.py colab colab` for the
+# Colab version of the fine-tuning lesson.
+episodes_dir = sys.argv[1] if len(sys.argv) == 3 else "episodes"
+notebooks_dir = sys.argv[2] if len(sys.argv) == 3 else "notebooks"
 
 # List of Markdown files to ignore (no conversion needed)
 ignore_list = [

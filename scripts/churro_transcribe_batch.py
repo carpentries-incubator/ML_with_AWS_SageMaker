@@ -57,6 +57,9 @@ def parse_args():
     p.add_argument("--min_pixels", type=int, default=DEFAULT_MIN_PIXELS)
     p.add_argument("--use_metadata", type=int, default=1)
     p.add_argument("--max_pages", type=int, default=0, help="0 = all")
+    p.add_argument("--dtype", type=str, default="bf16", choices=["bf16", "fp16", "auto"],
+                   help="weights dtype; auto = bf16 if the GPU supports it, else fp16 (a Colab T4)")
+    p.add_argument("--adapter_dir", type=str, default="", help="an unpacked adapter folder instead of --adapter_tar")
     return p.parse_args()
 
 
@@ -88,12 +91,16 @@ def main():
             tar.extractall(adapter_dir, filter="data")
         print("adapter files:", sorted(os.listdir(adapter_dir)))
 
+    if args.adapter_dir:
+        adapter_dir = args.adapter_dir
     processor_src = adapter_dir if (adapter_dir and os.path.exists(os.path.join(adapter_dir, "preprocessor_config.json"))) else args.model_id
     print(f"loading processor from {processor_src}; model from {args.model_id}")
     processor = AutoProcessor.from_pretrained(processor_src, min_pixels=args.min_pixels, max_pixels=args.max_pixels)
     processor.tokenizer.padding_side = "left"  # batched generation needs left padding
+    if args.dtype == "auto":
+        args.dtype = "bf16" if torch.cuda.is_bf16_supported() else "fp16"
     model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
-        args.model_id, torch_dtype=torch.bfloat16, attn_implementation="sdpa"
+        args.model_id, torch_dtype=(torch.bfloat16 if args.dtype == "bf16" else torch.float16), attn_implementation="sdpa"
     ).to("cuda")
 
     if adapter_dir:
