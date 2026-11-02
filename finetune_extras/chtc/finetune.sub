@@ -24,9 +24,15 @@ error = finetune_$(Cluster).err
 # --- the machine: one GPU with at least 20 GB of memory and bf16 support (capability 8.0 is Ampere and newer) ---
 request_gpus = 1
 +WantGPULab = true
-+GPUJobLength = "short"          # under 12 hours; this job is about an hour
++GPUJobLength = "short"          # under 12 hours; this job is about 20 minutes
++is_resumable = true             # also run on backfill GPUs, the cards other groups own and are not using; the job may be interrupted there
 gpus_minimum_memory = 20000      # MB; the memory rule says a 3B LoRA needs about 12 GB, with room for the before/after scoring
 gpus_minimum_capability = 8.0    # bf16, which the script trains in by default
+
+# --- checkpoints: finetune.sh stops with exit code 85 after two hours, HTCondor keeps output/ckpt and requeues the job, and
+# --- the script resumes from the last epoch's checkpoint. The same thing happens when a backfill job is interrupted.
+checkpoint_exit_code = 85
+transfer_checkpoint_files = output/ckpt
 
 request_cpus = 4
 request_memory = 32GB            # peak is loading the 7.5 GB model into CPU memory before it moves to the GPU
