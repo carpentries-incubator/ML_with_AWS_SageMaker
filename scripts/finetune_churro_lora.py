@@ -78,7 +78,7 @@ def parse_args():
     # --- how much of the data ---
     p.add_argument("--categories", type=str, default="", help="comma-separated subset, e.g. survey_notes; empty = all")
     p.add_argument("--holdout_frac", type=float, default=0.15, help="fraction of pages per category kept for scoring")
-    p.add_argument("--max_train_pages", type=int, default=0, help="0 = all; set small (e.g. 20) for a smoke test")
+    p.add_argument("--max_train_pages", type=int, default=0, help="0 = all; set small (e.g. 20) for a short test run")
     p.add_argument("--eval_pages", type=int, default=20, help="holdout pages transcribed to report CER (0 = skip)")
     p.add_argument("--eval_before", type=int, default=1, help="1 = also score the base model on the same pages before training")
     p.add_argument("--curve_pages", type=int, default=8, help="holdout pages scored at the end of every epoch for the CER curve (0 = skip)")

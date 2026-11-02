@@ -139,13 +139,13 @@ print("Files successfully uploaded to S3.")
 ```
 
 ## Check the training script
-Before launching a managed job, we run 100 epochs on the controller notebook as a smoke test. It checks the data paths and the training code and gives a rough time per epoch. It is only a local test. The runs we compare are launched as separate SageMaker jobs.
+Before launching a managed job, we run 100 epochs on the controller notebook as a short test. It checks the data paths and the training code and gives a rough time per epoch. It is only a local test. The runs we compare are launched as separate SageMaker jobs.
 
 ```python
 import torch
 import time as t # Measure training time locally
 
-epochs = 100          # small smoke test
+epochs = 100          # a short test run
 learning_rate = 0.001
 
 start_time = t.time()
@@ -180,10 +180,10 @@ print(f"Name: {name}, Project: {project}, Purpose: {purpose}")
 
 Every job in this lesson gets an estimate written down before `fit()`, a rough figure for how long it will run and what it will cost. There are two ways to make it, and which one applies depends on the size of the model. For a model this small, timing a short test run is more useful than counting the arithmetic, so the measured time comes first and the counted arithmetic, which the larger models later in the workshop need, after it.
 
-**Small models: time a smoke test and scale it.** The 100-epoch test gives a time per epoch. Each epoch costs the same as the last, and the script trains on all the rows in one step per epoch, so training time scales with epochs and with rows. Scale the measured time to 1,000 epochs, then add the two or three minutes of container startup and data download, which are billed and are most of the bill for a job this small. The result is not exact, because the notebook and the training instance are different machines, but it says whether the job will cost cents or dollars:
+**Small models: time a short run and scale it.** The 100-epoch test gives a time per epoch. Each epoch costs the same as the last, and the script trains on all the rows in one step per epoch, so training time scales with epochs and with rows. Scale the measured time to 1,000 epochs, then add the two or three minutes of container startup and data download, which are billed and are most of the bill for a job this small. The result is not exact, because the notebook and the training instance are different machines, but it says whether the job will cost cents or dollars:
 
 ```python
-local_seconds_per_epoch = local_elapsed / epochs                 # from the smoke test above: its wall-clock over its 100 epochs
+local_seconds_per_epoch = local_elapsed / epochs                 # from the short run above: its wall-clock over its 100 epochs
 planned_epochs = 1000
 startup_minutes = 3                                            # container pull + data download, billed; the same for every job
 rate = 0.115                                                   # $/hour, ml.m5.large, from the Instances for ML page
@@ -204,7 +204,7 @@ GPU-seconds = FLOPs ÷ (GPU peak FLOPS × 0.25)
 cost        = GPU-hours × instance price per hour + startup
 ```
 
-On `TitanicNet` the arithmetic comes out as a fraction of a second, which is why the smoke-test method is the one to use for it:
+On `TitanicNet` the arithmetic comes out as a fraction of a second, which is why timing a short run is the method to use for it:
 
 ```python
 from train_nn import TitanicNet
@@ -282,11 +282,11 @@ Take the model you expect to train for your own project or challenge, or the big
 3. **Epochs.** Small data usually takes three to five passes, large corpora one to three; the number is a budget, not a given.
 4. **Instance.** From the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page, or let the helper pick the cheapest that fits.
 
-If the FLOPs come out below 1e15, use the smoke-test method instead and say what you would measure. Write the estimate down with the `max_run` you would set, and keep it: the first bill goes next to it.
+If the FLOPs come out below 1e15, time a short run instead and say what you would measure. Write the estimate down with the `max_run` you would set, and keep it: the first bill goes next to it.
 
 :::::::::::::::::::::::: solution
 
-There is no single answer; the solution is the written estimate. One worked example for scale: a 7B language model fully fine-tuned on 50,000 documents of 2,000 tokens for 3 epochs is 6 × 7e9 × 3e8 = 1.3e19 FLOPs, 45 GPU-hours on A100s, about `$140` a run; the fine-tuning episode works that one through. A 10-million-parameter network on 100,000 rows for 20 epochs is 1.2e14 FLOPs: below the line, so time a smoke test and scale it, and expect the startup minutes to dominate.
+There is no single answer; the solution is the written estimate. One worked example for scale: a 7B language model fully fine-tuned on 50,000 documents of 2,000 tokens for 3 epochs is 6 × 7e9 × 3e8 = 1.3e19 FLOPs, 45 GPU-hours on A100s, about `$140` a run; the fine-tuning episode works that one through. A 10-million-parameter network on 100,000 rows for 20 epochs is 1.2e14 FLOPs: below the line, so time a short run and scale it, and expect the startup minutes to dominate.
 
 :::::::::::::::::::::::::::::::::
 
@@ -573,7 +573,7 @@ Two things the table does not change. `max_run` is per job, so a two-instance jo
 ::::::::::::::::::::::::::::::::::::: keypoints
 
 - **Startup dominates small jobs**: Every SageMaker training job waits a minute or so for an instance (not billed), then spends one to three minutes on container pull and data download (billed) before the script runs; for a job whose script finishes in seconds, that overhead is the whole bill.
-- **Estimate before you launch**: for small models, time a smoke test and scale it by epochs and rows, plus about three minutes of startup; for large ones, 6 FLOPs per parameter per token, divided by a quarter of the GPU's peak. `helpers.estimate_training_cost` does the second; write the number down and compare it to the bill.
+- **Estimate before you launch**: for small models, time a short run and scale it by epochs and rows, plus about three minutes of startup; for large ones, 6 FLOPs per parameter per token, divided by a quarter of the GPU's peak. `helpers.estimate_training_cost` does the second; write the number down and compare it to the bill.
 - **GPU or CPU is a measurement**: the same script on an `ml.g4dn.xlarge` was slower and dearer than on an `ml.m5.large` for this network, because the step is too small to keep a GPU busy; the GPU pays when the model and batch are large.
 - **More than one machine is the last move**: a faster single device first, then more GPUs in one box, then more instances. `instance_count=2` on its own runs the whole job twice and bills twice; data parallelism needs `distribution=` on the estimator and, for your own script, three additions: join the process group, shard the rows, wrap the model in DDP.
 - **Parallelism pays when the step's computation is large next to the gradient exchange**: big model, big batch, fast link. `helpers.estimate_parallel_speedup` gives the speedup and the cost ratio before you rent the devices; on 569 rows of tabular data the measured result was 0.85x the speed at 2.4x the cost.

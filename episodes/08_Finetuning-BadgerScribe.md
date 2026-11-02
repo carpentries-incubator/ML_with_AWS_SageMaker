@@ -1262,7 +1262,7 @@ Using the Step 0 phase table, estimate the cost of the class job on `ml.g6e.xlar
 
 Startup and upload (~6 min, `$0.26` at `$2.61`/h) do not speed up: the container pull and the S3 copies are the same on any instance. For the class job, training drops from ~12 to ~4 minutes and the ~14 minutes of scoring to ~5, so the job is about 15 minutes and ~`$0.65`: a little less than the `$0.75` g5 run. At this size the two are nearly a wash, because the fixed overhead is a third of the faster job.
 
-The homework run on the g5 is 25 + 34 + 6 = 65 minutes, about `$1.50`. On the g6e at 2.5–3x: ~9 minutes of training, ~12 of scoring, the same 6 of overhead, about 27 minutes and ~`$1.20`. The longer the GPU work, the more the faster card saves: the g5 bill grows linearly with pages and passes while the g6e bill grows at about two-thirds of the slope. The g6e only loses on a job so short that the fixed overhead dominates, a 5-minute smoke test, say.
+The homework run on the g5 is 25 + 34 + 6 = 65 minutes, about `$1.50`. On the g6e at 2.5–3x: ~9 minutes of training, ~12 of scoring, the same 6 of overhead, about 27 minutes and ~`$1.20`. The longer the GPU work, the more the faster card saves: the g5 bill grows linearly with pages and passes while the g6e bill grows at about two-thirds of the slope. The g6e only loses on a job so short that the fixed overhead dominates, a 5-minute test run, say.
 
 Compare the cost per run, not the hourly rate: the fixed overhead is a larger share of it on faster hardware. The catch is quotas: the account needs a service quota for `ml.g6e.xlarge` training jobs, and those often default to zero.
 
