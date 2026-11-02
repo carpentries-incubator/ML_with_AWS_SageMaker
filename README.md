@@ -46,7 +46,7 @@ Every compute-heavy exercise comes with a cost estimate, a runtime limit, and a 
 | `notebooks/*.ipynb` | Jupyter notebooks generated from the episodes by `scripts/md_to_ipynb.py`. Regenerated automatically on every push to `main`. Do not edit by hand. |
 | `scripts/` | The Python the episodes import or launch: training, fine-tuning and RAG scripts, cost estimation and launch checks in `helpers.py`, the notebook generator and the data preparation tools. Learners clone this repository onto their notebook instance. There is no separate helper repository. |
 | `learners/` | Setup instructions, glossary, and the instance-selection guide. |
-| `colab/` | A free, standalone version of the fine-tuning episode for Google Colab's T4, written in Markdown and converted to a notebook by the same script. It teaches LoRA with the same data, model and scripts and no AWS account. |
+| `colab/` | A free, standalone notebook version of the fine-tuning episode for Google Colab's T4. It teaches LoRA with the same data, model and scripts and no AWS account. Edit the notebook directly; it is not generated. |
 | `instructors/` | Instructor notes on account preparation, service quotas, cost estimates, data staging, and post-workshop cleanup with aws-nuke. |
 | `data/data.zip` | The Titanic CSVs for the training exercises, and the WattBot metadata and training questions for the RAG exercises. |
 | `config.yaml` | Lesson configuration and episode order. See the [Carpentries Workbench documentation](https://carpentries.github.io/sandpaper-docs/). |
