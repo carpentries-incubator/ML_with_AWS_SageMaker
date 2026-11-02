@@ -1,0 +1,25 @@
+# A small CPU job that downloads the CHURRO-3B weights from Hugging Face once
+# and leaves them in your /staging directory as one tar file, where every
+# fine-tuning job can read them. 7.5 GB is too large for /home and too slow to
+# pull again on every GPU job. Edit NETID below, then
+#     condor_submit fetch_model.sub
+
+NETID = bbadger
+STAGING = osdf:///chtc/staging/$SUBSTR(NETID,0,1)/$(NETID)
+
+container_image = $(STAGING)/churro.sif
+executable = fetch_model.sh
+
+log = fetch_model.log
+output = fetch_model.out
+error = fetch_model.err
+
+# The tar lands in staging, not in /home: 7.5 GB would blow the home quota
+transfer_output_files = churro-3B.tar
+transfer_output_remaps = "churro-3B.tar = $(STAGING)/churro-3B.tar"
+
+request_cpus = 2
+request_memory = 8GB
+request_disk = 20GB
+
+queue

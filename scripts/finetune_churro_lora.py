@@ -83,6 +83,13 @@ def parse_args():
     p.add_argument("--curve_pages", type=int, default=8, help="holdout pages scored at the end of every epoch for the CER curve (0 = skip)")
     p.add_argument("--max_new_tokens", type=int, default=1024)
     p.add_argument("--seed", type=int, default=42)
+    # Precision. SageMaker's A10G/L4/L40S GPUs run bf16, the default. A Colab T4 has no bf16, so
+    # --dtype auto picks fp16 there, and --load_in_4bit 1 (QLoRA) keeps the frozen weights in 4-bit
+    # so the whole run fits a 16 GB card.
+    p.add_argument("--dtype", type=str, default="bf16", choices=["bf16", "fp16", "auto"],
+                   help="compute dtype; auto = bf16 if the GPU supports it, else fp16")
+    p.add_argument("--load_in_4bit", type=int, default=0,
+                   help="1 = load the frozen base weights in 4-bit (QLoRA, needs bitsandbytes); 0 = 16-bit")
     # --- SageMaker paths ---
     p.add_argument("--train_dir", type=str, default=os.environ.get("SM_CHANNEL_TRAIN", "/opt/ml/input/data/train"))
     p.add_argument("--model_dir", type=str, default=os.environ.get("SM_MODEL_DIR", "/opt/ml/model"))
@@ -251,11 +258,25 @@ def main():
     hold_df[["page_id", "doc_id", "category"]].to_csv(os.path.join(args.model_dir, "holdout_page_ids.csv"), index=False)
 
     # --- model ---
-    print(f"loading {args.model_id}")
+    if args.dtype == "auto":
+        args.dtype = "bf16" if torch.cuda.get_device_capability(0)[0] >= 8 else "fp16"   # bf16 hardware is Ampere (8.0) and newer; a T4 is 7.5
+    dtype = torch.bfloat16 if args.dtype == "bf16" else torch.float16
+    print(f"loading {args.model_id} in {args.dtype}" + (", frozen weights in 4-bit" if args.load_in_4bit else ""))
     processor = AutoProcessor.from_pretrained(args.model_id, min_pixels=args.min_pixels, max_pixels=args.max_pixels)
-    model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
-        args.model_id, torch_dtype=torch.bfloat16, attn_implementation="sdpa"
-    ).to("cuda")
+    if args.load_in_4bit:
+        from transformers import BitsAndBytesConfig
+        model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+            args.model_id, attn_implementation="sdpa", device_map={"": 0},
+            quantization_config=BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4",
+                                                   bnb_4bit_use_double_quant=True, bnb_4bit_compute_dtype=dtype),
+        )
+        from peft import prepare_model_for_kbit_training
+        model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=True,
+                                                gradient_checkpointing_kwargs={"use_reentrant": False})
+    else:
+        model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+            args.model_id, torch_dtype=dtype, attn_implementation="sdpa"
+        ).to("cuda")
 
     # LoRA on the language model's attention + MLP projections only. The
     # vision tower stays frozen: its module names contain "visual", which
@@ -270,6 +291,11 @@ def main():
     )
     model = get_peft_model(model, lora)
     model.enable_input_require_grads()  # needed for gradient checkpointing with frozen embeddings
+    if args.dtype == "fp16":
+        # fp16 mixed precision keeps a 32-bit copy of what it trains; the adapter must start in 32-bit
+        for p_ in model.parameters():
+            if p_.requires_grad:
+                p_.data = p_.data.float()
     model.print_trainable_parameters()
 
     # Two checks before anything trains. A LoRA run is what was estimated and
@@ -338,7 +364,8 @@ def main():
         lr_scheduler_type="cosine",
         warmup_ratio=0.03,
         weight_decay=0.0,
-        bf16=True,
+        bf16=(args.dtype == "bf16"),
+        fp16=(args.dtype == "fp16"),
         gradient_checkpointing=True,
         gradient_checkpointing_kwargs={"use_reentrant": False},
         logging_steps=5,
