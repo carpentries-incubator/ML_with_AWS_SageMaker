@@ -445,7 +445,7 @@ def estimate_training_cost(params_billions, examples, tokens_per_example=1, epoc
     their own FLOPs-per-image figure instead.
 
     Only worth running when the FLOPs reach the 1e15 range: below that the bill is startup, not
-    compute, and a timed local smoke test is the better estimate (Training part 2 episode).
+    compute, and a timed short local run is the better estimate (Training part 2 episode).
     """
     return estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs=epochs, method="full",
                                   instance_type=instance_type, runs=runs, from_scratch=True, **kw)
@@ -611,7 +611,7 @@ def estimate_tuning_cost(train_minutes_per_job, price_per_hour, max_jobs, max_pa
     """Estimate a hyperparameter tuning job's bill before launching it, from the parameters the tuner takes.
 
     train_minutes_per_job: the billable minutes one child job spends after startup (training, evaluation, model
-    upload). For a small model, time a smoke test and scale it, as the PyTorch episode did; for a large one,
+    upload). For a small model, time a short run and scale it, as the PyTorch episode did; for a large one,
     estimate_training_cost gives it. The tuner keeps each of its max_parallel_jobs instances between child jobs,
     so the startup (container pull and data download, startup_minutes) is paid once per parallel slot, not once
     per job, and every later child job on a slot bills only its own minutes. The bill is the sum over child jobs;

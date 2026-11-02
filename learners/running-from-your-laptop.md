@@ -47,7 +47,7 @@ pip install "sagemaker>=2.200" boto3 jupyterlab pandas numpy scikit-learn xgboos
 jupyter lab
 ```
 
-`torch` and `xgboost` are only used for the local smoke tests in the training episodes; the jobs bring their own containers. The Bedrock episode needs nothing extra. The fine-tuning and Processing-jobs episodes bring their dependencies in the job's container.
+`torch` and `xgboost` are only used for the short local test runs in the training episodes; the jobs bring their own containers. The Bedrock episode needs nothing extra. The fine-tuning and Processing-jobs episodes bring their dependencies in the job's container.
 
 ## 3. The cells that change
 

@@ -244,6 +244,34 @@ The lesson's rules for a bigger run hold here, in CHTC's terms.
 - **Stay on one GPU unless the model does not fit it.** Almost every fine-tune a research group runs fits one card here: LoRA on anything up to about 27B with the frozen weights in bf16 on an 80 GB card, about 50B on an H200, and up to a 70B with them in 4-bit. One card is also the request that starts soonest. A second GPU does not make a job that fits one card cheaper, since nothing is billed, and a job that asks for two waits for a server with two free. When a model does not fit one card, `request_gpus = 2` or more and the training script's `Trainer` with `fsdp=` shards the weights, gradients and optimizer state across the cards, which the lesson's PyTorch episode explains. Ask for the A100, H100 or H200 servers for that, where the cards share NVLink. On the L40S and RTX PRO 6000 servers they share PCIe and the split loses more. `condor_status` names the server a card is in, and CHTC's GPU table says which cards those are. Test on a slice before a long run.
 - **Transcribing the test pages** uses the lesson's `churro_transcribe_batch.py` with `--adapter_dir` pointing at the unpacked adapter, over the 141 unlabeled test pages. The Colab version of this lesson, in the folder beside this one, has that step written out, and the same arguments work in a second GPU job here. The result is not a Kaggle submission, because the lesson's data is the German-letter part of the competition and a submission needs all 208 pages of its test set, the 141 letters plus 67 pages of surveyors' notes and account books. For that, fine-tune on the competition's own `train.csv` and images, 619 pages, which the script takes unchanged, and transcribe its `test.csv`.
 
+### Exercise: count the page for another model
+
+The lesson's episode and the Colab notebook measure how many tokens a page costs CHURRO, about 1,500, with the model's own processor. That count is what the training time follows, and the method works for any model. Pick another open vision-language model and count what the same page costs there. `llava-hf/llava-1.5-7b-hf` is not gated and its processor downloads in seconds. Before running anything, read its model card and predict two things: how many image tokens a page will take, and whether `max_pixels` will change that. Then load its processor, build the message with its chat template, the image, the instruction and the transcription, and read the `input_ids` length. Run the text without the image to separate the two. The count needs no GPU. Run it inside the container on the access point, from the `badger-scribe` directory with the data unpacked, with `apptainer exec /staging/<n>/<netid>/churro.sif python count_tokens.py`, or on your own machine.
+
+<details><summary>Solution</summary>
+
+```python
+from transformers import AutoProcessor
+import pandas as pd
+import badger_common as bc
+
+row = pd.read_csv("data/train.csv", keep_default_na=False).iloc[0]
+image = bc.load_page_image(f"data/images/{row.page_id}.jpg", bc.DEFAULT_MAX_PIXELS)
+prompt = bc.build_prompt(row.category)
+
+llava = AutoProcessor.from_pretrained("llava-hf/llava-1.5-7b-hf")
+messages = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": prompt}]},
+            {"role": "assistant", "content": [{"type": "text", "text": row.text}]}]
+text = llava.apply_chat_template(messages, tokenize=False)
+n_llava = llava(text=[text], images=[image], return_tensors="pt")["input_ids"].shape[1]
+n_llava_text = len(llava.tokenizer(text.replace("<image>", ""))["input_ids"])
+print(f"LLaVA 1.5: {n_llava} tokens for the page, {n_llava - n_llava_text} of them for the image; CHURRO: about 1,500")
+```
+
+LLaVA 1.5 resizes every image to 336 × 336 pixels and cuts it into 24 × 24 patches of 14 pixels, 576 image tokens however large the page, so `max_pixels` changes nothing for it. The page comes to about 900 tokens, 576 for the image and the rest for the instruction and the German text, which its Llama tokenizer splits into a different number of pieces than Qwen's. Fewer tokens is a cheaper step. It is not a better model for this task. A 336-pixel image of a letter page is too small to read the handwriting, which is why CHURRO spends 1,280 tokens on a megapixel. The token count is cost. Accuracy has to be measured.
+
+</details>
+
 ## 12. Clean up
 
 Jobs end on their own and nothing bills, but staging has a quota and the build machine is shared. When you are done with a project:

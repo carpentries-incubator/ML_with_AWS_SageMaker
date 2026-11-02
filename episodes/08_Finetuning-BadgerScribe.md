@@ -454,7 +454,7 @@ display(Image(filename=page_path, width=500))
 
 ### How many tokens is a page?
 
-The cost estimate in Step 0 used 1,600 tokens per page. That number is tokens, not words: the model never sees words. The image becomes one token per 28 × 28 pixel block once it is resized to `max_pixels`. The 28 is the model's own number. CHURRO's Qwen vision encoder cuts the image into 14 × 14 pixel patches and merges each 2 × 2 group of patches into one token for the language model, so one token covers 28 × 28 pixels, and both numbers are in the processor's config as `patch_size` and `merge_size`. The transcription becomes pieces of words, more pieces for German and for old spellings than for modern English. The count depends on the model, so it has to come from this model's own processor: every model has its own tokenizer vocabulary, and every vision model its own patch size and resizing rules, so the same page is a different number of tokens for a different model. CHURRO's processor is the code the training job will run on every page, so a count from it is the job's count, not an estimate. Its files are a few megabytes, so the 7.5 GB of weights stay in S3.
+The cost estimate in Step 0 used 1,600 tokens per page. That number is tokens, not words: the model never sees words. The image becomes one token per 28 × 28 pixel block once it is resized to `max_pixels`. The 28 is the model's own number. CHURRO's Qwen vision encoder cuts the image into 14 × 14 pixel patches and merges each 2 × 2 group of patches into one token for the language model, so one token covers 28 × 28 pixels, and both numbers are in the processor's config as `patch_size` and `merge_size`. The same method works for any model. Run one example through the model's own processor and read the length of the `input_ids` it returns, which is the count whatever the model does inside. What differs is how the image tokens arise, and the model card and the processor config say which. Qwen's models tile the image at one token per 28 × 28 pixels, so a bigger page is more tokens. Gemma 3 and PaliGemma resize every image to one fixed size and spend 256 tokens on it however large the page. LLaVA spends 576. The transcription becomes pieces of words, more pieces for German and for old spellings than for modern English. The count depends on the model, so it has to come from this model's own processor: every model has its own tokenizer vocabulary, and every vision model its own patch size and resizing rules, so the same page is a different number of tokens for a different model. CHURRO's processor is the code the training job will run on every page, so a count from it is the job's count, not an estimate. Its files are a few megabytes, so the 7.5 GB of weights stay in S3.
 
 ```python
 %pip install -q "transformers>=4.56"   # the processor that turns an image + text into the model's tokens; same version as the training job
@@ -484,7 +484,7 @@ enc = processor(text=[full], images=[image], return_tensors="pt")
 n_total = enc["input_ids"].shape[1]
 n_prompt = processor(text=[processor.apply_chat_template(bc.user_messages(prompt), tokenize=False, add_generation_prompt=True)],
                      images=[image], return_tensors="pt")["input_ids"].shape[1]
-n_image = int((enc["image_grid_thw"].prod(dim=1) // 4).sum())   # 14-px patches merged 2x2: one token per 28x28 block
+n_image = int((enc["image_grid_thw"].prod(dim=1) // 4).sum())   # Qwen-specific breakdown: 14-px patches merged 2x2, one token per 28x28 block. n_total above is the count for any model
 
 print(f"page {row.page_id}: {image.size[0]} x {image.size[1]} px after resizing -> {n_image} image tokens")
 print(f"instruction prompt (same text on every page): {n_prompt - n_image} tokens")
@@ -521,6 +521,31 @@ print(f"average tokens per page: {avg_image:.0f} image + {n_instructions} instru
 ```
 
 That average is the `tokens_per_example` the estimate should have used. Step 0 of this episode ran `helpers.estimate_finetune_cost` with a guess of 1,600 tokens per page; run it again with the measured average and compare:
+
+::::::::::::::::::::::::::::::::::::: challenge
+
+### Count the page for another model
+
+Pick another open vision-language model and count what the same page costs there. `llava-hf/llava-1.5-7b-hf` is not gated and its processor downloads in seconds. Before running anything, read its model card and predict two things: how many image tokens a page will take, and whether `max_pixels` will change that. Then load its processor, build the same message with its chat template, the image, the instruction and the transcription, and read the `input_ids` length. Run the text without the image to separate the two.
+
+:::::::::::::::::::::::: solution
+
+```python
+from transformers import AutoProcessor
+llava = AutoProcessor.from_pretrained("llava-hf/llava-1.5-7b-hf")
+messages = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": prompt}]},
+            {"role": "assistant", "content": [{"type": "text", "text": row.text}]}]
+text = llava.apply_chat_template(messages, tokenize=False)
+n_llava = llava(text=[text], images=[image], return_tensors="pt")["input_ids"].shape[1]
+n_llava_text = len(llava.tokenizer(text.replace("<image>", ""))["input_ids"])
+print(f"LLaVA 1.5: {n_llava} tokens for the page, {n_llava - n_llava_text} of them for the image; CHURRO: {n_total}")
+```
+
+LLaVA 1.5 resizes every image to 336 × 336 pixels and cuts it into 24 × 24 patches of 14 pixels, 576 image tokens however large the page, so `max_pixels` changes nothing for it. The page comes to about 900 tokens, 576 for the image and the rest for the instruction and the German text, which its Llama tokenizer splits into a different number of pieces than Qwen's. Fewer tokens is a cheaper step. It is not a better model for this task. A 336-pixel image of a letter page is too small to read the handwriting, which is why CHURRO spends 1,280 tokens on a megapixel. The token count is cost. Accuracy has to be measured.
+
+:::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::::::::::::::
 
 ```python
 helpers.estimate_finetune_cost(params_billions=3.75, examples=251, tokens_per_example=int(avg_tokens_per_page), epochs=2,
@@ -1237,7 +1262,7 @@ Using the Step 0 phase table, estimate the cost of the class job on `ml.g6e.xlar
 
 Startup and upload (~6 min, `$0.26` at `$2.61`/h) do not speed up: the container pull and the S3 copies are the same on any instance. For the class job, training drops from ~12 to ~4 minutes and the ~14 minutes of scoring to ~5, so the job is about 15 minutes and ~`$0.65`: a little less than the `$0.75` g5 run. At this size the two are nearly a wash, because the fixed overhead is a third of the faster job.
 
-The homework run on the g5 is 25 + 34 + 6 = 65 minutes, about `$1.50`. On the g6e at 2.5–3x: ~9 minutes of training, ~12 of scoring, the same 6 of overhead, about 27 minutes and ~`$1.20`. The longer the GPU work, the more the faster card saves: the g5 bill grows linearly with pages and passes while the g6e bill grows at about two-thirds of the slope. The g6e only loses on a job so short that the fixed overhead dominates, a 5-minute smoke test, say.
+The homework run on the g5 is 25 + 34 + 6 = 65 minutes, about `$1.50`. On the g6e at 2.5–3x: ~9 minutes of training, ~12 of scoring, the same 6 of overhead, about 27 minutes and ~`$1.20`. The longer the GPU work, the more the faster card saves: the g5 bill grows linearly with pages and passes while the g6e bill grows at about two-thirds of the slope. The g6e only loses on a job so short that the fixed overhead dominates, a 5-minute test run, say.
 
 Compare the cost per run, not the hourly rate: the fixed overhead is a larger share of it on faster hardware. The catch is quotas: the account needs a service quota for `ml.g6e.xlarge` training jobs, and those often default to zero.
 
