@@ -104,7 +104,7 @@ This episode runs the fine-tune as a SageMaker job. The same model, data and scr
 | Who can use it | Anyone with an AWS account and a card or credits | Anyone with a Google account | UW-Madison researchers and students, with a faculty sponsor |
 | Cost of this run | About `$0.75` | Free | Free |
 | GPU | A10G, 24 GB, bf16 | T4, 16 GB, no bf16, so the frozen weights go to 4-bit | L40S, A100, H100 or H200, 48 to 141 GB, bf16; NVLink on the A100, H100 and H200 servers |
-| Time for this run | 33 minutes, starts in a minute | About an hour, starts at once if a GPU is free | About 20 minutes, after a queue wait of minutes to hours |
+| Time for this run | 33 minutes, starts in a minute | About an hour and a half, starts at once if a GPU is free | About 20 minutes, after a queue wait of minutes to hours |
 | Largest LoRA fine-tune | No hard limit, only cost. 7B on the lesson's `$1.41`/h card, 70B at `$13`/h | about 7B, in 4-bit | about 50B in bf16 on an H200, a 70B in 4-bit on one 80 GB card, larger across a server's cards |
 | Largest full fine-tune | No hard limit, only cost. 3B at `$7`/h, 70B at `$127`/h | none, a 3B needs 52 GB | a 7B on one H200, a 70B across the H100 or H200 servers' cards |
 | What you learn beyond the fine-tune | Estimating and reading a bill, tags, job guard rails | Fitting a model into a small GPU | Describing a job for a scheduler, containers, staging data |
@@ -961,7 +961,7 @@ print(f"\nGPU spend so far: ${total:.2f}  (plus the CPU notebook at $0.05/h)")
 
 Then compare that number to the estimate in Step 0. If you are not within 50%, find out which line was wrong before launching anything else.
 
-## Homework: a four-pass LoRA run and (optionally) a Kaggle submission
+## Homework: a four-pass LoRA run and (optionally) predictions on the test pages
 
 Everything below is the same pattern at a larger scale: about `$1.50` for the LoRA fine-tune and `$0.80` for inference, roughly two hours of wall-clock time that you do not need to sit through. Launch, go do something else, come back.
 
@@ -1181,20 +1181,22 @@ for label, df in preds.items():
         capture_output=True, text=True).stdout)
 ```
 
-### Submit
+### Write the test-page predictions
 
-The `lora` prediction file already contains every test page. Keep only those rows, in the order `test.csv` lists them. If you want a leaderboard score, this file is what you upload on the competition's **Submit Prediction** page (two submissions per day; this is the only step that needs a Kaggle account, and it is optional).
+The `lora` prediction file already contains every one of the 141 test pages. Keep only those rows, in the order `test.csv` lists them, and you have the fine-tuned model's transcriptions of pages nobody has labeled.
+
+That file is not a Kaggle submission. The lesson's data is the German-letter part of Badger Scribe. The competition's training set has 619 pages in three categories, the 295 letters plus 288 pages of surveyors' field notes and 36 of 1830s account books, and its test set has 208 pages, the 141 letters plus 31 and 36 of the others. A submission needs a row for all 208. To get a leaderboard score, download the competition data from Kaggle, run the same fine-tune on its `train.csv` and images, which the script takes unchanged since its `--categories` default is all of them, run the transcriber over its `test.csv`, and build the file from its `sample_submission.csv`. This step is optional, and only it needs a Kaggle account.
 
 ```python
 %%script false --no-raise-error
 # homework cell, switched off by the line above: delete that line to run it
-submission = test_df[["page_id"]].merge(preds["lora"], on="page_id", how="left").fillna({"text": ""})
-assert len(submission) == len(test_df) and submission.text.str.len().gt(0).all(), "every test page needs a prediction"
+test_preds = test_df[["page_id"]].merge(preds["lora"], on="page_id", how="left").fillna({"text": ""})
+assert len(test_preds) == len(test_df) and test_preds.text.str.len().gt(0).all(), "every test page needs a prediction"
 
-submission_path = os.path.join(local_data_dir, "submission_churro_lora.csv")
-submission.to_csv(submission_path, index=False)
-s3_client.upload_file(submission_path, bucket_name, f"{data_prefix}/submissions/submission_churro_lora.csv")
-print("wrote", submission_path, len(submission), "rows")
+test_preds_path = os.path.join(local_data_dir, "test_predictions_churro_lora.csv")
+test_preds.to_csv(test_preds_path, index=False)
+s3_client.upload_file(test_preds_path, bucket_name, f"{data_prefix}/predictions/test_predictions_churro_lora.csv")
+print("wrote", test_preds_path, len(test_preds), "rows")
 ```
 
 Finally, rerun Step 3 and compare the total with the estimate you wrote down before the four-pass run.
