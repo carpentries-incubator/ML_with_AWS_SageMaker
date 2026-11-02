@@ -79,7 +79,7 @@ In this episode we will:
 A Processing job runs in a container on a separate machine. It cannot see the Python variables or files that exist only in this notebook, and the only code it gets is the one directory named by `source_dir=`, uploaded whole, the same way the training estimator's `source_dir` worked in the fine-tuning episode. The four scripts the jobs need are already on this instance, in the lesson clone, but pointing `source_dir` at the lesson's whole `scripts/` directory would upload every script in the workshop. So each job gets a small folder holding just the files it imports, copied out of the clone. The four files:
 
 - `scripts/embedding_inference.py`: generic embedding script (JSONL with a `text` field in, `embeddings.npy` out).
-- `scripts/hf_embedder.py`: the embedding model wrapper both jobs use, on plain `transformers` (mean pooling and normalisation, thirty lines), so neither job has to install anything for it.
+- `scripts/hf_embedder.py`: the embedding model wrapper both jobs use, on plain `transformers` (mean pooling and normalization, thirty lines), so neither job has to install anything for it.
 - `scripts/wattbot_rag_batch.py`: the WattBot RAG loop as a batch job: loads the inputs, runs the generator, writes `wattbot_solutions.csv`.
 - `scripts/wattbot_rag.py`: the shared pipeline logic (retrieval, prompts, answer parsing, `run_single_qa`, the scorer) that the Bedrock episode imported too. The batch script imports it, so it ships with the job; the notebook imports it for scoring.
 
@@ -225,7 +225,7 @@ print("Tags on every job this episode launches:", make_job_tags("Inference"))   
 
 ### Launch the embedding job
 
-Open `scripts/embedding_inference.py` first; it is under fifty lines. It reads a JSONL file of chunks from the job's input directory, embeds them with whatever Hugging Face model `--model_id` names, through the thirty-line wrapper in `hf_embedder.py`, normalises the vectors so a dot product is a cosine similarity, and saves one `embeddings.npy` to the output directory. Nothing in it knows about WattBot. Inputs in, outputs out, no state.
+Open `scripts/embedding_inference.py` first; it is under fifty lines. It reads a JSONL file of chunks from the job's input directory, embeds them with whatever Hugging Face model `--model_id` names, through the thirty-line wrapper in `hf_embedder.py`, normalizes the vectors so a dot product is a cosine similarity, and saves one `embeddings.npy` to the output directory. Nothing in it knows about WattBot. Inputs in, outputs out, no state.
 
 A `HuggingFaceProcessor` is the Processing-job counterpart of the estimator, with the same role, tags, instance type and container versions, plus a runtime cap. Its `run` call names the script, mounts the inputs, and says where the output goes. Once it is launched, the job appears on the [Processing jobs page](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/processing-jobs) of the SageMaker console (under **Data preparation** in the left menu), the Processing counterpart of the Training jobs page you used earlier.
 

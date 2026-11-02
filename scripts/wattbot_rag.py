@@ -134,7 +134,7 @@ def build_explanation_prompt(
 
 
 # ---------------------------------------------------------------------------
-# Answer normalisation and JSON parsing
+# Answer normalization and JSON parsing
 # ---------------------------------------------------------------------------
 
 _RANGE_RE = re.compile(r"^\s*([-+]?[0-9]+(?:\.[0-9]+)?)\s*(?:-|–|—|to)\s*([-+]?[0-9]+(?:\.[0-9]+)?)\s*$")
@@ -158,7 +158,7 @@ def _format_number(val: float) -> str:
 
 
 def normalize_answer_value(raw_value: Any) -> str:
-    """Normalise answer_value to the WattBot conventions.
+    """Normalize answer_value to the WattBot conventions.
 
     - 'is_blank' for unanswerable / empty values
     - booleans as 1/0
@@ -228,7 +228,7 @@ def split_ref_ids(value: Any) -> List[str]:
 
 
 def parse_answer_json(raw_answer: str, qid: str = "") -> Dict[str, Any]:
-    """Extract and normalise the JSON object the answer call was asked to return.
+    """Extract and normalize the JSON object the answer call was asked to return.
 
     Falls back to an unanswerable record when the model's output is not valid JSON.
     """
@@ -779,7 +779,7 @@ def embed_multimodal(
     whose body says whether the vector is for indexing or for a query and takes one
     input per call, and Titan Multimodal Embeddings G1 (`amazon.titan-embed-image-v1`),
     which takes `inputText` and/or `inputImage`. `purpose` is "index" for what is
-    stored and "query" for the question. Vectors are L2-normalised so cosine similarity
+    stored and "query" for the question. Vectors are L2-normalized so cosine similarity
     is a dot product.
     """
     import base64
@@ -820,7 +820,7 @@ def embed_multimodal(
 
 
 def image_blocks(images: Sequence[Tuple[str, bytes]]) -> List[Dict[str, Any]]:
-    """`converse` content blocks for labelled PNG images: a text label, then the image, per page.
+    """`converse` content blocks for labeled PNG images: a text label, then the image, per page.
 
     `images` is a list of (label, png_bytes); the label (for example "luccioni2024, page 6")
     lets the model cite the paper the page came from.

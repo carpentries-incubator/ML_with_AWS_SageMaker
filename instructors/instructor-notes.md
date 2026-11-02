@@ -130,7 +130,7 @@ FATA[0000] specified account doesn't have an alias. For safety reasons you need
 to specify an account alias. Your production account should contain the term 'prod'
 ```
 
-This is not a credentials problem. aws-nuke connected and then refused, because the account has **no account alias**. It requires one so that a human sees a recognisable account name before anything is deleted, and it refuses any alias containing `prod`.
+This is not a credentials problem. aws-nuke connected and then refused, because the account has **no account alias**. It requires one so that a human sees a recognizable account name before anything is deleted, and it refuses any alias containing `prod`.
 
 Create a non-production alias once. First confirm the account:
 

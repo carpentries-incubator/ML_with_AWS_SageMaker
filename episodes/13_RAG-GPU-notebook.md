@@ -472,7 +472,7 @@ print(f"Generator ({qwen_model_id}) test response: {test_response}")
 
 `call_qwen_chat` has the signature the shared pipeline expects, `generate(system_prompt, user_prompt, max_new_tokens) -> str`, and `embed_query` has the other one. `run_single_qa` in `wattbot_rag.py` makes two calls per question with them:
 
-- The first asks for a JSON object with `answer`, `answer_value` (normalized scalar, range or category), `answer_unit`, `ref_id` (list of document ids), `is_blank` and `supporting_materials`. The retrieved chunks go in the user turn, labelled `[doc_id, page N]` so the model can cite them, along with the expected `answer_unit` from `train_QA.csv` as a hint, so the number comes back in the unit the ground truth uses.
+- The first asks for a JSON object with `answer`, `answer_value` (normalized scalar, range or category), `answer_unit`, `ref_id` (list of document ids), `is_blank` and `supporting_materials`. The retrieved chunks go in the user turn, labeled `[doc_id, page N]` so the model can cite them, along with the expected `answer_unit` from `train_QA.csv` as a hint, so the number comes back in the unit the ground truth uses.
 - The second, made only when the first produced an answer, asks for a short explanation. With `with_evidence_type=True` it also asks the model to name the **main type of evidence** (`text`, `table`, `figure`, or a combination) in the strict format `evidence_type: explanation`, and the code turns that into `[evidence_type] explanation` for the CSV, so the tag is parsed, not trusted.
 
 ```python
@@ -534,7 +534,7 @@ solutions_df.head(20)
 
 ### Compare answers to ground truth
 
-WattBot scores each prediction with the competition's own `Score.py`, 0.75 for `answer_value` (numeric within ±0.1% relative tolerance, categorical match after normalisation, zero if you answer a question the corpus cannot answer), 0.20 for citation F1 against the ground-truth `ref_id` set, and 0.05 for a clean refusal when the answer is `is_blank`. `compute_wattbot_score` from `wattbot_rag.py` calls it for the headline number, adds a per-row score, and prints the worst rows with the model's explanation.
+WattBot scores each prediction with the competition's own `Score.py`, 0.75 for `answer_value` (numeric within ±0.1% relative tolerance, categorical match after normalization, zero if you answer a question the corpus cannot answer), 0.20 for citation F1 against the ground-truth `ref_id` set, and 0.05 for a clean refusal when the answer is `is_blank`. `compute_wattbot_score` from `wattbot_rag.py` calls it for the headline number, adds a per-row score, and prints the worst rows with the model's explanation.
 
 ```python
 results_df = compute_wattbot_score(

@@ -148,7 +148,7 @@ Three things follow:
 
 1. **Each job gets its own tags.** A SageMaker job launched from a tagged notebook does not inherit the notebook's tags. Pass `tags=job_tags` on every estimator, tuner and processor, as the training, tuning and Processing-job episodes do. Vary `Purpose` per job so the bill says what the money went to.
 2. **Bedrock is tagged through a profile, not a call.** `invoke_model` and `converse` have no tags parameter. An application inference profile is a free wrapper around one model that carries tags; usage routed through it is attributed to those tags. One profile per base model, so one for the embedding model and one for the generation model. Bedrock's tag format is lowercase `key`/`value` where SageMaker's is `Key`/`Value`; the tag names are the same.
-3. **Only the three approved keys count.** `Name`, `Project` and `Purpose`, with that spelling and capitalisation; the bill ignores any other key, for the reason the S3 episode gives.
+3. **Only the three approved keys count.** `Name`, `Project` and `Purpose`, with that spelling and capitalization; the bill ignores any other key, for the reason the S3 episode gives.
 
 ## Which to use
 
