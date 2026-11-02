@@ -497,7 +497,7 @@ from wattbot_rag import drop_questions_without_papers
 train_df = drop_questions_without_papers(train_df, {d["doc_id"] for d in chunked_docs})   # as in the other RAG episodes: questions citing papers the corpus lacks are not scored
 
 all_results = []
-max_N = np.inf   # set to e.g. 5 for a smoke test
+max_N = np.inf   # set to e.g. 5 for a short test
 run_start = time.time()
 
 for idx, row in train_df.iterrows():
