@@ -69,7 +69,7 @@ GPU quota increases can take weeks, so request them well ahead of the workshop. 
 
 After the workshop, follow `instructors/instructor-notes.md` to clean up the shared account, including with aws-nuke.
 
-The fine-tuning episode also exists without AWS, in `finetune_extras/`: a [free Colab notebook](https://colab.research.google.com/github/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/finetune_extras/colab/LoRA-finetuning-on-a-free-GPU.ipynb) that runs the same LoRA fine-tune on Colab's T4 with the frozen weights in 4-bit, and a [CHTC guide](finetune_extras/chtc/LoRA-finetuning-on-CHTC.md) that runs it as an HTCondor GPU job on UW-Madison's free research computing, from account request to results.
+The fine-tuning episode also exists without AWS, in `finetune_extras/`: a [free Colab notebook](https://colab.research.google.com/github/qualiaMachine/ML_with_Amazon_SageMaker/blob/main/finetune_extras/colab/LoRA-finetuning-on-a-free-GPU.ipynb) that runs the same LoRA fine-tune on Colab's T4 with the frozen weights in 4-bit, and a [CHTC guide](finetune_extras/chtc/LoRA-finetuning-on-CHTC.md) that runs it as an HTCondor GPU job on UW-Madison's free research computing, from account request to results.
 
 Learners working on their own can follow the [rendered lesson](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/) on their own AWS account. They will need to stage the shared datasets and model files described in the instructor pages.
 
