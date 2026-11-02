@@ -39,8 +39,6 @@ This can be surprisingly effective. [CHURRO](https://github.com/stanford-oval/Ch
 
 ![Three specialist models against much larger general ones, on each task's own benchmark. Sources: [CHURRO, EMNLP 2025](https://arxiv.org/abs/2509.19768); [Goedel-Prover-V2, ICLR 2026](https://arxiv.org/abs/2508.03613); [MedGemma technical report, 2025](https://arxiv.org/abs/2507.05201). Scores as reported by each model's authors.](fig/specialists-vs-large-models.png){alt="Dot plot of benchmark scores for three task-specific models against a much larger general model on the same benchmark; the specialist is ahead in each row by 6.5, 2.2 and 1.2 points"}
 
-Sources: [CHURRO, EMNLP 2025](https://arxiv.org/abs/2509.19768); [Goedel-Prover-V2, ICLR 2026](https://arxiv.org/abs/2508.03613); [MedGemma technical report, 2025](https://arxiv.org/abs/2507.05201). Scores are as reported by each model's authors.
-
 That's the approach we'll explore in this episode. We'll take CHURRO, which already specializes in historical documents, and adapt it further to a collection of handwritten German letters from UW-Madison's Badger Scribe challenge.
 
 ### How fine-tuning works
@@ -55,7 +53,7 @@ We could update every parameter in the model, which is called ***full fine-tunin
 
 The alternative to full fine-tuning is ***parameter-efficient fine-tuning***, or ***PEFT***, a family of methods that leave the pretrained weights frozen and train a small number of new parameters instead. ***Low-rank adaptation***, or ***LoRA***, is the most widely used form of PEFT. It keeps the pretrained weights frozen and adds small sets of trainable parameters to selected layers. Rather than directly changing a large weight matrix, LoRA learns a much smaller adjustment to its output.
 
-![Full fine-tuning updates every entry of a d × d weight matrix; LoRA freezes it and trains two thin matrices of rank r whose product is added to its output](fig/lora.svg){alt="Left: a d by d weight matrix, all trained, 16 bytes per weight. Right: the same matrix frozen in bf16 plus two thin trained matrices B (d by r) and A (r by d); output is W x plus B A x."}
+![Full fine-tuning updates the whole weight matrix; LoRA freezes it and trains two thin matrices beside it](fig/lora.svg){alt="Left: a d by d weight matrix, all trained, 16 bytes per weight. Right: the same matrix frozen in bf16 plus two thin trained matrices B (d by r) and A (r by d); output is W x plus B A x."}
 
 Nothing in the original model is trained. The trained parameters are the new matrices, and they are a small fraction of the model's size, under one percent in this episode. We still run the whole model during training, but we only calculate and store weight updates for the new matrices. That saves enough memory to fine-tune CHURRO on a single GPU with 24 GB of memory; the next section says how much.
 
@@ -67,7 +65,7 @@ This makes LoRA particularly useful for research groups. We can take an existing
 
 The GPU-hours put the three on one scale. Training from scratch is at the top, the full fine-tune that made CHURRO in the middle, and this episode's LoRA run at the bottom.
 
-![GPU-hours on a log scale for three ways to get a 3B model that does a task: training Llama 3.2 3B from scratch, 460,000 GPU-hours, about a thousand H100s for three weeks and some 300 MWh; the full fine-tune that made CHURRO-3B, 800 GPU-hours, eight H100s for four days and about 500 kWh; this episode's LoRA run, half a GPU-hour, one A10G for 32 minutes and about 0.2 kWh](fig/pretrain-finetune-lora.svg){alt="Horizontal bar chart on a logarithmic GPU-hours axis from 0.1 to 10 million. Training from scratch, every weight from random: 460,000 GPU-hours. Full fine-tuning, every weight from a pretrained model: 800 GPU-hours. LoRA fine-tuning, an adapter under one percent of the weights: 0.5 GPU-hours. Each bar is labelled with the GPUs, the time and the electricity. Energy is GPU electricity at the rated draw, a lower bound."}
+![GPU-hours, on a log scale, to train a 3B model from scratch, to fully fine-tune it, and to LoRA fine-tune it](fig/pretrain-finetune-lora.svg){alt="Horizontal bar chart on a logarithmic GPU-hours axis from 0.1 to 10 million. Training from scratch, every weight from random: 460,000 GPU-hours. Full fine-tuning, every weight from a pretrained model: 800 GPU-hours. LoRA fine-tuning, an adapter under one percent of the weights: 0.5 GPU-hours. Each bar is labelled with the GPUs, the time and the electricity. Energy is GPU electricity at the rated draw, a lower bound."}
 
 Why do the three differ so much? Training from scratch and full fine-tuning do the same work per step. Every parameter is updated, which means keeping four things in GPU memory for each one, the weight itself, its gradient, a 32-bit copy of the weight for the update to land in, and the optimizer's two running averages. That is 16 bytes per parameter, so a 3B model needs about 48 GB before activations and other overhead, which means several GPUs. What separates those two is how much data they go through, trillions of tokens against a hundred thousand pages. LoRA cuts the work in a different place. It updates only the adapter and leaves the model's own weights frozen, and a frozen weight costs 2 bytes, not 16, with nothing else to store for it. That is why the same model fits one GPU, and for our task it is all we need.
 
@@ -112,7 +110,7 @@ Before launching a fine-tune, write down what it should cost. If the bill comes 
 
 Every parameter in the model takes up GPU memory, and how much depends on what you are doing with it. Running the model needs only the weight. A full fine-tune needs the weight, its gradient, a 32-bit copy of the weight, and the two running averages Adam keeps for it, the four numbers per weight from the *How fine-tuning works* section above. A LoRA fine-tune keeps the weights frozen in 16-bit and adds a small adapter that carries its own gradients and optimizer state.
 
-![Bars of GPU memory per parameter: 1 byte for FP8 inference, 2 for bf16 inference, about 2.5 for a LoRA fine-tune, 16 for a full fine-tune made of the weight, its gradient, a 32-bit copy of the weight and the two averages Adam keeps](fig/memory-per-parameter.svg){alt="Stacked bar chart of bytes per parameter for inference versus LoRA versus full fine-tuning"}
+![GPU memory per parameter: inference, a LoRA fine-tune, and a full fine-tune](fig/memory-per-parameter.svg){alt="Stacked bar chart of bytes per parameter for inference versus LoRA versus full fine-tuning"}
 
 | What you are doing with the model | Bytes per parameter | What has to be in memory for each parameter |
 |---|---|---|
@@ -139,7 +137,7 @@ How long a job runs is how much work it does divided by how fast the GPU does it
 
 The work per token is easy to count, because every parameter does the same small amount of it. Running the model forward is one multiply and one add per parameter, 2 FLOPs. Passing the error back through the model to find what each parameter should have done is another 2. Updating the parameters is another 2. A full fine-tune does all three, 6 FLOPs per parameter per token. LoRA leaves the base weights alone, so it skips the update and does 4.
 
-![Three matrix products per token: forward (2 FLOPs per weight), error passed back to the inputs (2), and the weight update (2); full fine-tuning does all three for 6, LoRA skips the update for 4](fig/flops-per-token.svg){alt="A layer W with an input arrow, an output arrow, an error arrow going back and an update arrow into W, each labelled 2 FLOPs; a box totals 6 for full fine-tuning and 4 for LoRA"}
+![The three matrix products per token; a full fine-tune does all three, LoRA skips the weight update](fig/flops-per-token.svg){alt="A layer W with an input arrow, an output arrow, an error arrow going back and an update arrow into W, each labelled 2 FLOPs; a box totals 6 for full fine-tuning and 4 for LoRA"}
 
 ```text
 tokens      = examples × tokens per example × passes over the data
@@ -246,7 +244,7 @@ With the two rules, any run can be priced before it exists. The table does that 
 
 The class row is measured. The homework and team rows take that run's seconds per page and apply them to more passes and more pages. The 7B row is worked out in the challenge below, the 70B rows are order-of-magnitude figures, and the CHURRO row comes from a published review of the paper.
 
-![Cost per run on a log scale, from about a dollar for this episode's LoRA run to twelve thousand dollars for a 70B full fine-tune; a ten-run sweep shifts every bar up by one decade](fig/finetune-cost-ladder.svg){alt="Horizontal bar chart on a logarithmic dollar axis: this episode 0.75, homework 1.50, the full Badger Scribe train set 1.20, 7B full fine-tune 140, 70B LoRA 600, CHURRO-3B 6,300, 70B full fine-tune 12,000, with the ten-run sweep shown as a lighter extension of each bar"}
+![Cost per run, on a log scale, from this episode's LoRA run to a 70B full fine-tune; the lighter extension is a ten-run sweep](fig/finetune-cost-ladder.svg){alt="Horizontal bar chart on a logarithmic dollar axis: this episode 0.75, homework 1.50, the full Badger Scribe train set 1.20, 7B full fine-tune 140, 70B LoRA 600, CHURRO-3B 6,300, 70B full fine-tune 12,000, with the ten-run sweep shown as a lighter extension of each bar"}
 
 The CHURRO bar is the model you are about to fine-tune. Stanford spent on the order of 800 H100-hours making it, and you get the benefit for a dollar because you are adapting it, not retraining it. Starting from a model that already knows most of your task is the biggest saving available, and it is decided before any GPU is involved. The sweep extension is the one that surprises research groups. A first run is rarely the last, so a `$140` full fine-tune is usually a `$700` to `$1,400` project.
 

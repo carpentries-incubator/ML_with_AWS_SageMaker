@@ -42,7 +42,7 @@ The generator is **Qwen3-8B**, an 8-billion-parameter open-weight model (Apache 
 
 Open-weight models that fit one GPU are now close to the frontier on the kinds of tasks research code runs, on data that never leaves your account. The newest of this family, Qwen3.8-27B, fits one GPU and lands within a few points of a frontier commercial model:
 
-![Qwen3.8-27B against Claude Opus 4.8 on three benchmarks: 73.0 vs 74.6 on Terminal-Bench 2.1, 89.2 vs 93.6 on GPQA Diamond, 83.7 vs 80.5 on CharXiv reasoning](fig/qwen27b-vs-opus.png){alt="Paired horizontal bars comparing a 27B open-weight model on one GPU with a frontier commercial model; within a few points on agent tasks and science questions, ahead on chart reasoning"}
+![Qwen3.8-27B against Claude Opus 4.8 on three benchmarks, as reported by each model's authors](fig/qwen27b-vs-opus.png){alt="Paired horizontal bars comparing a 27B open-weight model on one GPU with a frontier commercial model; within a few points on agent tasks and science questions, ahead on chart reasoning"}
 
 Qwen figures are from the Qwen3.8-27B model card and were not reproduced here; Opus 4.8 figures are from its published evaluations.
 
