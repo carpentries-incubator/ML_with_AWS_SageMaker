@@ -282,7 +282,7 @@ Take the model you expect to train for your own project or challenge, or the big
 3. **Epochs.** Small data usually takes three to five passes, large corpora one to three; the number is a budget, not a given.
 4. **Instance.** From the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page, or let the helper pick the cheapest that fits.
 
-If the FLOPs come out below 1e15, use the smoke-test method instead and say what you would measure. Write the estimate down with the `max_run` you would set, and keep it: the first real bill goes next to it.
+If the FLOPs come out below 1e15, use the smoke-test method instead and say what you would measure. Write the estimate down with the `max_run` you would set, and keep it: the first bill goes next to it.
 
 :::::::::::::::::::::::: solution
 
