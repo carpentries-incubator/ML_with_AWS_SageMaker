@@ -30,6 +30,7 @@ instead of pulling from Hugging Face.
 
 import argparse
 import json
+import shutil
 import os
 import random
 import time
@@ -321,27 +322,46 @@ def main():
 
     # --- score the base model on the holdout sample BEFORE training ---
     # (the adapter is freshly initialized to zero, so this is the base model)
+    # The score and the per-page file are kept beside the checkpoints as well as in
+    # model_dir, because a resumed run on a new machine (Colab, CHTC, a SageMaker
+    # restart) has the checkpoints and an empty model_dir. Rescoring on resume is
+    # safe when either is missing: the adapter has not been loaded yet, so the model
+    # is still the base model.
     eval_before = None
     before_json = os.path.join(ckpt_dir, "eval_before.json")
-    if last_ckpt and os.path.exists(before_json):
+    before_csv, before_csv_ckpt = os.path.join(args.model_dir, "eval_before.csv"), os.path.join(ckpt_dir, "eval_before.csv")
+    if last_ckpt and os.path.exists(before_json) and os.path.exists(before_csv_ckpt):
         with open(before_json) as f:          # resumed run: the base-model score was already computed
             eval_before = json.load(f)
+        shutil.copyfile(before_csv_ckpt, before_csv)
+        print(f"[eval before] reused from {ckpt_dir}")
     elif args.eval_before:
+        if last_ckpt:
+            print("[eval before] checkpoint found but no saved base-model score beside it; scoring the base model again")
         eval_before = evaluate(model, processor, hold_df, images_dir, doc_ctx, args.max_pixels,
                                args.eval_pages, args.max_new_tokens, args.seed, "before", args.model_dir)
         with open(before_json, "w") as f:
             json.dump(eval_before, f)
+        shutil.copyfile(before_csv, before_csv_ckpt)
 
     # --- the curve: score a few holdout pages at the end of every epoch ---
     # The first curve_pages of the same seeded shuffle evaluate() uses, so they are a
     # subset of the before/after sample and every point is on the same pages.
+    # The points so far are kept beside the checkpoints too, so a resumed run keeps
+    # the epochs an earlier run scored.
     curve = []
-    if eval_before is not None and args.curve_pages > 0:
+    curve_json = os.path.join(ckpt_dir, "curve.json")
+    if last_ckpt and os.path.exists(curve_json):
+        with open(curve_json) as f:
+            curve = json.load(f)
+    elif eval_before is not None and args.curve_pages > 0:
         ids = sorted(hold_df["page_id"]); random.Random(args.seed).shuffle(ids)
-        sub = pd.read_csv(os.path.join(args.model_dir, "eval_before.csv"), keep_default_na=False)
+        sub = pd.read_csv(before_csv, keep_default_na=False)
         sub = sub[sub.page_id.isin(ids[:args.curve_pages])]
         if len(sub):
             curve.append({"epoch": 0, "macro_cer": round(macro_cer(sub)[0], 4)})
+            with open(curve_json, "w") as f:
+                json.dump(curve, f)
 
     class CurveCallback(TrainerCallback):
         def on_epoch_end(self, targs_, state, control, model=None, **kw):
@@ -352,6 +372,8 @@ def main():
                          args.curve_pages, args.max_new_tokens, args.seed, f"epoch{ep}", args.model_dir)
             if r:
                 curve.append({"epoch": ep, "macro_cer": r["macro_cer"]})
+                with open(curve_json, "w") as f:
+                    json.dump(curve, f)
 
     # --- train ---
     # transformers 5 dropped warmup_ratio and reads a warmup_steps value below 1 as a ratio instead
