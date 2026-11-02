@@ -27,7 +27,7 @@ A **SageMaker notebook instance** is a virtual machine that AWS runs for you wit
 ### Using the notebook as a controller
 The notebook instance is a *controller*: a small, cheap machine where you write code and use the **SageMaker Python SDK** to launch larger instances for model training, batch processing, and hyperparameter tuning. Those instances start, run your script, write their results to S3, and shut themselves down, so you pay for powerful hardware only for the minutes a job needs it.
 
-![The notebook instance launches SageMaker jobs that read from and write to S3 and end on their own, and calls Bedrock as an API](fig/aws-ml-ecosystem.svg){alt="Diagram from the overview episode: S3 buckets at the top, the notebook instance on the left launching SageMaker training, tuning and processing jobs, and Bedrock on the right"}
+![*The notebook instance launches jobs and calls Bedrock; S3 holds the data and the outputs*](fig/aws-ml-ecosystem.svg){alt="Diagram from the overview episode: S3 buckets at the top, the notebook instance on the left launching SageMaker training, tuning and processing jobs, and Bedrock on the right"}
 
 The notebook is the box on the left of the diagram from the overview episode. Everything else in the picture is launched or called from it, and every later episode uses this same instance.
 
@@ -68,7 +68,7 @@ We'll follow these steps to create our first "SageMaker notebook instance".
 
   Same spelling as on the bucket. The `Project` and `Purpose` lists from the S3 episode apply to every job you launch from this instance, and a value off them is refused at the first launch; the training episode shows what that looks like and how to check first.
 
-  ![Tag Setup Example](fig/notebook_tags.PNG){alt="Screenshot showing the three required tags on a SageMaker notebook instance"}
+  ![*Tag Setup Example*](fig/notebook_tags.PNG){alt="Screenshot showing the three required tags on a SageMaker notebook instance"}
 
 - Click **Create notebook instance**.
 

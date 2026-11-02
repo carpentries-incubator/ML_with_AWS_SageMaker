@@ -84,9 +84,7 @@ helpers.check_launch(job_tags)   # the account's rules, checked here first: AWS'
 print(f"Name: {name}, Project: {project}, Purpose: {purpose}")
 ```
 
-Next, we'll configure the baseline estimator that we plan to do hyperparameter search on.
-
-Every price in this episode is from the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page, us-east-1 on-demand; the tuning job's cost is that rate times the sum of the child jobs' billable minutes.
+Next, we'll configure the baseline estimator that we plan to do hyperparameter search on. Every price in this episode is from the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page, us-east-1 on-demand; the tuning job's cost is that rate times the sum of the child jobs' billable minutes.
 
 ```python
 import sagemaker
@@ -216,9 +214,7 @@ helpers.estimate_tuning_cost(
 );
 ```
 
-One child job, about 3 billable minutes, about `$0.01`.
-
-If the launch is refused with an `AccessDeniedException` ending in `explicit deny`, the account's checks are the cause: a missing tag, an instance type outside the lesson's list, or a resource kind the lesson never creates; the first training episode's callout *If the launch is refused* says what to look at.
+One child job, about 3 billable minutes, about `$0.01`. If the launch is refused with an `AccessDeniedException` ending in `explicit deny`, the account's checks are the cause: a missing tag, an instance type outside the lesson's list, or a resource kind the lesson never creates; the first training episode's callout *If the launch is refused* says what to look at.
 
 ```python
 # Define the input paths
@@ -266,9 +262,7 @@ tuning_cost_report(tuner, price_per_hour)
 ```
 
 ### Scaling up our approach
-If all goes well, we can scale up the experiment with the below code. In this configuration, we're scaling up the search by allowing SageMaker to test more hyperparameter configurations (`max_jobs=10`) while setting `max_parallel_jobs=2` to manage parallelization efficiently. With two jobs running at once, SageMaker will be able to explore potential improvements more quickly than in a fully sequential setup, while still dynamically selecting promising values as it learns from completed jobs. SageMaker's Bayesian optimization uses the completed trials to choose the next ones, so it spends fewer jobs on unpromising combinations. **Setting `max_parallel_jobs` higher than 2-4 reduces tuning efficiency, as SageMaker's ability to learn from completed jobs decreases when too many jobs run simultaneously.**
-
-With this approach, SageMaker is better able to refine configurations without overloading resources or risking inefficient exploration, making `max_parallel_jobs=2` a solid default for most use cases.
+If all goes well, we can scale up the experiment with the below code. In this configuration, we're scaling up the search by allowing SageMaker to test more hyperparameter configurations (`max_jobs=10`) while setting `max_parallel_jobs=2` to manage parallelization efficiently. With two jobs running at once, SageMaker will be able to explore potential improvements more quickly than in a fully sequential setup, while still dynamically selecting promising values as it learns from completed jobs. SageMaker's Bayesian optimization uses the completed trials to choose the next ones, so it spends fewer jobs on unpromising combinations. **Setting `max_parallel_jobs` higher than 2-4 reduces tuning efficiency, as SageMaker's ability to learn from completed jobs decreases when too many jobs run simultaneously.** Two at a time is a good default.
 
 Estimate first. The same call with the new limits:
 

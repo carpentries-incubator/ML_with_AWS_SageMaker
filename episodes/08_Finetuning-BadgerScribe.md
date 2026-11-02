@@ -37,9 +37,7 @@ Fine-tuning offers another approach. Show the model examples of the documents al
 
 This can be surprisingly effective. [CHURRO](https://github.com/stanford-oval/Churro) is a 3-billion-parameter vision-language model developed for historical text recognition. Its researchers fine-tuned an existing Qwen model on roughly 100,000 historical document pages and reported better transcription accuracy than Gemini 2.5 Pro at substantially lower inference cost ([paper](https://arxiv.org/abs/2509.19768)). Rather than using an increasingly large general-purpose model, they trained a smaller one to become particularly good at the task they cared about. The same pattern shows up in other fields:
 
-![Three research tasks where a small specialist model scores above a much larger general one: CHURRO (3B) over Gemini 2.5 Pro on historical handwriting, Goedel-Prover-V2 (8B) over DeepSeek-Prover-V2 on formal proofs, MedGemma (27B) over GPT-4o on medical questions](fig/specialists-vs-large-models.png){alt="Dot plot of benchmark scores for three task-specific models against a much larger general model on the same benchmark; the specialist is ahead in each row by 6.5, 2.2 and 1.2 points"}
-
-Sources: [CHURRO, EMNLP 2025](https://arxiv.org/abs/2509.19768); [Goedel-Prover-V2, ICLR 2026](https://arxiv.org/abs/2508.03613); [MedGemma technical report, 2025](https://arxiv.org/abs/2507.05201). Scores are as reported by each model's authors.
+![*Three specialist models against much larger general ones, on each task's own benchmark. Sources: [CHURRO, EMNLP 2025](https://arxiv.org/abs/2509.19768); [Goedel-Prover-V2, ICLR 2026](https://arxiv.org/abs/2508.03613); [MedGemma technical report, 2025](https://arxiv.org/abs/2507.05201). Scores as reported by each model's authors.*](fig/specialists-vs-large-models.png){alt="Dot plot of benchmark scores for three task-specific models against a much larger general model on the same benchmark; the specialist is ahead in each row by 6.5, 2.2 and 1.2 points"}
 
 That's the approach we'll explore in this episode. We'll take CHURRO, which already specializes in historical documents, and adapt it further to a collection of handwritten German letters from UW-Madison's Badger Scribe challenge.
 
@@ -55,7 +53,7 @@ We could update every parameter in the model, which is called ***full fine-tunin
 
 The alternative to full fine-tuning is ***parameter-efficient fine-tuning***, or ***PEFT***, a family of methods that leave the pretrained weights frozen and train a small number of new parameters instead. ***Low-rank adaptation***, or ***LoRA***, is the most widely used form of PEFT. It keeps the pretrained weights frozen and adds small sets of trainable parameters to selected layers. Rather than directly changing a large weight matrix, LoRA learns a much smaller adjustment to its output.
 
-![Full fine-tuning updates every entry of a d × d weight matrix; LoRA freezes it and trains two thin matrices of rank r whose product is added to its output](fig/lora.svg){alt="Left: a d by d weight matrix, all trained, 16 bytes per weight. Right: the same matrix frozen in bf16 plus two thin trained matrices B (d by r) and A (r by d); output is W x plus B A x."}
+![*Full fine-tuning updates the whole weight matrix; LoRA freezes it and trains two thin matrices beside it*](fig/lora.svg){alt="Left: a d by d weight matrix, all trained, 16 bytes per weight. Right: the same matrix frozen in bf16 plus two thin trained matrices B (d by r) and A (r by d); output is W x plus B A x."}
 
 Nothing in the original model is trained. The trained parameters are the new matrices, and they are a small fraction of the model's size, under one percent in this episode. We still run the whole model during training, but we only calculate and store weight updates for the new matrices. That saves enough memory to fine-tune CHURRO on a single GPU with 24 GB of memory; the next section says how much.
 
@@ -67,7 +65,7 @@ This makes LoRA particularly useful for research groups. We can take an existing
 
 The GPU-hours put the three on one scale. Training from scratch is at the top, the full fine-tune that made CHURRO in the middle, and this episode's LoRA run at the bottom.
 
-![GPU-hours on a log scale for three ways to get a 3B model that does a task: training Llama 3.2 3B from scratch, 460,000 GPU-hours, about a thousand H100s for three weeks and some 300 MWh; the full fine-tune that made CHURRO-3B, 800 GPU-hours, eight H100s for four days and about 500 kWh; this episode's LoRA run, half a GPU-hour, one A10G for 32 minutes and about 0.2 kWh](fig/pretrain-finetune-lora.svg){alt="Horizontal bar chart on a logarithmic GPU-hours axis from 0.1 to 10 million. Training from scratch, every weight from random: 460,000 GPU-hours. Full fine-tuning, every weight from a pretrained model: 800 GPU-hours. LoRA fine-tuning, an adapter under one percent of the weights: 0.5 GPU-hours. Each bar is labelled with the GPUs, the time and the electricity. Energy is GPU electricity at the rated draw, a lower bound."}
+![*GPU-hours, on a log scale, to train a 3B model from scratch, to fully fine-tune it, and to LoRA fine-tune it*](fig/pretrain-finetune-lora.svg){alt="Horizontal bar chart on a logarithmic GPU-hours axis from 0.1 to 10 million. Training from scratch, every weight from random: 460,000 GPU-hours. Full fine-tuning, every weight from a pretrained model: 800 GPU-hours. LoRA fine-tuning, an adapter under one percent of the weights: 0.5 GPU-hours. Each bar is labelled with the GPUs, the time and the electricity. Energy is GPU electricity at the rated draw, a lower bound."}
 
 Why do the three differ so much? Training from scratch and full fine-tuning do the same work per step. Every parameter is updated, which means keeping four things in GPU memory for each one, the weight itself, its gradient, a 32-bit copy of the weight for the update to land in, and the optimizer's two running averages. That is 16 bytes per parameter, so a 3B model needs about 48 GB before activations and other overhead, which means several GPUs. What separates those two is how much data they go through, trillions of tokens against a hundred thousand pages. LoRA cuts the work in a different place. It updates only the adapter and leaves the model's own weights frozen, and a frozen weight costs 2 bytes, not 16, with nothing else to store for it. That is why the same model fits one GPU, and for our task it is all we need.
 
@@ -92,9 +90,7 @@ We'll measure that using ***character error rate (CER)***, the same metric used 
 
 We'll run the training on AWS SageMaker, as a managed training job, with no interactive GPU notebook left running. SageMaker will provision the GPU, run our training script, save the model adapter and evaluation results, and shut down the instance when the job finishes.
 
-The entire run, including evaluation before and after fine-tuning, takes about 33 minutes on an `ml.g5.xlarge` instance and costs approximately `$0.75`, based on our measured October 2026 run.
-
-That small cost is deliberate. Fine-tuning can become expensive when we move to larger models, longer datasets, or repeated experiments, so we'll learn how to estimate memory and runtime requirements before launching the job. We'll also set a time limit to prevent an unexpected training run from continuing indefinitely.
+The entire run, including evaluation before and after fine-tuning, takes about 33 minutes on an `ml.g5.xlarge` instance and costs approximately `$0.75`, based on our measured October 2026 run. That small cost is deliberate. Fine-tuning can become expensive when we move to larger models, longer datasets, or repeated experiments, so we'll learn how to estimate memory and runtime requirements before launching the job. We'll also set a time limit to prevent an unexpected training run from continuing indefinitely.
 
 By the end, we'll have fine-tuned a vision-language model, compared its predictions against the original model, and checked how closely the actual bill matched our estimate.
 
@@ -114,7 +110,7 @@ Before launching a fine-tune, write down what it should cost. If the bill comes 
 
 Every parameter in the model takes up GPU memory, and how much depends on what you are doing with it. Running the model needs only the weight. A full fine-tune needs the weight, its gradient, a 32-bit copy of the weight, and the two running averages Adam keeps for it, the four numbers per weight from the *How fine-tuning works* section above. A LoRA fine-tune keeps the weights frozen in 16-bit and adds a small adapter that carries its own gradients and optimizer state.
 
-![Bars of GPU memory per parameter: 1 byte for FP8 inference, 2 for bf16 inference, about 2.5 for a LoRA fine-tune, 16 for a full fine-tune made of the weight, its gradient, a 32-bit copy of the weight and the two averages Adam keeps](fig/memory-per-parameter.svg){alt="Stacked bar chart of bytes per parameter for inference versus LoRA versus full fine-tuning"}
+![*GPU memory per parameter: inference, a LoRA fine-tune, and a full fine-tune*](fig/memory-per-parameter.svg){alt="Stacked bar chart of bytes per parameter for inference versus LoRA versus full fine-tuning"}
 
 | What you are doing with the model | Bytes per parameter | What has to be in memory for each parameter |
 |---|---|---|
@@ -124,14 +120,14 @@ Every parameter in the model takes up GPU memory, and how much depends on what y
 | LoRA fine-tune | ~2.5 | the frozen 16-bit weight, plus a share of the adapter with its gradients and optimizer state |
 | Full fine-tune, mixed precision | 16 | the 16-bit weight (2), its gradient (2), a 32-bit copy of the weight (4), Adam's two running averages (8) |
 
-Multiply the bytes per parameter by the parameter count, add about 4 GB for activations (more for long sequences or big batches), and you have the GPU memory the job needs. The second table does that for four model sizes and names the smallest SageMaker box that holds each one:
+Multiply the bytes per parameter by the parameter count, add about 4 GB for activations (more for long sequences or big batches), and you have the GPU memory the job needs. The second table does that for four model sizes and names the smallest SageMaker box that holds each one. The inference column uses the precision people run each size at. Models up to about 8B are served in bf16, which is how the Processing Jobs episode runs Qwen3-8B. Above that the weights are quantized, FP8 for the 27B as the GPU-notebook episode does, 4-bit for a 70B on one card. Training cannot be quantized that way, so the two fine-tuning columns are 16-bit throughout:
 
-| Model | Inference, bf16 | LoRA fine-tune | Full fine-tune |
+| Model | Inference, as run in practice | LoRA fine-tune | Full fine-tune |
 |---|---|---|---|
-| 3B | 6 GB: `ml.g5.xlarge`, 1 × 24 GB, `$1.41`/h | 12 GB: `ml.g5.xlarge` | 52 GB: `ml.g5.12xlarge`, 4 × 24 GB, `$7.09`/h |
-| 7B | 14 GB: `ml.g5.xlarge` | 22 GB: `ml.g5.xlarge`, with nothing to spare | 116 GB: `ml.g6e.12xlarge`, 4 × 48 GB, `$13.12`/h |
-| 27B | 54 GB: `ml.g5.12xlarge`, 4 × 24 GB, `$7.09`/h | 72 GB: `ml.g5.12xlarge` | 436 GB: `ml.p5.48xlarge`, 8 × 80 GB, `$63.30`/h |
-| 70B | 140 GB: `ml.g6e.12xlarge`, 4 × 48 GB, `$13.12`/h | 179 GB: `ml.g6e.12xlarge` | 1,124 GB: two `ml.p5.48xlarge`, `$127`/h |
+| 3B | bf16, 6 GB: `ml.g5.xlarge`, 1 × 24 GB, `$1.41`/h | 12 GB: `ml.g5.xlarge` | 52 GB: `ml.g5.12xlarge`, 4 × 24 GB, `$7.09`/h |
+| 7B | bf16, 14 GB: `ml.g5.xlarge` | 22 GB: `ml.g5.xlarge`, with nothing to spare | 116 GB: `ml.g6e.12xlarge`, 4 × 48 GB, `$13.12`/h |
+| 27B | FP8, 27 GB: `ml.g6e.xlarge`, 1 × 48 GB, `$2.61`/h | 72 GB: `ml.g5.12xlarge`, 4 × 24 GB, `$7.09`/h | 436 GB: `ml.p5.48xlarge`, 8 × 80 GB, `$63.30`/h |
+| 70B | 4-bit, 35 GB: `ml.g6e.xlarge`; FP8, 70 GB: `ml.g6e.12xlarge`, 4 × 48 GB, `$13.12`/h | 179 GB: `ml.g6e.12xlarge` | 1,124 GB: two `ml.p5.48xlarge`, `$127`/h |
 
 A 7B model that runs on one 24 GB GPU needs 116 GB to fully fine-tune, a four-GPU box at `$13` an hour with the model sharded across the GPUs. Training cannot run on quantized weights the way inference can, because each step's update is too small for 8-bit or 4-bit numbers to hold. LoRA avoids that jump by freezing the model and training a few million adapter parameters, which is why this episode fits on one 24 GB card.
 
@@ -141,7 +137,7 @@ How long a job runs is how much work it does divided by how fast the GPU does it
 
 The work per token is easy to count, because every parameter does the same small amount of it. Running the model forward is one multiply and one add per parameter, 2 FLOPs. Passing the error back through the model to find what each parameter should have done is another 2. Updating the parameters is another 2. A full fine-tune does all three, 6 FLOPs per parameter per token. LoRA leaves the base weights alone, so it skips the update and does 4.
 
-![Three matrix products per token: forward (2 FLOPs per weight), error passed back to the inputs (2), and the weight update (2); full fine-tuning does all three for 6, LoRA skips the update for 4](fig/flops-per-token.svg){alt="A layer W with an input arrow, an output arrow, an error arrow going back and an update arrow into W, each labelled 2 FLOPs; a box totals 6 for full fine-tuning and 4 for LoRA"}
+![*The three matrix products per token; a full fine-tune does all three, LoRA skips the weight update*](fig/flops-per-token.svg){alt="A layer W with an input arrow, an output arrow, an error arrow going back and an update arrow into W, each labelled 2 FLOPs; a box totals 6 for full fine-tuning and 4 for LoRA"}
 
 ```text
 tokens      = examples × tokens per example × passes over the data
@@ -248,7 +244,7 @@ With the two rules, any run can be priced before it exists. The table does that 
 
 The class row is measured. The homework and team rows take that run's seconds per page and apply them to more passes and more pages. The 7B row is worked out in the challenge below, the 70B rows are order-of-magnitude figures, and the CHURRO row comes from a published review of the paper.
 
-![Cost per run on a log scale, from about a dollar for this episode's LoRA run to twelve thousand dollars for a 70B full fine-tune; a ten-run sweep shifts every bar up by one decade](fig/finetune-cost-ladder.svg){alt="Horizontal bar chart on a logarithmic dollar axis: this episode 0.75, homework 1.50, the full Badger Scribe train set 1.20, 7B full fine-tune 140, 70B LoRA 600, CHURRO-3B 6,300, 70B full fine-tune 12,000, with the ten-run sweep shown as a lighter extension of each bar"}
+![*Cost per run, on a log scale, from this episode's LoRA run to a 70B full fine-tune; the lighter extension is a ten-run sweep*](fig/finetune-cost-ladder.svg){alt="Horizontal bar chart on a logarithmic dollar axis: this episode 0.75, homework 1.50, the full Badger Scribe train set 1.20, 7B full fine-tune 140, 70B LoRA 600, CHURRO-3B 6,300, 70B full fine-tune 12,000, with the ten-run sweep shown as a lighter extension of each bar"}
 
 The CHURRO bar is the model you are about to fine-tune. Stanford spent on the order of 800 H100-hours making it, and you get the benefit for a dollar because you are adapting it, not retraining it. Starting from a model that already knows most of your task is the biggest saving available, and it is decided before any GPU is involved. The sweep extension is the one that surprises research groups. A first run is rarely the last, so a `$140` full fine-tune is usually a `$700` to `$1,400` project.
 
@@ -306,7 +302,7 @@ The whole episode, with the controller notebook and the exercise:
 | Exercise 1: same job at 2 megapixels | `ml.g5.xlarge` | ~60 min | `$1.40` |
 | **Total** | | | **~`$2.30`** |
 
-Compare the classic mistake, doing all of this interactively on an `ml.g5.xlarge` *notebook* instance. The class itself costs about the same, but a notebook instance keeps billing after you close the tab. Forgotten over a weekend, `$90`. Forgotten for a month, `$1,029`. A training job ends.
+Compare the classic mistake, doing all of this interactively on an `ml.g5.xlarge` *notebook* instance. The class itself costs about the same, but a notebook instance keeps billing after you close the tab. Forgotten over a weekend, `$90`. Forgotten for a month, `$1,029`. A training job ends automatically.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
@@ -591,13 +587,6 @@ Open `code/finetune_churro_lora.py` in the Jupyter file browser. It is about 400
 
 :::::::::::::::::::::::::::::::::::::::
 
-One more setting, the one that controls cost more than any other:
-
-```python
-# Every 28x28 block of the page becomes one token. 1280 blocks ~ 1 megapixel.
-DEFAULT_MAX_PIXELS = 1280 * 28 * 28
-```
-
 ### Tags
 
 As in every episode: tags do not propagate from the notebook to the jobs it launches. Pass them to every estimator.
@@ -652,23 +641,35 @@ print(f"tags:         {make_job_tags('Training')}")
 
 Next, what the script will be told to do. These hyperparameters reach the script as command-line flags (`--epochs 2 --lr 0.0002 ...`), and they are what the Step 0 estimate was built from. Three of them set the cost: the number of pages, the number of passes, and `max_pixels`. The rest shape the training: a LoRA learning rate, the adapter rank, an effective batch of four pages through gradient accumulation, and which holdout pages get scored when.
 
-One of them, `lora_r`, decides how many parameters train, and the model's own `config.json` has what you need to work that out: the number of layers and the width of each projection LoRA attaches to. For any model on Hugging Face it is one click away, under **Files and versions** on the model page ([CHURRO-3B](https://huggingface.co/stanford-oval/churro-3B/tree/main), for this one), and the same page's safetensors viewer lists every weight tensor with its shape; the model card's prose is a quicker glance but not always complete, so read the file when a number matters. Here the file is staged next to the weights in the shared bucket. An adapter on a matrix of shape in × out adds r × (in + out) parameters.
+One of them, `lora_r`, the adapter rank, decides how many parameters train, and that number is worth knowing before the launch for two reasons. It is what the script's safeguard checks, since a run that trains 5% of the model instead of 1% is a different, more expensive job, and it is the `trainable params:` line the job prints, so working it out now means you can tell whether the job is doing what you asked.
+
+The arithmetic is short. LoRA attaches to seven weight matrices in every layer of the language model, the four attention projections (`q_proj`, `k_proj`, `v_proj`, `o_proj`) and the three in the MLP (`gate_proj`, `up_proj`, `down_proj`). On a matrix of shape in × out, an adapter of rank r adds r × (in + out) parameters, the two thin matrices from the LoRA figure. Add that up over the seven matrices, multiply by the number of layers, and you have the count. The widths come from the model's `config.json`. For any model on Hugging Face that file is one click away, under **Files and versions** on the model page ([CHURRO-3B](https://huggingface.co/stanford-oval/churro-3B/tree/main), for this one), and the same page's safetensors viewer lists every weight tensor with its shape. The model card's prose is a quicker glance but not always complete, so read the file when a number matters. Here the file is staged next to the weights in the shared bucket.
 
 ```python
-s3_client.download_file(shared_bucket, f"{data_prefix}/model/churro-3B/config.json", "config.json")   # the model's architecture, from the model card
+s3_client.download_file(shared_bucket, f"{data_prefix}/model/churro-3B/config.json", "config.json")   # the model's architecture file
 with open("config.json") as f:
     cfg = json.load(f)
 text = cfg.get("text_config", cfg)            # newer configs keep the language model's sizes under text_config, older ones at the top level
-layers, hidden, inter = text["num_hidden_layers"], text["hidden_size"], text["intermediate_size"]
-kv = hidden * text["num_key_value_heads"] // text["num_attention_heads"]   # k_proj and v_proj are narrower: one head group shares a key and a value
-total_params = 3.75e9
-print(f"{layers} layers; q_proj and o_proj {hidden} x {hidden}, k_proj and v_proj {hidden} x {kv}, gate/up/down_proj {hidden} x {inter}")
+
+layers = text["num_hidden_layers"]            # how many times the seven matrices repeat
+hidden = text["hidden_size"]                  # the width of the model's main vector
+inter = text["intermediate_size"]             # the MLP's wider middle layer
+kv = hidden * text["num_key_value_heads"] // text["num_attention_heads"]   # k_proj and v_proj are narrower: several attention heads share one key and value
+
+projections = {                               # (in, out) of each matrix LoRA attaches to, in one layer
+    "q_proj": (hidden, hidden), "k_proj": (hidden, kv), "v_proj": (hidden, kv), "o_proj": (hidden, hidden),
+    "gate_proj": (hidden, inter), "up_proj": (hidden, inter), "down_proj": (inter, hidden),
+}
+print(f"{layers} layers; " + ", ".join(f"{name} {i} x {o}" for name, (i, o) in projections.items()))
+
+total_params = 3.75e9                         # the whole model, vision tower included
 for lora_r in (8, 16, 32):
-    per_layer = lora_r * (2 * (hidden + hidden) + 2 * (hidden + kv) + 3 * (hidden + inter))   # r x (in + out), summed over the seven projections
-    print(f"rank {lora_r:>2}: {per_layer * layers / 1e6:5.1f}M trainable parameters, {100 * per_layer * layers / total_params:.2f}% of the model")
+    per_layer = sum(lora_r * (i + o) for i, o in projections.values())   # r x (in + out) for each of the seven matrices
+    trainable = per_layer * layers
+    print(f"rank {lora_r:>2}: {trainable / 1e6:5.1f}M trainable parameters, {100 * trainable / total_params:.2f}% of the model")
 ```
 
-Rank 16 is the lesson's choice: about 30 million parameters, under 1% of the model, which the job's log confirms in its `trainable params:` line.
+Rank 16, the lesson's choice, trains about 30 million parameters, under 1% of the model, and doubling the rank doubles it. The adapter's gradients and optimizer state, 16 bytes for each of those 30 million, come to about half a gigabyte, which is why a LoRA run fits beside the frozen 7.5 GB of weights on a 24 GB card. The job's log confirms the count in its `trainable params:` line, and the script refuses to train if more than 5% of the model turns out to be trainable.
 
 ```python
 hyperparameters = {
@@ -678,7 +679,7 @@ hyperparameters = {
     "lora_r": 16,                     # adapter rank: about 30 million trainable parameters, from the cell above; 32 would double that
     "batch_size": 1,
     "grad_accum": 4,                  # effective batch of 4 pages -> ~125 optimizer steps over 2 passes
-    "max_pixels": 1280 * 28 * 28,     # ~1 megapixel per page; tokens per page, and so cost, scale with it
+    "max_pixels": 1280 * 28 * 28,     # the page is resized to at most this many pixels, about a megapixel; every 28 x 28 block is one token, so about 1,280 image tokens a page, as Setup measured. The setting that moves cost most
     "eval_pages": 15,                 # holdout pages scored before (eval_before=1) and after training
     "eval_before": 1,
     "curve_pages": 8,                 # of those 15, scored again at the end of every epoch: the CER curve
