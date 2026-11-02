@@ -33,6 +33,10 @@ The same fine-tune runs in three places. This guide is the CHTC column. The othe
 | What ends a runaway job | `max_run`, a cap you set | The session's 12-hour limit | The job-length lane, 12 hours for short jobs |
 | What you learn beyond the fine-tune | Estimating and reading a bill, tags, job guard rails | Fitting a model into a small GPU | Describing a job for a scheduler, containers, staging data |
 
+For fine-tuning, CHTC is the first choice for anyone at UW-Madison. It is free, its GPUs are large, and the queue is the only price. Colab is for practising LoRA with nothing to set up. The cloud has the newest and fastest GPUs, and a fine-tune on a large dataset sometimes needs them, but it bills by the hour, so it is the choice when the other two cannot do the job, not the default.
+
+None of the three runtime limits is a wall. The training script writes a checkpoint at the end of every epoch and resumes from it, so a run longer than a CHTC job lane, a Colab session or an AWS runtime cap is several runs that each pick up where the last one stopped. Section 11 says how to make HTCondor carry the checkpoints between runs.
+
 ## 1. Get an account
 
 CHTC accounts are for research and approved courses. You need an active NetID and a faculty sponsor, usually your PI or the course instructor.

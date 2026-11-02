@@ -110,7 +110,9 @@ This episode runs the fine-tune as a SageMaker job. The same model, data and scr
 | What ends a runaway job | `max_run`, a cap you set | The session's 12-hour limit | The job-length lane, 12 hours for short jobs |
 | What you learn beyond the fine-tune | Estimating and reading a bill, tags, job guard rails | Fitting a model into a small GPU | Describing a job for a scheduler, containers, staging data |
 
-For a UW-Madison project, CHTC is the first place to look. For practising LoRA with nothing to set up, Colab. The cloud is for the rest, and for learning what a GPU costs when someone is paying.
+For fine-tuning, CHTC is the first choice for anyone at UW-Madison. It is free, its GPUs are large, and the queue is the only price. Colab is for practising LoRA with nothing to set up. The cloud has the newest and fastest GPUs, and a fine-tune on a large dataset sometimes needs them, but that is where the bills in this episode's cost table come from, so it is the choice when the other two cannot do the job, not the default.
+
+None of the three runtime limits is a wall. The training script writes a checkpoint at the end of every epoch and resumes from it, so a run longer than Colab's session, CHTC's job lane or an AWS `max_run` is several runs that each pick up where the last one stopped. Each version says where its checkpoints go.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
