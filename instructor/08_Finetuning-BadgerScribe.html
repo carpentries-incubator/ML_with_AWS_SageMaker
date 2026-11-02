@@ -287,8 +287,8 @@
 <li><a href="#step-1-launch-the-lora-fine-tune">Step 1: Launch the LoRA fine-tune</a></li>
 <li><a href="#step-2-read-the-results-and-the-bill">Step 2: Read the results and the bill</a></li>
 <li><a href="#step-3-what-did-this-episode-cost">Step 3: What did this episode cost?</a></li>
-<li><a href="#homework-a-four-pass-lora-run-and-optionally-a-kaggle-submission">Homework: a four-pass LoRA run and (optionally) a Kaggle
-submission</a></li>
+<li><a href="#homework-a-four-pass-lora-run-and-optionally-predictions-on-the-test-pages">Homework: a four-pass LoRA run and (optionally) predictions on the
+test pages</a></li>
 <li><a href="#cleanup">Cleanup</a></li>
 <li><a href="#bonus-exercises">Bonus exercises</a></li>
         </ul></div><!--/div.accordion-body-->
@@ -680,7 +680,7 @@ Colab</a></th>
 H100 and H200 servers</td>
 </tr><tr><td>Time for this run</td>
 <td>33 minutes, starts in a minute</td>
-<td>About an hour, starts at once if a GPU is free</td>
+<td>About an hour and a half, starts at once if a GPU is free</td>
 <td>About 20 minutes, after a queue wait of minutes to hours</td>
 </tr><tr><td>Largest LoRA fine-tune</td>
 <td>No hard limit, only cost. 7B on the lesson’s <code>$1.41</code>/h
@@ -2360,8 +2360,8 @@ means giving up a quarter of the data.</p>
 <p>Then compare that number to the estimate in Step 0. If you are not
 within 50%, find out which line was wrong before launching anything
 else.</p>
-</section><section><h2 class="section-heading" id="homework-a-four-pass-lora-run-and-optionally-a-kaggle-submission">Homework: a four-pass LoRA run and (optionally) a Kaggle
-submission<a class="anchor" aria-label="anchor" href="#homework-a-four-pass-lora-run-and-optionally-a-kaggle-submission"></a></h2>
+</section><section><h2 class="section-heading" id="homework-a-four-pass-lora-run-and-optionally-predictions-on-the-test-pages">Homework: a four-pass LoRA run and (optionally) predictions on the
+test pages<a class="anchor" aria-label="anchor" href="#homework-a-four-pass-lora-run-and-optionally-predictions-on-the-test-pages"></a></h2>
 <hr class="half-width"><p>Everything below is the same pattern at a larger scale: about
 <code>$1.50</code> for the LoRA fine-tune and <code>$0.80</code> for
 inference, roughly two hours of wall-clock time that you do not need to
@@ -2645,25 +2645,35 @@ way Kaggle runs it on a submission.</p>
 </div>
 </div>
 <div class="section level3">
-<h3 id="submit">Submit<a class="anchor" aria-label="anchor" href="#submit"></a></h3>
-<p>The <code>lora</code> prediction file already contains every test
-page. Keep only those rows, in the order <code>test.csv</code> lists
-them. If you want a leaderboard score, this file is what you upload on
-the competition’s <strong>Submit Prediction</strong> page (two
-submissions per day; this is the only step that needs a Kaggle account,
-and it is optional).</p>
+<h3 id="write-the-test-page-predictions">Write the test-page predictions<a class="anchor" aria-label="anchor" href="#write-the-test-page-predictions"></a></h3>
+<p>The <code>lora</code> prediction file already contains every one of
+the 141 test pages. Keep only those rows, in the order
+<code>test.csv</code> lists them, and you have the fine-tuned model’s
+transcriptions of pages nobody has labeled.</p>
+<p>That file is not a Kaggle submission. The lesson’s data is the
+German-letter part of Badger Scribe. The competition’s training set has
+619 pages in three categories, the 295 letters plus 288 pages of
+surveyors’ field notes and 36 of 1830s account books, and its test set
+has 208 pages, the 141 letters plus 31 and 36 of the others. A
+submission needs a row for all 208. To get a leaderboard score, download
+the competition data from Kaggle, run the same fine-tune on its
+<code>train.csv</code> and images, which the script takes unchanged
+since its <code>--categories</code> default is all of them, run the
+transcriber over its <code>test.csv</code>, and build the file from its
+<code>sample_submission.csv</code>. This step is optional, and only it
+needs a Kaggle account.</p>
 <div class="codewrapper sourceCode" id="cb52">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" tabindex="-1" aria-label="code-block-52-1"></a><span class="op">%%</span>script false <span class="op">--</span>no<span class="op">-</span><span class="cf">raise</span><span class="op">-</span>error</span>
 <span id="cb52-2"><a href="#cb52-2" tabindex="-1" aria-label="code-block-52-2"></a><span class="co"># homework cell, switched off by the line above: delete that line to run it</span></span>
-<span id="cb52-3"><a href="#cb52-3" tabindex="-1" aria-label="code-block-52-3"></a>submission <span class="op">=</span> test_df[[<span class="st">"page_id"</span>]].merge(preds[<span class="st">"lora"</span>], on<span class="op">=</span><span class="st">"page_id"</span>, how<span class="op">=</span><span class="st">"left"</span>).fillna({<span class="st">"text"</span>: <span class="st">""</span>})</span>
-<span id="cb52-4"><a href="#cb52-4" tabindex="-1" aria-label="code-block-52-4"></a><span class="cf">assert</span> <span class="bu">len</span>(submission) <span class="op">==</span> <span class="bu">len</span>(test_df) <span class="kw">and</span> submission.text.<span class="bu">str</span>.<span class="bu">len</span>().gt(<span class="dv">0</span>).<span class="bu">all</span>(), <span class="st">"every test page needs a prediction"</span></span>
+<span id="cb52-3"><a href="#cb52-3" tabindex="-1" aria-label="code-block-52-3"></a>test_preds <span class="op">=</span> test_df[[<span class="st">"page_id"</span>]].merge(preds[<span class="st">"lora"</span>], on<span class="op">=</span><span class="st">"page_id"</span>, how<span class="op">=</span><span class="st">"left"</span>).fillna({<span class="st">"text"</span>: <span class="st">""</span>})</span>
+<span id="cb52-4"><a href="#cb52-4" tabindex="-1" aria-label="code-block-52-4"></a><span class="cf">assert</span> <span class="bu">len</span>(test_preds) <span class="op">==</span> <span class="bu">len</span>(test_df) <span class="kw">and</span> test_preds.text.<span class="bu">str</span>.<span class="bu">len</span>().gt(<span class="dv">0</span>).<span class="bu">all</span>(), <span class="st">"every test page needs a prediction"</span></span>
 <span id="cb52-5"><a href="#cb52-5" tabindex="-1" aria-label="code-block-52-5"></a></span>
-<span id="cb52-6"><a href="#cb52-6" tabindex="-1" aria-label="code-block-52-6"></a>submission_path <span class="op">=</span> os.path.join(local_data_dir, <span class="st">"submission_churro_lora.csv"</span>)</span>
-<span id="cb52-7"><a href="#cb52-7" tabindex="-1" aria-label="code-block-52-7"></a>submission.to_csv(submission_path, index<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb52-8"><a href="#cb52-8" tabindex="-1" aria-label="code-block-52-8"></a>s3_client.upload_file(submission_path, bucket_name, <span class="ss">f"</span><span class="sc">{</span>data_prefix<span class="sc">}</span><span class="ss">/submissions/submission_churro_lora.csv"</span>)</span>
-<span id="cb52-9"><a href="#cb52-9" tabindex="-1" aria-label="code-block-52-9"></a><span class="bu">print</span>(<span class="st">"wrote"</span>, submission_path, <span class="bu">len</span>(submission), <span class="st">"rows"</span>)</span></code></pre>
+<span id="cb52-6"><a href="#cb52-6" tabindex="-1" aria-label="code-block-52-6"></a>test_preds_path <span class="op">=</span> os.path.join(local_data_dir, <span class="st">"test_predictions_churro_lora.csv"</span>)</span>
+<span id="cb52-7"><a href="#cb52-7" tabindex="-1" aria-label="code-block-52-7"></a>test_preds.to_csv(test_preds_path, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb52-8"><a href="#cb52-8" tabindex="-1" aria-label="code-block-52-8"></a>s3_client.upload_file(test_preds_path, bucket_name, <span class="ss">f"</span><span class="sc">{</span>data_prefix<span class="sc">}</span><span class="ss">/predictions/test_predictions_churro_lora.csv"</span>)</span>
+<span id="cb52-9"><a href="#cb52-9" tabindex="-1" aria-label="code-block-52-9"></a><span class="bu">print</span>(<span class="st">"wrote"</span>, test_preds_path, <span class="bu">len</span>(test_preds), <span class="st">"rows"</span>)</span></code></pre>
 </div>
 <p>Finally, rerun Step 3 and compare the total with the estimate you
 wrote down before the four-pass run.</p>
