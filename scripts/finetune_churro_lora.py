@@ -301,8 +301,7 @@ def main():
     # Two checks before anything trains. A LoRA run is what was estimated and
     # paid for; if the adapter landed on the vision tower, or if most of the
     # model is trainable, this is a different (and far more expensive) job.
-    trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    total = sum(p.numel() for p in model.parameters())
+    trainable, total = model.get_nb_trainable_parameters()   # PEFT's count; it corrects for 4-bit weights, which numel() would halve
     in_vision = [n for n, p in model.named_parameters() if p.requires_grad and "visual" in n]
     if in_vision:
         raise RuntimeError(f"{len(in_vision)} trainable tensors are in the vision tower (e.g. {in_vision[0]}); "
@@ -355,6 +354,9 @@ def main():
                 curve.append({"epoch": ep, "macro_cer": r["macro_cer"]})
 
     # --- train ---
+    # transformers 5 dropped warmup_ratio and reads a warmup_steps value below 1 as a ratio instead
+    import dataclasses
+    warmup = {"warmup_ratio": 0.03} if "warmup_ratio" in {f.name for f in dataclasses.fields(TrainingArguments)} else {"warmup_steps": 0.03}
     targs = TrainingArguments(
         output_dir=ckpt_dir,
         num_train_epochs=args.epochs,
@@ -362,7 +364,7 @@ def main():
         gradient_accumulation_steps=args.grad_accum,
         learning_rate=args.lr,
         lr_scheduler_type="cosine",
-        warmup_ratio=0.03,
+        **warmup,
         weight_decay=0.0,
         bf16=(args.dtype == "bf16"),
         fp16=(args.dtype == "fp16"),

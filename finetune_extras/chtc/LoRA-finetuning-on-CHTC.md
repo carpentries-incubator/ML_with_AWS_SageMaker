@@ -1,5 +1,7 @@
 # LoRA fine-tuning on CHTC: the same job on UW-Madison's free GPUs
 
+> **In development.** This guide has not yet been run end to end on CHTC. The submit files follow CHTC's current documentation, but expect rough edges until the first draft is complete, planned for 1 December 2026. If you try it before then and something fails, [open an issue](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/issues) with the job's `.log` and `.err` files.
+
 This is the fine-tuning episode of the [ML on AWS lesson](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/08_Finetuning-BadgerScribe.html) run on the [Center for High Throughput Computing](https://chtc.cs.wisc.edu/) (CHTC) instead of on AWS. Same model, CHURRO-3B. Same data, 295 pages of 1930s German letters in Kurrent script. Same training script and the same LoRA adapter at the end. What changes is who provides the GPU and how a job is described.
 
 CHTC is free to UW-Madison researchers and should be the first place a campus project looks for a GPU. It runs HTCondor, a job scheduler. You describe a job in a text file, hand it to the scheduler, and it finds a machine, copies your files there, runs your program and copies the results back. Nobody is billed. What you pay with is the time your job waits in the queue, and the care it takes to package a job so it runs unattended on a machine you never log in to. This guide goes from requesting an account to reading the fine-tuned model's scores. It takes a few days of calendar time for the account, an afternoon for the first container and model staging, and about an hour per fine-tuning run after that.
@@ -15,6 +17,21 @@ The files in this folder are everything the job needs:
 | `read_results.py` | Reads what the job sends back and prints the before-and-after comparison |
 
 The training script itself, `finetune_churro_lora.py`, and its helper `badger_common.py` come from the lesson's `scripts/` folder and are not changed.
+
+## Three places to run this fine-tune
+
+The same fine-tune runs in three places. This guide is the CHTC column. The others are the [lesson's episode](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/08_Finetuning-BadgerScribe.html) on AWS and a [Colab notebook](https://colab.research.google.com/github/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/finetune_extras/colab/LoRA-finetuning-on-a-free-GPU.ipynb).
+
+| | [AWS SageMaker](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/08_Finetuning-BadgerScribe.html) | [Google Colab](https://colab.research.google.com/github/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/finetune_extras/colab/LoRA-finetuning-on-a-free-GPU.ipynb) | [CHTC](#) |
+|---|---|---|---|
+| Who can use it | Anyone with an AWS account and a card or credits | Anyone with a Google account | UW-Madison researchers and students, with a faculty sponsor |
+| Cost of this run | About `$0.75` | Free | Free |
+| GPU | A10G, 24 GB, bf16 | T4, 16 GB, no bf16, so the frozen weights go to 4-bit | A100, L40 or H100, 40 to 80 GB, bf16 |
+| Time for this run | 33 minutes, starts in a minute | About an hour, starts at once if a GPU is free | About 20 minutes, after a queue wait of minutes to hours |
+| Largest LoRA fine-tune on one card | about 7B | about 7B in 4-bit | about 27B |
+| Getting started | Account and quotas take days on a new account | Open the notebook | Account takes two or three business days, then a container and staged weights, an afternoon |
+| What ends a runaway job | `max_run`, a cap you set | The session's 12-hour limit | The job-length lane, 12 hours for short jobs |
+| What you learn beyond the fine-tune | Estimating and reading a bill, tags, job guard rails | Fitting a model into a small GPU | Describing a job for a scheduler, containers, staging data |
 
 ## 1. Get an account
 
