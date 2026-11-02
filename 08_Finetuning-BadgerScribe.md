@@ -106,10 +106,10 @@ This episode runs the fine-tune as a SageMaker job. The same model, data and scr
 | GPU | A10G, 24 GB, bf16 | T4, 16 GB, no bf16, so the frozen weights go to 4-bit | L40S, A100, H100 or H200, 48 to 141 GB, bf16; NVLink on the A100, H100 and H200 servers |
 | Time for this run | 33 minutes, starts in a minute | About an hour, starts at once if a GPU is free | About 20 minutes, after a queue wait of minutes to hours |
 | Largest LoRA fine-tune | No hard limit, only cost. 7B on the lesson's `$1.41`/h card, 70B at `$13`/h | about 7B, in 4-bit | about 50B in bf16 on an H200, a 70B in 4-bit on one 80 GB card, larger across a server's cards |
-| Largest full fine-tune | No hard limit, only cost. 3B at `$7`/h, 70B at `$127`/h | none, a 3B needs 60 GB | a 7B on one H200, a 70B across the H100 or H200 servers' cards |
+| Largest full fine-tune | No hard limit, only cost. 3B at `$7`/h, 70B at `$127`/h | none, a 3B needs 52 GB | a 7B on one H200, a 70B across the H100 or H200 servers' cards |
 | What you learn beyond the fine-tune | Estimating and reading a bill, tags, job guard rails | Fitting a model into a small GPU | Describing a job for a scheduler, containers, staging data |
 
-For fine-tuning, CHTC is the first choice for anyone at UW-Madison. It is free, its GPUs are large, and the queue is the only price. Colab is for practising LoRA with nothing to set up. The cloud has the newest and fastest GPUs, and a fine-tune on a large dataset sometimes needs them, but that is where the bills in this episode's cost table come from, so it is the choice when the other two cannot do the job, not the default.
+For fine-tuning, CHTC is the first choice for UW-Madison researchers. It is free, its GPUs are large, and the queue is the only price. Colab is for practising LoRA with nothing to set up. The cloud has the newest and fastest GPUs, and a fine-tune on a large dataset sometimes needs them, but that is where the bills in this episode's cost table come from, so it is the choice when the other two cannot do the job, not the default.
 
 None of the three runtime limits is a wall. The training script writes a checkpoint at the end of every epoch and resumes from it, so a run longer than Colab's session, CHTC's job lane or an AWS `max_run` is several runs that each pick up where the last one stopped. Each version says where its checkpoints go.
 
@@ -133,7 +133,6 @@ Every parameter in the model takes up GPU memory, and how much depends on what y
 
 | What you are doing with the model | Bytes per parameter | What has to be in memory for each parameter |
 |---|---|---|
-| Inference, 4-bit weights | 0.5 | the weight, quantized |
 | Inference, FP8 | 1 | the weight, quantized |
 | Inference, bf16 | 2 | the weight |
 | LoRA fine-tune | ~2.5 | the frozen 16-bit weight, plus a share of the adapter with its gradients and optimizer state |
