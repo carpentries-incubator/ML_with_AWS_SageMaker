@@ -46,6 +46,7 @@ Every compute-heavy exercise comes with a cost estimate, a runtime limit, and a 
 | `notebooks/*.ipynb` | Jupyter notebooks generated from the episodes by `scripts/md_to_ipynb.py`. Regenerated automatically on every push to `main`. Do not edit by hand. |
 | `scripts/` | The Python the episodes import or launch: training, fine-tuning and RAG scripts, cost estimation and launch checks in `helpers.py`, the notebook generator and the data preparation tools. Learners clone this repository onto their notebook instance. There is no separate helper repository. |
 | `learners/` | Setup instructions, glossary, and the instance-selection guide. |
+| `colab/` | A free, standalone version of the fine-tuning episode for Google Colab's T4, written in Markdown and converted to a notebook by the same script. It teaches LoRA with the same data, model and scripts and no AWS account. |
 | `instructors/` | Instructor notes on account preparation, service quotas, cost estimates, data staging, and post-workshop cleanup with aws-nuke. |
 | `data/data.zip` | The Titanic CSVs for the training exercises, and the WattBot metadata and training questions for the RAG exercises. |
 | `config.yaml` | Lesson configuration and episode order. See the [Carpentries Workbench documentation](https://carpentries.github.io/sandpaper-docs/). |
@@ -67,6 +68,8 @@ Before class, follow `instructors/aws-account-prep.md` to prepare the AWS accoun
 GPU quota increases can take weeks, so request them well ahead of the workshop. The instructor notes also say which exercises can use precomputed results to cut GPU demand during class.
 
 After the workshop, follow `instructors/instructor-notes.md` to clean up the shared account, including with aws-nuke.
+
+The fine-tuning episode also exists as a [free Colab notebook](https://colab.research.google.com/github/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/colab/LoRA-finetuning-on-a-free-GPU.ipynb) that needs no AWS account. It runs the same LoRA fine-tune on Colab's T4 with the frozen weights in 4-bit.
 
 Learners working on their own can follow the [rendered lesson](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/) on their own AWS account. They will need to stage the shared datasets and model files described in the instructor pages.
 
