@@ -43,7 +43,7 @@ There is no option that is better in every case. Campus and national research co
 
 AWS offers many services. This workshop uses four pieces that work together.
 
-![S3 holds data and outputs; a small notebook instance launches SageMaker jobs that read from and write to S3 and end on their own; Bedrock is called as an API per token](fig/aws-ml-ecosystem.svg){alt="Diagram of the lesson's AWS components: S3 buckets at the top, a notebook instance on the left launching SageMaker training, tuning and processing jobs in the center, and Bedrock on the right called as an API"}
+![*The four pieces the lesson uses, and what moves between them*](fig/aws-ml-ecosystem.svg){alt="Diagram of the lesson's AWS components: S3 buckets at the top, a notebook instance on the left launching SageMaker training, tuning and processing jobs in the center, and Bedrock on the right called as an API"}
 
 The workflow is the diagram. Datasets and results live in S3. We work from a small JupyterLab notebook instance. SageMaker launches the compute-heavy jobs on separate machines. For tasks a model AWS already hosts can do, we call Bedrock instead.
 
@@ -83,9 +83,7 @@ The difference between SageMaker and Bedrock is control against convenience. Sag
 
 ### How the episodes use them
 
-Through the workshop, code is written in JupyterLab, datasets and results go to S3, training and other heavy jobs go to SageMaker, and Bedrock is called when a hosted model is enough.
-
-None of this needs the notebook instance. Everything here can be done from Python on your own computer or from the AWS command line, and the optional [The Same Jobs from the Terminal](14_CLI-equivalents.md) episode shows how.
+Through the workshop, code is written in JupyterLab, datasets and results go to S3, training and other heavy jobs go to SageMaker, and Bedrock is called when a hosted model is enough. None of this needs the notebook instance. Everything here can be done from Python on your own computer or from the AWS command line, and the optional [The Same Jobs from the Terminal](14_CLI-equivalents.md) episode shows how.
 
 ::::::::::::::::::::::::::::::::::::: keypoints
 
