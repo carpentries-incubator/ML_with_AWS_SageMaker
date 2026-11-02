@@ -109,7 +109,7 @@ The account enforces these tags on every job and notebook instance. A launch wit
 | `Tuning` | hyperparameter tuning jobs |
 | `Inference` | Bedrock calls, RAG jobs, batch transcription |
 
-![Example of Tags for an S3 Bucket](fig/bucket_tags2.png){alt="Screenshot showing required tags for an S3 bucket"}
+![*Example of Tags for an S3 Bucket*](fig/bucket_tags2.png){alt="Screenshot showing required tags for an S3 bucket"}
 
 ::::::::::::::::::::::::::::::::::::: callout
 
