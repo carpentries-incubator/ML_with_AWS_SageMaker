@@ -672,32 +672,37 @@ Colab</a></th>
 </tr><tr><td>GPU</td>
 <td>A10G, 24 GB, bf16</td>
 <td>T4, 16 GB, no bf16, so the frozen weights go to 4-bit</td>
-<td>A100, L40 or H100, 40 to 80 GB, bf16</td>
+<td>L40S, A100, H100 or H200, 48 to 141 GB, bf16; NVLink on the A100,
+H100 and H200 servers</td>
 </tr><tr><td>Time for this run</td>
 <td>33 minutes, starts in a minute</td>
 <td>About an hour, starts at once if a GPU is free</td>
 <td>About 20 minutes, after a queue wait of minutes to hours</td>
-</tr><tr><td>Largest LoRA fine-tune on one card</td>
-<td>about 7B</td>
-<td>about 7B in 4-bit</td>
-<td>about 27B</td>
-</tr><tr><td>Getting started</td>
-<td>Account and quotas take days on a new account</td>
-<td>Open the notebook</td>
-<td>Account takes two or three business days, then a container and
-staged weights, an afternoon</td>
-</tr><tr><td>What ends a runaway job</td>
-<td>
-<code>max_run</code>, a cap you set</td>
-<td>The session’s 12-hour limit</td>
-<td>The job-length lane, 12 hours for short jobs</td>
+</tr><tr><td>Largest LoRA fine-tune</td>
+<td>about 7B in bf16, about 13B in 4-bit, on one 24 GB card</td>
+<td>about 7B, in 4-bit</td>
+<td>about 50B in bf16 on an H200, a 70B in 4-bit on one 80 GB card,
+larger across a server’s cards</td>
+</tr><tr><td>Largest full fine-tune</td>
+<td>a 70B, on two 8-GPU instances at <code>$127</code>/h</td>
+<td>none, a 3B needs 60 GB</td>
+<td>a 7B on one H200, a 70B across the H100 or H200 servers’ cards</td>
 </tr><tr><td>What you learn beyond the fine-tune</td>
 <td>Estimating and reading a bill, tags, job guard rails</td>
 <td>Fitting a model into a small GPU</td>
 <td>Describing a job for a scheduler, containers, staging data</td>
-</tr></tbody></table><p>For a UW-Madison project, CHTC is the first place to look. For
-practising LoRA with nothing to set up, Colab. The cloud is for the
-rest, and for learning what a GPU costs when someone is paying.</p>
+</tr></tbody></table><p>For fine-tuning, CHTC is the first choice for anyone at UW-Madison.
+It is free, its GPUs are large, and the queue is the only price. Colab
+is for practising LoRA with nothing to set up. The cloud has the newest
+and fastest GPUs, and a fine-tune on a large dataset sometimes needs
+them, but that is where the bills in this episode’s cost table come
+from, so it is the choice when the other two cannot do the job, not the
+default.</p>
+<p>None of the three runtime limits is a wall. The training script
+writes a checkpoint at the end of every epoch and resumes from it, so a
+run longer than Colab’s session, CHTC’s job lane or an AWS
+<code>max_run</code> is several runs that each pick up where the last
+one stopped. Each version says where its checkpoints go.</p>
 <div id="what-the-class-account-allows" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -1138,7 +1143,7 @@ What does a project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5, because a full fine-tune of a 7B model
 needs about 112 GB plus activations, and the g5 has 24 GB. On the p4d, 8
@@ -1676,7 +1681,7 @@ step. Which, and why are they there?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>Only the language model’s <code>q_proj</code>, <code>k_proj</code>,
 <code>v_proj</code>, <code>o_proj</code>, <code>gate_proj</code>,
@@ -2257,7 +2262,7 @@ will compare it to the bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>Expect about 32 billed minutes. Scoring is the line most likely to
 surprise: at 17 to 21 seconds a page, the two 15-page evaluations and
@@ -2659,7 +2664,7 @@ summaries, and the before/after CER. Did the extra pixels help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -2700,7 +2705,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
 <div class="accordion-body">
 <p>Startup and upload (~6 min, <code>$0.26</code> at
 <code>$2.61</code>/h) do not speed up: the container pull and the S3
