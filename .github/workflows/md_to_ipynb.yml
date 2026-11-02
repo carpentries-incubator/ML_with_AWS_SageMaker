@@ -26,9 +26,7 @@ jobs:
         run: pip install nbformat
 
       - name: Convert Markdown files to Jupyter Notebooks
-        run: |
-          python scripts/md_to_ipynb.py
-          python scripts/md_to_ipynb.py colab colab
+        run: python scripts/md_to_ipynb.py
 
       # On a pull_request event the checkout is a detached merge commit, so
       # there is no branch to push to. Only report what would change there;
@@ -42,6 +40,6 @@ jobs:
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          git add notebooks/*.ipynb colab/*.ipynb
+          git add notebooks/*.ipynb
           git commit -m "Auto-generate Jupyter notebooks from Markdown" || echo "No changes to commit"
           git push
