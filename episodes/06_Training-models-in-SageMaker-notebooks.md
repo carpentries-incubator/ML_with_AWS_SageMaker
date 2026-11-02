@@ -86,7 +86,7 @@ print(f"region = {region}")
 ```
 
 ## Check the training script before launching a job
-A training job runs your script on a machine SageMaker rents for it, so the script has to work before it is worth renting anything. Run it here first, on the notebook instance, on the small Titanic data. If it crashes here, it costs a few seconds of a five-cent-an-hour machine. If it crashes as a job, you pay for the minutes the job's instance spent starting up, on a machine that costs more. Every later episode does the same, a few epochs on a subset on the cheapest machine, then the real run.
+A training job runs your script on a machine SageMaker rents for it, so the script has to work before it is worth renting anything. Run it here first, on the notebook instance, on the small Titanic data. If it crashes here, it costs a few seconds of a five-cent-an-hour machine. If it crashes as a job, you pay for the minutes the job's instance spent starting up, on a machine that costs more. Every later episode does the same, a few epochs on a subset on the cheapest machine, then the full run.
 
 ::::::::::::::::::::::::::::::::::::::: challenge
 
