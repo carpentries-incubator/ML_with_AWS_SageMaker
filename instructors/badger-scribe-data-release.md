@@ -2,7 +2,7 @@
 title: 'Badger Scribe data: publishing a release'
 ---
 
-The fine-tuning episode's data (the German-letter part of the Badger Scribe competition data: 295 labelled train pages, 141 test pages, 436 JPEG scans plus a few CSVs) lives as a **GitHub Release** on the lesson repository, not in the git tree and not on Kaggle. Each data version is one release with three zip assets:
+The fine-tuning episode's data (the German-letter part of the Badger Scribe competition data: 295 labeled train pages, 141 test pages, 436 JPEG scans plus a few CSVs) lives as a **GitHub Release** on the lesson repository, not in the git tree and not on Kaggle. Each data version is one release with three zip assets:
 
 | Asset | Contents | Size |
 |---|---|---|

@@ -51,7 +51,7 @@ The workflow is the diagram. Datasets and results live in S3. We work from a sma
 
 ### S3
 
-**Amazon S3 stores the data and the results.** [S3](https://aws.amazon.com/s3/) is object storage, organised in *buckets*. Datasets stay in a bucket instead of on the notebook instance, every SageMaker job reads its inputs from a bucket and writes its outputs back to one, and storage costs about two cents per GB per month. You create a bucket of your own in the next episode and use it for the rest of the workshop. The larger datasets are already in a shared bucket the instructors staged.
+**Amazon S3 stores the data and the results.** [S3](https://aws.amazon.com/s3/) is object storage, organized in *buckets*. Datasets stay in a bucket instead of on the notebook instance, every SageMaker job reads its inputs from a bucket and writes its outputs back to one, and storage costs about two cents per GB per month. You create a bucket of your own in the next episode and use it for the rest of the workshop. The larger datasets are already in a shared bucket the instructors staged.
 
 ### Notebook instance
 

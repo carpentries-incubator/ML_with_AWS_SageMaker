@@ -32,7 +32,7 @@ The same fine-tune runs in three places. This guide is the CHTC column. The othe
 | Largest full fine-tune | No hard limit, only cost. 3B at `$7`/h, 70B at `$127`/h | none, a 3B needs 52 GB | a 7B on one H200, a 70B across the H100 or H200 servers' cards |
 | What you learn beyond the fine-tune | Estimating and reading a bill, tags, job guard rails | Fitting a model into a small GPU | Describing a job for a scheduler, containers, staging data |
 
-For fine-tuning, CHTC is the first choice for UW-Madison researchers. It is free, its GPUs are large, and the queue is the only price. Colab is for practising LoRA with nothing to set up. The cloud has the newest and fastest GPUs, and a fine-tune on a large dataset sometimes needs them, but it bills by the hour, so it is the choice when the other two cannot do the job, not the default.
+For fine-tuning, CHTC is the first choice for UW-Madison researchers. It is free, its GPUs are large, and the queue is the only price. Colab is for practicing LoRA with nothing to set up. The cloud has the newest and fastest GPUs, and a fine-tune on a large dataset sometimes needs them, but it bills by the hour, so it is the choice when the other two cannot do the job, not the default.
 
 None of the three runtime limits is a wall. The training script writes a checkpoint at the end of every epoch and resumes from it, so a run longer than a CHTC job lane, a Colab session or an AWS runtime cap is several runs that each pick up where the last one stopped. Section 11 says how to make HTCondor carry the checkpoints between runs.
 
@@ -94,7 +94,7 @@ tar czf badger-scribe-data.tar.gz data
 ls -lh badger-scribe-data.tar.gz     # about 130 MB: under a gigabyte, so it can stay in /home and transfer from here
 ```
 
-`train.csv` has one row per labelled page, with its id, the letter it belongs to and the transcription. The training script holds 15% of the pages out of training, with a fixed seed, and scores them before and after. The lesson's episode has the data's story and a page to look at. Here the pages go straight into the job.
+`train.csv` has one row per labeled page, with its id, the letter it belongs to and the transcription. The training script holds 15% of the pages out of training, with a fixed seed, and scores them before and after. The lesson's episode has the data's story and a page to look at. Here the pages go straight into the job.
 
 ## 5. Build the container
 
@@ -187,7 +187,7 @@ On an A100 or an L40 expect about 5 minutes of training and 10 to 15 minutes of 
 apptainer exec /staging/<n>/<netid>/churro.sif python read_results.py adapter.tar.gz
 ```
 
-Read it the way the lesson's episode reads the SageMaker run. The mean CER before and after on the same pages is the fine-tune's effect and nothing else. The page that improved most shows what was learned, this writer's hand and the archive's conventions, umlauts and ß as written, Kurrent letterforms read correctly. The holdout curve, not the training loss, says whether two passes was the right amount. Still falling means another pass would help, flat means stop, rising while the loss falls means the model is memorising the training pages.
+Read it the way the lesson's episode reads the SageMaker run. The mean CER before and after on the same pages is the fine-tune's effect and nothing else. The page that improved most shows what was learned, this writer's hand and the archive's conventions, umlauts and ß as written, Kurrent letterforms read correctly. The holdout curve, not the training loss, says whether two passes was the right amount. Still falling means another pass would help, flat means stop, rising while the loss falls means the model is memorizing the training pages.
 
 ## 10. What CHTC gives you for free
 

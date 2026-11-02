@@ -403,7 +403,7 @@ aws sagemaker list-notebook-instances --query 'NotebookInstances[?NotebookInstan
 aws sagemaker list-endpoints --query 'Endpoints[].EndpointName'
 ```
 
-For anything the first four print, the matching `stop-...` command from section 3. A job you recognise as yours and expect to finish within its `MaxRuntimeInSeconds` can be left. A job you do not recognise is a question for its owner, and on a shared account the tags (`list-tags`) tell you who that is. For an endpoint, `aws sagemaker delete-endpoint --endpoint-name <name>`, then find out how it was created, because the notebook role refuses it and the permission set should once the policy is attached. Buckets cost almost nothing over a weekend and need no action.
+For anything the first four print, the matching `stop-...` command from section 3. A job you recognize as yours and expect to finish within its `MaxRuntimeInSeconds` can be left. A job you do not recognize is a question for its owner, and on a shared account the tags (`list-tags`) tell you who that is. For an endpoint, `aws sagemaker delete-endpoint --endpoint-name <name>`, then find out how it was created, because the notebook role refuses it and the permission set should once the policy is attached. Buckets cost almost nothing over a weekend and need no action.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 

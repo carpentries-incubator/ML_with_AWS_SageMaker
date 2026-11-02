@@ -18,7 +18,7 @@ The below table provides general recommendations for selecting AWS SageMaker ins
 
 #### How to read an instance name, and what the price covers
 
-An instance is a fixed box: `ml.` + family + generation + size. The family letter says what the box is built around (`t` and `m` general CPU, `c` compute-optimised CPU, `g` one or a few GPUs, `p` the multi-GPU data-centre boxes); the number is the generation (`g5` is newer than `g4dn`); a trailing letter is a variant (`g4dn` adds NVMe disks, `g6e` is the L40S version of `g6`); and the size (`xlarge`, `2xlarge`, ... `48xlarge`) scales vCPUs, RAM, and on GPU families the number of GPUs together. You cannot rent half a box or add a GPU to one.
+An instance is a fixed box: `ml.` + family + generation + size. The family letter says what the box is built around (`t` and `m` general CPU, `c` compute-optimized CPU, `g` one or a few GPUs, `p` the multi-GPU data-center boxes); the number is the generation (`g5` is newer than `g4dn`); a trailing letter is a variant (`g4dn` adds NVMe disks, `g6e` is the L40S version of `g6`); and the size (`xlarge`, `2xlarge`, ... `48xlarge`) scales vCPUs, RAM, and on GPU families the number of GPUs together. You cannot rent half a box or add a GPU to one.
 
 **The hourly price is for the whole box, not per GPU.** An `ml.p5.48xlarge` is eight H100s for `$63.30` an hour, about `$7.90` per H100-hour; an `ml.p4d.24xlarge` is eight A100s for `$25.25`, about `$3.15` per A100-hour; an `ml.g5.xlarge` is one A10G for `$1.41`. To turn an estimate into a bill:
 

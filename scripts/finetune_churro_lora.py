@@ -320,7 +320,7 @@ def main():
     print(f"checkpoints -> {ckpt_dir}; resuming from {last_ckpt or 'nothing (fresh run)'}")
 
     # --- score the base model on the holdout sample BEFORE training ---
-    # (the adapter is freshly initialised to zero, so this is the base model)
+    # (the adapter is freshly initialized to zero, so this is the base model)
     eval_before = None
     before_json = os.path.join(ckpt_dir, "eval_before.json")
     if last_ckpt and os.path.exists(before_json):

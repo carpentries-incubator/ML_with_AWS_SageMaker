@@ -3,7 +3,7 @@ as a SageMaker Processing job (the Processing Jobs episode's first job).
 
 Input:  <input_dir>/<input_filename>, one JSON object per line with a text field
 Output: <output_dir>/embeddings.npy, one row per chunk, in the same order,
-        unit-normalised so a dot product is a cosine similarity
+        unit-normalized so a dot product is a cosine similarity
 
 The job's ProcessingInput copies the chunk file to input_dir before this runs,
 and its ProcessingOutput copies output_dir to S3 when it exits. Nothing in the

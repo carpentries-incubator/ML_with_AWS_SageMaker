@@ -356,7 +356,7 @@ def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs
     tokens_per_example : int  tokens the model sees per example. Text: words x 1.3. An image on a
                               Qwen-VL style model: pixels / 784 (about 1,300 for one megapixel) plus
                               the text. An EEG window or audio clip: ask the model card what one
-                              example becomes after tokenisation.
+                              example becomes after tokenization.
     epochs : float            passes over the data
     method : "lora" | "full"
     instance_type : str       a key of helpers.GPU_INSTANCES; None picks the cheapest that fits

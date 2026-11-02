@@ -5,7 +5,7 @@ The SageMaker Hugging Face container ships `transformers` and PyTorch but not
 `transformers` release it currently wants, which has broken the container's
 other packages before. For a BERT-style embedding model such as
 `thenlper/gte-large` the sentence-transformers recipe is just mean pooling
-over the last hidden state followed by L2 normalisation, so we do that here
+over the last hidden state followed by L2 normalization, so we do that here
 and depend on nothing the container does not already have.
 
 `HFEmbedder.encode` keeps sentence-transformers' signature for the arguments
@@ -28,7 +28,7 @@ class HFEmbedder:
     @torch.no_grad()
     def encode(self, texts, batch_size: int = 32, normalize_embeddings: bool = True,
                convert_to_numpy: bool = True, show_progress_bar: bool = False):
-        """Embed a list of strings: mean-pool the last hidden state over real tokens, then unit-normalise."""
+        """Embed a list of strings: mean-pool the last hidden state over real tokens, then unit-normalize."""
         out = []
         for i in range(0, len(texts), batch_size):
             batch = self.tokenizer(texts[i:i + batch_size], padding=True, truncation=True,
