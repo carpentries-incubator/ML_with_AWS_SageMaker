@@ -120,14 +120,14 @@ Every parameter in the model takes up GPU memory, and how much depends on what y
 | LoRA fine-tune | ~2.5 | the frozen 16-bit weight, plus a share of the adapter with its gradients and optimizer state |
 | Full fine-tune, mixed precision | 16 | the 16-bit weight (2), its gradient (2), a 32-bit copy of the weight (4), Adam's two running averages (8) |
 
-Multiply the bytes per parameter by the parameter count, add about 4 GB for activations (more for long sequences or big batches), and you have the GPU memory the job needs. The second table does that for four model sizes and names the smallest SageMaker box that holds each one:
+Multiply the bytes per parameter by the parameter count, add about 4 GB for activations (more for long sequences or big batches), and you have the GPU memory the job needs. The second table does that for four model sizes and names the smallest SageMaker box that holds each one. The inference column uses the precision people run each size at. Models up to about 8B are served in bf16, which is how the Processing Jobs episode runs Qwen3-8B. Above that the weights are quantized, FP8 for the 27B as the GPU-notebook episode does, 4-bit for a 70B on one card. Training cannot be quantized that way, so the two fine-tuning columns are 16-bit throughout:
 
-| Model | Inference, bf16 | LoRA fine-tune | Full fine-tune |
+| Model | Inference, as run in practice | LoRA fine-tune | Full fine-tune |
 |---|---|---|---|
-| 3B | 6 GB: `ml.g5.xlarge`, 1 × 24 GB, `$1.41`/h | 12 GB: `ml.g5.xlarge` | 52 GB: `ml.g5.12xlarge`, 4 × 24 GB, `$7.09`/h |
-| 7B | 14 GB: `ml.g5.xlarge` | 22 GB: `ml.g5.xlarge`, with nothing to spare | 116 GB: `ml.g6e.12xlarge`, 4 × 48 GB, `$13.12`/h |
-| 27B | 54 GB: `ml.g5.12xlarge`, 4 × 24 GB, `$7.09`/h | 72 GB: `ml.g5.12xlarge` | 436 GB: `ml.p5.48xlarge`, 8 × 80 GB, `$63.30`/h |
-| 70B | 140 GB: `ml.g6e.12xlarge`, 4 × 48 GB, `$13.12`/h | 179 GB: `ml.g6e.12xlarge` | 1,124 GB: two `ml.p5.48xlarge`, `$127`/h |
+| 3B | bf16, 6 GB: `ml.g5.xlarge`, 1 × 24 GB, `$1.41`/h | 12 GB: `ml.g5.xlarge` | 52 GB: `ml.g5.12xlarge`, 4 × 24 GB, `$7.09`/h |
+| 7B | bf16, 14 GB: `ml.g5.xlarge` | 22 GB: `ml.g5.xlarge`, with nothing to spare | 116 GB: `ml.g6e.12xlarge`, 4 × 48 GB, `$13.12`/h |
+| 27B | FP8, 27 GB: `ml.g6e.xlarge`, 1 × 48 GB, `$2.61`/h | 72 GB: `ml.g5.12xlarge`, 4 × 24 GB, `$7.09`/h | 436 GB: `ml.p5.48xlarge`, 8 × 80 GB, `$63.30`/h |
+| 70B | 4-bit, 35 GB: `ml.g6e.xlarge`; FP8, 70 GB: `ml.g6e.12xlarge`, 4 × 48 GB, `$13.12`/h | 179 GB: `ml.g6e.12xlarge` | 1,124 GB: two `ml.p5.48xlarge`, `$127`/h |
 
 A 7B model that runs on one 24 GB GPU needs 116 GB to fully fine-tune, a four-GPU box at `$13` an hour with the model sharded across the GPUs. Training cannot run on quantized weights the way inference can, because each step's update is too small for 8-bit or 4-bit numbers to hold. LoRA avoids that jump by freezing the model and training a few million adapter parameters, which is why this episode fits on one 24 GB card.
 
