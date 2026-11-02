@@ -302,7 +302,7 @@ The whole episode, with the controller notebook and the exercise:
 | Exercise 1: same job at 2 megapixels | `ml.g5.xlarge` | ~60 min | `$1.40` |
 | **Total** | | | **~`$2.30`** |
 
-Compare the classic mistake, doing all of this interactively on an `ml.g5.xlarge` *notebook* instance. The class itself costs about the same, but a notebook instance keeps billing after you close the tab. Forgotten over a weekend, `$90`. Forgotten for a month, `$1,029`. A training job ends.
+Compare the classic mistake, doing all of this interactively on an `ml.g5.xlarge` *notebook* instance. The class itself costs about the same, but a notebook instance keeps billing after you close the tab. Forgotten over a weekend, `$90`. Forgotten for a month, `$1,029`. A training job ends automatically.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
