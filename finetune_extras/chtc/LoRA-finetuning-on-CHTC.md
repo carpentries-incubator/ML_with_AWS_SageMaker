@@ -10,19 +10,19 @@ The files in this folder are everything the job needs:
 
 | File | What it is |
 |---|---|
-| `churro.def` | The recipe for the software container, PyTorch 2.8 plus the Python packages the training script imports |
-| `build.sub` | The interactive job that builds the container |
-| `fetch_model.sub`, `fetch_model.sh` | A small job that downloads the 7.5 GB of CHURRO-3B weights once into your staging space |
-| `finetune.sub`, `finetune.sh` | The GPU job, and the script it runs inside the container |
-| `read_results.py` | Reads what the job sends back and prints the before-and-after comparison |
+| [`churro.def`](churro.def) | The recipe for the software container, PyTorch 2.8 plus the Python packages the training script imports |
+| [`build.sub`](build.sub) | The interactive job that builds the container |
+| [`fetch_model.sub`](fetch_model.sub), [`fetch_model.sh`](fetch_model.sh) | A small job that downloads the 7.5 GB of CHURRO-3B weights once into your staging space |
+| [`finetune.sub`](finetune.sub), [`finetune.sh`](finetune.sh) | The GPU job, and the script it runs inside the container |
+| [`read_results.py`](read_results.py) | Reads what the job sends back and prints the before-and-after comparison |
 
-The training script itself, `finetune_churro_lora.py`, and its helper `badger_common.py` come from the lesson's `scripts/` folder and are not changed.
+The training script itself, [`finetune_churro_lora.py`](../../scripts/finetune_churro_lora.py), and its helper [`badger_common.py`](../../scripts/badger_common.py) come from the lesson's [`scripts/`](../../scripts) folder and are not changed.
 
 ## Three places to run this fine-tune
 
 The same fine-tune runs in three places. This guide is the CHTC column. The others are the [lesson's episode](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/08_Finetuning-BadgerScribe.html) on AWS and a [Colab notebook](https://colab.research.google.com/github/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/finetune_extras/colab/LoRA-finetuning-on-a-free-GPU.ipynb).
 
-| | [AWS SageMaker](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/08_Finetuning-BadgerScribe.html) | [Google Colab](https://colab.research.google.com/github/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/finetune_extras/colab/LoRA-finetuning-on-a-free-GPU.ipynb) | [CHTC](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/tree/main/finetune_extras/chtc) |
+| | [AWS SageMaker](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/08_Finetuning-BadgerScribe.html) | [Google Colab](https://colab.research.google.com/github/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/finetune_extras/colab/LoRA-finetuning-on-a-free-GPU.ipynb) | [CHTC](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/finetune_extras/chtc/LoRA-finetuning-on-CHTC.md) |
 |---|---|---|---|
 | Who can use it | Anyone with an AWS account and a card or credits | Anyone with a Google account | UW-Madison researchers and students, with a faculty sponsor |
 | Cost of this run | About `$0.75` | Free | Free |
@@ -98,9 +98,9 @@ ls -lh badger-scribe-data.tar.gz     # about 130 MB: under a gigabyte, so it can
 
 ## 5. Build the container
 
-A job runs on a machine with an operating system and little else. The software comes along in a container, a file holding a complete Linux environment with PyTorch and the packages the script imports. `churro.def` is its recipe. It starts from the public PyTorch 2.8 image with CUDA 12.8, the same versions the lesson's SageMaker container had, and installs `transformers`, `peft` and a few small packages on top.
+A job runs on a machine with an operating system and little else. The software comes along in a container, a file holding a complete Linux environment with PyTorch and the packages the script imports. [`churro.def`](churro.def) is its recipe. It starts from the public PyTorch 2.8 image with CUDA 12.8, the same versions the lesson's SageMaker container had, and installs `transformers`, `peft` and a few small packages on top.
 
-Containers are built in an interactive job, on a build machine, not on the access point. `build.sub` describes that job. Submit it with `-i`, wait for the prompt to change to the build machine, and run the build there.
+Containers are built in an interactive job, on a build machine, not on the access point. [`build.sub`](build.sub) describes that job. Submit it with `-i`, wait for the prompt to change to the build machine, and run the build there.
 
 ```bash
 condor_submit -i build.sub
@@ -120,7 +120,7 @@ mv churro.sif /staging/<n>/<netid>/
 
 ## 6. Stage the model
 
-The base weights are 7.5 GB, too big for `/home` and too slow to download again for every run. `fetch_model.sub` is a small CPU job, no GPU, that downloads them from Hugging Face once, inside the container you just built, packs them as one tar, and writes the tar straight to your staging directory. Read the two files first. The submit file's `transfer_output_remaps` line is what sends a job's output somewhere other than the submit directory, and the shell script is what the job runs.
+The base weights are 7.5 GB, too big for `/home` and too slow to download again for every run. [`fetch_model.sub`](fetch_model.sub) is a small CPU job, no GPU, that downloads them from Hugging Face once, inside the container you just built, packs them as one tar, and writes the tar straight to your staging directory. Read the two files first. The submit file's `transfer_output_remaps` line is what sends a job's output somewhere other than the submit directory, and the shell script is what the job runs.
 
 Edit `NETID` at the top of `fetch_model.sub`, then submit and watch.
 
@@ -135,7 +135,7 @@ A job's life is in its `.log` file. Open `fetch_model.log` when it finishes and 
 
 ## 7. Read the job before you submit it
 
-Open `finetune.sub` and `finetune.sh` together. The submit file is the part of the lesson's estimator that described the machine and the files. The shell script is the part that ran the training script. Every setting has a comment, and these are the ones to understand.
+Open [`finetune.sub`](finetune.sub) and [`finetune.sh`](finetune.sh) together. The submit file is the part of the lesson's estimator that described the machine and the files. The shell script is the part that ran the training script. Every setting has a comment, and these are the ones to understand.
 
 **The arguments line** is the script's command-line flags, the same hyperparameters the lesson's SageMaker job set, two passes, a LoRA rank of 16, 15 holdout pages scored before and after, 8 of them at the end of every pass. Change a run here, not in the script.
 
@@ -185,7 +185,7 @@ On an A100 or an L40 expect about 5 minutes of training and 10 to 15 minutes of 
 
 ## 9. What changed
 
-`read_results.py` unpacks the archive and prints the summary, the per-page character error rate before and after on the same 15 held-out pages, the page that improved most, and saves the loss and holdout-CER curves as a picture. It needs pandas and matplotlib. Run it inside the container on the access point, which is light enough for there, or copy `adapter.tar.gz` to your own machine.
+[`read_results.py`](read_results.py) unpacks the archive and prints the summary, the per-page character error rate before and after on the same 15 held-out pages, the page that improved most, and saves the loss and holdout-CER curves as a picture. It needs pandas and matplotlib. Run it inside the container on the access point, which is light enough for there, or copy `adapter.tar.gz` to your own machine.
 
 ```bash
 apptainer exec /staging/<n>/<netid>/churro.sif python read_results.py adapter.tar.gz
