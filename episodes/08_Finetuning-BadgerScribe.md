@@ -105,8 +105,8 @@ This episode runs the fine-tune as a SageMaker job. The same model, data and scr
 | Cost of this run | About `$0.75` | Free | Free |
 | GPU | A10G, 24 GB, bf16 | T4, 16 GB, no bf16, so the frozen weights go to 4-bit | L40S, A100, H100 or H200, 48 to 141 GB, bf16; NVLink on the A100, H100 and H200 servers |
 | Time for this run | 33 minutes, starts in a minute | About an hour, starts at once if a GPU is free | About 20 minutes, after a queue wait of minutes to hours |
-| Largest LoRA fine-tune | about 7B in bf16, about 13B in 4-bit, on one 24 GB card | about 7B, in 4-bit | about 50B in bf16 on an H200, a 70B in 4-bit on one 80 GB card, larger across a server's cards |
-| Largest full fine-tune | a 70B, on two 8-GPU instances at `$127`/h | none, a 3B needs 60 GB | a 7B on one H200, a 70B across the H100 or H200 servers' cards |
+| Largest LoRA fine-tune | No hard limit, only cost. 7B on the lesson's `$1.41`/h card, 70B at `$13`/h | about 7B, in 4-bit | about 50B in bf16 on an H200, a 70B in 4-bit on one 80 GB card, larger across a server's cards |
+| Largest full fine-tune | No hard limit, only cost. 3B at `$7`/h, 70B at `$127`/h | none, a 3B needs 60 GB | a 7B on one H200, a 70B across the H100 or H200 servers' cards |
 | What you learn beyond the fine-tune | Estimating and reading a bill, tags, job guard rails | Fitting a model into a small GPU | Describing a job for a scheduler, containers, staging data |
 
 For fine-tuning, CHTC is the first choice for anyone at UW-Madison. It is free, its GPUs are large, and the queue is the only price. Colab is for practising LoRA with nothing to set up. The cloud has the newest and fastest GPUs, and a fine-tune on a large dataset sometimes needs them, but that is where the bills in this episode's cost table come from, so it is the choice when the other two cannot do the job, not the default.
