@@ -169,15 +169,32 @@ apptainer exec /staging/<n>/<netid>/churro.sif python read_results.py adapter.ta
 
 Read it the way the lesson's episode reads the SageMaker run. The mean CER before and after on the same pages is the fine-tune's effect and nothing else. The page that improved most shows what was learned, this writer's hand and the archive's conventions, umlauts and ß as written, Kurrent letterforms read correctly. The holdout curve, not the training loss, says whether two passes was the right amount. Still falling means another pass would help, flat means stop, rising while the loss falls means the model is memorising the training pages.
 
-## 10. What the run cost
+## 10. What CHTC gives you for free
 
-Nothing, in dollars. The equivalent of the lesson's `BillableTimeInSeconds` is the job's wall-clock time, and the scheduler recorded it:
+Nothing here is billed. What matters instead is what hardware is in the pool and how long you may hold it, because that sets the model sizes you can work with. The GPU Lab's inventory changes as cards are added, so read it from the scheduler, which lists every GPU type with its memory:
+
+```bash
+condor_status -constraint 'Gpus > 0' -af GPUs_DeviceName GPUs_GlobalMemoryMb | sort | uniq -c
+```
+
+As of 2026 the pool is mostly data-center cards of three memory sizes, A100s at 40 and 80 GB, L40s at 48 GB, and H100s at 80 GB, with a few older and smaller cards. The lesson's memory rules, 2 bytes per parameter for bf16 inference, about 2.5 for a LoRA fine-tune and 16 for a full fine-tune, plus a few gigabytes of working room, turn the memory into model sizes:
+
+| GPU memory | Inference, bf16 | LoRA fine-tune | Full fine-tune |
+|---|---|---|---|
+| 40 GB | up to about 15B | up to about 12B | nothing; a 3B model needs 60 GB |
+| 48 GB | up to about 20B | up to about 15B | nothing |
+| 80 GB | up to about 35B, or a 70B in 4-bit | up to about 27B | a 3B model, just |
+| several 80 GB cards in one job | a 70B in bf16 | a 70B | a 7B on two cards, a 70B on sixteen |
+
+This job needs 12 GB, so any card in the pool holds it with room to spare, and asking for a 20 GB minimum, as the submit file does, matches every one of them and starts soonest. A 7B LoRA, the largest the lesson's cost section considers on one card, is 22 GB and also fits everywhere here. The 80 GB cards are what a full fine-tune of CHURRO itself would take, and the lesson's `$6,300` for that run on AWS is zero dollars here, in exchange for its place in the queue.
+
+How long you may hold a GPU is the job-length lane. Short jobs, under 12 hours, may use two thirds of the lab's cards at once. Medium jobs, under 24 hours, one third. Long jobs, up to seven days, at most four GPUs per user. This run is an hour, so it goes in the short lane and competes for the most cards. A seven-day job holds a card nobody else can use, which is why the long lane is narrow and why checkpointing, in the next section, matters once a run is long.
+
+What a run used is in the scheduler's history, the same numbers the lesson read from a job's billable seconds on AWS, here read for fitting the next request to the job:
 
 ```bash
 condor_history <netid> -limit 3 -af:h ClusterId RemoteWallClockTime MemoryUsage DiskUsage MachineAttrGPUs_DeviceName0
 ```
-
-Put the numbers next to the request. Memory and disk used against requested tells you what to ask for next time, and asking for less than you need gets the job killed while asking for far more makes it wait for a bigger machine. The lesson's SageMaker job billed 32 minutes at `$1.41` an hour, `$0.75`. Here the same work ran on a faster GPU for free, and the price was the days for the account, the afternoon for the container and the staging, and the queue.
 
 ## 11. Scaling up, and the same guard rails
 
