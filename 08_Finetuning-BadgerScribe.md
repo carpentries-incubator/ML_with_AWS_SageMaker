@@ -95,7 +95,22 @@ The entire run, including evaluation before and after fine-tuning, takes about 3
 By the end, we'll have fine-tuned a vision-language model, compared its predictions against the original model, and checked how closely the actual bill matched our estimate.
 
 
-The same fine-tune, with the same data and scripts, also runs on Google Colab's free T4, with no AWS account, as a [standalone notebook](https://colab.research.google.com/github/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/finetune_extras/colab/LoRA-finetuning-on-a-free-GPU.ipynb), and on UW-Madison's CHTC as an [HTCondor job](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/tree/main/finetune_extras/chtc). Those are the versions to use for practising LoRA outside the workshop.
+### Three places to run this fine-tune
+
+This episode runs the fine-tune as a SageMaker job. The same model, data and scripts also run on Google Colab's free GPU and on UW-Madison's Center for High Throughput Computing, as two standalone versions in the lesson repository's `finetune_extras/` folder. Pick by what you have and what you want to learn.
+
+| | [AWS SageMaker](#) | [Google Colab](https://colab.research.google.com/github/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/finetune_extras/colab/LoRA-finetuning-on-a-free-GPU.ipynb) | [CHTC](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/tree/main/finetune_extras/chtc) |
+|---|---|---|---|
+| Who can use it | Anyone with an AWS account and a card or credits | Anyone with a Google account | UW-Madison researchers and students, with a faculty sponsor |
+| Cost of this run | About `$0.75` | Free | Free |
+| GPU | A10G, 24 GB, bf16 | T4, 16 GB, no bf16, so the frozen weights go to 4-bit | A100, L40 or H100, 40 to 80 GB, bf16 |
+| Time for this run | 33 minutes, starts in a minute | About an hour, starts at once if a GPU is free | About 20 minutes, after a queue wait of minutes to hours |
+| Largest LoRA fine-tune on one card | about 7B | about 7B in 4-bit | about 27B |
+| Getting started | Account and quotas take days on a new account | Open the notebook | Account takes two or three business days, then a container and staged weights, an afternoon |
+| What ends a runaway job | `max_run`, a cap you set | The session's 12-hour limit | The job-length lane, 12 hours for short jobs |
+| What you learn beyond the fine-tune | Estimating and reading a bill, tags, job guard rails | Fitting a model into a small GPU | Describing a job for a scheduler, containers, staging data |
+
+For a UW-Madison project, CHTC is the first place to look. For practising LoRA with nothing to set up, Colab. The cloud is for the rest, and for learning what a GPU costs when someone is paying.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
