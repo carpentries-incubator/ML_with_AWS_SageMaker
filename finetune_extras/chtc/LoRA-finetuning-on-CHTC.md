@@ -16,6 +16,21 @@ The files in this folder are everything the job needs:
 
 The training script itself, `finetune_churro_lora.py`, and its helper `badger_common.py` come from the lesson's `scripts/` folder and are not changed.
 
+## Three places to run this fine-tune
+
+The same fine-tune runs in three places. This guide is the CHTC column. The others are the [lesson's episode](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/08_Finetuning-BadgerScribe.html) on AWS and a [Colab notebook](https://colab.research.google.com/github/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/finetune_extras/colab/LoRA-finetuning-on-a-free-GPU.ipynb).
+
+| | [AWS SageMaker](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/08_Finetuning-BadgerScribe.html) | [Google Colab](https://colab.research.google.com/github/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/finetune_extras/colab/LoRA-finetuning-on-a-free-GPU.ipynb) | [CHTC](#) |
+|---|---|---|---|
+| Who can use it | Anyone with an AWS account and a card or credits | Anyone with a Google account | UW-Madison researchers and students, with a faculty sponsor |
+| Cost of this run | About `$0.75` | Free | Free |
+| GPU | A10G, 24 GB, bf16 | T4, 16 GB, no bf16, so the frozen weights go to 4-bit | A100, L40 or H100, 40 to 80 GB, bf16 |
+| Time for this run | 33 minutes, starts in a minute | About an hour, starts at once if a GPU is free | About 20 minutes, after a queue wait of minutes to hours |
+| Largest LoRA fine-tune on one card | about 7B | about 7B in 4-bit | about 27B |
+| Getting started | Account and quotas take days on a new account | Open the notebook | Account takes two or three business days, then a container and staged weights, an afternoon |
+| What ends a runaway job | `max_run`, a cap you set | The session's 12-hour limit | The job-length lane, 12 hours for short jobs |
+| What you learn beyond the fine-tune | Estimating and reading a bill, tags, job guard rails | Fitting a model into a small GPU | Describing a job for a scheduler, containers, staging data |
+
 ## 1. Get an account
 
 CHTC accounts are for research and approved courses. You need an active NetID and a faculty sponsor, usually your PI or the course instructor.
