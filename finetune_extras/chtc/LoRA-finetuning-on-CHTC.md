@@ -55,8 +55,8 @@ In your home directory, clone the lesson and copy the two Python files and this 
 
 ```bash
 cd ~
-git clone --depth 1 https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git
-mkdir badger-scribe && cd badger-scribe
+rm -rf ML_with_AWS_SageMaker && git clone -q --depth 1 https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git   # a fresh copy, so a rerun gets the current scripts
+mkdir -p badger-scribe && cd badger-scribe
 cp ../ML_with_AWS_SageMaker/scripts/finetune_churro_lora.py ../ML_with_AWS_SageMaker/scripts/badger_common.py .
 cp ../ML_with_AWS_SageMaker/finetune_extras/chtc/* .
 ls
@@ -127,7 +127,7 @@ Open `finetune.sub` and `finetune.sh` together. The submit file is the part of t
 
 *GPU memory per parameter: inference, a LoRA fine-tune, and a full fine-tune. The lesson's memory rule, which the GPU request below is read from.*
 
-**The GPU request** is where the lesson's cost estimate becomes a resource request. The lesson's memory rule gives about 12 GB for a 3B LoRA run, so `gpus_minimum_memory = 20000` asks for a card with at least 20 GB, with room for the before-and-after scoring. `gpus_minimum_capability = 8.0` asks for an Ampere or newer GPU, which is what bf16 training needs. The lesson's time rule gave 12 minutes of training on an A10G and the measured job was 32 minutes with its scoring, and CHTC's GPUs are faster, so `+GPUJobLength = "short"`, the lane for jobs under 12 hours. Short jobs can use two thirds of the GPU Lab's cards, medium jobs (under 24 hours) one third, and long jobs (up to seven days) at most four GPUs per user. Ask for the shortest lane the job fits, and it starts sooner.
+**The GPU request** is where the lesson's cost estimate becomes a resource request. The lesson's memory rule gives about 12 GB for a 3B LoRA run, so `gpus_minimum_memory = 20000` asks for a card with at least 20 GB, with room for the before-and-after scoring. `gpus_minimum_capability = 8.0` asks for an Ampere or newer GPU, which is what bf16 needs. On a card this size there is no reason to compress anything. The frozen base weights stay in bf16 and the adapter trains in bf16, as in the lesson's SageMaker job, which is why the script's default precision is right here and the Colab version's 4-bit setting is not needed. The lesson's time rule gave 12 minutes of training on an A10G and the measured job was 32 minutes with its scoring, and CHTC's GPUs are faster, so `+GPUJobLength = "short"`, the lane for jobs under 12 hours. Short jobs can use two thirds of the GPU Lab's cards, medium jobs (under 24 hours) one third, and long jobs (up to seven days) at most four GPUs per user. Ask for the shortest lane the job fits, and it starts sooner.
 
 **`request_memory` and `request_disk`** are the machine's RAM and scratch disk, not the GPU's. Loading 7.5 GB of weights peaks CPU memory at about twice that, so 32 GB. The disk holds the model tar and its unpacked copy, the data, the container's working files and the outputs, so 40 GB. A job that exceeds its request is held or killed, and the `.log` file says by how much, so a first run that is held is corrected by raising the number and resubmitting.
 
