@@ -522,6 +522,31 @@ print(f"average tokens per page: {avg_image:.0f} image + {n_instructions} instru
 
 That average is the `tokens_per_example` the estimate should have used. Step 0 of this episode ran `helpers.estimate_finetune_cost` with a guess of 1,600 tokens per page; run it again with the measured average and compare:
 
+::::::::::::::::::::::::::::::::::::: challenge
+
+### Count the page for another model
+
+Pick another open vision-language model and count what the same page costs there. `llava-hf/llava-1.5-7b-hf` is not gated and its processor downloads in seconds. Before running anything, read its model card and predict two things: how many image tokens a page will take, and whether `max_pixels` will change that. Then load its processor, build the same message with its chat template, the image, the instruction and the transcription, and read the `input_ids` length. Run the text without the image to separate the two.
+
+:::::::::::::::::::::::: solution
+
+```python
+from transformers import AutoProcessor
+llava = AutoProcessor.from_pretrained("llava-hf/llava-1.5-7b-hf")
+messages = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": prompt}]},
+            {"role": "assistant", "content": [{"type": "text", "text": row.text}]}]
+text = llava.apply_chat_template(messages, tokenize=False)
+n_llava = llava(text=[text], images=[image], return_tensors="pt")["input_ids"].shape[1]
+n_llava_text = len(llava.tokenizer(text.replace("<image>", ""))["input_ids"])
+print(f"LLaVA 1.5: {n_llava} tokens for the page, {n_llava - n_llava_text} of them for the image; CHURRO: {n_total}")
+```
+
+LLaVA 1.5 resizes every image to 336 × 336 pixels and cuts it into 24 × 24 patches of 14 pixels, 576 image tokens however large the page, so `max_pixels` changes nothing for it. The page comes to about 900 tokens, 576 for the image and the rest for the instruction and the German text, which its Llama tokenizer splits into a different number of pieces than Qwen's. Fewer tokens is a cheaper step. It is not a better model for this task. A 336-pixel image of a letter page is too small to read the handwriting, which is why CHURRO spends 1,280 tokens on a megapixel. The token count is cost. Accuracy has to be measured.
+
+:::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
 ```python
 helpers.estimate_finetune_cost(params_billions=3.75, examples=251, tokens_per_example=int(avg_tokens_per_page), epochs=2,
                                method="lora", instance_type="ml.g5.xlarge");
