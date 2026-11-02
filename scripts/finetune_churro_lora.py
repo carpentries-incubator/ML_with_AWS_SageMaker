@@ -259,7 +259,7 @@ def main():
 
     # --- model ---
     if args.dtype == "auto":
-        args.dtype = "bf16" if torch.cuda.is_bf16_supported() else "fp16"
+        args.dtype = "bf16" if torch.cuda.get_device_capability(0)[0] >= 8 else "fp16"   # bf16 hardware is Ampere (8.0) and newer; a T4 is 7.5
     dtype = torch.bfloat16 if args.dtype == "bf16" else torch.float16
     print(f"loading {args.model_id} in {args.dtype}" + (", frozen weights in 4-bit" if args.load_in_4bit else ""))
     processor = AutoProcessor.from_pretrained(args.model_id, min_pixels=args.min_pixels, max_pixels=args.max_pixels)

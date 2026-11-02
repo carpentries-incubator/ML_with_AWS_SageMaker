@@ -98,7 +98,7 @@ def main():
     processor = AutoProcessor.from_pretrained(processor_src, min_pixels=args.min_pixels, max_pixels=args.max_pixels)
     processor.tokenizer.padding_side = "left"  # batched generation needs left padding
     if args.dtype == "auto":
-        args.dtype = "bf16" if torch.cuda.is_bf16_supported() else "fp16"
+        args.dtype = "bf16" if torch.cuda.get_device_capability(0)[0] >= 8 else "fp16"   # bf16 hardware is Ampere (8.0) and newer; a T4 is 7.5
     model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
         args.model_id, torch_dtype=(torch.bfloat16 if args.dtype == "bf16" else torch.float16), attn_implementation="sdpa"
     ).to("cuda")
