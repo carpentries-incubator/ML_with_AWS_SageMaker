@@ -311,9 +311,7 @@ def job_cost_report(job_name: str, price_per_hour: float):
 prices = {"ml.m5.large": 0.115, "ml.g4dn.xlarge": 0.74}
 ```
 
-Set up the estimator for a longer run: the epochs, the instance, where the output goes, and a two-hour `max_run` cap.
-
-If the launch is refused with an `AccessDeniedException` ending in `explicit deny`, the account's checks are the cause: a missing tag, an instance type outside the lesson's list, or a resource kind the lesson never creates; the first training episode's callout *If the launch is refused* says what to look at.
+Set up the estimator for a longer run: the epochs, the instance, where the output goes, and a two-hour `max_run` cap. If the launch is refused with an `AccessDeniedException` ending in `explicit deny`, the account's checks are the cause: a missing tag, an instance type outside the lesson's list, or a resource kind the lesson never creates; the first training episode's callout *If the launch is refused* says what to look at.
 
 ```python
 from sagemaker.pytorch import PyTorch

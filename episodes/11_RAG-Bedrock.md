@@ -87,9 +87,7 @@ If there is no instructor-staged bucket, stage the four input files in your own 
 
 ### Step 1 – Configure the notebook
 
-Three things are new here compared with the training episodes, so the setup is split into four cells.
-
-The session, region and S3 client are as before, plus the execution role, printed because the Bedrock calls below run as it.
+Three things are new here compared with the training episodes, so the setup is split into four cells. The session, region and S3 client are as before, plus the execution role, printed because the Bedrock calls below run as it.
 
 ```python
 import os
@@ -699,9 +697,7 @@ A question is marked unanswerable (`is_blank` everywhere, as the competition req
 
 ## Step 11 – Run the WattBot evaluation with Bedrock
 
-Now we can loop over the questions, run retrieval + Bedrock generation, and write a `wattbot_solutions_bedrock.csv` file (locally and to your bucket).
-
-`train_QA.csv` has 245 questions, and at two calls each that is about twenty minutes. For class we score a stratified sample instead. `sample_questions_by_type` draws ten questions from each evidence type (Quote, Table, Figure, Math, unanswerable, cross-paper, reconcile), 53 questions after overlaps and the two missing papers, so every row of the breakdown in the next step has something in it. The first 53 rows of the file would be nearly all Quote questions. The seed fixes the draw, and the Processing Jobs episode uses the same one, so the two runs are compared on the same questions. Set `per_type=0` to run the whole file.
+Now we can loop over the questions, run retrieval + Bedrock generation, and write a `wattbot_solutions_bedrock.csv` file (locally and to your bucket). `train_QA.csv` has 245 questions, and at two calls each that is about twenty minutes. For class we score a stratified sample instead. `sample_questions_by_type` draws ten questions from each evidence type (Quote, Table, Figure, Math, unanswerable, cross-paper, reconcile), 53 questions after overlaps and the two missing papers, so every row of the breakdown in the next step has something in it. The first 53 rows of the file would be nearly all Quote questions. The seed fixes the draw, and the Processing Jobs episode uses the same one, so the two runs are compared on the same questions. Set `per_type=0` to run the whole file.
 
 The Processing Jobs episode reuses this same loop with self-hosted models; the only difference there is that the embedding, answer
 and explanation phases call local models instead of Bedrock-hosted ones.

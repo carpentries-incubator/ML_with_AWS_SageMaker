@@ -282,9 +282,7 @@ Using the S3 Standard rate in us-east-1:
    - **Deletion**: `$0`
    - **Total Cost**: **`$115.71004`**
 
-These costs assume no request charges beyond the `GET`s for training.
-
-The `GET` line is the same four-thousandths of a cent at every size: request costs depend on how many objects you touch, not how big they are. The download line is about 80% of the total at every size, since storage and transfer both scale with gigabytes: moving a dataset out of AWS once costs about four times what keeping it there for a month does, so keep large data in the region and bring code to it.
+These costs assume no request charges beyond the `GET`s for training. The `GET` line is the same four-thousandths of a cent at every size: request costs depend on how many objects you touch, not how big they are. The download line is about 80% of the total at every size, since storage and transfer both scale with gigabytes: moving a dataset out of AWS once costs about four times what keeping it there for a month does, so keep large data in the region and bring code to it.
 
 3. **Wrong region, 100 GB**: 100 reads x 100 GB x `$0.01` = **`$100`** of inter-region transfer, on top of the `$11.30` above. The one-time download to a laptop was `$9`; the misplaced bucket costs ten times that, silently, and keeps costing with every job.
 
