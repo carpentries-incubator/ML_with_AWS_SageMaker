@@ -587,13 +587,6 @@ Open `code/finetune_churro_lora.py` in the Jupyter file browser. It is about 400
 
 :::::::::::::::::::::::::::::::::::::::
 
-One more setting, the one that controls cost more than any other:
-
-```python
-# Every 28x28 block of the page becomes one token. 1280 blocks ~ 1 megapixel.
-DEFAULT_MAX_PIXELS = 1280 * 28 * 28
-```
-
 ### Tags
 
 As in every episode: tags do not propagate from the notebook to the jobs it launches. Pass them to every estimator.
@@ -674,7 +667,7 @@ hyperparameters = {
     "lora_r": 16,                     # adapter rank: about 30 million trainable parameters, from the cell above; 32 would double that
     "batch_size": 1,
     "grad_accum": 4,                  # effective batch of 4 pages -> ~125 optimizer steps over 2 passes
-    "max_pixels": 1280 * 28 * 28,     # ~1 megapixel per page; tokens per page, and so cost, scale with it
+    "max_pixels": 1280 * 28 * 28,     # the page is resized to at most this many pixels, about a megapixel; every 28 x 28 block is one token, so about 1,280 image tokens a page, as Setup measured. The setting that moves cost most
     "eval_pages": 15,                 # holdout pages scored before (eval_before=1) and after training
     "eval_before": 1,
     "curve_pages": 8,                 # of those 15, scored again at the end of every epoch: the CER curve
