@@ -1,0 +1,17 @@
+# An interactive job for building the container. Start it with
+#     condor_submit -i build.sub
+# wait for a shell on a build machine, then run
+#     apptainer build churro.sif churro.def
+# The build downloads the PyTorch image (several GB) and installs the Python
+# packages; it takes 10 to 20 minutes. If it dies, the usual cause is disk:
+# raise request_disk.
+
+log = build.log
+transfer_input_files = churro.def
+
++IsBuildJob = true
+request_cpus = 4
+request_memory = 16GB
+request_disk = 30GB
+
+queue

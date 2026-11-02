@@ -95,7 +95,7 @@ The entire run, including evaluation before and after fine-tuning, takes about 3
 By the end, we'll have fine-tuned a vision-language model, compared its predictions against the original model, and checked how closely the actual bill matched our estimate.
 
 
-The same fine-tune, with the same data and scripts, also runs on Google Colab's free T4, with no AWS account, as a [standalone notebook](https://colab.research.google.com/github/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/finetune_extras/colab/LoRA-finetuning-on-a-free-GPU.ipynb). It is the version to use for practising LoRA outside the workshop.
+The same fine-tune, with the same data and scripts, also runs on Google Colab's free T4, with no AWS account, as a [standalone notebook](https://colab.research.google.com/github/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/finetune_extras/colab/LoRA-finetuning-on-a-free-GPU.ipynb), and on UW-Madison's CHTC as an [HTCondor job](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/tree/main/finetune_extras/chtc). Those are the versions to use for practising LoRA outside the workshop.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
