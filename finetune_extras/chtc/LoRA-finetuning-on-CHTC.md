@@ -26,12 +26,15 @@ The same fine-tune runs in three places. This guide is the CHTC column. The othe
 |---|---|---|---|
 | Who can use it | Anyone with an AWS account and a card or credits | Anyone with a Google account | UW-Madison researchers and students, with a faculty sponsor |
 | Cost of this run | About `$0.75` | Free | Free |
-| GPU | A10G, 24 GB, bf16 | T4, 16 GB, no bf16, so the frozen weights go to 4-bit | A100, L40 or H100, 40 to 80 GB, bf16 |
+| GPU | A10G, 24 GB, bf16 | T4, 16 GB, no bf16, so the frozen weights go to 4-bit | L40S, A100, H100 or H200, 48 to 141 GB, bf16; NVLink on the A100, H100 and H200 servers |
 | Time for this run | 33 minutes, starts in a minute | About an hour, starts at once if a GPU is free | About 20 minutes, after a queue wait of minutes to hours |
-| Largest LoRA fine-tune on one card | about 7B | about 7B in 4-bit | about 27B |
-| Getting started | Account and quotas take days on a new account | Open the notebook | Account takes two or three business days, then a container and staged weights, an afternoon |
-| What ends a runaway job | `max_run`, a cap you set | The session's 12-hour limit | The job-length lane, 12 hours for short jobs |
+| Largest LoRA fine-tune | about 7B in bf16, about 13B in 4-bit, on one 24 GB card | about 7B, in 4-bit | about 50B in bf16 on an H200, a 70B in 4-bit on one 80 GB card, larger across a server's cards |
+| Largest full fine-tune | a 70B, on two 8-GPU instances at `$127`/h | none, a 3B needs 60 GB | a 7B on one H200, a 70B across the H100 or H200 servers' cards |
 | What you learn beyond the fine-tune | Estimating and reading a bill, tags, job guard rails | Fitting a model into a small GPU | Describing a job for a scheduler, containers, staging data |
+
+For fine-tuning, CHTC is the first choice for anyone at UW-Madison. It is free, its GPUs are large, and the queue is the only price. Colab is for practising LoRA with nothing to set up. The cloud has the newest and fastest GPUs, and a fine-tune on a large dataset sometimes needs them, but it bills by the hour, so it is the choice when the other two cannot do the job, not the default.
+
+None of the three runtime limits is a wall. The training script writes a checkpoint at the end of every epoch and resumes from it, so a run longer than a CHTC job lane, a Colab session or an AWS runtime cap is several runs that each pick up where the last one stopped. Section 11 says how to make HTCondor carry the checkpoints between runs.
 
 ## 1. Get an account
 
@@ -194,16 +197,20 @@ Nothing here is billed. What matters instead is what hardware is in the pool and
 condor_status -constraint 'Gpus > 0' -af GPUs_DeviceName GPUs_GlobalMemoryMb | sort | uniq -c
 ```
 
-As of 2026 the pool is mostly data-center cards of three memory sizes, A100s at 40 and 80 GB, L40s at 48 GB, and H100s at 80 GB, with a few older and smaller cards. The lesson's memory rules, 2 bytes per parameter for bf16 inference, about 2.5 for a LoRA fine-tune and 16 for a full fine-tune, plus a few gigabytes of working room, turn the memory into model sizes:
+CHTC publishes the inventory behind that command, and as of late 2026 the open pool is, in order of how many there are: 34 H200s with 141 GB, 27 L40s and 22 L40Ss with 48 GB, 24 A100s at 80 or 40 GB, 12 RTX PRO 6000s with 96 GB, 8 H100s with 80 GB, and a few dozen older cards with 11 to 24 GB. A second, larger backfill pool runs jobs that can be interrupted, which is what `+is_resumable = true` asks for. Two things about the cards matter for fine-tuning beyond their memory. Their generation, which the data file calls `hardware_generation` and HTCondor calls capability, is 8.0 or newer for every card from the A100 up, so bf16 training works on all of them. And how the cards in one server are wired together. In the A100, H100 and H200 servers the GPUs are soldered onto one board and joined by NVLink, NVIDIA's direct GPU-to-GPU link, which is the build data-center AI servers use and what a multi-GPU job wants. The L40, L40S and RTX PRO 6000 are ordinary plug-in cards that talk through the PCIe bus, several times slower.
 
-| GPU memory | Inference, bf16 | LoRA fine-tune | Full fine-tune |
-|---|---|---|---|
-| 40 GB | up to about 15B | up to about 12B | nothing; a 3B model needs 60 GB |
-| 48 GB | up to about 20B | up to about 15B | nothing |
-| 80 GB | up to about 35B, or a 70B in 4-bit | up to about 27B | a 3B model, just |
-| two or more 80 GB cards in one job, with the model sharded across them | a 70B in bf16 | a 70B | a 7B on two cards |
+The lesson's memory rules turn the memory into model sizes. Inference needs 2 bytes per parameter in bf16, a LoRA fine-tune about 2.5 with the frozen weights in bf16 or about 1 with them in 4-bit (the QLoRA setup the Colab version uses), and a full fine-tune 16, plus a few gigabytes of working room:
 
-The last row is for a model that does not fit one card, and it is slower than the card count suggests. The GPUs in a CHTC server talk over PCIe, not the NVLink of the big training boxes, and the lesson's PyTorch episode estimated 3.2 of an ideal 4 over PCIe for a full fine-tune's gradient exchange. Stay on one card whenever the memory rule says the job fits. This job needs 12 GB, so any card in the pool holds it with room to spare, and asking for a 20 GB minimum, as the submit file does, matches every one of them and starts soonest. A 7B LoRA, the largest the lesson's cost section considers on one card, is 22 GB and also fits everywhere here. The 80 GB cards are what a full fine-tune of CHURRO itself would take, and the lesson's `$6,300` for that run on AWS is zero dollars here, in exchange for its place in the queue.
+| GPU memory | Cards | Inference, bf16 | LoRA fine-tune | Full fine-tune |
+|---|---|---|---|---|
+| 40 GB | A100 40 GB, A100 MIG slices | up to about 15B | up to about 12B, about 35B in 4-bit | nothing; a 3B model needs 60 GB |
+| 48 GB | L40, L40S | up to about 20B | up to about 15B, about 40B in 4-bit | nothing |
+| 80 GB | A100 80 GB, H100 | up to about 35B, or a 70B in 4-bit | up to about 27B, about 70B in 4-bit | a 3B model, just |
+| 96 GB | RTX PRO 6000 | up to about 40B | up to about 35B, a 70B in 4-bit | a 3B model |
+| 141 GB | H200 | up to about 65B | up to about 50B, a 70B in 4-bit with room | a 3B model easily, a 7B model, just |
+| several cards in one server, model sharded across them | the A100, H100 and H200 servers, joined by NVLink | a 70B in bf16 | a 70B in bf16 | a 7B on two 80 GB cards, a 70B on many |
+
+The last row is for a model that does not fit one card, and how well it works depends on the server. On the A100, H100 and H200 servers the cards share NVLink and a sharded job runs close to the card count. On the L40S and RTX PRO 6000 servers the cards share a PCIe bus, and the lesson's PyTorch episode estimated 3.2 of an ideal 4 for a full fine-tune's gradient exchange over PCIe, less for a smaller batch. Stay on one card whenever the memory rule says the job fits. This job needs 12 GB, so any card in the pool holds it with room to spare, and asking for a 20 GB minimum, as the submit file does, matches every one of them and starts soonest. A 7B LoRA, the largest the lesson's cost section considers on one card, is 22 GB and also fits everywhere here. The 80 GB and larger cards are what a full fine-tune of CHURRO itself would take, and the lesson's `$6,300` for that run on AWS is zero dollars here, in exchange for its place in the queue.
 
 How long you may hold a GPU is the job-length lane. Short jobs, under 12 hours, may use two thirds of the lab's cards at once. Medium jobs, under 24 hours, one third. Long jobs, up to seven days, at most four GPUs per user. This run is an hour, so it goes in the short lane and competes for the most cards. A seven-day job holds a card nobody else can use, which is why the long lane is narrow and why checkpointing, in the next section, matters once a run is long.
 
@@ -220,7 +227,7 @@ The lesson's rules for a bigger run hold here, in CHTC's terms.
 - **A longer run goes in a longer lane.** The homework's four-pass run is still short. A run of many hours is `+GPUJobLength = "medium"` or `"long"`, and the long lane caps a user at four GPUs.
 - **Checkpoint anything long.** The training script already writes a checkpoint at the end of every epoch to `output/ckpt` and resumes from it when restarted. HTCondor can carry those checkpoints across an interruption if the job tells it to. Add `checkpoint_exit_code = 85` and `transfer_checkpoint_files = output/ckpt` to the submit file, and have the wrapper exit with code 85 after each epoch's checkpoint instead of running to the end. CHTC's checkpointing guide has the protocol, and jobs that checkpoint every few hours can add `+is_resumable = true` to run on backfill GPUs too. For a one-hour run it is not worth the setup, which is the same call the lesson made.
 - **Test on a slice first.** Add `--max_train_pages 20 --epochs 1 --eval_pages 3 --curve_pages 0` to the arguments line for a ten-minute run before the real one. A bug costs ten minutes of a free GPU here instead of a dollar, but the queue time is the same, so the habit still pays.
-- **Stay on one GPU unless the model does not fit it.** Almost every fine-tune a research group runs, LoRA on anything up to about 27B, fits one 80 GB card, and one card is the request that starts soonest. A second GPU does not make a job that fits one card cheaper here, since nothing is billed, and it rarely makes it much faster, because the cards in a CHTC server share a PCIe bus, not NVLink, and a job that asks for two waits for a server with two free. When a model does not fit one card, `request_gpus = 2` or more and the training script's `Trainer` with `fsdp=` shards the weights, gradients and optimizer state across them, which the lesson's PyTorch episode explains. Test that it works on a slice before a long run.
+- **Stay on one GPU unless the model does not fit it.** Almost every fine-tune a research group runs fits one card here, LoRA on anything up to about 27B with the frozen weights in bf16 on an 80 GB card, about 50B on an H200, and up to a 70B with them in 4-bit, and one card is the request that starts soonest. A second GPU does not make a job that fits one card cheaper, since nothing is billed, and a job that asks for two waits for a server with two free. When a model does not fit one card, `request_gpus = 2` or more and the training script's `Trainer` with `fsdp=` shards the weights, gradients and optimizer state across them, which the lesson's PyTorch episode explains. Ask for the A100, H100 or H200 servers for that, where the cards share NVLink. On the L40S and RTX PRO 6000 servers they share PCIe and the split loses more. `condor_status` names the server a card is in, and CHTC's GPU table says which cards those are. Test that it works on a slice before a long run.
 - **A Kaggle submission** uses the lesson's `churro_transcribe_batch.py` with `--adapter_dir` pointing at the unpacked adapter, over the 141 test pages. The Colab version of this lesson, in the folder beside this one, has that step written out, and the same arguments work in a second GPU job here.
 
 ## 12. Clean up
