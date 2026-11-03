@@ -157,6 +157,10 @@ Then one job's bill. `job_cost_report()` in the training episodes called `descri
 
 ```bash
 aws sagemaker list-training-jobs --sort-by CreationTime --sort-order Descending --query 'TrainingJobSummaries[].[TrainingJobName,TrainingJobStatus]' --output table
+# only your own, since the lesson names every job after its notebook instance: filter on that name
+# aws sagemaker list-training-jobs --name-contains <notebook-instance-name> --sort-by CreationTime --sort-order Descending --query 'TrainingJobSummaries[].[TrainingJobName,TrainingJobStatus]' --output table
+# the same list in name order, which groups each learner's jobs together
+# aws sagemaker list-training-jobs --sort-by Name --sort-order Ascending --query 'TrainingJobSummaries[].[TrainingJobName,TrainingJobStatus]' --output table
 ```
 
 ::::::::::::::::::::::::::::::::::::: tab
