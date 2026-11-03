@@ -81,8 +81,6 @@ Code blocks in the episodes become notebook cells, so keep each block runnable o
 
 For issues, suggestions, or requests for other ML and AI workflows, [open a GitHub issue](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/issues) or email [endemann@wisc.edu](mailto:endemann@wisc.edu).
 
-Development takes place on the [qualiaMachine fork](https://github.com/qualiaMachine/ML_with_Amazon_SageMaker), and changes are synced to the Carpentries Incubator repository by pull request.
-
 ## Citation and license
 
 Please cite the lesson using `CITATION.cff`.
