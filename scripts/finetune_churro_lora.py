@@ -80,14 +80,14 @@ def parse_args():
     # A local directory works as a model id for from_pretrained; SageMaker sets
     # SM_CHANNEL_MODEL when the estimator is given a "model" channel.
     p.add_argument("--model_id", type=str, default=os.environ.get("SM_CHANNEL_MODEL", "stanford-oval/churro-3B"))
-    p.add_argument("--epochs", type=float, default=2.0)
-    p.add_argument("--lr", type=float, default=2e-4)
-    p.add_argument("--lora_r", type=int, default=16)
-    p.add_argument("--lora_alpha", type=int, default=32)
-    p.add_argument("--lora_dropout", type=float, default=0.05)
-    p.add_argument("--batch_size", type=int, default=1, help="pages per step per GPU")
-    p.add_argument("--grad_accum", type=int, default=8, help="effective batch = batch_size * grad_accum")
-    p.add_argument("--max_pixels", type=int, default=DEFAULT_MAX_PIXELS)
+    p.add_argument("--epochs", type=float, default=2.0, help="passes over the training pages; the holdout curve says whether more would help")
+    p.add_argument("--lr", type=float, default=2e-4, help="LoRA trains at about 10x the learning rate of a full fine-tune (~1e-5), because the adapter starts at zero and is small")
+    p.add_argument("--lora_r", type=int, default=16, help="adapter rank: the inner width of the two thin matrices; trainable parameters scale with it")
+    p.add_argument("--lora_alpha", type=int, default=32, help="scales the adapter's output by alpha/r; alpha = 2r is the usual choice")
+    p.add_argument("--lora_dropout", type=float, default=0.05, help="dropout on the adapter's input, a little regularization on a few hundred pages")
+    p.add_argument("--batch_size", type=int, default=1, help="pages per step per GPU; a page is ~1,500 tokens, so one at a time on a 24 GB card")
+    p.add_argument("--grad_accum", type=int, default=8, help="steps whose gradients are summed before an update: effective batch = batch_size * grad_accum")
+    p.add_argument("--max_pixels", type=int, default=DEFAULT_MAX_PIXELS, help="the image is resized to at most this many pixels; one token per 28x28 block, so this sets the image tokens")
     p.add_argument("--min_pixels", type=int, default=DEFAULT_MIN_PIXELS)
     p.add_argument("--use_metadata", type=int, default=1)
     # --- how much of the data ---
@@ -282,6 +282,10 @@ def main():
     print(f"loading {args.model_id} in {args.dtype}" + (", frozen weights in 4-bit" if args.load_in_4bit else ""))
     processor = AutoProcessor.from_pretrained(args.model_id, min_pixels=args.min_pixels, max_pixels=args.max_pixels)
     if args.load_in_4bit:
+        # QLoRA: the frozen base weights are stored in 4-bit (nf4, a format shaped to how weights are
+        # distributed; double quantization also compresses the scaling factors). Each weight is
+        # unpacked to the compute dtype when a layer runs, so the arithmetic is the same as in 16-bit
+        # and only the storage shrinks, 7.5 GB to about 2 GB for this model. The adapter is not quantized.
         from transformers import BitsAndBytesConfig
         model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
             args.model_id, attn_implementation="sdpa", device_map={"": 0},
@@ -289,6 +293,8 @@ def main():
                                                    bnb_4bit_use_double_quant=True, bnb_4bit_compute_dtype=dtype),
         )
         from peft import prepare_model_for_kbit_training
+        # Freezes the quantized weights, keeps the layer norms in 32-bit for stability, and turns on
+        # gradient checkpointing, which recomputes activations in the backward pass instead of storing them.
         model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=True,
                                                 gradient_checkpointing_kwargs={"use_reentrant": False})
     else:
@@ -296,25 +302,28 @@ def main():
             args.model_id, torch_dtype=dtype, attn_implementation="sdpa"
         ).to("cuda")
 
-    # LoRA on the language model's attention + MLP projections only. The
-    # vision tower stays frozen: its module names contain "visual", which
-    # the negative lookahead excludes.
+    # LoRA: beside each chosen weight matrix W (in x out), add two thin matrices A (in x r) and
+    # B (r x out), initialized so that B is zero and the adapter starts as a no-op. The layer
+    # computes W x + (alpha/r) B A x; W never changes, only A and B train. The seven targets are
+    # the language model's attention projections (q, k, v, o) and MLP projections (gate, up, down)
+    # in every layer. The vision tower stays frozen: its module names contain "visual", which the
+    # negative lookahead excludes, so the adapter does not touch how the page is seen.
     lora = LoraConfig(
         r=args.lora_r,
         lora_alpha=args.lora_alpha,
         lora_dropout=args.lora_dropout,
-        bias="none",
+        bias="none",                      # the biases stay frozen too
         task_type="CAUSAL_LM",
         target_modules=r"^(?!.*visual).*\.(q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj)$",
     )
-    model = get_peft_model(model, lora)
-    model.enable_input_require_grads()  # needed for gradient checkpointing with frozen embeddings
+    model = get_peft_model(model, lora)   # wraps the model: every parameter frozen, the adapters added and trainable
+    model.enable_input_require_grads()    # gradient checkpointing needs a grad path through the frozen embeddings to reach the adapters
     if args.dtype == "fp16":
-        # fp16 mixed precision keeps a 32-bit copy of what it trains; the adapter must start in 32-bit
+        # fp16 mixed precision keeps a 32-bit master copy of what it trains; the adapter must start in 32-bit
         for p_ in model.parameters():
             if p_.requires_grad:
                 p_.data = p_.data.float()
-    model.print_trainable_parameters()
+    model.print_trainable_parameters()    # "trainable params: 29,933,568 || all params: 3,784,556,544 || trainable%: 0.79" at rank 16
 
     # Two checks before anything trains. A LoRA run is what was estimated and
     # paid for; if the adapter landed on the vision tower, or if most of the
@@ -402,13 +411,13 @@ def main():
         per_device_train_batch_size=args.batch_size,
         gradient_accumulation_steps=args.grad_accum,
         learning_rate=args.lr,
-        lr_scheduler_type="cosine",
-        **warmup,
-        weight_decay=0.0,
-        bf16=(args.dtype == "bf16"),
-        fp16=(args.dtype == "fp16"),
-        gradient_checkpointing=True,
-        gradient_checkpointing_kwargs={"use_reentrant": False},
+        lr_scheduler_type="cosine",       # the rate falls along a cosine to zero at the last step
+        **warmup,                         # the first 3% of steps ramp the rate up from zero
+        weight_decay=0.0,                 # no decay on the adapter; it starts at zero and is small
+        bf16=(args.dtype == "bf16"),      # mixed precision: the frozen weights and the activations in 16-bit,
+        fp16=(args.dtype == "fp16"),      # the adapter's master copy and optimizer state in 32-bit
+        gradient_checkpointing=True,      # recompute activations in the backward pass instead of storing them all:
+        gradient_checkpointing_kwargs={"use_reentrant": False},   # slower by ~30%, but the 1,500-token pages fit
         logging_steps=5,
         save_strategy="epoch",            # adapter + optimizer state at the end of every epoch
         save_total_limit=1,               # keep only the latest; the adapter is ~100 MB
@@ -430,8 +439,8 @@ def main():
     print(f"training finished in {train_secs / 60:.1f} min; final loss {result.training_loss:.4f}")
 
     # --- save adapter + processor, and the curves ---
-    model.save_pretrained(args.model_dir)
-    processor.save_pretrained(args.model_dir)
+    model.save_pretrained(args.model_dir)       # PEFT saves only the adapter (A and B for each target), ~100 MB, not the 7.5 GB base
+    processor.save_pretrained(args.model_dir)   # the resize and tokenizer settings, so inference prepares pages the same way
     loss_curve = [{"step": h["step"], "epoch": round(h["epoch"], 3), "loss": h["loss"]}
                   for h in trainer.state.log_history if "loss" in h]
     with open(os.path.join(args.model_dir, "train_log.json"), "w") as f:
