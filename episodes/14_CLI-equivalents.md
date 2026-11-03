@@ -27,17 +27,17 @@ exercises: 10
 
 Everything in this lesson went through the SageMaker Python SDK in a notebook on a SageMaker notebook instance. That instance is a cost and a chore. It bills while it is on, five cents an hour for the `ml.t3.medium`, a dollar a day, and someone has to remember to stop it. It is also a second place to work, a Jupyter session in a browser tab, when your code, your editor and your files are on your laptop.
 
-None of that is required. The notebook instance was a convenience for teaching. SageMaker is an API, and the AWS CLI calls the same API from a terminal. A job launched from your laptop needs no instance at all. The request goes from your terminal to SageMaker, the job runs on a machine rented for it and ends, and the model lands in S3. For a project that launches a job a day and otherwise works locally, that removes the notebook instance's whole cost and the habit of stopping it. The terminal is also the tool for checking on a job from another machine, stopping something when no notebook is open, and copying results out of S3 in bulk.
+None of that is required. The notebook instance was a convenience for teaching and for governance in a shared account. SageMaker is an API, and the AWS CLI calls the same API from a terminal. A job launched from your laptop needs no instance at all. The request goes from your terminal to SageMaker, the job runs on a machine rented for it and ends, and the model lands in S3. For a project that launches a job a day and otherwise works locally, that removes the notebook instance's whole cost and the habit of stopping it. The terminal is also the tool for checking on a job from another machine, stopping something when no notebook is open, and copying results out of S3 in bulk.
 
 This episode does five things from a laptop terminal. It signs in to the account with Identity Center, lists what is running and reads what a job cost, stops your own jobs and your own notebook instance by name, copies data to and from S3, and relaunches the training episode's XGBoost job from a JSON file.
 
 Two things differ from the notebook. The first is identity. On the instance, its role signed every call. On a laptop you sign in yourself, which is section 1. The second is checking. The lesson's notebooks printed a cost estimate and ran a launch check before every job. A JSON request does neither on its own, so section 5 runs the lesson's checker on the file before the create call. It applies the account's rules and prints the most the request can bill.
 
-On a shared workshop account, such as the ML Marathon's, keep launching from the notebook instance. It is required there, because every learner's launches and the code behind them then sit on an instance the administrators can see, which is how they help when something goes wrong. The terminal route is for your own account. On any account it is the tool for looking and for stopping.
+On a shared workshop account, such as the ML Marathon's, keep launching from the notebook instance. It is required there, because every learner's launches and the code behind them then sit on an instance the administrators can see, which is how they help when something goes wrong. Launching from the terminal is for your own account, and for practicing it in this episode. Checking on jobs and stopping them from the terminal is fine on any account.
 
 ### What the notebooks did, and the command that does the same
 
-The CLI, the SDK and the console are one API, so every call the episodes made has a CLI command with the same name and the same fields. This table is the map. The sections below work through the rows that matter most.
+The CLI, the SageMaker SDK, `boto3` and the console all talk to the same AWS API. The SDK's estimators built requests for it, the `boto3` calls in the cleanup and RAG episodes sent requests to it directly, and the console shows its results. So every call the episodes made has a CLI command with the same name and the same fields, and a `boto3` method name such as `describe_training_job` is the CLI command `describe-training-job` with the underscores swapped for hyphens. This table is the map. The sections below work through the rows that matter most.
 
 | Episode | In the notebook | From the terminal |
 |---|---|---|
@@ -59,7 +59,7 @@ The SDK's job classes (`XGBoost`, `PyTorch`, `HuggingFace`, `HuggingFaceProcesso
 
 ### What to replace in the commands
 
-Anything in angle brackets, `<like this>`, is a value of yours. Replace it, brackets included. This is every placeholder in the episode and where its value comes from.
+Anything in angle brackets, `<like this>`, is a value of yours. Replace it, brackets included. This table lists every placeholder in the episode and how to find its value.
 
 | Placeholder | What it is | Where to find it |
 |---|---|---|
@@ -86,7 +86,7 @@ Nothing here is more powerful than a notebook cell. The difference is that a ter
 
 ## 1. Sign in with Identity Center
 
-This episode runs from your own laptop, in a terminal, so it works when no notebook is open. The AWS CLI is already installed in CloudShell and on every SageMaker notebook instance, where it uses the instance's role and needs no sign-in. A laptop has neither, so two things come first.
+This episode runs from your own laptop, in a terminal, so it works when no notebook is open. CloudShell and the SageMaker notebook instance already have the AWS CLI installed, and on the instance it uses the instance's role, so there is no sign-in. On a laptop you install the CLI and sign in yourself.
 
 1. **Install [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)** from the installer for your operating system. Then open a terminal, Terminal on macOS, Git Bash or PowerShell on Windows, and check that it is on your path:
 
@@ -94,7 +94,7 @@ This episode runs from your own laptop, in a terminal, so it works when no noteb
 aws --version
 ```
 
-2. **Register the account's Identity Center**, once. Run the command below in the same terminal. It asks four things in turn. First the start URL and the region of the Identity Center sign-in page, the same ones you used in the browser, both in the sign-in email from your instructor. It then opens a browser tab for you to approve the device, lets you pick the account and the permission set, and finally asks for a default region, `us-east-2` for the workshop account, and a name for the profile. A profile is a named set of these answers, saved in `~/.aws/config` on your laptop, so that the CLI knows which account, role and region a command is for. One laptop can hold several, one per account you use. Call this one `workshop`, since the rest of the episode uses that name.
+2. **Register the account's Identity Center**, once. Run the command below in the same terminal. It asks four things in turn. First the start URL and the region of the Identity Center sign-in page, the same ones you used in the browser, both in the sign-in email from your instructor. It then opens a browser tab for you to approve the device, and comes back to the terminal to ask which account and which permission set. On the workshop account there is one of each, the account your instructor set up and the permission set your login carries, so pick what it offers. The permission set is not the notebook role. It is the identity you sign in with, the same one the console uses. The notebook role, `ml-sagemaker-use`, is what a job runs as, and it stays in the job's `RoleArn` in section 5. Finally it asks for a default region, `us-east-2` for the workshop account, and a name for the profile. A profile is a named set of these answers, saved in `~/.aws/config` on your laptop, so that the CLI knows which account, role and region a command is for. One laptop can hold several, one per account you use. Call this one `workshop`, since the rest of the episode uses that name.
 
 ```bash
 aws configure sso
