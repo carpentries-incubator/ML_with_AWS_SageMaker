@@ -58,7 +58,7 @@ A GPU notebook instance is a rental with the meter running. It bills by the hour
 | A week | ~`$438` |
 | A month | **~`$1,906`** |
 
-The same evaluation on Bedrock cost well under a dollar. One forgotten weekend on this instance costs a thousand times more than the work it was rented for. A forgotten GPU notebook is the most common way research groups overspend cloud credits.
+The same evaluation on Bedrock cost well under a dollar. One forgotten weekend on this instance costs a thousand times more than the work it was rented for. A forgotten GPU notebook is a common way research groups overspend cloud credits.
 
 Two further charges people do not expect:
 
