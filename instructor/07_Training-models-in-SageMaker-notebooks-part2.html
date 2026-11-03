@@ -633,7 +633,7 @@ copy of a small dataset costs nothing worth counting.</p>
 </div>
 </section><section><h2 class="section-heading" id="check-the-training-script">Check the training script<a class="anchor" aria-label="anchor" href="#check-the-training-script"></a></h2>
 <hr class="half-width"><p>Before launching a managed job, we run 100 epochs on the controller
-notebook as a smoke test. It checks the data paths and the training code
+notebook as a short test. It checks the data paths and the training code
 and gives a rough time per epoch. It is only a local test. The runs we
 compare are launched as separate SageMaker jobs.</p>
 <div class="codewrapper sourceCode" id="cb9">
@@ -642,7 +642,7 @@ compare are launched as separate SageMaker jobs.</p>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" tabindex="-1" aria-label="code-block-9-1"></a><span class="im">import</span> torch</span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1" aria-label="code-block-9-2"></a><span class="im">import</span> time <span class="im">as</span> t <span class="co"># Measure training time locally</span></span>
 <span id="cb9-3"><a href="#cb9-3" tabindex="-1" aria-label="code-block-9-3"></a></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a>epochs <span class="op">=</span> <span class="dv">100</span>          <span class="co"># small smoke test</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1" aria-label="code-block-9-4"></a>epochs <span class="op">=</span> <span class="dv">100</span>          <span class="co"># a short test run</span></span>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1" aria-label="code-block-9-5"></a>learning_rate <span class="op">=</span> <span class="fl">0.001</span></span>
 <span id="cb9-6"><a href="#cb9-6" tabindex="-1" aria-label="code-block-9-6"></a></span>
 <span id="cb9-7"><a href="#cb9-7" tabindex="-1" aria-label="code-block-9-7"></a>start_time <span class="op">=</span> t.time()</span>
@@ -692,7 +692,7 @@ on the size of the model. For a model this small, timing a short test
 run is more useful than counting the arithmetic, so the measured time
 comes first and the counted arithmetic, which the larger models later in
 the workshop need, after it.</p>
-<p><strong>Small models: time a smoke test and scale it.</strong> The
+<p><strong>Small models: time a short run and scale it.</strong> The
 100-epoch test gives a time per epoch. Each epoch costs the same as the
 last, and the script trains on all the rows in one step per epoch, so
 training time scales with epochs and with rows. Scale the measured time
@@ -704,7 +704,7 @@ will cost cents or dollars:</p>
 <div class="codewrapper sourceCode" id="cb11">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a>local_seconds_per_epoch <span class="op">=</span> local_elapsed <span class="op">/</span> epochs                 <span class="co"># from the smoke test above: its wall-clock over its 100 epochs</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a>local_seconds_per_epoch <span class="op">=</span> local_elapsed <span class="op">/</span> epochs                 <span class="co"># from the short run above: its wall-clock over its 100 epochs</span></span>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a>planned_epochs <span class="op">=</span> <span class="dv">1000</span></span>
 <span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a>startup_minutes <span class="op">=</span> <span class="dv">3</span>                                            <span class="co"># container pull + data download, billed; the same for every job</span></span>
 <span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a>rate <span class="op">=</span> <span class="fl">0.115</span>                                                   <span class="co"># $/hour, ml.m5.large, from the Instances for ML page</span></span>
@@ -735,7 +735,7 @@ practice. It is a scale estimate, not a runtime prediction:</p>
 GPU-seconds = FLOPs ÷ (GPU peak FLOPS × 0.25)
 cost        = GPU-hours × instance price per hour + startup</code></pre>
 <p>On <code>TitanicNet</code> the arithmetic comes out as a fraction of
-a second, which is why the smoke-test method is the one to use for
+a second, which is why timing a short run is the method to use for
 it:</p>
 <div class="codewrapper sourceCode" id="cb13">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -898,8 +898,8 @@ given.</li>
 <li>
 <strong>Instance.</strong> From the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
 for ML</a> page, or let the helper pick the cheapest that fits.</li>
-</ol><p>If the FLOPs come out below 1e15, use the smoke-test method instead
-and say what you would measure. Write the estimate down with the
+</ol><p>If the FLOPs come out below 1e15, time a short run instead and say
+what you would measure. Write the estimate down with the
 <code>max_run</code> you would set, and keep it: the first bill goes
 next to it.</p>
 </div>
@@ -918,7 +918,7 @@ documents of 2,000 tokens for 3 epochs is 6 × 7e9 × 3e8 = 1.3e19 FLOPs,
 45 GPU-hours on A100s, about <code>$140</code> a run; the fine-tuning
 episode works that one through. A 10-million-parameter network on
 100,000 rows for 20 epochs is 1.2e14 FLOPs: below the line, so time a
-smoke test and scale it, and expect the startup minutes to dominate.</p>
+short run and scale it, and expect the startup minutes to dominate.</p>
 </div>
 </div>
 </div>
@@ -1423,9 +1423,9 @@ before the script runs; for a job whose script finishes in seconds, that
 overhead is the whole bill.</li>
 <li>
 <strong>Estimate before you launch</strong>: for small models, time
-a smoke test and scale it by epochs and rows, plus about three minutes
-of startup; for large ones, 6 FLOPs per parameter per token, divided by
-a quarter of the GPU’s peak. <code>helpers.estimate_training_cost</code>
+a short run and scale it by epochs and rows, plus about three minutes of
+startup; for large ones, 6 FLOPs per parameter per token, divided by a
+quarter of the GPU’s peak. <code>helpers.estimate_training_cost</code>
 does the second; write the number down and compare it to the bill.</li>
 <li>
 <strong>GPU or CPU is a measurement</strong>: the same script on an
@@ -1515,7 +1515,7 @@ any links that you are not going to use.
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/07_Training-models-in-SageMaker-notebooks-part2.html",
   "dateCreated": "2024-10-31",
   "dateModified": "2026-11-02",
-  "datePublished": "2026-11-02"
+  "datePublished": "2026-11-03"
 }
 
   </script><script>
