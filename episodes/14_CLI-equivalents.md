@@ -94,11 +94,26 @@ This episode runs from your own laptop, in a terminal, so it works when no noteb
 aws --version
 ```
 
-2. **Register the account's Identity Center**, once. Run the command below in the same terminal. It asks four things in turn. First the start URL and the region of the Identity Center sign-in page, the same ones you used in the browser, both in the sign-in email from your instructor. It then opens a browser tab for you to approve the device, and comes back to the terminal to ask which account and which permission set. On the workshop account there is one of each, the account your instructor set up and the permission set your login carries, so pick what it offers. The permission set is not the notebook role. It is the identity you sign in with, the same one the console uses. The notebook role, `ml-sagemaker-use`, is what a job runs as, and it stays in the job's `RoleArn` in section 5. Finally it asks for a default region, `us-east-2` for the workshop account, and a name for the profile. A profile is a named set of these answers, saved in `~/.aws/config` on your laptop, so that the CLI knows which account, role and region a command is for. One laptop can hold several, one per account you use. Call this one `workshop`, since the rest of the episode uses that name.
+2. **Register the account's Identity Center**, once. Run the command below in the same terminal and answer its prompts in this order. A profile is a named set of these answers, saved in `~/.aws/config` on your laptop, so that the CLI knows which account, role and region a command is for. One laptop can hold several, one per account you use.
 
 ```bash
 aws configure sso
 ```
+
+| Prompt | Answer |
+|---|---|
+| SSO session name | `workshop` |
+| SSO start URL | Your sign-in link from the instructor's email, up to and including `/start`, with nothing after it |
+| SSO region | The region Identity Center runs in, which is in the same email. It is not always the account's working region |
+| SSO registration scopes | Enter, for the default |
+| A browser tab opens | Approve the device code it shows |
+| Account | There is one on the workshop account; confirm it |
+| Role | There is one, the permission set your login carries; confirm it |
+| Default client region | `us-east-2` for the workshop account |
+| Default output format | `json` |
+| Profile name | `workshop`, since the rest of the episode uses that name |
+
+The role here is the permission set, not the notebook role. The permission set is the identity you sign in with, the same one the console uses. The notebook role, `ml-sagemaker-use`, is what a job runs as, and it stays in the job's `RoleArn` in section 5.
 
 The commands in this episode are the same in Bash (macOS, Linux, Git Bash on Windows) and in PowerShell. Where the shell's own syntax differs, variables, line continuation, writing a file, the two are shown as tabs.
 
