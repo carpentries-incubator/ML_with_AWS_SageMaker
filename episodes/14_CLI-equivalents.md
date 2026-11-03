@@ -74,7 +74,7 @@ This episode runs from your own laptop, in a terminal, so it works when no noteb
 aws --version
 ```
 
-2. **Register the account's Identity Center**, once. Run the command below in the same terminal. It asks four things in turn. First the start URL and the region of the Identity Center sign-in page, the same ones you used in the browser, both in the sign-in email from your instructor. It then opens a browser tab for you to approve the device, lets you pick the account and the permission set, and finally asks for a default region, `us-east-2` for the workshop account, and a name for the profile. Call the profile `workshop`, since the rest of the episode uses that name.
+2. **Register the account's Identity Center**, once. Run the command below in the same terminal. It asks four things in turn. First the start URL and the region of the Identity Center sign-in page, the same ones you used in the browser, both in the sign-in email from your instructor. It then opens a browser tab for you to approve the device, lets you pick the account and the permission set, and finally asks for a default region, `us-east-2` for the workshop account, and a name for the profile. A profile is a named set of these answers, saved in `~/.aws/config` on your laptop, so that the CLI knows which account, role and region a command is for. One laptop can hold several, one per account you use. Call this one `workshop`, since the rest of the episode uses that name.
 
 ```bash
 aws configure sso
@@ -82,7 +82,7 @@ aws configure sso
 
 The commands in this episode are the same in Bash (macOS, Linux, Git Bash on Windows) and in PowerShell. Where the shell's own syntax differs, variables, line continuation, writing a file, the two are shown as tabs.
 
-From then on, every session starts with a login, and a check that you are who you think you are, in the account you think you are in:
+From then on, every session starts with three commands. The login fetches credentials for the profile, which takes you through the browser once more. Setting `AWS_PROFILE` makes every later command in that terminal use the profile without a `--profile` flag on each one. The identity check confirms that you are who you think you are, in the account you think you are in:
 
 ::::::::::::::::::::::::::::::::::::: tab
 
