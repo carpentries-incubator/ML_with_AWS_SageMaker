@@ -373,10 +373,10 @@ python -c "import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); impo
 python -c "import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); import helpers; helpers.estimate_finetune_cost(params_billions=3.75, examples=251, tokens_per_example=1600, epochs=2, instance_type='ml.g5.xlarge')"
 ```
 
-Then check the request. `scripts/check_request.py` reads the JSON and does two things. It applies the account's rules from `scripts/guardrails.json`, as `helpers.check_launch` did before every launch in the notebooks, so a `Project` or `Purpose` off the lists, an instance type off the list or a cap over 48 hours is named here, where AWS would refuse it silently. Then it prints the most the request can bill: every instance it asks for, running to its cap, at the instance's hourly price, and for a tuning job every child job it allows. With `--max-cost` it exits with an error when that worst case is above the amount, which is the check to put in front of every create call:
+Then check the request. `scripts/check_request.py` reads the JSON and does two things. It applies the account's rules from `scripts/guardrails.json`, as `helpers.check_launch` did before every launch in the notebooks, so a `Project` or `Purpose` off the lists, an instance type off the list or a cap over 48 hours is named here, where AWS would refuse it silently. Then it prints the most the request can bill: every instance it asks for, running to its cap, at the instance's hourly price, and for a tuning job every child job it allows. `--max-cost` is a dollar amount you choose, the most you are willing to spend on this job. When the worst case is above it, the checker exits with an error, and the launch command below is written so that an error stops it. Here it is `1`, one dollar, because the job's worst case is four cents:
 
 ```bash
-python ML_with_AWS_SageMaker/scripts/check_request.py train-xgboost.json --max-cost 1
+python ML_with_AWS_SageMaker/scripts/check_request.py train-xgboost.json --max-cost 1   # refuse if this job could bill more than $1
 ```
 
 ```output
