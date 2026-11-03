@@ -31,7 +31,7 @@ None of that is required. The notebook instance was a convenience for teaching. 
 
 This episode does five things from a laptop terminal. It signs in to the account with Identity Center, lists what is running and reads what a job cost, stops jobs and notebook instances, copies data to and from S3, and relaunches the training episode's XGBoost job from a JSON file.
 
-What you give up is what the instance did for you. On the instance, its role signs every call, the lesson's helper checks a launch against the account's rules before it is sent, and the console shows what you started next to everyone else's work. On a laptop you sign in yourself, the JSON carries no price and no check, and a mistake is not seen until the bill. The rules in the callout and the request check in section 5 cover that.
+What changes is who does the checking. On the instance, its role signed every call, so there was nothing to sign in to. The launch check was never the instance's. It was a line in the lesson's notebooks, run before every job. On a laptop you sign in yourself, and a JSON request carries no price and no check unless you run one, so a mistake is not seen until the bill. The rules in the callout and the request check in section 5 cover that.
 
 ### What the notebooks did, and the command that does the same
 
