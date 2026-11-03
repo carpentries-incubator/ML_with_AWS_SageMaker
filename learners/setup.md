@@ -72,4 +72,4 @@ Skim the [Glossary](https://carpentries-incubator.github.io/ML_with_AWS_SageMake
 
 Do episodes 1 to 4 before anything else. Episode 2 creates your S3 bucket, episode 3 creates the notebook instance and clones the lesson onto it, which is where every later episode's notebook comes from, and episode 4 is the first read of your bucket from the notebook.
 
-After that, do episodes 6 to 9 in order. Episode 8 can be skipped, and 9 needs the files 7 saves. Episodes 10 to 13 also go in order, since each reuses what the one before cached in your bucket.
+After that, do episodes 6 to 8 in order, since 8 needs the files 7 saves. Episode 9, the fine-tune, stands on its own. Episodes 10 to 13 also go in order, since each reuses what the one before cached in your bucket.

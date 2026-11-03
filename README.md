@@ -15,8 +15,8 @@ Cost management is built into the exercises. Learners estimate the cost before l
 | Episodes | What they cover | Hands-on problem |
 |---|---|---|
 | 1 to 5 | AWS orientation, S3, setting up the controller notebook, reading and writing data in S3, and optional GitHub version control | Titanic survival data |
-| 6, 7 and 9 | XGBoost and PyTorch training jobs, CPU and GPU compared, multi-instance training, and hyperparameter tuning | Titanic survival classifier |
-| 8 | LoRA fine-tuning of CHURRO-3B, with a cost estimate and evaluation before and after training | [Badger Scribe](https://www.kaggle.com/competitions/badger-scribe), historical German handwriting transcription |
+| 6 to 8 | XGBoost and PyTorch training jobs, CPU and GPU compared, multi-instance training, and hyperparameter tuning | Titanic survival classifier |
+| 9 | LoRA fine-tuning of CHURRO-3B, with a cost estimate and evaluation before and after training | [Badger Scribe](https://www.kaggle.com/competitions/badger-scribe), historical German handwriting transcription |
 | 10 to 13 | RAG on Bedrock, multimodal retrieval, GPU Processing jobs, and optional self-hosted inference on a GPU notebook | [WattBot](https://www.kaggle.com/competitions/WattBot2026), energy-literature Q&A |
 | 14 to 15 | Optional AWS CLI workflows, resource management, cost monitoring and cleanup | |
 
