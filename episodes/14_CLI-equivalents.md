@@ -103,15 +103,17 @@ aws configure sso
 | Prompt | Answer |
 |---|---|
 | SSO session name | `workshop` |
-| SSO start URL | Your sign-in link from the instructor's email, up to and including `/start`, with nothing after it |
-| SSO region | The region Identity Center runs in, which is in the same email. It is not always the account's working region |
+| SSO start URL | Your sign-in link from the instructor's email, up to and including `/start`, with nothing after it (for UW-Madison it begins with `https://uw-madison` and ends in `awsapps.com/start`) |
+| SSO region | The region Identity Center runs in, from the same email (`us-east-2` for UW-Madison). It is not always the account's working region |
 | SSO registration scopes | Enter, for the default |
-| A browser tab opens | Approve the device code it shows |
-| Account | There is one on the workshop account; confirm it |
-| Role | There is one, the permission set your login carries; confirm it |
+| A browser tab opens | Sign in with your university login if asked. On the page headed *Allow botocore-client-workshop to access your data?*, choose **Allow access** |
+| Account | The workshop account, whose ID is in the sign-in email. If your login has only one, the CLI picks it for you |
+| Role | The permission set your login carries (for UW-Madison, the one with `sagemaker` in its name). If there is only one, the CLI picks it |
 | Default client region | `us-east-2` for the workshop account |
-| Default output format | `json` |
-| Profile name | `workshop`, since the rest of the episode uses that name |
+| Default output format | Enter, which is `json` |
+| Profile name | `workshop`, in place of the long default it offers, since the rest of the episode uses that name |
+
+The wizard ends by printing `aws sts get-caller-identity --profile workshop`. That is the identity check from the next block.
 
 The role here is the permission set, not the notebook role. The permission set is the identity you sign in with, the same one the console uses. The notebook role, `ml-sagemaker-use`, is what a job runs as, and it stays in the job's `RoleArn` in section 5.
 
