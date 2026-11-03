@@ -63,8 +63,8 @@ Anything in angle brackets, `<like this>`, is a value of yours. Replace it, brac
 
 | Placeholder | What it is | Where to find it |
 |---|---|---|
-| `<notebook-instance-name>` | The name you gave your notebook instance in the controllers episode | The first column of `aws sagemaker list-notebook-instances` in section 2 |
-| `<your-bucket>` | The bucket you created in the S3 episode | `aws s3 ls` prints every bucket you can see |
+| `<notebook-instance-name>`, then `$NB` | The name you gave your notebook instance in the controllers episode | The first column of `aws sagemaker list-notebook-instances` in section 2, where it is set once as `$NB` |
+| `<your-bucket>`, then `$BUCKET` | The bucket you created in the S3 episode | `aws s3 ls` prints every bucket you can see; set once as `$BUCKET` in section 2 |
 | `<a training job name>` | Any training job you ran | The list command in section 2, or the name the training notebook printed when `fit()` ran |
 | `<your xgboost job name>` | The XGBoost job from the training episode, named `<notebook-instance-name>-xgboost-<timestamp>` | `aws sagemaker list-training-jobs --name-contains xgboost --query 'TrainingJobSummaries[].TrainingJobName'` |
 | `<name>` in section 3 | A job or notebook instance to stop | The lists in section 2 |
@@ -153,12 +153,34 @@ aws sagemaker list-notebook-instances --query 'NotebookInstances[].[NotebookInst
 aws sagemaker list-endpoints       # must print an empty list on the workshop account
 ```
 
+Your notebook instance is in the fourth list, and `aws s3 ls` prints your bucket. Those two names come up in most commands below, so set them as shell variables once per terminal session, after the login, and the commands use `$NB` and `$BUCKET` from here on:
+
+::::::::::::::::::::::::::::::::::::: tab
+
+### Bash
+
+```bash
+aws s3 ls
+NB='<notebook-instance-name>'
+BUCKET='<your-bucket>'
+```
+
+### PowerShell
+
+```powershell
+aws s3 ls
+$NB = "<notebook-instance-name>"
+$BUCKET = "<your-bucket>"
+```
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
 Then one job's bill. `job_cost_report()` in the training episodes called `describe_training_job` and read four fields from it, the status, the instance count, `BillableTimeInSeconds`, and the model's S3 path, and computed the wall-clock from `CreationTime` and `TrainingEndTime`. This is the same call with the same fields. Pick a job from the list below, newest first with its status, and put its full name in place of `<a training job name>`. On the shared account the list is everyone's jobs, so do not take the newest. Take the one named after your notebook instance:
 
 ```bash
 aws sagemaker list-training-jobs --sort-by CreationTime --sort-order Descending --query 'TrainingJobSummaries[].[TrainingJobName,TrainingJobStatus]' --output table
 # only your own, since the lesson names every job after its notebook instance: filter on that name
-# aws sagemaker list-training-jobs --name-contains <notebook-instance-name> --sort-by CreationTime --sort-order Descending --query 'TrainingJobSummaries[].[TrainingJobName,TrainingJobStatus]' --output table
+# aws sagemaker list-training-jobs --name-contains $NB --sort-by CreationTime --sort-order Descending --query 'TrainingJobSummaries[].[TrainingJobName,TrainingJobStatus]' --output table
 # the same list in name order, which groups each learner's jobs together
 # aws sagemaker list-training-jobs --sort-by Name --sort-order Ascending --query 'TrainingJobSummaries[].[TrainingJobName,TrainingJobStatus]' --output table
 ```
@@ -228,7 +250,7 @@ A stopped job keeps its logs and whatever it had already written to S3. A stoppe
 
 ```bash
 aws sagemaker delete-notebook-instance --notebook-instance-name <name>   # only after it reports Stopped
-aws s3 rb s3://<your-bucket> --force                                     # empties the bucket, then deletes it; the cleanup episode's delete_objects loop plus delete_bucket
+aws s3 rb s3://$BUCKET --force                                             # empties the bucket, then deletes it; the cleanup episode's delete_objects loop plus delete_bucket
 aws bedrock list-inference-profiles --type-equals APPLICATION --query 'inferenceProfileSummaries[].[inferenceProfileName,inferenceProfileArn]' --output table
 aws bedrock delete-inference-profile --inference-profile-identifier <ARN>  # one per profile, as the cleanup episode's loop did
 ```
@@ -238,11 +260,11 @@ aws bedrock delete-inference-profile --inference-profile-identifier <ARN>  # one
 The Accessing S3 episode moved single files with `s3.upload_file` and `s3.download_file` and listed the bucket with `helpers.show_bucket`. For many files, or for pulling a job's outputs down to a laptop, the CLI is the better tool, and these are the same keys those episodes used:
 
 ```bash
-aws s3 ls s3://<your-bucket>/ --recursive --human-readable --summarize             # helpers.show_bucket, for the whole bucket
-aws s3 cp titanic_train.csv s3://<your-bucket>/titanic_train.csv                     # s3.upload_file(train_filename, bucket_name, train_filename)
-aws s3 cp s3://<your-bucket>/xgboost/<job-name>/output/model.tar.gz model.tar.gz    # the download in the training episode's evaluate step
-aws s3 sync s3://<your-bucket>/xgboost/ ./xgboost-outputs/                           # every job's outputs under the prefix; only new or changed files move
-aws s3 rm s3://<your-bucket>/scratch/ --recursive                                    # delete a prefix; this one asks no questions
+aws s3 ls s3://$BUCKET/ --recursive --human-readable --summarize             # helpers.show_bucket, for the whole bucket
+aws s3 cp titanic_train.csv s3://$BUCKET/titanic_train.csv                     # s3.upload_file(train_filename, bucket_name, train_filename)
+aws s3 cp s3://$BUCKET/xgboost/<job-name>/output/model.tar.gz model.tar.gz    # the download in the training episode's evaluate step
+aws s3 sync s3://$BUCKET/xgboost/ ./xgboost-outputs/                           # every job's outputs under the prefix; only new or changed files move
+aws s3 rm s3://$BUCKET/scratch/ --recursive                                    # delete a prefix; this one asks no questions
 ```
 
 The last line, `sync --delete` and the `rb --force` in section 3 remove data for good and ask nothing first. Check the bucket name twice before any of them, and on the shared account run them only on your own bucket.
@@ -256,7 +278,7 @@ Downloads to a laptop are a transfer out of AWS (`$0.09` per GB). For anything l
 First find the job's name. The training episode named it after your notebook instance, so it is the one with `xgboost` in it:
 
 ```bash
-aws sagemaker list-training-jobs --name-contains xgboost --query 'TrainingJobSummaries[].TrainingJobName'
+aws sagemaker list-training-jobs --name-contains "$NB-xgboost" --query 'TrainingJobSummaries[].TrainingJobName'
 ```
 
 Put that name in place of `<your xgboost job name>` below.
@@ -283,7 +305,7 @@ aws sagemaker describe-training-job --training-job-name $JOB `
 
 The describe output is a description, not a request. It carries fields AWS fills in after the fact, so it cannot be saved and sent back as it is, which is why the file below is written out from the estimator's arguments and takes only three values from the description.
 
-`image` is the XGBoost 1.7-1 container that `framework_version="1.7-1"` picked. `role` is the `role` the notebook printed. `code` is where `fit()` uploaded `source_dir`, the `sourcedir.tar.gz` in the SDK's default bucket that the training episode pointed out under *What landed in S3*. Reusing it means this job runs the same `train_xgboost.py` the notebook's job ran. Save the file below as `train-xgboost.json`, in the folder your terminal is in, with any text editor. The file is the same whichever shell you use. Put the three values in place of `<image>`, `<role>` and `<code>`, your bucket in place of `<your-bucket>`, your notebook instance's name in `TrainingJobName`, and your tag values in place of `<LastnameFirstname>` and `<ChallengeName>`. The `code` value prints with quotation marks inside it; put only the `s3://...` path in place of `<code>`, since the file supplies the quotes. The `-cli-1` suffix makes the job name unique; use `-cli-2` for a second run, since SageMaker refuses a name it has seen.
+`image` is the XGBoost 1.7-1 container that `framework_version="1.7-1"` picked. `role` is the `role` the notebook printed. `code` is where `fit()` uploaded `source_dir`, the `sourcedir.tar.gz` in the SDK's default bucket that the training episode pointed out under *What landed in S3*. Reusing it means this job runs the same `train_xgboost.py` the notebook's job ran. Save the file below as `train-xgboost.json`, in the folder your terminal is in, with any text editor. The file is the same whichever shell you use, and a file cannot read shell variables, so the two names are written out in it. Put the three values in place of `<image>`, `<role>` and `<code>`, your bucket in place of `<your-bucket>`, your notebook instance's name in `TrainingJobName`, and your tag values in place of `<LastnameFirstname>` and `<ChallengeName>`. The `code` value prints with quotation marks inside it; put only the `s3://...` path in place of `<code>`, since the file supplies the quotes. The `-cli-1` suffix makes the job name unique; use `-cli-2` for a second run, since SageMaker refuses a name it has seen.
 
 ```json
 {
@@ -375,8 +397,8 @@ python ML_with_AWS_SageMaker/scripts/check_request.py train-xgboost.json --max-c
 The CLI returns the moment the request is accepted. Nothing waits, which is `fit(wait=False)`. To follow the job the way the default `wait=True` did, then read its bill as in section 2:
 
 ```bash
-aws sagemaker wait training-job-completed-or-stopped --training-job-name <notebook-instance-name>-xgboost-cli-1   # blocks until it ends
-aws sagemaker describe-training-job --training-job-name <notebook-instance-name>-xgboost-cli-1 --query '{status:TrainingJobStatus, billable_s:BillableTimeInSeconds, failure:FailureReason, model:ModelArtifacts.S3ModelArtifacts}'
+aws sagemaker wait training-job-completed-or-stopped --training-job-name "$NB-xgboost-cli-1"   # blocks until it ends
+aws sagemaker describe-training-job --training-job-name "$NB-xgboost-cli-1" --query '{status:TrainingJobStatus, billable_s:BillableTimeInSeconds, failure:FailureReason, model:ModelArtifacts.S3ModelArtifacts}'
 ```
 
 Expect the same two to three billable minutes on `ml.m5.large` as the notebook's job, under a cent, and the same `xgboost-model.json` inside the `model.tar.gz` it names.
