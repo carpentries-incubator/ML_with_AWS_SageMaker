@@ -47,7 +47,7 @@ Resource management and cost tracking. Cloud resources keep billing after you st
 
 :::::::::::::::::::::::::::::::::::::
 
-The lesson uses four AWS pieces. The overview episode introduces each one.
+The lesson uses four AWS pieces. The overview episode introduces each one in more detail.
 
 ![*The four pieces the lesson uses, and what moves between them*](fig/aws-ml-ecosystem.svg){alt="Diagram of the lesson's AWS components: S3 buckets at the top, a notebook instance on the left launching SageMaker training, tuning and processing jobs in the center, and Bedrock on the right called as an API"}
 
