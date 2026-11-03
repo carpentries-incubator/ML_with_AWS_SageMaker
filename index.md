@@ -25,8 +25,8 @@ What cloud computing offers a researcher, when AWS makes sense next to a laptop 
 Training, fine-tuning and hyperparameter tuning. SageMaker runs the training scripts on separate compute instances, starting with small models and ending with a vision-language model of billions of parameters. Along the way we compare hardware choices and see how training time, model size and the number of experiments set the cost.
 
 - **Model training.** Train XGBoost and PyTorch models on the Titanic data. Launch the training jobs from the notebook, compare CPU and GPU, and see when more than one instance helps.
-- **Fine-tuning.** Adapt CHURRO-3B, an open-weight vision-language model, to transcribe historical German handwriting from the Badger Scribe challenge. Use LoRA to cut the GPU memory needed, estimate the run's cost, and measure transcription accuracy before and after.
 - **Hyperparameter tuning.** Set up a search over learning rates and epochs, let SageMaker run the training jobs, and compare the results under a cost ceiling.
+- **Fine-tuning.** Adapt CHURRO-3B, an open-weight vision-language model, to transcribe historical German handwriting from the Badger Scribe challenge. Use LoRA to cut the GPU memory needed, estimate the run's cost, and measure transcription accuracy before and after.
 
 ### 3 Bedrock
 

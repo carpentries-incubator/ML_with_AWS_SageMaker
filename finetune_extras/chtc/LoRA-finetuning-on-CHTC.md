@@ -2,7 +2,7 @@
 
 > **In development.** This guide has not been run end to end on CHTC yet. The submit files follow CHTC's documentation, and the first tested draft is planned for 1 December 2026. If something fails before then, [open an issue](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/issues) and attach the job's `.log` and `.err` files.
 
-This guide runs the fine-tuning episode of the [ML on AWS lesson](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/08_Finetuning-BadgerScribe.html) on UW-Madison's [Center for High Throughput Computing](https://chtc.cs.wisc.edu/) (CHTC) instead of on AWS. The model, the data, the training script and the LoRA adapter it produces are the same as in the episode. What changes is where the GPU comes from and how the job is described.
+This guide runs the fine-tuning episode of the [ML on AWS lesson](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/09_Finetuning-BadgerScribe.html) on UW-Madison's [Center for High Throughput Computing](https://chtc.cs.wisc.edu/) (CHTC) instead of on AWS. The model, the data, the training script and the LoRA adapter it produces are the same as in the episode. What changes is where the GPU comes from and how the job is described.
 
 CHTC is free for UW-Madison researchers. It runs HTCondor, a job scheduler. You describe a job in a text file and submit it. HTCondor finds a machine with the resources the job asked for, copies your files to it, runs your program, and copies the results back. Nothing is billed. The costs are the time a job waits in the queue and the work of packaging a job so it runs without you on a machine you never log in to.
 
@@ -22,9 +22,9 @@ The training script, [`finetune_churro_lora.py`](../../scripts/finetune_churro_l
 
 ## Three places to run this fine-tune
 
-The same fine-tune runs in three places. This guide is the CHTC column. The others are the [lesson's episode](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/08_Finetuning-BadgerScribe.html) on AWS and a [Colab notebook](https://colab.research.google.com/github/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/finetune_extras/colab/LoRA-finetuning-on-a-free-GPU.ipynb).
+The same fine-tune runs in three places. This guide is the CHTC column. The others are the [lesson's episode](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/09_Finetuning-BadgerScribe.html) on AWS and a [Colab notebook](https://colab.research.google.com/github/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/finetune_extras/colab/LoRA-finetuning-on-a-free-GPU.ipynb).
 
-| | [AWS SageMaker](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/08_Finetuning-BadgerScribe.html) | [Google Colab](https://colab.research.google.com/github/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/finetune_extras/colab/LoRA-finetuning-on-a-free-GPU.ipynb) | [CHTC](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/finetune_extras/chtc/LoRA-finetuning-on-CHTC.md) |
+| | [AWS SageMaker](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/09_Finetuning-BadgerScribe.html) | [Google Colab](https://colab.research.google.com/github/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/finetune_extras/colab/LoRA-finetuning-on-a-free-GPU.ipynb) | [CHTC](https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/blob/main/finetune_extras/chtc/LoRA-finetuning-on-CHTC.md) |
 |---|---|---|---|
 | Who can use it | Anyone with an AWS account and a card or credits | Anyone with a Google account | UW-Madison researchers and students, with a faculty sponsor |
 | Cost of this run | About `$0.75` | Free | Free |
