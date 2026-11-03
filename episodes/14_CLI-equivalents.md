@@ -107,17 +107,11 @@ aws sts get-caller-identity
 
 The output names the account ID and an `AWSReservedSSO_...` role. The credentials expire after a few hours. Run `aws sso login` again when a command returns `ExpiredToken`. Nothing that would still work next month is written anywhere.
 
-Each section below does a step with the AWS commands first, so that you see what the SDK and the lesson's helpers were doing, and then shows the helper that does the same, for after the workshop. The helpers are in the lesson's `scripts/helpers.py`, plain Python that runs on a laptop as it did on the notebook instance. Clone the lesson once and install `boto3`, which the module imports. `boto3` reads `AWS_PROFILE`, so the helpers that call AWS use the login above.
+The sections below are the AWS commands, so that you see what the SDK was doing. Most of the lesson's helpers wrapped one of these calls and are not needed here. The ones that do arithmetic, the cost estimators and the launch check, come back in section 5, from the lesson's `scripts/helpers.py`, plain Python that runs on a laptop as it did on the notebook instance. Clone the lesson once and install `boto3`, which the module imports:
 
 ```bash
 git clone -q https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git   # once, anywhere on the laptop
 pip install boto3
-```
-
-A helper is called from `python -c`, with the lesson's scripts folder put on the path first. Every example below has this shape:
-
-```bash
-python -c "import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); import helpers; helpers.<function>(...)"
 ```
 
 If you are on the notebook instance's own terminal (JupyterLab, **File → New → Terminal**), skip this step. The instance's role is already the identity, which is the reason the lesson works from one.
@@ -186,12 +180,6 @@ aws sagemaker list-tags --resource-arn $ARN --query 'Tags[].[Key,Value]' --outpu
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-The helper for the notebook instance's status and type is `get_notebook_instance_info`, which the training episode called before each launch. The name is the one you gave the instance in the controllers episode, and the first column of the `list-notebook-instances` table above:
-
-```bash
-python -c "import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); import helpers; helpers.get_notebook_instance_info('<notebook-instance-name>', region='us-east-2')"
-```
-
 ## 3. Stopping jobs and notebook instances
 
 Each of these stops a charge. They are the calls behind the **Stop** buttons the cleanup episode walks through in the console.
@@ -225,13 +213,6 @@ aws s3 rm s3://<your-bucket>/scratch/ --recursive                               
 ```
 
 Downloads to a laptop are a transfer out of AWS (`$0.09` per GB). For anything larger than a few hundred megabytes, keep the data in the region and let a job read it, which is the lesson's pattern.
-
-The helpers for the listing are `show_bucket`, which prints each prefix with its object count and size, and `get_s3_bucket_size`, which the Accessing S3 episode used for the storage cost:
-
-```bash
-python -c "import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); import helpers; helpers.show_bucket('<your-bucket>')"
-python -c "import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); import helpers; helpers.get_s3_bucket_size('<your-bucket>')"
-```
 
 ## 5. Launching the training episode's job from a JSON file
 
@@ -370,7 +351,7 @@ Read it against the estimator cell in the training episode. Every field is one o
 
 The string values with escaped quotes, `"\"titanic_train.csv\""`, are how the SDK encodes a text hyperparameter, and the container decodes them before they reach `argparse` in the script, so `--train titanic_train.csv` arrives as it did from the notebook. Numbers are plain strings.
 
-Before sending it, estimate it, as the notebooks did before every launch. Nothing in a JSON file prints a price, so the hand method is the instance's hourly rate from the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page times the minutes you expect, and `MaxRuntimeInSeconds` at about twice that. This XGBoost job is startup and little else, two to three minutes on `ml.m5.large`, under a cent. For a job with real compute the lesson's estimators do the arithmetic, with the same arguments the notebooks gave them. These are the PyTorch episode's estimate, the tuning episode's and the fine-tuning episode's, and each prints the time, the cost and the `max_run` to put in the request:
+Before sending it, estimate it, as the notebooks did before every launch. Nothing in a JSON file prints a price, so the hand method is the instance's hourly rate from the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page times the minutes you expect, and `MaxRuntimeInSeconds` at about twice that. This XGBoost job is startup and little else, two to three minutes on `ml.m5.large`, under a cent. For a job with real compute the lesson's estimators do the arithmetic, with the same arguments the notebooks gave them. They are called from `python -c`, with the lesson's scripts folder put on the path first. These are the PyTorch episode's estimate, the tuning episode's and the fine-tuning episode's, and each prints the time, the cost and the `max_run` to put in the request:
 
 ```bash
 python -c "import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); import helpers; helpers.estimate_training_cost(params_billions=0.125, examples=1_000_000, tokens_per_example=256, epochs=3, instance_type='ml.g6.xlarge')"
