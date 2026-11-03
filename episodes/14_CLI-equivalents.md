@@ -65,7 +65,7 @@ Anything in angle brackets, `<like this>`, is a value of yours. Replace it, brac
 |---|---|---|
 | `<notebook-instance-name>` | The name you gave your notebook instance in the controllers episode | The first column of `aws sagemaker list-notebook-instances` in section 2 |
 | `<your-bucket>` | The bucket you created in the S3 episode | `aws s3 ls` prints every bucket you can see |
-| `<a training job name>` | Any training job you ran | `aws sagemaker list-training-jobs --query 'TrainingJobSummaries[].TrainingJobName'`, newest first |
+| `<a training job name>` | Any training job you ran | The list command in section 2, or the name the training notebook printed when `fit()` ran |
 | `<the training episode's xgboost job name>` | The XGBoost job from the training episode, named `<notebook-instance-name>-xgboost-<timestamp>` | `aws sagemaker list-training-jobs --name-contains xgboost --query 'TrainingJobSummaries[].TrainingJobName'` |
 | `<name>` in section 3 | A job or notebook instance to stop | The lists in section 2 |
 | `<image>`, `<role>`, `<code>` | The container, the role and the uploaded code of the XGBoost job | Printed by the `describe-training-job` command at the start of section 5 |
@@ -124,7 +124,13 @@ aws sts get-caller-identity
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-The output names the account ID and an `AWSReservedSSO_...` role. The credentials expire after a few hours. Run `aws sso login` again when a command returns `ExpiredToken`. Nothing that would still work next month is written anywhere.
+The output names the account ID and an `AWSReservedSSO_...` role. Check the region too, since SageMaker resources are regional and a job in another region does not appear in any list:
+
+```bash
+aws configure get region     # us-east-2 for the workshop account; if it is wrong, run aws configure sso again
+```
+
+The credentials expire after a few hours. Run `aws sso login` again when a command returns `ExpiredToken`. Nothing that would still work next month is written anywhere.
 
 If you are in the notebook instance's own terminal instead (JupyterLab, **File → New → Terminal**), skip the install and the sign-in. The instance's role is already the identity, and every command below works there as written.
 
@@ -147,10 +153,10 @@ aws sagemaker list-notebook-instances --query 'NotebookInstances[].[NotebookInst
 aws sagemaker list-endpoints       # must print an empty list on the workshop account
 ```
 
-Then one job's bill. `job_cost_report()` in the training episodes called `describe_training_job` and read four fields from it, the status, the instance count, `BillableTimeInSeconds`, and the model's S3 path, and computed the wall-clock from `CreationTime` and `TrainingEndTime`. This is the same call with the same fields. Pick any job name from the list below, which prints your training jobs newest first, and put it in place of `<a training job name>`:
+Then one job's bill. `job_cost_report()` in the training episodes called `describe_training_job` and read four fields from it, the status, the instance count, `BillableTimeInSeconds`, and the model's S3 path, and computed the wall-clock from `CreationTime` and `TrainingEndTime`. This is the same call with the same fields. Pick a job from the list below, newest first with its status, and put its full name in place of `<a training job name>`. On the shared account the list is everyone's jobs, so do not take the newest. Take the one named after your notebook instance:
 
 ```bash
-aws sagemaker list-training-jobs --query 'TrainingJobSummaries[].TrainingJobName'
+aws sagemaker list-training-jobs --sort-by CreationTime --sort-order Descending --query 'TrainingJobSummaries[].[TrainingJobName,TrainingJobStatus]' --output table
 ```
 
 ::::::::::::::::::::::::::::::::::::: tab
@@ -173,7 +179,7 @@ aws sagemaker describe-training-job --training-job-name $JOB `
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-Cost is `billable_s` × `count` ÷ 3600 × the hourly rate from the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page, the arithmetic `job_cost_report()` did. The helper printed it. Here you do the multiplication.
+Cost is `billable_s` × `count` ÷ 3600 × the hourly rate from the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page, the arithmetic `job_cost_report()` did. The helper printed it. Here you do the multiplication. `billable_s` is missing for a job that failed before its instance was ready, which is also a job that cost nothing.
 
 The other job kinds have the same shape. The Processing Jobs episode's `job_cost()` read `CreationTime`, `ProcessingStartTime` and `ProcessingEndTime` from `describe_processing_job`, and the tuning episode's `tuning_cost_report()` looped `describe_training_job` over the tuner's child jobs:
 
@@ -183,7 +189,7 @@ aws sagemaker list-training-jobs-for-hyper-parameter-tuning-job --hyper-paramete
 aws sagemaker describe-hyper-parameter-tuning-job --hyper-parameter-tuning-job-name <name> --query 'BestTrainingJob.TrainingJobName'   # tuner.best_training_job()
 ```
 
-Tags are returned by a separate call, which is also how you find the untagged job that shows on the bill under "No tag key":
+Tags are returned by a separate call. The `Name` tag is how you confirm a job is yours before you stop it in the next section, and a job with no tags is the one that shows on the bill under "No tag key":
 
 ::::::::::::::::::::::::::::::::::::: tab
 
@@ -235,6 +241,8 @@ aws s3 sync s3://<your-bucket>/xgboost/ ./xgboost-outputs/                      
 aws s3 rm s3://<your-bucket>/scratch/ --recursive                                    # delete a prefix; this one asks no questions
 ```
 
+The last line, `sync --delete` and the `rb --force` in section 3 remove data for good and ask nothing first. Check the bucket name twice before any of them, and on the shared account run them only on your own bucket.
+
 Downloads to a laptop are a transfer out of AWS (`$0.09` per GB). For anything larger than a few hundred megabytes, keep the data in the region and let a job read it, which is the lesson's pattern.
 
 ## 5. Launching the training episode's job from a JSON file
@@ -268,6 +276,8 @@ aws sagemaker describe-training-job --training-job-name $JOB `
 ```
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
+
+The describe output is a description, not a request. It carries fields AWS fills in after the fact, so it cannot be saved and sent back as it is, which is why the file below is written out from the estimator's arguments and takes only three values from the description.
 
 `image` is the XGBoost 1.7-1 container that `framework_version="1.7-1"` picked. `role` is the `role` the notebook printed. `code` is where `fit()` uploaded `source_dir`, the `sourcedir.tar.gz` in the SDK's default bucket that the training episode pointed out under *What landed in S3*. Reusing it means this job runs the same `train_xgboost.py` the notebook's job ran. Write the file below with the three values in place of `<image>`, `<role>` and `<code>`, your bucket in place of `<your-bucket>`, your notebook instance's name in `TrainingJobName`, and your tag values in place of `<LastnameFirstname>` and `<ChallengeName>`. The `-cli-1` suffix makes the job name unique; use `-cli-2` for a second run, since SageMaker refuses a name it has seen.
 
