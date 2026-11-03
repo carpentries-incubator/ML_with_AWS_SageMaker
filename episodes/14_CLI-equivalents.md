@@ -25,11 +25,15 @@ exercises: 10
 
 ### Optional, self-study episode
 
-Everything in this lesson went through the SageMaker Python SDK in a notebook. The same account can be used from a terminal with the AWS CLI, to check on a job from another machine, to stop something when no notebook is open, to copy results out of S3 in bulk, or to script a launch. This episode does five things from a laptop terminal. It signs in to the account with Identity Center, lists what is running and reads what a job cost, stops jobs and notebook instances, copies data to and from S3, and relaunches the training episode's XGBoost job from a JSON file, which is the request `estimator.fit()` sent.
+Everything in this lesson went through the SageMaker Python SDK in a notebook on a SageMaker notebook instance. That instance is a cost and a chore. It bills while it is on, five cents an hour for the `ml.t3.medium`, a dollar a day, and someone has to remember to stop it. It is also a second place to work, a Jupyter session in a browser tab, when your code, your editor and your files are on your laptop.
 
-The case for the terminal is the notebook instance. Every job in this lesson was launched from an `ml.t3.medium` that bills while it is on, five cents an hour, a dollar a day, and that someone has to remember to stop. A job launched from a laptop needs no instance at all. The request goes from your terminal to SageMaker, the job runs on a machine rented for it and ends, and the model lands in S3. For a project that launches a job a day and otherwise works locally, that is the notebook's whole cost gone and nothing left running overnight. The training episode's `wait=False` pattern gets most of the way there from a notebook. The CLI gets the rest.
+None of that is required. The notebook instance was a convenience for teaching. SageMaker is an API, and the AWS CLI calls the same API from a terminal. A job launched from your laptop needs no instance at all. The request goes from your terminal to SageMaker, the job runs on a machine rented for it and ends, and the model lands in S3. For a project that launches a job a day and otherwise works locally, that removes the notebook instance's whole cost and the habit of stopping it. The terminal is also the tool for checking on a job from another machine, stopping something when no notebook is open, and copying results out of S3 in bulk.
 
-What you give up is what the instance did for you. On the instance, its role signs every call, the lesson's helper checks a launch against the account's rules before it goes, and the console shows what you started next to everyone else's work. On a laptop you sign in yourself, the JSON carries no price and no check, and a mistake is not seen until the bill. The rules in the callout and the request check in section 5 cover that.
+This episode does five things from a laptop terminal. It signs in to the account with Identity Center, lists what is running and reads what a job cost, stops jobs and notebook instances, copies data to and from S3, and relaunches the training episode's XGBoost job from a JSON file.
+
+Two things differ from the notebook. The first is identity. On the instance, its role signed every call. On a laptop you sign in yourself, which is section 1. The second is checking. The lesson's notebooks printed a cost estimate and ran a launch check before every job. A JSON request does neither on its own, so section 5 runs the lesson's checker on the file before the create call. It applies the account's rules and prints the most the request can bill.
+
+On a shared workshop account, such as the ML Marathon's, keep launching from the notebook instance. It is required there, because every learner's launches and the code behind them then sit on an instance the administrators can see, which is how they help when something goes wrong. The terminal route is for your own account. On any account it is the tool for looking and for stopping.
 
 ### What the notebooks did, and the command that does the same
 
@@ -53,6 +57,21 @@ The CLI, the SDK and the console are one API, so every call the episodes made ha
 
 The SDK's job classes (`XGBoost`, `PyTorch`, `HuggingFace`, `HuggingFaceProcessor`, `HyperparameterTuner`) are builders for the JSON these commands take. `describe-*` on any job you launched from a notebook prints that JSON back, which is how section 5 gets its file.
 
+### What to replace in the commands
+
+Anything in angle brackets, `<like this>`, is a value of yours. Replace it, brackets included. This is every placeholder in the episode and where its value comes from.
+
+| Placeholder | What it is | Where to find it |
+|---|---|---|
+| `<notebook-instance-name>` | The name you gave your notebook instance in the controllers episode | The first column of `aws sagemaker list-notebook-instances` in section 2 |
+| `<your-bucket>` | The bucket you created in the S3 episode | `aws s3 ls` prints every bucket you can see |
+| `<a training job name>` | Any training job you ran | `aws sagemaker list-training-jobs --query 'TrainingJobSummaries[].TrainingJobName'`, newest first |
+| `<the training episode's xgboost job name>` | The XGBoost job from the training episode, named `<notebook-instance-name>-xgboost-<timestamp>` | `aws sagemaker list-training-jobs --name-contains xgboost --query 'TrainingJobSummaries[].TrainingJobName'` |
+| `<name>` in section 3 | A job or notebook instance to stop | The lists in section 2 |
+| `<image>`, `<role>`, `<code>` | The container, the role and the uploaded code of the XGBoost job | Printed by the `describe-training-job` command at the start of section 5 |
+| `<LastnameFirstname>`, `<ChallengeName>` | Your `Name` and `Project` tag values | The same values you put on your bucket and your notebook instance |
+| `<ARN>` | A Bedrock inference profile's ARN | The second column of `aws bedrock list-inference-profiles` in section 3 |
+
 ::::::::::::::::::::::::::::::::::::: callout
 
 ### Read this before the first command
@@ -61,7 +80,7 @@ Nothing here is more powerful than a notebook cell. The difference is that a ter
 
 1. **Authenticate with `aws sso login` only.** Never `aws configure` with an access key ID and secret. Those are long-lived, and they end up in shell histories and committed files.
 2. **Launch only jobs** (training, processing, tuning), with the same three tags and the same `MaxRuntimeInSeconds` the notebooks always set. Jobs end automatically. **Endpoints, EC2 instances and GPU notebook instances do not**, and the lesson never creates them from the CLI, or at all.
-3. **A refused `create` command is the account's rules, not a fault.** The workshop account carries a guard-rail policy that denies endpoint and EC2 creation, instance types outside the lesson's list, caps over 48 hours, and any job whose three tags are missing, blank or off the `Project` and `Purpose` lists. Do not look for a workaround. The policy is on the notebook role today, which covers every launch from an instance. A laptop CLI runs under the permission set, which gets the same policy when the Identity Center administrator attaches it, and until then these rules are yours to keep by hand from a laptop. (Instructors: the policy and its status are on the [Account preparation checklist](../instructors/aws-account-prep.md) page.)
+3. **A refused `create` command is the account's rules, not a fault.** The workshop account carries a guard-rail policy that denies endpoint and EC2 creation, instance types outside the lesson's list, caps over 48 hours, and any job whose three tags are missing, blank or off the `Project` and `Purpose` lists. The administrator attaches that policy, to the notebook role and to the permission set your laptop signs in with. You attach nothing. If a `create` command is refused, that policy is why, and AWS says only `AccessDenied`. The checker in section 5 applies the same rules to a request before it is sent, so you see the reason instead. (Instructors: the policy and where it is attached are on the [Account preparation checklist](../instructors/aws-account-prep.md) page.)
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -107,14 +126,14 @@ aws sts get-caller-identity
 
 The output names the account ID and an `AWSReservedSSO_...` role. The credentials expire after a few hours. Run `aws sso login` again when a command returns `ExpiredToken`. Nothing that would still work next month is written anywhere.
 
+If you are in the notebook instance's own terminal instead (JupyterLab, **File → New → Terminal**), skip the install and the sign-in. The instance's role is already the identity, and every command below works there as written.
+
 The sections below are the AWS commands, so that you see what the SDK was doing. Most of the lesson's helpers wrapped one of these calls and are not needed here. The ones that do arithmetic, the cost estimators and the launch check, come back in section 5, from the lesson's `scripts/helpers.py`, plain Python that runs on a laptop as it did on the notebook instance. Clone the lesson once and install `boto3`, which the module imports:
 
 ```bash
 git clone -q https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git   # once, anywhere on the laptop
 pip install boto3
 ```
-
-If you are on the notebook instance's own terminal (JupyterLab, **File → New → Terminal**), skip this step. The instance's role is already the identity, which is the reason the lesson works from one.
 
 ## 2. What is running, and what a job cost
 
@@ -128,7 +147,11 @@ aws sagemaker list-notebook-instances --query 'NotebookInstances[].[NotebookInst
 aws sagemaker list-endpoints       # must print an empty list on the workshop account
 ```
 
-Then one job's bill. `job_cost_report()` in the training episodes called `describe_training_job` and read four fields from it, the status, the instance count, `BillableTimeInSeconds`, and the model's S3 path, and computed the wall-clock from `CreationTime` and `TrainingEndTime`. This is the same call with the same fields. Use a job name from the training episode's `Training jobs` page, or from `list-training-jobs` without the status filter.
+Then one job's bill. `job_cost_report()` in the training episodes called `describe_training_job` and read four fields from it, the status, the instance count, `BillableTimeInSeconds`, and the model's S3 path, and computed the wall-clock from `CreationTime` and `TrainingEndTime`. This is the same call with the same fields. Pick any job name from the list below, which prints your training jobs newest first, and put it in place of `<a training job name>`:
+
+```bash
+aws sagemaker list-training-jobs --query 'TrainingJobSummaries[].TrainingJobName'
+```
 
 ::::::::::::::::::::::::::::::::::::: tab
 
@@ -218,6 +241,14 @@ Downloads to a laptop are a transfer out of AWS (`$0.09` per GB). For anything l
 
 `xgboost_estimator.fit({'train': train_input})` in the training episode assembled a JSON request and sent it to `CreateTrainingJob`. SageMaker kept that request, and `describe-training-job` on the job you ran prints it back. Three fields come from there, because they are specific to your account and region, and the rest of the file below is the estimator's arguments under their API names.
 
+First find the job's name. The training episode named it after your notebook instance, so it is the one with `xgboost` in it:
+
+```bash
+aws sagemaker list-training-jobs --name-contains xgboost --query 'TrainingJobSummaries[].TrainingJobName'
+```
+
+Put that name in place of `<the training episode's xgboost job name>` below.
+
 ::::::::::::::::::::::::::::::::::::: tab
 
 ### Bash
@@ -238,7 +269,7 @@ aws sagemaker describe-training-job --training-job-name $JOB `
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-`image` is the XGBoost 1.7-1 container that `framework_version="1.7-1"` picked. `role` is the `role` the notebook printed. `code` is where `fit()` uploaded `source_dir`, the `sourcedir.tar.gz` in the SDK's default bucket that the training episode pointed out under *What landed in S3*. Reusing it means this job runs the same `train_xgboost.py` the notebook's job ran. Put the three values into the file, with your bucket, your tag values and a job name that is unique in the account:
+`image` is the XGBoost 1.7-1 container that `framework_version="1.7-1"` picked. `role` is the `role` the notebook printed. `code` is where `fit()` uploaded `source_dir`, the `sourcedir.tar.gz` in the SDK's default bucket that the training episode pointed out under *What landed in S3*. Reusing it means this job runs the same `train_xgboost.py` the notebook's job ran. Write the file below with the three values in place of `<image>`, `<role>` and `<code>`, your bucket in place of `<your-bucket>`, your notebook instance's name in `TrainingJobName`, and your tag values in place of `<LastnameFirstname>` and `<ChallengeName>`. The `-cli-1` suffix makes the job name unique; use `-cli-2` for a second run, since SageMaker refuses a name it has seen.
 
 ::::::::::::::::::::::::::::::::::::: tab
 
@@ -397,7 +428,7 @@ The PyTorch job, a Processing job and a tuning job follow the same route. `descr
 - `aws sagemaker create-notebook-instance` with a GPU type: a GPU notebook is `$60` a day while you are asleep. The optional GPU-notebook episode creates one through the console, where it stays visible, and deletes it the same session.
 - `aws ec2 run-instances`: bare virtual machines have no tags required, no runtime cap and no SageMaker job list to appear in.
 
-On the workshop account all three are denied on the notebook role, as is any instance type outside the lesson's list, any cap over 48 hours and any job whose tags are missing or off the lists. The permission set a laptop uses gets the same policy once the administrator attaches it. The instructor page [Account preparation checklist](../instructors/aws-account-prep.md) has the policy. On your own account, the same denies are an afternoon's work.
+On the workshop account all three are denied by the guard-rail policy the administrator attached, as is any instance type outside the lesson's list, any cap over 48 hours and any job whose tags are missing or off the lists. On your own account, the policy is on the instructor page [Account preparation checklist](../instructors/aws-account-prep.md). Attaching it to your own user or role takes an afternoon and is worth it.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -433,7 +464,7 @@ aws sagemaker list-notebook-instances --query 'NotebookInstances[?NotebookInstan
 aws sagemaker list-endpoints --query 'Endpoints[].EndpointName'
 ```
 
-For anything the first four print, the matching `stop-...` command from section 3. A job you recognize as yours and expect to finish within its `MaxRuntimeInSeconds` can be left. A job you do not recognize is a question for its owner, and on a shared account the tags (`list-tags`) tell you who that is. For an endpoint, `aws sagemaker delete-endpoint --endpoint-name <name>`, then find out how it was created, because the notebook role refuses it and the permission set should once the policy is attached. Buckets cost almost nothing over a weekend and need no action.
+For anything the first four print, the matching `stop-...` command from section 3. A job you recognize as yours and expect to finish within its `MaxRuntimeInSeconds` can be left. A job you do not recognize is a question for its owner, and on a shared account the tags (`list-tags`) tell you who that is. For an endpoint, `aws sagemaker delete-endpoint --endpoint-name <name>`, then find out how it was created, because on the workshop account the guard-rail policy refuses it. Buckets cost almost nothing over a weekend and need no action.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
