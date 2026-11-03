@@ -1,14 +1,21 @@
 """LoRA fine-tune of CHURRO-3B (a Qwen2.5-VL-3B fine-tune for historical
-text) on the Badger Scribe train set. Runs as a SageMaker training job.
+text) on the Badger Scribe train set.
 
-SageMaker passes hyperparameters as command-line flags and mounts the
-`train` channel at $SM_CHANNEL_TRAIN. That directory must contain:
+The same script runs in three places. As a SageMaker training job it is the
+lesson's fine-tuning episode. On Google Colab's free T4 it is the notebook in
+finetune_extras/colab, and on UW-Madison's CHTC it is the HTCondor job in
+finetune_extras/chtc. Every setting is a command-line flag, and the four
+paths default to SageMaker's so the estimator needs nothing extra; the other
+two pass them explicitly.
+
+--train_dir must contain:
 
     train.csv              page_id, doc_id, text, category, label_source
     metadata.csv           optional catalog context, joined on doc_id
     images/<page_id>.jpg   one scan per page
 
-What gets written to $SM_MODEL_DIR (SageMaker tars it into model.tar.gz):
+What gets written to --model_dir (SageMaker tars it into model.tar.gz; the
+Colab notebook reads it in place; the CHTC wrapper tars it for transfer):
 
     adapter_config.json, adapter_model.safetensors   the LoRA adapter
     processor files                                  the resize/tokenizer settings used in
@@ -20,12 +27,19 @@ What gets written to $SM_MODEL_DIR (SageMaker tars it into model.tar.gz):
     train_summary.json                               what this run did and scored
 
 The base weights are never modified: a LoRA adapter is ~100 MB that sits on
-top of the frozen 3B model. That is what makes this fit on a 24 GB GPU and
-finish in about half an hour.
+top of the frozen 3B model. That is what makes this fit on a 24 GB GPU in
+bf16, or on a 16 GB T4 with the frozen weights in 4-bit (--load_in_4bit 1).
 
-If a `model` channel is mounted (a staged copy of the base weights in S3),
-SageMaker sets $SM_CHANNEL_MODEL and the script loads from that directory
-instead of pulling from Hugging Face.
+--model_id takes a Hugging Face id or a local directory of the base weights.
+On SageMaker a `model` channel (a staged copy in S3) sets $SM_CHANNEL_MODEL
+and becomes the default; on CHTC the job passes the unpacked tar's folder.
+
+--checkpoint_dir is where a run can be resumed from. The adapter and optimizer
+state go there at the end of every epoch, with the base model's score and the
+holdout curve beside them, so a run that is interrupted or stopped at a
+runtime limit continues from its last epoch when started again with the same
+directory. SageMaker syncs it to S3, the Colab notebook puts it on Google
+Drive, and the CHTC job lists it as its checkpoint files.
 """
 
 import argparse
@@ -58,8 +72,9 @@ MAX_TRAINABLE_FRACTION = 0.05   # a LoRA adapter is well under this; more means 
 
 
 def parse_args():
-    """Every knob the notebook can set reaches the script as a command-line flag;
-    SageMaker turns the estimator's hyperparameters dict into exactly these flags."""
+    """Every setting reaches the script as a command-line flag. SageMaker turns the
+    estimator's hyperparameters dict into these flags; the Colab notebook and the CHTC
+    submit file write them out."""
     p = argparse.ArgumentParser()
     # --- what to train ---
     # A local directory works as a model id for from_pretrained; SageMaker sets
@@ -84,19 +99,21 @@ def parse_args():
     p.add_argument("--curve_pages", type=int, default=8, help="holdout pages scored at the end of every epoch for the CER curve (0 = skip)")
     p.add_argument("--max_new_tokens", type=int, default=1024)
     p.add_argument("--seed", type=int, default=42)
-    # Precision. SageMaker's A10G/L4/L40S GPUs run bf16, the default. A Colab T4 has no bf16, so
-    # --dtype auto picks fp16 there, and --load_in_4bit 1 (QLoRA) keeps the frozen weights in 4-bit
-    # so the whole run fits a 16 GB card.
+    # Precision. The SageMaker and CHTC GPUs (A10G, L4, L40S, A100 and newer) run bf16, the default.
+    # A Colab T4 has no bf16, so --dtype auto picks fp16 there, and --load_in_4bit 1 (QLoRA) keeps
+    # the frozen weights in 4-bit so the whole run fits a 16 GB card.
     p.add_argument("--dtype", type=str, default="bf16", choices=["bf16", "fp16", "auto"],
                    help="compute dtype; auto = bf16 if the GPU supports it, else fp16")
     p.add_argument("--load_in_4bit", type=int, default=0,
                    help="1 = load the frozen base weights in 4-bit (QLoRA, needs bitsandbytes); 0 = 16-bit")
-    # --- SageMaker paths ---
+    # --- paths: SageMaker's by default, passed explicitly on Colab and CHTC ---
     p.add_argument("--train_dir", type=str, default=os.environ.get("SM_CHANNEL_TRAIN", "/opt/ml/input/data/train"))
     p.add_argument("--model_dir", type=str, default=os.environ.get("SM_MODEL_DIR", "/opt/ml/model"))
     p.add_argument("--output_data_dir", type=str, default=os.environ.get("SM_OUTPUT_DATA_DIR", "/opt/ml/output/data"))
-    # SageMaker creates /opt/ml/checkpoints when the estimator sets checkpoint_s3_uri, and syncs it
-    # to S3 while the job runs. Anything saved there survives the job being killed or interrupted.
+    # Where a run can be resumed from. SageMaker creates /opt/ml/checkpoints when the estimator sets
+    # checkpoint_s3_uri and syncs it to S3 while the job runs; Colab points it at Google Drive; the
+    # CHTC submit file lists it in transfer_checkpoint_files. If the directory does not exist, the
+    # checkpoints go under output_data_dir instead.
     p.add_argument("--checkpoint_dir", type=str, default="/opt/ml/checkpoints")
     return p.parse_args()
 
