@@ -141,7 +141,7 @@ aws sts get-caller-identity
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-The output names the account ID and an `AWSReservedSSO_...` role. Check the region too, since SageMaker resources are regional and a job in another region does not appear in any list:
+The login ends with `Successfully logged into Start URL: ...`. The identity check prints the account ID and an `Arn` that names an `AWSReservedSSO_...` role, the permission set, and ends with your email. Check the region too, since SageMaker resources are regional and a job in another region does not appear in any list:
 
 ```bash
 aws configure get region     # us-east-2 for the workshop account; if it is wrong, run aws configure sso again
