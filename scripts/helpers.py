@@ -313,6 +313,20 @@ if __name__ == "__main__":
 # price per instance-hour from the AWS price list of 2026-10-16 (for the whole box), the
 # instance's network bandwidth (Gbit/s, from the instance's spec sheet) and, on multi-GPU boxes,
 # the GPU-to-GPU link per GPU (GB/s: NVLink on p4d/p5, PCIe on g5/g6e). Links are approximate.
+# The CPU instances the lesson uses, with the same us-east-1 on-demand prices as the Instances for ML page
+CPU_INSTANCES = {
+    "ml.t3.medium": {"price": 0.05},
+    "ml.m5.large":  {"price": 0.115},
+    "ml.m5.xlarge": {"price": 0.23},
+}
+
+
+def instance_price(instance_type):
+    """Hourly price of an instance the lesson uses, from the two tables above; None if unknown."""
+    spec = GPU_INSTANCES.get(instance_type) or CPU_INSTANCES.get(instance_type)
+    return spec["price"] if spec else None
+
+
 GPU_INSTANCES = {
     "ml.g4dn.xlarge":   {"gpus": 1, "gpu": "T4",        "gpu_mem_gb": 16, "tflops_bf16": 65,  "price": 0.74, "net_gbps": 25,  "note": "no bf16 support; modern LLM fine-tuning is slow or fails"},
     "ml.g6.xlarge":     {"gpus": 1, "gpu": "L4",        "gpu_mem_gb": 24, "tflops_bf16": 121, "price": 1.13, "net_gbps": 10},
