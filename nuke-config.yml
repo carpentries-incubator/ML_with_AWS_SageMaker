@@ -1,0 +1,17 @@
+regions:
+  - global
+  - us-east-2          # the class account's region; nothing outside it is touched
+
+blocklist:
+  - "551379999285"     # production, never nuke
+
+accounts:
+  "183295408236":      # the shared workshop account
+    resource-types:
+      includes:        # ONLY these types are deleted (aws-nuke v3 key is "includes")
+        - S3Bucket
+        - SageMakerNotebookInstance
+    filters:
+      S3Bucket:
+        - property: Name
+          value: "ml-marathon-shared"   # instructor-staged data bucket: keep it
