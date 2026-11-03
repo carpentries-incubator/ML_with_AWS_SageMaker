@@ -86,7 +86,7 @@ Nothing here is more powerful than a notebook cell. The difference is that a ter
 
 ## 1. Sign in with Identity Center
 
-This episode runs from your own laptop, in a terminal, so it works when no notebook is open. The AWS CLI is already installed in CloudShell and on every SageMaker notebook instance, where it uses the instance's role and needs no sign-in. A laptop has neither, so two things come first.
+This episode runs from your own laptop, in a terminal, so it works when no notebook is open. CloudShell and the SageMaker notebook instance already have the AWS CLI installed, and on the instance it uses the instance's role, so there is no sign-in. On a laptop you install the CLI and sign in yourself.
 
 1. **Install [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)** from the installer for your operating system. Then open a terminal, Terminal on macOS, Git Bash or PowerShell on Windows, and check that it is on your path:
 
