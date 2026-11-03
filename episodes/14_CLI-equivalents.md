@@ -186,7 +186,7 @@ aws sagemaker list-tags --resource-arn $ARN --query 'Tags[].[Key,Value]' --outpu
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-The helper for the notebook instance's status and type is `get_notebook_instance_info`, which the training episode called before each launch:
+The helper for the notebook instance's status and type is `get_notebook_instance_info`, which the training episode called before each launch. The name is the one you gave the instance in the controllers episode, and the first column of the `list-notebook-instances` table above:
 
 ```bash
 python -c "import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); import helpers; helpers.get_notebook_instance_info('<notebook-instance-name>', region='us-east-2')"
