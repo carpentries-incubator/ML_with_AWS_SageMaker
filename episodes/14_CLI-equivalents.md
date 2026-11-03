@@ -33,7 +33,7 @@ This episode does five things from a laptop terminal. It signs in to the account
 
 Two things differ from the notebook. The first is identity. On the instance, its role signed every call. On a laptop you sign in yourself, which is section 1. The second is checking. The lesson's notebooks printed a cost estimate and ran a launch check before every job. A JSON request does neither on its own, so section 5 runs the lesson's checker on the file before the create call. It applies the account's rules and prints the most the request can bill.
 
-On a shared workshop account, such as the ML Marathon's, keep launching from the notebook instance. It is required there, because every learner's launches and the code behind them then sit on an instance the administrators can see, which is how they help when something goes wrong. The terminal route is for your own account. On any account it is the tool for looking and for stopping.
+On a shared workshop account, such as the ML Marathon's, keep launching from the notebook instance, apart from the one launch in this episode. It is required there, because every learner's launches and the code behind them then sit on an instance the administrators can see, which is how they help when something goes wrong. The terminal route is for your own account. On any account it is the tool for looking and for stopping.
 
 ### What the notebooks did, and the command that does the same
 
