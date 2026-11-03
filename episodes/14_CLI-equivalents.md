@@ -37,7 +37,7 @@ On a shared workshop account, such as the ML Marathon's, keep launching from the
 
 ### What the notebooks did, and the command that does the same
 
-The CLI, the SDK and the console are one API, so every call the episodes made has a CLI command with the same name and the same fields. This table is the map. The sections below work through the rows that matter most.
+The CLI, the SageMaker SDK, `boto3` and the console all talk to the same AWS API. The SDK's estimators built requests for it, the `boto3` calls in the cleanup and RAG episodes sent requests to it directly, and the console shows its results. So every call the episodes made has a CLI command with the same name and the same fields, and a `boto3` method name such as `describe_training_job` is the CLI command `describe-training-job` with the underscores swapped for hyphens. This table is the map. The sections below work through the rows that matter most.
 
 | Episode | In the notebook | From the terminal |
 |---|---|---|
@@ -59,7 +59,7 @@ The SDK's job classes (`XGBoost`, `PyTorch`, `HuggingFace`, `HuggingFaceProcesso
 
 ### What to replace in the commands
 
-Anything in angle brackets, `<like this>`, is a value of yours. Replace it, brackets included. This is every placeholder in the episode and where its value comes from.
+Anything in angle brackets, `<like this>`, is a value of yours. Replace it, brackets included. This table lists every placeholder in the episode and how to find its value.
 
 | Placeholder | What it is | Where to find it |
 |---|---|---|
