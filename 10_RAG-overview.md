@@ -51,7 +51,7 @@ The difference is in how each one bills.
 | **Model updates** | AWS and the provider | You: containers, CUDA, GPU memory |
 | **Model choice** | A curated catalog, proprietary models included | Any open-weight model you can load |
 
-Self-hosting on SageMaker gives you control over the weights, the libraries and the hardware, which matters for a specific open-weight model or your own fine-tune. The trade is that a rented GPU bills while the instance runs, whether or not it is generating answers, and research work is mostly occasional experiments, not a steady stream of requests. A GPU instance is a rental whose meter runs until you turn it off, and forgetting to is the most common way a research team spends its cloud budget on nothing. Bedrock has no such failure. Stop calling it and you stop paying.
+Self-hosting on SageMaker gives you control over the weights, the libraries and the hardware, which matters for a specific open-weight model or your own fine-tune. The trade is that a rented GPU bills while the instance runs, whether or not it is generating answers, and research work is mostly occasional experiments, not a steady stream of requests. A GPU instance is a rental whose meter runs until you turn it off, and forgetting to is a common way a research team spends its cloud budget on nothing. Bedrock has no such failure. Stop calling it and you stop paying.
 
 ### What forgetting costs
 
