@@ -66,7 +66,7 @@ Anything in angle brackets, `<like this>`, is a value of yours. Replace it, brac
 | `<notebook-instance-name>` | The name you gave your notebook instance in the controllers episode | The first column of `aws sagemaker list-notebook-instances` in section 2 |
 | `<your-bucket>` | The bucket you created in the S3 episode | `aws s3 ls` prints every bucket you can see |
 | `<a training job name>` | Any training job you ran | The list command in section 2, or the name the training notebook printed when `fit()` ran |
-| `<the training episode's xgboost job name>` | The XGBoost job from the training episode, named `<notebook-instance-name>-xgboost-<timestamp>` | `aws sagemaker list-training-jobs --name-contains xgboost --query 'TrainingJobSummaries[].TrainingJobName'` |
+| `<your xgboost job name>` | The XGBoost job from the training episode, named `<notebook-instance-name>-xgboost-<timestamp>` | `aws sagemaker list-training-jobs --name-contains xgboost --query 'TrainingJobSummaries[].TrainingJobName'` |
 | `<name>` in section 3 | A job or notebook instance to stop | The lists in section 2 |
 | `<image>`, `<role>`, `<code>` | The container, the role and the uploaded code of the XGBoost job | Printed by the `describe-training-job` command at the start of section 5 |
 | `<LastnameFirstname>`, `<ChallengeName>` | Your `Name` and `Project` tag values | The same values you put on your bucket and your notebook instance |
@@ -164,7 +164,7 @@ aws sagemaker list-training-jobs --sort-by CreationTime --sort-order Descending 
 ### Bash
 
 ```bash
-JOB=<a training job name>
+JOB='<a training job name>'
 aws sagemaker describe-training-job --training-job-name $JOB \
   --query '{status:TrainingJobStatus, instance:ResourceConfig.InstanceType, count:ResourceConfig.InstanceCount, billable_s:BillableTimeInSeconds, created:CreationTime, ended:TrainingEndTime, model:ModelArtifacts.S3ModelArtifacts}'
 ```
@@ -179,7 +179,7 @@ aws sagemaker describe-training-job --training-job-name $JOB `
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-Cost is `billable_s` × `count` ÷ 3600 × the hourly rate from the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page, the arithmetic `job_cost_report()` did. The helper printed it. Here you do the multiplication. `billable_s` is missing for a job that failed before its instance was ready, which is also a job that cost nothing.
+Cost is `billable_s` × `count` ÷ 3600 × the hourly rate from the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page, the arithmetic `job_cost_report()` did. The helper printed it. Here you do the multiplication. `billable_s` can be missing for a job that failed. Read the status and `FailureReason` before reading anything into its cost.
 
 The other job kinds have the same shape. The Processing Jobs episode's `job_cost()` read `CreationTime`, `ProcessingStartTime` and `ProcessingEndTime` from `describe_processing_job`, and the tuning episode's `tuning_cost_report()` looped `describe_training_job` over the tuner's child jobs:
 
@@ -211,7 +211,7 @@ aws sagemaker list-tags --resource-arn $ARN --query 'Tags[].[Key,Value]' --outpu
 
 ## 3. Stopping jobs and notebook instances
 
-Each of these stops a charge. They are the calls behind the **Stop** buttons the cleanup episode walks through in the console. Every one takes a name, and on a shared account the name must be yours. The lists in section 2 show everyone's jobs and instances, and the lesson names each one after its owner's notebook instance, which the `Name` tag confirms. Stop only what you started. Someone else's job is a question for them, or for the instructor.
+Each of these stops a charge. They are the calls behind the **Stop** buttons the cleanup episode walks through in the console. Every one takes a name, and on a shared account the name must be yours. The lists in section 2 show everyone's jobs and instances. Before any stop command, confirm the `Name` tag with the `list-tags` call from section 2, and stop only what you started. Someone else's job is a question for them, or for the instructor.
 
 ```bash
 aws sagemaker stop-training-job   --training-job-name   <name>
@@ -255,14 +255,14 @@ First find the job's name. The training episode named it after your notebook ins
 aws sagemaker list-training-jobs --name-contains xgboost --query 'TrainingJobSummaries[].TrainingJobName'
 ```
 
-Put that name in place of `<the training episode's xgboost job name>` below.
+Put that name in place of `<your xgboost job name>` below.
 
 ::::::::::::::::::::::::::::::::::::: tab
 
 ### Bash
 
 ```bash
-JOB=<the training episode's xgboost job name>
+JOB='<your xgboost job name>'
 aws sagemaker describe-training-job --training-job-name $JOB \
   --query '{image:AlgorithmSpecification.TrainingImage, role:RoleArn, code:HyperParameters.sagemaker_submit_directory}'
 ```
@@ -270,7 +270,7 @@ aws sagemaker describe-training-job --training-job-name $JOB \
 ### PowerShell
 
 ```powershell
-$JOB = "<the training episode's xgboost job name>"
+$JOB = "<your xgboost job name>"
 aws sagemaker describe-training-job --training-job-name $JOB `
   --query '{image:AlgorithmSpecification.TrainingImage, role:RoleArn, code:HyperParameters.sagemaker_submit_directory}'
 ```
@@ -279,14 +279,9 @@ aws sagemaker describe-training-job --training-job-name $JOB `
 
 The describe output is a description, not a request. It carries fields AWS fills in after the fact, so it cannot be saved and sent back as it is, which is why the file below is written out from the estimator's arguments and takes only three values from the description.
 
-`image` is the XGBoost 1.7-1 container that `framework_version="1.7-1"` picked. `role` is the `role` the notebook printed. `code` is where `fit()` uploaded `source_dir`, the `sourcedir.tar.gz` in the SDK's default bucket that the training episode pointed out under *What landed in S3*. Reusing it means this job runs the same `train_xgboost.py` the notebook's job ran. Write the file below with the three values in place of `<image>`, `<role>` and `<code>`, your bucket in place of `<your-bucket>`, your notebook instance's name in `TrainingJobName`, and your tag values in place of `<LastnameFirstname>` and `<ChallengeName>`. The `-cli-1` suffix makes the job name unique; use `-cli-2` for a second run, since SageMaker refuses a name it has seen.
+`image` is the XGBoost 1.7-1 container that `framework_version="1.7-1"` picked. `role` is the `role` the notebook printed. `code` is where `fit()` uploaded `source_dir`, the `sourcedir.tar.gz` in the SDK's default bucket that the training episode pointed out under *What landed in S3*. Reusing it means this job runs the same `train_xgboost.py` the notebook's job ran. Save the file below as `train-xgboost.json`, in the folder your terminal is in, with any text editor. The file is the same whichever shell you use. Put the three values in place of `<image>`, `<role>` and `<code>`, your bucket in place of `<your-bucket>`, your notebook instance's name in `TrainingJobName`, and your tag values in place of `<LastnameFirstname>` and `<ChallengeName>`. The `code` value prints with quotation marks inside it; put only the `s3://...` path in place of `<code>`, since the file supplies the quotes. The `-cli-1` suffix makes the job name unique; use `-cli-2` for a second run, since SageMaker refuses a name it has seen.
 
-::::::::::::::::::::::::::::::::::::: tab
-
-### Bash
-
-```bash
-cat > train-xgboost.json <<'JSON'
+```json
 {
   "TrainingJobName": "<notebook-instance-name>-xgboost-cli-1",
   "AlgorithmSpecification": {
@@ -325,55 +320,7 @@ cat > train-xgboost.json <<'JSON'
     { "Key": "Purpose", "Value": "Training" }
   ]
 }
-JSON
 ```
-
-### PowerShell
-
-```powershell
-@'
-{
-  "TrainingJobName": "<notebook-instance-name>-xgboost-cli-1",
-  "AlgorithmSpecification": {
-    "TrainingImage": "<image>",
-    "TrainingInputMode": "File"
-  },
-  "RoleArn": "<role>",
-  "HyperParameters": {
-    "train": "\"titanic_train.csv\"",
-    "max_depth": "3",
-    "eta": "0.1",
-    "subsample": "0.8",
-    "colsample_bytree": "0.8",
-    "num_round": "100",
-    "sagemaker_program": "\"train_xgboost.py\"",
-    "sagemaker_submit_directory": "\"<code>\"",
-    "sagemaker_region": "\"us-east-2\"",
-    "sagemaker_container_log_level": "20"
-  },
-  "InputDataConfig": [
-    {
-      "ChannelName": "train",
-      "ContentType": "csv",
-      "DataSource": { "S3DataSource": {
-        "S3DataType": "S3Prefix",
-        "S3Uri": "s3://<your-bucket>/titanic_train.csv",
-        "S3DataDistributionType": "FullyReplicated" } }
-    }
-  ],
-  "OutputDataConfig": { "S3OutputPath": "s3://<your-bucket>/xgboost/" },
-  "ResourceConfig": { "InstanceType": "ml.m5.large", "InstanceCount": 1, "VolumeSizeInGB": 30 },
-  "StoppingCondition": { "MaxRuntimeInSeconds": 1200 },
-  "Tags": [
-    { "Key": "Name",    "Value": "<LastnameFirstname>" },
-    { "Key": "Project", "Value": "<ChallengeName>" },
-    { "Key": "Purpose", "Value": "Training" }
-  ]
-}
-'@ | Set-Content -Path train-xgboost.json
-```
-
-::::::::::::::::::::::::::::::::::::::::::::::::
 
 Read it against the estimator cell in the training episode. Every field is one of its arguments:
 
@@ -413,6 +360,8 @@ worst case if every job runs to its cap: 1 x 0.33 h x $0.115/h = $0.04
 
 The same command takes a Processing job's or a tuning job's request, and the tuning job's worst case multiplies by its `MaxNumberOfTrainingJobs`, which is where a tuning request surprises people.
 
+The check catches configuration and cost mistakes before a request reaches AWS. It does not grant permission to launch the job or guarantee that AWS accepts it. The account's own policy decides that, and on the shared workshop account the rule is the one above, launch from the notebook instance.
+
 Then send it. This one line is `estimator.fit()`, and the `&&` in front of it means the create call runs only when the check passed:
 
 ```bash
@@ -446,7 +395,7 @@ On the workshop account all three are denied by the guard-rail policy the admini
 
 ### Challenge: what is still running on Friday evening
 
-You are leaving for the weekend and have a terminal, not a browser. Write the commands you would run, in order, to make sure the account is costing nothing until Monday, and the one command to run if each check finds something. Then run them against your own resources.
+You are leaving for the weekend and have a terminal, not a browser. Write the commands you would run, in order, to make sure nothing of yours is costing money until Monday, and the one command to run if a check finds something. Then run them.
 
 :::::::::::::::::::::::::::::::::::: solution
 
@@ -474,7 +423,7 @@ aws sagemaker list-notebook-instances --query 'NotebookInstances[?NotebookInstan
 aws sagemaker list-endpoints --query 'Endpoints[].EndpointName'
 ```
 
-For anything the first four print, the matching `stop-...` command from section 3. A job you recognize as yours and expect to finish within its `MaxRuntimeInSeconds` can be left. A job you do not recognize is a question for its owner, and on a shared account the tags (`list-tags`) tell you who that is. For an endpoint, `aws sagemaker delete-endpoint --endpoint-name <name>`, then find out how it was created, because on the workshop account the guard-rail policy refuses it. Buckets cost almost nothing over a weekend and need no action.
+For anything of yours the first four print, confirm it with `list-tags` and run the matching `stop-...` command from section 3. A job you expect to finish within its `MaxRuntimeInSeconds` can be left. A job that is not yours is its owner's, and the tags say who that is. For an endpoint, `aws sagemaker delete-endpoint --endpoint-name <name>`, then find out how it was created, because on the workshop account the guard-rail policy refuses it. Buckets cost almost nothing over a weekend and need no action.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
