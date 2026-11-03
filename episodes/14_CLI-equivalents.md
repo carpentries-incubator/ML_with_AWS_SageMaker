@@ -45,7 +45,8 @@ The CLI, the SDK and the console are one API, so every call the episodes made ha
 | Training | `job_cost_report(job_name, price)` | `aws sagemaker describe-training-job --training-job-name <name>` (section 2) |
 | Hyperparameter tuning | `tuner.fit(...)` | `aws sagemaker create-hyper-parameter-tuning-job --cli-input-json file://...` |
 | Hyperparameter tuning | `tuning_cost_report(tuner, price)`, `tuner.best_training_job()` | `aws sagemaker list-training-jobs-for-hyper-parameter-tuning-job`, `describe-hyper-parameter-tuning-job --query BestTrainingJob.TrainingJobName` |
-| Fine-tuning | `helpers.check_launch(...)`, `helpers.check_finetune_launch(...)` | `python scripts/check_request.py <request>.json` (section 5) |
+| PyTorch, Hyperparameter tuning, Fine-tuning | `helpers.estimate_training_cost(...)`, `helpers.estimate_tuning_cost(...)`, `helpers.estimate_finetune_cost(...)` | the same functions from a laptop (section 5) |
+| Fine-tuning | `helpers.check_launch(...)`, `helpers.check_finetune_launch(...)` | `python scripts/check_request.py <request>.json --max-cost <dollars>` (section 5) |
 | RAG with Processing jobs | `rag_processor.run(...)`, `describe_processing_job(...)` | `aws sagemaker create-processing-job --cli-input-json file://...`, `aws sagemaker describe-processing-job --processing-job-name <name>` |
 | RAG with Bedrock | `bedrock.list_inference_profiles(typeEquals="APPLICATION")`, `bedrock_runtime.converse(...)` | `aws bedrock list-inference-profiles --type-equals APPLICATION`, `aws bedrock-runtime converse --model-id <profile ARN> ...` |
 | Cleanup | `sm.list_notebook_instances()`, `bedrock.delete_inference_profile(...)` | `aws sagemaker list-notebook-instances`, `aws bedrock delete-inference-profile --inference-profile-identifier <ARN>` (section 3) |
@@ -66,7 +67,15 @@ Nothing here is more powerful than a notebook cell. The difference is that a ter
 
 ## 1. Sign in with Identity Center
 
-This episode runs from your own laptop, a terminal that works when no notebook is open. The AWS CLI is already installed in CloudShell and on every SageMaker notebook instance, where it uses the instance's role and needs no sign-in. A laptop has neither, so install [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) there, then register the account's Identity Center once. It asks four things. First the start URL and the region of the Identity Center sign-in page, the same ones you used in the browser, both in the sign-in email from your instructor. It then opens a browser tab for you to approve the device, lets you pick the account and the permission set, and finally asks for a default region, `us-east-2` for the workshop account, and a name for the profile.
+This episode runs from your own laptop, in a terminal, so it works when no notebook is open. The AWS CLI is already installed in CloudShell and on every SageMaker notebook instance, where it uses the instance's role and needs no sign-in. A laptop has neither, so two things come first.
+
+1. **Install [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)** from the installer for your operating system. Then open a terminal, Terminal on macOS, Git Bash or PowerShell on Windows, and check that it is on your path:
+
+```bash
+aws --version
+```
+
+2. **Register the account's Identity Center**, once. Run the command below in the same terminal. It asks four things in turn. First the start URL and the region of the Identity Center sign-in page, the same ones you used in the browser, both in the sign-in email from your instructor. It then opens a browser tab for you to approve the device, lets you pick the account and the permission set, and finally asks for a default region, `us-east-2` for the workshop account, and a name for the profile. A profile is a named set of these answers, saved in `~/.aws/config` on your laptop, so that the CLI knows which account, role and region a command is for. One laptop can hold several, one per account you use. Call this one `workshop`, since the rest of the episode uses that name.
 
 ```bash
 aws configure sso
@@ -74,7 +83,7 @@ aws configure sso
 
 The commands in this episode are the same in Bash (macOS, Linux, Git Bash on Windows) and in PowerShell. Where the shell's own syntax differs, variables, line continuation, writing a file, the two are shown as tabs.
 
-From then on, every session starts with a login, and a check that you are who you think you are, in the account you think you are in:
+From then on, every session starts with three commands. The login fetches credentials for the profile, which takes you through the browser once more. Setting `AWS_PROFILE` makes every later command in that terminal use the profile without a `--profile` flag on each one. The identity check confirms that you are who you think you are, in the account you think you are in:
 
 ::::::::::::::::::::::::::::::::::::: tab
 
@@ -97,6 +106,13 @@ aws sts get-caller-identity
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 The output names the account ID and an `AWSReservedSSO_...` role. The credentials expire after a few hours. Run `aws sso login` again when a command returns `ExpiredToken`. Nothing that would still work next month is written anywhere.
+
+The sections below are the AWS commands, so that you see what the SDK was doing. Most of the lesson's helpers wrapped one of these calls and are not needed here. The ones that do arithmetic, the cost estimators and the launch check, come back in section 5, from the lesson's `scripts/helpers.py`, plain Python that runs on a laptop as it did on the notebook instance. Clone the lesson once and install `boto3`, which the module imports:
+
+```bash
+git clone -q https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git   # once, anywhere on the laptop
+pip install boto3
+```
 
 If you are on the notebook instance's own terminal (JupyterLab, **File → New → Terminal**), skip this step. The instance's role is already the identity, which is the reason the lesson works from one.
 
@@ -335,17 +351,31 @@ Read it against the estimator cell in the training episode. Every field is one o
 
 The string values with escaped quotes, `"\"titanic_train.csv\""`, are how the SDK encodes a text hyperparameter, and the container decodes them before they reach `argparse` in the script, so `--train titanic_train.csv` arrives as it did from the notebook. Numbers are plain strings.
 
-Before sending it, check it the way the notebooks did. `helpers.check_launch` read the account's rules from `scripts/guardrails.json` before every launch, and `scripts/check_request.py` applies the same file to a request. A `Project` or `Purpose` off the lists, an instance type off the list or a cap over 48 hours is named here, where AWS would refuse it silently:
+Before sending it, estimate it, as the notebooks did before every launch. Nothing in a JSON file prints a price, so the hand method is the instance's hourly rate from the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page times the minutes you expect, and `MaxRuntimeInSeconds` at about twice that. This XGBoost job is startup and little else, two to three minutes on `ml.m5.large`, under a cent. For a job with real compute the lesson's estimators do the arithmetic, with the same arguments the notebooks gave them. They are called from `python -c`, with the lesson's scripts folder put on the path first. These are the PyTorch episode's estimate, the tuning episode's and the fine-tuning episode's, and each prints the time, the cost and the `max_run` to put in the request:
 
 ```bash
-git clone -q https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git   # once, anywhere on the laptop
-python ML_with_AWS_SageMaker/scripts/check_request.py train-xgboost.json
+python -c "import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); import helpers; helpers.estimate_training_cost(params_billions=0.125, examples=1_000_000, tokens_per_example=256, epochs=3, instance_type='ml.g6.xlarge')"
+python -c "import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); import helpers; helpers.estimate_tuning_cost(train_minutes_per_job=1, price_per_hour=0.115, max_jobs=8)"
+python -c "import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); import helpers; helpers.estimate_finetune_cost(params_billions=3.75, examples=251, tokens_per_example=1600, epochs=2, instance_type='ml.g5.xlarge')"
 ```
 
-Then send it. This one line is `estimator.fit()`:
+Then check the request. `scripts/check_request.py` reads the JSON and does two things. It applies the account's rules from `scripts/guardrails.json`, as `helpers.check_launch` did before every launch in the notebooks, so a `Project` or `Purpose` off the lists, an instance type off the list or a cap over 48 hours is named here, where AWS would refuse it silently. Then it prints the most the request can bill: every instance it asks for, running to its cap, at the instance's hourly price, and for a tuning job every child job it allows. With `--max-cost` it exits with an error when that worst case is above the amount, which is the check to put in front of every create call:
 
 ```bash
-aws sagemaker create-training-job --cli-input-json file://train-xgboost.json
+python ML_with_AWS_SageMaker/scripts/check_request.py train-xgboost.json --max-cost 1
+```
+
+```output
+train-xgboost.json: tags, instance type and cap pass the account's rules
+worst case if every job runs to its cap: 1 x 0.33 h x $0.115/h = $0.04
+```
+
+The same command takes a Processing job's or a tuning job's request, and the tuning job's worst case multiplies by its `MaxNumberOfTrainingJobs`, which is where a tuning request surprises people.
+
+Then send it. This one line is `estimator.fit()`, and the `&&` in front of it means the create call runs only when the check passed:
+
+```bash
+python ML_with_AWS_SageMaker/scripts/check_request.py train-xgboost.json --max-cost 1 && aws sagemaker create-training-job --cli-input-json file://train-xgboost.json
 ```
 
 The CLI returns the moment the request is accepted. Nothing waits, which is `fit(wait=False)`. To follow the job the way the default `wait=True` did, then read its bill as in section 2:
@@ -355,7 +385,7 @@ aws sagemaker wait training-job-completed-or-stopped --training-job-name <notebo
 aws sagemaker describe-training-job --training-job-name <notebook-instance-name>-xgboost-cli-1 --query '{status:TrainingJobStatus, billable_s:BillableTimeInSeconds, failure:FailureReason, model:ModelArtifacts.S3ModelArtifacts}'
 ```
 
-Expect the same two to three billable minutes on `ml.m5.large` as the notebook's job, under a cent, and the same `xgboost-model.json` inside the `model.tar.gz` it names. Nothing in a JSON file prints a price, so look the instance type up on the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page before sending it, as the notebooks did with their estimate cell.
+Expect the same two to three billable minutes on `ml.m5.large` as the notebook's job, under a cent, and the same `xgboost-model.json` inside the `model.tar.gz` it names.
 
 The PyTorch job, a Processing job and a tuning job follow the same route. `describe-training-job`, `describe-processing-job` and `describe-hyper-parameter-tuning-job` on the ones you ran print the request, and `create-training-job`, `create-processing-job` and `create-hyper-parameter-tuning-job` take it back with `--cli-input-json`. A PyTorch job's `HyperParameters` carries `epochs` and `learning_rate` and two input channels. A Processing job's `AppSpecification.ContainerArguments` is the `arguments=` list. A tuning job's file has the estimator's request nested under `TrainingJobDefinition` and the ranges under `HyperParameterTuningJobConfig.ParameterRanges`.
 

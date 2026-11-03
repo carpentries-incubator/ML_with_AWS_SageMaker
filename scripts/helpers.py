@@ -326,6 +326,19 @@ GPU_INSTANCES = {
     "ml.p5.48xlarge":   {"gpus": 8, "gpu": "H100 80GB", "gpu_mem_gb": 80, "tflops_bf16": 989, "price": 63.30, "net_gbps": 3200, "gpu_link_gbs": 900},
 }
 
+# The CPU instances the lesson uses, with the same us-east-1 on-demand prices as the Instances for ML page
+CPU_INSTANCES = {
+    "ml.t3.medium": {"price": 0.05},
+    "ml.m5.large":  {"price": 0.115},
+    "ml.m5.xlarge": {"price": 0.23},
+}
+
+
+def instance_price(instance_type):
+    """Hourly price of an instance the lesson uses, from the two tables above; None if unknown."""
+    spec = GPU_INSTANCES.get(instance_type) or CPU_INSTANCES.get(instance_type)
+    return spec["price"] if spec else None
+
 # Bytes of GPU memory per model parameter, from the fine-tuning episode's table.
 BYTES_PER_PARAM = {"lora": 2.5, "full": 16.0}
 
