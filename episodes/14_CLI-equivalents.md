@@ -66,7 +66,15 @@ Nothing here is more powerful than a notebook cell. The difference is that a ter
 
 ## 1. Sign in with Identity Center
 
-This episode runs from your own laptop, a terminal that works when no notebook is open. The AWS CLI is already installed in CloudShell and on every SageMaker notebook instance, where it uses the instance's role and needs no sign-in. A laptop has neither, so install [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) there, then register the account's Identity Center once. It asks four things. First the start URL and the region of the Identity Center sign-in page, the same ones you used in the browser, both in the sign-in email from your instructor. It then opens a browser tab for you to approve the device, lets you pick the account and the permission set, and finally asks for a default region, `us-east-2` for the workshop account, and a name for the profile.
+This episode runs from your own laptop, in a terminal, so it works when no notebook is open. The AWS CLI is already installed in CloudShell and on every SageMaker notebook instance, where it uses the instance's role and needs no sign-in. A laptop has neither, so two things come first.
+
+1. **Install [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)** from the installer for your operating system. Then open a terminal, Terminal on macOS, Git Bash or PowerShell on Windows, and check that it is on your path:
+
+```bash
+aws --version
+```
+
+2. **Register the account's Identity Center**, once. Run the command below in the same terminal. It asks four things in turn. First the start URL and the region of the Identity Center sign-in page, the same ones you used in the browser, both in the sign-in email from your instructor. It then opens a browser tab for you to approve the device, lets you pick the account and the permission set, and finally asks for a default region, `us-east-2` for the workshop account, and a name for the profile. Call the profile `workshop`, since the rest of the episode uses that name.
 
 ```bash
 aws configure sso
