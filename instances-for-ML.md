@@ -29,6 +29,12 @@ bill           = instance-hours × price per instance-hour
 
 So "32 H100s for 25 hours" is 800 GPU-hours, which is four `ml.p5.48xlarge` for 25 hours, 100 instance-hours, about `$6,330`. The same 800 GPU-hours on one box would take 100 hours of wall-clock time and cost the same.
 
+#### Which instance for what
+
+To read the table, find the row whose memory is at least 1.5× your dataset, then move down to the first GPU row only if the task is deep learning. For the workshop, the controller is always `ml.t3.medium`, the Titanic training jobs use `ml.m5.large` or `ml.g4dn.xlarge`, the fine-tuning job uses `ml.g5.xlarge`, and the RAG Processing jobs use `ml.g5.xlarge` (embedding) and `ml.g6e.xlarge` (the 27B generator).
+
+The bottom rows of the table are for training. For inference only, a large model usually belongs on Bedrock, not on a rented GPU. Bedrock serves models of 70B parameters and up, Claude, Nova, Llama and others, at a price per token, with no instance to size, start or forget. The RAG episodes compare the two. The lesson's evaluation cost well under a dollar on Bedrock, and about `$5` for two hours of a 27B model self-hosted on an `ml.g6e.xlarge`, an instance that bills about `$60` a day whether or not it is answering. Rent a GPU for inference when the model is one Bedrock does not serve, such as your own fine-tune or a specific open-weight model, or when the volume is steady enough to keep the instance busy.
+
 | **Dataset Size** | **Max Model Size (Approx.)** | **Recommended Instance** | **vCPU** | **Memory (GiB)** | **GPU** | **Price per Hour (USD)** | **Suitable Tasks** |
 |------------------:|------------------------------|------------------------------|----------|------------------|---------|--------------------------|------------------------------------------------------|
 | < 1 GB | Up to 100 M params | ml.t3.medium | 2 | 4 | None | `$0.05` | Controller notebook; lightweight preprocessing or small models |
@@ -53,5 +59,3 @@ So "32 H100s for 25 hours" is 800 GPU-hours, which is four `ml.p5.48xlarge` for 
 | 100 GB | Up to 70 B+ params | ml.p4d.24xlarge (A100) | 96 | 1,152 | 8 × A100 (40 GB) | `$25.25` | High-end DL / LLM fine-tuning |
 | 1 TB+ | Up to 70 B+ params | ml.p4d.24xlarge (A100) | 96 | 1,152 | 8 × A100 (40 GB) | `$25.25` | Distributed training for foundation-scale models |
 | 1 TB+ | 70 B+ params, full fine-tunes | ml.p5.48xlarge (H100) | 192 | 2,048 | 8 × H100 (80 GB) | `$63.30` | Full (non-LoRA) fine-tuning and pretraining; where five-figure bills come from |
-
-A quick way to read the table: find the row whose memory is at least 1.5× your dataset, then move down to the first GPU row only if the task is deep learning. For the workshop, the controller is always `ml.t3.medium`, the Titanic training jobs use `ml.m5.large` or `ml.g4dn.xlarge`, the fine-tuning job uses `ml.g5.xlarge`, and the RAG Processing jobs use `ml.g5.xlarge` (embedding) and `ml.g6e.xlarge` (the 27B generator).
