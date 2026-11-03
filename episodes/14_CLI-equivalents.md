@@ -16,7 +16,7 @@ exercises: 10
 
 - Authenticate the CLI with short-lived Identity Center credentials, never with access keys.
 - Match each SDK call and helper the episodes used to the CLI command that does the same thing.
-- List, inspect and stop training jobs, processing jobs, tuning jobs and notebook instances from the terminal, and read a job's bill the way `job_cost_report()` did.
+- List and inspect training jobs, processing jobs, tuning jobs and notebook instances from the terminal, stop your own by name, and read a job's bill the way `job_cost_report()` did.
 - Copy data to and from S3 in bulk with `aws s3 sync`.
 - Relaunch the training episode's XGBoost job from its JSON description, with the same script, hyperparameters, cap and tags.
 - State which resources the lesson never creates from the CLI, and why the account refuses them.
@@ -29,7 +29,7 @@ Everything in this lesson went through the SageMaker Python SDK in a notebook on
 
 None of that is required. The notebook instance was a convenience for teaching. SageMaker is an API, and the AWS CLI calls the same API from a terminal. A job launched from your laptop needs no instance at all. The request goes from your terminal to SageMaker, the job runs on a machine rented for it and ends, and the model lands in S3. For a project that launches a job a day and otherwise works locally, that removes the notebook instance's whole cost and the habit of stopping it. The terminal is also the tool for checking on a job from another machine, stopping something when no notebook is open, and copying results out of S3 in bulk.
 
-This episode does five things from a laptop terminal. It signs in to the account with Identity Center, lists what is running and reads what a job cost, stops jobs and notebook instances, copies data to and from S3, and relaunches the training episode's XGBoost job from a JSON file.
+This episode does five things from a laptop terminal. It signs in to the account with Identity Center, lists what is running and reads what a job cost, stops your own jobs and your own notebook instance by name, copies data to and from S3, and relaunches the training episode's XGBoost job from a JSON file.
 
 Two things differ from the notebook. The first is identity. On the instance, its role signed every call. On a laptop you sign in yourself, which is section 1. The second is checking. The lesson's notebooks printed a cost estimate and ran a launch check before every job. A JSON request does neither on its own, so section 5 runs the lesson's checker on the file before the create call. It applies the account's rules and prints the most the request can bill.
 
@@ -205,7 +205,7 @@ aws sagemaker list-tags --resource-arn $ARN --query 'Tags[].[Key,Value]' --outpu
 
 ## 3. Stopping jobs and notebook instances
 
-Each of these stops a charge. They are the calls behind the **Stop** buttons the cleanup episode walks through in the console.
+Each of these stops a charge. They are the calls behind the **Stop** buttons the cleanup episode walks through in the console. Every one takes a name, and on a shared account the name must be yours. The lists in section 2 show everyone's jobs and instances, and the lesson names each one after its owner's notebook instance, which the `Name` tag confirms. Stop only what you started. Someone else's job is a question for them, or for the instructor.
 
 ```bash
 aws sagemaker stop-training-job   --training-job-name   <name>
