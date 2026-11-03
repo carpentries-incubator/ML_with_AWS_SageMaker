@@ -2,7 +2,7 @@
 title: 'Fine-tuning episode: cost, capacity and setup'
 ---
 
-Planning notes for running the [Fine-tuning a Vision-Language Model with Training Jobs](../episodes/08_Finetuning-BadgerScribe.md) episode (Badger Scribe, CHURRO-3B LoRA) with a class of about 50 in a 2-hour slot (3 with the bonus exercises) (quotas below are sized for 100). Prices are on-demand SageMaker rates from the AWS price list published 2026-10-16 (`us-east-1` and the class account's `us-east-2` are the same for these instance types); re-check them before the term, since `ml.g5.xlarge` has already moved from `$1.21` to `$1.41` since the RAG episodes were written.
+Planning notes for running the [Fine-tuning a Vision-Language Model with Training Jobs](../episodes/09_Finetuning-BadgerScribe.md) episode (Badger Scribe, CHURRO-3B LoRA) with a class of about 50 in a 2-hour slot (3 with the bonus exercises) (quotas below are sized for 100). Prices are on-demand SageMaker rates from the AWS price list published 2026-10-16 (`us-east-1` and the class account's `us-east-2` are the same for these instance types); re-check them before the term, since `ml.g5.xlarge` has already moved from `$1.21` to `$1.41` since the RAG episodes were written.
 
 ## The in-class design
 
