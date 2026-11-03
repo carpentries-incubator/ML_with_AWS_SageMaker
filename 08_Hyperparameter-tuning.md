@@ -21,7 +21,7 @@ exercises: 15
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/09_Hyperparameter-tuning.ipynb`. Select the **`conda_pytorch`** kernel.
+Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/08_Hyperparameter-tuning.ipynb`. Select the **`conda_pytorch`** kernel.
 
 ## Hyperparameter tuning in SageMaker
 The PyTorch episode trained one neural network with a learning rate and an epoch count chosen by hand. Those settings change the result, and choosing them by hand means launching a series of experiments and keeping track of their scores yourself. SageMaker's hyperparameter tuner does that for us. We say which settings may vary, how a good result is measured, and how many training jobs we are willing to pay for.
