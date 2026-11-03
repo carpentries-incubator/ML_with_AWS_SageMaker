@@ -45,6 +45,7 @@ The CLI, the SDK and the console are one API, so every call the episodes made ha
 | Training | `job_cost_report(job_name, price)` | `aws sagemaker describe-training-job --training-job-name <name>` (section 2) |
 | Hyperparameter tuning | `tuner.fit(...)` | `aws sagemaker create-hyper-parameter-tuning-job --cli-input-json file://...` |
 | Hyperparameter tuning | `tuning_cost_report(tuner, price)`, `tuner.best_training_job()` | `aws sagemaker list-training-jobs-for-hyper-parameter-tuning-job`, `describe-hyper-parameter-tuning-job --query BestTrainingJob.TrainingJobName` |
+| PyTorch, Hyperparameter tuning, Fine-tuning | `helpers.estimate_training_cost(...)`, `helpers.estimate_tuning_cost(...)`, `helpers.estimate_finetune_cost(...)` | the same functions from a laptop, after the workshop (the callout at the end of section 5) |
 | Fine-tuning | `helpers.check_launch(...)`, `helpers.check_finetune_launch(...)` | `python scripts/check_request.py <request>.json` (section 5) |
 | RAG with Processing jobs | `rag_processor.run(...)`, `describe_processing_job(...)` | `aws sagemaker create-processing-job --cli-input-json file://...`, `aws sagemaker describe-processing-job --processing-job-name <name>` |
 | RAG with Bedrock | `bedrock.list_inference_profiles(typeEquals="APPLICATION")`, `bedrock_runtime.converse(...)` | `aws bedrock list-inference-profiles --type-equals APPLICATION`, `aws bedrock-runtime converse --model-id <profile ARN> ...` |
@@ -366,6 +367,22 @@ aws sagemaker describe-training-job --training-job-name <notebook-instance-name>
 Expect the same two to three billable minutes on `ml.m5.large` as the notebook's job, under a cent, and the same `xgboost-model.json` inside the `model.tar.gz` it names. Nothing in a JSON file prints a price, so look the instance type up on the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page before sending it, as the notebooks did with their estimate cell.
 
 The PyTorch job, a Processing job and a tuning job follow the same route. `describe-training-job`, `describe-processing-job` and `describe-hyper-parameter-tuning-job` on the ones you ran print the request, and `create-training-job`, `create-processing-job` and `create-hyper-parameter-tuning-job` take it back with `--cli-input-json`. A PyTorch job's `HyperParameters` carries `epochs` and `learning_rate` and two input channels. A Processing job's `AppSpecification.ContainerArguments` is the `arguments=` list. A tuning job's file has the estimator's request nested under `TrainingJobDefinition` and the ranges under `HyperParameterTuningJobConfig.ParameterRanges`.
+
+::::::::::::::::::::::::::::::::::::: callout
+
+### The lesson's helpers, from your laptop
+
+The estimates and the launch check in this episode are the AWS commands and the lesson's checker, so that you see what the SDK was doing. After the workshop, the helpers the notebooks used are a convenience you can keep. `scripts/helpers.py` is plain Python and runs on a laptop as it did on the notebook instance. With the lesson cloned as above and `boto3` installed (`pip install boto3`, since the module imports it), import it into `python -c` and call the function the notebook called, with the same arguments. The estimators make no AWS calls. These three are the PyTorch episode's estimate, the tuning episode's and the fine-tuning episode's:
+
+```bash
+python -c "import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); import helpers; helpers.estimate_training_cost(params_billions=0.125, examples=1_000_000, tokens_per_example=256, epochs=3, instance_type='ml.g6.xlarge')"
+python -c "import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); import helpers; helpers.estimate_tuning_cost(train_minutes_per_job=1, price_per_hour=0.115, max_jobs=8)"
+python -c "import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); import helpers; helpers.estimate_finetune_cost(params_billions=3.75, examples=251, tokens_per_example=1600, epochs=2, instance_type='ml.g5.xlarge')"
+```
+
+Each prints the time, the cost and the `max_run` to set, which is the request's `MaxRuntimeInSeconds`.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
 
 ::::::::::::::::::::::::::::::::::::: callout
 
