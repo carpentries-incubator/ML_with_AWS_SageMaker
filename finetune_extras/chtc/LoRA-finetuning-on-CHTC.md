@@ -219,6 +219,17 @@ apptainer exec /staging/<n>/<netid>/churro.sif python read_results.py adapter.ta
 
 Read the output the way the lesson's episode reads the SageMaker run. The mean CER before and after on the same pages measures the fine-tune's effect and nothing else. The page that improved most shows what was learned: this writer's hand, and the archive's conventions, such as umlauts and ß as written and Kurrent letterforms read correctly. The holdout curve, not the training loss, says whether two passes was the right number. If it is still falling, another pass would help. If it is flat, stop. If it rises while the loss keeps falling, the model is memorizing the training pages.
 
+### How many passes to plan
+
+The number of passes is fixed before a run starts, because the cost cap and the learning-rate schedule are both laid out over it. The cosine schedule decays to zero at the planned end, so a run cannot be extended by a pass without changing the schedule it already followed. The common practice is not to guess a number but to pick a budget, score the holdout at the end of every pass inside it, and keep the best pass.
+
+- **A few hundred to a few thousand examples**, as here: plan 3 to 5 passes. One pass rarely settles, and ten usually memorizes the training pages.
+- **Tens of thousands of examples and up**: 1 to 3 passes. A second pass over that much data often helps less than it costs.
+- **Keep the best checkpoint, not the last.** The script saves one per pass. Hugging Face's `Trainer` can reload the best automatically with `load_best_model_at_end=True`, when `save_strategy` and `eval_strategy` are both `epoch`.
+- **Early stopping**, ending the run when the holdout has not improved for a set number of passes, is `EarlyStoppingCallback` in `Trainer`. It is used less with large models than with small ones, because each evaluation costs minutes of GPU time and because stopping early leaves the cosine schedule unfinished. Most teams plan the budget and pick the best pass afterwards.
+
+Here a pass is a few minutes of GPU time and costs nothing, so the budget is set by the queue and the job lane, not by a bill. Four passes with the scoring is still a short-lane job. The epoch count is on the submit file's arguments line.
+
 ## 10. What CHTC's GPUs can do
 
 Nothing here is billed, so what matters is which GPUs are in the pool and how long you may hold one, because that sets the model sizes you can work with. The inventory changes as cards are added, so read it from the scheduler, which lists every GPU type with its memory:
