@@ -729,6 +729,27 @@ hyperparameters = {
 }
 ```
 
+**What one training step does.** The Trainer takes one page at a time, since `batch_size` is 1. It runs the page image, the instruction prompt and the human transcription through the model, and measures the loss on the transcription tokens only, since the collator masks the prompt and image tokens out of it. The gradient of that loss flows back through the frozen model into the adapter matrices, the only parameters with gradients. After `grad_accum` pages, four here, the summed gradient makes one AdamW update to the adapter, so a pass over 251 pages is about 63 updates and two passes about 126. The learning rate ramps up over the first 3% of updates and then falls along a cosine curve to zero at the last one. Every update costs a forward and a backward pass over about 1,500 tokens.
+
+**Every setting, and what it moves.** The dictionary sets the ones the lesson chose. The others keep the script's defaults, which the script's `--help` lists.
+
+| Setting | Value here | What it does | What changing it costs or buys |
+|---|---|---|---|
+| `epochs` | 2 | Passes over the training pages. Training time scales with it, and the holdout curve at the end of each pass says whether the next one helped. | A third pass is 50% more training time. The homework runs four. |
+| `lr` | 2e-4 | The size of each update to the adapter. LoRA uses about ten times a full fine-tune's rate (~1e-5), because the adapter starts at zero and has few parameters. | Too high and the loss climbs or jumps around. Too low and two passes do not get far. |
+| `lora_r` | 16 | The adapter rank, the inner width of the two thin matrices. The trainable parameter count scales with it, about 30 million at 16. | 32 doubles the trainable parameters and the adapter's memory, and on a few hundred pages tends to overfit sooner. |
+| `lora_alpha` | 32 (default) | Scales the adapter's output by alpha ÷ r, 2 here. The script's default, not set in the run. | Keep alpha at twice r when changing r, or the effective learning rate of the adapter changes with it. |
+| `lora_dropout` | 0.05 (default) | Dropout on the adapter's input, a little regularization against a few hundred pages. | Rarely worth changing. |
+| `batch_size` | 1 | Pages per forward pass per GPU. A page is about 1,500 tokens with its image, so one page at a time is what fits beside the model on a 24 GB card. | 2 needs roughly twice the activation memory and does not fit the lesson's card. |
+| `grad_accum` | 4 | Pages whose gradients are summed before one update. The effective batch is `batch_size` × `grad_accum`. | 8 halves the number of updates per pass, each a little smoother. The script's default is 8; the lesson uses 4 so that 251 pages give enough updates in two passes. |
+| `max_pixels` | 1,003,520 (1280 × 28 × 28) | The page is resized to at most this many pixels, and every 28 × 28 block is one token, so about 1,280 image tokens a page. | Halving it halves the image tokens and the training time, and loses detail on small handwriting. Doubling it doubles both. |
+| `eval_pages` | 15 | Holdout pages transcribed and scored, before training when `eval_before` is 1 and again after. | Scoring is 20 to 70 seconds a page, so 15 pages is 5 to 15 minutes each time. 40 pages, the homework's choice, gives a steadier number at three times the scoring time. |
+| `eval_before` | 1 | Score the base model on the same pages before training, so the before-and-after comparison is on identical pages. | 0 skips it and saves the time. Then there is nothing to compare against. |
+| `curve_pages` | 8 | Of the 15 holdout pages, the ones scored again at the end of every pass, which draws the holdout CER curve. | 0 skips the curve. More pages make the curve steadier and each pass longer. |
+| `holdout_frac` | 0.15 (default) | The fraction of pages, within each category, held out of training with a fixed seed. 44 of 295 here. | Changing it changes which pages are scored, so runs with different values are not comparable. |
+| `seed` | 42 (default) | Fixes the holdout split, the evaluation sample and the training order, so every run scores the same pages. |  |
+| `max_new_tokens` | 1024 (default) | The most tokens the model may generate when transcribing a page during scoring. | A page is about 200 text tokens. The cap matters only when the model rambles, which the base model does on pages it cannot read. |
+
 One check of all of it before the estimator exists, as `check_launch` checked the tags. `check_finetune_launch` applies the account's rules to the tags, the instance type and the cap, and then this lesson's own rules for a fine-tune: LoRA and not a full fine-tune, a model of at most 7B, a cap between the estimate and four times it, checkpoints on any run that may pass an hour, a fixed job name, and sane values for the passes and the pixel budget. It raises with every problem named, or prints what the launch is allowed to cost.
 
 ```python
