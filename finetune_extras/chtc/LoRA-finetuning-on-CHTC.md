@@ -139,7 +139,7 @@ A job's history is in its `.log` file. Open `fetch_model.log` when the job finis
 
 ## 7. Read the job before you submit it
 
-Open [`finetune.sub`](finetune.sub) and [`finetune.sh`](finetune.sh) together. The submit file describes the machine and the files, which the lesson's estimator did on SageMaker. The shell script runs the training script. Every setting has a comment. These are the ones to understand.
+Open [`finetune.sub`](finetune.sub) and [`finetune.sh`](finetune.sh) together. The submit file describes the machine and the files, which the lesson's estimator did on SageMaker. The shell script runs the training script. Every setting has a comment on the line above it. HTCondor reads a `#` at the end of a setting's line as part of the value, so a comment never shares a line with a setting in a submit file. These are the ones to understand.
 
 **The arguments line** holds the script's command-line flags, the same hyperparameters as the lesson's SageMaker job: two passes, a LoRA rank of 16, 15 holdout pages scored before and after, and 8 of them scored at the end of every pass. To change a run, change this line, not the script.
 
