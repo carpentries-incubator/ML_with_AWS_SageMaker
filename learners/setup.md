@@ -6,7 +6,7 @@ title: Setup
 Before the workshop:
 
 1. **GitHub Account (optional)** – Only needed for the optional episode on pushing your own code to GitHub.
-2. **AWS Access** – Use a **shared AWS account** (UW-Madison) or an AWS account of your own.
+2. **AWS Access** – Use a **shared AWS account** (UW-Madison) or an AWS account of your own. On your own account there is no instructor behind the scenes, so you also create the notebook role and stage the datasets that the fine-tuning and RAG episodes read, which the instructor pages describe.
 3. **Data** – Download one small zip.
 4. **Glossary** — Skim the workshop glossary.
 5. **Episodes 1 to 4 first** — They create the bucket and notebook instance every later episode uses.
@@ -47,9 +47,14 @@ Steps 3 to 6 need administrator rights on the account, which you have on an acco
 
 ::::::::::::::::::::::::::::::::::::: callout
 
-### Instructors, before the workshop
+### Whoever prepares the account: instructors, or you on your own
 
-The launch rules the shared-account tab describes are not part of SageMaker. They are policies you attach to the account, and the shared data bucket has to be staged. Work through the instructor pages before the first session: the [Account preparation checklist](../instructors/aws-account-prep.md) sets the quotas, Bedrock model access, the cost tags and the guard rails, and the [Shared data bucket](../instructors/shared-data-bucket.md) page stages the datasets and model weights the fine-tuning and RAG episodes read. The [Instructor Notes](../instructors/instructor-notes.md) index has the rest, including the end-of-workshop cleanup.
+Whichever tab applies, someone has to prepare the account before the first episode that needs it. On the shared account that is the instructor. On an account of your own, it is you, and the same pages apply. Two things are required on any account:
+
+- **The notebook role.** Every notebook and job runs as `ml-sagemaker-use`, with the Bedrock permissions the RAG episodes need. The [Account preparation checklist](../instructors/aws-account-prep.md) has the commands under *The notebook role* and *Bedrock*. The checklist also covers GPU quotas, which take weeks on a new account, and the guard rails, which are policies attached to the account and are optional when you are the only user.
+- **The staged datasets.** The fine-tuning and RAG episodes read the Badger Scribe pages, the CHURRO-3B weights and the WattBot papers from a bucket somebody filled in advance. The [Shared data bucket](../instructors/shared-data-bucket.md) page has the commands. On your own account, fill a bucket of your own and set `shared_bucket` in those episodes to its name.
+
+The [Instructor Notes](../instructors/instructor-notes.md) index has the rest, including the end-of-workshop cleanup.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
