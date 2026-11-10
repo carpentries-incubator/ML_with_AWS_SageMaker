@@ -404,7 +404,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Instances for ML</h1>
-        <p>Last updated on 2026-11-02 |
+        <p>Last updated on 2026-11-03 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/learners/instances-for-ML.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -495,6 +495,28 @@ bill           = instance-hours × price per instance-hour</code></pre>
 <code>ml.p5.48xlarge</code> for 25 hours, 100 instance-hours, about
 <code>$6,330</code>. The same 800 GPU-hours on one box would take 100
 hours of wall-clock time and cost the same.</p>
+</div>
+<div class="section level4">
+<h4 id="which-instance-for-what">Which instance for what<a class="anchor" aria-label="anchor" href="#which-instance-for-what"></a></h4>
+<p>To read the table, find the row whose memory is at least 1.5× your
+dataset, then move down to the first GPU row only if the task is deep
+learning. For the workshop, the controller is always
+<code>ml.t3.medium</code>, the Titanic training jobs use
+<code>ml.m5.large</code> or <code>ml.g4dn.xlarge</code>, the fine-tuning
+job uses <code>ml.g5.xlarge</code>, and the RAG Processing jobs use
+<code>ml.g5.xlarge</code> (embedding) and <code>ml.g6e.xlarge</code>
+(the 27B generator).</p>
+<p>The bottom rows of the table are for training. For inference only, a
+large model usually belongs on Bedrock, not on a rented GPU. Bedrock
+serves models of 70B parameters and up, Claude, Nova, Llama and others,
+at a price per token, with no instance to size, start or forget. The RAG
+episodes compare the two. The lesson’s evaluation cost well under a
+dollar on Bedrock, and about <code>$5</code> for two hours of a 27B
+model self-hosted on an <code>ml.g6e.xlarge</code>, an instance that
+bills about <code>$60</code> a day whether or not it is answering. Rent
+a GPU for inference when the model is one Bedrock does not serve, such
+as your own fine-tune or a specific open-weight model, or when the
+volume is steady enough to keep the instance busy.</p>
 <table class="table"><colgroup><col width="9%"><col width="15%"><col width="15%"><col width="5%"><col width="9%"><col width="4%"><col width="13%"><col width="27%"></colgroup><thead><tr><th align="right"><strong>Dataset Size</strong></th>
 <th><strong>Max Model Size (Approx.)</strong></th>
 <th><strong>Recommended Instance</strong></th>
@@ -686,19 +708,10 @@ corpora</td>
 <td><code>$63.30</code></td>
 <td>Full (non-LoRA) fine-tuning and pretraining; where five-figure bills
 come from</td>
-</tr></tbody></table><p>A quick way to read the table: find the row whose memory is at least
-1.5× your dataset, then move down to the first GPU row only if the task
-is deep learning. For the workshop, the controller is always
-<code>ml.t3.medium</code>, the Titanic training jobs use
-<code>ml.m5.large</code> or <code>ml.g4dn.xlarge</code>, the fine-tuning
-job uses <code>ml.g5.xlarge</code>, and the RAG Processing jobs use
-<code>ml.g5.xlarge</code> (embedding) and <code>ml.g6e.xlarge</code>
-(the 27B generator).</p>
-<!--
+</tr></tbody></table><!--
 Place links that you need to refer to multiple times across pages here. Delete
 any links that you are not going to use.
- -->
-</div>
+ --></div>
 
 
 
@@ -757,8 +770,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-11-02",
-  "datePublished": "2026-11-03"
+  "dateModified": "2026-11-03",
+  "datePublished": "2026-11-10"
 }
 
   </script><script>

@@ -802,7 +802,10 @@ any links that you are not going to use.
 optional episode on pushing your own code to GitHub.</li>
 <li>
 <strong>AWS Access</strong> – Use a <strong>shared AWS
-account</strong> (UW-Madison) or an AWS account of your own.</li>
+account</strong> (UW-Madison) or an AWS account of your own. On your own
+account there is no instructor behind the scenes, so you also create the
+notebook role and stage the datasets that the fine-tuning and RAG
+episodes read, which the instructor pages describe.</li>
 <li>
 <strong>Data</strong> – Download one small zip.</li>
 <li>
@@ -836,7 +839,7 @@ choose.</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-SharedaccountUW-Madison" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-SharedaccountUW-Madison">
+<div id="nav-tabpanel-1-SharedaccountUW-Madison" class="tab-pane show active" aria-labelledby="nav-tab-1-SharedaccountUW-Madison" role="tabpanel">
 <p>If you are attending this lesson at UW-Madison (ML Marathon or
 Research Bazaar), the instructors will provide a shared AWS account for
 all attendees. You do not need to set up your own AWS account. What to
@@ -866,7 +869,7 @@ with an <code>AccessDenied</code> message that does not say why; <a href="refuse
 lesson’s helper module can tell you before and after the launch. Check
 there before emailing.</li>
 </ul></div>
-<div id="nav-tabpanel-1-YourownAWSaccount" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-YourownAWSaccount">
+<div id="nav-tabpanel-1-YourownAWSaccount" class="tab-pane" aria-labelledby="nav-tab-1-YourownAWSaccount" role="tabpanel">
 <p>If you are not attending through the shared account, follow these
 steps:</p>
 <ol style="list-style-type: decimal"><li>Create an account at <a href="https://aws.amazon.com/" class="external-link">aws.amazon.com</a> on the <strong>paid
@@ -916,22 +919,35 @@ administrator.</p>
 </div>
 </div>
 </div>
-<div id="instructors-before-the-workshop" class="callout">
+<div id="whoever-prepares-the-account-instructors-or-you-on-your-own" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
 </div>
 <span class="callout-header">Callout</span>
-<div id="instructors-before-the-workshop" class="callout-inner">
-<h3 class="callout-title">Instructors, before the workshop</h3>
+<div id="whoever-prepares-the-account-instructors-or-you-on-your-own" class="callout-inner">
+<h3 class="callout-title">Whoever prepares the account: instructors, or
+you on your own</h3>
 <div class="callout-content">
-<p>The launch rules the shared-account tab describes are not part of
-SageMaker. They are policies you attach to the account, and the shared
-data bucket has to be staged. Work through the instructor pages before
-the first session: the <a href="aws-account-prep.html">Account
-preparation checklist</a> sets the quotas, Bedrock model access, the
-cost tags and the guard rails, and the <a href="shared-data-bucket.html">Shared data bucket</a> page stages the
-datasets and model weights the fine-tuning and RAG episodes read. The <a href="instructor-notes.html">Instructor Notes</a> index has the rest,
-including the end-of-workshop cleanup.</p>
+<p>Whichever tab applies, someone has to prepare the account before the
+first episode that needs it. On the shared account that is the
+instructor. On an account of your own, it is you, and the same pages
+apply. Two things are required on any account:</p>
+<ul><li>
+<strong>The notebook role.</strong> Every notebook and job runs as
+<code>ml-sagemaker-use</code>, with the Bedrock permissions the RAG
+episodes need. The <a href="aws-account-prep.html">Account preparation
+checklist</a> has the commands under <em>The notebook role</em> and
+<em>Bedrock</em>. The checklist also covers GPU quotas, which take weeks
+on a new account, and the guard rails, which are policies attached to
+the account and are optional when you are the only user.</li>
+<li>
+<strong>The staged datasets.</strong> The fine-tuning and RAG
+episodes read the Badger Scribe pages, the CHURRO-3B weights and the
+WattBot papers from a bucket somebody filled in advance. The <a href="shared-data-bucket.html">Shared data bucket</a> page has the
+commands. On your own account, fill a bucket of your own and set
+<code>shared_bucket</code> in those episodes to its name.</li>
+</ul><p>The <a href="instructor-notes.html">Instructor Notes</a> index has
+the rest, including the end-of-workshop cleanup.</p>
 </div>
 </div>
 </div>
@@ -1025,8 +1041,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/index.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/index.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-11-03",
-  "datePublished": "2026-11-03"
+  "dateModified": "2026-11-10",
+  "datePublished": "2026-11-10"
 }
 
   </script><script>

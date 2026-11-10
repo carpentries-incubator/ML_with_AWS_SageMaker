@@ -432,7 +432,7 @@ test pages</a></li>
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Fine-tuning a Vision-Language Model with Training Jobs</h1>
-        <p>Last updated on 2026-11-03 |
+        <p>Last updated on 2026-11-04 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/09_Finetuning-BadgerScribe.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -1147,7 +1147,7 @@ What does a project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5, because a full fine-tune of a 7B model
 needs about 112 GB plus activations, and the g5 has 24 GB. On the p4d, 8
@@ -1285,7 +1285,7 @@ costs one epoch, not the whole bill.</li>
 <button class="accordion-button instructor-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInstructor1" aria-expanded="false" aria-controls="collapseInstructor1">
   <h3 class="accordion-header" id="headingInstructor1">  <div class="note-square"><i aria-hidden="true" class="callout-icon" data-feather="edit-2"></i></div> Before class (instructor checklist) </h3>
 </button>
-<div id="collapseInstructor1" class="accordion-collapse collapse" aria-labelledby="headingInstructor1" data-bs-parent="#accordionInstructor1">
+<div id="collapseInstructor1" class="accordion-collapse collapse" data-bs-parent="#accordionInstructor1" aria-labelledby="headingInstructor1">
 <div class="accordion-body">
 <p>Students never download the data themselves; four things have to be
 in place before the session. Each is written out in the instructor
@@ -1617,7 +1617,7 @@ length. Run the text without the image to separate the two.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -1790,7 +1790,7 @@ step. Which, and why are they there?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>Only the language model’s <code>q_proj</code>, <code>k_proj</code>,
 <code>v_proj</code>, <code>o_proj</code>, <code>gate_proj</code>,
@@ -1991,7 +1991,112 @@ to train if more than 5% of the model turns out to be trainable.</p>
 <span id="cb29-11"><a href="#cb29-11" tabindex="-1" aria-label="code-block-29-11"></a>    <span class="st">"curve_pages"</span>: <span class="dv">8</span>,                 <span class="co"># of those 15, scored again at the end of every epoch: the CER curve</span></span>
 <span id="cb29-12"><a href="#cb29-12" tabindex="-1" aria-label="code-block-29-12"></a>}</span></code></pre>
 </div>
-<p>One check of all of it before the estimator exists, as
+<p><strong>What one training step does.</strong> The Trainer takes one
+page at a time, since <code>batch_size</code> is 1. It runs the page
+image, the instruction prompt and the human transcription through the
+model, and measures the loss on the transcription tokens only, since the
+collator masks the prompt and image tokens out of it. The gradient of
+that loss flows back through the frozen model into the adapter matrices,
+the only parameters with gradients. After <code>grad_accum</code> pages,
+four here, the summed gradient makes one AdamW update to the adapter, so
+a pass over 251 pages is about 63 updates and two passes about 126. The
+learning rate ramps up over the first 3% of updates and then falls along
+a cosine curve to zero at the last one. Every update costs a forward and
+a backward pass over about 1,500 tokens.</p>
+<p><strong>Every setting, and what it moves.</strong> The dictionary
+sets the ones the lesson chose. The others keep the script’s defaults,
+which the script’s <code>--help</code> lists.</p>
+<table class="table"><colgroup><col width="25%"><col width="25%"><col width="25%"><col width="25%"></colgroup><thead><tr><th>Setting</th>
+<th>Value here</th>
+<th>What it does</th>
+<th>What changing it costs or buys</th>
+</tr></thead><tbody><tr><td><code>epochs</code></td>
+<td>2</td>
+<td>Passes over the training pages. Training time scales with it, and
+the holdout curve at the end of each pass says whether the next one
+helped.</td>
+<td>A third pass is 50% more training time. The homework runs four.</td>
+</tr><tr><td><code>lr</code></td>
+<td>2e-4</td>
+<td>The size of each update to the adapter. LoRA uses about ten times a
+full fine-tune’s rate (~1e-5), because the adapter starts at zero and
+has few parameters.</td>
+<td>Too high and the loss climbs or jumps around. Too low and two passes
+do not get far.</td>
+</tr><tr><td><code>lora_r</code></td>
+<td>16</td>
+<td>The adapter rank, the inner width of the two thin matrices. The
+trainable parameter count scales with it, about 30 million at 16.</td>
+<td>32 doubles the trainable parameters and the adapter’s memory, and on
+a few hundred pages tends to overfit sooner.</td>
+</tr><tr><td><code>lora_alpha</code></td>
+<td>32 (default)</td>
+<td>Scales the adapter’s output by alpha ÷ r, 2 here. The script’s
+default, not set in the run.</td>
+<td>Keep alpha at twice r when changing r, or the effective learning
+rate of the adapter changes with it.</td>
+</tr><tr><td><code>lora_dropout</code></td>
+<td>0.05 (default)</td>
+<td>Dropout on the adapter’s input, a little regularization against a
+few hundred pages.</td>
+<td>Rarely worth changing.</td>
+</tr><tr><td><code>batch_size</code></td>
+<td>1</td>
+<td>Pages per forward pass per GPU. A page is about 1,500 tokens with
+its image, so one page at a time is what fits beside the model on a 24
+GB card.</td>
+<td>2 needs roughly twice the activation memory and does not fit the
+lesson’s card.</td>
+</tr><tr><td><code>grad_accum</code></td>
+<td>4</td>
+<td>Pages whose gradients are summed before one update. The effective
+batch is <code>batch_size</code> × <code>grad_accum</code>.</td>
+<td>8 halves the number of updates per pass, each a little smoother. The
+script’s default is 8; the lesson uses 4 so that 251 pages give enough
+updates in two passes.</td>
+</tr><tr><td><code>max_pixels</code></td>
+<td>1,003,520 (1280 × 28 × 28)</td>
+<td>The page is resized to at most this many pixels, and every 28 × 28
+block is one token, so about 1,280 image tokens a page.</td>
+<td>Halving it halves the image tokens and the training time, and loses
+detail on small handwriting. Doubling it doubles both.</td>
+</tr><tr><td><code>eval_pages</code></td>
+<td>15</td>
+<td>Holdout pages transcribed and scored, before training when
+<code>eval_before</code> is 1 and again after.</td>
+<td>Scoring is 20 to 70 seconds a page, so 15 pages is 5 to 15 minutes
+each time. 40 pages, the homework’s choice, gives a steadier number at
+three times the scoring time.</td>
+</tr><tr><td><code>eval_before</code></td>
+<td>1</td>
+<td>Score the base model on the same pages before training, so the
+before-and-after comparison is on identical pages.</td>
+<td>0 skips it and saves the time. Then there is nothing to compare
+against.</td>
+</tr><tr><td><code>curve_pages</code></td>
+<td>8</td>
+<td>Of the 15 holdout pages, the ones scored again at the end of every
+pass, which draws the holdout CER curve.</td>
+<td>0 skips the curve. More pages make the curve steadier and each pass
+longer.</td>
+</tr><tr><td><code>holdout_frac</code></td>
+<td>0.15 (default)</td>
+<td>The fraction of pages, within each category, held out of training
+with a fixed seed. 44 of 295 here.</td>
+<td>Changing it changes which pages are scored, so runs with different
+values are not comparable.</td>
+</tr><tr><td><code>seed</code></td>
+<td>42 (default)</td>
+<td>Fixes the holdout split, the evaluation sample and the training
+order, so every run scores the same pages.</td>
+<td></td>
+</tr><tr><td><code>max_new_tokens</code></td>
+<td>1024 (default)</td>
+<td>The most tokens the model may generate when transcribing a page
+during scoring.</td>
+<td>A page is about 200 text tokens. The cap matters only when the model
+rambles, which the base model does on pages it cannot read.</td>
+</tr></tbody></table><p>One check of all of it before the estimator exists, as
 <code>check_launch</code> checked the tags.
 <code>check_finetune_launch</code> applies the account’s rules to the
 tags, the instance type and the cap, and then this lesson’s own rules
@@ -2371,7 +2476,7 @@ will compare it to the bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>Expect about 32 billed minutes. Scoring is the line most likely to
 surprise: at 17 to 21 seconds a page, the two 15-page evaluations and
@@ -2783,7 +2888,7 @@ summaries, and the before/after CER. Did the extra pixels help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -2824,7 +2929,7 @@ instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution6" aria-expanded="false" aria-controls="collapseSolution6">
   <h4 class="accordion-header" id="headingSolution6"> Show me the solution </h4>
 </button>
-<div id="collapseSolution6" class="accordion-collapse collapse" aria-labelledby="headingSolution6" data-bs-parent="#accordionSolution6">
+<div id="collapseSolution6" class="accordion-collapse collapse" data-bs-parent="#accordionSolution6" aria-labelledby="headingSolution6">
 <div class="accordion-body">
 <p>Startup and upload (~6 min, <code>$0.26</code> at
 <code>$2.61</code>/h) do not speed up: the container pull and the S3
@@ -2945,8 +3050,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/09_Finetuning-BadgerScribe.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/09_Finetuning-BadgerScribe.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-11-03",
-  "datePublished": "2026-11-03"
+  "dateModified": "2026-11-04",
+  "datePublished": "2026-11-10"
 }
 
   </script><script>
