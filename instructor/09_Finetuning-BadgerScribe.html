@@ -751,14 +751,14 @@ one stopped. Each version says where its checkpoints go.</p>
 fine-tune a model larger than 30B on the class account. The limit comes
 from the instances the account allows, which are single-GPU and top out
 at the 48 GB <code>ml.g6e.xlarge</code>. On your own account you would
-rent a bigger instance. A 7B LoRA needs about 22 GB and fits the 24 GB
-card the class uses. A LoRA in bf16 fits the 48 GB card up to about 17B.
-Beyond that, on this account, the frozen weights go to 4-bit, which the
-training script does with <code>--load_in_4bit 1</code>, and a 30B model
-in 4-bit needs about 34 GB. A full fine-tune of even a 7B model needs
-more memory than any instance the account allows. The larger runs appear
-in this episode only as estimates, so that you can recognize one before
-you launch it.</p>
+rent a bigger instance. A 7B LoRA at rank 16 needs about 19 GB and fits
+the 24 GB card the class uses. A LoRA in bf16 fits the 48 GB card up to
+about 20B. Beyond that, on this account, the frozen weights go to 4-bit,
+which the training script does with <code>--load_in_4bit 1</code>, and a
+30B model in 4-bit needs about 34 GB. A full fine-tune of even a 7B
+model needs more memory than any instance the account allows. The larger
+runs appear in this episode only as estimates, so that you can recognize
+one before you launch it.</p>
 </div>
 </div>
 </div>
@@ -821,7 +821,8 @@ are 16-bit throughout:</p>
 </tr><tr><td>7B</td>
 <td>bf16, 14 GB: <code>ml.g5.xlarge</code>
 </td>
-<td>22 GB: <code>ml.g5.xlarge</code>, with nothing to spare</td>
+<td>19 GB: <code>ml.g5.xlarge</code>
+</td>
 <td>116 GB: <code>ml.g6e.12xlarge</code>, 4 × 48 GB,
 <code>$13.12</code>/h</td>
 </tr><tr><td>27B</td>
@@ -834,7 +835,7 @@ are 16-bit throughout:</p>
 </tr><tr><td>70B</td>
 <td>4-bit, 35 GB: <code>ml.g6e.xlarge</code>; FP8, 70 GB:
 <code>ml.g6e.12xlarge</code>, 4 × 48 GB, <code>$13.12</code>/h</td>
-<td>179 GB: <code>ml.g6e.12xlarge</code>
+<td>146 GB: <code>ml.g6e.12xlarge</code>
 </td>
 <td>1,124 GB: two <code>ml.p5.48xlarge</code>, <code>$127</code>/h</td>
 </tr></tbody></table><p>A 7B model that runs on one 24 GB GPU needs 116 GB to fully
@@ -927,17 +928,15 @@ arithmetic is the same.</li>
 <li>
 <code>method</code>: <code>"lora"</code> or <code>"full"</code>,
 which sets the bytes per parameter and the FLOPs per token.</li>
-<li>The adapter rank is not an argument, because at ordinary ranks it
-changes neither number by much. Memory is the frozen weights, 2 bytes
-per parameter, plus 16 bytes for each adapter parameter, which at rank
-16 on this model is 2.1 bytes per parameter in all and at rank 64 about
-2.5, the flat figure the function uses. Compute is the forward and
-backward pass through the whole frozen model, the same at any rank, and
-the adapter’s own share is under 1%. The flat figures stop holding at
-very high ranks. At rank 256 the adapter is about 13% of this model’s
-weights, memory is about 4 bytes per parameter, 19 GB with the
-activations against the 13 GB the function reports, and you would add it
-yourself.</li>
+<li>
+<code>lora_r</code>: the adapter rank. It sets the adapter’s share
+of the model, about the rank divided by the model’s hidden size, and
+from that the memory: 2 bytes per frozen parameter plus 16 for each
+adapter parameter. At rank 16 on this model that is 2.1 bytes per
+parameter, at rank 64 about 2.5, at rank 256 about 4, so the rank hardly
+moves the memory until it is large. It does not move the time, because
+the pass through the frozen model is the same work at any rank. Left
+out, the function uses a flat 2.5 bytes.</li>
 <li>
 <code>instance_type</code>: one of the boxes in the price list;
 leave it out and the cheapest one that fits is chosen.</li>
@@ -958,9 +957,10 @@ sweep.</li>
 <span id="cb2-8"><a href="#cb2-8" tabindex="-1" aria-label="code-block-2-8"></a>    tokens_per_example<span class="op">=</span><span class="dv">1600</span>,     <span class="co"># ~1,300 image tokens + ~300 text tokens; counted in Setup below</span></span>
 <span id="cb2-9"><a href="#cb2-9" tabindex="-1" aria-label="code-block-2-9"></a>    epochs<span class="op">=</span><span class="dv">2</span>,                    <span class="co"># passes over the 251 pages: a budget, not a known number; see the bullet above</span></span>
 <span id="cb2-10"><a href="#cb2-10" tabindex="-1" aria-label="code-block-2-10"></a>    method<span class="op">=</span><span class="st">"lora"</span>,</span>
-<span id="cb2-11"><a href="#cb2-11" tabindex="-1" aria-label="code-block-2-11"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>,</span>
-<span id="cb2-12"><a href="#cb2-12" tabindex="-1" aria-label="code-block-2-12"></a>    runs<span class="op">=</span><span class="dv">1</span>,                      <span class="co"># one run today; the printout's last cost line is this times runs</span></span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1" aria-label="code-block-2-13"></a>)</span></code></pre>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1" aria-label="code-block-2-11"></a>    lora_r<span class="op">=</span><span class="dv">16</span>,                   <span class="co"># the adapter rank; sets the adapter's share of the model, and with it the memory</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1" aria-label="code-block-2-12"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>,</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1" aria-label="code-block-2-13"></a>    runs<span class="op">=</span><span class="dv">1</span>,                      <span class="co"># one run today; the printout's last cost line is this times runs</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1" aria-label="code-block-2-14"></a>)</span></code></pre>
 </div>
 <p>The function says about 27 minutes and <code>$0.64</code>, 17 minutes
 of training plus 10 of startup. The hand calculation said 12 minutes of
@@ -987,9 +987,10 @@ tries settings, and the printout’s last line prices all eight.</p>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1" aria-label="code-block-3-4"></a>    tokens_per_example<span class="op">=</span><span class="dv">800</span>,      <span class="co"># about 600 words each</span></span>
 <span id="cb3-5"><a href="#cb3-5" tabindex="-1" aria-label="code-block-3-5"></a>    epochs<span class="op">=</span><span class="dv">3</span>,                    <span class="co"># three passes over the documents</span></span>
 <span id="cb3-6"><a href="#cb3-6" tabindex="-1" aria-label="code-block-3-6"></a>    method<span class="op">=</span><span class="st">"lora"</span>,</span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1" aria-label="code-block-3-7"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>,</span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1" aria-label="code-block-3-8"></a>    runs<span class="op">=</span><span class="dv">8</span>,                      <span class="co"># the eight attempts a project takes; the last cost line is for all of them</span></span>
-<span id="cb3-9"><a href="#cb3-9" tabindex="-1" aria-label="code-block-3-9"></a>)<span class="op">;</span></span></code></pre>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1" aria-label="code-block-3-7"></a>    lora_r<span class="op">=</span><span class="dv">16</span>,</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1" aria-label="code-block-3-8"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>,</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1" aria-label="code-block-3-9"></a>    runs<span class="op">=</span><span class="dv">8</span>,                      <span class="co"># the eight attempts a project takes; the last cost line is for all of them</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1" aria-label="code-block-3-10"></a>)<span class="op">;</span></span></code></pre>
 </div>
 <p>About <code>$11</code> a run and <code>$92</code> for the project,
 eight hours of GPU time each. Leave <code>instance_type</code> out and
@@ -1326,7 +1327,7 @@ above, with the instance type forced to the four-GPU
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="co"># The class run on a 4 x A10G box. An estimate, not a launch: the class account does not allow multi-GPU instances.</span></span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a>helpers.estimate_finetune_cost(</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a>    params_billions<span class="op">=</span><span class="fl">3.75</span>, examples<span class="op">=</span><span class="dv">251</span>, tokens_per_example<span class="op">=</span><span class="dv">1600</span>, epochs<span class="op">=</span><span class="dv">2</span>, method<span class="op">=</span><span class="st">"lora"</span>,</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a>    params_billions<span class="op">=</span><span class="fl">3.75</span>, examples<span class="op">=</span><span class="dv">251</span>, tokens_per_example<span class="op">=</span><span class="dv">1600</span>, epochs<span class="op">=</span><span class="dv">2</span>, method<span class="op">=</span><span class="st">"lora"</span>, lora_r<span class="op">=</span><span class="dv">16</span>,</span>
 <span id="cb5-4"><a href="#cb5-4" tabindex="-1" aria-label="code-block-5-4"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.12xlarge"</span>,   <span class="co"># forced: left out, the function would pick the cheapest single GPU that fits</span></span>
 <span id="cb5-5"><a href="#cb5-5" tabindex="-1" aria-label="code-block-5-5"></a>)<span class="op">;</span></span></code></pre>
 </div>
@@ -1693,7 +1694,7 @@ per page; run it again with the measured average and compare:</p>
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" tabindex="-1" aria-label="code-block-19-1"></a>helpers.estimate_finetune_cost(params_billions<span class="op">=</span><span class="fl">3.75</span>, examples<span class="op">=</span><span class="dv">251</span>, tokens_per_example<span class="op">=</span><span class="bu">int</span>(avg_tokens_per_page), epochs<span class="op">=</span><span class="dv">2</span>,</span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1" aria-label="code-block-19-2"></a>                               method<span class="op">=</span><span class="st">"lora"</span>, instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>)<span class="op">;</span></span></code></pre>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1" aria-label="code-block-19-2"></a>                               method<span class="op">=</span><span class="st">"lora"</span>, lora_r<span class="op">=</span><span class="dv">16</span>, instance_type<span class="op">=</span><span class="st">"ml.g5.xlarge"</span>)<span class="op">;</span></span></code></pre>
 </div>
 <p>The measured count is a tenth below the guess, and the estimate moves
 with it: 26 minutes and <code>$0.60</code> against 27 and
@@ -1782,7 +1783,7 @@ changes the bill:</p>
 <span id="cb22-2"><a href="#cb22-2" tabindex="-1" aria-label="code-block-22-2"></a>                               method<span class="op">=</span><span class="st">"full"</span>)<span class="op">;</span>   <span class="co"># no instance_type: the cheapest that holds it</span></span></code></pre>
 </div>
 <p>Memory is what changes. The weights, their gradients and the
-optimizer’s state come to 64 GB against 13, so the run no longer fits a
+optimizer’s state come to 64 GB against 12, so the run no longer fits a
 24 GB GPU, and the cheapest instance that holds it is the four-GPU
 <code>ml.g5.12xlarge</code> at <code>$7.09</code> an hour, five times
 the price. The four GPUs share the work, so the job is shorter, and the
@@ -1795,7 +1796,7 @@ launched; read the memory line and the instance it forces.</p>
 <div class="codewrapper sourceCode" id="cb23">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" tabindex="-1" aria-label="code-block-23-1"></a>helpers.estimate_finetune_cost(params_billions<span class="op">=</span><span class="dv">7</span>, examples<span class="op">=</span><span class="dv">251</span>, tokens_per_example<span class="op">=</span><span class="bu">int</span>(avg_tokens_per_page), epochs<span class="op">=</span><span class="dv">2</span>, method<span class="op">=</span><span class="st">"lora"</span>)<span class="op">;</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" tabindex="-1" aria-label="code-block-23-1"></a>helpers.estimate_finetune_cost(params_billions<span class="op">=</span><span class="dv">7</span>, examples<span class="op">=</span><span class="dv">251</span>, tokens_per_example<span class="op">=</span><span class="bu">int</span>(avg_tokens_per_page), epochs<span class="op">=</span><span class="dv">2</span>, method<span class="op">=</span><span class="st">"lora"</span>, lora_r<span class="op">=</span><span class="dv">16</span>)<span class="op">;</span></span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb24">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -1805,7 +1806,7 @@ launched; read the memory line and the instance it forces.</p>
 <div class="codewrapper sourceCode" id="cb25">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" tabindex="-1" aria-label="code-block-25-1"></a>helpers.estimate_finetune_cost(params_billions<span class="op">=</span><span class="dv">70</span>, examples<span class="op">=</span><span class="dv">251</span>, tokens_per_example<span class="op">=</span><span class="bu">int</span>(avg_tokens_per_page), epochs<span class="op">=</span><span class="dv">2</span>, method<span class="op">=</span><span class="st">"lora"</span>)<span class="op">;</span></span></code></pre>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" tabindex="-1" aria-label="code-block-25-1"></a>helpers.estimate_finetune_cost(params_billions<span class="op">=</span><span class="dv">70</span>, examples<span class="op">=</span><span class="dv">251</span>, tokens_per_example<span class="op">=</span><span class="bu">int</span>(avg_tokens_per_page), epochs<span class="op">=</span><span class="dv">2</span>, method<span class="op">=</span><span class="st">"lora"</span>, lora_r<span class="op">=</span><span class="dv">16</span>)<span class="op">;</span></span></code></pre>
 </div>
 <div class="codewrapper sourceCode" id="cb26">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -1814,10 +1815,10 @@ launched; read the memory line and the instance it forces.</p>
 <span id="cb26-2"><a href="#cb26-2" tabindex="-1" aria-label="code-block-26-2"></a>helpers.estimate_finetune_cost(params_billions<span class="op">=</span><span class="dv">70</span>, examples<span class="op">=</span><span class="dv">251</span>, tokens_per_example<span class="op">=</span><span class="bu">int</span>(avg_tokens_per_page), epochs<span class="op">=</span><span class="dv">2</span>, method<span class="op">=</span><span class="st">"full"</span>,</span>
 <span id="cb26-3"><a href="#cb26-3" tabindex="-1" aria-label="code-block-26-3"></a>                               instance_type<span class="op">=</span><span class="st">"ml.p5.48xlarge"</span>)<span class="op">;</span>   <span class="co"># the largest box on the list: 8 x H100, 640 GB</span></span></code></pre>
 </div>
-<p>A 7B LoRA still fits one GPU, 22 GB on a 24 GB L4, for under a
+<p>A 7B LoRA still fits one GPU, 19 GB on a 24 GB L4, for under a
 dollar; the full fine-tune of the same model needs 116 GB, a four-GPU
 box at <code>$13</code> an hour, and the account refuses it. At 70B the
-LoRA needs 179 GB, so even the adapter run is a four-GPU job the account
+LoRA needs 146 GB, so even the adapter run is a four-GPU job the account
 refuses, and the full fine-tune needs 1,124 GB: nothing on the list
 holds it, and the function says what the largest box would do, start,
 bill ten minutes of startup at <code>$63</code> an hour, and die out of
@@ -2145,18 +2146,17 @@ at rank 256 this run’s memory goes from 12 GB to about 19 GB, which the
 flat estimate does not show. More data, another pass, or a lower
 learning rate are cheaper first tries, and the holdout curve, not the
 training loss, says whether any of them helped.</p>
-<p>The estimator takes the adapter’s share of the model as
-<code>trainable_fraction</code>, which the count cell above gives for
-any rank, so the cost of a higher rank can be priced before it is
-tried:</p>
+<p>The estimator’s <code>lora_r</code> argument prices any rank. Its
+<code>hidden_size</code> argument takes the width the count cell read
+from the config, which makes the share exact for this model instead of
+estimated from the parameter count:</p>
 <div class="codewrapper sourceCode" id="cb31">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" tabindex="-1" aria-label="code-block-31-1"></a><span class="cf">for</span> lora_r <span class="kw">in</span> (<span class="dv">16</span>, <span class="dv">64</span>, <span class="dv">256</span>):</span>
-<span id="cb31-2"><a href="#cb31-2" tabindex="-1" aria-label="code-block-31-2"></a>    trainable <span class="op">=</span> layers <span class="op">*</span> <span class="bu">sum</span>(lora_r <span class="op">*</span> (i <span class="op">+</span> o) <span class="cf">for</span> i, o <span class="kw">in</span> shapes)</span>
-<span id="cb31-3"><a href="#cb31-3" tabindex="-1" aria-label="code-block-31-3"></a>    est <span class="op">=</span> helpers.estimate_finetune_cost(params_billions<span class="op">=</span><span class="fl">3.75</span>, examples<span class="op">=</span><span class="dv">251</span>, tokens_per_example<span class="op">=</span><span class="dv">1600</span>, epochs<span class="op">=</span><span class="dv">2</span>, method<span class="op">=</span><span class="st">"lora"</span>,</span>
-<span id="cb31-4"><a href="#cb31-4" tabindex="-1" aria-label="code-block-31-4"></a>                                         instance_type<span class="op">=</span>instance_type, trainable_fraction<span class="op">=</span>trainable <span class="op">/</span> <span class="fl">3.75e9</span>, verbose<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb31-5"><a href="#cb31-5" tabindex="-1" aria-label="code-block-31-5"></a>    <span class="bu">print</span>(<span class="ss">f"rank </span><span class="sc">{</span>lora_r<span class="sc">:&gt;3}</span><span class="ss">: </span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> trainable <span class="op">/</span> <span class="fl">3.75e9</span><span class="sc">:5.1f}</span><span class="ss">% trainable, ~</span><span class="sc">{</span>est[<span class="st">'memory_gb_needed'</span>]<span class="sc">:.0f}</span><span class="ss"> GB, ~</span><span class="sc">{</span>est[<span class="st">'wall_clock_hours'</span>] <span class="op">*</span> <span class="dv">60</span><span class="sc">:.0f}</span><span class="ss"> min, ~$</span><span class="sc">{</span>est[<span class="st">'cost_per_run'</span>]<span class="sc">:.2f}</span><span class="ss">"</span>)</span></code></pre>
+<span id="cb31-2"><a href="#cb31-2" tabindex="-1" aria-label="code-block-31-2"></a>    est <span class="op">=</span> helpers.estimate_finetune_cost(params_billions<span class="op">=</span><span class="fl">3.75</span>, examples<span class="op">=</span><span class="dv">251</span>, tokens_per_example<span class="op">=</span><span class="dv">1600</span>, epochs<span class="op">=</span><span class="dv">2</span>, method<span class="op">=</span><span class="st">"lora"</span>,</span>
+<span id="cb31-3"><a href="#cb31-3" tabindex="-1" aria-label="code-block-31-3"></a>                                         lora_r<span class="op">=</span>lora_r, hidden_size<span class="op">=</span>hidden, instance_type<span class="op">=</span>instance_type, verbose<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb31-4"><a href="#cb31-4" tabindex="-1" aria-label="code-block-31-4"></a>    <span class="bu">print</span>(<span class="ss">f"rank </span><span class="sc">{</span>lora_r<span class="sc">:&gt;3}</span><span class="ss">: ~</span><span class="sc">{</span>est[<span class="st">'memory_gb_needed'</span>]<span class="sc">:.0f}</span><span class="ss"> GB, ~</span><span class="sc">{</span>est[<span class="st">'wall_clock_hours'</span>] <span class="op">*</span> <span class="dv">60</span><span class="sc">:.0f}</span><span class="ss"> min, ~$</span><span class="sc">{</span>est[<span class="st">'cost_per_run'</span>]<span class="sc">:.2f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <p>Memory is what moves, from 12 GB at rank 16 to about 19 GB at rank
 256, while the time and the bill hardly change, since the pass through
