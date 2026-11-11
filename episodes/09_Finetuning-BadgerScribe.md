@@ -490,25 +490,25 @@ Fetch the processor's config files from the shared bucket and load the processor
 
 ```python
 from transformers import AutoProcessor
-import badger_scribe_helpers as bc
+import badger_scribe_helpers as bsh
 
 proc_dir = os.path.join(local_data_dir, "churro-processor")
 os.makedirs(proc_dir, exist_ok=True)
 for fname in ["config.json", "preprocessor_config.json", "tokenizer.json", "tokenizer_config.json", "special_tokens_map.json",
               "added_tokens.json", "vocab.json", "merges.txt", "chat_template.json", "video_preprocessor_config.json"]:
     s3_client.download_file(shared_bucket, f"{data_prefix}/model/churro-3B/{fname}", os.path.join(proc_dir, fname))
-processor = AutoProcessor.from_pretrained(proc_dir, min_pixels=bc.DEFAULT_MIN_PIXELS, max_pixels=bc.DEFAULT_MAX_PIXELS)
+processor = AutoProcessor.from_pretrained(proc_dir, min_pixels=bsh.DEFAULT_MIN_PIXELS, max_pixels=bsh.DEFAULT_MAX_PIXELS)
 ```
 
 Now the page you displayed above, prepared the way the training script prepares it: the image resized to the pixel cap, the instruction prompt built for its category, and the transcription attached as the assistant's answer. Running the prompt alone through the processor a second time tells us how many tokens come before the transcription starts.
 
 ```python
-image = bc.load_page_image(page_path, bc.DEFAULT_MAX_PIXELS)   # resized the way the training script resizes it
-prompt = bc.build_prompt(row.category)
-full = processor.apply_chat_template(bc.full_messages(prompt, row.text), tokenize=False)
+image = bsh.load_page_image(page_path, bsh.DEFAULT_MAX_PIXELS)   # resized the way the training script resizes it
+prompt = bsh.build_prompt(row.category)
+full = processor.apply_chat_template(bsh.full_messages(prompt, row.text), tokenize=False)
 enc = processor(text=[full], images=[image], return_tensors="pt")
 n_total = enc["input_ids"].shape[1]
-n_prompt = processor(text=[processor.apply_chat_template(bc.user_messages(prompt), tokenize=False, add_generation_prompt=True)],
+n_prompt = processor(text=[processor.apply_chat_template(bsh.user_messages(prompt), tokenize=False, add_generation_prompt=True)],
                      images=[image], return_tensors="pt")["input_ids"].shape[1]
 n_image = int((enc["image_grid_thw"].prod(dim=1) // 4).sum())   # Qwen-specific breakdown: 14-px patches merged 2x2, one token per 28x28 block. n_total above is the count for any model
 
@@ -531,7 +531,7 @@ for pid in sample.page_id:
     path = os.path.join(local_data_dir, f"{pid}.jpg")
     if not os.path.exists(path):
         s3_client.download_file(shared_bucket, f"{data_prefix}/images/{pid}.jpg", path)
-    grid = processor.image_processor(images=[bc.load_page_image(path, bc.DEFAULT_MAX_PIXELS)], return_tensors="pt")["image_grid_thw"]
+    grid = processor.image_processor(images=[bsh.load_page_image(path, bsh.DEFAULT_MAX_PIXELS)], return_tensors="pt")["image_grid_thw"]
     image_tokens.append(int((grid.prod(dim=1) // 4).sum()))
 ```
 
