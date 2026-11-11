@@ -570,6 +570,8 @@ def count_page_tokens(model_id, image, prompt, answer, **processor_kwargs):
     text = len(proc.tokenizer(proc.apply_chat_template(text_only, tokenize=False))["input_ids"])
     return {"total": total, "image": total - text, "text": text}
 
+# The page from the cell above: `image` is it resized to the pixel cap, `prompt` the instruction for its category,
+# `row.text` its human transcription. proc_dir holds CHURRO's processor files, with the pixel limits the job uses.
 count_page_tokens(proc_dir, image, prompt, row.text, min_pixels=bsh.DEFAULT_MIN_PIXELS, max_pixels=bsh.DEFAULT_MAX_PIXELS)
 ```
 
@@ -582,6 +584,8 @@ Pick another open vision-language model and count what the same page costs there
 :::::::::::::::::::::::: solution
 
 ```python
+# The same page as above: `row` is its train.csv record, `image` the page resized to the pixel cap, `prompt` the
+# instruction built for its category, `row.text` its human transcription, and `n_total` CHURRO's count for it.
 llava = count_page_tokens("llava-hf/llava-1.5-7b-hf", image, prompt, row.text)
 print(f"LLaVA 1.5: {llava['total']} tokens for the page, {llava['image']} of them for the image; CHURRO: {n_total}")
 ```
