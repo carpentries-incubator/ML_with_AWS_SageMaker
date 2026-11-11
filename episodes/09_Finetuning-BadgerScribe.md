@@ -235,20 +235,31 @@ A 3B LoRA run fits a 24 GB GPU with room to spare, and the table has two 24 GB c
 
 Multi-GPU instances are for jobs that do not fit on one GPU, a full fine-tune of a 7B model or anything at 70B and above. They do not make a job cheaper. GPU-hours are the cost, and spreading them across eight GPUs shortens the wall-clock time and leaves the bill alone, and only shortens it when the job is big enough to keep all eight busy. For a job that fits one GPU the price goes up 5x to 45x and the job gets no faster. You add GPUs when the memory table says one GPU cannot hold the job, not to save money.
 
-When a job does need several GPUs, the training script's Hugging Face `Trainer` runs data-parallel across every GPU of the instance once the estimator sets `distribution={"torch_distributed": {"enabled": True}}`; the PyTorch episode's table of setups per kind of job has the details, including sharding the model with `fsdp=` when it does not fit one GPU. LoRA splits across GPUs better than a full fine-tune does, because what the GPUs exchange after every step is the gradient, and in a LoRA run that is the adapter alone, under 1% of the model. `helpers.estimate_parallel_speedup` takes `method="lora"` for this. As in the PyTorch episode, it takes one step instead of the whole run, `tokens_per_step`, the batch size times the tokens per example, because the exchange it prices happens once per step. The class run on a four-GPU box, as an estimate only:
+The cost estimator shows what a bigger box does. The same class-run call as above, with the instance type forced to the four-GPU `ml.g5.12xlarge`:
 
 ```python
-# How much faster would the class run go on a 4 × A10G instance than on one A10G?
-# An estimate, not a launch: a 12-minute job does not need four GPUs, and the box costs 5x the single one.
+# The class run on a 4 x A10G box. An estimate, not a launch: the class account does not allow multi-GPU instances.
+helpers.estimate_finetune_cost(
+    params_billions=3.75, examples=251, tokens_per_example=1600, epochs=2, method="lora",
+    instance_type="ml.g5.12xlarge",   # forced: left out, the function would pick the cheapest single GPU that fits
+);
+```
+
+The training minutes drop to a quarter, since the function splits the GPU-hours evenly across the four cards, and the bill goes from `$0.64` to `$1.69`, because the box costs five times as much per hour and the ten startup minutes are now paid at the higher rate. That is the general shape. More GPUs shorten the wall-clock and never lower the bill.
+
+The even split is the best case. When a job does need several GPUs, the training script's Hugging Face `Trainer` runs data-parallel across every GPU of the instance once the estimator sets `distribution={"torch_distributed": {"enabled": True}}`, and the PyTorch episode's table of setups per kind of job has the details, including sharding the model with `fsdp=` when it does not fit one GPU. After every step the GPUs exchange their gradients, and that exchange is time the even split does not count. `helpers.estimate_parallel_speedup` prices it. Its `method` argument is the same as the cost estimator's, what the run trains, and it sets the size of the exchange: a full fine-tune's gradient is the whole model's, a LoRA run's is the adapter's, under 1% of the model, so LoRA splits across GPUs better. As in the PyTorch episode, it takes one step instead of the whole run, `tokens_per_step`, the batch size times the tokens per example, because the exchange happens once per step.
+
+```python
+# How much of the ideal 4x does the class run get on the 4 x A10G box, once the exchange is counted?
 helpers.estimate_parallel_speedup(
     params_billions=3.75,
     tokens_per_step=4 * 1600,        # one step, not the run: the job trains 1 page per GPU, so 4 pages on 4 GPUs, x 1,600 tokens a page
     instance_type="ml.g5.12xlarge",  # the box: 4 GPUs sharing a PCIe link, which is what the exchange crosses
-    method="lora",                   # what the run trains, as in the cost estimator: sets what the GPUs exchange each step, the adapter's gradient here, under 1% of the model
+    method="lora",                   # what the run trains, as in the cost estimator: the exchange is the adapter's gradient
 );
 ```
 
-Near 4x on 4 GPUs at about the same total cost, which is the case for a multi-GPU box when a LoRA run on a million pages has to finish by a deadline. It is not a reason to rent one for a run that finishes in twelve minutes, and the class account does not allow multi-GPU instances at all.
+Near 4x on 4 GPUs, so for a LoRA run the even split is close to right, which is the case for a multi-GPU box when a LoRA run on a million pages has to finish by a deadline. It is not a reason to rent one for a run that finishes in twelve minutes.
 
 ### What fine-tuning costs, from one dollar to ten thousand
 
