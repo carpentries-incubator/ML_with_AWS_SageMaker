@@ -1958,10 +1958,11 @@ the image tokens, and <code>-100</code> is the value PyTorch’s
 cross-entropy ignores. The model is graded on what it writes, not on
 repeating the question.</li>
 <li>Right after the adapter is attached: it raises if any trainable
-tensor is in the vision tower, or if more than 5% of the model is
-trainable. Either means the job is not the LoRA run that was estimated,
-so it stops before the GPU-hours are spent; a job that raises there has
-cost its startup minutes and nothing more.</li>
+tensor is in the vision tower, or if more than 15% of the model is
+trainable, which rank 256 stays under on this model. Either means the
+job is not the LoRA run that was estimated, so it stops before the
+GPU-hours are spent; a job that raises there has cost its startup
+minutes and nothing more.</li>
 </ol></div>
 </div>
 </div>
@@ -2064,7 +2065,7 @@ scored when.</p>
 <p>One of them, <code>lora_r</code>, the adapter rank, sets how many
 parameters train. The job prints that count as
 <code>trainable params:</code> when it starts, and the script’s
-safeguard refuses to train if it is more than 5% of the model, so it is
+safeguard refuses to train if it is more than 15% of the model, so it is
 worth knowing the number before the launch.</p>
 <p>The count follows from the LoRA figure. An adapter of rank r on a
 weight matrix of shape in × out adds two thin matrices, r × (in + out)
