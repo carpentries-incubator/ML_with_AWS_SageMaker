@@ -41,11 +41,15 @@ This can be surprisingly effective. [CHURRO](https://github.com/stanford-oval/Ch
 
 That's the approach we'll explore in this episode. We'll take CHURRO, which already specializes in historical documents, and adapt it further to a collection of handwritten German letters from UW-Madison's Badger Scribe challenge.
 
+![*The steps that made CHURRO, from Qwen2.5-VL's pretraining to its fine-tune on 99,491 historical pages; this episode adds one more step*](fig/qwen-to-churro.png){alt="Five steps: text pretraining, vision pretraining, post-training, the released Qwen 2.5 VL 3B, and CHURRO's fine-tune on historical pages"}
+
 ### How fine-tuning works
 
 Fine-tuning uses the same basic training process we've already seen. The model makes predictions on training examples, we measure how far those predictions are from the correct answers, and gradient descent adjusts its parameters to reduce the error.
 
 The difference is where we begin. Rather than initializing the model with random weights, we start with weights learned during an earlier, much larger training process. Our examples don't need to teach the model everything about language or images. They only need to help it adapt what it already knows.
+
+![*Where a fine-tune sits in a model's life: after pretraining and post-training, on the released model*](fig/model-lifecycle-finetune.png){alt="Pipeline from pretraining through supervised fine-tuning and tuning from feedback to a released model, then a dashed arrow to your own fine-tune"}
 
 We could update every parameter in the model, which is called ***full fine-tuning***. That's how CHURRO itself was created. But even a relatively small model with 3 billion parameters is expensive to train this way, because training requires much more GPU memory than simply running the model.
 
@@ -104,7 +108,7 @@ This episode runs the fine-tune as a SageMaker job. The same model, data and scr
 | Who can use it | Anyone with an AWS account and a card or credits | Anyone with a Google account | UW-Madison researchers and students, with a faculty sponsor |
 | Cost of this run | About `$0.75` | Free | Free |
 | GPU | A10G, 24 GB, bf16 | T4, 16 GB, no bf16, so the frozen weights go to 4-bit | L40S, A100, H100 or H200, 48 to 141 GB, bf16; NVLink on the A100, H100 and H200 servers |
-| Time for this run | 33 minutes, starts in a minute | About an hour and a half, starts at once if a GPU is free | About 20 minutes, after a queue wait of minutes to hours |
+| Time for this run | 33 minutes billed, after one to ten minutes waiting for an instance | About an hour and a half, starts at once if a GPU is free | About 20 minutes, after a queue wait of minutes to hours |
 | Largest LoRA fine-tune | No hard limit, only cost. 7B on the lesson's `$1.41`/h card, 70B at `$13`/h | about 7B, in 4-bit | about 50B in bf16 on an H200, a 70B in 4-bit on one 80 GB card, larger across a server's cards |
 | Largest full fine-tune | No hard limit, only cost. 3B at `$7`/h, 70B at `$127`/h | none, a 3B needs 52 GB | a 7B on one H200, a 70B across the H100 or H200 servers' cards |
 | What you learn beyond the fine-tune | Estimating and reading a bill, tags, job guard rails | Fitting a model into a small GPU | Describing a job for a scheduler, containers, staging data |
@@ -129,12 +133,11 @@ Before launching a fine-tune, write down what it should cost. If the bill comes 
 
 Every parameter in the model takes up GPU memory, and how much depends on what you are doing with it. Running the model needs only the weight. A full fine-tune needs the weight, its gradient, a 32-bit copy of the weight, and the two running averages Adam keeps for it, the four numbers per weight from the *How fine-tuning works* section above. A LoRA fine-tune keeps the weights frozen in 16-bit and adds a small adapter that carries its own gradients and optimizer state.
 
-![*GPU memory per parameter: inference, a LoRA fine-tune, and a full fine-tune*](fig/memory-per-parameter.svg){alt="Stacked bar chart of bytes per parameter for inference versus LoRA versus full fine-tuning"}
+![*GPU memory per parameter: inference, a LoRA fine-tune, and a full fine-tune*](fig/memory-per-parameter.png){alt="Stacked bar chart of bytes per parameter for inference versus LoRA versus full fine-tuning"}
 
 | What you are doing with the model | Bytes per parameter | What has to be in memory for each parameter |
 |---|---|---|
 | Inference, FP8 | 1 | the weight, quantized |
-| Inference, bf16 | 2 | the weight |
 | LoRA fine-tune | ~2.5 | the frozen 16-bit weight, plus a share of the adapter with its gradients and optimizer state |
 | Full fine-tune, mixed precision | 16 | the 16-bit weight (2), its gradient (2), a 32-bit copy of the weight (4), Adam's two running averages (8) |
 
@@ -148,6 +151,8 @@ Multiply the bytes per parameter by the parameter count, add about 4 GB for acti
 | 70B | 4-bit, 35 GB: `ml.g6e.xlarge`; FP8, 70 GB: `ml.g6e.12xlarge`, 4 × 48 GB, `$13.12`/h | 179 GB: `ml.g6e.12xlarge` | 1,124 GB: two `ml.p5.48xlarge`, `$127`/h |
 
 A 7B model that runs on one 24 GB GPU needs 116 GB to fully fine-tune, a four-GPU box at `$13` an hour with the model sharded across the GPUs. Training cannot run on quantized weights the way inference can, because each step's update is too small for 8-bit or 4-bit numbers to hold. LoRA avoids that jump by freezing the model and training a few million adapter parameters, which is why this episode fits on one 24 GB card.
+
+![*GPU memory to fine-tune four model sizes, full and LoRA, on a log scale, against one A10G and one H100*](fig/memory-by-model-size.png){alt="Bar chart on a log scale of GPU memory for full fine-tuning and LoRA at 3B, 7B, 27B and 70B, with dashed lines at 24 GB for an A10G and 80 GB for an H100"}
 
 ### How long will it run?
 
@@ -195,7 +200,7 @@ step0_estimate = helpers.estimate_finetune_cost(
 )
 ```
 
-The function says about 27 minutes and `$0.64`, 17 minutes of training plus 10 of startup. The hand calculation said 12 minutes of training, and the measured run took 12. The estimator is high because it adds half again for gradient checkpointing, which our script uses to save memory by recomputing the forward pass during the backward one. A third either way is normal for this rule. The job you launch in Step 1 bills about 32 minutes, because it also scores holdout pages before and after training, about 14 minutes the estimator does not count. Keep `step0_estimate`. Step 2 puts it next to the job's own bill.
+The function says about 27 minutes and `$0.64`, 17 minutes of training plus 10 of startup. The hand calculation said 12 minutes of training, and the measured run took 17 with the two end-of-pass scorings inside it, about 12 of training alone. The estimator is high because it adds half again for gradient checkpointing, which our script uses to save memory by recomputing the forward pass during the backward one. A third either way is normal for this rule. The job you launch in Step 1 bills about 32 minutes, because it also scores holdout pages before and after training, about 14 minutes the estimator does not count. Keep `step0_estimate`. Step 2 puts it next to the job's own bill.
 
 The same call for a 7B model on 5,000 documents of about 600 words (800 tokens) each, three passes, on the same card, so the two printouts compare. One argument changes besides the size. `runs` goes from 1 to 8, because a project reruns a fine-tune as it fixes data and tries settings, and the printout's last line prices all eight.
 
@@ -624,6 +629,27 @@ print(os.listdir("code"))
 
 ::::::::::::::::::::::::::::::::::::::: challenge
 
+### What the script is, and what LoRA adds to it
+
+`finetune_churro_lora.py` is an ordinary Hugging Face training script. It is Python on PyTorch, and it uses three libraries. `transformers` loads the model and its processor and provides the `Trainer`, the training loop that handles batching, mixed precision, gradient accumulation, checkpoints and logging. `peft` adds the LoRA adapter. `pandas` and `PIL` read the pages. Nothing in it is specific to SageMaker, Colab or CHTC beyond the paths it reads and writes, which is why the same file runs in all three places.
+
+Most of the script is what any fine-tune needs, LoRA or not:
+
+- **A dataset class** that turns one row of `train.csv` into a page image, the instruction prompt for its category, and the transcription as the answer.
+- **A collator** that tokenizes a batch and masks everything but the transcription out of the loss, so the model is graded on what it writes and not on repeating the prompt or the image tokens.
+- **An evaluation function** that transcribes held-out pages and computes the character error rate, run before training, after it, and at the end of every pass.
+- **The `Trainer` call** with its arguments, and the saving of the model and the summary.
+
+LoRA itself is a small addition, and this is what is new when you add it to a script of your own:
+
+1. **Two calls from `peft`.** `LoraConfig` names the rank, alpha, dropout and the target modules, and `get_peft_model` wraps the model, freezing every parameter and attaching the adapters. That is the whole mechanism, about ten lines.
+2. **Choosing `target_modules`.** Which weight matrices get an adapter. The usual choice for a transformer is the attention projections and the MLP projections in every layer of the language model. For a vision-language model the pattern has to exclude the vision tower, which is the regular expression's `(?!.*visual)` here, and the names differ between model families, so read the model's module names before writing it.
+3. **The learning rate.** About ten times a full fine-tune's, because the adapter starts at zero and is small.
+4. **What gets saved.** `save_pretrained` on the wrapped model writes only the adapter, about 100 MB, with a config naming the base model. Inference loads the base weights and then the adapter on top, `PeftModel.from_pretrained`, which is what `churro_transcribe_batch.py` does, and can merge the two into one set of weights for speed.
+5. **Memory tricks that pair with it.** Gradient checkpointing and, on a small card, loading the frozen weights in 4-bit (QLoRA, `BitsAndBytesConfig` plus `prepare_model_for_kbit_training`). Neither is LoRA, but both are what make a LoRA run fit the card you have.
+
+Everything else, the schedule, the warmup, mixed precision, the checkpointing and the resume, is standard `Trainer` use. The two safeguard checks after `get_peft_model` are the lesson's addition, not a LoRA requirement, and are worth copying: they catch an adapter that landed on the wrong modules before any GPU time is spent.
+
 ### Read the script before you pay for it
 
 Open `code/finetune_churro_lora.py` in the Jupyter file browser. It is about 400 lines and you are about to launch it on a GPU. Find the answers in the file:
@@ -729,6 +755,10 @@ for lora_r in (8, 16, 32):
 ```
 
 Rank 16, the lesson's choice, trains about 30 million parameters, under 1% of the model, and doubling the rank doubles it. The adapter's gradients and optimizer state, 16 bytes for each of those 30 million, come to about half a gigabyte, which is why a LoRA run fits beside the frozen 7.5 GB of weights on a 24 GB card. The job's log confirms the count in its `trainable params:` line, and the script refuses to train if more than 5% of the model turns out to be trainable.
+
+Rank is a trade between capacity and memory, and the trade is measured. On Llama-2-7B, a LoRA at rank 16 trailed a full fine-tune on a code benchmark, rank 256 matched it, and the memory for the rank-256 run was still a fifth of the full fine-tune's. For a few hundred pages, rank 16 is the usual starting point.
+
+![*On Llama-2-7B, LoRA at rank 256 matched full fine-tuning on a code benchmark with a fifth of the memory. Source: [Biderman et al., 2024](https://arxiv.org/abs/2405.09673)*](fig/lora-rank-vs-full.png){alt="Two bar charts: HumanEval accuracy and GPU memory for LoRA at ranks 16, 64 and 256 and for full fine-tuning"}
 
 ```python
 hyperparameters = {

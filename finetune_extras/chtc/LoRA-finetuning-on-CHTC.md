@@ -18,7 +18,7 @@ The files in this folder:
 | [`finetune.sub`](finetune.sub), [`finetune.sh`](finetune.sh) | The GPU job, and the script it runs inside the container |
 | [`read_results.py`](read_results.py) | Reads what the job sends back and prints the before-and-after comparison |
 
-The training script, [`finetune_churro_lora.py`](../../scripts/finetune_churro_lora.py), and its helper [`badger_common.py`](../../scripts/badger_common.py) come from the lesson's [`scripts/`](../../scripts) folder unchanged.
+The training script, [`finetune_churro_lora.py`](../../scripts/finetune_churro_lora.py), and its helper [`badger_common.py`](../../scripts/badger_common.py) come from the lesson's [`scripts/`](../../scripts) folder unchanged. It is an ordinary Hugging Face training script, PyTorch with `transformers` for the model and the `Trainer` and `peft` for the LoRA adapter, and nothing in it is specific to any of the three platforms beyond the paths it reads and writes. The lesson's episode, under *What the script is, and what LoRA adds to it*, walks through its parts and says which few lines are the LoRA.
 
 ## Three places to run this fine-tune
 
@@ -29,7 +29,7 @@ The same fine-tune runs in three places. This guide is the CHTC column. The othe
 | Who can use it | Anyone with an AWS account and a card or credits | Anyone with a Google account | UW-Madison researchers and students, with a faculty sponsor |
 | Cost of this run | About `$0.75` | Free | Free |
 | GPU | A10G, 24 GB, bf16 | T4, 16 GB, no bf16, so the frozen weights go to 4-bit | L40S, A100, H100 or H200, 48 to 141 GB, bf16; NVLink on the A100, H100 and H200 servers |
-| Time for this run | 33 minutes, starts in a minute | About an hour and a half, starts at once if a GPU is free | About 20 minutes, after a queue wait of minutes to hours |
+| Time for this run | 33 minutes billed, after one to ten minutes waiting for an instance | About an hour and a half, starts at once if a GPU is free | About 20 minutes, after a queue wait of minutes to hours |
 | Largest LoRA fine-tune | No hard limit, only cost. 7B on the lesson's `$1.41`/h card, 70B at `$13`/h | about 7B, in 4-bit | about 50B in bf16 on an H200, a 70B in 4-bit on one 80 GB card, larger across a server's cards |
 | Largest full fine-tune | No hard limit, only cost. 3B at `$7`/h, 70B at `$127`/h | none, a 3B needs 52 GB | a 7B on one H200, a 70B across the H100 or H200 servers' cards |
 | What you learn beyond the fine-tune | Estimating and reading a bill, tags, job guard rails | Fitting a model into a small GPU | Describing a job for a scheduler, containers, staging data |
@@ -167,7 +167,7 @@ Open [`finetune.sub`](finetune.sub) and [`finetune.sh`](finetune.sh) together. T
 
 **`transfer_output_files`** names what comes back, the adapter archive the shell script packs and the folder of scores and curves. HTCondor returns new files in the job's top-level directory by default, but not folders, so the folder has to be listed.
 
-![GPU memory per parameter: inference, a LoRA fine-tune, and a full fine-tune](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/fig/memory-per-parameter.svg)
+![GPU memory per parameter: inference, a LoRA fine-tune, and a full fine-tune](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/fig/memory-per-parameter.png)
 
 *GPU memory per parameter, the lesson's memory rule.*
 
@@ -242,16 +242,20 @@ CHTC publishes the inventory behind that command on its [GPU jobs page](https://
 
 Two things about the cards matter for fine-tuning beyond their memory. Every card from the A100 up has capability 8.0 or newer, so bf16 training works on all of them. And the cards in one server are connected in one of two ways. In the A100, H100 and H200 servers the GPUs are mounted on one board and joined by NVLink, NVIDIA's direct GPU-to-GPU link, which is how data-center AI servers are built and what a multi-GPU job wants. The L40, L40S and RTX PRO 6000 are plug-in cards that talk through the PCIe bus, which is several times slower.
 
-The lesson's memory rules turn GPU memory into model sizes. Inference needs 2 bytes per parameter in bf16. A LoRA fine-tune needs about 2.5 with the frozen weights in bf16, or about 1 with them in 4-bit, the QLoRA setup the Colab version uses. A full fine-tune needs 16. Each needs a few gigabytes of working room on top.
+The lesson's memory rules turn GPU memory into model sizes. Inference needs 1 byte per parameter with the weights in FP8. A LoRA fine-tune needs about 2.5 with the frozen weights in bf16, or about 1 with them in 4-bit, the QLoRA setup the Colab version uses. A full fine-tune needs 16. Each needs a few gigabytes of working room on top.
 
-| GPU memory | Cards | Inference, bf16 | LoRA fine-tune | Full fine-tune |
+| GPU memory | Cards | Inference, FP8 | LoRA fine-tune | Full fine-tune |
 |---|---|---|---|---|
-| 40 GB | A100 40 GB, A100 MIG slices | up to about 15B | up to about 12B, about 35B in 4-bit | nothing; a 3B model needs 52 GB |
-| 48 GB | L40, L40S | up to about 20B | up to about 15B, about 40B in 4-bit | nothing |
-| 80 GB | A100 80 GB, H100 | up to about 35B, or a 70B in 4-bit | up to about 27B, about 70B in 4-bit | a 3B model, just |
-| 96 GB | RTX PRO 6000 | up to about 40B | up to about 35B, a 70B in 4-bit | a 3B model |
-| 141 GB | H200 | up to about 65B | up to about 50B, a 70B in 4-bit with room | a 3B model easily, a 7B model, just |
-| several cards in one server, model sharded across them | the A100, H100 and H200 servers, joined by NVLink | a 70B in bf16 | a 70B in bf16 | a 7B on two 80 GB cards, a 70B on many |
+| 40 GB | A100 40 GB, A100 MIG slices | up to about 35B | up to about 12B, about 35B in 4-bit | nothing; a 3B model needs 52 GB |
+| 48 GB | L40, L40S | up to about 40B | up to about 15B, about 40B in 4-bit | nothing |
+| 80 GB | A100 80 GB, H100 | up to about 75B | up to about 27B, about 70B in 4-bit | a 3B model, just |
+| 96 GB | RTX PRO 6000 | up to about 90B | up to about 35B, a 70B in 4-bit | a 3B model |
+| 141 GB | H200 | up to about 135B | up to about 50B, a 70B in 4-bit with room | a 3B model easily, a 7B model, just |
+| several cards in one server, model sharded across them | the A100, H100 and H200 servers, joined by NVLink | anything larger | a 70B in bf16 | a 7B on two 80 GB cards, a 70B on many |
+
+![Bar chart on a log scale of GPU memory for full fine-tuning and LoRA at 3B, 7B, 27B and 70B, with lines at 24 GB and 80 GB](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/fig/memory-by-model-size.png)
+
+*GPU memory to fine-tune four model sizes, full and LoRA, on a log scale, against one A10G and one H100, which is the lesson's cloud card and CHTC's 80 GB cards.*
 
 The last row is for a model that does not fit one card, and how well it works depends on the server. On the A100, H100 and H200 servers the cards share NVLink and a sharded job runs at close to the card count. On the L40S and RTX PRO 6000 servers the cards share a PCIe bus, and the lesson's PyTorch episode estimated a speedup of 3.6 on four cards for a full fine-tune's gradient exchange over PCIe, less for a smaller batch.
 
