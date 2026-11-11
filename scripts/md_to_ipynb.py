@@ -49,7 +49,8 @@ def stable_cell_id(source, seen_ids):
 # same files with the right content types. The Workbench {alt="..."} attribute
 # block is dropped because Jupyter would print it literally.
 SITE_FIG_URL = "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/fig/"
-figure_pattern = re.compile(r"!\[([^\]]*)\]\(fig/([^)\s]+)\)(\{[^}]*\})?")
+# The caption may itself contain markdown links, i.e. one level of nested brackets.
+figure_pattern = re.compile(r"!\[((?:[^\[\]]|\[[^\]]*\])*)\]\(fig/([^)\s]+)\)(\{[^}]*\})?")
 
 
 def rewrite_figure_links(md_content):
