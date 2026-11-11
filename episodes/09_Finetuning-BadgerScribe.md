@@ -108,7 +108,7 @@ This episode runs the fine-tune as a SageMaker job. The same model, data and scr
 | Who can use it | Anyone with an AWS account and a card or credits | Anyone with a Google account | UW-Madison researchers and students, with a faculty sponsor |
 | Cost of this run | About `$0.75` | Free | Free |
 | GPU | A10G, 24 GB, bf16 | T4, 16 GB, no bf16, so the frozen weights go to 4-bit | L40S, A100, H100 or H200, 48 to 141 GB, bf16; NVLink on the A100, H100 and H200 servers |
-| Time for this run | 33 minutes, starts in a minute | About an hour and a half, starts at once if a GPU is free | About 20 minutes, after a queue wait of minutes to hours |
+| Time for this run | 33 minutes billed, after one to ten minutes waiting for an instance | About an hour and a half, starts at once if a GPU is free | About 20 minutes, after a queue wait of minutes to hours |
 | Largest LoRA fine-tune | No hard limit, only cost. 7B on the lesson's `$1.41`/h card, 70B at `$13`/h | about 7B, in 4-bit | about 50B in bf16 on an H200, a 70B in 4-bit on one 80 GB card, larger across a server's cards |
 | Largest full fine-tune | No hard limit, only cost. 3B at `$7`/h, 70B at `$127`/h | none, a 3B needs 52 GB | a 7B on one H200, a 70B across the H100 or H200 servers' cards |
 | What you learn beyond the fine-tune | Estimating and reading a bill, tags, job guard rails | Fitting a model into a small GPU | Describing a job for a scheduler, containers, staging data |
@@ -200,7 +200,7 @@ step0_estimate = helpers.estimate_finetune_cost(
 )
 ```
 
-The function says about 27 minutes and `$0.64`, 17 minutes of training plus 10 of startup. The hand calculation said 12 minutes of training, and the measured run took 12. The estimator is high because it adds half again for gradient checkpointing, which our script uses to save memory by recomputing the forward pass during the backward one. A third either way is normal for this rule. The job you launch in Step 1 bills about 32 minutes, because it also scores holdout pages before and after training, about 14 minutes the estimator does not count. Keep `step0_estimate`. Step 2 puts it next to the job's own bill.
+The function says about 27 minutes and `$0.64`, 17 minutes of training plus 10 of startup. The hand calculation said 12 minutes of training, and the measured run took 17 with the two end-of-pass scorings inside it, about 12 of training alone. The estimator is high because it adds half again for gradient checkpointing, which our script uses to save memory by recomputing the forward pass during the backward one. A third either way is normal for this rule. The job you launch in Step 1 bills about 32 minutes, because it also scores holdout pages before and after training, about 14 minutes the estimator does not count. Keep `step0_estimate`. Step 2 puts it next to the job's own bill.
 
 The same call for a 7B model on 5,000 documents of about 600 words (800 tokens) each, three passes, on the same card, so the two printouts compare. One argument changes besides the size. `runs` goes from 1 to 8, because a project reruns a fine-tune as it fixes data and tries settings, and the printout's last line prices all eight.
 
@@ -628,6 +628,27 @@ print(os.listdir("code"))
 - `churro_transcribe_batch.py`: used in the homework. Transcribes any list of pages with the base model or with the adapter merged in, and writes `predictions.csv` in the submission format.
 
 ::::::::::::::::::::::::::::::::::::::: challenge
+
+### What the script is, and what LoRA adds to it
+
+`finetune_churro_lora.py` is an ordinary Hugging Face training script. It is Python on PyTorch, and it uses three libraries. `transformers` loads the model and its processor and provides the `Trainer`, the training loop that handles batching, mixed precision, gradient accumulation, checkpoints and logging. `peft` adds the LoRA adapter. `pandas` and `PIL` read the pages. Nothing in it is specific to SageMaker, Colab or CHTC beyond the paths it reads and writes, which is why the same file runs in all three places.
+
+Most of the script is what any fine-tune needs, LoRA or not:
+
+- **A dataset class** that turns one row of `train.csv` into a page image, the instruction prompt for its category, and the transcription as the answer.
+- **A collator** that tokenizes a batch and masks everything but the transcription out of the loss, so the model is graded on what it writes and not on repeating the prompt or the image tokens.
+- **An evaluation function** that transcribes held-out pages and computes the character error rate, run before training, after it, and at the end of every pass.
+- **The `Trainer` call** with its arguments, and the saving of the model and the summary.
+
+LoRA itself is a small addition, and this is what is new when you add it to a script of your own:
+
+1. **Two calls from `peft`.** `LoraConfig` names the rank, alpha, dropout and the target modules, and `get_peft_model` wraps the model, freezing every parameter and attaching the adapters. That is the whole mechanism, about ten lines.
+2. **Choosing `target_modules`.** Which weight matrices get an adapter. The usual choice for a transformer is the attention projections and the MLP projections in every layer of the language model. For a vision-language model the pattern has to exclude the vision tower, which is the regular expression's `(?!.*visual)` here, and the names differ between model families, so read the model's module names before writing it.
+3. **The learning rate.** About ten times a full fine-tune's, because the adapter starts at zero and is small.
+4. **What gets saved.** `save_pretrained` on the wrapped model writes only the adapter, about 100 MB, with a config naming the base model. Inference loads the base weights and then the adapter on top, `PeftModel.from_pretrained`, which is what `churro_transcribe_batch.py` does, and can merge the two into one set of weights for speed.
+5. **Memory tricks that pair with it.** Gradient checkpointing and, on a small card, loading the frozen weights in 4-bit (QLoRA, `BitsAndBytesConfig` plus `prepare_model_for_kbit_training`). Neither is LoRA, but both are what make a LoRA run fit the card you have.
+
+Everything else, the schedule, the warmup, mixed precision, the checkpointing and the resume, is standard `Trainer` use. The two safeguard checks after `get_peft_model` are the lesson's addition, not a LoRA requirement, and are worth copying: they catch an adapter that landed on the wrong modules before any GPU time is spent.
 
 ### Read the script before you pay for it
 

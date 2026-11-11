@@ -18,7 +18,7 @@ The files in this folder:
 | [`finetune.sub`](finetune.sub), [`finetune.sh`](finetune.sh) | The GPU job, and the script it runs inside the container |
 | [`read_results.py`](read_results.py) | Reads what the job sends back and prints the before-and-after comparison |
 
-The training script, [`finetune_churro_lora.py`](../../scripts/finetune_churro_lora.py), and its helper [`badger_common.py`](../../scripts/badger_common.py) come from the lesson's [`scripts/`](../../scripts) folder unchanged.
+The training script, [`finetune_churro_lora.py`](../../scripts/finetune_churro_lora.py), and its helper [`badger_common.py`](../../scripts/badger_common.py) come from the lesson's [`scripts/`](../../scripts) folder unchanged. It is an ordinary Hugging Face training script, PyTorch with `transformers` for the model and the `Trainer` and `peft` for the LoRA adapter, and nothing in it is specific to any of the three platforms beyond the paths it reads and writes. The lesson's episode, under *What the script is, and what LoRA adds to it*, walks through its parts and says which few lines are the LoRA.
 
 ## Three places to run this fine-tune
 
@@ -29,7 +29,7 @@ The same fine-tune runs in three places. This guide is the CHTC column. The othe
 | Who can use it | Anyone with an AWS account and a card or credits | Anyone with a Google account | UW-Madison researchers and students, with a faculty sponsor |
 | Cost of this run | About `$0.75` | Free | Free |
 | GPU | A10G, 24 GB, bf16 | T4, 16 GB, no bf16, so the frozen weights go to 4-bit | L40S, A100, H100 or H200, 48 to 141 GB, bf16; NVLink on the A100, H100 and H200 servers |
-| Time for this run | 33 minutes, starts in a minute | About an hour and a half, starts at once if a GPU is free | About 20 minutes, after a queue wait of minutes to hours |
+| Time for this run | 33 minutes billed, after one to ten minutes waiting for an instance | About an hour and a half, starts at once if a GPU is free | About 20 minutes, after a queue wait of minutes to hours |
 | Largest LoRA fine-tune | No hard limit, only cost. 7B on the lesson's `$1.41`/h card, 70B at `$13`/h | about 7B, in 4-bit | about 50B in bf16 on an H200, a 70B in 4-bit on one 80 GB card, larger across a server's cards |
 | Largest full fine-tune | No hard limit, only cost. 3B at `$7`/h, 70B at `$127`/h | none, a 3B needs 52 GB | a 7B on one H200, a 70B across the H100 or H200 servers' cards |
 | What you learn beyond the fine-tune | Estimating and reading a bill, tags, job guard rails | Fitting a model into a small GPU | Describing a job for a scheduler, containers, staging data |
