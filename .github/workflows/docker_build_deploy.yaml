@@ -35,9 +35,13 @@ on:
         default: false
         type: boolean
 
-# only one build/deploy at a time
+# only one build/deploy at a time per trigger. The group is keyed by event so that
+# the workflow_run trigger, which fires when "03 Maintain: Apply Package Cache" finishes
+# and then skips because this lesson needs no renv, cannot cancel the push build that
+# is already running. With a single shared group every merge's build was cancelled and
+# the site only updated on the weekly schedule.
 concurrency:
-  group: docker-build-deploy
+  group: docker-build-deploy-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
