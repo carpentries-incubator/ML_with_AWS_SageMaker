@@ -250,7 +250,7 @@ Multi-GPU instances are for jobs that do not fit on one GPU, a full fine-tune of
 
 ### What fine-tuning costs, from one dollar to ten thousand
 
-With the two rules, any run can be priced before it exists. The table does that for runs from this episode's to the ones that make a model like CHURRO, with SageMaker on-demand prices in `us-east-1` from October 2026. GPUs come in fixed boxes, so "32 H100s for 25 hours" is four `ml.p5.48xlarge` for 25 hours, 100 instance-hours at `$63.30`:
+With the two rules, any run can be priced before it exists. The table does that for runs from this episode's to the ones that make a model like CHURRO, with SageMaker on-demand prices from October 2026. GPUs come in fixed boxes, so "32 H100s for 25 hours" is four `ml.p5.48xlarge` for 25 hours, 100 instance-hours at `$63.30`:
 
 | Run | GPUs | Instances rented (price per instance-hour) | Hours | GPU-hours | Cost = instance-hours × price |
 |---|---|---|---|---|---|
@@ -719,7 +719,7 @@ First the guard rails, each one a named variable so that the printout below show
 
 ```python
 instance_type = "ml.g5.xlarge"            # one A10G GPU, 24 GB; the GPU lives in the job, not in this notebook
-g5_price = 1.41                           # $/hour, us-east-1 on-demand, from the Instances for ML page
+g5_price = helpers.instance_price(instance_type)   # $/hour on-demand, from the lesson's price table, the same numbers as the Instances for ML page
 estimated_minutes = 27                    # the Step 0 estimate
 max_run_minutes = 65                      # about twice the estimate; SageMaker kills the job at this cap, whatever it is doing
 run_id = time.strftime("%m%d-%H%M")                                   # launch time, so every run gets a new name: job names must be unique in the account

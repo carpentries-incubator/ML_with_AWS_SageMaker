@@ -307,8 +307,8 @@ def job_cost_report(job_name: str, price_per_hour: float):
     print(f"    model: {desc['ModelArtifacts']['S3ModelArtifacts']}")   # the model.tar.gz this job uploaded to output_path
     return desc
 
-# us-east-1 on-demand rates (2026-10-16); check the instances page for your region
-prices = {"ml.m5.large": 0.115, "ml.g4dn.xlarge": 0.74}
+# $/hour on-demand, from the lesson's price table, the same numbers as the Instances for ML page
+prices = {name: helpers.instance_price(name) for name in ["ml.m5.large", "ml.g4dn.xlarge"]}
 ```
 
 Set up the estimator for a longer run: the epochs, the instance, where the output goes, and a two-hour `max_run` cap. If the launch is refused with an `AccessDeniedException` ending in `explicit deny`, the account's checks are the cause: a missing tag, an instance type outside the lesson's list, or a resource kind the lesson never creates; the first training episode's callout *If the launch is refused* says what to look at.

@@ -310,7 +310,7 @@ if __name__ == "__main__":
 
 # SageMaker training instances the lesson refers to: GPUs per box, GPU memory per GPU (GB),
 # bf16 dense peak per GPU (TFLOPS, from NVIDIA's data sheets; the sheets' headline figures for the L4 and
-# L40S are with sparsity, twice these), the us-east-1 on-demand
+# L40S are with sparsity, twice these), the US East on-demand
 # price per instance-hour from the AWS price list of 2026-10-16 (for the whole box), the
 # instance's network bandwidth (Gbit/s, from the instance's spec sheet) and, on multi-GPU boxes,
 # the GPU-to-GPU link per GPU (GB/s: NVLink on p4d/p5, PCIe on g5/g6e). Links are approximate.
@@ -327,7 +327,7 @@ GPU_INSTANCES = {
     "ml.p5.48xlarge":   {"gpus": 8, "gpu": "H100 80GB", "gpu_mem_gb": 80, "tflops_bf16": 989, "price": 63.30, "net_gbps": 3200, "gpu_link_gbs": 900},
 }
 
-# The CPU instances the lesson uses, with the same us-east-1 on-demand prices as the Instances for ML page
+# The CPU instances the lesson uses, with the same US East on-demand prices as the Instances for ML page
 CPU_INSTANCES = {
     "ml.t3.medium": {"price": 0.05},
     "ml.m5.large":  {"price": 0.115},
