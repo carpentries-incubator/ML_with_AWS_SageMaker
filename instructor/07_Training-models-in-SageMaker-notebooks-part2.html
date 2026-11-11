@@ -430,7 +430,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Training Models in SageMaker: PyTorch Example</h1>
-        <p>Last updated on 2026-11-02 |
+        <p>Last updated on 2026-11-11 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/07_Training-models-in-SageMaker-notebooks-part2.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -941,8 +941,8 @@ to use.</p>
 <span id="cb17-10"><a href="#cb17-10" tabindex="-1" aria-label="code-block-17-10"></a>    <span class="bu">print</span>(<span class="ss">f"    model: </span><span class="sc">{</span>desc[<span class="st">'ModelArtifacts'</span>][<span class="st">'S3ModelArtifacts'</span>]<span class="sc">}</span><span class="ss">"</span>)   <span class="co"># the model.tar.gz this job uploaded to output_path</span></span>
 <span id="cb17-11"><a href="#cb17-11" tabindex="-1" aria-label="code-block-17-11"></a>    <span class="cf">return</span> desc</span>
 <span id="cb17-12"><a href="#cb17-12" tabindex="-1" aria-label="code-block-17-12"></a></span>
-<span id="cb17-13"><a href="#cb17-13" tabindex="-1" aria-label="code-block-17-13"></a><span class="co"># us-east-1 on-demand rates (2026-10-16); check the instances page for your region</span></span>
-<span id="cb17-14"><a href="#cb17-14" tabindex="-1" aria-label="code-block-17-14"></a>prices <span class="op">=</span> {<span class="st">"ml.m5.large"</span>: <span class="fl">0.115</span>, <span class="st">"ml.g4dn.xlarge"</span>: <span class="fl">0.74</span>}</span></code></pre>
+<span id="cb17-13"><a href="#cb17-13" tabindex="-1" aria-label="code-block-17-13"></a><span class="co"># $/hour on-demand, from the lesson's price table, the same numbers as the Instances for ML page</span></span>
+<span id="cb17-14"><a href="#cb17-14" tabindex="-1" aria-label="code-block-17-14"></a>prices <span class="op">=</span> {name: helpers.instance_price(name) <span class="cf">for</span> name <span class="kw">in</span> [<span class="st">"ml.m5.large"</span>, <span class="st">"ml.g4dn.xlarge"</span>]}</span></code></pre>
 </div>
 <p>Set up the estimator for a longer run: the epochs, the instance,
 where the output goes, and a two-hour <code>max_run</code> cap. If the
@@ -1341,10 +1341,11 @@ tokens each, three ways:</p>
 <span id="cb26-6"><a href="#cb26-6" tabindex="-1" aria-label="code-block-26-6"></a>)<span class="op">;</span></span></code></pre>
 </div>
 <p>Read the three together. Two L40S instances over a 20 Gb/s network
-spend as long exchanging the 28 GB gradient as computing, so two
-machines finish in the same time as one and bill twice. Four L40S in one
-box over PCIe get 3.2 of the ideal 4. Eight A100s over NVLink get 7.8 of
-8, which is why the big training boxes are built that way.</p>
+spend a third of every step exchanging the 28 GB gradient, so two
+machines get 1.3 of the ideal 2 and bill 1.5 times as much per run. Four
+L40S in one box over PCIe get 3.6 of the ideal 4. Eight A100s over
+NVLink get 7.8 of 8, which is why the big training boxes are built that
+way.</p>
 <p>Data parallelism helps when each step’s computation is large next to
 the exchange, which means a big model, a big batch and a fast link, in
 that order of importance. Run the function before renting more than one
@@ -1514,8 +1515,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/07_Training-models-in-SageMaker-notebooks-part2.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/07_Training-models-in-SageMaker-notebooks-part2.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-11-02",
-  "datePublished": "2026-11-10"
+  "dateModified": "2026-11-11",
+  "datePublished": "2026-11-11"
 }
 
   </script><script>
