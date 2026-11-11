@@ -749,35 +749,25 @@ print(f"tags:         {make_job_tags('Training')}")
 
 Next, what the script will be told to do. These hyperparameters reach the script as command-line flags (`--epochs 2 --lr 0.0002 ...`), and they are what the Step 0 estimate was built from. Three of them set the cost: the number of pages, the number of passes, and `max_pixels`. The rest shape the training: a LoRA learning rate, the adapter rank, an effective batch of four pages through gradient accumulation, and which holdout pages get scored when.
 
-One of them, `lora_r`, the adapter rank, decides how many parameters train, and that number is worth knowing before the launch for two reasons. It is what the script's safeguard checks, since a run that trains 5% of the model instead of 1% is a different, more expensive job, and it is the `trainable params:` line the job prints, so working it out now means you can tell whether the job is doing what you asked.
+One of them, `lora_r`, the adapter rank, sets how many parameters train. The job prints that count as `trainable params:` when it starts, and the script's safeguard refuses to train if it is more than 5% of the model, so it is worth knowing the number before the launch.
 
-The arithmetic is short. LoRA attaches to seven weight matrices in every layer of the language model, the four attention projections (`q_proj`, `k_proj`, `v_proj`, `o_proj`) and the three in the MLP (`gate_proj`, `up_proj`, `down_proj`). On a matrix of shape in × out, an adapter of rank r adds r × (in + out) parameters, the two thin matrices from the LoRA figure. Add that up over the seven matrices, multiply by the number of layers, and you have the count. The widths come from the model's `config.json`. For any model on Hugging Face that file is one click away, under **Files and versions** on the model page ([CHURRO-3B](https://huggingface.co/stanford-oval/churro-3B/tree/main), for this one), and the same page's safetensors viewer lists every weight tensor with its shape. The model card's prose is a quicker glance but not always complete, so read the file when a number matters. Here the file is staged next to the weights in the shared bucket.
+The count follows from the LoRA figure. An adapter of rank r on a weight matrix of shape in × out adds two thin matrices, r × (in + out) parameters. LoRA attaches to seven matrices in every layer of the language model, the four attention projections and the three in the MLP, and their shapes are in the model's `config.json`. Multiply out and sum over the layers:
 
 ```python
-s3_client.download_file(shared_bucket, f"{data_prefix}/model/churro-3B/config.json", "config.json")   # the model's architecture file
-with open("config.json") as f:
-    cfg = json.load(f)
-text = cfg.get("text_config", cfg)            # newer configs keep the language model's sizes under text_config, older ones at the top level
+s3_client.download_file(shared_bucket, f"{data_prefix}/model/churro-3B/config.json", "config.json")
+cfg = json.load(open("config.json"))
+cfg = cfg.get("text_config", cfg)                                   # the language model's sizes; older configs keep them at the top level
+layers, hidden, inter = cfg["num_hidden_layers"], cfg["hidden_size"], cfg["intermediate_size"]
+kv = hidden * cfg["num_key_value_heads"] // cfg["num_attention_heads"]   # k_proj and v_proj are narrower
 
-layers = text["num_hidden_layers"]            # how many times the seven matrices repeat
-hidden = text["hidden_size"]                  # the width of the model's main vector
-inter = text["intermediate_size"]             # the MLP's wider middle layer
-kv = hidden * text["num_key_value_heads"] // text["num_attention_heads"]   # k_proj and v_proj are narrower: several attention heads share one key and value
-
-projections = {                               # (in, out) of each matrix LoRA attaches to, in one layer
-    "q_proj": (hidden, hidden), "k_proj": (hidden, kv), "v_proj": (hidden, kv), "o_proj": (hidden, hidden),
-    "gate_proj": (hidden, inter), "up_proj": (hidden, inter), "down_proj": (inter, hidden),
-}
-print(f"{layers} layers; " + ", ".join(f"{name} {i} x {o}" for name, (i, o) in projections.items()))
-
-total_params = 3.75e9                         # the whole model, vision tower included
-for lora_r in (8, 16, 32):
-    per_layer = sum(lora_r * (i + o) for i, o in projections.values())   # r x (in + out) for each of the seven matrices
-    trainable = per_layer * layers
-    print(f"rank {lora_r:>2}: {trainable / 1e6:5.1f}M trainable parameters, {100 * trainable / total_params:.2f}% of the model")
+shapes = [(hidden, hidden), (hidden, kv), (hidden, kv), (hidden, hidden),   # q, k, v, o projections
+          (hidden, inter), (hidden, inter), (inter, hidden)]               # gate, up, down projections
+lora_r = 16
+trainable = layers * sum(lora_r * (i + o) for i, o in shapes)             # r x (in + out) per matrix, times the layers
+print(f"rank {lora_r}: {trainable / 1e6:.0f}M trainable parameters, {100 * trainable / 3.75e9:.2f}% of the 3.75B")
 ```
 
-Rank 16, the lesson's choice, trains about 30 million parameters, under 1% of the model, and doubling the rank doubles it. The adapter's gradients and optimizer state, 16 bytes for each of those 30 million, come to about half a gigabyte, which is why a LoRA run fits beside the frozen 7.5 GB of weights on a 24 GB card. The job's log confirms the count in its `trainable params:` line, and the script refuses to train if more than 5% of the model turns out to be trainable.
+About 30 million at rank 16, under 1% of the model, and doubling the rank doubles it. Their gradients and optimizer state, 16 bytes each, come to about half a gigabyte, which is why a LoRA run fits beside the frozen 7.5 GB of weights on a 24 GB card.
 
 Rank is a trade between capacity and memory, and the trade is measured. On Llama-2-7B, a LoRA at rank 16 trailed a full fine-tune on a code benchmark, rank 256 matched it, and the memory for the rank-256 run was still a fifth of the full fine-tune's. For a few hundred pages, rank 16 is the usual starting point ([Biderman et al., 2024](https://arxiv.org/abs/2405.09673)).
 
