@@ -444,8 +444,10 @@ def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs
             print(f"warning:    {spec['gpu']}: {spec['note']}")
         if method == "full" and not from_scratch:
             print("warning:    full fine-tuning updates every weight; do not run one on the class account")
-        if method == "lora" and params_billions > 7:
-            print("warning:    LoRA above 7B is outside what the class account allows")
+        if method == "lora" and params_billions > 30:
+            print("warning:    LoRA above 30B is outside what the class account allows: it does not fit the 48 GB GPU even with the frozen weights in 4-bit")
+        elif method == "lora" and params_billions > 7:
+            print("warning:    a LoRA run above 7B fits the account's GPUs only with the frozen weights in 4-bit (--load_in_4bit 1) on the 48 GB ml.g6e.xlarge")
         if spec["gpus"] > 1:
             print("warning:    multi-GPU instance; not allowed on the class account, and more GPUs do not make the run cheaper")
     return result
@@ -530,8 +532,9 @@ def check_finetune_launch(tags, instance_type, max_run, estimated_minutes, price
     if method != "lora":
         problems.append(f'method="{method}": a full fine-tune updates every weight, needs 16 bytes per parameter, '
                         "and is not run on the class account; use LoRA")
-    elif params_billions > 7:
-        problems.append(f"{params_billions}B parameters: a LoRA run above 7B does not fit the 24 GB GPU the lesson uses")
+    elif params_billions > 30:
+        problems.append(f"{params_billions}B parameters: a LoRA run above 30B does not fit the 48 GB GPU, the largest the account allows, "
+                        "even with the frozen weights in 4-bit")
     if max_run is None:
         problems.append("no max_run: the SDK would send 24 hours, so a hung job bills a day; set it to about twice the estimate")
     else:
