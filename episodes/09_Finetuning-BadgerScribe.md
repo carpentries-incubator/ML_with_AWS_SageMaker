@@ -846,13 +846,12 @@ estimator = HuggingFace(
 )
 ```
 
-Now launch. Two details in this one line matter:
+Now launch. The estimator described the machine and the code. `fit()` supplies the data and starts the job, and its first argument is where the model weights come in.
 
-- `job_name` is the one defined with the guard rails, with the launch time in it: SageMaker requires training job names to be unique in the account, and a name that is fixed fails with `ResourceInUse` the second time the cell runs. Rerunning the guard-rail cell gives a new name and a new checkpoint prefix. To **resume** a job that was killed, keep the old `checkpoint_s3_uri` and launch under the new name.
-- If the launch is refused with an `AccessDeniedException` ending in `explicit deny`, the account's checks are the cause: a missing tag, an instance type outside the lesson's list, or a resource kind the lesson never creates; the first training episode's callout *If the launch is refused* says what to look at.
-- `wait=True` (the default) blocks the notebook until the job ends and streams its log here. For a 33-minute job that is the right choice: you cannot accidentally queue a second launch while you wait, and everything worth doing in the meantime happens on the job's page under [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training), not in this notebook.
-
-The second input channel, `model`, is the copy of CHURRO-3B your instructor staged in the shared bucket: SageMaker mounts it at `/opt/ml/input/data/model` and the script loads from there, so a hundred jobs starting in the same minute copy 7.5 GB from S3 instead of each pulling it from Hugging Face.
+- **The first argument is the input channels**, a dictionary of names to S3 locations. SageMaker copies each location onto the job's instance before the script starts, at `/opt/ml/input/data/<name>`, and tells the script where through an environment variable, `SM_CHANNEL_TRAIN` for a channel named `train`. The names are yours to choose and the script reads them by name. The XGBoost job in the training episode had one channel, `train`. This job has two. `train` is the pages and CSVs. `model` is the copy of CHURRO-3B your instructor staged in the shared bucket, and the script loads the base weights from that folder instead of pulling 7.5 GB from Hugging Face, which matters when a class launches a hundred jobs in the same minute. Both locations were set in Setup as `train_s3_uri` and `model_s3_uri`.
+- **`job_name`** is the one defined with the guard rails, with the launch time in it. SageMaker requires training job names to be unique in the account, and a fixed name fails with `ResourceInUse` the second time the cell runs. Rerunning the guard-rail cell gives a new name and a new checkpoint prefix. To **resume** a job that was killed, keep the old `checkpoint_s3_uri` and launch under the new name.
+- **`wait=True`**, the default, blocks the notebook until the job ends and streams its log here. For a 33-minute job that is the right choice. You cannot queue a second launch by accident while you wait, and everything worth doing in the meantime happens on the job's page under [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training), not in this notebook.
+- If the launch is refused with an `AccessDeniedException` ending in `explicit deny`, the account's checks are the cause: a missing tag, an instance type outside the lesson's list, or a resource kind the lesson never creates. The first training episode's callout *If the launch is refused* says what to look at.
 
 ```python
 # two channels: "train" is mounted at /opt/ml/input/data/train, "model" at /opt/ml/input/data/model inside the container
