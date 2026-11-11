@@ -29,12 +29,14 @@ Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/09_Finetuning-BadgerSc
 
 ### Joining at this episode
 
-This episode stands on its own, and these are the four things the earlier episodes set up that it uses. Learners coming through the whole lesson have seen each one.
+This episode stands on its own, but it runs from a notebook instance and writes to a bucket that the earlier episodes create. If this is your first episode, complete these before the first cell, in this order. They take about half an hour. Learners coming through the whole lesson have done each one.
 
-- **An S3 bucket of your own**, from the S3 episode, where every job's outputs land. The notebook refers to it as `bucket_name`.
-- **A notebook instance**, from the controllers episode, a small CPU machine running JupyterLab. It launches jobs and reads results. The GPU is never on it.
-- **A role**, `ml-sagemaker-use`, which the notebook instance runs as and hands to every job, so nothing here asks you to sign in.
-- **Three tags on everything**, `Name`, `Project` and `Purpose`, which the shared account requires on every job and uses to attribute the bill.
+1. **Sign in to the account**, following the [setup page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/index.html#setup). On the shared UW-Madison account that is the sign-in link the instructors emailed; on your own account, the page says what to prepare.
+2. **Create an S3 bucket of your own**, in [episode 2](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/02_Data-storage-setting-up-S3.html), with the three tags `Name`, `Project` and `Purpose` on it. Every job's outputs land there, and the notebook refers to it as `bucket_name`. Uploading the Titanic data is for the other episodes and can be skipped.
+3. **Create a notebook instance**, in [episode 3](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/03_SageMaker-notebooks-as-controllers.html), a small CPU machine running JupyterLab, with the same three tags and the `ml-sagemaker-use` role. The instance launches jobs and reads results; the GPU is never on it. The episode ends by cloning the lesson repository onto the instance, which is where this episode's notebook, scripts and helper code come from.
+4. **Read your bucket from the notebook once**, in [episode 4](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/04_Accessing-S3-via-SageMaker-notebooks.html), to see how a notebook lists, reads and writes S3. This episode's first cells do the same with the Badger Scribe data, and this step is the one to skip if time is short.
+
+Two things the account handles for you. The role is what the notebook instance runs as and hands to every job, so nothing here asks you to sign in again. The three tags are required on every job, and the shared account uses them to attribute the bill, so the launch cells below carry them.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
