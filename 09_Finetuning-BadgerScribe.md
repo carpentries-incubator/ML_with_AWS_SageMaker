@@ -129,7 +129,7 @@ None of the three runtime limits is a wall. The training script writes a checkpo
 
 ### What the class account allows
 
-Do not fully fine-tune anything in this workshop, and do not LoRA fine-tune a model larger than 30B on the class account. The limit comes from the instances the account allows, which are single-GPU and top out at the 48 GB `ml.g6e.xlarge`. On your own account you would rent a bigger instance. A 7B LoRA needs about 22 GB and fits the 24 GB card the class uses. A LoRA in bf16 fits the 48 GB card up to about 17B. Beyond that, on this account, the frozen weights go to 4-bit, which the training script does with `--load_in_4bit 1`, and a 30B model in 4-bit needs about 34 GB. A full fine-tune of even a 7B model needs more memory than any instance the account allows. The larger runs appear in this episode only as estimates, so that you can recognize one before you launch it.
+Do not fully fine-tune anything in this workshop, and do not LoRA fine-tune a model larger than 30B on the class account. The limit comes from the instances the account allows, which are single-GPU and top out at the 48 GB `ml.g6e.xlarge`. On your own account you would rent a bigger instance. A 7B LoRA at rank 16 needs about 19 GB and fits the 24 GB card the class uses. A LoRA in bf16 fits the 48 GB card up to about 20B. Beyond that, on this account, the frozen weights go to 4-bit, which the training script does with `--load_in_4bit 1`, and a 30B model in 4-bit needs about 34 GB. A full fine-tune of even a 7B model needs more memory than any instance the account allows. The larger runs appear in this episode only as estimates, so that you can recognize one before you launch it.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -154,9 +154,9 @@ Multiply the bytes per parameter by the parameter count, add about 4 GB for acti
 | Model | Inference, as run in practice | LoRA fine-tune | Full fine-tune |
 |---|---|---|---|
 | 3B | bf16, 6 GB: `ml.g5.xlarge`, 1 × 24 GB, `$1.41`/h | 12 GB: `ml.g5.xlarge` | 52 GB: `ml.g5.12xlarge`, 4 × 24 GB, `$7.09`/h |
-| 7B | bf16, 14 GB: `ml.g5.xlarge` | 22 GB: `ml.g5.xlarge`, with nothing to spare | 116 GB: `ml.g6e.12xlarge`, 4 × 48 GB, `$13.12`/h |
+| 7B | bf16, 14 GB: `ml.g5.xlarge` | 19 GB: `ml.g5.xlarge` | 116 GB: `ml.g6e.12xlarge`, 4 × 48 GB, `$13.12`/h |
 | 27B | FP8, 27 GB: `ml.g6e.xlarge`, 1 × 48 GB, `$2.61`/h | 72 GB: `ml.g5.12xlarge`, 4 × 24 GB, `$7.09`/h | 436 GB: `ml.p5.48xlarge`, 8 × 80 GB, `$63.30`/h |
-| 70B | 4-bit, 35 GB: `ml.g6e.xlarge`; FP8, 70 GB: `ml.g6e.12xlarge`, 4 × 48 GB, `$13.12`/h | 179 GB: `ml.g6e.12xlarge` | 1,124 GB: two `ml.p5.48xlarge`, `$127`/h |
+| 70B | 4-bit, 35 GB: `ml.g6e.xlarge`; FP8, 70 GB: `ml.g6e.12xlarge`, 4 × 48 GB, `$13.12`/h | 146 GB: `ml.g6e.12xlarge` | 1,124 GB: two `ml.p5.48xlarge`, `$127`/h |
 
 A 7B model that runs on one 24 GB GPU needs 116 GB to fully fine-tune, a four-GPU box at `$13` an hour with the model sharded across the GPUs. Training cannot run on quantized weights the way inference can, because each step's update is too small for 8-bit or 4-bit numbers to hold. LoRA avoids that jump by freezing the model and training a few million adapter parameters, which is why this episode fits on one 24 GB card.
 
@@ -189,7 +189,7 @@ For the class run, 251 pages at about 1,600 tokens each for 2 passes is 803,000 
 - `tokens_per_example`: how many tokens the model sees for one of those items. Tokens, not words, because the model never sees words. English text is about 1.3 tokens per word, more for German and for old spellings. An image on a Qwen-VL style model becomes one token per 28 × 28 pixel block after resizing, 14-pixel patches merged two by two, about 1,300 for a megapixel. For a page here that is about 1,300 for the image plus about 300 for the transcription, 1,600; the Setup section counts it with the model's own processor, so it is not a guess.
 - `epochs`: passes over the data. You do not know in advance how many a model needs, so this is a budget you set, and the estimate scales with it. The usual budget is 3 to 5 passes for a few hundred to a few thousand examples and 1 to 3 for tens of thousands, scoring held-out data at the end of every pass and keeping the best one. Step 2 reads that curve for this run. The class run uses 2 to keep the job near half an hour, and the homework uses 4. The three numbers multiply to the tokens the model sees, 251 × 1,600 × 2, about 800,000. If you know the total tokens and not the breakdown, put the total in `examples` and 1 in `tokens_per_example`; the arithmetic is the same.
 - `method`: `"lora"` or `"full"`, which sets the bytes per parameter and the FLOPs per token.
-- The adapter rank is not an argument, because at ordinary ranks it changes neither number by much. Memory is the frozen weights, 2 bytes per parameter, plus 16 bytes for each adapter parameter, which at rank 16 on this model is 2.1 bytes per parameter in all and at rank 64 about 2.5, the flat figure the function uses. Compute is the forward and backward pass through the whole frozen model, the same at any rank, and the adapter's own share is under 1%. The flat figures stop holding at very high ranks. At rank 256 the adapter is about 13% of this model's weights, memory is about 4 bytes per parameter, 19 GB with the activations against the 13 GB the function reports, and you would add it yourself.
+- `lora_r`: the adapter rank. It sets the adapter's share of the model, about the rank divided by the model's hidden size, and from that the memory: 2 bytes per frozen parameter plus 16 for each adapter parameter. At rank 16 on this model that is 2.1 bytes per parameter, at rank 64 about 2.5, at rank 256 about 4, so the rank hardly moves the memory until it is large. It does not move the time, because the pass through the frozen model is the same work at any rank. Left out, the function uses a flat 2.5 bytes.
 - `instance_type`: one of the boxes in the price list; leave it out and the cheapest one that fits is chosen.
 - `runs`: how many times you expect to run it. A first run is never the last; five to ten is realistic for a project before any sweep.
 
@@ -204,6 +204,7 @@ step0_estimate = helpers.estimate_finetune_cost(
     tokens_per_example=1600,     # ~1,300 image tokens + ~300 text tokens; counted in Setup below
     epochs=2,                    # passes over the 251 pages: a budget, not a known number; see the bullet above
     method="lora",
+    lora_r=16,                   # the adapter rank; sets the adapter's share of the model, and with it the memory
     instance_type="ml.g5.xlarge",
     runs=1,                      # one run today; the printout's last cost line is this times runs
 )
@@ -220,6 +221,7 @@ helpers.estimate_finetune_cost(
     tokens_per_example=800,      # about 600 words each
     epochs=3,                    # three passes over the documents
     method="lora",
+    lora_r=16,
     instance_type="ml.g5.xlarge",
     runs=8,                      # the eight attempts a project takes; the last cost line is for all of them
 );
@@ -337,7 +339,7 @@ A multi-GPU box runs one job as data parallelism. Every GPU holds its own full c
 ```python
 # The class run on a 4 x A10G box. An estimate, not a launch: the class account does not allow multi-GPU instances.
 helpers.estimate_finetune_cost(
-    params_billions=3.75, examples=251, tokens_per_example=1600, epochs=2, method="lora",
+    params_billions=3.75, examples=251, tokens_per_example=1600, epochs=2, method="lora", lora_r=16,
     instance_type="ml.g5.12xlarge",   # forced: left out, the function would pick the cheapest single GPU that fits
 );
 ```
@@ -551,7 +553,7 @@ That average is the `tokens_per_example` the estimate should have used. Step 0 o
 
 ```python
 helpers.estimate_finetune_cost(params_billions=3.75, examples=251, tokens_per_example=int(avg_tokens_per_page), epochs=2,
-                               method="lora", instance_type="ml.g5.xlarge");
+                               method="lora", lora_r=16, instance_type="ml.g5.xlarge");
 ```
 
 The measured count is a tenth below the guess, and the estimate moves with it: 26 minutes and `$0.60` against 27 and `$0.64`. Step 1 keeps the 27-minute figure; a tenth either way is well inside what the rule can tell, which is about a factor of two. Multiply by pages and passes and that is the "tokens seen" in the cost table. Halve `max_pixels` and the image count halves with it; that is what Exercise 1 changes.
@@ -604,12 +606,12 @@ helpers.estimate_finetune_cost(params_billions=3.75, examples=251, tokens_per_ex
                                method="full");   # no instance_type: the cheapest that holds it
 ```
 
-Memory is what changes. The weights, their gradients and the optimizer's state come to 64 GB against 13, so the run no longer fits a 24 GB GPU, and the cheapest instance that holds it is the four-GPU `ml.g5.12xlarge` at `$7.09` an hour, five times the price. The four GPUs share the work, so the job is shorter, and the run comes to about `$1.87` against `$0.60`. On 251 pages that is a dollar; the same jump at 7B is the Step 0 table's `$140` a run, and the two warnings the function prints are the account's rules: no full fine-tune, no multi-GPU instance.
+Memory is what changes. The weights, their gradients and the optimizer's state come to 64 GB against 12, so the run no longer fits a 24 GB GPU, and the cheapest instance that holds it is the four-GPU `ml.g5.12xlarge` at `$7.09` an hour, five times the price. The four GPUs share the work, so the job is shorter, and the run comes to about `$1.87` against `$0.60`. On 251 pages that is a dollar; the same jump at 7B is the Step 0 table's `$140` a run, and the two warnings the function prints are the account's rules: no full fine-tune, no multi-GPU instance.
 
 Two more sizes on the same 251 pages, each both ways. Nothing is launched; read the memory line and the instance it forces.
 
 ```python
-helpers.estimate_finetune_cost(params_billions=7, examples=251, tokens_per_example=int(avg_tokens_per_page), epochs=2, method="lora");
+helpers.estimate_finetune_cost(params_billions=7, examples=251, tokens_per_example=int(avg_tokens_per_page), epochs=2, method="lora", lora_r=16);
 ```
 
 ```python
@@ -617,7 +619,7 @@ helpers.estimate_finetune_cost(params_billions=7, examples=251, tokens_per_examp
 ```
 
 ```python
-helpers.estimate_finetune_cost(params_billions=70, examples=251, tokens_per_example=int(avg_tokens_per_page), epochs=2, method="lora");
+helpers.estimate_finetune_cost(params_billions=70, examples=251, tokens_per_example=int(avg_tokens_per_page), epochs=2, method="lora", lora_r=16);
 ```
 
 ```python
@@ -626,7 +628,7 @@ helpers.estimate_finetune_cost(params_billions=70, examples=251, tokens_per_exam
                                instance_type="ml.p5.48xlarge");   # the largest box on the list: 8 x H100, 640 GB
 ```
 
-A 7B LoRA still fits one GPU, 22 GB on a 24 GB L4, for under a dollar; the full fine-tune of the same model needs 116 GB, a four-GPU box at `$13` an hour, and the account refuses it. At 70B the LoRA needs 179 GB, so even the adapter run is a four-GPU job the account refuses, and the full fine-tune needs 1,124 GB: nothing on the list holds it, and the function says what the largest box would do, start, bill ten minutes of startup at `$63` an hour, and die out of memory. That run is two or more such boxes with the model sharded across them, which is the `$12,000` row in the cost table once the data is a real corpus and not 251 pages. On 251 pages the arithmetic is minutes everywhere, so these bills are mostly each box's price for ten minutes of startup; what the four runs show is the box a model forces you onto, which is the first thing to find out about a fine-tune, before the data or the epochs.
+A 7B LoRA still fits one GPU, 19 GB on a 24 GB L4, for under a dollar; the full fine-tune of the same model needs 116 GB, a four-GPU box at `$13` an hour, and the account refuses it. At 70B the LoRA needs 146 GB, so even the adapter run is a four-GPU job the account refuses, and the full fine-tune needs 1,124 GB: nothing on the list holds it, and the function says what the largest box would do, start, bill ten minutes of startup at `$63` an hour, and die out of memory. That run is two or more such boxes with the model sharded across them, which is the `$12,000` row in the cost table once the data is a real corpus and not 251 pages. On 251 pages the arithmetic is minutes everywhere, so these bills are mostly each box's price for ten minutes of startup; what the four runs show is the box a model forces you onto, which is the first thing to find out about a fine-tune, before the data or the epochs.
 
 ### A code folder for the job
 
@@ -772,14 +774,13 @@ About 30 million at rank 16, under 1% of the model, and doubling the rank double
 
 Rank is a trade between capacity and memory, and the trade is measured. On Llama-2-7B, a LoRA at rank 16 trailed a full fine-tune on a code benchmark, rank 256 matched it, and the memory for the rank-256 run was still a fifth of the full fine-tune's. For a few hundred pages, rank 16 is the usual starting point ([Biderman et al., 2024](https://arxiv.org/abs/2405.09673)). The rank is the first thing people raise when a run's score is short of what they want, and it is usually the wrong first move. On a few hundred pages a large adapter memorizes the training pages sooner, which the holdout curve shows as rising while the training loss keeps falling, and at rank 256 this run's memory goes from 12 GB to about 19 GB, which the flat estimate does not show. More data, another pass, or a lower learning rate are cheaper first tries, and the holdout curve, not the training loss, says whether any of them helped.
 
-The estimator takes the adapter's share of the model as `trainable_fraction`, which the count cell above gives for any rank, so the cost of a higher rank can be priced before it is tried:
+The estimator's `lora_r` argument prices any rank. Its `hidden_size` argument takes the width the count cell read from the config, which makes the share exact for this model instead of estimated from the parameter count:
 
 ```python
 for lora_r in (16, 64, 256):
-    trainable = layers * sum(lora_r * (i + o) for i, o in shapes)
     est = helpers.estimate_finetune_cost(params_billions=3.75, examples=251, tokens_per_example=1600, epochs=2, method="lora",
-                                         instance_type=instance_type, trainable_fraction=trainable / 3.75e9, verbose=False)
-    print(f"rank {lora_r:>3}: {100 * trainable / 3.75e9:5.1f}% trainable, ~{est['memory_gb_needed']:.0f} GB, ~{est['wall_clock_hours'] * 60:.0f} min, ~${est['cost_per_run']:.2f}")
+                                         lora_r=lora_r, hidden_size=hidden, instance_type=instance_type, verbose=False)
+    print(f"rank {lora_r:>3}: ~{est['memory_gb_needed']:.0f} GB, ~{est['wall_clock_hours'] * 60:.0f} min, ~${est['cost_per_run']:.2f}")
 ```
 
 Memory is what moves, from 12 GB at rank 16 to about 19 GB at rank 256, while the time and the bill hardly change, since the pass through the frozen model is the same work at any rank. On this 24 GB card rank 256 still fits, with little room for a bigger batch or a larger page, and that is the trade the holdout curve has to justify.
