@@ -555,23 +555,35 @@ helpers.estimate_finetune_cost(params_billions=3.75, examples=251, tokens_per_ex
 
 The measured count is a tenth below the guess, and the estimate moves with it: 26 minutes and `$0.60` against 27 and `$0.64`. Step 1 keeps the 27-minute figure; a tenth either way is well inside what the rule can tell, which is about a factor of two. Multiply by pages and passes and that is the "tokens seen" in the cost table. Halve `max_pixels` and the image count halves with it; that is what Exercise 1 changes.
 
+The same steps as a function, so the count can be repeated for any model. It builds the message twice, once with the image and once without, runs the model's own processor on each, and reads the difference as the image tokens. For CHURRO it returns the numbers worked out above:
+
+```python
+def count_page_tokens(model_id, image, prompt, answer, **processor_kwargs):
+    """Tokens one page costs a vision-language model: total, image and text. model_id is a Hugging Face id or a local
+    folder of processor files. Works for any model whose processor takes image and text content blocks."""
+    proc = AutoProcessor.from_pretrained(model_id, **processor_kwargs)
+    with_image = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": prompt}]},
+                  {"role": "assistant", "content": [{"type": "text", "text": answer}]}]
+    text_only = [{"role": "user", "content": [{"type": "text", "text": prompt}]},
+                 {"role": "assistant", "content": [{"type": "text", "text": answer}]}]
+    total = proc(text=[proc.apply_chat_template(with_image, tokenize=False)], images=[image], return_tensors="pt")["input_ids"].shape[1]
+    text = len(proc.tokenizer(proc.apply_chat_template(text_only, tokenize=False))["input_ids"])
+    return {"total": total, "image": total - text, "text": text}
+
+count_page_tokens(proc_dir, image, prompt, row.text, min_pixels=bsh.DEFAULT_MIN_PIXELS, max_pixels=bsh.DEFAULT_MAX_PIXELS)
+```
+
 ::::::::::::::::::::::::::::::::::::: challenge
 
 ### Count the page for another model
 
-Pick another open vision-language model and count what the same page costs there. `llava-hf/llava-1.5-7b-hf` is not gated and its processor downloads in seconds. Before running anything, read its model card and predict two things: how many image tokens a page will take, and whether `max_pixels` will change that. Then load its processor, build the same message with its chat template, the image, the instruction and the transcription, and read the `input_ids` length. Run the text without the image to separate the two.
+Pick another open vision-language model and count what the same page costs there. `llava-hf/llava-1.5-7b-hf` is not gated and its processor downloads in seconds. Before running anything, read its model card and predict two things: how many image tokens a page will take, and whether `max_pixels` will change that. Then call `count_page_tokens` with its model id and the same page, prompt and transcription.
 
 :::::::::::::::::::::::: solution
 
 ```python
-from transformers import AutoProcessor
-llava = AutoProcessor.from_pretrained("llava-hf/llava-1.5-7b-hf")
-messages = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": prompt}]},
-            {"role": "assistant", "content": [{"type": "text", "text": row.text}]}]
-text = llava.apply_chat_template(messages, tokenize=False)
-n_llava = llava(text=[text], images=[image], return_tensors="pt")["input_ids"].shape[1]
-n_llava_text = len(llava.tokenizer(text.replace("<image>", ""))["input_ids"])
-print(f"LLaVA 1.5: {n_llava} tokens for the page, {n_llava - n_llava_text} of them for the image; CHURRO: {n_total}")
+llava = count_page_tokens("llava-hf/llava-1.5-7b-hf", image, prompt, row.text)
+print(f"LLaVA 1.5: {llava['total']} tokens for the page, {llava['image']} of them for the image; CHURRO: {n_total}")
 ```
 
 LLaVA 1.5 resizes every image to 336 × 336 pixels and cuts it into 24 × 24 patches of 14 pixels, 576 image tokens however large the page, so `max_pixels` changes nothing for it. The page comes to about 900 tokens, 576 for the image and the rest for the instruction and the German text, which its Llama tokenizer splits into a different number of pieces than Qwen's. Fewer tokens is a cheaper step. It is not a better model for this task. A 336-pixel image of a letter page is too small to read the handwriting, which is why CHURRO spends 1,280 tokens on a megapixel. The token count is cost. Accuracy has to be measured.
