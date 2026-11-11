@@ -770,7 +770,19 @@ print(f"rank {lora_r}: {trainable / 1e6:.0f}M trainable parameters, {100 * train
 
 About 30 million at rank 16, under 1% of the model, and doubling the rank doubles it. Their gradients and optimizer state, 16 bytes each, come to about half a gigabyte, which is why a LoRA run fits beside the frozen 7.5 GB of weights on a 24 GB card.
 
-Rank is a trade between capacity and memory, and the trade is measured. On Llama-2-7B, a LoRA at rank 16 trailed a full fine-tune on a code benchmark, rank 256 matched it, and the memory for the rank-256 run was still a fifth of the full fine-tune's. For a few hundred pages, rank 16 is the usual starting point ([Biderman et al., 2024](https://arxiv.org/abs/2405.09673)). The rank is the first thing people raise when a run's score is short of what they want, and it is usually the wrong first move. On a few hundred pages a large adapter memorizes the training pages sooner, which the holdout curve shows as rising while the training loss keeps falling, and at rank 256 this run's memory goes from 13 GB to about 19 GB and the cost estimate no longer holds. More data, another pass, or a lower learning rate are cheaper first tries, and the holdout curve, not the training loss, says whether any of them helped.
+Rank is a trade between capacity and memory, and the trade is measured. On Llama-2-7B, a LoRA at rank 16 trailed a full fine-tune on a code benchmark, rank 256 matched it, and the memory for the rank-256 run was still a fifth of the full fine-tune's. For a few hundred pages, rank 16 is the usual starting point ([Biderman et al., 2024](https://arxiv.org/abs/2405.09673)). The rank is the first thing people raise when a run's score is short of what they want, and it is usually the wrong first move. On a few hundred pages a large adapter memorizes the training pages sooner, which the holdout curve shows as rising while the training loss keeps falling, and at rank 256 this run's memory goes from 12 GB to about 19 GB, which the flat estimate does not show. More data, another pass, or a lower learning rate are cheaper first tries, and the holdout curve, not the training loss, says whether any of them helped.
+
+The estimator takes the adapter's share of the model as `trainable_fraction`, which the count cell above gives for any rank, so the cost of a higher rank can be priced before it is tried:
+
+```python
+for lora_r in (16, 64, 256):
+    trainable = layers * sum(lora_r * (i + o) for i, o in shapes)
+    est = helpers.estimate_finetune_cost(params_billions=3.75, examples=251, tokens_per_example=1600, epochs=2, method="lora",
+                                         instance_type=instance_type, trainable_fraction=trainable / 3.75e9, verbose=False)
+    print(f"rank {lora_r:>3}: {100 * trainable / 3.75e9:5.1f}% trainable, ~{est['memory_gb_needed']:.0f} GB, ~{est['wall_clock_hours'] * 60:.0f} min, ~${est['cost_per_run']:.2f}")
+```
+
+Memory is what moves, from 12 GB at rank 16 to about 19 GB at rank 256, while the time and the bill hardly change, since the pass through the frozen model is the same work at any rank. On this 24 GB card rank 256 still fits, with little room for a bigger batch or a larger page, and that is the trade the holdout curve has to justify.
 
 ```python
 hyperparameters = {
