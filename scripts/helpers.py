@@ -351,7 +351,7 @@ FLOPS_PER_PARAM_TOKEN = {"lora": 4.0, "full": 6.0}
 def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs=2, method="lora",
                            instance_type=None, runs=1, utilization=0.25, gradient_checkpointing=True,
                            activations_gb=4.0, startup_minutes=10, verbose=True, from_scratch=False,
-                           trainable_fraction=None):
+                           lora_r=None, hidden_size=None, trainable_fraction=None):
     """
     Back-of-the-envelope cost of a fine-tuning run, using the two rules from the
     fine-tuning episode. Good to within about a factor of two, which is enough to tell
@@ -381,11 +381,17 @@ def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs
     gradient_checkpointing : bool   adds ~50% compute; needed on small GPUs
     activations_gb : float    headroom for activations; raise for long sequences or big batches
     startup_minutes : float   per-job fixed overhead (container pull, data download, model load)
-    trainable_fraction : float, LoRA only. The adapter's share of the model's parameters, which the
-                              rank sets (the fine-tuning episode's count cell works it out from the
-                              model's config: about 0.008 at rank 16 on CHURRO-3B, 0.13 at rank 256).
-                              Given, memory is 2 bytes per frozen parameter plus 16 per adapter
-                              parameter instead of the flat 2.5, which matters above rank 64 or so.
+    lora_r : int, LoRA only. The adapter rank. Sets the adapter's share of the model, about
+                              rank / hidden_size for an adapter on every attention and MLP projection,
+                              and from that the memory: 2 bytes per frozen parameter plus 16 per adapter
+                              parameter, instead of the flat 2.5. Rank hardly moves the memory below 64
+                              and doubles it by 256. Left out, the flat 2.5 is used.
+    hidden_size : int         the model's hidden size, from its config.json, for the rank arithmetic.
+                              Left out, it is estimated from the parameter count (2048 at 3.75B, growing
+                              with the square root of the size), which is within about 30%.
+    trainable_fraction : float, LoRA only. The adapter's exact share of the parameters, when you have
+                              it (the fine-tuning episode's count cell computes it from the config:
+                              0.008 at rank 16 on CHURRO-3B, 0.13 at rank 256). Overrides lora_r.
 
     Returns a dict with the numbers and prints a report when verbose.
     """
@@ -395,6 +401,9 @@ def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs
     params = params_billions * 1e9
     tokens = examples * tokens_per_example * epochs
     bytes_per_param = BYTES_PER_PARAM[method]
+    if method == "lora" and trainable_fraction is None and lora_r is not None:
+        hidden = hidden_size or 2048 * (params / 3.75e9) ** 0.5    # CHURRO-3B's hidden size, scaled by the square root of the size
+        trainable_fraction = lora_r / hidden                        # r x (in + out) summed over the projections, over their in x out: about r / hidden
     if method == "lora" and trainable_fraction is not None:
         bytes_per_param = 2.0 + 16.0 * trainable_fraction          # frozen weights in bf16, plus the adapter's full training state
     mem_gb = bytes_per_param * params / 1e9 + activations_gb
@@ -431,7 +440,8 @@ def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs
               f"{tokens_per_example:,} tokens x {epochs:g} passes = {tokens/1e6:,.1f}M tokens")
         print(f"memory:     ~{mem_gb:.0f} GB needed; {instance_type} has {spec['gpus'] * spec['gpu_mem_gb']} GB ({gpus})")
         if method == "lora" and trainable_fraction is not None:
-            print(f"adapter:    {100 * trainable_fraction:.1f}% of the parameters train, so {bytes_per_param:.1f} bytes per parameter instead of the flat 2.5")
+            rank = f"rank {lora_r}: " if lora_r is not None else ""
+            print(f"adapter:    {rank}{100 * trainable_fraction:.1f}% of the parameters train, so {bytes_per_param:.1f} bytes per parameter")
         if not fits(spec):
             fitting = [k for k, v in GPU_INSTANCES.items() if fits(v) and "note" not in v]
             cheapest = min(fitting, key=lambda k: GPU_INSTANCES[k]["price"]) if fitting else None
