@@ -187,7 +187,7 @@ For the class run, 251 pages at about 1,600 tokens each for 2 passes is 803,000 
 - `params_billions`: every parameter the model holds, including parts you are not training. CHURRO is a 3B language model plus a vision tower, 3.75B in all.
 - `examples`: one example is one training item, whatever the model is given one at a time. Here it is one page image with its transcription, and there are 251 of them. For a text model it would be one document; for a speech model, one recording.
 - `tokens_per_example`: how many tokens the model sees for one of those items. Tokens, not words, because the model never sees words. English text is about 1.3 tokens per word, more for German and for old spellings. An image on a Qwen-VL style model becomes one token per 28 × 28 pixel block after resizing, 14-pixel patches merged two by two, about 1,300 for a megapixel. For a page here that is about 1,300 for the image plus about 300 for the transcription, 1,600; the Setup section counts it with the model's own processor, so it is not a guess.
-- `epochs`: passes over the data. The three numbers multiply to the tokens the model sees, 251 × 1,600 × 2, about 800,000. If you know the total tokens and not the breakdown, put the total in `examples` and 1 in `tokens_per_example`; the arithmetic is the same.
+- `epochs`: passes over the data. You do not know in advance how many a model needs, so this is a budget you set, and the estimate scales with it. The usual budget is 3 to 5 passes for a few hundred to a few thousand examples and 1 to 3 for tens of thousands, scoring held-out data at the end of every pass and keeping the best one. Step 2 reads that curve for this run. The class run uses 2 to keep the job near half an hour, and the homework uses 4. The three numbers multiply to the tokens the model sees, 251 × 1,600 × 2, about 800,000. If you know the total tokens and not the breakdown, put the total in `examples` and 1 in `tokens_per_example`; the arithmetic is the same.
 - `method`: `"lora"` or `"full"`, which sets the bytes per parameter and the FLOPs per token.
 - `instance_type`: one of the boxes in the price list; leave it out and the cheapest one that fits is chosen.
 - `runs`: how many times you expect to run it. A first run is never the last; five to ten is realistic for a project before any sweep.
@@ -201,7 +201,7 @@ step0_estimate = helpers.estimate_finetune_cost(
     params_billions=3.75,        # CHURRO-3B: the 3B language model plus its vision tower
     examples=251,                # one example = one page image with its transcription
     tokens_per_example=1600,     # ~1,300 image tokens + ~300 text tokens; counted in Setup below
-    epochs=2,                    # passes over the 251 pages
+    epochs=2,                    # passes over the 251 pages: a budget, not a known number; see the bullet above
     method="lora",
     instance_type="ml.g5.xlarge",
     runs=1,                      # one run today; the printout's last cost line is this times runs
