@@ -359,7 +359,8 @@ def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs
 
     Rule 1, memory: bytes per parameter x parameters + activations must fit the GPU memory
     (summed across GPUs on a multi-GPU box, where the model is sharded).
-    Rule 2, time: FLOPs = k x parameters x tokens (k = 4 for LoRA, 6 for full), divided by
+    Rule 2, time: FLOPs = k x parameters x tokens (k = 4 for LoRA, 6 for full; with the adapter's
+    share known, k = 4 + 2 x that share, so a rank-256 adapter adds a few percent), divided by
     the GPU's peak bf16 rate x utilization; +50% when gradient checkpointing recomputes
     the forward pass. Cost = instance-hours x price per instance-hour + startup.
 
@@ -385,7 +386,9 @@ def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs
                               rank / hidden_size for an adapter on every attention and MLP projection,
                               and from that the memory: 2 bytes per frozen parameter plus 16 per adapter
                               parameter, instead of the flat 2.5. Rank hardly moves the memory below 64
-                              and doubles it by 256. Left out, the flat 2.5 is used.
+                              and doubles it by 256. The compute moves less, since the pass through the
+                              frozen model is the same at any rank and only the adapter's own weight
+                              gradients grow with it. Left out, the flat 2.5 is used.
     hidden_size : int         the model's hidden size, from its config.json, for the rank arithmetic.
                               Left out, it is estimated from the parameter count (2048 at 3.75B, growing
                               with the square root of the size), which is within about 30%.
@@ -407,7 +410,10 @@ def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs
     if method == "lora" and trainable_fraction is not None:
         bytes_per_param = 2.0 + 16.0 * trainable_fraction          # frozen weights in bf16, plus the adapter's full training state
     mem_gb = bytes_per_param * params / 1e9 + activations_gb
-    flops = FLOPS_PER_PARAM_TOKEN[method] * params * tokens * (1.5 if gradient_checkpointing else 1.0)
+    flops_per_param_token = FLOPS_PER_PARAM_TOKEN[method]
+    if method == "lora" and trainable_fraction is not None:
+        flops_per_param_token = 4.0 + 2.0 * trainable_fraction      # the pass through the frozen model, plus the adapter's own weight gradients
+    flops = flops_per_param_token * params * tokens * (1.5 if gradient_checkpointing else 1.0)
 
     def fits(spec):
         return spec["gpus"] * spec["gpu_mem_gb"] >= mem_gb
