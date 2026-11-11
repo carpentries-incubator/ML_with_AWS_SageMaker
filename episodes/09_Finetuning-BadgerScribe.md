@@ -39,7 +39,7 @@ This can be surprisingly effective. [CHURRO](https://github.com/stanford-oval/Ch
 
 ![*Three specialist models against much larger general ones, on each task's own benchmark. Sources: [CHURRO, EMNLP 2025](https://arxiv.org/abs/2509.19768); [Goedel-Prover-V2, ICLR 2026](https://arxiv.org/abs/2508.03613); [MedGemma technical report, 2025](https://arxiv.org/abs/2507.05201). Scores as reported by each model's authors.*](fig/specialists-vs-large-models.png){alt="Dot plot of benchmark scores for three task-specific models against a much larger general model on the same benchmark; the specialist is ahead in each row by 6.5, 2.2 and 1.2 points"}
 
-That's the approach we'll explore in this episode. We'll take CHURRO, which already specializes in historical documents, and adapt it further to a collection of handwritten German letters from UW-Madison's Badger Scribe challenge.
+That's the approach we'll explore in this episode. We'll take CHURRO, which already specializes in historical documents, and adapt it further to a collection of handwritten German letters from UW-Madison's [Badger Scribe](https://www.kaggle.com/competitions/badger-scribe) challenge.
 
 ![*The steps that made CHURRO, from Qwen2.5-VL's pretraining to its fine-tune on 99,491 historical pages; this episode adds one more step*](fig/qwen-to-churro.png){alt="Five steps: text pretraining, vision pretraining, post-training, the released Qwen 2.5 VL 3B, and CHURRO's fine-tune on historical pages"}
 
@@ -1272,7 +1272,7 @@ for label, df in preds.items():
 
 The `lora` prediction file already contains every one of the 141 test pages. Keep only those rows, in the order `test.csv` lists them, and you have the fine-tuned model's transcriptions of pages nobody has labeled.
 
-That file is not a Kaggle submission. The lesson's data is the German-letter part of Badger Scribe. The competition's training set has 619 pages in three categories, the 295 letters plus 288 pages of surveyors' field notes and 36 of 1830s account books, and its test set has 208 pages, the 141 letters plus 31 and 36 of the others. A submission needs a row for all 208. To get a leaderboard score, download the competition data from Kaggle, run the same fine-tune on its `train.csv` and images, which the script takes unchanged since its `--categories` default is all of them, run the transcriber over its `test.csv`, and build the file from its `sample_submission.csv`. This step is optional, and only it needs a Kaggle account.
+That file is not a Kaggle submission. The lesson's data is the German-letter part of [Badger Scribe](https://www.kaggle.com/competitions/badger-scribe). The competition's training set has 619 pages in three categories, the 295 letters plus 288 pages of surveyors' field notes and 36 of 1830s account books, and its test set has 208 pages, the 141 letters plus 31 and 36 of the others. A submission needs a row for all 208. To get a leaderboard score, download the competition data from Kaggle, run the same fine-tune on its `train.csv` and images, which the script takes unchanged since its `--categories` default is all of them, run the transcriber over its `test.csv`, and build the file from its `sample_submission.csv`. This step is optional, and only it needs a Kaggle account.
 
 ```python
 %%script false --no-raise-error
