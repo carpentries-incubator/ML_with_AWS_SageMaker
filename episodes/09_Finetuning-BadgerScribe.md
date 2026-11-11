@@ -484,6 +484,8 @@ The cost estimate in Step 0 used 1,600 tokens per page. That number is tokens, n
 %pip install -q "transformers>=4.56"   # the processor that turns an image + text into the model's tokens; same version as the training job
 ```
 
+`badger_common.py` is the lesson's helper module for this episode, in `scripts/` beside `helpers.py` and imported from the same path. It holds the instruction prompt, the page loader with its pixel limits, and the competition's character error rate, and both the training script and the inference script import it, so the notebook, the job and the scoring all prepare a page the same way. Here it supplies the pixel limits and the prompt.
+
 Fetch the processor's config files from the shared bucket and load the processor with the same pixel limits the training script uses. Then run one page through it twice: once with the transcription, to count everything, and once with only the prompt, to find where the transcription's tokens start. The count splits three ways: the image, the instruction prompt the script sends with every page (the transcription rules from `build_prompt` plus the chat-template markup around them, the same on every page), and the transcription itself.
 
 ```python
