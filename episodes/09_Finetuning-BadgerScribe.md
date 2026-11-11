@@ -238,13 +238,13 @@ Multi-GPU instances are for jobs that do not fit on one GPU, a full fine-tune of
 When a job does need several GPUs, the training script's Hugging Face `Trainer` runs data-parallel across every GPU of the instance once the estimator sets `distribution={"torch_distributed": {"enabled": True}}`; the PyTorch episode's table of setups per kind of job has the details, including sharding the model with `fsdp=` when it does not fit one GPU. LoRA splits across GPUs better than a full fine-tune does, because what the GPUs exchange after every step is the gradient, and in a LoRA run that is the adapter alone, under 1% of the model. `helpers.estimate_parallel_speedup` takes `method="lora"` for this. As in the PyTorch episode, it takes one step instead of the whole run, `tokens_per_step`, the batch size times the tokens per example, because the exchange it prices happens once per step. The class run on a four-GPU box, as an estimate only:
 
 ```python
-# The class run on a 4 × A10G instance: the gradient exchanged is the adapter's, not the model's.
+# How much faster would the class run go on a 4 × A10G instance than on one A10G?
 # An estimate, not a launch: a 12-minute job does not need four GPUs, and the box costs 5x the single one.
 helpers.estimate_parallel_speedup(
     params_billions=3.75,
     tokens_per_step=4 * 1600,        # one step, not the run: the job trains 1 page per GPU, so 4 pages on 4 GPUs, x 1,600 tokens a page
-    instance_type="ml.g5.12xlarge",
-    method="lora",
+    instance_type="ml.g5.12xlarge",  # the box: 4 GPUs sharing a PCIe link, which is what the exchange crosses
+    method="lora",                   # what the run trains, as in the cost estimator: sets what the GPUs exchange each step, the adapter's gradient here, under 1% of the model
 );
 ```
 

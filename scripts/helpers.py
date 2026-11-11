@@ -653,6 +653,9 @@ def estimate_parallel_speedup(params_billions, tokens_per_step, instance_type, i
     time, and the speedup over one device, on `instance_count` boxes of `instance_type` using every GPU in each.
 
     tokens_per_step: the global batch in tokens (examples per step x tokens per example), split across the devices.
+    method: what the run trains, "full" or "lora", the same argument the cost estimator takes. It is not a kind of
+    parallelism. It sets how much the devices exchange each step: a full fine-tune's gradient is the whole model's,
+    a LoRA run's is the adapter's, about a percent of it, so a LoRA run comes closer to the ideal speedup.
     The exchange moves the gradient of every trainable parameter once per step (ring all-reduce: about 2 x its bytes
     per device, 4 bytes per value), over the slowest link in use: the GPU-to-GPU link inside one box, or the
     network when there is more than one box. Plus one millisecond of latency per step. The exchange is not
