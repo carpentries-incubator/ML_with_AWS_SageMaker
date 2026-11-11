@@ -406,6 +406,9 @@ def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs
     bytes_per_param = BYTES_PER_PARAM[method]
     if method == "lora" and trainable_fraction is None and lora_r is not None:
         hidden = hidden_size or 2048 * (params / 3.75e9) ** 0.5    # CHURRO-3B's hidden size, scaled by the square root of the size
+        if lora_r > hidden:
+            raise ValueError(f"lora_r={lora_r} is wider than the model's hidden size (~{hidden:.0f}): an adapter cannot have "
+                             "more rank than the matrix it sits beside, and above a few hundred it already costs more memory than a full fine-tune")
         trainable_fraction = lora_r / hidden                        # r x (in + out) summed over the projections, over their in x out: about r / hidden
     if method == "lora" and trainable_fraction is not None:
         bytes_per_param = 2.0 + 16.0 * trainable_fraction          # frozen weights in bf16, plus the adapter's full training state
@@ -448,6 +451,12 @@ def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs
         if method == "lora" and trainable_fraction is not None:
             rank = f"rank {lora_r}: " if lora_r is not None else ""
             print(f"adapter:    {rank}{100 * trainable_fraction:.1f}% of the parameters train, so {bytes_per_param:.1f} bytes per parameter")
+            if trainable_fraction > 0.15:
+                print(f"warning:    {100 * trainable_fraction:.0f}% of the model trainable is more than the lesson's training script allows (15%); "
+                      "an adapter that large is paying toward full fine-tuning's memory without its directness")
+            elif lora_r is not None and lora_r > 256:
+                print(f"warning:    rank {lora_r} is above 256, the largest rank with measured results (Biderman et al., 2024, where 256 "
+                      "matched a full fine-tune); on a few hundred examples a higher rank memorizes them sooner, and more data or another pass is the cheaper first try")
         if not fits(spec):
             fitting = [k for k, v in GPU_INSTANCES.items() if fits(v) and "note" not in v]
             cheapest = min(fitting, key=lambda k: GPU_INSTANCES[k]["price"]) if fitting else None
@@ -578,6 +587,9 @@ def check_finetune_launch(tags, instance_type, max_run, estimated_minutes, price
     hp = hyperparameters or {}
     if hp.get("epochs", 0) > 10:
         problems.append(f"epochs={hp['epochs']}: more than ten passes over the data; run a few first and read the curve")
+    if hp.get("lora_r", 0) > 256:
+        problems.append(f"lora_r={hp['lora_r']}: above 256, the largest rank with measured results; on CHURRO that is more of the model "
+                        "than the training script allows, and a higher rank is the wrong first move when the score is short")
     if hp.get("max_pixels", 0) > 4 * 1280 * 28 * 28:
         problems.append(f"max_pixels={hp['max_pixels']}: four times the lesson's page budget, so tokens and cost per page are four times too")
     if problems:
