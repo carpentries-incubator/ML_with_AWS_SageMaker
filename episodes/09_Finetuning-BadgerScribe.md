@@ -41,8 +41,6 @@ This can be surprisingly effective. [CHURRO](https://github.com/stanford-oval/Ch
 
 That's the approach we'll explore in this episode. We'll take CHURRO, which already specializes in historical documents, and adapt it further to a collection of handwritten German letters from UW-Madison's [Badger Scribe](https://www.kaggle.com/competitions/badger-scribe) challenge.
 
-![*The steps that made CHURRO, from Qwen2.5-VL's pretraining to its fine-tune on 99,491 historical pages; this episode adds one more step*](fig/qwen-to-churro.png){alt="Five steps: text pretraining, vision pretraining, post-training, the released Qwen 2.5 VL 3B, and CHURRO's fine-tune on historical pages"}
-
 ### How fine-tuning works
 
 Fine-tuning uses the same basic training process we've already seen. The model makes predictions on training examples, we measure how far those predictions are from the correct answers, and gradient descent adjusts its parameters to reduce the error.
