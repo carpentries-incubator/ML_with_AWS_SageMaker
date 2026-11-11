@@ -197,7 +197,7 @@ step0_estimate = helpers.estimate_finetune_cost(
 
 The function says about 27 minutes and `$0.64`, 17 minutes of training plus 10 of startup. The hand calculation said 12 minutes of training, and the measured run took 12. The estimator is high because it adds half again for gradient checkpointing, which our script uses to save memory by recomputing the forward pass during the backward one. A third either way is normal for this rule. The job you launch in Step 1 bills about 32 minutes, because it also scores holdout pages before and after training, about 14 minutes the estimator does not count. Keep `step0_estimate`. Step 2 puts it next to the job's own bill.
 
-The same call for a 7B model on 5,000 documents of about 600 words (800 tokens) each, three passes. Two arguments change besides the size. `runs` goes from 1 to 8, because a project reruns a fine-tune as it fixes data and tries settings, and the printout's last line prices all eight. `instance_type` is left out, so the function picks the cheapest instance the model fits on.
+The same call for a 7B model on 5,000 documents of about 600 words (800 tokens) each, three passes, on the same card, so the two printouts compare. One argument changes besides the size. `runs` goes from 1 to 8, because a project reruns a fine-tune as it fixes data and tries settings, and the printout's last line prices all eight.
 
 ```python
 helpers.estimate_finetune_cost(
@@ -206,9 +206,12 @@ helpers.estimate_finetune_cost(
     tokens_per_example=800,      # about 600 words each
     epochs=3,                    # three passes over the documents
     method="lora",
+    instance_type="ml.g5.xlarge",
     runs=8,                      # the eight attempts a project takes; the last cost line is for all of them
-);                               # no instance_type: the cheapest that fits is chosen
+);
 ```
+
+About `$11` a run and `$92` for the project, eight hours of GPU time each. Leave `instance_type` out and the function picks the cheapest instance on the lesson's list that holds the job, which here is `ml.g6.xlarge`, the L4 at `$1.13` an hour, a little slower and a little cheaper per run than the A10G. The class rents the `ml.g5.xlarge` because that is the training instance the workshop account has quota for.
 
 Batch size is not an input, and does not need to be. A bigger batch keeps the GPU busier, which is the `utilization` argument (0.25 by default; a well-fed GPU reaches 0.35 or so), and it needs more memory for activations, which is `activations_gb`.
 
@@ -583,7 +586,7 @@ helpers.estimate_finetune_cost(params_billions=70, examples=251, tokens_per_exam
                                instance_type="ml.p5.48xlarge");   # the largest box on the list: 8 x H100, 640 GB
 ```
 
-A 7B LoRA still fits one GPU, 22 GB on a 24 GB L4, for about `$0.50`; the full fine-tune of the same model needs 116 GB, a four-GPU box at `$13` an hour, and the account refuses it. At 70B the LoRA needs 179 GB, so even the adapter run is a four-GPU job the account refuses, and the full fine-tune needs 1,124 GB: nothing on the list holds it, and the function says what the largest box would do, start, bill ten minutes of startup at `$63` an hour, and die out of memory. That run is two or more such boxes with the model sharded across them, which is the `$12,000` row in the cost table once the data is a real corpus and not 251 pages. On 251 pages the arithmetic is minutes everywhere, so these bills are mostly each box's price for ten minutes of startup; what the four runs show is the box a model forces you onto, which is the first thing to find out about a fine-tune, before the data or the epochs.
+A 7B LoRA still fits one GPU, 22 GB on a 24 GB L4, for under a dollar; the full fine-tune of the same model needs 116 GB, a four-GPU box at `$13` an hour, and the account refuses it. At 70B the LoRA needs 179 GB, so even the adapter run is a four-GPU job the account refuses, and the full fine-tune needs 1,124 GB: nothing on the list holds it, and the function says what the largest box would do, start, bill ten minutes of startup at `$63` an hour, and die out of memory. That run is two or more such boxes with the model sharded across them, which is the `$12,000` row in the cost table once the data is a real corpus and not 251 pages. On 251 pages the arithmetic is minutes everywhere, so these bills are mostly each box's price for ten minutes of startup; what the four runs show is the box a model forces you onto, which is the first thing to find out about a fine-tune, before the data or the epochs.
 
 ### A code folder for the job
 

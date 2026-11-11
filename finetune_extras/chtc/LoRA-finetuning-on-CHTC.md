@@ -253,7 +253,7 @@ The lesson's memory rules turn GPU memory into model sizes. Inference needs 2 by
 | 141 GB | H200 | up to about 65B | up to about 50B, a 70B in 4-bit with room | a 3B model easily, a 7B model, just |
 | several cards in one server, model sharded across them | the A100, H100 and H200 servers, joined by NVLink | a 70B in bf16 | a 70B in bf16 | a 7B on two 80 GB cards, a 70B on many |
 
-The last row is for a model that does not fit one card, and how well it works depends on the server. On the A100, H100 and H200 servers the cards share NVLink and a sharded job runs at close to the card count. On the L40S and RTX PRO 6000 servers the cards share a PCIe bus, and the lesson's PyTorch episode estimated a speedup of 3.2 on four cards for a full fine-tune's gradient exchange over PCIe, less for a smaller batch.
+The last row is for a model that does not fit one card, and how well it works depends on the server. On the A100, H100 and H200 servers the cards share NVLink and a sharded job runs at close to the card count. On the L40S and RTX PRO 6000 servers the cards share a PCIe bus, and the lesson's PyTorch episode estimated a speedup of 3.6 on four cards for a full fine-tune's gradient exchange over PCIe, less for a smaller batch.
 
 Stay on one card whenever the memory rule says the job fits. This job needs 12 GB, so every card from the A100 up holds it with room to spare. The submit file's 20 GB minimum and capability 8.0 match all of those, so the job starts soonest. A 7B LoRA, the largest the lesson's cost section considers on one card, needs 22 GB and also fits everywhere here. A full fine-tune of CHURRO itself, which the lesson prices at `$6,300` on AWS, needs the 80 GB and larger cards and costs nothing here except its wait in the queue.
 
