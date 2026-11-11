@@ -219,15 +219,17 @@ Batch size is not an input, and does not need to be. A bigger batch keeps the GP
 
 The memory rule names the smallest box that holds a job. These are the single-GPU and multi-GPU SageMaker training instances from the price list; the full table, with CPU instances and notes on each GPU, is on the supplemental [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page:
 
-| Instance | GPU | GPU memory | `$`/hour |
-|---|---|---|---|
-| `ml.g4dn.xlarge` | 1 × T4 | 16 GB | `$0.74` |
-| `ml.g6.xlarge` | 1 × L4 | 24 GB | `$1.13` |
-| `ml.g5.xlarge` | 1 × A10G | 24 GB | `$1.41` |
-| `ml.g6e.xlarge` | 1 × L40S | 48 GB | `$2.61` |
-| `ml.g5.12xlarge` | 4 × A10G | 96 GB | `$7.09` |
-| `ml.p4d.24xlarge` | 8 × A100 | 320 GB | `$25.25` |
-| `ml.p5.48xlarge` | 8 × H100 | 640 GB | `$63.30` |
+| Instance | GPU | GPU memory | Peak speed per GPU, bf16 TFLOPS | `$`/hour |
+|---|---|---|---|---|
+| `ml.g4dn.xlarge` | 1 × T4 | 16 GB | 65, fp16 only | `$0.74` |
+| `ml.g6.xlarge` | 1 × L4 | 24 GB | 61 | `$1.13` |
+| `ml.g5.xlarge` | 1 × A10G | 24 GB | 70 | `$1.41` |
+| `ml.g6e.xlarge` | 1 × L40S | 48 GB | 181 | `$2.61` |
+| `ml.g5.12xlarge` | 4 × A10G | 96 GB | 70 | `$7.09` |
+| `ml.p4d.24xlarge` | 8 × A100 | 320 GB | 312 | `$25.25` |
+| `ml.p5.48xlarge` | 8 × H100 | 640 GB | 989 | `$63.30` |
+
+The speed column is the dense figure from NVIDIA's data sheets, which the estimator uses. The sheets' headline numbers for the L4 and L40S are twice these, counted with sparsity, which training does not get.
 
 A 3B LoRA run fits a 24 GB GPU with room to spare, and the table has two 24 GB cards. The L4 is the cheaper per run. It is about 15% slower than the A10G at 20% less per hour, so a job that fits either costs a little less on the `ml.g6.xlarge`, and on your own account that is the one to request quota for. The class uses the `ml.g5.xlarge` because it is the training instance the workshop account has quota for, and the measured numbers in this episode are from it. The T4 is too small and too slow for a 3B vision model with page-sized images. The `ml.g6e.xlarge` is 2 to 3x faster than either 24 GB card for less than twice the price, so it becomes cheaper per run once training outweighs the fixed startup.
 
