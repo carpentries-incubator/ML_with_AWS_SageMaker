@@ -934,9 +934,11 @@ of the model, about the rank divided by the model’s hidden size, and
 from that the memory: 2 bytes per frozen parameter plus 16 for each
 adapter parameter. At rank 16 on this model that is 2.1 bytes per
 parameter, at rank 64 about 2.5, at rank 256 about 4, so the rank hardly
-moves the memory until it is large. It does not move the time, because
-the pass through the frozen model is the same work at any rank. Left
-out, the function uses a flat 2.5 bytes.</li>
+moves the memory until it is large. It moves the time even less, because
+the forward and backward pass through the frozen model is the same work
+at any rank and only the adapter’s own weight updates grow with it, a
+few percent of the total at rank 256. Left out, the function uses a flat
+2.5 bytes.</li>
 <li>
 <code>instance_type</code>: one of the boxes in the price list;
 leave it out and the cheapest one that fits is chosen.</li>
@@ -2159,10 +2161,11 @@ estimated from the parameter count:</p>
 <span id="cb31-4"><a href="#cb31-4" tabindex="-1" aria-label="code-block-31-4"></a>    <span class="bu">print</span>(<span class="ss">f"rank </span><span class="sc">{</span>lora_r<span class="sc">:&gt;3}</span><span class="ss">: ~</span><span class="sc">{</span>est[<span class="st">'memory_gb_needed'</span>]<span class="sc">:.0f}</span><span class="ss"> GB, ~</span><span class="sc">{</span>est[<span class="st">'wall_clock_hours'</span>] <span class="op">*</span> <span class="dv">60</span><span class="sc">:.0f}</span><span class="ss"> min, ~$</span><span class="sc">{</span>est[<span class="st">'cost_per_run'</span>]<span class="sc">:.2f}</span><span class="ss">"</span>)</span></code></pre>
 </div>
 <p>Memory is what moves, from 12 GB at rank 16 to about 19 GB at rank
-256, while the time and the bill hardly change, since the pass through
-the frozen model is the same work at any rank. On this 24 GB card rank
-256 still fits, with little room for a bigger batch or a larger page,
-and that is the trade the holdout curve has to justify.</p>
+256, while the time and the bill change by a few percent, since the pass
+through the frozen model is the same work at any rank and only the
+adapter’s own updates grow. On this 24 GB card rank 256 still fits, with
+little room for a bigger batch or a larger page, and that is the trade
+the holdout curve has to justify.</p>
 <div class="codewrapper sourceCode" id="cb32">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
