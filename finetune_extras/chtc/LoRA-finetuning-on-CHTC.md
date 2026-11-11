@@ -238,7 +238,7 @@ Nothing here is billed, so what matters is which GPUs are in the pool and how lo
 condor_status -constraint 'Gpus > 0' -af GPUs_DeviceName GPUs_GlobalMemoryMb | sort | uniq -c
 ```
 
-CHTC publishes the inventory behind that command. As of late 2026 the open pool has 34 H200s with 141 GB, 27 L40s and 22 L40Ss with 48 GB, 24 A100s with 80 or 40 GB, 12 RTX PRO 6000s with 96 GB, 8 H100s with 80 GB, and a few dozen older cards with 11 to 24 GB. The backfill pool, the GPUs research groups own, is larger, and `+is_resumable = true` in the submit file is what lets a job use it.
+CHTC publishes the inventory behind that command on its [GPU jobs page](https://chtc.cs.wisc.edu/uw-research-computing/gpu-jobs), with the count of each card and whether it is in the open pool or backfill. As of late 2026 the open pool has 34 H200s with 141 GB, 27 L40s and 22 L40Ss with 48 GB, 24 A100s with 80 or 40 GB, 12 RTX PRO 6000s with 96 GB, 8 H100s with 80 GB, and a few dozen older cards with 11 to 24 GB. The backfill pool, the GPUs research groups own, is larger, and `+is_resumable = true` in the submit file is what lets a job use it. The lanes and the checkpointing protocol are on the same page and on CHTC's [checkpointing guide](https://chtc.cs.wisc.edu/uw-research-computing/checkpointing).
 
 Two things about the cards matter for fine-tuning beyond their memory. Every card from the A100 up has capability 8.0 or newer, so bf16 training works on all of them. And the cards in one server are connected in one of two ways. In the A100, H100 and H200 servers the GPUs are mounted on one board and joined by NVLink, NVIDIA's direct GPU-to-GPU link, which is how data-center AI servers are built and what a multi-GPU job wants. The L40, L40S and RTX PRO 6000 are plug-in cards that talk through the PCIe bus, which is several times slower.
 
@@ -253,7 +253,7 @@ The lesson's memory rules turn GPU memory into model sizes. Inference needs 2 by
 | 141 GB | H200 | up to about 65B | up to about 50B, a 70B in 4-bit with room | a 3B model easily, a 7B model, just |
 | several cards in one server, model sharded across them | the A100, H100 and H200 servers, joined by NVLink | a 70B in bf16 | a 70B in bf16 | a 7B on two 80 GB cards, a 70B on many |
 
-The last row is for a model that does not fit one card, and how well it works depends on the server. On the A100, H100 and H200 servers the cards share NVLink and a sharded job runs at close to the card count. On the L40S and RTX PRO 6000 servers the cards share a PCIe bus, and the lesson's PyTorch episode estimated a speedup of 3.2 on four cards for a full fine-tune's gradient exchange over PCIe, less for a smaller batch.
+The last row is for a model that does not fit one card, and how well it works depends on the server. On the A100, H100 and H200 servers the cards share NVLink and a sharded job runs at close to the card count. On the L40S and RTX PRO 6000 servers the cards share a PCIe bus, and the lesson's PyTorch episode estimated a speedup of 3.6 on four cards for a full fine-tune's gradient exchange over PCIe, less for a smaller batch.
 
 Stay on one card whenever the memory rule says the job fits. This job needs 12 GB, so every card from the A100 up holds it with room to spare. The submit file's 20 GB minimum and capability 8.0 match all of those, so the job starts soonest. A 7B LoRA, the largest the lesson's cost section considers on one card, needs 22 GB and also fits everywhere here. A full fine-tune of CHURRO itself, which the lesson prices at `$6,300` on AWS, needs the 80 GB and larger cards and costs nothing here except its wait in the queue.
 
@@ -303,7 +303,35 @@ LLaVA 1.5 resizes every image to 336 × 336 pixels and cuts it into 24 × 24 pat
 
 </details>
 
-## 12. Clean up
+## 12. When a job fails
+
+Every job leaves three files in the directory it was submitted from, named by the submit file's `log`, `output` and `error` lines. For the fine-tuning job they are `finetune_<cluster>.log`, `.out` and `.err`, where the cluster number is what `condor_submit` printed. Read them in this order.
+
+| File | What is in it | Read it when |
+|---|---|---|
+| `.log` | HTCondor's record of the job: submitted, matched to a machine, files transferred, started, evicted or held, finished, with the memory and disk it used against what it requested | Always first. It says whether the job ran at all, and why it stopped |
+| `.err` | What the script wrote to standard error: Python tracebacks, CUDA errors, warnings from the libraries | The job ran and ended with a non-zero exit code |
+| `.out` | What the script printed: the page split, the trainable parameter line, the safeguards, the scores and the Trainer's loss lines | The job ran, to see how far it got, and the results of a job that finished |
+
+`condor_tail -f <jobid>` shows the `.out` file of a running job. A job that is still in the queue has no `.out` or `.err` yet, only the `.log`. On the shared GPU machines `condor_ssh_to_job` is not available, so the three files and `condor_tail` are the way in.
+
+The symptoms and where they point:
+
+| What you see | Where to look | What it usually is |
+|---|---|---|
+| `condor_q` shows the job idle for over an hour | `condor_q -better-analyze <jobid>`, which counts the machines that match each requirement | A requirement nothing satisfies, or a busy lab. Zero matches on `gpus_minimum_memory` or `gpus_minimum_capability` means the number is wrong; a few matches means wait, or ask for a shorter lane |
+| `condor_q` shows the job held (`H`) | `condor_q -hold <jobid>`, or `condor_q <jobid> -af HoldReason`, and the `.log` | Memory or disk over the request, a missing input file, or a bad path in `transfer_input_files`. The reason names the number or the file. Fix the submit file and `condor_submit` again; a held job does not resume on its own |
+| The job ran for a minute and ended | `.err`, then the `.log` for the exit code | The script failed before training: a missing module means the container is wrong, a `FileNotFoundError` means the tar or the data archive did not unpack where the script looks, a `RuntimeError` from the safeguards means the adapter landed where it should not |
+| `CUDA out of memory` in `.err` | `.err`, and the `.log` for which GPU it ran on | The card is smaller than the request assumed, or `--max_pixels` is set high. Raise `gpus_minimum_memory`, or lower `--max_pixels` on the arguments line |
+| The job ended at exactly two hours and was requeued | `.log` shows the exit code 85 and a new start | That is the checkpoint timeout working, not a failure. The next run resumes from `output/ckpt`. If it happens on every run, an epoch is longer than the timeout, which section 11 covers |
+| The job finished but `adapter.tar.gz` is missing | `.out` for the last lines, `.err` for a traceback in the scoring | The script failed after training, in `[eval after]`, or the wrapper's `tar` step. The checkpoint in `output/ckpt` is not returned, so rerun with the fix |
+| `condor_history` shows a job you do not remember | `condor_history <netid> -limit 10` | Jobs finish and leave the queue; the history is where they went |
+
+To try a command by hand on a GPU machine, submit the fine-tuning job interactively, `condor_submit -i finetune.sub`, which gives a shell on a matching machine with the files transferred and the container running. Run `finetune.sh` there a line at a time. The lane and the GPU request apply as for a batch job, so the wait is the same.
+
+CHTC's facilitators answer questions at chtc@cs.wisc.edu, and the [get help page](https://chtc.cs.wisc.edu/uw-research-computing/get-help) has office hours. Send the three files with the question.
+
+## 13. Clean up
 
 Jobs end on their own and nothing bills, but staging has a quota and the build machine is shared. When you are done with a project:
 

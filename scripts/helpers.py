@@ -309,19 +309,20 @@ if __name__ == "__main__":
 # ---------------------------------------------------------------------------
 
 # SageMaker training instances the lesson refers to: GPUs per box, GPU memory per GPU (GB),
-# bf16 dense peak per GPU (TFLOPS, from NVIDIA's data sheets), the us-east-1 on-demand
+# bf16 dense peak per GPU (TFLOPS, from NVIDIA's data sheets; the sheets' headline figures for the L4 and
+# L40S are with sparsity, twice these), the us-east-1 on-demand
 # price per instance-hour from the AWS price list of 2026-10-16 (for the whole box), the
 # instance's network bandwidth (Gbit/s, from the instance's spec sheet) and, on multi-GPU boxes,
 # the GPU-to-GPU link per GPU (GB/s: NVLink on p4d/p5, PCIe on g5/g6e). Links are approximate.
 GPU_INSTANCES = {
     "ml.g4dn.xlarge":   {"gpus": 1, "gpu": "T4",        "gpu_mem_gb": 16, "tflops_bf16": 65,  "price": 0.74, "net_gbps": 25,  "note": "no bf16 support; modern LLM fine-tuning is slow or fails"},
-    "ml.g6.xlarge":     {"gpus": 1, "gpu": "L4",        "gpu_mem_gb": 24, "tflops_bf16": 121, "price": 1.13, "net_gbps": 10},
+    "ml.g6.xlarge":     {"gpus": 1, "gpu": "L4",        "gpu_mem_gb": 24, "tflops_bf16": 61,  "price": 1.13, "net_gbps": 10},
     "ml.g5.xlarge":     {"gpus": 1, "gpu": "A10G",      "gpu_mem_gb": 24, "tflops_bf16": 70,  "price": 1.41, "net_gbps": 10},
     "ml.g5.2xlarge":    {"gpus": 1, "gpu": "A10G",      "gpu_mem_gb": 24, "tflops_bf16": 70,  "price": 1.52, "net_gbps": 10},
-    "ml.g6e.xlarge":    {"gpus": 1, "gpu": "L40S",      "gpu_mem_gb": 48, "tflops_bf16": 362, "price": 2.61, "net_gbps": 20},
-    "ml.g6e.2xlarge":   {"gpus": 1, "gpu": "L40S",      "gpu_mem_gb": 48, "tflops_bf16": 362, "price": 2.80, "net_gbps": 20},
+    "ml.g6e.xlarge":    {"gpus": 1, "gpu": "L40S",      "gpu_mem_gb": 48, "tflops_bf16": 181, "price": 2.61, "net_gbps": 20},
+    "ml.g6e.2xlarge":   {"gpus": 1, "gpu": "L40S",      "gpu_mem_gb": 48, "tflops_bf16": 181, "price": 2.80, "net_gbps": 20},
     "ml.g5.12xlarge":   {"gpus": 4, "gpu": "A10G",      "gpu_mem_gb": 24, "tflops_bf16": 70,  "price": 7.09, "net_gbps": 40, "gpu_link_gbs": 32},
-    "ml.g6e.12xlarge":  {"gpus": 4, "gpu": "L40S",      "gpu_mem_gb": 48, "tflops_bf16": 362, "price": 13.12, "net_gbps": 400, "gpu_link_gbs": 32},
+    "ml.g6e.12xlarge":  {"gpus": 4, "gpu": "L40S",      "gpu_mem_gb": 48, "tflops_bf16": 181, "price": 13.12, "net_gbps": 400, "gpu_link_gbs": 32},
     "ml.p4d.24xlarge":  {"gpus": 8, "gpu": "A100 40GB", "gpu_mem_gb": 40, "tflops_bf16": 312, "price": 25.25, "net_gbps": 400, "gpu_link_gbs": 600},
     "ml.p5.48xlarge":   {"gpus": 8, "gpu": "H100 80GB", "gpu_mem_gb": 80, "tflops_bf16": 989, "price": 63.30, "net_gbps": 3200, "gpu_link_gbs": 900},
 }
@@ -652,6 +653,9 @@ def estimate_parallel_speedup(params_billions, tokens_per_step, instance_type, i
     time, and the speedup over one device, on `instance_count` boxes of `instance_type` using every GPU in each.
 
     tokens_per_step: the global batch in tokens (examples per step x tokens per example), split across the devices.
+    method: what the run trains, "full" or "lora", the same argument the cost estimator takes. It is not a kind of
+    parallelism. It sets how much the devices exchange each step: a full fine-tune's gradient is the whole model's,
+    a LoRA run's is the adapter's, about a percent of it, so a LoRA run comes closer to the ideal speedup.
     The exchange moves the gradient of every trainable parameter once per step (ring all-reduce: about 2 x its bytes
     per device, 4 bytes per value), over the slowest link in use: the GPU-to-GPU link inside one box, or the
     network when there is more than one box. Plus one millisecond of latency per step. The exchange is not
