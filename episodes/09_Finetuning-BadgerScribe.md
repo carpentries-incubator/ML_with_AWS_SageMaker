@@ -129,7 +129,7 @@ None of the three runtime limits is a wall. The training script writes a checkpo
 
 ### What the class account allows
 
-Do not fully fine-tune anything in this workshop, and do not LoRA fine-tune a model larger than 30B on the class account. The limit is memory. A 7B LoRA needs about 22 GB and fits the 24 GB card the class uses. Above that the frozen weights have to go to 4-bit, which the training script does with `--load_in_4bit 1`, and a 30B model in 4-bit needs about 34 GB, which fits the 48 GB `ml.g6e.xlarge`, the largest GPU the account allows. A full fine-tune of even a 7B model needs more memory than any instance the account allows. The larger runs appear in this episode only as estimates, so that you can recognize one before you launch it.
+Do not fully fine-tune anything in this workshop, and do not LoRA fine-tune a model larger than 30B on the class account. The limit comes from the instances the account allows, which are single-GPU and top out at the 48 GB `ml.g6e.xlarge`. On your own account you would rent a bigger instance. A 7B LoRA needs about 22 GB and fits the 24 GB card the class uses. A LoRA in bf16 fits the 48 GB card up to about 17B. Beyond that, on this account, the frozen weights go to 4-bit, which the training script does with `--load_in_4bit 1`, and a 30B model in 4-bit needs about 34 GB. A full fine-tune of even a 7B model needs more memory than any instance the account allows. The larger runs appear in this episode only as estimates, so that you can recognize one before you launch it.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
