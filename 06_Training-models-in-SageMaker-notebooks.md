@@ -312,7 +312,7 @@ from sagemaker.xgboost.estimator import XGBoost   # framework estimator: AWS's X
 # Define instance type/count we'll use for training
 instance_type="ml.m5.large"   # the managed machine SageMaker launches for the job, separate from this notebook's instance
 instance_count=1 # always start with 1; the next episode shows what a second instance does
-price_per_hour = 0.115 # ml.m5.large, us-east-1 on-demand (2026-10-16), from the Instances for ML page; check it for your region
+price_per_hour = helpers.instance_price("ml.m5.large")   # $/hour on-demand, from the lesson's price table, the same numbers as the Instances for ML page
 
 # The runtime cap, in seconds: SageMaker stops the job and releases the instance when it is reached. Set it a little above the estimate;
 # the estimate here is three or four minutes, so 20 minutes leaves room for a slow container pull without letting a hung job bill for hours.
@@ -533,7 +533,7 @@ Do this once while the job is short, so that it is familiar when the job is long
 
 1. The `wait=False` cell above launched a job; note the name it printed.
 2. From the Jupyter menu choose **Kernel**, **Restart**. Every variable is gone, which is what a stopped instance would also do to you, without the minutes of waiting for it to start again.
-3. Rerun the setup cells at the top of the episode (the session, bucket and role), set `price_per_hour = 0.115` again, and rerun the cell that defines `job_cost_report`. Do not rerun the launch cells.
+3. Rerun the setup cells at the top of the episode (the session, bucket and role), set `price_per_hour` again, and rerun the cell that defines `job_cost_report`. Do not rerun the launch cells.
 4. Set `job_name` to the name you noted and run the `job_cost_report` cell.
 
 What was the job's status when you looked, and what did it cost compared with the first job?
