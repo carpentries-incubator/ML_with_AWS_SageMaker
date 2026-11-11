@@ -56,7 +56,7 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset
 
-from badger_common import (
+from badger_scribe_helpers import (
     DEFAULT_MAX_PIXELS,
     DEFAULT_MIN_PIXELS,
     build_prompt,
