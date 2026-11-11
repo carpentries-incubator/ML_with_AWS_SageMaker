@@ -692,7 +692,7 @@ Open `code/finetune_churro_lora.py` in the Jupyter file browser. It is about 400
 1. Only the language model's `q_proj`, `k_proj`, `v_proj`, `o_proj`, `gate_proj`, `up_proj` and `down_proj`. Every module in the vision tower has `visual` in its name, and the negative lookahead excludes them. Without it, the vision blocks' own `gate_proj`, `up_proj` and `down_proj` would match too, and the model would be relearning how to see from 251 pages.
 2. A LoRA adapter on a matrix of shape in × out adds r × (in + out) parameters. Per layer: 16 × 4096 × 2 for `q_proj` and `o_proj`, 16 × 2304 × 2 for `k_proj` and `v_proj`, 16 × 13056 × 3 for the MLP, about 831,000; times 36 layers is about 30 million, under 1% of the 3.75 billion. The log line `trainable params: ... || all params: ... || trainable%: ...` should agree. If it said 100%, nothing was frozen and the run is a full fine-tune at a full fine-tune's memory and price.
 3. The transcription only. `labels[enc["attention_mask"] == 0] = -100` drops the padding, `labels[i, :n_prompt] = -100` drops the prompt and the image tokens, and `-100` is the value PyTorch's cross-entropy ignores. The model is graded on what it writes, not on repeating the question.
-4. Right after the adapter is attached: it raises if any trainable tensor is in the vision tower, or if more than 5% of the model is trainable. Either means the job is not the LoRA run that was estimated, so it stops before the GPU-hours are spent; a job that raises there has cost its startup minutes and nothing more.
+4. Right after the adapter is attached: it raises if any trainable tensor is in the vision tower, or if more than 15% of the model is trainable, which rank 256 stays under on this model. Either means the job is not the LoRA run that was estimated, so it stops before the GPU-hours are spent; a job that raises there has cost its startup minutes and nothing more.
 
 :::::::::::::::::::::::::::::::::::::::
 
@@ -752,7 +752,7 @@ print(f"tags:         {make_job_tags('Training')}")
 
 Next, what the script will be told to do. These hyperparameters reach the script as command-line flags (`--epochs 2 --lr 0.0002 ...`), and they are what the Step 0 estimate was built from. Three of them set the cost: the number of pages, the number of passes, and `max_pixels`. The rest shape the training: a LoRA learning rate, the adapter rank, an effective batch of four pages through gradient accumulation, and which holdout pages get scored when.
 
-One of them, `lora_r`, the adapter rank, sets how many parameters train. The job prints that count as `trainable params:` when it starts, and the script's safeguard refuses to train if it is more than 5% of the model, so it is worth knowing the number before the launch.
+One of them, `lora_r`, the adapter rank, sets how many parameters train. The job prints that count as `trainable params:` when it starts, and the script's safeguard refuses to train if it is more than 15% of the model, so it is worth knowing the number before the launch.
 
 The count follows from the LoRA figure. An adapter of rank r on a weight matrix of shape in × out adds two thin matrices, r × (in + out) parameters. LoRA attaches to seven matrices in every layer of the language model, the four attention projections and the three in the MLP, and their shapes are in the model's `config.json`. Multiply out and sum over the layers:
 

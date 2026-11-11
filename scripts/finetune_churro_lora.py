@@ -68,7 +68,7 @@ from badger_scribe_helpers import (
     user_messages,
 )
 
-MAX_TRAINABLE_FRACTION = 0.05   # a LoRA adapter is well under this; more means the base weights are not frozen
+MAX_TRAINABLE_FRACTION = 0.15   # rank 256 on CHURRO is 12.5%; more means the base weights are not frozen, or a rank past any measured benefit
 
 
 def parse_args():
