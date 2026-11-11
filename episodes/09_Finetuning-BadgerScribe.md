@@ -189,6 +189,7 @@ For the class run, 251 pages at about 1,600 tokens each for 2 passes is 803,000 
 - `tokens_per_example`: how many tokens the model sees for one of those items. Tokens, not words, because the model never sees words. English text is about 1.3 tokens per word, more for German and for old spellings. An image on a Qwen-VL style model becomes one token per 28 × 28 pixel block after resizing, 14-pixel patches merged two by two, about 1,300 for a megapixel. For a page here that is about 1,300 for the image plus about 300 for the transcription, 1,600; the Setup section counts it with the model's own processor, so it is not a guess.
 - `epochs`: passes over the data. You do not know in advance how many a model needs, so this is a budget you set, and the estimate scales with it. The usual budget is 3 to 5 passes for a few hundred to a few thousand examples and 1 to 3 for tens of thousands, scoring held-out data at the end of every pass and keeping the best one. Step 2 reads that curve for this run. The class run uses 2 to keep the job near half an hour, and the homework uses 4. The three numbers multiply to the tokens the model sees, 251 × 1,600 × 2, about 800,000. If you know the total tokens and not the breakdown, put the total in `examples` and 1 in `tokens_per_example`; the arithmetic is the same.
 - `method`: `"lora"` or `"full"`, which sets the bytes per parameter and the FLOPs per token.
+- The adapter rank is not an argument, because at ordinary ranks it changes neither number by much. Memory is the frozen weights, 2 bytes per parameter, plus 16 bytes for each adapter parameter, which at rank 16 on this model is 2.1 bytes per parameter in all and at rank 64 about 2.5, the flat figure the function uses. Compute is the forward and backward pass through the whole frozen model, the same at any rank, and the adapter's own share is under 1%. The flat figures stop holding at very high ranks. At rank 256 the adapter is about 13% of this model's weights, memory is about 4 bytes per parameter, 19 GB with the activations against the 13 GB the function reports, and you would add it yourself.
 - `instance_type`: one of the boxes in the price list; leave it out and the cheapest one that fits is chosen.
 - `runs`: how many times you expect to run it. A first run is never the last; five to ten is realistic for a project before any sweep.
 
@@ -250,7 +251,7 @@ Multi-GPU instances are for jobs that do not fit on one GPU, a full fine-tune of
 
 ### What fine-tuning costs, from one dollar to ten thousand
 
-With the two rules, any run can be priced before it exists. The table does that for runs from this episode's to the ones that make a model like CHURRO, with SageMaker on-demand prices in `us-east-1` from October 2026. GPUs come in fixed boxes, so "32 H100s for 25 hours" is four `ml.p5.48xlarge` for 25 hours, 100 instance-hours at `$63.30`:
+With the two rules, any run can be priced before it exists. The table does that for runs from this episode's to the ones that make a model like CHURRO, with SageMaker on-demand prices from October 2026. GPUs come in fixed boxes, so "32 H100s for 25 hours" is four `ml.p5.48xlarge` for 25 hours, 100 instance-hours at `$63.30`:
 
 | Run | GPUs | Instances rented (price per instance-hour) | Hours | GPU-hours | Cost = instance-hours × price |
 |---|---|---|---|---|---|
@@ -570,6 +571,8 @@ def count_page_tokens(model_id, image, prompt, answer, **processor_kwargs):
     text = len(proc.tokenizer(proc.apply_chat_template(text_only, tokenize=False))["input_ids"])
     return {"total": total, "image": total - text, "text": text}
 
+# The page from the cell above: `image` is it resized to the pixel cap, `prompt` the instruction for its category,
+# `row.text` its human transcription. proc_dir holds CHURRO's processor files, with the pixel limits the job uses.
 count_page_tokens(proc_dir, image, prompt, row.text, min_pixels=bsh.DEFAULT_MIN_PIXELS, max_pixels=bsh.DEFAULT_MAX_PIXELS)
 ```
 
@@ -582,6 +585,8 @@ Pick another open vision-language model and count what the same page costs there
 :::::::::::::::::::::::: solution
 
 ```python
+# The same page as above: `row` is its train.csv record, `image` the page resized to the pixel cap, `prompt` the
+# instruction built for its category, `row.text` its human transcription, and `n_total` CHURRO's count for it.
 llava = count_page_tokens("llava-hf/llava-1.5-7b-hf", image, prompt, row.text)
 print(f"LLaVA 1.5: {llava['total']} tokens for the page, {llava['image']} of them for the image; CHURRO: {n_total}")
 ```
@@ -625,7 +630,7 @@ A 7B LoRA still fits one GPU, 22 GB on a 24 GB L4, for under a dollar; the full 
 
 ### A code folder for the job
 
-The three scripts the job needs are already on this instance, in the lesson clone. The job cannot use them from there: it runs in a container on another machine, and the only code it gets is the one directory named by `source_dir=` on the estimator, uploaded whole. That directory should hold what the job imports and a `requirements.txt` listing what the container has to install, and nothing else. So make a small `code/` folder here with copies of the three files, instead of pointing `source_dir` at the lesson's `scripts/` directory, which would upload every script in the lesson and need a requirements file written into the repository:
+The three scripts the job needs are already on this instance, in the lesson clone. The job cannot use them from there: it runs in a container on another machine, and the only code it gets is the one directory named by `source_dir=` on the estimator, uploaded whole. That directory should hold what the job imports and a `requirements.txt` listing what the container has to install, and nothing else. The prebuilt container has PyTorch and `transformers`, and before it runs the entry point it installs whatever `requirements.txt` names, which is how `peft` gets there. So make a small `code/` folder here with copies of the three files, instead of pointing `source_dir` at the lesson's `scripts/` directory, which would upload every script in the lesson and need a requirements file written into the repository:
 
 ```python
 import shutil
@@ -642,7 +647,9 @@ print(os.listdir("code"))
 
 - `badger_scribe_helpers.py`: the prompt, image loading, and a copy of the competition's CER. Shared by the other two so the model is trained on the same prompt it is later asked.
 - `finetune_churro_lora.py`: the training job entry point. Holds out 15% of pages per category, filters to the categories you ask for, scores a sample of holdout pages with the base model, trains a LoRA adapter, scores the same pages again, and saves everything.
-- `churro_transcribe_batch.py`: used in the homework. Transcribes any list of pages with the base model or with the adapter merged in, and writes `predictions.csv` in the submission format.
+- `churro_transcribe_batch.py`: not used by the training job. It rides along because the homework's Processing job ships the same folder, and it transcribes any list of pages with the base model or with the adapter merged in, writing `predictions.csv`.
+
+The training job runs the first file, imports the second, and installs the requirements. The folder is a few kilobytes, so the unused third file costs nothing.
 
 ::::::::::::::::::::::::::::::::::::::: challenge
 
@@ -715,7 +722,7 @@ First the guard rails, each one a named variable so that the printout below show
 
 ```python
 instance_type = "ml.g5.xlarge"            # one A10G GPU, 24 GB; the GPU lives in the job, not in this notebook
-g5_price = 1.41                           # $/hour, us-east-1 on-demand, from the Instances for ML page
+g5_price = helpers.instance_price(instance_type)   # $/hour on-demand, from the lesson's price table, the same numbers as the Instances for ML page
 estimated_minutes = 27                    # the Step 0 estimate
 max_run_minutes = 65                      # about twice the estimate; SageMaker kills the job at this cap, whatever it is doing
 run_id = time.strftime("%m%d-%H%M")                                   # launch time, so every run gets a new name: job names must be unique in the account
@@ -743,37 +750,39 @@ print(f"tags:         {make_job_tags('Training')}")
 
 Next, what the script will be told to do. These hyperparameters reach the script as command-line flags (`--epochs 2 --lr 0.0002 ...`), and they are what the Step 0 estimate was built from. Three of them set the cost: the number of pages, the number of passes, and `max_pixels`. The rest shape the training: a LoRA learning rate, the adapter rank, an effective batch of four pages through gradient accumulation, and which holdout pages get scored when.
 
-One of them, `lora_r`, the adapter rank, decides how many parameters train, and that number is worth knowing before the launch for two reasons. It is what the script's safeguard checks, since a run that trains 5% of the model instead of 1% is a different, more expensive job, and it is the `trainable params:` line the job prints, so working it out now means you can tell whether the job is doing what you asked.
+One of them, `lora_r`, the adapter rank, sets how many parameters train. The job prints that count as `trainable params:` when it starts, and the script's safeguard refuses to train if it is more than 5% of the model, so it is worth knowing the number before the launch.
 
-The arithmetic is short. LoRA attaches to seven weight matrices in every layer of the language model, the four attention projections (`q_proj`, `k_proj`, `v_proj`, `o_proj`) and the three in the MLP (`gate_proj`, `up_proj`, `down_proj`). On a matrix of shape in × out, an adapter of rank r adds r × (in + out) parameters, the two thin matrices from the LoRA figure. Add that up over the seven matrices, multiply by the number of layers, and you have the count. The widths come from the model's `config.json`. For any model on Hugging Face that file is one click away, under **Files and versions** on the model page ([CHURRO-3B](https://huggingface.co/stanford-oval/churro-3B/tree/main), for this one), and the same page's safetensors viewer lists every weight tensor with its shape. The model card's prose is a quicker glance but not always complete, so read the file when a number matters. Here the file is staged next to the weights in the shared bucket.
+The count follows from the LoRA figure. An adapter of rank r on a weight matrix of shape in × out adds two thin matrices, r × (in + out) parameters. LoRA attaches to seven matrices in every layer of the language model, the four attention projections and the three in the MLP, and their shapes are in the model's `config.json`. Multiply out and sum over the layers:
 
 ```python
-s3_client.download_file(shared_bucket, f"{data_prefix}/model/churro-3B/config.json", "config.json")   # the model's architecture file
-with open("config.json") as f:
-    cfg = json.load(f)
-text = cfg.get("text_config", cfg)            # newer configs keep the language model's sizes under text_config, older ones at the top level
+s3_client.download_file(shared_bucket, f"{data_prefix}/model/churro-3B/config.json", "config.json")
+cfg = json.load(open("config.json"))
+cfg = cfg.get("text_config", cfg)                                   # the language model's sizes; older configs keep them at the top level
+layers, hidden, inter = cfg["num_hidden_layers"], cfg["hidden_size"], cfg["intermediate_size"]
+kv = hidden * cfg["num_key_value_heads"] // cfg["num_attention_heads"]   # k_proj and v_proj are narrower
 
-layers = text["num_hidden_layers"]            # how many times the seven matrices repeat
-hidden = text["hidden_size"]                  # the width of the model's main vector
-inter = text["intermediate_size"]             # the MLP's wider middle layer
-kv = hidden * text["num_key_value_heads"] // text["num_attention_heads"]   # k_proj and v_proj are narrower: several attention heads share one key and value
-
-projections = {                               # (in, out) of each matrix LoRA attaches to, in one layer
-    "q_proj": (hidden, hidden), "k_proj": (hidden, kv), "v_proj": (hidden, kv), "o_proj": (hidden, hidden),
-    "gate_proj": (hidden, inter), "up_proj": (hidden, inter), "down_proj": (inter, hidden),
-}
-print(f"{layers} layers; " + ", ".join(f"{name} {i} x {o}" for name, (i, o) in projections.items()))
-
-total_params = 3.75e9                         # the whole model, vision tower included
-for lora_r in (8, 16, 32):
-    per_layer = sum(lora_r * (i + o) for i, o in projections.values())   # r x (in + out) for each of the seven matrices
-    trainable = per_layer * layers
-    print(f"rank {lora_r:>2}: {trainable / 1e6:5.1f}M trainable parameters, {100 * trainable / total_params:.2f}% of the model")
+shapes = [(hidden, hidden), (hidden, kv), (hidden, kv), (hidden, hidden),   # q, k, v, o projections
+          (hidden, inter), (hidden, inter), (inter, hidden)]               # gate, up, down projections
+lora_r = 16
+trainable = layers * sum(lora_r * (i + o) for i, o in shapes)             # r x (in + out) per matrix, times the layers
+print(f"rank {lora_r}: {trainable / 1e6:.0f}M trainable parameters, {100 * trainable / 3.75e9:.2f}% of the 3.75B")
 ```
 
-Rank 16, the lesson's choice, trains about 30 million parameters, under 1% of the model, and doubling the rank doubles it. The adapter's gradients and optimizer state, 16 bytes for each of those 30 million, come to about half a gigabyte, which is why a LoRA run fits beside the frozen 7.5 GB of weights on a 24 GB card. The job's log confirms the count in its `trainable params:` line, and the script refuses to train if more than 5% of the model turns out to be trainable.
+About 30 million at rank 16, under 1% of the model, and doubling the rank doubles it. Their gradients and optimizer state, 16 bytes each, come to about half a gigabyte, which is why a LoRA run fits beside the frozen 7.5 GB of weights on a 24 GB card.
 
-Rank is a trade between capacity and memory, and the trade is measured. On Llama-2-7B, a LoRA at rank 16 trailed a full fine-tune on a code benchmark, rank 256 matched it, and the memory for the rank-256 run was still a fifth of the full fine-tune's. For a few hundred pages, rank 16 is the usual starting point ([Biderman et al., 2024](https://arxiv.org/abs/2405.09673)).
+Rank is a trade between capacity and memory, and the trade is measured. On Llama-2-7B, a LoRA at rank 16 trailed a full fine-tune on a code benchmark, rank 256 matched it, and the memory for the rank-256 run was still a fifth of the full fine-tune's. For a few hundred pages, rank 16 is the usual starting point ([Biderman et al., 2024](https://arxiv.org/abs/2405.09673)). The rank is the first thing people raise when a run's score is short of what they want, and it is usually the wrong first move. On a few hundred pages a large adapter memorizes the training pages sooner, which the holdout curve shows as rising while the training loss keeps falling, and at rank 256 this run's memory goes from 12 GB to about 19 GB, which the flat estimate does not show. More data, another pass, or a lower learning rate are cheaper first tries, and the holdout curve, not the training loss, says whether any of them helped.
+
+The estimator takes the adapter's share of the model as `trainable_fraction`, which the count cell above gives for any rank, so the cost of a higher rank can be priced before it is tried:
+
+```python
+for lora_r in (16, 64, 256):
+    trainable = layers * sum(lora_r * (i + o) for i, o in shapes)
+    est = helpers.estimate_finetune_cost(params_billions=3.75, examples=251, tokens_per_example=1600, epochs=2, method="lora",
+                                         instance_type=instance_type, trainable_fraction=trainable / 3.75e9, verbose=False)
+    print(f"rank {lora_r:>3}: {100 * trainable / 3.75e9:5.1f}% trainable, ~{est['memory_gb_needed']:.0f} GB, ~{est['wall_clock_hours'] * 60:.0f} min, ~${est['cost_per_run']:.2f}")
+```
+
+Memory is what moves, from 12 GB at rank 16 to about 19 GB at rank 256, while the time and the bill hardly change, since the pass through the frozen model is the same work at any rank. On this 24 GB card rank 256 still fits, with little room for a bigger batch or a larger page, and that is the trade the holdout curve has to justify.
 
 ```python
 hyperparameters = {
@@ -831,7 +840,7 @@ model_output_path = f"s3://{bucket_name}/{data_prefix}/models/"   # the job's mo
 
 estimator = HuggingFace(
     entry_point="finetune_churro_lora.py",
-    source_dir="code/",                   # the whole directory ships with the job: script, badger_scribe_helpers.py, requirements.txt
+    source_dir="code/",                   # the whole folder ships with the job; the container pip-installs requirements.txt, then runs entry_point, which imports badger_scribe_helpers
     role=role,
     tags=make_job_tags("Training"),
     instance_type=instance_type,
@@ -850,13 +859,12 @@ estimator = HuggingFace(
 )
 ```
 
-Now launch. Two details in this one line matter:
+Now launch. The estimator described the machine and the code. `fit()` supplies the data and starts the job, and its first argument is where the model weights come in.
 
-- `job_name` is the one defined with the guard rails, with the launch time in it: SageMaker requires training job names to be unique in the account, and a name that is fixed fails with `ResourceInUse` the second time the cell runs. Rerunning the guard-rail cell gives a new name and a new checkpoint prefix. To **resume** a job that was killed, keep the old `checkpoint_s3_uri` and launch under the new name.
-- If the launch is refused with an `AccessDeniedException` ending in `explicit deny`, the account's checks are the cause: a missing tag, an instance type outside the lesson's list, or a resource kind the lesson never creates; the first training episode's callout *If the launch is refused* says what to look at.
-- `wait=True` (the default) blocks the notebook until the job ends and streams its log here. For a 33-minute job that is the right choice: you cannot accidentally queue a second launch while you wait, and everything worth doing in the meantime happens on the job's page under [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training), not in this notebook.
-
-The second input channel, `model`, is the copy of CHURRO-3B your instructor staged in the shared bucket: SageMaker mounts it at `/opt/ml/input/data/model` and the script loads from there, so a hundred jobs starting in the same minute copy 7.5 GB from S3 instead of each pulling it from Hugging Face.
+- **The first argument is the input channels**, a dictionary of names to S3 locations. SageMaker copies each location onto the job's instance before the script starts, at `/opt/ml/input/data/<name>`, and tells the script where through an environment variable, `SM_CHANNEL_TRAIN` for a channel named `train`. The names are yours to choose and the script reads them by name. The XGBoost job in the training episode had one channel, `train`. This job has two. `train` is the pages and CSVs. `model` is the copy of CHURRO-3B your instructor staged in the shared bucket, and the script loads the base weights from that folder instead of pulling 7.5 GB from Hugging Face, which matters when a class launches a hundred jobs in the same minute. Both locations were set in Setup as `train_s3_uri` and `model_s3_uri`.
+- **`job_name`** is the one defined with the guard rails, with the launch time in it. SageMaker requires training job names to be unique in the account, and a fixed name fails with `ResourceInUse` the second time the cell runs. Rerunning the guard-rail cell gives a new name and a new checkpoint prefix. To **resume** a job that was killed, keep the old `checkpoint_s3_uri` and launch under the new name.
+- **`wait=True`**, the default, blocks the notebook until the job ends and streams its log here. For a 33-minute job that is the right choice. You cannot queue a second launch by accident while you wait, and everything worth doing in the meantime happens on the job's page under [Training jobs](https://us-east-2.console.aws.amazon.com/sagemaker/home?region=us-east-2#/training), not in this notebook.
+- If the launch is refused with an `AccessDeniedException` ending in `explicit deny`, the account's checks are the cause: a missing tag, an instance type outside the lesson's list, or a resource kind the lesson never creates. The first training episode's callout *If the launch is refused* says what to look at.
 
 ```python
 # two channels: "train" is mounted at /opt/ml/input/data/train, "model" at /opt/ml/input/data/model inside the container

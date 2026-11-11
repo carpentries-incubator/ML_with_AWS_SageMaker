@@ -2,7 +2,7 @@
 title: Instances for ML
 ---
 
-The below table provides general recommendations for selecting AWS SageMaker instances based on dataset size, computational needs, and cost considerations. Prices are **us-east-1 on-demand, from the AWS price list of 2026-10-16**; other regions (including the workshop's US East (Ohio), `us-east-2`) are the same or within a few percent. Rows marked *approx.* were not re-verified against that list.
+The below table provides general recommendations for selecting AWS SageMaker instances based on dataset size, computational needs, and cost considerations. Prices are **on-demand for US East, from the AWS price list of 2026-10-16**. N. Virginia (`us-east-1`) and Ohio (`us-east-2`), the workshop's region, list the same rates for the SageMaker instances here, spot-checked on the 2026-11-11 list for the m5, g6e and p4d; other regions are within a few percent. Rows marked *approx.* were not re-verified against that list.
 
 #### General Notes:
 - **Minimum RAM** should be at least 1.5X dataset size unless using batch processing (common in deep learning).

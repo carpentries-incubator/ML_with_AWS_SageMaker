@@ -310,7 +310,7 @@ if __name__ == "__main__":
 
 # SageMaker training instances the lesson refers to: GPUs per box, GPU memory per GPU (GB),
 # bf16 dense peak per GPU (TFLOPS, from NVIDIA's data sheets; the sheets' headline figures for the L4 and
-# L40S are with sparsity, twice these), the us-east-1 on-demand
+# L40S are with sparsity, twice these), the US East on-demand
 # price per instance-hour from the AWS price list of 2026-10-16 (for the whole box), the
 # instance's network bandwidth (Gbit/s, from the instance's spec sheet) and, on multi-GPU boxes,
 # the GPU-to-GPU link per GPU (GB/s: NVLink on p4d/p5, PCIe on g5/g6e). Links are approximate.
@@ -327,7 +327,7 @@ GPU_INSTANCES = {
     "ml.p5.48xlarge":   {"gpus": 8, "gpu": "H100 80GB", "gpu_mem_gb": 80, "tflops_bf16": 989, "price": 63.30, "net_gbps": 3200, "gpu_link_gbs": 900},
 }
 
-# The CPU instances the lesson uses, with the same us-east-1 on-demand prices as the Instances for ML page
+# The CPU instances the lesson uses, with the same US East on-demand prices as the Instances for ML page
 CPU_INSTANCES = {
     "ml.t3.medium": {"price": 0.05},
     "ml.m5.large":  {"price": 0.115},
@@ -350,7 +350,8 @@ FLOPS_PER_PARAM_TOKEN = {"lora": 4.0, "full": 6.0}
 
 def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs=2, method="lora",
                            instance_type=None, runs=1, utilization=0.25, gradient_checkpointing=True,
-                           activations_gb=4.0, startup_minutes=10, verbose=True, from_scratch=False):
+                           activations_gb=4.0, startup_minutes=10, verbose=True, from_scratch=False,
+                           trainable_fraction=None):
     """
     Back-of-the-envelope cost of a fine-tuning run, using the two rules from the
     fine-tuning episode. Good to within about a factor of two, which is enough to tell
@@ -380,6 +381,11 @@ def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs
     gradient_checkpointing : bool   adds ~50% compute; needed on small GPUs
     activations_gb : float    headroom for activations; raise for long sequences or big batches
     startup_minutes : float   per-job fixed overhead (container pull, data download, model load)
+    trainable_fraction : float, LoRA only. The adapter's share of the model's parameters, which the
+                              rank sets (the fine-tuning episode's count cell works it out from the
+                              model's config: about 0.008 at rank 16 on CHURRO-3B, 0.13 at rank 256).
+                              Given, memory is 2 bytes per frozen parameter plus 16 per adapter
+                              parameter instead of the flat 2.5, which matters above rank 64 or so.
 
     Returns a dict with the numbers and prints a report when verbose.
     """
@@ -388,7 +394,10 @@ def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs
         raise ValueError("method must be 'lora' or 'full'")
     params = params_billions * 1e9
     tokens = examples * tokens_per_example * epochs
-    mem_gb = BYTES_PER_PARAM[method] * params / 1e9 + activations_gb
+    bytes_per_param = BYTES_PER_PARAM[method]
+    if method == "lora" and trainable_fraction is not None:
+        bytes_per_param = 2.0 + 16.0 * trainable_fraction          # frozen weights in bf16, plus the adapter's full training state
+    mem_gb = bytes_per_param * params / 1e9 + activations_gb
     flops = FLOPS_PER_PARAM_TOKEN[method] * params * tokens * (1.5 if gradient_checkpointing else 1.0)
 
     def fits(spec):
@@ -421,6 +430,8 @@ def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs
         print(f"{what} of a {params_billions:g}B model: {examples:,} examples x "
               f"{tokens_per_example:,} tokens x {epochs:g} passes = {tokens/1e6:,.1f}M tokens")
         print(f"memory:     ~{mem_gb:.0f} GB needed; {instance_type} has {spec['gpus'] * spec['gpu_mem_gb']} GB ({gpus})")
+        if method == "lora" and trainable_fraction is not None:
+            print(f"adapter:    {100 * trainable_fraction:.1f}% of the parameters train, so {bytes_per_param:.1f} bytes per parameter instead of the flat 2.5")
         if not fits(spec):
             fitting = [k for k, v in GPU_INSTANCES.items() if fits(v) and "note" not in v]
             cheapest = min(fitting, key=lambda k: GPU_INSTANCES[k]["price"]) if fitting else None
