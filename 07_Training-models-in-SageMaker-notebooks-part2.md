@@ -552,7 +552,7 @@ helpers.estimate_parallel_speedup(
 );
 ```
 
-Read the three together. Two L40S instances over a 20 Gb/s network spend as long exchanging the 28 GB gradient as computing, so two machines finish in the same time as one and bill twice. Four L40S in one box over PCIe get 3.2 of the ideal 4. Eight A100s over NVLink get 7.8 of 8, which is why the big training boxes are built that way.
+Read the three together. Two L40S instances over a 20 Gb/s network spend a third of every step exchanging the 28 GB gradient, so two machines get 1.3 of the ideal 2 and bill 1.5 times as much per run. Four L40S in one box over PCIe get 3.6 of the ideal 4. Eight A100s over NVLink get 7.8 of 8, which is why the big training boxes are built that way.
 
 Data parallelism helps when each step's computation is large next to the exchange, which means a big model, a big batch and a fast link, in that order of importance. Run the function before renting more than one device, and read the cost line: the speedup is what you buy, the cost ratio is what you pay for it.
 
