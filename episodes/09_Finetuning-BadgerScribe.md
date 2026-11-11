@@ -129,13 +129,13 @@ None of the three runtime limits is a wall. The training script writes a checkpo
 
 ### What the class account allows
 
-Do not fully fine-tune anything in this workshop, and do not LoRA fine-tune a model larger than 7B on the class account. A 7B LoRA needs about 22 GB, which is the most the 24 GB GPU the class uses will hold; a full fine-tune of a 7B model needs more memory than any instance the account allows. The larger runs appear in this episode only as estimates, so that you can recognize one before you launch it.
+Do not fully fine-tune anything in this workshop, and do not LoRA fine-tune a model larger than 30B on the class account. The limit is memory. A 7B LoRA needs about 22 GB and fits the 24 GB card the class uses. Above that the frozen weights have to go to 4-bit, which the training script does with `--load_in_4bit 1`, and a 30B model in 4-bit needs about 34 GB, which fits the 48 GB `ml.g6e.xlarge`, the largest GPU the account allows. A full fine-tune of even a 7B model needs more memory than any instance the account allows. The larger runs appear in this episode only as estimates, so that you can recognize one before you launch it.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## Step 0: Estimate the cost before you launch anything
 
-Before launching a fine-tune, write down what it should cost. If the bill comes in at three times your number, something is wrong, and you want to find that out on the first run, not the fiftieth. Two questions decide the cost of any training run. Will the model fit on the GPU, and how long will it run? Both can be answered on paper, to within a factor of two, before anything is rented.
+Before launching a fine-tune, write down what it should cost, with the estimator functions the lesson provides. If the bill comes in at three times your number, something is wrong, and you want to find that out on the first run, not the fiftieth. Two questions decide the cost of any training run. How much GPU memory does it need, which decides the instance you rent and its hourly price, and how long will it run? Both can be answered on paper, to within a factor of two, before anything is rented.
 
 ### How much GPU memory it needs
 
@@ -811,7 +811,7 @@ hyperparameters = {
 | `seed` | 42 (default) | Fixes the holdout split, the evaluation sample and the training order, so every run scores the same pages. |  |
 | `max_new_tokens` | 1024 (default) | The most tokens the model may generate when transcribing a page during scoring. | A page is about 200 text tokens. The cap matters only when the model rambles, which the base model does on pages it cannot read. |
 
-One check of all of it before the estimator exists, as `check_launch` checked the tags. `check_finetune_launch` applies the account's rules to the tags, the instance type and the cap, and then this lesson's own rules for a fine-tune: LoRA and not a full fine-tune, a model of at most 7B, a cap between the estimate and four times it, checkpoints on any run that may pass an hour, a fixed job name, and sane values for the passes and the pixel budget. It raises with every problem named, or prints what the launch is allowed to cost.
+One check of all of it before the estimator exists, as `check_launch` checked the tags. `check_finetune_launch` applies the account's rules to the tags, the instance type and the cap, and then this lesson's own rules for a fine-tune: LoRA and not a full fine-tune, a model of at most 30B, a cap between the estimate and four times it, checkpoints on any run that may pass an hour, a fixed job name, and sane values for the passes and the pixel budget. It raises with every problem named, or prints what the launch is allowed to cost.
 
 ```python
 helpers.check_finetune_launch(
