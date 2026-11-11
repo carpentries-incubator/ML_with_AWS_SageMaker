@@ -133,12 +133,11 @@ Before launching a fine-tune, write down what it should cost. If the bill comes 
 
 Every parameter in the model takes up GPU memory, and how much depends on what you are doing with it. Running the model needs only the weight. A full fine-tune needs the weight, its gradient, a 32-bit copy of the weight, and the two running averages Adam keeps for it, the four numbers per weight from the *How fine-tuning works* section above. A LoRA fine-tune keeps the weights frozen in 16-bit and adds a small adapter that carries its own gradients and optimizer state.
 
-![*GPU memory per parameter: inference, a LoRA fine-tune, and a full fine-tune*](fig/memory-per-parameter.svg){alt="Stacked bar chart of bytes per parameter for inference versus LoRA versus full fine-tuning"}
+![*GPU memory per parameter: inference, a LoRA fine-tune, and a full fine-tune*](fig/memory-per-parameter.png){alt="Stacked bar chart of bytes per parameter for inference versus LoRA versus full fine-tuning"}
 
 | What you are doing with the model | Bytes per parameter | What has to be in memory for each parameter |
 |---|---|---|
 | Inference, FP8 | 1 | the weight, quantized |
-| Inference, bf16 | 2 | the weight |
 | LoRA fine-tune | ~2.5 | the frozen 16-bit weight, plus a share of the adapter with its gradients and optimizer state |
 | Full fine-tune, mixed precision | 16 | the 16-bit weight (2), its gradient (2), a 32-bit copy of the weight (4), Adam's two running averages (8) |
 

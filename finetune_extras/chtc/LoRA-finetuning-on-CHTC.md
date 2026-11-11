@@ -167,7 +167,7 @@ Open [`finetune.sub`](finetune.sub) and [`finetune.sh`](finetune.sh) together. T
 
 **`transfer_output_files`** names what comes back, the adapter archive the shell script packs and the folder of scores and curves. HTCondor returns new files in the job's top-level directory by default, but not folders, so the folder has to be listed.
 
-![GPU memory per parameter: inference, a LoRA fine-tune, and a full fine-tune](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/fig/memory-per-parameter.svg)
+![GPU memory per parameter: inference, a LoRA fine-tune, and a full fine-tune](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/fig/memory-per-parameter.png)
 
 *GPU memory per parameter, the lesson's memory rule.*
 
@@ -242,16 +242,16 @@ CHTC publishes the inventory behind that command on its [GPU jobs page](https://
 
 Two things about the cards matter for fine-tuning beyond their memory. Every card from the A100 up has capability 8.0 or newer, so bf16 training works on all of them. And the cards in one server are connected in one of two ways. In the A100, H100 and H200 servers the GPUs are mounted on one board and joined by NVLink, NVIDIA's direct GPU-to-GPU link, which is how data-center AI servers are built and what a multi-GPU job wants. The L40, L40S and RTX PRO 6000 are plug-in cards that talk through the PCIe bus, which is several times slower.
 
-The lesson's memory rules turn GPU memory into model sizes. Inference needs 2 bytes per parameter in bf16. A LoRA fine-tune needs about 2.5 with the frozen weights in bf16, or about 1 with them in 4-bit, the QLoRA setup the Colab version uses. A full fine-tune needs 16. Each needs a few gigabytes of working room on top.
+The lesson's memory rules turn GPU memory into model sizes. Inference needs 1 byte per parameter with the weights in FP8. A LoRA fine-tune needs about 2.5 with the frozen weights in bf16, or about 1 with them in 4-bit, the QLoRA setup the Colab version uses. A full fine-tune needs 16. Each needs a few gigabytes of working room on top.
 
-| GPU memory | Cards | Inference, bf16 | LoRA fine-tune | Full fine-tune |
+| GPU memory | Cards | Inference, FP8 | LoRA fine-tune | Full fine-tune |
 |---|---|---|---|---|
-| 40 GB | A100 40 GB, A100 MIG slices | up to about 15B | up to about 12B, about 35B in 4-bit | nothing; a 3B model needs 52 GB |
-| 48 GB | L40, L40S | up to about 20B | up to about 15B, about 40B in 4-bit | nothing |
-| 80 GB | A100 80 GB, H100 | up to about 35B, or a 70B in 4-bit | up to about 27B, about 70B in 4-bit | a 3B model, just |
-| 96 GB | RTX PRO 6000 | up to about 40B | up to about 35B, a 70B in 4-bit | a 3B model |
-| 141 GB | H200 | up to about 65B | up to about 50B, a 70B in 4-bit with room | a 3B model easily, a 7B model, just |
-| several cards in one server, model sharded across them | the A100, H100 and H200 servers, joined by NVLink | a 70B in bf16 | a 70B in bf16 | a 7B on two 80 GB cards, a 70B on many |
+| 40 GB | A100 40 GB, A100 MIG slices | up to about 35B | up to about 12B, about 35B in 4-bit | nothing; a 3B model needs 52 GB |
+| 48 GB | L40, L40S | up to about 40B | up to about 15B, about 40B in 4-bit | nothing |
+| 80 GB | A100 80 GB, H100 | up to about 75B | up to about 27B, about 70B in 4-bit | a 3B model, just |
+| 96 GB | RTX PRO 6000 | up to about 90B | up to about 35B, a 70B in 4-bit | a 3B model |
+| 141 GB | H200 | up to about 135B | up to about 50B, a 70B in 4-bit with room | a 3B model easily, a 7B model, just |
+| several cards in one server, model sharded across them | the A100, H100 and H200 servers, joined by NVLink | anything larger | a 70B in bf16 | a 7B on two 80 GB cards, a 70B on many |
 
 ![Bar chart on a log scale of GPU memory for full fine-tuning and LoRA at 3B, 7B, 27B and 70B, with lines at 24 GB and 80 GB](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/fig/memory-by-model-size.png)
 
