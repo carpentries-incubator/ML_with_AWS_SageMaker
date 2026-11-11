@@ -484,13 +484,13 @@ The cost estimate in Step 0 used 1,600 tokens per page. That number is tokens, n
 %pip install -q "transformers>=4.56"   # the processor that turns an image + text into the model's tokens; same version as the training job
 ```
 
-`badger_common.py` is the lesson's helper module for this episode, in `scripts/` beside `helpers.py` and imported from the same path. It holds the instruction prompt, the page loader with its pixel limits, and the competition's character error rate, and both the training script and the inference script import it, so the notebook, the job and the scoring all prepare a page the same way. Here it supplies the pixel limits and the prompt.
+`badger_scribe_helpers.py` is the lesson's helper module for this episode, in `scripts/` beside `helpers.py` and imported from the same path. It holds the instruction prompt, the page loader with its pixel limits, and the competition's character error rate, and both the training script and the inference script import it, so the notebook, the job and the scoring all prepare a page the same way. Here it supplies the pixel limits and the prompt.
 
 Fetch the processor's config files from the shared bucket and load the processor with the same pixel limits the training script uses. Then run one page through it twice: once with the transcription, to count everything, and once with only the prompt, to find where the transcription's tokens start. The count splits three ways: the image, the instruction prompt the script sends with every page (the transcription rules from `build_prompt` plus the chat-template markup around them, the same on every page), and the transcription itself.
 
 ```python
 from transformers import AutoProcessor
-import badger_common as bc
+import badger_scribe_helpers as bc
 
 proc_dir = os.path.join(local_data_dir, "churro-processor")
 os.makedirs(proc_dir, exist_ok=True)
@@ -619,7 +619,7 @@ The three scripts the job needs are already on this instance, in the lesson clon
 import shutil
 
 os.makedirs("code", exist_ok=True)
-for f in ["badger_common.py", "finetune_churro_lora.py", "churro_transcribe_batch.py"]:
+for f in ["badger_scribe_helpers.py", "finetune_churro_lora.py", "churro_transcribe_batch.py"]:
     shutil.copy(f"/home/ec2-user/SageMaker/ML_with_AWS_SageMaker/scripts/{f}", f"code/{f}")
 
 with open("code/requirements.txt", "w") as f:  # pip-installed inside the container before the script starts
@@ -628,7 +628,7 @@ with open("code/requirements.txt", "w") as f:  # pip-installed inside the contai
 print(os.listdir("code"))
 ```
 
-- `badger_common.py`: the prompt, image loading, and a copy of the competition's CER. Shared by the other two so the model is trained on the same prompt it is later asked.
+- `badger_scribe_helpers.py`: the prompt, image loading, and a copy of the competition's CER. Shared by the other two so the model is trained on the same prompt it is later asked.
 - `finetune_churro_lora.py`: the training job entry point. Holds out 15% of pages per category, filters to the categories you ask for, scores a sample of holdout pages with the base model, trains a LoRA adapter, scores the same pages again, and saves everything.
 - `churro_transcribe_batch.py`: used in the homework. Transcribes any list of pages with the base model or with the adapter merged in, and writes `predictions.csv` in the submission format.
 
@@ -819,7 +819,7 @@ model_output_path = f"s3://{bucket_name}/{data_prefix}/models/"   # the job's mo
 
 estimator = HuggingFace(
     entry_point="finetune_churro_lora.py",
-    source_dir="code/",                   # the whole directory ships with the job: script, badger_common.py, requirements.txt
+    source_dir="code/",                   # the whole directory ships with the job: script, badger_scribe_helpers.py, requirements.txt
     role=role,
     tags=make_job_tags("Training"),
     instance_type=instance_type,
