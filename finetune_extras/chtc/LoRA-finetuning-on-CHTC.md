@@ -18,7 +18,7 @@ The files in this folder:
 | [`finetune.sub`](finetune.sub), [`finetune.sh`](finetune.sh) | The GPU job, and the script it runs inside the container |
 | [`read_results.py`](read_results.py) | Reads what the job sends back and prints the before-and-after comparison |
 
-The training script, [`finetune_churro_lora.py`](../../scripts/finetune_churro_lora.py), and its helper [`badger_common.py`](../../scripts/badger_common.py) come from the lesson's [`scripts/`](../../scripts) folder unchanged. It is an ordinary Hugging Face training script, PyTorch with `transformers` for the model and the `Trainer` and `peft` for the LoRA adapter, and nothing in it is specific to any of the three platforms beyond the paths it reads and writes. The lesson's episode, under *What the script is, and what LoRA adds to it*, walks through its parts and says which few lines are the LoRA.
+The training script, [`finetune_churro_lora.py`](../../scripts/finetune_churro_lora.py), and its helper [`badger_scribe_helpers.py`](../../scripts/badger_scribe_helpers.py) come from the lesson's [`scripts/`](../../scripts) folder unchanged. It is an ordinary Hugging Face training script, PyTorch with `transformers` for the model and the `Trainer` and `peft` for the LoRA adapter, and nothing in it is specific to any of the three platforms beyond the paths it reads and writes. The lesson's episode, under *What the script is, and what LoRA adds to it*, walks through its parts and says which few lines are the LoRA.
 
 ## Three places to run this fine-tune
 
@@ -81,7 +81,7 @@ In your home directory, clone the lesson and copy the two Python files and this 
 cd ~
 rm -rf ML_with_AWS_SageMaker && git clone -q --depth 1 https://github.com/carpentries-incubator/ML_with_AWS_SageMaker.git   # a fresh copy, so a rerun gets the current scripts
 mkdir -p badger-scribe && cd badger-scribe
-cp ../ML_with_AWS_SageMaker/scripts/finetune_churro_lora.py ../ML_with_AWS_SageMaker/scripts/badger_common.py .
+cp ../ML_with_AWS_SageMaker/scripts/finetune_churro_lora.py ../ML_with_AWS_SageMaker/scripts/badger_scribe_helpers.py .
 cp ../ML_with_AWS_SageMaker/finetune_extras/chtc/* .
 ls
 ```
@@ -288,7 +288,7 @@ The lesson's episode and the Colab notebook measure how many tokens a page costs
 ```python
 from transformers import AutoProcessor
 import pandas as pd
-import badger_common as bc
+import badger_scribe_helpers as bc
 
 row = pd.read_csv("data/train.csv", keep_default_na=False).iloc[0]
 image = bc.load_page_image(f"data/images/{row.page_id}.jpg", bc.DEFAULT_MAX_PIXELS)
