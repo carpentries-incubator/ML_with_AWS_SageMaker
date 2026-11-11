@@ -105,7 +105,7 @@ print("Region:", session.boto_region_name)
 # Define instance type/count we'll use for training
 instance_type="ml.m5.large"
 instance_count=1 # always start with 1; tuning parallelism comes from max_parallel_jobs, not instance_count
-price_per_hour = 0.115 # ml.m5.large, us-east-1 on-demand (2026-10-16), from the Instances for ML page; check it for your region
+price_per_hour = helpers.instance_price("ml.m5.large")   # $/hour on-demand, from the lesson's price table, the same numbers as the Instances for ML page
 
 # The runtime cap, in seconds: SageMaker stops the job and releases the instance when it is reached. Set it a little above the estimate;
 # the estimate here is three or four minutes, so 20 minutes leaves room for a slow container pull without letting a hung job bill for hours.
