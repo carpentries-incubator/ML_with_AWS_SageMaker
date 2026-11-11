@@ -493,26 +493,40 @@ Select the <strong><code>conda_pytorch</code></strong> kernel.</p>
 <div id="joining-at-this-episode" class="callout-inner">
 <h3 class="callout-title">Joining at this episode</h3>
 <div class="callout-content">
-<p>This episode stands on its own, and these are the four things the
-earlier episodes set up that it uses. Learners coming through the whole
-lesson have seen each one.</p>
-<ul><li>
-<strong>An S3 bucket of your own</strong>, from the S3 episode,
-where every job’s outputs land. The notebook refers to it as
-<code>bucket_name</code>.</li>
+<p>This episode stands on its own, but it runs from a notebook instance
+and writes to a bucket that the earlier episodes create. If this is your
+first episode, complete these before the first cell, in this order. They
+take about half an hour. Learners coming through the whole lesson have
+done each one.</p>
+<ol style="list-style-type: decimal"><li>
+<strong>Sign in to the account</strong>, following the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/index.html#setup" class="external-link">setup
+page</a>. On the shared UW-Madison account that is the sign-in link the
+instructors emailed; on your own account, the page says what to
+prepare.</li>
 <li>
-<strong>A notebook instance</strong>, from the controllers episode,
-a small CPU machine running JupyterLab. It launches jobs and reads
-results. The GPU is never on it.</li>
+<strong>Create an S3 bucket of your own</strong>, in <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/02_Data-storage-setting-up-S3.html" class="external-link">episode
+2</a>, with the three tags <code>Name</code>, <code>Project</code> and
+<code>Purpose</code> on it. Every job’s outputs land there, and the
+notebook refers to it as <code>bucket_name</code>. Uploading the Titanic
+data is for the other episodes and can be skipped.</li>
 <li>
-<strong>A role</strong>, <code>ml-sagemaker-use</code>, which the
-notebook instance runs as and hands to every job, so nothing here asks
-you to sign in.</li>
+<strong>Create a notebook instance</strong>, in <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/03_SageMaker-notebooks-as-controllers.html" class="external-link">episode
+3</a>, a small CPU machine running JupyterLab, with the same three tags
+and the <code>ml-sagemaker-use</code> role. The instance launches jobs
+and reads results; the GPU is never on it. The episode ends by cloning
+the lesson repository onto the instance, which is where this episode’s
+notebook, scripts and helper code come from.</li>
 <li>
-<strong>Three tags on everything</strong>, <code>Name</code>,
-<code>Project</code> and <code>Purpose</code>, which the shared account
-requires on every job and uses to attribute the bill.</li>
-</ul></div>
+<strong>Read your bucket from the notebook once</strong>, in <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/04_Accessing-S3-via-SageMaker-notebooks.html" class="external-link">episode
+4</a>, to see how a notebook lists, reads and writes S3. This episode’s
+first cells do the same with the Badger Scribe data, and this step is
+the one to skip if time is short.</li>
+</ol><p>Two things the account handles for you. The role is what the notebook
+instance runs as and hands to every job, so nothing here asks you to
+sign in again. The three tags are required on every job, and the shared
+account uses them to attribute the bill, so the launch cells below carry
+them.</p>
+</div>
 </div>
 </div>
 <section><h2 class="section-heading" id="why-fine-tune-a-model">Why fine-tune a model?<a class="anchor" aria-label="anchor" href="#why-fine-tune-a-model"></a></h2>
@@ -1196,7 +1210,7 @@ What does a project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5, because a full fine-tune of a 7B model
 needs about 112 GB plus activations, and the g5 has 24 GB. On the p4d, 8
@@ -1376,7 +1390,7 @@ one for a run that finishes in twelve minutes.</p>
 <button class="accordion-button instructor-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInstructor1" aria-expanded="false" aria-controls="collapseInstructor1">
   <h3 class="accordion-header" id="headingInstructor1">  <div class="note-square"><i aria-hidden="true" class="callout-icon" data-feather="edit-2"></i></div> Before class (instructor checklist) </h3>
 </button>
-<div id="collapseInstructor1" class="accordion-collapse collapse" aria-labelledby="headingInstructor1" data-bs-parent="#accordionInstructor1">
+<div id="collapseInstructor1" class="accordion-collapse collapse" data-bs-parent="#accordionInstructor1" aria-labelledby="headingInstructor1">
 <div class="accordion-body">
 <p>Students never download the data themselves; four things have to be
 in place before the session. Each is written out in the instructor
@@ -1752,7 +1766,7 @@ prompt and transcription.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb21">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -1977,7 +1991,7 @@ step. Which, and why are they there?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>Only the language model’s <code>q_proj</code>, <code>k_proj</code>,
 <code>v_proj</code>, <code>o_proj</code>, <code>gate_proj</code>,
@@ -2672,7 +2686,7 @@ will compare it to the bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>Expect about 32 billed minutes. Scoring is the line most likely to
 surprise: at 17 to 21 seconds a page, the two 15-page evaluations and
@@ -3065,7 +3079,7 @@ summaries, and the before/after CER. Did the extra pixels help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -3106,7 +3120,7 @@ when does the faster instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution6" aria-expanded="false" aria-controls="collapseSolution6">
   <h4 class="accordion-header" id="headingSolution6"> Show me the solution </h4>
 </button>
-<div id="collapseSolution6" class="accordion-collapse collapse" aria-labelledby="headingSolution6" data-bs-parent="#accordionSolution6">
+<div id="collapseSolution6" class="accordion-collapse collapse" data-bs-parent="#accordionSolution6" aria-labelledby="headingSolution6">
 <div class="accordion-body">
 <p>Startup and upload (~6 min, <code>$0.26</code> at
 <code>$2.61</code>/h) do not speed up: the container pull and the S3
