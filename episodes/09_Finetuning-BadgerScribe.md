@@ -101,7 +101,7 @@ We'll measure that using ***character error rate (CER)***, the same metric used 
 
 ### What we'll do, and what it will cost
 
-We'll run the training on AWS SageMaker, as a managed training job, with no interactive GPU notebook left running. SageMaker will provision the GPU, run our training script, save the model adapter and evaluation results, and shut down the instance when the job finishes.
+We'll run the training on AWS SageMaker as a training job. SageMaker will provision a GPU instance for it, run our training script, save the model adapter and evaluation results, and shut down the instance when the job finishes. The GPU is rented for the job and nothing else, so there is no GPU notebook to remember to stop afterwards.
 
 The entire run, including evaluation before and after fine-tuning, takes about 33 minutes on an `ml.g5.xlarge` instance and costs approximately `$0.75`, based on our measured October 2026 run. That small cost is deliberate. Fine-tuning can become expensive when we move to larger models, longer datasets, or repeated experiments, so we'll learn how to estimate memory and runtime requirements before launching the job. We'll also set a time limit to prevent an unexpected training run from continuing indefinitely.
 
