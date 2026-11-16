@@ -432,7 +432,7 @@ test pages</a></li>
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Fine-tuning a Vision-Language Model with Training Jobs</h1>
-        <p>Last updated on 2026-11-11 |
+        <p>Last updated on 2026-11-16 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/09_Finetuning-BadgerScribe.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -2572,15 +2572,19 @@ the third. The third pass bought 0.008 of CER for five minutes of GPU,
 which is why the class run stops at two and the homework goes to four:
 that is the trade the curve lets you see.</p>
 <p>Eight pages is a noisy estimate, since one hard page moves it, so
-read the trend and not the third decimal. The job holds out 44 pages and
-scores 15 of them, 8 per curve point, to keep the run near half an hour.
-Those numbers are chosen for the clock, not for the statistics. In your
-own work, keep most of the data for training, but score enough held-out
-examples that the number is not noise. Twenty is a floor. With a few
-hundred examples, 50 is a reasonable holdout; with thousands, 100 or
-more. Scoring is linear in pages, about 18 seconds each here, so score
-the curve on a small fixed sample each pass and the whole holdout only
-at the end.</p>
+read the trend and not the third decimal. That is also why the curve’s
+starting point is not the base score the before-and-after cell printed,
+0.246 against 0.267 in our run. Both are the base model on holdout
+pages, one on the 8 curve pages and the other on all 15, and the 15
+include a second page the base model left blank, scored 1.0, which the 8
+do not. The job holds out 44 pages and scores 15 of them, 8 per curve
+point, to keep the run near half an hour. Those numbers are chosen for
+the clock, not for the statistics. In your own work, keep most of the
+data for training, but score enough held-out examples that the number is
+not noise. Twenty is a floor. With a few hundred examples, 50 is a
+reasonable holdout; with thousands, 100 or more. Scoring is linear in
+pages, about 18 seconds each here, so score the curve on a small fixed
+sample each pass and the whole holdout only at the end.</p>
 <p><strong>The holdout number flatters you.</strong> The script holds
 out 15% of <em>pages</em>, so pages from the same letter bundle appear
 in both the training and holdout halves. The competition’s hidden test
@@ -3197,8 +3201,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/09_Finetuning-BadgerScribe.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/09_Finetuning-BadgerScribe.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-11-11",
-  "datePublished": "2026-11-11"
+  "dateModified": "2026-11-16",
+  "datePublished": "2026-11-16"
 }
 
   </script><script>
