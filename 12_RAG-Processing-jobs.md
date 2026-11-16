@@ -28,6 +28,18 @@ Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/12_RAG-Processing-jobs
 
 The Bedrock episode built the whole WattBot pipeline without managing a GPU, and that stays the simplest choice whenever Bedrock carries a model that will do. Research often depends on a particular open-weight checkpoint, though. A newly released model, a smaller size, a fine-tune for scientific text, a model a paper just published. Bedrock's catalog is curated. It carries Amazon's models, Anthropic, Meta, Mistral, DeepSeek and a few others, and within a family only some sizes, usually a generation behind. For Qwen, the serverless lineup is still the Qwen3 series. Hugging Face hosts well over a million open-weight checkpoints, and the one you want is usually not on Bedrock, and often never will be.
 
+::::::::::::::::::::::::::::::::::::: callout
+
+### Custom Model Import, the route between the catalog and a GPU
+
+Bedrock has a second way to serve a model it does not carry. **Custom Model Import** takes a Hugging Face checkpoint from your bucket, converts it once, and then serves it the same way as a catalog model, through `converse`, paying only while it answers and nothing while idle. For an open-weight model that works, it is the cheapest way to serve one and the only route with no GPU to manage.
+
+Try it only when it works, which is a short list. The import job checks the model's `architectures` value in `config.json` and refuses anything it has not been built for. In November 2026 the accepted list was Llama, Mistral, Mixtral, GPT-BigCode, Llama vision, Qwen2, Qwen2-VL, Qwen2.5-VL, GPT-OSS and Gemma 3 text. Neither the Qwen3 family this episode runs nor Qwen3.5 was on it. We tried the smallest Qwen3.5 model, 1.5 GB, and the job came back after twenty minutes with "Amazon Bedrock does not support the architecture (qwen3_5)". New architectures are added months after a release, not weeks.
+
+So the check is thirty seconds, before any upload. Open the model's `config.json` on Hugging Face and read `model_type`. On the list, import is worth the hour it takes, which is an upload to S3, an import job with a service role that can read the bucket, and a first `converse` call. Off the list, skip it and rent a GPU, which is what the rest of this episode does. Two notes for the workshop account. The service role is an IAM role, which the learner permission set cannot create, so the import route needs an administrator. And the import itself is free; what costs is the model answering, billed per five-minute window while it is active, at a rate that depends on the model's size.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
 In that case you run the model on hardware you rent through SageMaker, and the next decision is how long to keep that hardware. SageMaker rents a GPU three ways.
 
 | | Bills | Stops when | Best for |
