@@ -27,15 +27,15 @@ AWS has several places to keep data, with different uses.
 > When using AWS for research, **ensure that no restricted or sensitive data is uploaded to S3 or any other AWS service *unless explicitly approved by your institution’s IT or cloud security team***.
 > For projects involving sensitive or regulated data (e.g., HIPAA, FERPA, or proprietary research data), consult your institution's cloud security or compliance team to explore approved solutions. This may include encryption, restricted-access storage, or dedicated secure environments. If unsure about data classification, review your institution's data security policies before uploading.
 
-## Instance storage versus S3
+### What S3 is
+**Amazon S3** (Simple Storage Service) is where data lives on AWS. It stores files as objects in **buckets**, which are containers where you store, organize and manage data files. Buckets act as the top-level directory within S3 and can hold a virtually unlimited number of files and folders, making them ideal for storing large datasets, backups, logs, or any files needed for your project. You access objects in a bucket via a unique **S3 URI** (e.g., `s3://your-bucket-name/your-file.csv`), which you can use to reference data across various AWS services like EC2 and SageMaker.
+
+### Instance storage versus S3
 When AWS runs a machine for you, it has storage of its own for code, notebooks, installed software and temporary data. You can download a dataset from S3 to that storage when you need to work with the files, and some workflows read data from S3 straight into memory instead.
 
 That storage does not last. Storage attached to a SageMaker training or processing job is deleted when the job finishes. A SageMaker notebook instance has a storage volume that survives stopping and restarting the instance but is deleted with it. The next episode covers those details when you create a notebook instance.
 
 S3 keeps your data separate from the machines that run your code. Datasets, trained models and other results stay available after a job finishes or an instance is deleted, and several jobs can read the same files without each keeping a copy.
-
-### What is an S3 bucket?
-Storing data in an **S3 bucket** is generally preferred for machine learning workflows on AWS, especially when using SageMaker. An S3 bucket is a container in Amazon S3 (Simple Storage Service) where you can store, organize, and manage data files. Buckets act as the top-level directory within S3 and can hold a virtually unlimited number of files and folders, making them ideal for storing large datasets, backups, logs, or any files needed for your project. You access objects in a bucket via a unique **S3 URI** (e.g., `s3://your-bucket-name/your-file.csv`), which you can use to reference data across various AWS services like EC2 and SageMaker.
 
 ::::::::::::::::::::::::::::::::::::: callout 
 
