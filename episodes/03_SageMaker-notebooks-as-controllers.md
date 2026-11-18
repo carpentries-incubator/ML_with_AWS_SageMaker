@@ -42,7 +42,7 @@ The SageMaker SDK runs anywhere Python does, so the lesson could be run from a l
 We'll follow these steps to create our first "SageMaker notebook instance".
 
 #### 1. Navigate to SageMaker
-- Check the region in the top-right corner of the console first. The create form has no region field: a notebook instance is created in whichever region the console is showing, and it has to be the region of your bucket, in the workshop account US East (Ohio), `us-east-2`. If it shows anything else, change it there before going on.
+- Check the region in the top-right corner of the console first. The create form has no region field: a notebook instance is created in whichever region the console is showing, and it has to match the region you created your bucket in during the S3 episode, in the workshop account US East (Ohio), `us-east-2`. If it shows anything else, change it there before going on.
 - In the AWS Console, search for **SageMaker**.
 - Recommended: Select the star icon next to **Amazon SageMaker AI** to save SageMaker as a bookmark in your AWS toolbar 
 - Select  **Amazon SageMaker AI**
