@@ -31,7 +31,7 @@ AWS has several places to keep data, with different uses.
 **Amazon S3** (Simple Storage Service) is where data lives on AWS. It stores files as objects in **buckets**, which are containers where you store, organize and manage data files. Buckets act as the top-level directory within S3 and can hold a virtually unlimited number of files and folders, making them ideal for storing large datasets, backups, logs, or any files needed for your project. You access objects in a bucket via a unique **S3 URI** (e.g., `s3://your-bucket-name/your-file.csv`), which you can use to reference data across various AWS services like EC2 and SageMaker.
 
 ### Instance storage versus S3
-When AWS runs a machine for you, it has storage of its own for code, notebooks, installed software and temporary data. You can download a dataset from S3 to that storage when you need to work with the files, and some workflows read data from S3 straight into memory instead.
+When AWS runs a machine for you, an **EC2 instance**, it comes with a disk of its own, an **EBS volume** (Elastic Block Store), for code, notebooks, installed software and temporary data. You can download a dataset from S3 to that storage when you need to work with the files, and some workflows read data from S3 straight into memory instead.
 
 That storage does not last. Storage attached to a SageMaker training or processing job is deleted when the job finishes. A SageMaker notebook instance has a storage volume that survives stopping and restarting the instance but is deleted with it. The next episode covers those details when you create a notebook instance.
 
