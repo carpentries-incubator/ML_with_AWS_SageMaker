@@ -7,7 +7,7 @@ exercises: 5
 :::::::::::::::::::::::::::::::::::::: questions 
 
 - How can I store and manage data effectively in AWS for SageMaker workflows?
-- What are the best practices for using S3 versus EC2 storage for machine learning projects?
+- When does data belong in S3, and when on the storage attached to an instance?
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -27,8 +27,12 @@ AWS has several places to keep data, with different uses.
 > When using AWS for research, **ensure that no restricted or sensitive data is uploaded to S3 or any other AWS service *unless explicitly approved by your institution’s IT or cloud security team***.
 > For projects involving sensitive or regulated data (e.g., HIPAA, FERPA, or proprietary research data), consult your institution's cloud security or compliance team to explore approved solutions. This may include encryption, restricted-access storage, or dedicated secure environments. If unsure about data classification, review your institution's data security policies before uploading.
 
-## EC2 storage versus S3
-Every machine SageMaker runs for you is an EC2 virtual machine with a disk attached, which AWS calls EC2 storage. The notebook instance you create in the next episode is one, and so is every machine a training or processing job runs on. That disk is temporary. A job's disk disappears when the job ends. The notebook instance's disk keeps one folder, `/home/ec2-user/SageMaker`, across a Stop and nothing across a Delete, and packages installed with `pip` are gone at every Stop. So the disk is for your code, the notebooks and scripts you are working on, and for a local copy of a file when you need one; data read straight from S3 into memory needs no copy at all. The data itself lives in S3, where every machine can read it, where it outlives all of them, and where it costs cents a month.
+## Instance storage versus S3
+When AWS runs a machine for you, it has storage of its own for code, notebooks, installed software and temporary data. You can download a dataset from S3 to that storage when you need to work with the files, and some workflows read data from S3 straight into memory instead.
+
+The difference that matters is how long the data lasts. Storage attached to a SageMaker training or processing job is deleted when the job finishes. A SageMaker notebook instance has a storage volume that survives stopping and restarting the instance but is deleted with it. The next episode covers those details when you create a notebook instance.
+
+S3 keeps your data separate from the machines that run your code. Datasets, trained models and other results stay available after a job finishes or an instance is deleted, and several jobs can read the same files without each keeping a copy.
 
 ### What is an S3 bucket?
 Storing data in an **S3 bucket** is generally preferred for machine learning workflows on AWS, especially when using SageMaker. An S3 bucket is a container in Amazon S3 (Simple Storage Service) where you can store, organize, and manage data files. Buckets act as the top-level directory within S3 and can hold a virtually unlimited number of files and folders, making them ideal for storing large datasets, backups, logs, or any files needed for your project. You access objects in a bucket via a unique **S3 URI** (e.g., `s3://your-bucket-name/your-file.csv`), which you can use to reference data across various AWS services like EC2 and SageMaker.
@@ -38,12 +42,11 @@ Storing data in an **S3 bucket** is generally preferred for machine learning wor
 ### Benefits of using S3 (recommended for SageMaker and ML workflows)
 Store data in S3 and load it onto an instance as needed. This gives:  
 
-- **Separation of storage and compute**: data in S3 remains accessible when instances are stopped or deleted.
+- **Data that outlives the machine**: what is in S3 stays there when a job ends or an instance is stopped or deleted.
 - **Easy data sharing**: a bucket can be read by team members and by other projects.  
 - **Integration with AWS services**: SageMaker, Lambda, and other AWS services read directly from and write back to S3.  
-- **Scalability**: a bucket holds any amount of data; an instance's disk does not.  
-- **Cost efficiency**: S3 storage is generally lower cost than expanding EC2 disk volumes, and you only pay for the storage you use.  
-- **Data persistence**: Unlike EC2 storage, which is lost when an instance is deleted, S3 ensures long-term data availability.  
+- **Scalability**: a bucket holds any amount of data; an instance's storage does not.  
+- **Cost efficiency**: S3 storage costs less than a larger instance volume, and you pay only for what you store.  
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -311,7 +314,7 @@ When you are done with the data, remove the files and buckets you no longer need
 ::::::::::::::::::::::::::::::::::::: keypoints 
 
 - Use S3 for scalable, cost-effective, and flexible storage.
-- EC2 storage is fairly uncommon, but may be suitable for small, temporary datasets; only `/home/ec2-user/SageMaker` survives a Stop, and nothing survives a Delete.
+- Use the storage attached to an instance for code, software environments and temporary working files, and S3 for datasets and results that must outlive the instance or job.
 
 - Create the bucket in the same region as your SageMaker notebook, and tag it with the same three keys (`Name`, `Project`, `Purpose`) you will put on every other resource.
 - Track your S3 storage costs, data transfer, and requests to manage expenses.
