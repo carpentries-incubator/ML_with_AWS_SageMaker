@@ -41,7 +41,7 @@ There is no option that is better in every case. Campus and national research co
 
 ### S3, the notebook instance, SageMaker and Bedrock
 
-AWS offers many services. This workshop uses four pieces that work together.
+AWS offers many services. This workshop uses the four most often used for ML and AI work, and they work together.
 
 ![*The four pieces the lesson uses, and what moves between them*](fig/aws-ml-ecosystem.svg){alt="Diagram of the lesson's AWS components: S3 buckets at the top, a notebook instance on the left launching SageMaker training, tuning and processing jobs in the center, and Bedrock on the right called as an API"}
 
