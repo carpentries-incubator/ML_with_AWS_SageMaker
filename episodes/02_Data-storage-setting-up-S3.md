@@ -30,7 +30,7 @@ AWS has several places to keep data, with different uses.
 ## Instance storage versus S3
 When AWS runs a machine for you, it has storage of its own for code, notebooks, installed software and temporary data. You can download a dataset from S3 to that storage when you need to work with the files, and some workflows read data from S3 straight into memory instead.
 
-The difference that matters is how long the data lasts. Storage attached to a SageMaker training or processing job is deleted when the job finishes. A SageMaker notebook instance has a storage volume that survives stopping and restarting the instance but is deleted with it. The next episode covers those details when you create a notebook instance.
+That storage does not last. Storage attached to a SageMaker training or processing job is deleted when the job finishes. A SageMaker notebook instance has a storage volume that survives stopping and restarting the instance but is deleted with it. The next episode covers those details when you create a notebook instance.
 
 S3 keeps your data separate from the machines that run your code. Datasets, trained models and other results stay available after a job finishes or an instance is deleted, and several jobs can read the same files without each keeping a copy.
 
