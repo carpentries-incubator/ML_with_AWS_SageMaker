@@ -21,7 +21,7 @@ exercises: 5
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## Storing data on AWS
-AWS has several places to keep data, with different uses. 
+This lesson keeps data in two places, S3 and the disk attached to a machine, and this section says what each is for.
 
 > #### Consult your institution's IT before handling sensitive data in AWS
 > When using AWS for research, **ensure that no restricted or sensitive data is uploaded to S3 or any other AWS service *unless explicitly approved by your institution’s IT or cloud security team***.
