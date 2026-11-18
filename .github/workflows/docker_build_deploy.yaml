@@ -8,6 +8,7 @@ on:
     paths-ignore:
       - '.github/workflows/**.yaml'
       - '.github/workbench-docker-version.txt'
+      - '.devcontainer'
   schedule:
     - cron: '0 0 * * 2'
   workflow_run:
@@ -35,11 +36,7 @@ on:
         default: false
         type: boolean
 
-# only one build/deploy at a time per trigger. The group is keyed by event so that
-# the workflow_run trigger, which fires when "03 Maintain: Apply Package Cache" finishes
-# and then skips because this lesson needs no renv, cannot cancel the push build that
-# is already running. With a single shared group every merge's build was cancelled and
-# the site only updated on the weekly schedule.
+# only one build/deploy at a time
 concurrency:
   group: docker-build-deploy-${{ github.event_name }}
   cancel-in-progress: true
