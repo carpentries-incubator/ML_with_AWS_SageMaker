@@ -81,10 +81,6 @@ The notebook instance is not the only way to drive AWS. Everything it does can b
 
 The difference between SageMaker and Bedrock is control against convenience. SageMaker runs your own code on compute you choose. Bedrock runs models AWS hosts, with no infrastructure of yours underneath.
 
-### How the episodes use them
-
-Through the workshop, code is written in JupyterLab, datasets and results go to S3, training and other heavy jobs go to SageMaker, and Bedrock is called when a hosted model is enough. None of this needs the notebook instance. Everything here can be done from Python on your own computer or from the AWS command line, and the optional [The Same Jobs from the Terminal](14_CLI-equivalents.md) episode shows how.
-
 ::::::::::::::::::::::::::::::::::::: keypoints
 
 - The cloud offers the current GPU generation on demand, billed per second while a job runs. Campus and national research computing is often cheaper for sustained work, and free to many researchers.
