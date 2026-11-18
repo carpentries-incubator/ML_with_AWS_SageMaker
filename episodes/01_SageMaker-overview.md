@@ -45,7 +45,7 @@ AWS offers many services. This workshop uses the four most often used for ML and
 
 ![](fig/aws-ml-ecosystem.svg){alt="Diagram of the lesson's AWS components: S3 buckets at the top, a notebook instance on the left launching SageMaker training, tuning and processing jobs in the center, and Bedrock on the right called as an API"}
 
-Datasets and results live in S3. We work from a small JupyterLab notebook instance. SageMaker launches the compute-heavy jobs on separate machines. For tasks a model AWS already hosts can do, we call Bedrock instead.
+Datasets and results live in S3. We work from a small JupyterLab notebook instance. SageMaker launches the compute-heavy jobs on separate machines. For tasks a model AWS already hosts can do, we call Bedrock instead. None of this needs the notebook instance. The same jobs can be launched from the AWS CLI on your own computer, and the optional [The Same Jobs from the Terminal](14_CLI-equivalents.md) episode does that.
 
 ::::::::::::::::::::::::::::::::::::: tab
 
@@ -57,7 +57,7 @@ Datasets and results live in S3. We work from a small JupyterLab notebook instan
 
 **The SageMaker notebook instance is where you work.** It is a small machine running JupyterLab, started at the beginning of the workshop and stopped at the end, and every notebook in the lesson runs on it. It is where code is written, scripts are tested on small data, jobs are launched and results are read back. It needs little power, because the expensive work runs elsewhere, so it is an `ml.t3.medium` at about five cents an hour. The cheap notebook stays up while you work, and the larger instances are paid for only while a job needs them. The [Notebooks as Controllers](03_SageMaker-notebooks-as-controllers.md) episode creates it, and the two after that connect it to S3 and to a copy of the lesson's code.
 
-You do not need the notebook instance to use AWS. The same jobs can be launched with the AWS CLI from your own computer, and the optional [The Same Jobs from the Terminal](14_CLI-equivalents.md) episode does that. We start with the notebook for two reasons. In a classroom every learner gets the same environment with nothing to install, and on a shared account every launched job has its code in a notebook the administrators can open, which is how a problem gets tracked down fast when a learner hits one.
+We start with the notebook for two reasons. In a classroom every learner gets the same environment with nothing to install, and on a shared account every launched job has its code in a notebook the administrators can open, which is how a problem gets tracked down fast when a learner hits one.
 
 ### SageMaker
 
