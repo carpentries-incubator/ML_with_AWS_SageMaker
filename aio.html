@@ -666,7 +666,7 @@ episode does that. The tabs below say more about each of the four.</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
 <p><strong>Amazon S3 stores the data and the results.</strong> <a href="https://aws.amazon.com/s3/" class="external-link">S3</a> is object storage, organized in
 <em>buckets</em>. Datasets stay in a bucket instead of on the notebook
 instance, every SageMaker job reads its inputs from a bucket and writes
@@ -675,7 +675,7 @@ month. You create a bucket of your own in the next episode and use it
 for the rest of the workshop. The larger datasets are already in a
 shared bucket the instructors staged.</p>
 </div>
-<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
+<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
 <p><strong>The SageMaker notebook instance is where you work.</strong>
 It is a small machine running JupyterLab, started at the beginning of
 the workshop and stopped at the end, and every notebook in the lesson
@@ -693,7 +693,7 @@ shared account every launched job has its code in a notebook the
 administrators can open, which is how a problem gets tracked down fast
 when a learner hits one.</p>
 </div>
-<div id="nav-tabpanel-1-3" class="tab-pane" aria-labelledby="nav-tab-1-3" role="tabpanel">
+<div id="nav-tabpanel-1-3" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-3">
 <p><strong>Amazon SageMaker runs the ML jobs.</strong> <a href="https://aws.amazon.com/sagemaker/" class="external-link">SageMaker</a> is AWS’s managed
 machine learning service. You give it a training or inference script,
 the input data and an instance type. It starts that instance, runs the
@@ -722,7 +722,7 @@ seconds, and tags split the bill by project. Training a hundred small
 models on a dataset under 10 GB costs under <code>$20</code>.</li>
 </ul>
 </div>
-<div id="nav-tabpanel-1-4" class="tab-pane" aria-labelledby="nav-tab-1-4" role="tabpanel">
+<div id="nav-tabpanel-1-4" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-4">
 <p><strong>Amazon Bedrock serves hosted models.</strong> Sometimes there
 is no model to train or host. You want to send a model a prompt and get
 a response. <a href="https://aws.amazon.com/bedrock/" class="external-link">Bedrock</a> gives
@@ -2357,7 +2357,7 @@ task?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>One way to do it:</li>
@@ -5169,7 +5169,7 @@ any links that you are not going to use.
 </div>
 </section></section><section id="aio-08_Hyperparameter-tuning"><p>Content from <a href="08_Hyperparameter-tuning.html">Hyperparameter Tuning in SageMaker: Neural Network Example</a></p>
 <hr>
-<p>Last updated on 2026-11-11 |
+<p>Last updated on 2026-11-19 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/08_Hyperparameter-tuning.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <div class="text-end">
@@ -5510,8 +5510,10 @@ episode did. For a large one,
 <code>helpers.estimate_training_cost</code> gives it. Here it is about 1
 minute.</li>
 <li>
-<code>price_per_hour</code>: the instance’s rate from the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
-for ML</a> page, the same variable the estimator cell above set.</li>
+<code>instance_type</code>: the child jobs’ instance, the same
+<code>instance_type</code> the estimator above uses. The function looks
+up its hourly rate in the lesson’s price table, as the training
+episodes’ estimators do.</li>
 <li>
 <code>max_jobs</code>: how many child jobs the tuner may launch in
 total, the same <code>max_jobs</code> you give the tuner.</li>
@@ -5532,7 +5534,7 @@ The whole search, as a dictionary, comes back too.</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" tabindex="-1" aria-label="code-block-8-1"></a>helpers.estimate_tuning_cost(</span>
 <span id="cb8-2"><a href="#cb8-2" tabindex="-1" aria-label="code-block-8-2"></a>    train_minutes_per_job<span class="op">=</span><span class="dv">1</span>,     <span class="co"># a child job's billable minutes after startup, from the PyTorch episode's CPU job</span></span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1" aria-label="code-block-8-3"></a>    price_per_hour<span class="op">=</span>price_per_hour,   <span class="co"># ml.m5.large, set with the estimator above</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1" aria-label="code-block-8-3"></a>    instance_type<span class="op">=</span>instance_type,     <span class="co"># ml.m5.large, set with the estimator above</span></span>
 <span id="cb8-4"><a href="#cb8-4" tabindex="-1" aria-label="code-block-8-4"></a>    max_jobs<span class="op">=</span><span class="dv">1</span>,                  <span class="co"># the tuner's max_jobs: one child job, to test the setup</span></span>
 <span id="cb8-5"><a href="#cb8-5" tabindex="-1" aria-label="code-block-8-5"></a>    max_parallel_jobs<span class="op">=</span><span class="dv">1</span>,         <span class="co"># the tuner's max_parallel_jobs: one instance, so startup is paid once</span></span>
 <span id="cb8-6"><a href="#cb8-6" tabindex="-1" aria-label="code-block-8-6"></a>)<span class="op">;</span></span></code></pre>
@@ -5624,7 +5626,7 @@ simultaneously.</strong> Two at a time is a good default.</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a>helpers.estimate_tuning_cost(</span>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a>    train_minutes_per_job<span class="op">=</span><span class="dv">1</span>,     <span class="co"># unchanged: the child jobs are the same job</span></span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a>    price_per_hour<span class="op">=</span>price_per_hour,</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a>    instance_type<span class="op">=</span>instance_type,</span>
 <span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a>    max_jobs<span class="op">=</span><span class="dv">10</span>,                 <span class="co"># ten child jobs</span></span>
 <span id="cb11-5"><a href="#cb11-5" tabindex="-1" aria-label="code-block-11-5"></a>    max_parallel_jobs<span class="op">=</span><span class="dv">2</span>,         <span class="co"># two at a time, so startup is paid twice and the other eight jobs reuse warm instances</span></span>
 <span id="cb11-6"><a href="#cb11-6" tabindex="-1" aria-label="code-block-11-6"></a>)<span class="op">;</span></span></code></pre>
@@ -12515,7 +12517,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -12579,7 +12581,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still downloading or
@@ -13598,7 +13600,7 @@ any links that you are not going to use.
 </div>
 </section></section><section id="aio-14_CLI-equivalents"><p>Content from <a href="14_CLI-equivalents.html">(Optional) The Same Jobs from the Terminal</a></p>
 <hr>
-<p>Last updated on 2026-11-04 |
+<p>Last updated on 2026-11-19 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/14_CLI-equivalents.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <div class="text-end">
@@ -14593,7 +14595,7 @@ in the request:</p>
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
 <pre class="sourceCode bash" tabindex="0"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" tabindex="-1" aria-label="code-block-23-1"></a><span class="ex">python</span> <span class="at">-c</span> <span class="st">"import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); import helpers; helpers.estimate_training_cost(params_billions=0.125, examples=1_000_000, tokens_per_example=256, epochs=3, instance_type='ml.g6.xlarge')"</span></span>
-<span id="cb23-2"><a href="#cb23-2" tabindex="-1" aria-label="code-block-23-2"></a><span class="ex">python</span> <span class="at">-c</span> <span class="st">"import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); import helpers; helpers.estimate_tuning_cost(train_minutes_per_job=1, price_per_hour=0.115, max_jobs=8)"</span></span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1" aria-label="code-block-23-2"></a><span class="ex">python</span> <span class="at">-c</span> <span class="st">"import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); import helpers; helpers.estimate_tuning_cost(train_minutes_per_job=1, instance_type='ml.m5.large', max_jobs=8)"</span></span>
 <span id="cb23-3"><a href="#cb23-3" tabindex="-1" aria-label="code-block-23-3"></a><span class="ex">python</span> <span class="at">-c</span> <span class="st">"import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); import helpers; helpers.estimate_finetune_cost(params_billions=3.75, examples=251, tokens_per_example=1600, epochs=2, instance_type='ml.g5.xlarge')"</span></span></code></pre>
 </div>
 <p>Then check the request. <code>scripts/check_request.py</code> reads
@@ -15227,7 +15229,7 @@ stopped your notebook instance and walked away?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>A complete list for someone who did every episode, including the
 optional ones:</p>
@@ -15394,8 +15396,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/aio.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/aio.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-11-18",
-  "datePublished": "2026-11-18"
+  "dateModified": "2026-11-19",
+  "datePublished": "2026-11-19"
 }
 
   </script><script>

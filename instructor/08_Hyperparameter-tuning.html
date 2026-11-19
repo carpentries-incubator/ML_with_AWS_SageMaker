@@ -423,7 +423,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Hyperparameter Tuning in SageMaker: Neural Network Example</h1>
-        <p>Last updated on 2026-11-11 |
+        <p>Last updated on 2026-11-19 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/08_Hyperparameter-tuning.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -756,8 +756,10 @@ episode did. For a large one,
 <code>helpers.estimate_training_cost</code> gives it. Here it is about 1
 minute.</li>
 <li>
-<code>price_per_hour</code>: the instance’s rate from the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">Instances
-for ML</a> page, the same variable the estimator cell above set.</li>
+<code>instance_type</code>: the child jobs’ instance, the same
+<code>instance_type</code> the estimator above uses. The function looks
+up its hourly rate in the lesson’s price table, as the training
+episodes’ estimators do.</li>
 <li>
 <code>max_jobs</code>: how many child jobs the tuner may launch in
 total, the same <code>max_jobs</code> you give the tuner.</li>
@@ -777,7 +779,7 @@ The whole search, as a dictionary, comes back too.</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" tabindex="-1" aria-label="code-block-8-1"></a>helpers.estimate_tuning_cost(</span>
 <span id="cb8-2"><a href="#cb8-2" tabindex="-1" aria-label="code-block-8-2"></a>    train_minutes_per_job<span class="op">=</span><span class="dv">1</span>,     <span class="co"># a child job's billable minutes after startup, from the PyTorch episode's CPU job</span></span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1" aria-label="code-block-8-3"></a>    price_per_hour<span class="op">=</span>price_per_hour,   <span class="co"># ml.m5.large, set with the estimator above</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1" aria-label="code-block-8-3"></a>    instance_type<span class="op">=</span>instance_type,     <span class="co"># ml.m5.large, set with the estimator above</span></span>
 <span id="cb8-4"><a href="#cb8-4" tabindex="-1" aria-label="code-block-8-4"></a>    max_jobs<span class="op">=</span><span class="dv">1</span>,                  <span class="co"># the tuner's max_jobs: one child job, to test the setup</span></span>
 <span id="cb8-5"><a href="#cb8-5" tabindex="-1" aria-label="code-block-8-5"></a>    max_parallel_jobs<span class="op">=</span><span class="dv">1</span>,         <span class="co"># the tuner's max_parallel_jobs: one instance, so startup is paid once</span></span>
 <span id="cb8-6"><a href="#cb8-6" tabindex="-1" aria-label="code-block-8-6"></a>)<span class="op">;</span></span></code></pre>
@@ -866,7 +868,7 @@ simultaneously.</strong> Two at a time is a good default.</p>
 </h3>
 <pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" tabindex="-1" aria-label="code-block-11-1"></a>helpers.estimate_tuning_cost(</span>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1" aria-label="code-block-11-2"></a>    train_minutes_per_job<span class="op">=</span><span class="dv">1</span>,     <span class="co"># unchanged: the child jobs are the same job</span></span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a>    price_per_hour<span class="op">=</span>price_per_hour,</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1" aria-label="code-block-11-3"></a>    instance_type<span class="op">=</span>instance_type,</span>
 <span id="cb11-4"><a href="#cb11-4" tabindex="-1" aria-label="code-block-11-4"></a>    max_jobs<span class="op">=</span><span class="dv">10</span>,                 <span class="co"># ten child jobs</span></span>
 <span id="cb11-5"><a href="#cb11-5" tabindex="-1" aria-label="code-block-11-5"></a>    max_parallel_jobs<span class="op">=</span><span class="dv">2</span>,         <span class="co"># two at a time, so startup is paid twice and the other eight jobs reuse warm instances</span></span>
 <span id="cb11-6"><a href="#cb11-6" tabindex="-1" aria-label="code-block-11-6"></a>)<span class="op">;</span></span></code></pre>
@@ -1338,8 +1340,8 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/08_Hyperparameter-tuning.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/08_Hyperparameter-tuning.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-11-11",
-  "datePublished": "2026-11-18"
+  "dateModified": "2026-11-19",
+  "datePublished": "2026-11-19"
 }
 
   </script><script>
