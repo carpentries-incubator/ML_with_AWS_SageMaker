@@ -663,17 +663,23 @@ def explain_refusal(minutes=60, region=None):
     return found
 
 
-def estimate_tuning_cost(train_minutes_per_job, price_per_hour, max_jobs, max_parallel_jobs=2, startup_minutes=2):
+def estimate_tuning_cost(train_minutes_per_job, max_jobs, max_parallel_jobs=2, instance_type=None, startup_minutes=2,
+                         price_per_hour=None):
     """Estimate a hyperparameter tuning job's bill before launching it, from the parameters the tuner takes.
 
     train_minutes_per_job: the billable minutes one child job spends after startup (training, evaluation, model
     upload). For a small model, time a short run and scale it, as the PyTorch episode did; for a large one,
-    estimate_training_cost gives it. The tuner keeps each of its max_parallel_jobs instances between child jobs,
+    estimate_training_cost gives it. instance_type: the child jobs' instance, priced from the lesson's table as the
+    other estimators do (price_per_hour overrides it for an instance the table lacks). The tuner keeps each of its max_parallel_jobs instances between child jobs,
     so the startup (container pull and data download, startup_minutes) is paid once per parallel slot, not once
     per job, and every later child job on a slot bills only its own minutes. The bill is the sum over child jobs;
     the tuning job itself is free. Wall-clock is the startup plus the rounds of parallel jobs, before the unbilled
     minute or two of provisioning.
     """
+    if price_per_hour is None:
+        if instance_type is None:
+            raise ValueError("give instance_type (e.g. 'ml.m5.large'), or price_per_hour for an instance the lesson's table lacks")
+        price_per_hour = instance_price(instance_type)
     slots = min(max_parallel_jobs, max_jobs)
     rounds = -(-max_jobs // slots)                                   # ceiling division
     billable_minutes = slots * startup_minutes + max_jobs * train_minutes_per_job
@@ -682,7 +688,7 @@ def estimate_tuning_cost(train_minutes_per_job, price_per_hour, max_jobs, max_pa
     max_run_seconds = int(2 * (startup_minutes + train_minutes_per_job) * 60)   # per child job, twice the estimate
     print(f"child jobs:   {max_jobs} jobs, {slots} at a time, {rounds} round(s)")
     print(f"billable:     {billable_minutes:.0f} min = {slots} x {startup_minutes} min startup + {max_jobs} x {train_minutes_per_job} min per job")
-    print(f"cost:         ~${cost:.2f} at ${price_per_hour}/h")
+    print(f"cost:         ~${cost:.2f} at ${price_per_hour}/h" + (f" ({instance_type})" if instance_type else ""))
     print(f"wall-clock:   ~{wall_minutes:.0f} min, plus a minute or two of provisioning")
     print(f"max_run:      {max_run_seconds} s per child job")
     return {"billable_minutes": billable_minutes, "cost": round(cost, 3), "wall_minutes": wall_minutes,

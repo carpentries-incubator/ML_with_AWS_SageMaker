@@ -386,7 +386,7 @@ Before sending it, estimate it, as the notebooks did before every launch. Nothin
 
 ```bash
 python -c "import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); import helpers; helpers.estimate_training_cost(params_billions=0.125, examples=1_000_000, tokens_per_example=256, epochs=3, instance_type='ml.g6.xlarge')"
-python -c "import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); import helpers; helpers.estimate_tuning_cost(train_minutes_per_job=1, price_per_hour=0.115, max_jobs=8)"
+python -c "import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); import helpers; helpers.estimate_tuning_cost(train_minutes_per_job=1, instance_type='ml.m5.large', max_jobs=8)"
 python -c "import sys; sys.path.insert(0, 'ML_with_AWS_SageMaker/scripts'); import helpers; helpers.estimate_finetune_cost(params_billions=3.75, examples=251, tokens_per_example=1600, epochs=2, instance_type='ml.g5.xlarge')"
 ```
 

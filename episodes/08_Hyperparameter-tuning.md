@@ -198,7 +198,7 @@ Now we give the tuner the training and validation `.npz` files the PyTorch episo
 Estimate first, as before every launch. The training episodes estimated one job. A tuning job is many, and `helpers.estimate_tuning_cost` does the arithmetic from the same numbers the tuner takes. Its first input is the minutes one child job bills after its startup, which the PyTorch episode's CPU job measured: about 3 billable minutes, 2 of them startup, so about 1 minute of training, evaluation and model upload. The tuner keeps each instance between child jobs, so startup is paid once per parallel slot and every later job on that slot bills only its own minute. Its inputs are the numbers the tuner takes plus one measurement:
 
 - `train_minutes_per_job`: the billable minutes one child job spends after its startup, on training, evaluation and the model upload. For a small model, time a short run and scale it, as the PyTorch episode did. For a large one, `helpers.estimate_training_cost` gives it. Here it is about 1 minute.
-- `price_per_hour`: the instance's rate from the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page, the same variable the estimator cell above set.
+- `instance_type`: the child jobs' instance, the same `instance_type` the estimator above uses. The function looks up its hourly rate in the lesson's price table, as the training episodes' estimators do.
 - `max_jobs`: how many child jobs the tuner may launch in total, the same `max_jobs` you give the tuner.
 - `max_parallel_jobs`: how many run at once, the same `max_parallel_jobs`. This is the number of instances the tuner keeps up, so it is the number of times startup is paid.
 - `startup_minutes`: the container pull and data download, 2 by default, from the training episodes' measured jobs.
@@ -208,7 +208,7 @@ It prints the billable minutes with their breakdown, the cost, the wall-clock be
 ```python
 helpers.estimate_tuning_cost(
     train_minutes_per_job=1,     # a child job's billable minutes after startup, from the PyTorch episode's CPU job
-    price_per_hour=price_per_hour,   # ml.m5.large, set with the estimator above
+    instance_type=instance_type,     # ml.m5.large, set with the estimator above
     max_jobs=1,                  # the tuner's max_jobs: one child job, to test the setup
     max_parallel_jobs=1,         # the tuner's max_parallel_jobs: one instance, so startup is paid once
 );
@@ -269,7 +269,7 @@ Estimate first. The same call with the new limits:
 ```python
 helpers.estimate_tuning_cost(
     train_minutes_per_job=1,     # unchanged: the child jobs are the same job
-    price_per_hour=price_per_hour,
+    instance_type=instance_type,
     max_jobs=10,                 # ten child jobs
     max_parallel_jobs=2,         # two at a time, so startup is paid twice and the other eight jobs reuse warm instances
 );
