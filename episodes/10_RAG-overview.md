@@ -53,7 +53,7 @@ The difference is in how each one bills.
 
 Self-hosting on SageMaker gives you control over the weights, the libraries and the hardware, which matters for a specific open-weight model or your own fine-tune. The trade is that a rented GPU bills while the instance runs, whether or not it is generating answers, and research work is mostly occasional experiments, not a steady stream of requests. A GPU instance is a rental whose meter runs until you turn it off, and forgetting to is a common way a research team spends its cloud budget on nothing. Bedrock has no such failure. Stop calling it and you stop paying.
 
-### What forgetting costs
+### A GPU instance left running
 
 A GPU notebook instance left running after you close your laptop (on-demand prices at the time of writing; the [instances page](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) has the current ones):
 
@@ -99,6 +99,8 @@ The four differ less in what the model computes than in how long the hardware st
 Call the embedding and generation models from your pipeline. You keep the retrieval logic; AWS keeps the models. You pay per token, nothing runs between calls, and there is nothing to shut down. Bedrock is also where proprietary models such as Claude are available without a separate contract.
 
 **Use it for:** any RAG system where a catalog model will do, from prototypes and course projects to research tools and production chatbots.
+
+Bedrock can also serve a model it does not carry. **Custom Model Import** takes an open-weight checkpoint from your bucket and serves it the same way, with nothing running between calls, for a short list of supported architectures. The Processing Jobs episode tries it.
 
 ### 2. SageMaker Processing jobs
 
