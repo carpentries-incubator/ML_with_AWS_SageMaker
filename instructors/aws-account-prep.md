@@ -37,7 +37,7 @@ Console: **Service Quotas → AWS services → Amazon SageMaker**, in the region
 | `ml.g5.xlarge for training job usage` | 100 | fine-tuning episode (one job per student at once) |
 | `ml.g6e.xlarge for training job usage` | 100 | optional: fine-tuning Exercise 2 |
 | `Number of instances across all training jobs` | 250 (already applied) | account-level ceiling; 250 covers 100 students |
-| `ml.g5.12xlarge for training job usage` and `ml.g6e.12xlarge for training job usage` | 4 each | the four-GPU instances the fine-tuning episode estimates, for 70B LoRA runs or large datasets; enough for a few learners at once |
+| `ml.g5.12xlarge for training job usage` and `ml.g6e.12xlarge for training job usage` | 4 each | the four-GPU instances the fine-tuning episode estimates, for 70B LoRA runs or large datasets |
 | `ml.g5.xlarge for processing job usage` | 200 | Processing Jobs episode (both jobs) and fine-tuning homework (two jobs per student, possibly at once) |
 | `ml.g6.xlarge for training job usage` and `for processing job usage` | 100 each (fallback) | the capacity fallback for `ml.g5.xlarge` at the end of this page; it is on the guard-rail list, and it needs a quota before it can be used |
 | `ml.g6e.xlarge for processing job usage` | 0 | no episode uses it; the Processing Jobs episode runs Qwen3-8B on `ml.g5.xlarge`, and the 27B generator runs only in the optional GPU-notebook episode, on a notebook instance |
@@ -252,23 +252,6 @@ Learners reach the account through the console, the SageMaker SDK in notebooks, 
       }
     },
     {
-      "Sid": "FourGpuTypesCapAtFourHours",
-      "Effect": "Deny",
-      "Action": [
-        "sagemaker:CreateTrainingJob",
-        "sagemaker:CreateProcessingJob"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "ForAnyValue:StringEquals": {
-          "sagemaker:InstanceTypes": ["ml.g5.12xlarge", "ml.g6e.12xlarge"]
-        },
-        "NumericGreaterThan": {
-          "sagemaker:MaxRuntimeInSeconds": "14400"
-        }
-      }
-    },
-    {
       "Sid": "ProcessingJobsNeedACap",
       "Effect": "Deny",
       "Action": [
@@ -288,7 +271,7 @@ Learners reach the account through the console, the SageMaker SDK in notebooks, 
 What each statement does, and what it costs you:
 
 - **NothingThatRunsUntilDeleted** blocks the three resource kinds with no runtime cap. Nothing in the lesson creates any of them, so no episode changes. This is the statement that would have stopped the participant who spent a year's credits from a terminal.
-- **OnlyLessonInstanceTypes** refuses any job or notebook whose instance type is not on the list. The list must match the quota table above exactly, including the capacity fallbacks; a type you forget here fails for every learner at once, from the console too. Keep `ml.g6e.xlarge` on the list only if you want the optional GPU-notebook episode to be possible. The two four-GPU types are on the list with their own cap, **FourGpuTypesCapAtFourHours**. Under the 48-hour cap one hung job costs `$125` on the largest single GPU but `$630` on an `ml.g6e.12xlarge`, so runs on those types are limited to four hours, `$55` at most. IAM ANDs the conditions within one statement, so the type list and the shorter cap go together in the second statement and the 48-hour statement is unchanged.
+- **OnlyLessonInstanceTypes** refuses any job or notebook whose instance type is not on the list. The list must match the quota table above exactly, including the capacity fallbacks; a type you forget here fails for every learner at once, from the console too. Keep `ml.g6e.xlarge` on the list only if you want the optional GPU-notebook episode to be possible. The two four-GPU types are on the list for learners whose models need them. Under the 48-hour cap one hung job costs `$125` on the largest single GPU and `$630` on an `ml.g6e.12xlarge`, so the per-learner budget alert below matters more once they are on the list, and the lesson's launch check prints what a job that runs to its cap would cost.
 - **The three tag statements** refuse a job or notebook created without each of the cost-allocation keys. **NameTagNotBlank** refuses a `Name` that is present but empty, which passes the first check and still bills as nobody's. **ProjectTagFromTheList and PurposeTagFromTheList** refuse any `Project` that is not on the list and any `Purpose` that is not one of the five words the lesson uses. The project list is the workshop's own project, `SinkOrSwim`, plus the year's challenge names; it is the one thing in the policy that changes every year, and it also decides your own test runs. The lesson's example values, `DoeJohn` and `SinkOrSwim`, are allowed on purpose, so that a learner who runs a notebook without replacing them is not stopped at the first launch; what they cost is a job on the bill under `DoeJohn`, which Cost Explorer shows and the first episodes tell learners to check.
 - **Buckets are not covered.** A bucket can be created without tags, from the console or the SDK, and the policy does not try to stop it: the S3 console creates the bucket and attaches the tags in a second call, so a deny on an untagged `CreateBucket` would refuse every bucket. An untagged bucket costs cents a month and shows on the bill as unallocated, which is where you find it at cleanup. The S3 episode makes the tags mandatory in words instead.
 - **RuntimeCapAtMost48Hours and ProcessingJobsNeedACap** bound what one job can bill. A training job always carries a `StoppingCondition` (the API requires one, and the SDK's default is 24 hours); a Processing job does not, and without one it runs until the script ends. With the instance list above, the most one job can now cost is 48 hours of the dearest type, `ml.g6e.2xlarge` at `$2.80`: about `$135`. Lower the number to tighten it; the credit-request form promises learners 48 hours, so change both together.
