@@ -100,7 +100,7 @@ Call the embedding and generation models from your pipeline. You keep the retrie
 
 **Use it for:** any RAG system where a catalog model will do, from prototypes and course projects to research tools and production chatbots.
 
-Bedrock can also serve a model that is not in its catalog. **Custom Model Import** takes an open-weight checkpoint from your bucket and serves it the same way, with nothing running between calls, for a short list of supported architectures. The RAG Beyond the Bedrock Catalog episode tries it.
+Bedrock can also serve a model that is not in its catalog. **Custom Model Import** takes an open-weight checkpoint from your bucket and serves it the same way, with nothing running between calls, for a short list of supported architectures. The Bedrock episode tries it in its last step.
 
 ### 2. SageMaker Processing jobs
 
