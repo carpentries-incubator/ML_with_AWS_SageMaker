@@ -16,8 +16,7 @@ exercises: 15
 
 - Verify that our SageMaker notebook instance has a working GPU and compatible Python environment.
 - Reuse the WattBot metadata and questions from the shared bucket, and the `chunks.jsonl` the Bedrock episode cached in your own bucket.
-- Build the embedding matrix and the retrieval step with a self-hosted embedding model, in plain NumPy.
-- Build a small retrieval helper that finds the most relevant chunks for a question using cosine similarity in embedding space.
+- Build the embedding matrix with a self-hosted embedding model and retrieve the most relevant chunks for a question by cosine similarity, in plain NumPy.
 - Serve a 27B open-weight generator (Qwen3.8-27B in FP8, via vLLM) on the notebook's GPU and wire it to the retriever to produce WattBot-format answers (including `answer`, `ref_id`, `ref_url`, and `supporting_materials`).
 - Explain why inference uses quantized weights instead of bf16, and what a self-hosted GPU costs per hour, per forgotten weekend, and per forgotten month.
 - Add a second LLM pass that generates short explanations and marks whether the evidence comes from text, figures, tables, or a combination.
@@ -30,23 +29,19 @@ exercises: 15
 
 ### Optional, self-study episode
 
-This episode is not taught in the workshop. **The Bedrock and Processing Jobs episodes are the default ways to run RAG; this one is for the case where you need to work on a self-hosted model by hand, and only if you will remember to stop the instance.** **Do not run this notebook on the controller instance from the other episodes. Create a new GPU notebook instance for it (Setup below). On a CPU instance the vLLM install and the 27 GB model load will exhaust memory and freeze your JupyterLab.** It runs the same pipeline as the Processing Jobs episode on a GPU notebook instance, which is the right tool for prototyping alone at a keyboard and the wrong one for a room of a hundred people with meters running. Work through it on your own when you want to see model loading, GPU memory and generation as plain Python. Read the cost callout first.
+This episode is not taught in the workshop. Work through it on your own, on a separate GPU notebook instance created in the Setup section below, and read the cost callout first. **Do not run it on the controller instance from the other episodes.** On a CPU instance the vLLM install and the 27 GB model load exhaust memory and freeze JupyterLab.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 ## Why run RAG on a GPU notebook?
 
-The Bedrock and Processing Jobs episodes are the better patterns for most research work. Bedrock serves the models for you, and a Processing job rents a GPU only long enough to finish a batch. A notebook GPU gives you something different, an interactive place to load a model, watch GPU memory, try retrieval strategies and change prompts without repackaging a job after every experiment.
+The Bedrock and Processing Jobs episodes are the patterns for most research work. Bedrock serves the model for you, and a Processing job rents a GPU for the length of a batch and releases it, which is the right way to run a pipeline once it works. What a job does not give you is interactivity. Every change to the prompt, the retrieval or the model means repackaging and relaunching it, and what comes back is a log. A GPU notebook keeps the loaded model between cells, so you can watch GPU memory, try a retrieval strategy, change a prompt and read the answer, and launch the job once the pipeline is settled.
 
-That matters when you need a model Bedrock does not offer and want to work on it by hand. This episode runs the WattBot pipeline with **Qwen3.8-27B** as the generator, a 27-billion-parameter open-weight (Apache 2.0) model released in August 2026 that Bedrock does not carry, loaded in FP8 through vLLM beside a local embedding model. Everything a managed model API hides, loading an embedding model, loading a generator, fitting both in GPU memory, is a cell you can run and change.
-
-A 27B model is large enough that the choice of GPU and weight precision matters. At about one byte per weight, FP8 puts the weights near 27 GB, and a 48 GB L40S leaves room for the embedding model and the attention cache that generation needs. The 24 GB GPU the earlier episodes used cannot hold this setup. That makes the notebook a good place to learn about model serving, and an expensive place to leave idle.
-
-**Treat this as an interactive experiment, not a deployment pattern.** Create the separate GPU notebook described below. Do not run it on the CPU controller from the other episodes.
+The model here is one Bedrock does not carry, so, as in the Processing Jobs episode, it is loaded by hand. This episode runs the WattBot pipeline with **Qwen3.8-27B** as the generator, a 27-billion-parameter open-weight (Apache 2.0) model released in August 2026, the larger relative of the Qwen3-8B the Processing Jobs episode ran, loaded in FP8 through vLLM beside a local embedding model. Everything a managed model API hides, loading an embedding model, loading a generator, fitting both in GPU memory, is a cell you can run and change.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
-### This instance bills `$2.61` an hour until you stop it, and nothing stops it for you
+### This instance bills `$2.61` an hour until you stop it
 
 A GPU notebook instance is a rental with the meter running. It bills by the hour from the moment it starts until the moment *you* stop it, whether it is generating answers, sitting at an idle prompt, or showing a closed browser tab on a laptop that went home for the weekend. Nothing in this episode turns it off for you. The instance we use, `ml.g6e.xlarge` (one L40S GPU, 48 GB), costs **`$2.61` per hour** on-demand in `us-east-1` (AWS price list, October 2026). That is:
 
@@ -75,29 +70,27 @@ What keeps this safe:
 
 ## What we'll build
 
-We reuse the [WattBot 2026](https://www.kaggle.com/competitions/WattBot2026) document chunks and evaluation questions prepared in the Bedrock episode. The pipeline keeps its purpose. What changes is that its two managed model calls become two models running on this GPU, `thenlper/gte-large` for embeddings and Qwen3.8-27B for answers. Qwen3.8-27B is the newer and larger relative of the Qwen3-8B the Processing Jobs episode ran, and sits within a few points of a frontier commercial model on agent tasks and science questions (see that episode's chart), which is why it is worth the trouble of hosting.
+We reuse the [WattBot 2026](https://www.kaggle.com/competitions/WattBot2026) document chunks and evaluation questions prepared in the Bedrock episode. The pipeline keeps its purpose. What changes is that its two managed model calls become two models running on this GPU, `thenlper/gte-large` for embeddings and Qwen3.8-27B for answers.
 
 First we load the cached chunks and embed them into a searchable matrix. Then we implement cosine-similarity retrieval so a question brings back the most relevant passages. Finally we load Qwen through vLLM, pass those passages into the same WattBot prompts, and generate answers, citations and short explanations that label the evidence type, `[text]`, `[table]`, `[figure]` or a combination such as `[text+table]`. Scoring those answers against the competition's references tells us how the self-hosted pipeline performs, not only whether it runs.
 
-The workflow is kept close to the earlier episodes on purpose. With the documents, prompts and scoring the same, the differences in model serving are the only thing left to compare.
+With the documents, prompts and scoring the same as the earlier episodes, the model serving is the only thing that differs.
 
 
 ## Notebook + dataset setup
 
 For this episode you need a notebook instance with a GPU that can hold the FP8 27B model plus the embedding model plus working memory for generation. Create a new notebook instance (same steps as the controller-notebook episode, same three tags) with:
 
-- **Instance type:** `ml.g6e.xlarge` (1 × L40S, 48 GB GPU memory, `$2.61`/h on the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page). The FP8 weights are ~27 GB; the rest is for the embedding model and the KV cache that generation needs for long prompts. The L40S runs FP8 natively. A 24 GB instance such as `ml.g5.xlarge` cannot hold this model; a 16 GB `ml.g4dn.xlarge` cannot hold anything in this size class.
-- **Volume size:** `100` GB (the default of 5 GB will not fit the weights or the vLLM install). This volume bills at `$0.14` per GB-month even while the instance is stopped.
+- **Instance type:** `ml.g6e.xlarge` (1 × L40S, 48 GB GPU memory, `$2.61`/h on the [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) page). At about one byte per weight, the FP8 weights are ~27 GB; the rest is for the embedding model and the KV cache that generation needs for long prompts. The L40S runs FP8 natively. The 24 GB `ml.g5.xlarge` the earlier episodes used cannot hold this model, and a 16 GB `ml.g4dn.xlarge` cannot hold anything in this size class.
+- **Volume size:** `100` GB. The default of 5 GB will not fit the weights or the vLLM install.
 - **Tags:** the same `Project`, `Name`, `Purpose` keys as every other resource; `Purpose` is `Notebook`.
 
 Once it is `InService`, open JupyterLab, clone the lesson repository as in the controller-notebook episode (this is a new instance, so it has no copy yet), and open `/ML_with_AWS_SageMaker/notebooks/13_RAG-GPU-notebook.ipynb`. Select the **`conda_pytorch`** kernel.
 
-See [Instances for ML](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html) for further guidance. This instance bills by the hour from the moment it starts, whether or not it is doing anything. **Stop it when you leave**, and **delete it** when the episode is over.
-
 We reuse the same two buckets as the Bedrock episode, the shared bucket for `metadata.csv` and `train_QA.csv`, and your own bucket for the `wattbot/chunks.jsonl` you cached there. If you skipped that episode, go back and run its chunking step first. Your notebook instance carries the tags you gave it when you created it and your bucket carries its own tags, so in this episode those two resources are the only things being billed.
 
 
-###  Verify GPU and basic environment
+### Verify GPU and basic environment
 
 
 ```python
@@ -130,7 +123,7 @@ The install may replace PyTorch and then needs a kernel restart, so it comes bef
 
 ### Installing vLLM takes a few minutes, and the meter is running
 
-vLLM is the open-source inference engine that loads an open-weight model onto the GPU and answers chat requests from Python, the self-hosted counterpart of Bedrock's runtime (the Processing Jobs episode introduces it). `pip install vllm` downloads several gigabytes (it brings its own CUDA kernels and may replace the kernel's PyTorch build) and takes 5–10 minutes. Qwen3.8 needs vLLM 0.17 or newer. The 27 GB of model weights take another 4–6 minutes to download the first time. At `$2.61` an hour that is about 60 cents of waiting, which is fine; what is not fine is doing it twice because the instance was deleted and recreated. Keep the Hugging Face cache on the 100 GB volume (the `HF_HOME` line in the serving cell below does that) so the weights survive a stop/start.
+vLLM is the open-source inference engine that loads an open-weight model onto the GPU and answers chat requests from Python, the self-hosted counterpart of Bedrock's runtime (the Processing Jobs episode introduces it). `pip install vllm` downloads several gigabytes (it brings its own CUDA kernels and may replace the kernel's PyTorch build) and takes 5–10 minutes. Qwen3.8 needs vLLM 0.17 or newer. The 27 GB of model weights take another 4–6 minutes to download the first time. At `$2.61` an hour that is about 60 cents of waiting, which is fine; what is not fine is doing it twice because the instance was deleted and recreated. Keep the Hugging Face cache on the 100 GB volume (the `HF_HOME` line in the GPU check cell above does that) so the weights survive a stop/start.
 
 If the install changes PyTorch, restart the kernel (**Kernel → Restart**) before continuing.
 
@@ -300,26 +293,12 @@ Each chunk keeps a pointer back to its document and page metadata (`doc_id`, `ti
 
 ## Step 3 – Build an embedding matrix
 
-Now we embed each chunk into a vector with an open **embedding model**:
-
-### `thenlper/gte-large`
-
-The embedder the Processing Jobs episode used has 335 million parameters, 0.7 GB in bf16, 1,024-dimensional vectors, and about 1,100 chunks a minute on an A10G, so the 9,000 chunks here take a few minutes on this GPU.
-
-We will:
-
-1. Load the embedding model on GPU if available.
-2. Encode all chunks in batches.
-3. Store the resulting matrix as a `torch.Tensor` or `numpy.ndarray` along with the original `chunked_docs` list.
-
-Later, we’ll implement a small retrieval helper that does cosine-similarity search over this matrix, with no indexing library.
+Now we embed each chunk into a vector with an open **embedding model**, `thenlper/gte-large`, the one the Processing Jobs episode used. It has 335 million parameters, 0.7 GB in bf16, 1,024-dimensional vectors, and does about 1,100 chunks a minute on an A10G, so the 9,000 chunks here take a few minutes on this GPU. The result is one matrix, one row per chunk, kept beside the `chunked_docs` list it was made from.
 
 
 
 ```python
-# We'll use a stronger embedding model now that we have a GPU.
-# This model has ~335M parameters and benefits from GPU acceleration,
-# and fits beside the 27B generator on this 48 GB GPU.
+# The embedding model the Processing Jobs episode used: ~335M parameters, which fits beside the 27B generator on this 48 GB GPU
 embedding_model_id = "thenlper/gte-large"
 
 print("CUDA available for embeddings:", torch.cuda.is_available())
@@ -362,7 +341,7 @@ chunk_embeddings.shape
 ```
 
 
-### 4. Build a simple retrieval step (cosine similarity)
+## Step 4 – Retrieve by cosine similarity
 
 Retrieval here is cosine similarity between the question's vector and every chunk's vector, with the top *k* chunks as context, and nothing more. For nine thousand chunks that is one matrix multiply. A vector database (FAISS, Chroma, Weaviate) is the same step built for millions of chunks or many concurrent users, with approximate search, metadata filters and a shared index; swapping it in changes nothing else in the pipeline.
 
@@ -392,7 +371,7 @@ for r in test_retrieved:
 ```
 
 
-### 5. Serve the generator, Qwen3.8-27B in FP8, with vLLM
+## Step 5 – Serve the generator, Qwen3.8-27B in FP8, with vLLM
 
 For this episode we use **Qwen3.8-27B**, an open-weight model that Bedrock does not carry, in its **FP8** release (`Qwen/Qwen3.8-27B-FP8`), served with [vLLM](https://docs.vllm.ai/). It is a dense 27B model with a hybrid attention design (most layers use a linear-attention variant with a fixed-size state, so the KV cache stays small even for long prompts), a native 262K context, and a "thinking" mode that is on by default and that we turn off, because WattBot wants a JSON answer, not a reasoning trace.
 
@@ -400,15 +379,7 @@ For this episode we use **Qwen3.8-27B**, an open-weight model that Bedrock does 
 
 **Why vLLM and not `transformers.pipeline`?** vLLM is an inference server. It has the kernels for FP8 and for this model's hybrid attention, batches requests, and manages the KV cache so long prompts do not run out of memory. It is what you would deploy behind an API, and its offline `LLM` class is a two-line replacement for a `transformers.pipeline`.
 
-We will:
-
-1. Call the model once to propose an answer and supporting evidence.
-2. Call it a **second time** with a smaller prompt to generate a short explanation (<= 100 characters).
-
 ```python
-import os
-# Keep model weights on the notebook's 100 GB volume, not the small root disk.
-
 from vllm import LLM, SamplingParams
 
 qwen_model_id = "Qwen/Qwen3.8-27B-FP8"   # pre-quantized FP8 checkpoint; vLLM reads that from its config, so no quantization= argument is needed
@@ -468,7 +439,7 @@ print(f"Generator ({qwen_model_id}) test response: {test_response}")
 ```
 
 
-### 6. The prompts
+## Step 6 – The prompts
 
 `call_qwen_chat` has the signature the shared pipeline expects, `generate(system_prompt, user_prompt, max_new_tokens) -> str`, and `embed_query` has the other one. `run_single_qa` in `wattbot_rag.py` makes two calls per question with them:
 
@@ -481,7 +452,7 @@ print("-" * 80)
 print(explanation_system_prompt(with_evidence_type=True))
 ```
 
-### 7. Run over the full WattBot training set
+## Step 7 – Run over the WattBot training set
 
 For every row of `train_QA.csv`, `run_single_qa`:
 
@@ -532,7 +503,7 @@ print(f"Saved solutions for {len(solutions_df)} questions to: {solutions_path}")
 solutions_df.head(20)
 ```
 
-### Compare answers to ground truth
+## Step 8 – Compare answers to ground truth
 
 WattBot scores each prediction with the competition's own `Score.py`, 0.75 for `answer_value` (numeric within ±0.1% relative tolerance, categorical match after normalization, zero if you answer a question the corpus cannot answer), 0.20 for citation F1 against the ground-truth `ref_id` set, and 0.05 for a clean refusal when the answer is `is_blank`. `compute_wattbot_score` from `wattbot_rag.py` calls it for the headline number, adds a per-row score, and prints the worst rows with the model's explanation.
 
