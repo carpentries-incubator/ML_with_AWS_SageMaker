@@ -489,13 +489,12 @@ def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs
             print(f"warning:    {spec['gpu']}: {spec['note']}")
         if method == "full" and not from_scratch:
             print("warning:    full fine-tuning updates every weight; do not run one on the class account")
-        if method == "lora" and params_billions > 30:
-            print("warning:    LoRA above 30B is outside what the class account allows, which caps LoRA runs at 30B")
-        elif method == "lora" and not load_in_4bit and mem_gb > 48:
-            print("warning:    in bf16 this does not fit the 48 GB ml.g6e.xlarge, the largest GPU the class account allows; store the frozen "
-                  "weights in 4-bit (--load_in_4bit 1 on the script, load_in_4bit=True here) and it does, at the same cost")
+        if method == "lora" and not load_in_4bit and mem_gb > 48 and spec["gpus"] > 1:
+            print("note:       in bf16 this needs a multi-GPU box; with the frozen weights in 4-bit (--load_in_4bit 1 on the script, "
+                  "load_in_4bit=True here) it fits one 48 GB ml.g6e.xlarge, at about the same cost and a longer wall-clock")
         if spec["gpus"] > 1:
-            print("warning:    multi-GPU instance; not allowed on the class account, and more GPUs do not make the run cheaper")
+            print(f"note:       multi-GPU instance at ${spec['price']}/h: the GPUs split the work, so the run is shorter, not cheaper; "
+                  f"the account caps a run on it at 4 hours, ${4 * spec['price']:.0f} at most")
     return result
 
 
@@ -535,6 +534,9 @@ def load_guard_rails(path=GUARDRAILS_FILE):
         "purposes": statements["PurposeTagFromTheList"]["Condition"]["StringNotLike"]["aws:RequestTag/Purpose"],
         "instance_types": statements["OnlyLessonInstanceTypes"]["Condition"]["ForAnyValue:StringNotEquals"]["sagemaker:InstanceTypes"],
         "max_run_seconds": int(statements["RuntimeCapAtMost48Hours"]["Condition"]["NumericGreaterThan"]["sagemaker:MaxRuntimeInSeconds"]),
+        # the multi-GPU types carry a shorter cap of their own, so one hung job on a $13/h box stays under $55
+        "capped_instance_types": statements["FourGpuTypesCapAtFourHours"]["Condition"]["ForAnyValue:StringEquals"]["sagemaker:InstanceTypes"],
+        "capped_max_run_seconds": int(statements["FourGpuTypesCapAtFourHours"]["Condition"]["NumericGreaterThan"]["sagemaker:MaxRuntimeInSeconds"]),
     }
 
 
@@ -560,6 +562,9 @@ def check_launch(tags, instance_type=None, max_run=None):
         problems.append(f"instance type {instance_type} is not one the lesson uses: choose from {', '.join(rules['instance_types'])}")
     if max_run is not None and max_run > rules["max_run_seconds"]:
         problems.append(f"max_run of {max_run} s is above the account's cap of {rules['max_run_seconds']} s ({rules['max_run_seconds'] // 3600} hours)")
+    if max_run is not None and instance_type in rules["capped_instance_types"] and max_run > rules["capped_max_run_seconds"]:
+        problems.append(f"max_run of {max_run} s is above the {rules['capped_max_run_seconds'] // 3600}-hour cap the account puts on {instance_type}: "
+                        "a multi-GPU box bills several times a single GPU's rate, so its runs are kept short; split the work or ask the instructor")
     if problems:
         raise ValueError("this launch would be refused by the account:\n  - " + "\n  - ".join(problems))
     return tags
@@ -577,10 +582,7 @@ def check_finetune_launch(tags, instance_type, max_run, estimated_minutes, price
         problems += str(e).split("\n  - ")[1:]
     if method != "lora":
         problems.append(f'method="{method}": a full fine-tune updates every weight, needs 16 bytes per parameter, '
-                        "and is not run on the class account; use LoRA")
-    elif params_billions > 30:
-        problems.append(f"{params_billions}B parameters: a LoRA run above 30B does not fit the 48 GB GPU, the largest the account allows, "
-                        "even with the frozen weights in 4-bit")
+                        "and costs a hundred times the LoRA run; the lesson does not run one. Use LoRA")
     if max_run is None:
         problems.append("no max_run: the SDK would send 24 hours, so a hung job bills a day; set it to about twice the estimate")
     else:

@@ -34,7 +34,9 @@
             "ml.g5.xlarge",
             "ml.g6.xlarge",
             "ml.g6e.xlarge",
-            "ml.g6e.2xlarge"
+            "ml.g6e.2xlarge",
+            "ml.g5.12xlarge",
+            "ml.g6e.12xlarge"
           ]
         }
       }
@@ -160,6 +162,26 @@
       "Condition": {
         "NumericGreaterThan": {
           "sagemaker:MaxRuntimeInSeconds": "172800"
+        }
+      }
+    },
+    {
+      "Sid": "FourGpuTypesCapAtFourHours",
+      "Effect": "Deny",
+      "Action": [
+        "sagemaker:CreateTrainingJob",
+        "sagemaker:CreateProcessingJob"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "ForAnyValue:StringEquals": {
+          "sagemaker:InstanceTypes": [
+            "ml.g5.12xlarge",
+            "ml.g6e.12xlarge"
+          ]
+        },
+        "NumericGreaterThan": {
+          "sagemaker:MaxRuntimeInSeconds": "14400"
         }
       }
     },
