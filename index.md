@@ -34,7 +34,7 @@ Inference and retrieval-augmented generation (RAG). Training changes a model's p
 
 - **RAG with Bedrock.** Build the pipeline for WattBot, a challenge of questions about the environmental impact of AI. Split research papers into searchable passages, embed them, retrieve the relevant evidence, and produce answers with citations. The models are Bedrock's, with usage tracked through tagged inference profiles.
 - **Multimodal retrieval.** Extend the pipeline to retrieve from figures and tables as well as text, and measure whether that improves the answers.
-- **RAG beyond the Bedrock catalog.** Run the embedding and generation models yourself, as GPU Processing jobs that shut down when they finish, compare the results and the costs with Bedrock, and import a small open-weight model into Bedrock to see the route that needs no GPU. An optional episode runs the same pipeline interactively on a GPU notebook, to see model loading and inference step by step.
+- **RAG with SageMaker.** Run the embedding and generation models yourself, as GPU Processing jobs that shut down when they finish, and compare the results and the costs with Bedrock. An optional episode runs the same pipeline interactively on a GPU notebook, to see model loading and inference step by step.
 
 ### 4 Cleanup
 

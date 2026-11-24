@@ -445,7 +445,7 @@ Console: **Service Quotas → Amazon Bedrock**, and **Bedrock → Model access**
 
 ### The Custom Model Import role
 
-Step 5 of the RAG Beyond the Bedrock Catalog episode imports a small open-weight model into Bedrock. The import job runs as an IAM role that can read the learner's bucket, and the learner permission set cannot create roles, so the instructor creates one role for the account and runs that step in front of the class. From CloudShell, in the class region:
+The last step of the Bedrock episode imports a small open-weight model into Bedrock. The import job runs as an IAM role that can read the learner's bucket, and the learner permission set cannot create roles, so the instructor creates one role for the account and runs that step in front of the class. From CloudShell, in the class region:
 
 ```bash
 cat > trust.json <<'EOF'

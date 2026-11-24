@@ -20,6 +20,7 @@ exercises: 20
 - Embed chunks with Amazon Titan Text Embeddings and retrieve relevant context with cosine similarity.
 - Generate WattBot-format answers and explanations with a Bedrock-hosted model (DeepSeek V3) and score them against `train_QA.csv`.
 - Build a second index from page images with a multimodal embedding model and measure what it changes for the table and figure questions.
+- Check whether a model's architecture can be imported into Bedrock, import a small one with Custom Model Import, and call it through `converse`.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -1154,9 +1155,108 @@ Measured once on this corpus, 50 table and figure questions, Nova 2 Lite through
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
 
+## Step 14 – Custom Model Import: when the catalog lacks your model
+
+Bedrock has a second way to serve a model that is not in its catalog. **Custom Model Import** takes a Hugging Face checkpoint from your bucket, converts it once, and then serves it like a catalog model. You call it through `converse`, you pay only while it answers, and nothing runs between calls. When the model's architecture is supported, this is the cheapest way to serve an open-weight model, and it is the only way that leaves you no GPU to manage.
+
+The list of supported architectures is short. The import job reads `model_type` in the model's `config.json` and refuses any architecture it has not been built for. In November 2026 the list was Llama, Mistral, Mixtral, GPT-BigCode, Llama vision, Qwen2, Qwen2-VL, Qwen2.5-VL, GPT-OSS and Gemma 3 text. The Qwen3-8B the next episode runs is not on it, and neither is Qwen3.5. We tried the smallest Qwen3.5 model and the job failed with "Amazon Bedrock does not support the architecture (qwen3_5)". New architectures are added months after a model is released. Checking `config.json` takes thirty seconds and should come before any upload.
+
+The demo uses a model that is on the list, `Qwen/Qwen2.5-0.5B-Instruct`, which is under a gigabyte. It needs two things the rest of the lesson does not. The import job runs as an IAM role that can read your bucket, and the workshop's learner permission set cannot create roles, so on the shared account the instructors provide the role's ARN. The [account preparation checklist](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/aws-account-prep.html) has the two policies for your own account. The job also takes 10 to 30 minutes to convert even a small model, so launch it and keep reading while it runs.
+
+::::::::::::::::::::::::::::::::::::: callout
+
+### In class, watch the instructor run this step
+
+The import needs a role that the learner permission set cannot create, so in the workshop the instructor runs these cells once and everyone follows the output. On your own account, create the role from the checklist and run the cells yourself.
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+The first cell reads the model's `config.json` from Hugging Face and compares `model_type` with the list.
+
+```python
+import requests
+
+import_model_id = "Qwen/Qwen2.5-0.5B-Instruct"   # small, and its architecture is on Bedrock's list
+supported = {"llama", "mistral", "mixtral", "gpt_bigcode", "mllama", "qwen2", "qwen2_vl", "qwen2_5_vl", "gpt_oss", "gemma3_text"}   # November 2026; the import job's own error message lists the current set
+
+cfg = requests.get(f"https://huggingface.co/{import_model_id}/raw/main/config.json", timeout=30).json()
+print(f"{import_model_id}: model_type {cfg['model_type']}, architectures {cfg['architectures']}")
+if cfg["model_type"] not in supported:
+    raise SystemExit("not an architecture Bedrock imports; rent a GPU instead, as the next episode does")
+```
+
+The second cell uploads the weights to your bucket. The import job expects the Hugging Face folder as it is, with `config.json`, the safetensors files and the tokenizer files.
+
+```python
+from huggingface_hub import snapshot_download
+
+local_dir = snapshot_download(import_model_id, allow_patterns=["*.json", "*.safetensors", "*.txt", "*.jinja"])   # no .bin or .gguf copies
+import_prefix = f"bedrock-import/{import_model_id.split('/')[-1].lower()}/"
+for fname in os.listdir(local_dir):
+    if os.path.isfile(os.path.join(local_dir, fname)):
+        s3.upload_file(os.path.join(local_dir, fname), bucket_name, import_prefix + fname)
+print(f"uploaded to s3://{bucket_name}/{import_prefix}")
+```
+
+The third cell starts the import job, tagged like every other resource, and waits for it to finish. `bedrock` is the control-plane client from Step 1. `jobTags` tags the job and `importedModelTags` tags the model it produces, since tags never propagate from one resource to another.
+
+```python
+import_tags = [{"Key": "Name", "Value": name}, {"Key": "Project", "Value": project}, {"Key": "Purpose", "Value": "Inference"}]   # the same three tags as the profiles
+import_role_arn = "arn:aws:iam::123456789012:role/BedrockImportRole"   # <-- EDIT ME: from the instructor, or the role you created from the checklist
+import_job_name = f"{name.lower()}-import-{int(time.time())}"   # job names are unique per account
+
+bedrock.create_model_import_job(
+    jobName=import_job_name,
+    importedModelName=import_job_name,
+    roleArn=import_role_arn,                                     # the role Bedrock assumes to read the bucket; not the notebook's role
+    modelDataSource={"s3DataSource": {"s3Uri": f"s3://{bucket_name}/{import_prefix}"}},
+    jobTags=import_tags,
+    importedModelTags=import_tags,
+)
+
+while True:
+    job = bedrock.get_model_import_job(jobIdentifier=import_job_name)
+    print(time.strftime("%H:%M"), job["status"])
+    if job["status"] in ("Completed", "Failed"):
+        break
+    time.sleep(60)
+if job["status"] == "Failed":
+    raise SystemExit(job["failureMessage"])   # an unsupported architecture is named here
+imported_model_arn = job["importedModelArn"]
+```
+
+The last cell makes one call. The first request after an idle period gets a `ModelNotReadyException` while Bedrock loads the model, so the cell retries until it answers. The call is the same `converse` the Bedrock episode used, with the imported model's ARN in place of a catalog model ID.
+
+```python
+def call_imported_chat(system_prompt: str, user_prompt: str, max_new_tokens: int = 384) -> str:
+    """generate(system_prompt, user_prompt, max_new_tokens) -> str, the callable run_single_qa expects, on the imported model."""
+    for attempt in range(10):
+        try:
+            r = bedrock_runtime.converse(modelId=imported_model_arn, system=[{"text": system_prompt}],
+                                         messages=[{"role": "user", "content": [{"text": user_prompt}]}],
+                                         inferenceConfig={"maxTokens": max_new_tokens, "temperature": 0.0})
+            return r["output"]["message"]["content"][0]["text"].strip()
+        except bedrock_runtime.exceptions.ModelNotReadyException:
+            print("model loading, retrying in 60 s")   # the cold start, a minute or two after idling
+            time.sleep(60)
+    raise RuntimeError("model did not become ready")
+
+print(call_imported_chat("You answer in one short sentence.", "What is 2 + 2?", max_new_tokens=32))
+```
+
+This function has the signature that `run_single_qa` expects for `generate`, so passing it in place of `call_bedrock_chat` in Step 11 runs the WattBot loop on the imported model, with no GPU in your account. A 0.5B model will score poorly on WattBot. The demo shows how the import works, and a larger supported model would be imported the same way.
+
+An imported model is billed per **Custom Model Unit**, the amount of capacity the model needs, in five-minute windows while the model is active, and it costs nothing while idle. A model this small is one unit, so the demo costs cents. The import itself is free. When you are done, delete the imported model and the weights in your bucket.
+
+```python
+bedrock.delete_imported_model(modelIdentifier=imported_model_arn)
+for obj in s3.list_objects_v2(Bucket=bucket_name, Prefix=import_prefix).get("Contents", []):
+    s3.delete_object(Bucket=bucket_name, Key=obj["Key"])
+```
+
 ## Wrap-up
 
-You now have a complete WattBot evaluation on Bedrock, billed per token, with nothing left running. The next episode reruns it on a self-hosted model in a Processing job, then imports a small model into Bedrock to show the route with no GPU at all, and the optional GPU-notebook episode runs it once more by hand, so by the end there are three versions of the same pipeline to compare, Bedrock, a Processing job and a notebook GPU. The code they share is the retrieval, prompting and scoring in `wattbot_rag.py`; what each one implements is the two callables, `embed_query` and `generate`.
+You now have a complete WattBot evaluation on Bedrock, billed per token, with nothing left running. The next episode reruns it on a self-hosted model in a Processing job, and the optional GPU-notebook episode runs it once more by hand, so by the end there are three versions of the same pipeline to compare, Bedrock, a Processing job and a notebook GPU. The code they share is the retrieval, prompting and scoring in `wattbot_rag.py`; what each one implements is the two callables, `embed_query` and `generate`.
 
 Use Bedrock or another hosted API when a catalog model will do and you would rather pay per token than manage a GPU. Use a self-hosted model on a GPU when the work needs a model the catalog does not carry, when you need control over the exact checkpoint, or when you already have GPUs you are not paying for by the hour. Batch size alone does not decide it. On this episode's questions Bedrock cost a tenth of the Processing job, and the per-token price has to be compared with the GPU's hourly rate for your own workload before a large batch tips the other way.
 
