@@ -158,7 +158,8 @@ Three things follow:
 |---|---|
 | You need to embed and query a document collection and a catalog model (Titan, Claude, Llama, ...) will do | **Bedrock** |
 | You want an interactive chatbot or API over your documents | **Bedrock** |
-| You need a specific open-weight model and the work is batch (embedding a corpus, bulk generation) | **Processing jobs** |
+| You need a specific open-weight model and its architecture is on Bedrock's import list | **Bedrock, Custom Model Import** |
+| You need a specific open-weight model Bedrock cannot import, and the work is batch (embedding a corpus, bulk generation) | **Processing jobs** |
 | You are learning how RAG works, or debugging a model step by step | **Notebook GPU**, stopped when you leave |
 | You need interactive serving of a model Bedrock does not offer, with steady traffic | **Inference endpoint** |
 
@@ -168,7 +169,7 @@ If in doubt, Bedrock. Its worst case is a somewhat higher per-token bill; the wo
 
 ### The order of the hands-on episodes
 
-The next two episodes build RAG on **Bedrock** first, then on **Processing jobs**. The Bedrock episode is the one to start from. It builds the whole WattBot pipeline, chunking the corpus included, from a cheap CPU notebook with nothing left running afterward. The Processing-jobs episode reruns the same pipeline on an open-weight model Bedrock does not carry, as jobs that end on their own, which shows what Bedrock does for you and what it costs to do yourself. An optional self-study episode runs the same self-hosted pipeline interactively on a GPU notebook instance, for the case where you need to work on a self-hosted model by hand, and only if you will remember to stop the instance. All three share one module of pipeline code, `scripts/wattbot_rag.py` in the lesson repository.
+The next two episodes build RAG on **Bedrock** first, then on **Processing jobs**. The Bedrock episode is the one to start from. It builds the whole WattBot pipeline, chunking the corpus included, from a cheap CPU notebook with nothing left running afterward, and ends by importing a small open-weight model into Bedrock. The Processing-jobs episode reruns the same pipeline on an open-weight model Bedrock does not carry, as jobs that end on their own, which shows what Bedrock does for you and what it costs to do yourself. An optional self-study episode runs the same self-hosted pipeline interactively on a GPU notebook instance, for the case where you need to work on a self-hosted model by hand, and only if you will remember to stop the instance. All three share one module of pipeline code, `scripts/wattbot_rag.py` in the lesson repository.
 
 When you build your own RAG system afterward, start from the Bedrock episode.
 
