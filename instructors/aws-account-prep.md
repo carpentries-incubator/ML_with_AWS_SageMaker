@@ -381,7 +381,7 @@ aws lambda invoke --function-name nightly-notebook-stop out.json && cat out.json
 
 Say in the credit-request form and in class that instances stop at 11 pm, that a running cell is interrupted when they do, and that jobs are not.
 
-### 2. A spend alert per learner, and a brake on the class total
+### 2. A spend alert per learner, and a limit on the class total
 
 AWS Budgets can watch one cost-allocation tag. One budget per learner on the `Name` tag, at the per-person credit with an alert at 80%, tells you who is about to run over, a day or two late because of Cost Explorer's lag. From CloudShell, with a file `names.txt` holding one `Name` tag value per line:
 

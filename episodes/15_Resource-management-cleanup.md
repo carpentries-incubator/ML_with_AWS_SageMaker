@@ -184,7 +184,7 @@ If you administer an account of your own, a lab's or a project's, the same rules
 | A runtime cap on every job, at most 48 hours | a hung job billing for a week | an IAM deny when `sagemaker:MaxRuntimeInSeconds` is missing or too large |
 | No endpoints, no EC2 | the two resource kinds with no runtime cap at all | an IAM deny on `CreateEndpoint` and `ec2:RunInstances` |
 | Notebook instances stop at 11 pm | the forgotten GPU notebook, `$63` a night | a ten-line scheduled Lambda function |
-| A budget per person and a brake on the total | a quiet overspend | AWS Budgets on the `Name` tag, with an action that attaches a deny policy at the ceiling |
+| A budget per person and a limit on the total | a quiet overspend | AWS Budgets on the `Name` tag, with an action that attaches a deny policy at the ceiling |
 
 A deny applies to everyone who uses the role, including you, so your own launches need real tag values and listed instance types too. And the error a refused request gets, `AccessDeniedException ... with an explicit deny in an identity-based policy`, does not say which rule matched, so write the rules down where the people using the account will find them. A deny cannot carry a custom message either: AWS says `explicit deny in an identity-based policy` and nothing more, which is why this lesson keeps a copy of the policy next to its helper code and checks every launch against it in the notebook first, with `helpers.check_launch`, so the message you get names the rule. The [If a Launch Is Refused](../learners/refused-launch.md) page is the same list in one place, for the day a job of your own is refused.
 
