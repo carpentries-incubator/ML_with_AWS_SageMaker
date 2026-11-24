@@ -323,6 +323,7 @@
 <li><a href="#step-2-processing-job-1-embed-all-chunks-on-a-gpu">Step 2 – Processing Job 1: embed all chunks on a GPU</a></li>
 <li><a href="#step-3-processing-job-2-the-wattbot-rag-loop-as-a-job">Step 3 – Processing Job 2: the WattBot RAG loop as a job</a></li>
 <li><a href="#step-4-download-predictions-and-evaluate">Step 4 – Download predictions and evaluate</a></li>
+<li><a href="#step-5-endpoints-and-why-this-lesson-does-not-run-one">Step 5 – Endpoints, and why this lesson does not run one</a></li>
         </ul></div><!--/div.accordion-body-->
     </div><!--/div.accordion-collapse-->
 
@@ -428,7 +429,7 @@
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>RAG with Processing Jobs</h1>
-        <p>Last updated on 2026-11-18 |
+        <p>Last updated on 2026-11-24 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/12_RAG-Processing-jobs.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -449,8 +450,8 @@
 <div class="card-body">
 <div class="inner">
 <h3 class="card-title">Questions</h3>
-<ul><li>When does a RAG pipeline need a self-hosted, open-weight model
-instead of Bedrock?</li>
+<ul><li>When does a RAG pipeline need an open-weight model Bedrock does not
+carry, and what are the ways to run one?</li>
 <li>How do we run the embedding and generation steps of the WattBot
 pipeline as SageMaker Processing jobs that end on their own?</li>
 <li>How do we pass data in and out of a job through S3, and tag the job
@@ -474,6 +475,7 @@ and runs the full RAG loop over the training questions.</li>
 its duration to what it cost.</li>
 <li>Score the batch predictions with the WattBot metric and compare
 against the Bedrock run.</li>
+<li>Say why the lesson does not deploy an inference endpoint.</li>
 </ul></div>
 </div>
 </div>
@@ -486,55 +488,22 @@ Select the <strong><code>conda_pytorch</code></strong> kernel.</p>
 <hr class="half-width"><p>The Bedrock episode built the whole WattBot pipeline without managing
 a GPU, and that stays the simplest choice whenever Bedrock carries a
 model that will do. Research often depends on a particular open-weight
-checkpoint, though. A newly released model, a smaller size, a fine-tune
-for scientific text, a model a paper just published. Bedrock’s catalog
-is curated. It carries Amazon’s models, Anthropic, Meta, Mistral,
-DeepSeek and a few others, and within a family only some sizes, usually
-a generation behind. For Qwen, the serverless lineup is still the Qwen3
-series. Hugging Face hosts well over a million open-weight checkpoints,
-and the one you want is usually not on Bedrock, and often never will
-be.</p>
-<div id="custom-model-import-the-route-between-the-catalog-and-a-gpu" class="callout">
-<div class="callout-square">
-<i class="callout-icon" data-feather="bell"></i>
-</div>
-<span class="callout-header">Callout</span>
-<div id="custom-model-import-the-route-between-the-catalog-and-a-gpu" class="callout-inner">
-<h3 class="callout-title">Custom Model Import, the route between the
-catalog and a GPU</h3>
-<div class="callout-content">
-<p>Bedrock has a second way to serve a model it does not carry.
-<strong>Custom Model Import</strong> takes a Hugging Face checkpoint
-from your bucket, converts it once, and then serves it the same way as a
-catalog model, through <code>converse</code>, paying only while it
-answers and nothing while idle. For an open-weight model that works, it
-is the cheapest way to serve one and the only route with no GPU to
-manage.</p>
-<p>Try it only when it works, which is a short list. The import job
-checks the model’s <code>architectures</code> value in
-<code>config.json</code> and refuses anything it has not been built for.
-In November 2026 the accepted list was Llama, Mistral, Mixtral,
-GPT-BigCode, Llama vision, Qwen2, Qwen2-VL, Qwen2.5-VL, GPT-OSS and
-Gemma 3 text. Neither the Qwen3 family this episode runs nor Qwen3.5 was
-on it. We tried the smallest Qwen3.5 model and the job was refused with
-“Amazon Bedrock does not support the architecture (qwen3_5)”. New
-architectures are added months after a release, not weeks.</p>
-<p>So the check is thirty seconds, before any upload. Open the model’s
-<code>config.json</code> on Hugging Face and read
-<code>model_type</code>. On the list, import is worth the hour it takes,
-which is an upload to S3, an import job with a service role that can
-read the bucket, and a first <code>converse</code> call. Off the list,
-skip it and rent a GPU, which is what the rest of this episode does. Two
-notes for the workshop account. The service role is an IAM role, which
-the learner permission set cannot create, so the import route needs an
-administrator. And the import itself is free; what costs is the model
-answering, billed per five-minute window while it is active, at a rate
-that depends on the model’s size.</p>
-</div>
-</div>
-</div>
-<p>In that case you run the model on hardware you rent through
-SageMaker, and the next decision is how long to keep that hardware.
+checkpoint, though, such as a newly released model, a smaller size, a
+fine-tune for scientific text, or a model a paper just published.
+Bedrock’s catalog is curated. It carries Amazon’s models, Anthropic,
+Meta, Mistral, DeepSeek and a few others, and within a family only some
+sizes, usually a generation behind. For Qwen, the serverless lineup is
+still the Qwen3 series. Hugging Face hosts well over a million
+open-weight checkpoints, and the one you want is usually not on Bedrock,
+and often never will be.</p>
+<p>There are three ways to run a model Bedrock does not carry. You can
+import the weights into Bedrock, which then serves them like a catalog
+model, as the last step of the Bedrock episode did; that works for a
+short list of architectures, and the model here is not on it. You can
+rent a GPU through SageMaker and run the model yourself, which is what
+Steps 1 to 4 do. Or you can deploy a SageMaker inference endpoint, which
+Step 5 describes and the lesson does not run.</p>
+<p>When you rent the hardware, the next decision is how long to keep it.
 SageMaker rents a GPU three ways.</p>
 <table class="table"><colgroup><col width="25%"><col width="25%"><col width="25%"><col width="25%"></colgroup><thead><tr><th></th>
 <th>Bills</th>
@@ -654,6 +623,7 @@ sample as the Bedrock episode.</li>
 <li>Score the result and compare it with the Bedrock run. The retrieval
 logic, prompts and scorer are unchanged, so the comparison is of the
 models, not of the pipeline.</li>
+<li>Read why the lesson does not deploy an inference endpoint.</li>
 </ul></section><section><h2 class="section-heading" id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a></h2>
 <hr class="half-width"><div class="section level3">
 <h3 id="a-code-folder-for-each-job">A code folder for each job<a class="anchor" aria-label="anchor" href="#a-code-folder-for-each-job"></a></h3>
@@ -1253,7 +1223,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -1317,7 +1287,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still downloading or
@@ -1339,6 +1309,21 @@ nothing caps it.</p>
 </div>
 </div>
 </div>
+</section><section><h2 class="section-heading" id="step-5-endpoints-and-why-this-lesson-does-not-run-one">Step 5 – Endpoints, and why this lesson does not run one<a class="anchor" aria-label="anchor" href="#step-5-endpoints-and-why-this-lesson-does-not-run-one"></a></h2>
+<hr class="half-width"><p>The third way is a <strong>SageMaker inference endpoint</strong>,
+which loads the model on an instance you choose and answers requests at
+an HTTPS address. Applications with steady traffic use endpoints, and
+the RAG overview describes when one is the right choice. An endpoint
+bills by the hour from the moment it is deployed until you delete it,
+whether or not anyone is sending requests. The cheapest GPU on the
+lesson’s list costs <code>$1.41</code> an hour, which is about
+<code>$1,000</code> a month, and an individual researcher’s model
+answers a few hundred questions a day. For nearly every research use, a
+job is the better choice for batch work and Bedrock is the better choice
+for answers in seconds, with a catalog model or an imported one as in
+the Bedrock episode, because neither leaves anything running. The
+workshop account refuses <code>CreateEndpoint</code> for this reason,
+and the lesson does not build one.</p>
 <div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
 <i class="callout-icon" data-feather="key"></i>
@@ -1346,8 +1331,9 @@ nothing caps it.</p>
 <h2 class="callout-header">Key Points</h2>
 <div class="callout-inner">
 <div class="callout-content">
-<ul><li>Bedrock’s catalog is curated and lags releases; when you need a
-specific open-weight model you rent a GPU and serve it yourself.</li>
+<ul><li>Bedrock’s catalog is curated and lags releases. When you need a
+specific open-weight model and its architecture cannot be imported into
+Bedrock, you rent a GPU and run it yourself.</li>
 <li>Of the ways to rent a GPU, a Processing job is the one that cannot
 be forgotten. It bills while the script runs and ends on its own, with
 <code>max_runtime_in_seconds</code> as the backstop. Use it for batch
@@ -1364,6 +1350,9 @@ unchanged from the Bedrock episode; only the two model callables
 differ.</li>
 <li>Tags do not propagate from the notebook. Every job gets its own
 <code>tags=</code>.</li>
+<li>An inference endpoint bills by the hour until deleted. For an
+individual researcher a job or Bedrock is almost always the better fit,
+and the lesson does not deploy one.</li>
 </ul></div>
 </div>
 </div>
@@ -1431,7 +1420,7 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/12_RAG-Processing-jobs.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/12_RAG-Processing-jobs.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-11-18",
+  "dateModified": "2026-11-24",
   "datePublished": "2026-11-24"
 }
 

@@ -742,13 +742,18 @@ on. DeepSeek V3 is the generator here, and any catalog model is a
 one-line swap.</li>
 <li>Bedrock bills per token and leaves nothing running between calls,
 which is why it is the default route for RAG inference.</li>
+<li>Custom Model Import serves an open-weight model the catalog lacks
+the same way, for a short list of architectures. Check
+<code>model_type</code> in the model’s <code>config.json</code> before
+uploading anything.</li>
 <li>The model is one tunable component; most accuracy gains come from
 chunking, retrieval, and post-processing.</li>
 </ul></section><section id="12_RAG-Processing-jobs"><h2 class="section-heading"><a href="12_RAG-Processing-jobs.html">RAG with Processing Jobs</a></h2>
 <hr class="half-width">
 <ul>
-<li>Bedrock’s catalog is curated and lags releases; when you need a
-specific open-weight model you rent a GPU and serve it yourself.</li>
+<li>Bedrock’s catalog is curated and lags releases. When you need a
+specific open-weight model and its architecture cannot be imported into
+Bedrock, you rent a GPU and run it yourself.</li>
 <li>Of the ways to rent a GPU, a Processing job is the one that cannot
 be forgotten. It bills while the script runs and ends on its own, with
 <code>max_runtime_in_seconds</code> as the backstop. Use it for batch
@@ -765,6 +770,9 @@ unchanged from the Bedrock episode; only the two model callables
 differ.</li>
 <li>Tags do not propagate from the notebook. Every job gets its own
 <code>tags=</code>.</li>
+<li>An inference endpoint bills by the hour until deleted. For an
+individual researcher a job or Bedrock is almost always the better fit,
+and the lesson does not deploy one.</li>
 </ul></section><section id="13_RAG-GPU-notebook"><h2 class="section-heading"><a href="13_RAG-GPU-notebook.html">(Optional) RAG with a Notebook GPU</a></h2>
 <hr class="half-width">
 <ul>

@@ -661,7 +661,7 @@ episode does that. The tabs below say more about each of the four.</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
 <p><strong>Amazon S3 stores the data and the results.</strong> <a href="https://aws.amazon.com/s3/" class="external-link">S3</a> is object storage, organized in
 <em>buckets</em>. Datasets stay in a bucket instead of on the notebook
 instance, every SageMaker job reads its inputs from a bucket and writes
@@ -670,7 +670,7 @@ month. You create a bucket of your own in the next episode and use it
 for the rest of the workshop. The larger datasets are already in a
 shared bucket the instructors staged.</p>
 </div>
-<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
+<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
 <p><strong>The SageMaker notebook instance is where you work.</strong>
 It is a small machine running JupyterLab, started at the beginning of
 the workshop and stopped at the end, and every notebook in the lesson
@@ -688,7 +688,7 @@ shared account every launched job has its code in a notebook the
 administrators can open, which is how a problem gets tracked down fast
 when a learner hits one.</p>
 </div>
-<div id="nav-tabpanel-1-3" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-3">
+<div id="nav-tabpanel-1-3" class="tab-pane" aria-labelledby="nav-tab-1-3" role="tabpanel">
 <p><strong>Amazon SageMaker runs the ML jobs.</strong> <a href="https://aws.amazon.com/sagemaker/" class="external-link">SageMaker</a> is AWS’s managed
 machine learning service. You give it a training or inference script,
 the input data and an instance type. It starts that instance, runs the
@@ -717,7 +717,7 @@ seconds, and tags split the bill by project. Training a hundred small
 models on a dataset under 10 GB costs under <code>$20</code>.</li>
 </ul>
 </div>
-<div id="nav-tabpanel-1-4" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-4">
+<div id="nav-tabpanel-1-4" class="tab-pane" aria-labelledby="nav-tab-1-4" role="tabpanel">
 <p><strong>Amazon Bedrock serves hosted models.</strong> Sometimes there
 is no model to train or host. You want to send a model a prompt and get
 a response. <a href="https://aws.amazon.com/bedrock/" class="external-link">Bedrock</a> gives
@@ -1402,7 +1402,7 @@ charge?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <p>Using the S3 Standard rate in us-east-1:</p>
 <ol style="list-style-type: decimal">
@@ -2861,7 +2861,7 @@ commit it, push with your PAT, and verify the change on GitHub.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>Still inside
 <code>/home/ec2-user/SageMaker/sagemaker-work</code>:</p>
@@ -4078,7 +4078,7 @@ any links that you are not going to use.
 </div>
 </section></section><section id="aio-07_Training-models-in-SageMaker-notebooks-part2"><p>Content from <a href="07_Training-models-in-SageMaker-notebooks-part2.html">Training Models in SageMaker: PyTorch Example</a></p>
 <hr>
-<p>Last updated on 2026-11-11 |
+<p>Last updated on 2026-11-24 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/07_Training-models-in-SageMaker-notebooks-part2.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <div class="text-end">
@@ -4995,7 +4995,7 @@ tokens each, three ways:</p>
 <div class="codewrapper sourceCode" id="cb24">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" tabindex="-1" aria-label="code-block-24-1"></a><span class="co"># Two single-GPU instances over the network: the class-account form of data parallelism</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" tabindex="-1" aria-label="code-block-24-1"></a><span class="co"># Two single-GPU instances over the network; a four-GPU box does the same inside one machine, over a faster link</span></span>
 <span id="cb24-2"><a href="#cb24-2" tabindex="-1" aria-label="code-block-24-2"></a>helpers.estimate_parallel_speedup(</span>
 <span id="cb24-3"><a href="#cb24-3" tabindex="-1" aria-label="code-block-24-3"></a>    params_billions<span class="op">=</span><span class="dv">7</span>,</span>
 <span id="cb24-4"><a href="#cb24-4" tabindex="-1" aria-label="code-block-24-4"></a>    tokens_per_step<span class="op">=</span><span class="dv">16</span> <span class="op">*</span> <span class="dv">2000</span>,       <span class="co"># one step: a batch of 16 documents x 2,000 tokens each</span></span>
@@ -5907,7 +5907,7 @@ of the search. Then run it and check (a) and (b) with
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <ul>
 <li>
@@ -5959,7 +5959,7 @@ in the notebook?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>The tuner can only vary what the script reads. Right now
 <code>train_nn.py</code> has no <code>--batch_size</code> argument and
@@ -6062,7 +6062,7 @@ any links that you are not going to use.
 </div>
 </section></section><section id="aio-09_Finetuning-BadgerScribe"><p>Content from <a href="09_Finetuning-BadgerScribe.html">Fine-tuning a Vision-Language Model with Training Jobs</a></p>
 <hr>
-<p>Last updated on 2026-11-16 |
+<p>Last updated on 2026-11-24 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/09_Finetuning-BadgerScribe.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <div class="text-end">
@@ -6439,18 +6439,19 @@ one stopped. Each version says where its checkpoints go.</p>
 <div id="what-the-class-account-allows" class="callout-inner">
 <h3 class="callout-title">What the class account allows</h3>
 <div class="callout-content">
-<p>Do not fully fine-tune anything in this workshop, and do not LoRA
-fine-tune a model larger than 30B on the class account. The limit comes
-from the instances the account allows, which are single-GPU and top out
-at the 48 GB <code>ml.g6e.xlarge</code>. On your own account you would
-rent a bigger instance. A 7B LoRA at rank 16 needs about 19 GB and fits
-the 24 GB card the class uses. A LoRA in bf16 fits the 48 GB card up to
-about 20B. Beyond that, on this account, the frozen weights go to 4-bit,
-which the training script does with <code>--load_in_4bit 1</code>, and a
-30B model in 4-bit needs about 34 GB. A full fine-tune of even a 7B
-model needs more memory than any instance the account allows. The larger
-runs appear in this episode only as estimates, so that you can recognize
-one before you launch it.</p>
+<p>Do not fully fine-tune anything in this workshop. A full fine-tune of
+the 3B model costs a hundred times the LoRA run, and the 7B is
+<code>$140</code> a run, for no gain on a few hundred pages. Any LoRA
+run that fits the account’s instances is allowed. The list goes up to
+the four-GPU <code>ml.g6e.12xlarge</code> at <code>$13</code> an hour,
+which holds a 70B LoRA in bf16. Keep your own spending reasonable: the
+estimator prints each run’s cost and what a job that runs to its cap
+would bill, and on a <code>$13</code> an hour instance that is
+<code>$52</code> for every four hours of cap. On a single GPU, a model
+above about 20B fits only with its frozen weights in 4-bit, the training
+script’s <code>--load_in_4bit 1</code>, and the estimator prints a note
+when that applies. The larger runs appear in this episode as estimates,
+so that you know their price before you launch one.</p>
 </div>
 </div>
 </div>
@@ -6675,6 +6676,13 @@ the forward and backward pass through the frozen model is the same work
 at any rank and only the adapter’s own weight updates grow with it, a
 few percent of the total at rank 256. Left out, the function uses a flat
 2.5 bytes.</li>
+<li>
+<code>load_in_4bit</code>: store the frozen weights in 4-bit, half a
+byte per parameter instead of two, which is the training script’s
+<code>--load_in_4bit 1</code>. It is how a model above about 20B fits
+the 48 GB card, and it changes only the memory line: the adapter and the
+arithmetic are the same, so the time and the cost are too. The function
+says when a run needs it.</li>
 <li>
 <code>instance_type</code>: one of the boxes in the price list;
 leave it out and the cheapest one that fits is chosen.</li>
@@ -6992,7 +7000,7 @@ What does a project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5, because a full fine-tune of a 7B model
 needs about 112 GB plus activations, and the g5 has 24 GB. On the p4d, 8
@@ -7172,7 +7180,7 @@ above, with the instance type forced to the four-GPU
 <div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="co"># The class run on a 4 x A10G box. An estimate, not a launch: the class account does not allow multi-GPU instances.</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="co"># The class run on a 4 x A10G instance, estimated but not launched; the single GPU is cheaper for a job this small</span></span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a>helpers.estimate_finetune_cost(</span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a>    params_billions<span class="op">=</span><span class="fl">3.75</span>, examples<span class="op">=</span><span class="dv">251</span>, tokens_per_example<span class="op">=</span><span class="dv">1600</span>, epochs<span class="op">=</span><span class="dv">2</span>, method<span class="op">=</span><span class="st">"lora"</span>, lora_r<span class="op">=</span><span class="dv">16</span>,</span>
 <span id="cb5-4"><a href="#cb5-4" tabindex="-1" aria-label="code-block-5-4"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.12xlarge"</span>,   <span class="co"># forced: left out, the function would pick the cheapest single GPU that fits</span></span>
@@ -7560,7 +7568,7 @@ prompt and transcription.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb21">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -7599,8 +7607,9 @@ optimizer’s state come to 64 GB against 12, so the run no longer fits a
 the price. The four GPUs share the work, so the job is shorter, and the
 run comes to about <code>$1.87</code> against <code>$0.60</code>. On 251
 pages that is a dollar; the same jump at 7B is the Step 0 table’s
-<code>$140</code> a run, and the two warnings the function prints are
-the account’s rules: no full fine-tune, no multi-GPU instance.</p>
+<code>$140</code> a run, and the function prints the lesson’s rule
+against full fine-tuning along with the four-GPU instance’s hourly
+rate.</p>
 <p>Two more sizes on the same 251 pages, each both ways. Nothing is
 launched; read the memory line and the instance it forces.</p>
 <div class="codewrapper sourceCode" id="cb23">
@@ -7627,18 +7636,18 @@ launched; read the memory line and the instance it forces.</p>
 </div>
 <p>A 7B LoRA still fits one GPU, 19 GB on a 24 GB L4, for under a
 dollar; the full fine-tune of the same model needs 116 GB, a four-GPU
-box at <code>$13</code> an hour, and the account refuses it. At 70B the
-LoRA needs 146 GB, so even the adapter run is a four-GPU job the account
-refuses, and the full fine-tune needs 1,124 GB: nothing on the list
-holds it, and the function says what the largest box would do, start,
-bill ten minutes of startup at <code>$63</code> an hour, and die out of
-memory. That run is two or more such boxes with the model sharded across
-them, which is the <code>$12,000</code> row in the cost table once the
-data is a real corpus and not 251 pages. On 251 pages the arithmetic is
-minutes everywhere, so these bills are mostly each box’s price for ten
-minutes of startup; what the four runs show is the box a model forces
-you onto, which is the first thing to find out about a fine-tune, before
-the data or the epochs.</p>
+box at <code>$13</code> an hour, and the lesson does not run one. At 70B
+the LoRA needs 146 GB, a four-GPU job, and the full fine-tune needs
+1,124 GB: nothing on the list holds it, and the function says what the
+largest box would do, start, bill ten minutes of startup at
+<code>$63</code> an hour, and die out of memory. That run is two or more
+such boxes with the model sharded across them, which is the
+<code>$12,000</code> row in the cost table once the data is a real
+corpus and not 251 pages. On 251 pages the arithmetic is minutes
+everywhere, so these bills are mostly each box’s price for ten minutes
+of startup; what the four runs show is the box a model forces you onto,
+which is the first thing to find out about a fine-tune, before the data
+or the epochs.</p>
 </div>
 <div class="section level3">
 <h3 id="a-code-folder-for-the-job">A code folder for the job<a class="anchor" aria-label="anchor" href="#a-code-folder-for-the-job"></a>
@@ -7795,7 +7804,7 @@ step. Which, and why are they there?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Only the language model’s <code>q_proj</code>, <code>k_proj</code>,
@@ -8157,11 +8166,11 @@ rambles, which the base model does on pages it cannot read.</td>
 <code>check_launch</code> checked the tags.
 <code>check_finetune_launch</code> applies the account’s rules to the
 tags, the instance type and the cap, and then this lesson’s own rules
-for a fine-tune: LoRA and not a full fine-tune, a model of at most 30B,
-a cap between the estimate and four times it, checkpoints on any run
-that may pass an hour, a fixed job name, and sane values for the passes
-and the pixel budget. It raises with every problem named, or prints what
-the launch is allowed to cost.</p>
+for a fine-tune: LoRA and not a full fine-tune, a cap between the
+estimate and four times it, checkpoints on any run that may pass an
+hour, a fixed job name, and sane values for the passes and the pixel
+budget. It raises an error naming every problem, or prints the most the
+launch can cost.</p>
 <div class="codewrapper sourceCode" id="cb33">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -8556,7 +8565,7 @@ will compare it to the bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
 <div class="accordion-body">
 <ol style="list-style-type: decimal">
 <li>Expect about 32 billed minutes. Scoring is the line most likely to
@@ -8965,7 +8974,7 @@ summaries, and the before/after CER. Did the extra pixels help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -9006,7 +9015,7 @@ when does the faster instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution6" aria-expanded="false" aria-controls="collapseSolution6">
   <h4 class="accordion-header" id="headingSolution6"> Show me the solution </h4>
 </button>
-<div id="collapseSolution6" class="accordion-collapse collapse" data-bs-parent="#accordionSolution6" aria-labelledby="headingSolution6">
+<div id="collapseSolution6" class="accordion-collapse collapse" aria-labelledby="headingSolution6" data-bs-parent="#accordionSolution6">
 <div class="accordion-body">
 <p>Startup and upload (~6 min, <code>$0.26</code> at
 <code>$2.61</code>/h) do not speed up: the container pull and the S3
@@ -9071,7 +9080,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-10_RAG-overview"><p>Content from <a href="10_RAG-overview.html">Overview of RAG Workflows on AWS</a></p>
 <hr>
-<p>Last updated on 2026-11-03 |
+<p>Last updated on 2026-11-24 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/10_RAG-overview.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <div class="text-end">
@@ -9221,7 +9230,7 @@ forgetting to is a common way a research team spends its cloud budget on
 nothing. Bedrock has no such failure. Stop calling it and you stop
 paying.</p>
 <div class="section level3">
-<h3 id="what-forgetting-costs">What forgetting costs<a class="anchor" aria-label="anchor" href="#what-forgetting-costs"></a>
+<h3 id="a-gpu-instance-left-running">A GPU instance left running<a class="anchor" aria-label="anchor" href="#a-gpu-instance-left-running"></a>
 </h3>
 <p>A GPU notebook instance left running after you close your laptop
 (on-demand prices at the time of writing; the <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instances-for-ML.html" class="external-link">instances
@@ -9403,6 +9412,11 @@ contract.</p>
 <p><strong>Use it for:</strong> any RAG system where a catalog model
 will do, from prototypes and course projects to research tools and
 production chatbots.</p>
+<p>Bedrock can also serve a model that is not in its catalog.
+<strong>Custom Model Import</strong> takes an open-weight checkpoint
+from your bucket and serves it the same way, with nothing running
+between calls, for a short list of supported architectures. The Bedrock
+episode tries it in its last step.</p>
 </div>
 <div class="section level3">
 <h3 id="sagemaker-processing-jobs">2. SageMaker Processing jobs<a class="anchor" aria-label="anchor" href="#sagemaker-processing-jobs"></a>
@@ -9585,8 +9599,13 @@ model (Titan, Claude, Llama, …) will do</td>
 <td><strong>Bedrock</strong></td>
 </tr>
 <tr>
-<td>You need a specific open-weight model and the work is batch
-(embedding a corpus, bulk generation)</td>
+<td>You need a specific open-weight model and its architecture is on
+Bedrock’s import list</td>
+<td><strong>Bedrock, Custom Model Import</strong></td>
+</tr>
+<tr>
+<td>You need a specific open-weight model Bedrock cannot import, and the
+work is batch (embedding a corpus, bulk generation)</td>
 <td><strong>Processing jobs</strong></td>
 </tr>
 <tr>
@@ -9616,10 +9635,11 @@ month.</p>
 <p>The next two episodes build RAG on <strong>Bedrock</strong> first,
 then on <strong>Processing jobs</strong>. The Bedrock episode is the one
 to start from. It builds the whole WattBot pipeline, chunking the corpus
-included, from a cheap CPU notebook with nothing left running afterward.
-The Processing-jobs episode reruns the same pipeline on an open-weight
-model Bedrock does not carry, as jobs that end on their own, which shows
-what Bedrock does for you and what it costs to do yourself. An optional
+included, from a cheap CPU notebook with nothing left running afterward,
+and ends by importing a small open-weight model into Bedrock. The
+Processing-jobs episode reruns the same pipeline on an open-weight model
+Bedrock does not carry, as jobs that end on their own, which shows what
+Bedrock does for you and what it costs to do yourself. An optional
 self-study episode runs the same self-hosted pipeline interactively on a
 GPU notebook instance, for the case where you need to work on a
 self-hosted model by hand, and only if you will remember to stop the
@@ -9668,7 +9688,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-11_RAG-Bedrock"><p>Content from <a href="11_RAG-Bedrock.html">RAG with Bedrock</a></p>
 <hr>
-<p>Last updated on 2026-11-18 |
+<p>Last updated on 2026-11-24 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/11_RAG-Bedrock.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <div class="text-end">
@@ -9712,6 +9732,9 @@ Bedrock-hosted model (DeepSeek V3) and score them against
 <li>Build a second index from page images with a multimodal embedding
 model and measure what it changes for the table and figure
 questions.</li>
+<li>Check whether a model’s architecture can be imported into Bedrock,
+import a small one with Custom Model Import, and call it through
+<code>converse</code>.</li>
 </ul>
 </div>
 </div>
@@ -10444,7 +10467,7 @@ helper wraps:</p>
 </button>
 </div>
 </nav><div id="nav-tabContent-1" class="tab-content">
-<div id="nav-tabpanel-1-1" class="tab-pane show active" aria-labelledby="nav-tab-1-1" role="tabpanel">
+<div id="nav-tabpanel-1-1" class="tab-pane show active" role="tabpanel" aria-labelledby="nav-tab-1-1">
 <div class="codewrapper sourceCode" id="cb18">
 <h3 class="code-label">BASH<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -10453,7 +10476,7 @@ helper wraps:</p>
 <span id="cb18-3"><a href="#cb18-3" tabindex="-1" aria-label="code-block-18-3"></a>  <span class="at">--tags</span> key=Name,value=DoeJohn key=Project,value=SinkOrSwim key=Purpose,value=Inference</span></code></pre>
 </div>
 </div>
-<div id="nav-tabpanel-1-2" class="tab-pane" aria-labelledby="nav-tab-1-2" role="tabpanel">
+<div id="nav-tabpanel-1-2" class="tab-pane" role="tabpanel" aria-labelledby="nav-tab-1-2">
 <div class="codewrapper sourceCode" id="cb19">
 <h3 class="code-label">POWERSHELL<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -10516,7 +10539,7 @@ month’s Bedrock spend by <code>Project</code>?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb20">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -10970,7 +10993,7 @@ same questions, <code>$1.41</code> an hour?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
 <div class="accordion-body">
 <p>The two prices are from the <a href="https://aws.amazon.com/bedrock/pricing/" class="external-link">Bedrock pricing page</a>
 for DeepSeek on-demand in October 2026; update them for the model and
@@ -11050,7 +11073,7 @@ what moved the score.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
 <div class="accordion-body">
 <p>Both solution cells start with
 <code>%%script false --no-raise-error</code>, which makes Jupyter skip
@@ -11563,17 +11586,171 @@ few cents.</p>
 </div>
 </div>
 </div>
+</section><section><h2 class="section-heading" id="step-14-custom-model-import-when-the-catalog-lacks-your-model">Step 14 – Custom Model Import: when the catalog lacks your
+model<a class="anchor" aria-label="anchor" href="#step-14-custom-model-import-when-the-catalog-lacks-your-model"></a>
+</h2>
+<hr class="half-width">
+<p>Every model in this episode so far came from Bedrock’s catalog, and
+for WattBot the catalog had what we needed. Research often needs a model
+it does not carry, such as a newly released one, a smaller size, or a
+fine-tune for scientific text. Bedrock has a second way to serve such a
+model. <strong>Custom Model Import</strong> takes a Hugging Face
+checkpoint from your bucket, converts it once, and then serves it like a
+catalog model. You call it through <code>converse</code>, you pay only
+while it answers, and nothing runs between calls. When the model’s
+architecture is supported, this is the cheapest way to serve an
+open-weight model, and it is the only way that leaves you no GPU to
+manage.</p>
+<p>The list of supported architectures is short. The import job reads
+<code>model_type</code> in the model’s <code>config.json</code> and
+refuses any architecture it has not been built for. In November 2026 the
+list was Llama, Mistral, Mixtral, GPT-BigCode, Llama vision, Qwen2,
+Qwen2-VL, Qwen2.5-VL, GPT-OSS and Gemma 3 text. The Qwen3-8B the next
+episode runs is not on it, and neither is Qwen3.5. We tried the smallest
+Qwen3.5 model and the job failed with “Amazon Bedrock does not support
+the architecture (qwen3_5)”. New architectures are added months after a
+model is released. Checking <code>config.json</code> takes thirty
+seconds and should come before any upload.</p>
+<p>The demo uses a model that is on the list,
+<code>Qwen/Qwen2.5-0.5B-Instruct</code>, which is under a gigabyte. It
+needs two things the rest of the lesson does not. The import job runs as
+an IAM role that can read your bucket, and the workshop’s learner
+permission set cannot create roles, so on the shared account the
+instructors provide the role’s ARN. The <a href="https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/aws-account-prep.html" class="external-link">account
+preparation checklist</a> has the two policies for your own account. The
+job also takes 10 to 30 minutes to convert even a small model, so launch
+it and keep reading while it runs.</p>
+<div id="in-class-watch-the-instructor-run-this-step" class="callout">
+<div class="callout-square">
+<i class="callout-icon" data-feather="bell"></i>
+</div>
+<span class="callout-header">Callout</span>
+<div id="in-class-watch-the-instructor-run-this-step" class="callout-inner">
+<h3 class="callout-title">In class, watch the instructor run this
+step</h3>
+<div class="callout-content">
+<p>The import needs a role that the learner permission set cannot
+create, so in the workshop the instructor runs these cells once and
+everyone follows the output. On your own account, create the role from
+the checklist and run the cells yourself.</p>
+</div>
+</div>
+</div>
+<p>The first cell reads the model’s <code>config.json</code> from
+Hugging Face and compares <code>model_type</code> with the list.</p>
+<div class="codewrapper sourceCode" id="cb45">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" tabindex="-1" aria-label="code-block-45-1"></a><span class="im">import</span> requests</span>
+<span id="cb45-2"><a href="#cb45-2" tabindex="-1" aria-label="code-block-45-2"></a></span>
+<span id="cb45-3"><a href="#cb45-3" tabindex="-1" aria-label="code-block-45-3"></a>import_model_id <span class="op">=</span> <span class="st">"Qwen/Qwen2.5-0.5B-Instruct"</span>   <span class="co"># small, and its architecture is on Bedrock's list</span></span>
+<span id="cb45-4"><a href="#cb45-4" tabindex="-1" aria-label="code-block-45-4"></a>supported <span class="op">=</span> {<span class="st">"llama"</span>, <span class="st">"mistral"</span>, <span class="st">"mixtral"</span>, <span class="st">"gpt_bigcode"</span>, <span class="st">"mllama"</span>, <span class="st">"qwen2"</span>, <span class="st">"qwen2_vl"</span>, <span class="st">"qwen2_5_vl"</span>, <span class="st">"gpt_oss"</span>, <span class="st">"gemma3_text"</span>}   <span class="co"># November 2026; the import job's own error message lists the current set</span></span>
+<span id="cb45-5"><a href="#cb45-5" tabindex="-1" aria-label="code-block-45-5"></a></span>
+<span id="cb45-6"><a href="#cb45-6" tabindex="-1" aria-label="code-block-45-6"></a>cfg <span class="op">=</span> requests.get(<span class="ss">f"https://huggingface.co/</span><span class="sc">{</span>import_model_id<span class="sc">}</span><span class="ss">/raw/main/config.json"</span>, timeout<span class="op">=</span><span class="dv">30</span>).json()</span>
+<span id="cb45-7"><a href="#cb45-7" tabindex="-1" aria-label="code-block-45-7"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>import_model_id<span class="sc">}</span><span class="ss">: model_type </span><span class="sc">{</span>cfg[<span class="st">'model_type'</span>]<span class="sc">}</span><span class="ss">, architectures </span><span class="sc">{</span>cfg[<span class="st">'architectures'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb45-8"><a href="#cb45-8" tabindex="-1" aria-label="code-block-45-8"></a><span class="cf">if</span> cfg[<span class="st">"model_type"</span>] <span class="kw">not</span> <span class="kw">in</span> supported:</span>
+<span id="cb45-9"><a href="#cb45-9" tabindex="-1" aria-label="code-block-45-9"></a>    <span class="cf">raise</span> <span class="pp">SystemExit</span>(<span class="st">"not an architecture Bedrock imports; rent a GPU instead, as the next episode does"</span>)</span></code></pre>
+</div>
+<p>The second cell uploads the weights to your bucket. The import job
+expects the Hugging Face folder as it is, with <code>config.json</code>,
+the safetensors files and the tokenizer files.</p>
+<div class="codewrapper sourceCode" id="cb46">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" tabindex="-1" aria-label="code-block-46-1"></a><span class="im">from</span> huggingface_hub <span class="im">import</span> snapshot_download</span>
+<span id="cb46-2"><a href="#cb46-2" tabindex="-1" aria-label="code-block-46-2"></a></span>
+<span id="cb46-3"><a href="#cb46-3" tabindex="-1" aria-label="code-block-46-3"></a>local_dir <span class="op">=</span> snapshot_download(import_model_id, allow_patterns<span class="op">=</span>[<span class="st">"*.json"</span>, <span class="st">"*.safetensors"</span>, <span class="st">"*.txt"</span>, <span class="st">"*.jinja"</span>])   <span class="co"># no .bin or .gguf copies</span></span>
+<span id="cb46-4"><a href="#cb46-4" tabindex="-1" aria-label="code-block-46-4"></a>import_prefix <span class="op">=</span> <span class="ss">f"bedrock-import/</span><span class="sc">{</span>import_model_id<span class="sc">.</span>split(<span class="st">'/'</span>)[<span class="op">-</span><span class="dv">1</span>]<span class="sc">.</span>lower()<span class="sc">}</span><span class="ss">/"</span></span>
+<span id="cb46-5"><a href="#cb46-5" tabindex="-1" aria-label="code-block-46-5"></a><span class="cf">for</span> fname <span class="kw">in</span> os.listdir(local_dir):</span>
+<span id="cb46-6"><a href="#cb46-6" tabindex="-1" aria-label="code-block-46-6"></a>    <span class="cf">if</span> os.path.isfile(os.path.join(local_dir, fname)):</span>
+<span id="cb46-7"><a href="#cb46-7" tabindex="-1" aria-label="code-block-46-7"></a>        s3.upload_file(os.path.join(local_dir, fname), bucket_name, import_prefix <span class="op">+</span> fname)</span>
+<span id="cb46-8"><a href="#cb46-8" tabindex="-1" aria-label="code-block-46-8"></a><span class="bu">print</span>(<span class="ss">f"uploaded to s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>import_prefix<span class="sc">}</span><span class="ss">"</span>)</span></code></pre>
+</div>
+<p>The third cell starts the import job, tagged like every other
+resource, and waits for it to finish. <code>bedrock</code> is the
+control-plane client from Step 1. <code>jobTags</code> tags the job and
+<code>importedModelTags</code> tags the model it produces, since tags
+never propagate from one resource to another.</p>
+<div class="codewrapper sourceCode" id="cb47">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" tabindex="-1" aria-label="code-block-47-1"></a>import_tags <span class="op">=</span> [{<span class="st">"Key"</span>: <span class="st">"Name"</span>, <span class="st">"Value"</span>: name}, {<span class="st">"Key"</span>: <span class="st">"Project"</span>, <span class="st">"Value"</span>: project}, {<span class="st">"Key"</span>: <span class="st">"Purpose"</span>, <span class="st">"Value"</span>: <span class="st">"Inference"</span>}]   <span class="co"># the same three tags as the profiles</span></span>
+<span id="cb47-2"><a href="#cb47-2" tabindex="-1" aria-label="code-block-47-2"></a>import_role_arn <span class="op">=</span> <span class="st">"arn:aws:iam::123456789012:role/BedrockImportRole"</span>   <span class="co"># &lt;-- EDIT ME: from the instructor, or the role you created from the checklist</span></span>
+<span id="cb47-3"><a href="#cb47-3" tabindex="-1" aria-label="code-block-47-3"></a>import_job_name <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>name<span class="sc">.</span>lower()<span class="sc">}</span><span class="ss">-import-</span><span class="sc">{</span><span class="bu">int</span>(time.time())<span class="sc">}</span><span class="ss">"</span>   <span class="co"># job names are unique per account</span></span>
+<span id="cb47-4"><a href="#cb47-4" tabindex="-1" aria-label="code-block-47-4"></a></span>
+<span id="cb47-5"><a href="#cb47-5" tabindex="-1" aria-label="code-block-47-5"></a>bedrock.create_model_import_job(</span>
+<span id="cb47-6"><a href="#cb47-6" tabindex="-1" aria-label="code-block-47-6"></a>    jobName<span class="op">=</span>import_job_name,</span>
+<span id="cb47-7"><a href="#cb47-7" tabindex="-1" aria-label="code-block-47-7"></a>    importedModelName<span class="op">=</span>import_job_name,</span>
+<span id="cb47-8"><a href="#cb47-8" tabindex="-1" aria-label="code-block-47-8"></a>    roleArn<span class="op">=</span>import_role_arn,                                     <span class="co"># the role Bedrock assumes to read the bucket; not the notebook's role</span></span>
+<span id="cb47-9"><a href="#cb47-9" tabindex="-1" aria-label="code-block-47-9"></a>    modelDataSource<span class="op">=</span>{<span class="st">"s3DataSource"</span>: {<span class="st">"s3Uri"</span>: <span class="ss">f"s3://</span><span class="sc">{</span>bucket_name<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>import_prefix<span class="sc">}</span><span class="ss">"</span>}},</span>
+<span id="cb47-10"><a href="#cb47-10" tabindex="-1" aria-label="code-block-47-10"></a>    jobTags<span class="op">=</span>import_tags,</span>
+<span id="cb47-11"><a href="#cb47-11" tabindex="-1" aria-label="code-block-47-11"></a>    importedModelTags<span class="op">=</span>import_tags,</span>
+<span id="cb47-12"><a href="#cb47-12" tabindex="-1" aria-label="code-block-47-12"></a>)</span>
+<span id="cb47-13"><a href="#cb47-13" tabindex="-1" aria-label="code-block-47-13"></a></span>
+<span id="cb47-14"><a href="#cb47-14" tabindex="-1" aria-label="code-block-47-14"></a><span class="cf">while</span> <span class="va">True</span>:</span>
+<span id="cb47-15"><a href="#cb47-15" tabindex="-1" aria-label="code-block-47-15"></a>    job <span class="op">=</span> bedrock.get_model_import_job(jobIdentifier<span class="op">=</span>import_job_name)</span>
+<span id="cb47-16"><a href="#cb47-16" tabindex="-1" aria-label="code-block-47-16"></a>    <span class="bu">print</span>(time.strftime(<span class="st">"%H:%M"</span>), job[<span class="st">"status"</span>])</span>
+<span id="cb47-17"><a href="#cb47-17" tabindex="-1" aria-label="code-block-47-17"></a>    <span class="cf">if</span> job[<span class="st">"status"</span>] <span class="kw">in</span> (<span class="st">"Completed"</span>, <span class="st">"Failed"</span>):</span>
+<span id="cb47-18"><a href="#cb47-18" tabindex="-1" aria-label="code-block-47-18"></a>        <span class="cf">break</span></span>
+<span id="cb47-19"><a href="#cb47-19" tabindex="-1" aria-label="code-block-47-19"></a>    time.sleep(<span class="dv">60</span>)</span>
+<span id="cb47-20"><a href="#cb47-20" tabindex="-1" aria-label="code-block-47-20"></a><span class="cf">if</span> job[<span class="st">"status"</span>] <span class="op">==</span> <span class="st">"Failed"</span>:</span>
+<span id="cb47-21"><a href="#cb47-21" tabindex="-1" aria-label="code-block-47-21"></a>    <span class="cf">raise</span> <span class="pp">SystemExit</span>(job[<span class="st">"failureMessage"</span>])   <span class="co"># an unsupported architecture is named here</span></span>
+<span id="cb47-22"><a href="#cb47-22" tabindex="-1" aria-label="code-block-47-22"></a>imported_model_arn <span class="op">=</span> job[<span class="st">"importedModelArn"</span>]</span></code></pre>
+</div>
+<p>The last cell makes one call. The first request after an idle period
+gets a <code>ModelNotReadyException</code> while Bedrock loads the
+model, so the cell retries until it answers. The call is the same
+<code>converse</code> the Bedrock episode used, with the imported
+model’s ARN in place of a catalog model ID.</p>
+<div class="codewrapper sourceCode" id="cb48">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" tabindex="-1" aria-label="code-block-48-1"></a><span class="kw">def</span> call_imported_chat(system_prompt: <span class="bu">str</span>, user_prompt: <span class="bu">str</span>, max_new_tokens: <span class="bu">int</span> <span class="op">=</span> <span class="dv">384</span>) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
+<span id="cb48-2"><a href="#cb48-2" tabindex="-1" aria-label="code-block-48-2"></a>    <span class="co">"""generate(system_prompt, user_prompt, max_new_tokens) -&gt; str, the callable run_single_qa expects, on the imported model."""</span></span>
+<span id="cb48-3"><a href="#cb48-3" tabindex="-1" aria-label="code-block-48-3"></a>    <span class="cf">for</span> attempt <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">10</span>):</span>
+<span id="cb48-4"><a href="#cb48-4" tabindex="-1" aria-label="code-block-48-4"></a>        <span class="cf">try</span>:</span>
+<span id="cb48-5"><a href="#cb48-5" tabindex="-1" aria-label="code-block-48-5"></a>            r <span class="op">=</span> bedrock_runtime.converse(modelId<span class="op">=</span>imported_model_arn, system<span class="op">=</span>[{<span class="st">"text"</span>: system_prompt}],</span>
+<span id="cb48-6"><a href="#cb48-6" tabindex="-1" aria-label="code-block-48-6"></a>                                         messages<span class="op">=</span>[{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: [{<span class="st">"text"</span>: user_prompt}]}],</span>
+<span id="cb48-7"><a href="#cb48-7" tabindex="-1" aria-label="code-block-48-7"></a>                                         inferenceConfig<span class="op">=</span>{<span class="st">"maxTokens"</span>: max_new_tokens, <span class="st">"temperature"</span>: <span class="fl">0.0</span>})</span>
+<span id="cb48-8"><a href="#cb48-8" tabindex="-1" aria-label="code-block-48-8"></a>            <span class="cf">return</span> r[<span class="st">"output"</span>][<span class="st">"message"</span>][<span class="st">"content"</span>][<span class="dv">0</span>][<span class="st">"text"</span>].strip()</span>
+<span id="cb48-9"><a href="#cb48-9" tabindex="-1" aria-label="code-block-48-9"></a>        <span class="cf">except</span> bedrock_runtime.exceptions.ModelNotReadyException:</span>
+<span id="cb48-10"><a href="#cb48-10" tabindex="-1" aria-label="code-block-48-10"></a>            <span class="bu">print</span>(<span class="st">"model loading, retrying in 60 s"</span>)   <span class="co"># the cold start, a minute or two after idling</span></span>
+<span id="cb48-11"><a href="#cb48-11" tabindex="-1" aria-label="code-block-48-11"></a>            time.sleep(<span class="dv">60</span>)</span>
+<span id="cb48-12"><a href="#cb48-12" tabindex="-1" aria-label="code-block-48-12"></a>    <span class="cf">raise</span> <span class="pp">RuntimeError</span>(<span class="st">"model did not become ready"</span>)</span>
+<span id="cb48-13"><a href="#cb48-13" tabindex="-1" aria-label="code-block-48-13"></a></span>
+<span id="cb48-14"><a href="#cb48-14" tabindex="-1" aria-label="code-block-48-14"></a><span class="bu">print</span>(call_imported_chat(<span class="st">"You answer in one short sentence."</span>, <span class="st">"What is 2 + 2?"</span>, max_new_tokens<span class="op">=</span><span class="dv">32</span>))</span></code></pre>
+</div>
+<p>This function has the signature that <code>run_single_qa</code>
+expects for <code>generate</code>, so passing it in place of
+<code>call_bedrock_chat</code> in Step 11 runs the WattBot loop on the
+imported model, with no GPU in your account. A 0.5B model will score
+poorly on WattBot. The demo shows how the import works, and a larger
+supported model would be imported the same way.</p>
+<p>An imported model is billed per <strong>Custom Model Unit</strong>,
+the amount of capacity the model needs, in five-minute windows while the
+model is active, and it costs nothing while idle. A model this small is
+one unit, so the demo costs cents. The import itself is free. When you
+are done, delete the imported model and the weights in your bucket.</p>
+<div class="codewrapper sourceCode" id="cb49">
+<h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
+</h3>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" tabindex="-1" aria-label="code-block-49-1"></a>bedrock.delete_imported_model(modelIdentifier<span class="op">=</span>imported_model_arn)</span>
+<span id="cb49-2"><a href="#cb49-2" tabindex="-1" aria-label="code-block-49-2"></a><span class="cf">for</span> obj <span class="kw">in</span> s3.list_objects_v2(Bucket<span class="op">=</span>bucket_name, Prefix<span class="op">=</span>import_prefix).get(<span class="st">"Contents"</span>, []):</span>
+<span id="cb49-3"><a href="#cb49-3" tabindex="-1" aria-label="code-block-49-3"></a>    s3.delete_object(Bucket<span class="op">=</span>bucket_name, Key<span class="op">=</span>obj[<span class="st">"Key"</span>])</span></code></pre>
+</div>
 </section><section><h2 class="section-heading" id="wrap-up">Wrap-up<a class="anchor" aria-label="anchor" href="#wrap-up"></a>
 </h2>
 <hr class="half-width">
 <p>You now have a complete WattBot evaluation on Bedrock, billed per
-token, with nothing left running. The Processing-jobs episode reruns it
-on a self-hosted model, and the optional GPU-notebook episode once more
-by hand, so by the end there are three versions of the same pipeline to
-compare, Bedrock, a Processing job and a notebook GPU. The code they
-share is the retrieval, prompting and scoring in
-<code>wattbot_rag.py</code>; what each one implements is the two
-callables, <code>embed_query</code> and <code>generate</code>.</p>
+token, with nothing left running. The next episode reruns it on a
+self-hosted model in a Processing job, and the optional GPU-notebook
+episode runs it once more by hand, so by the end there are three
+versions of the same pipeline to compare, Bedrock, a Processing job and
+a notebook GPU. The code they share is the retrieval, prompting and
+scoring in <code>wattbot_rag.py</code>; what each one implements is the
+two callables, <code>embed_query</code> and <code>generate</code>. The
+imported model in Step 14 is a fourth <code>generate</code> on the same
+code.</p>
 <p>Use Bedrock or another hosted API when a catalog model will do and
 you would rather pay per token than manage a GPU. Use a self-hosted
 model on a GPU when the work needs a model the catalog does not carry,
@@ -11614,6 +11791,10 @@ on. DeepSeek V3 is the generator here, and any catalog model is a
 one-line swap.</li>
 <li>Bedrock bills per token and leaves nothing running between calls,
 which is why it is the default route for RAG inference.</li>
+<li>Custom Model Import serves an open-weight model the catalog lacks
+the same way, for a short list of architectures. Check
+<code>model_type</code> in the model’s <code>config.json</code> before
+uploading anything.</li>
 <li>The model is one tunable component; most accuracy gains come from
 chunking, retrieval, and post-processing.</li>
 </ul>
@@ -11626,7 +11807,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-12_RAG-Processing-jobs"><p>Content from <a href="12_RAG-Processing-jobs.html">RAG with Processing Jobs</a></p>
 <hr>
-<p>Last updated on 2026-11-18 |
+<p>Last updated on 2026-11-24 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/12_RAG-Processing-jobs.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <div class="text-end">
@@ -11640,8 +11821,8 @@ any links that you are not going to use.
 <div class="inner">
 <h3 class="card-title">Questions</h3>
 <ul>
-<li>When does a RAG pipeline need a self-hosted, open-weight model
-instead of Bedrock?</li>
+<li>When does a RAG pipeline need an open-weight model Bedrock does not
+carry, and what are the ways to run one?</li>
 <li>How do we run the embedding and generation steps of the WattBot
 pipeline as SageMaker Processing jobs that end on their own?</li>
 <li>How do we pass data in and out of a job through S3, and tag the job
@@ -11667,6 +11848,7 @@ and runs the full RAG loop over the training questions.</li>
 its duration to what it cost.</li>
 <li>Score the batch predictions with the WattBot metric and compare
 against the Bedrock run.</li>
+<li>Say why the lesson does not deploy an inference endpoint.</li>
 </ul>
 </div>
 </div>
@@ -11682,55 +11864,22 @@ Select the <strong><code>conda_pytorch</code></strong> kernel.</p>
 <p>The Bedrock episode built the whole WattBot pipeline without managing
 a GPU, and that stays the simplest choice whenever Bedrock carries a
 model that will do. Research often depends on a particular open-weight
-checkpoint, though. A newly released model, a smaller size, a fine-tune
-for scientific text, a model a paper just published. Bedrock’s catalog
-is curated. It carries Amazon’s models, Anthropic, Meta, Mistral,
-DeepSeek and a few others, and within a family only some sizes, usually
-a generation behind. For Qwen, the serverless lineup is still the Qwen3
-series. Hugging Face hosts well over a million open-weight checkpoints,
-and the one you want is usually not on Bedrock, and often never will
-be.</p>
-<div id="custom-model-import-the-route-between-the-catalog-and-a-gpu" class="callout">
-<div class="callout-square">
-<i class="callout-icon" data-feather="bell"></i>
-</div>
-<span class="callout-header">Callout</span>
-<div id="custom-model-import-the-route-between-the-catalog-and-a-gpu" class="callout-inner">
-<h3 class="callout-title">Custom Model Import, the route between the
-catalog and a GPU</h3>
-<div class="callout-content">
-<p>Bedrock has a second way to serve a model it does not carry.
-<strong>Custom Model Import</strong> takes a Hugging Face checkpoint
-from your bucket, converts it once, and then serves it the same way as a
-catalog model, through <code>converse</code>, paying only while it
-answers and nothing while idle. For an open-weight model that works, it
-is the cheapest way to serve one and the only route with no GPU to
-manage.</p>
-<p>Try it only when it works, which is a short list. The import job
-checks the model’s <code>architectures</code> value in
-<code>config.json</code> and refuses anything it has not been built for.
-In November 2026 the accepted list was Llama, Mistral, Mixtral,
-GPT-BigCode, Llama vision, Qwen2, Qwen2-VL, Qwen2.5-VL, GPT-OSS and
-Gemma 3 text. Neither the Qwen3 family this episode runs nor Qwen3.5 was
-on it. We tried the smallest Qwen3.5 model and the job was refused with
-“Amazon Bedrock does not support the architecture (qwen3_5)”. New
-architectures are added months after a release, not weeks.</p>
-<p>So the check is thirty seconds, before any upload. Open the model’s
-<code>config.json</code> on Hugging Face and read
-<code>model_type</code>. On the list, import is worth the hour it takes,
-which is an upload to S3, an import job with a service role that can
-read the bucket, and a first <code>converse</code> call. Off the list,
-skip it and rent a GPU, which is what the rest of this episode does. Two
-notes for the workshop account. The service role is an IAM role, which
-the learner permission set cannot create, so the import route needs an
-administrator. And the import itself is free; what costs is the model
-answering, billed per five-minute window while it is active, at a rate
-that depends on the model’s size.</p>
-</div>
-</div>
-</div>
-<p>In that case you run the model on hardware you rent through
-SageMaker, and the next decision is how long to keep that hardware.
+checkpoint, though, such as a newly released model, a smaller size, a
+fine-tune for scientific text, or a model a paper just published.
+Bedrock’s catalog is curated. It carries Amazon’s models, Anthropic,
+Meta, Mistral, DeepSeek and a few others, and within a family only some
+sizes, usually a generation behind. For Qwen, the serverless lineup is
+still the Qwen3 series. Hugging Face hosts well over a million
+open-weight checkpoints, and the one you want is usually not on Bedrock,
+and often never will be.</p>
+<p>There are three ways to run a model Bedrock does not carry. You can
+import the weights into Bedrock, which then serves them like a catalog
+model, as the last step of the Bedrock episode did; that works for a
+short list of architectures, and the model here is not on it. You can
+rent a GPU through SageMaker and run the model yourself, which is what
+Steps 1 to 4 do. Or you can deploy a SageMaker inference endpoint, which
+Step 5 describes and the lesson does not run.</p>
+<p>When you rent the hardware, the next decision is how long to keep it.
 SageMaker rents a GPU three ways.</p>
 <table class="table">
 <colgroup>
@@ -11888,6 +12037,7 @@ sample as the Bedrock episode.</li>
 <li>Score the result and compare it with the Bedrock run. The retrieval
 logic, prompts and scorer are unchanged, so the comparison is of the
 models, not of the pipeline.</li>
+<li>Read why the lesson does not deploy an inference endpoint.</li>
 </ul></section><section><h2 class="section-heading" id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
 </h2>
 <hr class="half-width">
@@ -12512,7 +12662,7 @@ run?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p><code>describe_processing_job</code> returns three timestamps; the
 gap between the first two is unbilled provisioning, between the last two
@@ -12576,7 +12726,7 @@ instance left running over a weekend (64 hours).</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <p>With a 600-second cap the RAG job is killed by SageMaker ten minutes
 after <code>ProcessingStartTime</code>, while it is still downloading or
@@ -12598,6 +12748,23 @@ nothing caps it.</p>
 </div>
 </div>
 </div>
+</section><section><h2 class="section-heading" id="step-5-endpoints-and-why-this-lesson-does-not-run-one">Step 5 – Endpoints, and why this lesson does not run one<a class="anchor" aria-label="anchor" href="#step-5-endpoints-and-why-this-lesson-does-not-run-one"></a>
+</h2>
+<hr class="half-width">
+<p>The third way is a <strong>SageMaker inference endpoint</strong>,
+which loads the model on an instance you choose and answers requests at
+an HTTPS address. Applications with steady traffic use endpoints, and
+the RAG overview describes when one is the right choice. An endpoint
+bills by the hour from the moment it is deployed until you delete it,
+whether or not anyone is sending requests. The cheapest GPU on the
+lesson’s list costs <code>$1.41</code> an hour, which is about
+<code>$1,000</code> a month, and an individual researcher’s model
+answers a few hundred questions a day. For nearly every research use, a
+job is the better choice for batch work and Bedrock is the better choice
+for answers in seconds, with a catalog model or an imported one as in
+the Bedrock episode, because neither leaves anything running. The
+workshop account refuses <code>CreateEndpoint</code> for this reason,
+and the lesson does not build one.</p>
 <div id="keypoints1" class="callout keypoints">
 <div class="callout-square">
 <i class="callout-icon" data-feather="key"></i>
@@ -12606,8 +12773,9 @@ nothing caps it.</p>
 <div class="callout-inner">
 <div class="callout-content">
 <ul>
-<li>Bedrock’s catalog is curated and lags releases; when you need a
-specific open-weight model you rent a GPU and serve it yourself.</li>
+<li>Bedrock’s catalog is curated and lags releases. When you need a
+specific open-weight model and its architecture cannot be imported into
+Bedrock, you rent a GPU and run it yourself.</li>
 <li>Of the ways to rent a GPU, a Processing job is the one that cannot
 be forgotten. It bills while the script runs and ends on its own, with
 <code>max_runtime_in_seconds</code> as the backstop. Use it for batch
@@ -12624,6 +12792,9 @@ unchanged from the Bedrock episode; only the two model callables
 differ.</li>
 <li>Tags do not propagate from the notebook. Every job gets its own
 <code>tags=</code>.</li>
+<li>An inference endpoint bills by the hour until deleted. For an
+individual researcher a job or Bedrock is almost always the better fit,
+and the lesson does not deploy one.</li>
 </ul>
 </div>
 </div>
@@ -12717,15 +12888,15 @@ means repackaging and relaunching it, and what comes back is a log. A
 GPU notebook keeps the loaded model between cells, so you can watch GPU
 memory, try a retrieval strategy, change a prompt and read the answer,
 and launch the job once the pipeline is settled.</p>
-<p>The model here is one Bedrock does not carry, so, as in the
-Processing Jobs episode, it is loaded by hand. This episode runs the
-WattBot pipeline with <strong>Qwen3.8-27B</strong> as the generator, a
-27-billion-parameter open-weight (Apache 2.0) model released in August
-2026, the larger relative of the Qwen3-8B the Processing Jobs episode
-ran, loaded in FP8 through vLLM beside a local embedding model.
-Everything a managed model API hides, loading an embedding model,
-loading a generator, fitting both in GPU memory, is a cell you can run
-and change.</p>
+<p>Bedrock does not carry the model used here, so this episode loads it
+by hand, as the Processing Jobs episode did. The generator is
+<strong>Qwen3.8-27B</strong>, a 27-billion-parameter open-weight (Apache
+2.0) model released in August 2026 and the larger relative of the
+Qwen3-8B the Processing Jobs episode ran. It is loaded in FP8 through
+vLLM, beside a local embedding model. Loading the embedding model,
+loading the generator and fitting both in GPU memory are the steps a
+managed model API hides, and here each one is a cell you can run and
+change.</p>
 <div id="this-instance-bills-2.61-an-hour-until-you-stop-it" class="callout">
 <div class="callout-square">
 <i class="callout-icon" data-feather="bell"></i>
@@ -14753,7 +14924,7 @@ any links that you are not going to use.
  -->
 </section></section><section id="aio-15_Resource-management-cleanup"><p>Content from <a href="15_Resource-management-cleanup.html">Resource Management and Monitoring</a></p>
 <hr>
-<p>Last updated on 2026-11-02 |
+<p>Last updated on 2026-11-24 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/15_Resource-management-cleanup.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 <div class="text-end">
@@ -15107,7 +15278,7 @@ missing or too large</td>
 <td>a ten-line scheduled Lambda function</td>
 </tr>
 <tr>
-<td>A budget per person and a brake on the total</td>
+<td>A budget per person and a limit on the total</td>
 <td>a quiet overspend</td>
 <td>AWS Budgets on the <code>Name</code> tag, with an action that
 attaches a deny policy at the ceiling</td>
@@ -15169,7 +15340,7 @@ stopped your notebook instance and walked away?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>A complete list for someone who did every episode, including the
 optional ones:</p>

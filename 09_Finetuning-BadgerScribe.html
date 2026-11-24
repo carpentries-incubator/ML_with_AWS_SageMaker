@@ -432,7 +432,7 @@ test pages</a></li>
       </div>
     </nav><main id="main-content" class="main-content"><div class="container lesson-content">
         <h1>Fine-tuning a Vision-Language Model with Training Jobs</h1>
-        <p>Last updated on 2026-11-16 |
+        <p>Last updated on 2026-11-24 |
 
         <a href="https://github.com/carpentries-incubator/ML_with_AWS_SageMaker/edit/main/episodes/09_Finetuning-BadgerScribe.md" class="external-link">Edit this page <i aria-hidden="true" data-feather="edit"></i></a></p>
 
@@ -759,18 +759,19 @@ one stopped. Each version says where its checkpoints go.</p>
 <div id="what-the-class-account-allows" class="callout-inner">
 <h3 class="callout-title">What the class account allows</h3>
 <div class="callout-content">
-<p>Do not fully fine-tune anything in this workshop, and do not LoRA
-fine-tune a model larger than 30B on the class account. The limit comes
-from the instances the account allows, which are single-GPU and top out
-at the 48 GB <code>ml.g6e.xlarge</code>. On your own account you would
-rent a bigger instance. A 7B LoRA at rank 16 needs about 19 GB and fits
-the 24 GB card the class uses. A LoRA in bf16 fits the 48 GB card up to
-about 20B. Beyond that, on this account, the frozen weights go to 4-bit,
-which the training script does with <code>--load_in_4bit 1</code>, and a
-30B model in 4-bit needs about 34 GB. A full fine-tune of even a 7B
-model needs more memory than any instance the account allows. The larger
-runs appear in this episode only as estimates, so that you can recognize
-one before you launch it.</p>
+<p>Do not fully fine-tune anything in this workshop. A full fine-tune of
+the 3B model costs a hundred times the LoRA run, and the 7B is
+<code>$140</code> a run, for no gain on a few hundred pages. Any LoRA
+run that fits the account’s instances is allowed. The list goes up to
+the four-GPU <code>ml.g6e.12xlarge</code> at <code>$13</code> an hour,
+which holds a 70B LoRA in bf16. Keep your own spending reasonable: the
+estimator prints each run’s cost and what a job that runs to its cap
+would bill, and on a <code>$13</code> an hour instance that is
+<code>$52</code> for every four hours of cap. On a single GPU, a model
+above about 20B fits only with its frozen weights in 4-bit, the training
+script’s <code>--load_in_4bit 1</code>, and the estimator prints a note
+when that applies. The larger runs appear in this episode as estimates,
+so that you know their price before you launch one.</p>
 </div>
 </div>
 </div>
@@ -951,6 +952,13 @@ the forward and backward pass through the frozen model is the same work
 at any rank and only the adapter’s own weight updates grow with it, a
 few percent of the total at rank 256. Left out, the function uses a flat
 2.5 bytes.</li>
+<li>
+<code>load_in_4bit</code>: store the frozen weights in 4-bit, half a
+byte per parameter instead of two, which is the training script’s
+<code>--load_in_4bit 1</code>. It is how a model above about 20B fits
+the 48 GB card, and it changes only the memory line: the adapter and the
+arithmetic are the same, so the time and the cost are too. The function
+says when a run needs it.</li>
 <li>
 <code>instance_type</code>: one of the boxes in the price list;
 leave it out and the cheapest one that fits is chosen.</li>
@@ -1208,7 +1216,7 @@ What does a project cost?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution1" aria-expanded="false" aria-controls="collapseSolution1">
   <h4 class="accordion-header" id="headingSolution1"> Show me the solution </h4>
 </button>
-<div id="collapseSolution1" class="accordion-collapse collapse" data-bs-parent="#accordionSolution1" aria-labelledby="headingSolution1">
+<div id="collapseSolution1" class="accordion-collapse collapse" aria-labelledby="headingSolution1" data-bs-parent="#accordionSolution1">
 <div class="accordion-body">
 <p>It does not fit on the g5, because a full fine-tune of a 7B model
 needs about 112 GB plus activations, and the g5 has 24 GB. On the p4d, 8
@@ -1339,7 +1347,7 @@ above, with the instance type forced to the four-GPU
 <div class="codewrapper sourceCode" id="cb5">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
-<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="co"># The class run on a 4 x A10G box. An estimate, not a launch: the class account does not allow multi-GPU instances.</span></span>
+<pre class="sourceCode python" tabindex="0"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" tabindex="-1" aria-label="code-block-5-1"></a><span class="co"># The class run on a 4 x A10G instance, estimated but not launched; the single GPU is cheaper for a job this small</span></span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1" aria-label="code-block-5-2"></a>helpers.estimate_finetune_cost(</span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1" aria-label="code-block-5-3"></a>    params_billions<span class="op">=</span><span class="fl">3.75</span>, examples<span class="op">=</span><span class="dv">251</span>, tokens_per_example<span class="op">=</span><span class="dv">1600</span>, epochs<span class="op">=</span><span class="dv">2</span>, method<span class="op">=</span><span class="st">"lora"</span>, lora_r<span class="op">=</span><span class="dv">16</span>,</span>
 <span id="cb5-4"><a href="#cb5-4" tabindex="-1" aria-label="code-block-5-4"></a>    instance_type<span class="op">=</span><span class="st">"ml.g5.12xlarge"</span>,   <span class="co"># forced: left out, the function would pick the cheapest single GPU that fits</span></span>
@@ -1722,7 +1730,7 @@ prompt and transcription.</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution2" aria-expanded="false" aria-controls="collapseSolution2">
   <h4 class="accordion-header" id="headingSolution2"> Show me the solution </h4>
 </button>
-<div id="collapseSolution2" class="accordion-collapse collapse" data-bs-parent="#accordionSolution2" aria-labelledby="headingSolution2">
+<div id="collapseSolution2" class="accordion-collapse collapse" aria-labelledby="headingSolution2" data-bs-parent="#accordionSolution2">
 <div class="accordion-body">
 <div class="codewrapper sourceCode" id="cb21">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
@@ -1761,8 +1769,9 @@ optimizer’s state come to 64 GB against 12, so the run no longer fits a
 the price. The four GPUs share the work, so the job is shorter, and the
 run comes to about <code>$1.87</code> against <code>$0.60</code>. On 251
 pages that is a dollar; the same jump at 7B is the Step 0 table’s
-<code>$140</code> a run, and the two warnings the function prints are
-the account’s rules: no full fine-tune, no multi-GPU instance.</p>
+<code>$140</code> a run, and the function prints the lesson’s rule
+against full fine-tuning along with the four-GPU instance’s hourly
+rate.</p>
 <p>Two more sizes on the same 251 pages, each both ways. Nothing is
 launched; read the memory line and the instance it forces.</p>
 <div class="codewrapper sourceCode" id="cb23">
@@ -1789,18 +1798,18 @@ launched; read the memory line and the instance it forces.</p>
 </div>
 <p>A 7B LoRA still fits one GPU, 19 GB on a 24 GB L4, for under a
 dollar; the full fine-tune of the same model needs 116 GB, a four-GPU
-box at <code>$13</code> an hour, and the account refuses it. At 70B the
-LoRA needs 146 GB, so even the adapter run is a four-GPU job the account
-refuses, and the full fine-tune needs 1,124 GB: nothing on the list
-holds it, and the function says what the largest box would do, start,
-bill ten minutes of startup at <code>$63</code> an hour, and die out of
-memory. That run is two or more such boxes with the model sharded across
-them, which is the <code>$12,000</code> row in the cost table once the
-data is a real corpus and not 251 pages. On 251 pages the arithmetic is
-minutes everywhere, so these bills are mostly each box’s price for ten
-minutes of startup; what the four runs show is the box a model forces
-you onto, which is the first thing to find out about a fine-tune, before
-the data or the epochs.</p>
+box at <code>$13</code> an hour, and the lesson does not run one. At 70B
+the LoRA needs 146 GB, a four-GPU job, and the full fine-tune needs
+1,124 GB: nothing on the list holds it, and the function says what the
+largest box would do, start, bill ten minutes of startup at
+<code>$63</code> an hour, and die out of memory. That run is two or more
+such boxes with the model sharded across them, which is the
+<code>$12,000</code> row in the cost table once the data is a real
+corpus and not 251 pages. On 251 pages the arithmetic is minutes
+everywhere, so these bills are mostly each box’s price for ten minutes
+of startup; what the four runs show is the box a model forces you onto,
+which is the first thing to find out about a fine-tune, before the data
+or the epochs.</p>
 </div>
 <div class="section level3">
 <h3 id="a-code-folder-for-the-job">A code folder for the job<a class="anchor" aria-label="anchor" href="#a-code-folder-for-the-job"></a></h3>
@@ -1947,7 +1956,7 @@ step. Which, and why are they there?</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution3" aria-expanded="false" aria-controls="collapseSolution3">
   <h4 class="accordion-header" id="headingSolution3"> Show me the solution </h4>
 </button>
-<div id="collapseSolution3" class="accordion-collapse collapse" data-bs-parent="#accordionSolution3" aria-labelledby="headingSolution3">
+<div id="collapseSolution3" class="accordion-collapse collapse" aria-labelledby="headingSolution3" data-bs-parent="#accordionSolution3">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>Only the language model’s <code>q_proj</code>, <code>k_proj</code>,
 <code>v_proj</code>, <code>o_proj</code>, <code>gate_proj</code>,
@@ -2262,11 +2271,11 @@ rambles, which the base model does on pages it cannot read.</td>
 <code>check_launch</code> checked the tags.
 <code>check_finetune_launch</code> applies the account’s rules to the
 tags, the instance type and the cap, and then this lesson’s own rules
-for a fine-tune: LoRA and not a full fine-tune, a model of at most 30B,
-a cap between the estimate and four times it, checkpoints on any run
-that may pass an hour, a fixed job name, and sane values for the passes
-and the pixel budget. It raises with every problem named, or prints what
-the launch is allowed to cost.</p>
+for a fine-tune: LoRA and not a full fine-tune, a cap between the
+estimate and four times it, checkpoints on any run that may pass an
+hour, a fixed job name, and sane values for the passes and the pixel
+budget. It raises an error naming every problem, or prints the most the
+launch can cost.</p>
 <div class="codewrapper sourceCode" id="cb33">
 <h3 class="code-label">PYTHON<i aria-hidden="true" data-feather="chevron-left"></i><i aria-hidden="true" data-feather="chevron-right"></i>
 </h3>
@@ -2646,7 +2655,7 @@ will compare it to the bill after the homework.</li>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution4" aria-expanded="false" aria-controls="collapseSolution4">
   <h4 class="accordion-header" id="headingSolution4"> Show me the solution </h4>
 </button>
-<div id="collapseSolution4" class="accordion-collapse collapse" data-bs-parent="#accordionSolution4" aria-labelledby="headingSolution4">
+<div id="collapseSolution4" class="accordion-collapse collapse" aria-labelledby="headingSolution4" data-bs-parent="#accordionSolution4">
 <div class="accordion-body">
 <ol style="list-style-type: decimal"><li>Expect about 32 billed minutes. Scoring is the line most likely to
 surprise: at 17 to 21 seconds a page, the two 15-page evaluations and
@@ -3039,7 +3048,7 @@ summaries, and the before/after CER. Did the extra pixels help?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution5" aria-expanded="false" aria-controls="collapseSolution5">
   <h4 class="accordion-header" id="headingSolution5"> Show me the solution </h4>
 </button>
-<div id="collapseSolution5" class="accordion-collapse collapse" data-bs-parent="#accordionSolution5" aria-labelledby="headingSolution5">
+<div id="collapseSolution5" class="accordion-collapse collapse" aria-labelledby="headingSolution5" data-bs-parent="#accordionSolution5">
 <div class="accordion-body">
 <p>Time per page roughly doubles: the sequence is twice as long and
 attention cost grows faster than linearly. On these scans the strokes
@@ -3080,7 +3089,7 @@ when does the faster instance save money?</p>
 <button class="accordion-button solution-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSolution6" aria-expanded="false" aria-controls="collapseSolution6">
   <h4 class="accordion-header" id="headingSolution6"> Show me the solution </h4>
 </button>
-<div id="collapseSolution6" class="accordion-collapse collapse" data-bs-parent="#accordionSolution6" aria-labelledby="headingSolution6">
+<div id="collapseSolution6" class="accordion-collapse collapse" aria-labelledby="headingSolution6" data-bs-parent="#accordionSolution6">
 <div class="accordion-body">
 <p>Startup and upload (~6 min, <code>$0.26</code> at
 <code>$2.61</code>/h) do not speed up: the container pull and the S3
@@ -3201,7 +3210,7 @@ any links that you are not going to use.
   "url": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/09_Finetuning-BadgerScribe.html",
   "identifier": "https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/09_Finetuning-BadgerScribe.html",
   "dateCreated": "2024-10-31",
-  "dateModified": "2026-11-16",
+  "dateModified": "2026-11-24",
   "datePublished": "2026-11-24"
 }
 
