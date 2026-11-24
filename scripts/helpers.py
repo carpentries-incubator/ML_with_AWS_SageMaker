@@ -493,7 +493,7 @@ def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs
             print("note:       in bf16 this needs a multi-GPU instance. With the frozen weights in 4-bit (--load_in_4bit 1 on the script, "
                   "load_in_4bit=True here) it fits one 48 GB ml.g6e.xlarge, at about the same cost and a longer wall-clock")
         if spec["gpus"] > 1:
-            print(f"note:       multi-GPU instance at ${spec['price']}/h. The GPUs split the work, so the run is shorter, not cheaper. "
+            print(f"note:       multi-GPU instance at ${spec['price']}/h. The GPUs split the work, so the run finishes sooner but costs about the same. "
                   f"The account limits a run on it to 4 hours, ${4 * spec['price']:.0f} at most")
     return result
 

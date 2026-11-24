@@ -28,9 +28,9 @@ Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/12_RAG-Processing-jobs
 
 ## When Bedrock does not have your model
 
-The Bedrock episode built the whole WattBot pipeline without managing a GPU, and that stays the simplest choice whenever Bedrock carries a model that will do. Research often depends on a particular open-weight checkpoint, though. A newly released model, a smaller size, a fine-tune for scientific text, a model a paper just published. Bedrock's catalog is curated. It carries Amazon's models, Anthropic, Meta, Mistral, DeepSeek and a few others, and within a family only some sizes, usually a generation behind. For Qwen, the serverless lineup is still the Qwen3 series. Hugging Face hosts well over a million open-weight checkpoints, and the one you want is usually not on Bedrock, and often never will be.
+The Bedrock episode built the whole WattBot pipeline without managing a GPU, and that stays the simplest choice whenever Bedrock carries a model that will do. Research often depends on a particular open-weight checkpoint, though, such as a newly released model, a smaller size, a fine-tune for scientific text, or a model a paper just published. Bedrock's catalog is curated. It carries Amazon's models, Anthropic, Meta, Mistral, DeepSeek and a few others, and within a family only some sizes, usually a generation behind. For Qwen, the serverless lineup is still the Qwen3 series. Hugging Face hosts well over a million open-weight checkpoints, and the one you want is usually not on Bedrock, and often never will be.
 
-There are three ways to run a model Bedrock does not carry. Rent a GPU through SageMaker and run the model yourself, which is most of this episode. Import the weights into Bedrock, which then serves them like a catalog model with nothing running between calls; that works for a short list of architectures, and Step 5 tries it. Or deploy a SageMaker inference endpoint, which Step 6 describes and the lesson does not run.
+There are three ways to run a model Bedrock does not carry. You can rent a GPU through SageMaker and run the model yourself, which is what Steps 1 to 4 do. You can import the weights into Bedrock, which then serves them like a catalog model and charges nothing between calls; this works for a short list of architectures, and Step 5 tries it. Or you can deploy a SageMaker inference endpoint, which Step 6 describes and the lesson does not run.
 
 When you rent the hardware, the next decision is how long to keep it. SageMaker rents a GPU three ways.
 
@@ -75,7 +75,7 @@ In this episode we will:
 - Reuse the chunks cached in your bucket by the Bedrock episode and the inputs in the shared bucket.
 - Run two short-lived GPU Processing jobs. One computes embeddings for all chunks, the second runs Qwen3-8B with `transformers` and the full RAG loop (retrieval + generation) over the same 53-question sample as the Bedrock episode.
 - Score the result and compare it with the Bedrock run. The retrieval logic, prompts and scorer are unchanged, so the comparison is of the models, not of the pipeline.
-- Import a small open-weight model into Bedrock and call it, to see the route that needs no GPU at all, and read why the lesson stops short of an endpoint.
+- Import a small open-weight model into Bedrock and call it, which needs no GPU in your account, and read why the lesson does not deploy an endpoint.
 
 
 ## Setup
@@ -522,21 +522,21 @@ Under the caps we set, the worst case for a job that hangs (a stuck download, a 
 
 ## Step 5 – Custom Model Import: Bedrock serving a model it does not carry
 
-Bedrock has a second way to serve a model that is not in its catalog. **Custom Model Import** takes a Hugging Face checkpoint from your bucket, converts it once, and then serves it like a catalog model: you call it through `converse`, pay only while it answers, and nothing runs between calls. When it works it is the cheapest way to serve an open-weight model and the only one with no GPU to manage.
+Bedrock has a second way to serve a model that is not in its catalog. **Custom Model Import** takes a Hugging Face checkpoint from your bucket, converts it once, and then serves it like a catalog model. You call it through `converse`, you pay only while it answers, and nothing runs between calls. When the model's architecture is supported, this is the cheapest way to serve an open-weight model, and it is the only way that leaves you no GPU to manage.
 
-It works for a short list of architectures. The import job reads `model_type` in the model's `config.json` and refuses anything it has not been built for. In November 2026 the list was Llama, Mistral, Mixtral, GPT-BigCode, Llama vision, Qwen2, Qwen2-VL, Qwen2.5-VL, GPT-OSS and Gemma 3 text. The Qwen3-8B this episode just ran is not on it, and neither is Qwen3.5: we tried the smallest Qwen3.5 model and the job came back with "Amazon Bedrock does not support the architecture (qwen3_5)". New architectures arrive months after a release. So the first step is a thirty-second check of `config.json`, before uploading anything.
+The list of supported architectures is short. The import job reads `model_type` in the model's `config.json` and refuses any architecture it has not been built for. In November 2026 the list was Llama, Mistral, Mixtral, GPT-BigCode, Llama vision, Qwen2, Qwen2-VL, Qwen2.5-VL, GPT-OSS and Gemma 3 text. The Qwen3-8B this episode just ran is not on it, and neither is Qwen3.5. We tried the smallest Qwen3.5 model and the job failed with "Amazon Bedrock does not support the architecture (qwen3_5)". New architectures are added months after a model is released. Checking `config.json` takes thirty seconds and should come before any upload.
 
-The demo uses a model that is on the list, `Qwen/Qwen2.5-0.5B-Instruct`, which is under a gigabyte. Two things it needs that the rest of the lesson does not. The import job runs as an IAM role that can read your bucket, which the workshop's learner permission set cannot create; on the shared account the instructors provide its ARN, and the [account preparation checklist](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/aws-account-prep.html) has the two policies for your own account. And the job takes 10 to 30 minutes to convert even a small model, so launch it and read on.
+The demo uses a model that is on the list, `Qwen/Qwen2.5-0.5B-Instruct`, which is under a gigabyte. It needs two things the rest of the lesson does not. The import job runs as an IAM role that can read your bucket, and the workshop's learner permission set cannot create roles, so on the shared account the instructors provide the role's ARN. The [account preparation checklist](https://carpentries-incubator.github.io/ML_with_AWS_SageMaker/instructor/aws-account-prep.html) has the two policies for your own account. The job also takes 10 to 30 minutes to convert even a small model, so launch it and keep reading while it runs.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
 ### In class, watch the instructor run this step
 
-The import needs a role the learner permission set cannot create, so in the workshop the instructor runs these cells once and everyone reads the result. On your own account, create the role from the checklist and run them yourself.
+The import needs a role that the learner permission set cannot create, so in the workshop the instructor runs these cells once and everyone follows the output. On your own account, create the role from the checklist and run the cells yourself.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
-First the check. It reads one small file from Hugging Face and compares `model_type` with the list.
+The first cell reads the model's `config.json` from Hugging Face and compares `model_type` with the list.
 
 ```python
 import requests
@@ -550,7 +550,7 @@ if cfg["model_type"] not in supported:
     raise SystemExit("not an architecture Bedrock imports; rent a GPU instead, as the jobs above did")
 ```
 
-Then the weights go to your bucket. The import job wants the Hugging Face folder as it is: `config.json`, the safetensors files and the tokenizer files.
+The second cell uploads the weights to your bucket. The import job expects the Hugging Face folder as it is, with `config.json`, the safetensors files and the tokenizer files.
 
 ```python
 from huggingface_hub import snapshot_download
@@ -563,7 +563,7 @@ for fname in os.listdir(local_dir):
 print(f"uploaded to s3://{bucket_name}/{import_prefix}")
 ```
 
-Then the import job, tagged like every other resource, and a loop that waits for it. `jobTags` tag the job and `importedModelTags` the model it produces, since tags never propagate.
+The third cell starts the import job, tagged like every other resource, and waits for it to finish. `jobTags` tags the job and `importedModelTags` tags the model it produces, since tags never propagate from one resource to another.
 
 ```python
 bedrock = boto3.client("bedrock", region_name=region)   # the control-plane client: imports, model lists; bedrock-runtime is the one that answers prompts
@@ -591,7 +591,7 @@ if job["status"] == "Failed":
 imported_model_arn = job["importedModelArn"]
 ```
 
-Then one call. The first request after an idle period gets a `ModelNotReadyException` while Bedrock loads the model, so the cell retries. The call is the same `converse` the Bedrock episode used, with the imported model's ARN in place of a catalog model ID.
+The last cell makes one call. The first request after an idle period gets a `ModelNotReadyException` while Bedrock loads the model, so the cell retries until it answers. The call is the same `converse` the Bedrock episode used, with the imported model's ARN in place of a catalog model ID.
 
 ```python
 bedrock_runtime = boto3.client("bedrock-runtime", region_name=region)
@@ -612,9 +612,9 @@ def call_imported_chat(system_prompt: str, user_prompt: str, max_new_tokens: int
 print(call_imported_chat("You answer in one short sentence.", "What is 2 + 2?", max_new_tokens=32))
 ```
 
-That function has the signature `run_single_qa` takes for `generate`, so passing it in place of the job's generator runs the WattBot loop on the imported model, from this CPU notebook, with no GPU anywhere in your account. A 0.5B model will score poorly; the point is the route, not the number.
+This function has the signature that `run_single_qa` expects for `generate`, so passing it in place of the job's generator runs the WattBot loop on the imported model from this CPU notebook, with no GPU in your account. A 0.5B model will score poorly on WattBot. The demo shows how the import works, and a larger supported model would be imported the same way.
 
-Billing is per **Custom Model Unit**, the slice of capacity the model needs, in five-minute windows while the model is active, and nothing while idle. A model this small is one unit, so the demo is cents. The import itself is free. When you are done, delete the imported model and the weights in your bucket.
+An imported model is billed per **Custom Model Unit**, the amount of capacity the model needs, in five-minute windows while the model is active, and it costs nothing while idle. A model this small is one unit, so the demo costs cents. The import itself is free. When you are done, delete the imported model and the weights in your bucket.
 
 ```python
 bedrock.delete_imported_model(modelIdentifier=imported_model_arn)
@@ -624,7 +624,7 @@ for obj in s3_client.list_objects_v2(Bucket=bucket_name, Prefix=import_prefix).g
 
 ## Step 6 – Endpoints, and why this lesson does not run one
 
-The third way is a **SageMaker inference endpoint**: the model loaded on an instance you choose, behind an HTTPS address, answering requests as they come. It is what an application with steady traffic uses, and the RAG overview says when that is the right tool. It bills by the hour from the moment it is deployed until you delete it, whether or not anyone is asking. The cheapest GPU on the lesson's list is `$1.41` an hour, about `$1,000` a month, for a model an individual researcher queries a few hundred times a day. For nearly every research use one of the two routes above fits better: a job for batch work, and Bedrock, catalog or imported, for answers in seconds with nothing left running. The workshop account refuses `CreateEndpoint` for that reason, and the lesson does not build one.
+The third way is a **SageMaker inference endpoint**, which loads the model on an instance you choose and answers requests at an HTTPS address. Applications with steady traffic use endpoints, and the RAG overview describes when one is the right choice. An endpoint bills by the hour from the moment it is deployed until you delete it, whether or not anyone is sending requests. The cheapest GPU on the lesson's list costs `$1.41` an hour, which is about `$1,000` a month, and an individual researcher's model answers a few hundred questions a day. For nearly every research use, a job is the better choice for batch work and Bedrock is the better choice for answers in seconds, with a catalog model or an imported one, because neither leaves anything running. The workshop account refuses `CreateEndpoint` for this reason, and the lesson does not build one.
 
 ::::::::::::::::::::::::::::::::::::: keypoints
 

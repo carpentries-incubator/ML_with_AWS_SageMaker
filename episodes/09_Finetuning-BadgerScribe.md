@@ -340,7 +340,7 @@ This section is for a run that does not fit one GPU, or a LoRA run on far more d
 A multi-GPU box runs one job as data parallelism. Every GPU holds its own full copy of the model and the adapter, takes its own share of each batch, a page each here, and computes the gradient for that share. After every step the GPUs exchange their gradients and average them, so all four copies make the same update and stay identical. Four GPUs therefore get through four pages in the time one GPU gets through one. The cost estimator shows what that does to the run. The same class-run call as above, with the instance type forced to the four-GPU `ml.g5.12xlarge`:
 
 ```python
-# The class run on a 4 x A10G box. An estimate, not a launch: the single GPU is cheaper for a job this small.
+# The class run on a 4 x A10G instance, estimated but not launched; the single GPU is cheaper for a job this small
 helpers.estimate_finetune_cost(
     params_billions=3.75, examples=251, tokens_per_example=1600, epochs=2, method="lora", lora_r=16,
     instance_type="ml.g5.12xlarge",   # forced: left out, the function would pick the cheapest single GPU that fits
