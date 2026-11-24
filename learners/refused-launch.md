@@ -12,7 +12,7 @@ Every launch from a notebook instance on the workshop account is checked against
 | `Name` is blank | Your last and first name run together, e.g. `DoeJohn`. |
 | `Project` is not on the list | One of `SinkOrSwim`, `WattBot2026`, `BadgerScribe`, `BadgerCode`, `BrainDecoding`, `PoisonedWell`, `SnapshotWI`, spelled exactly, capitals included. |
 | `Purpose` is not on the list | One of `Storage`, `Notebook`, `Training`, `Tuning`, `Inference`. |
-| The instance type is not one the lesson uses | `ml.t3.medium`, `ml.m5.large`, `ml.m5.xlarge`, `ml.g4dn.xlarge`, `ml.g5.xlarge`, `ml.g6.xlarge`, `ml.g6e.xlarge`, `ml.g6e.2xlarge`, and the four-GPU `ml.g5.12xlarge` and `ml.g6e.12xlarge`, which are limited to 4-hour runs. A hung job costs at most about `$125` on a single GPU and `$55` on a four-GPU instance. Ask the instructor if your work needs another. |
+| The instance type is not one the lesson uses | `ml.t3.medium`, `ml.m5.large`, `ml.m5.xlarge`, `ml.g4dn.xlarge`, `ml.g5.xlarge`, `ml.g6.xlarge`, `ml.g6e.xlarge`, `ml.g6e.2xlarge`, and the four-GPU `ml.g5.12xlarge` and `ml.g6e.12xlarge`. Under the 48-hour cap a hung job costs at most about `$125` on a single GPU and `$630` on the largest four-GPU instance, so set `max_run` close to your estimate. Ask the instructor if your work needs another. |
 | The runtime cap is over 48 hours | `max_run` (training and tuning jobs) or `max_runtime_in_seconds` (Processing jobs) of at most `172800`. Set it a little above your estimate. |
 | A Processing job has no cap | Processing jobs do not get a default cap; pass `max_runtime_in_seconds=`. |
 | It is an endpoint or an EC2 instance | Nothing that runs until deleted can be created on this account. Use a job, or Bedrock. |

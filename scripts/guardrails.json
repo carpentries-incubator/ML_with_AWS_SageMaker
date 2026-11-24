@@ -166,26 +166,6 @@
       }
     },
     {
-      "Sid": "FourGpuTypesCapAtFourHours",
-      "Effect": "Deny",
-      "Action": [
-        "sagemaker:CreateTrainingJob",
-        "sagemaker:CreateProcessingJob"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "ForAnyValue:StringEquals": {
-          "sagemaker:InstanceTypes": [
-            "ml.g5.12xlarge",
-            "ml.g6e.12xlarge"
-          ]
-        },
-        "NumericGreaterThan": {
-          "sagemaker:MaxRuntimeInSeconds": "14400"
-        }
-      }
-    },
-    {
       "Sid": "ProcessingJobsNeedACap",
       "Effect": "Deny",
       "Action": [
