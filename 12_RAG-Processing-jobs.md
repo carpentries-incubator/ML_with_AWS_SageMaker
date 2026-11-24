@@ -6,7 +6,7 @@ exercises: 20
 
 :::::::::::::::::::::::::::::::::::::: questions
 
-- When does a RAG pipeline need a self-hosted, open-weight model instead of Bedrock?
+- When does a RAG pipeline need an open-weight model Bedrock does not carry, and what are the ways to run one?
 - How do we run the embedding and generation steps of the WattBot pipeline as SageMaker Processing jobs that end on their own?
 - How do we pass data in and out of a job through S3, and tag the job so its cost is traceable?
 
@@ -19,6 +19,7 @@ exercises: 20
 - Launch a second Processing job that runs Qwen3-8B (an open-weight model in a size Bedrock does not carry) with `transformers` and runs the full RAG loop over the training questions.
 - Read a job's inputs, outputs, arguments and runtime cap, and relate its duration to what it cost.
 - Score the batch predictions with the WattBot metric and compare against the Bedrock run.
+- Say why the lesson does not deploy an inference endpoint.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -26,21 +27,11 @@ Open the notebook from: `/ML_with_AWS_SageMaker/notebooks/12_RAG-Processing-jobs
 
 ## When Bedrock does not have your model
 
-The Bedrock episode built the whole WattBot pipeline without managing a GPU, and that stays the simplest choice whenever Bedrock carries a model that will do. Research often depends on a particular open-weight checkpoint, though. A newly released model, a smaller size, a fine-tune for scientific text, a model a paper just published. Bedrock's catalog is curated. It carries Amazon's models, Anthropic, Meta, Mistral, DeepSeek and a few others, and within a family only some sizes, usually a generation behind. For Qwen, the serverless lineup is still the Qwen3 series. Hugging Face hosts well over a million open-weight checkpoints, and the one you want is usually not on Bedrock, and often never will be.
+The Bedrock episode built the whole WattBot pipeline without managing a GPU, and that stays the simplest choice whenever Bedrock carries a model that will do. Research often depends on a particular open-weight checkpoint, though, such as a newly released model, a smaller size, a fine-tune for scientific text, or a model a paper just published. Bedrock's catalog is curated. It carries Amazon's models, Anthropic, Meta, Mistral, DeepSeek and a few others, and within a family only some sizes, usually a generation behind. For Qwen, the serverless lineup is still the Qwen3 series. Hugging Face hosts well over a million open-weight checkpoints, and the one you want is usually not on Bedrock, and often never will be.
 
-::::::::::::::::::::::::::::::::::::: callout
+There are three ways to run a model Bedrock does not carry. You can import the weights into Bedrock, which then serves them like a catalog model, as the last step of the Bedrock episode did; that works for a short list of architectures, and the model here is not on it. You can rent a GPU through SageMaker and run the model yourself, which is what Steps 1 to 4 do. Or you can deploy a SageMaker inference endpoint, which Step 5 describes and the lesson does not run.
 
-### Custom Model Import, the route between the catalog and a GPU
-
-Bedrock has a second way to serve a model it does not carry. **Custom Model Import** takes a Hugging Face checkpoint from your bucket, converts it once, and then serves it the same way as a catalog model, through `converse`, paying only while it answers and nothing while idle. For an open-weight model that works, it is the cheapest way to serve one and the only route with no GPU to manage.
-
-Try it only when it works, which is a short list. The import job checks the model's `architectures` value in `config.json` and refuses anything it has not been built for. In November 2026 the accepted list was Llama, Mistral, Mixtral, GPT-BigCode, Llama vision, Qwen2, Qwen2-VL, Qwen2.5-VL, GPT-OSS and Gemma 3 text. Neither the Qwen3 family this episode runs nor Qwen3.5 was on it. We tried the smallest Qwen3.5 model and the job was refused with "Amazon Bedrock does not support the architecture (qwen3_5)". New architectures are added months after a release, not weeks.
-
-So the check is thirty seconds, before any upload. Open the model's `config.json` on Hugging Face and read `model_type`. On the list, import is worth the hour it takes, which is an upload to S3, an import job with a service role that can read the bucket, and a first `converse` call. Off the list, skip it and rent a GPU, which is what the rest of this episode does. Two notes for the workshop account. The service role is an IAM role, which the learner permission set cannot create, so the import route needs an administrator. And the import itself is free; what costs is the model answering, billed per five-minute window while it is active, at a rate that depends on the model's size.
-
-::::::::::::::::::::::::::::::::::::::::::::::::
-
-In that case you run the model on hardware you rent through SageMaker, and the next decision is how long to keep that hardware. SageMaker rents a GPU three ways.
+When you rent the hardware, the next decision is how long to keep it. SageMaker rents a GPU three ways.
 
 | | Bills | Stops when | Best for |
 |---|---|---|---|
@@ -82,6 +73,7 @@ In this episode we will:
 - Reuse the chunks cached in your bucket by the Bedrock episode and the inputs in the shared bucket.
 - Run two short-lived GPU Processing jobs. One computes embeddings for all chunks, the second runs Qwen3-8B with `transformers` and the full RAG loop (retrieval + generation) over the same 53-question sample as the Bedrock episode.
 - Score the result and compare it with the Bedrock run. The retrieval logic, prompts and scorer are unchanged, so the comparison is of the models, not of the pipeline.
+- Read why the lesson does not deploy an inference endpoint.
 
 
 ## Setup
@@ -526,13 +518,18 @@ Under the caps we set, the worst case for a job that hangs (a stuck download, a 
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
+## Step 5 – Endpoints, and why this lesson does not run one
+
+The third way is a **SageMaker inference endpoint**, which loads the model on an instance you choose and answers requests at an HTTPS address. Applications with steady traffic use endpoints, and the RAG overview describes when one is the right choice. An endpoint bills by the hour from the moment it is deployed until you delete it, whether or not anyone is sending requests. The cheapest GPU on the lesson's list costs `$1.41` an hour, which is about `$1,000` a month, and an individual researcher's model answers a few hundred questions a day. For nearly every research use, a job is the better choice for batch work and Bedrock is the better choice for answers in seconds, with a catalog model or an imported one as in the Bedrock episode, because neither leaves anything running. The workshop account refuses `CreateEndpoint` for this reason, and the lesson does not build one.
+
 ::::::::::::::::::::::::::::::::::::: keypoints
 
-- Bedrock's catalog is curated and lags releases; when you need a specific open-weight model you rent a GPU and serve it yourself.
+- Bedrock's catalog is curated and lags releases. When you need a specific open-weight model and its architecture cannot be imported into Bedrock, you rent a GPU and run it yourself.
 - Of the ways to rent a GPU, a Processing job is the one that cannot be forgotten. It bills while the script runs and ends on its own, with `max_runtime_in_seconds` as the backstop. Use it for batch work; use Bedrock or an endpoint when you need answers in seconds.
 - Inference needs only the weights. Qwen3-8B is small enough to run unquantized, ~16 GB in bf16 on one 24 GB GPU, with the rest for the prompts' attention cache; how many prompts decode together is bounded by that remainder. Larger models are quantized to fit.
 - A job's inputs and outputs are S3 prefixes mounted into the container; the notebook only stages files and reads results, so it stays a cheap CPU instance.
 - The pipeline logic (`wattbot_rag.py`) ships with the job unchanged from the Bedrock episode; only the two model callables differ.
 - Tags do not propagate from the notebook. Every job gets its own `tags=`.
+- An inference endpoint bills by the hour until deleted. For an individual researcher a job or Bedrock is almost always the better fit, and the lesson does not deploy one.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
