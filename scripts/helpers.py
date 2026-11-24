@@ -490,11 +490,11 @@ def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs
         if method == "full" and not from_scratch:
             print("warning:    full fine-tuning updates every weight; do not run one on the class account")
         if method == "lora" and not load_in_4bit and mem_gb > 48 and spec["gpus"] > 1:
-            print("note:       in bf16 this needs a multi-GPU box; with the frozen weights in 4-bit (--load_in_4bit 1 on the script, "
+            print("note:       in bf16 this needs a multi-GPU instance. With the frozen weights in 4-bit (--load_in_4bit 1 on the script, "
                   "load_in_4bit=True here) it fits one 48 GB ml.g6e.xlarge, at about the same cost and a longer wall-clock")
         if spec["gpus"] > 1:
-            print(f"note:       multi-GPU instance at ${spec['price']}/h: the GPUs split the work, so the run is shorter, not cheaper; "
-                  f"the account caps a run on it at 4 hours, ${4 * spec['price']:.0f} at most")
+            print(f"note:       multi-GPU instance at ${spec['price']}/h. The GPUs split the work, so the run is shorter, not cheaper. "
+                  f"The account limits a run on it to 4 hours, ${4 * spec['price']:.0f} at most")
     return result
 
 
@@ -534,7 +534,7 @@ def load_guard_rails(path=GUARDRAILS_FILE):
         "purposes": statements["PurposeTagFromTheList"]["Condition"]["StringNotLike"]["aws:RequestTag/Purpose"],
         "instance_types": statements["OnlyLessonInstanceTypes"]["Condition"]["ForAnyValue:StringNotEquals"]["sagemaker:InstanceTypes"],
         "max_run_seconds": int(statements["RuntimeCapAtMost48Hours"]["Condition"]["NumericGreaterThan"]["sagemaker:MaxRuntimeInSeconds"]),
-        # the multi-GPU types carry a shorter cap of their own, so one hung job on a $13/h box stays under $55
+        # the multi-GPU types have a shorter cap, so a hung job on a $13/h instance costs at most about $55
         "capped_instance_types": statements["FourGpuTypesCapAtFourHours"]["Condition"]["ForAnyValue:StringEquals"]["sagemaker:InstanceTypes"],
         "capped_max_run_seconds": int(statements["FourGpuTypesCapAtFourHours"]["Condition"]["NumericGreaterThan"]["sagemaker:MaxRuntimeInSeconds"]),
     }
@@ -564,7 +564,7 @@ def check_launch(tags, instance_type=None, max_run=None):
         problems.append(f"max_run of {max_run} s is above the account's cap of {rules['max_run_seconds']} s ({rules['max_run_seconds'] // 3600} hours)")
     if max_run is not None and instance_type in rules["capped_instance_types"] and max_run > rules["capped_max_run_seconds"]:
         problems.append(f"max_run of {max_run} s is above the {rules['capped_max_run_seconds'] // 3600}-hour cap the account puts on {instance_type}: "
-                        "a multi-GPU box bills several times a single GPU's rate, so its runs are kept short; split the work or ask the instructor")
+                        "a multi-GPU instance costs several times a single GPU's rate, so its runs are limited to 4 hours. Split the work or ask the instructor")
     if problems:
         raise ValueError("this launch would be refused by the account:\n  - " + "\n  - ".join(problems))
     return tags

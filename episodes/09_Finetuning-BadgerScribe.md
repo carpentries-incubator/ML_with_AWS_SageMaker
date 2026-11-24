@@ -131,7 +131,7 @@ None of the three runtime limits is a wall. The training script writes a checkpo
 
 ### What the class account allows
 
-Do not fully fine-tune anything in this workshop. A full fine-tune of even the 3B model costs a hundred times the LoRA run, and the 7B is `$140` a run, for no gain on a few hundred pages. LoRA runs of any size the account's instances hold are allowed, and the instance list goes up to the four-GPU `ml.g6e.12xlarge` at `$13` an hour, which holds a 70B LoRA in bf16. The brake is spend, not size. The estimator prints what a run costs and what its cap could bill, and the account holds a run on a four-GPU box to 4 hours, so one hung job there stays near `$50`. On a single GPU, a model above about 20B fits only with its frozen weights in 4-bit, which the training script does with `--load_in_4bit 1`; the estimator says when. The larger runs appear in this episode as estimates, so that you know their price before you launch one.
+Do not fully fine-tune anything in this workshop. A full fine-tune of the 3B model costs a hundred times the LoRA run, and the 7B is `$140` a run, for no gain on a few hundred pages. Any LoRA run that fits the account's instances is allowed. The list goes up to the four-GPU `ml.g6e.12xlarge` at `$13` an hour, which holds a 70B LoRA in bf16. The account limits a run on a four-GPU instance to 4 hours, so a hung job there costs about `$50` at most, and the estimator prints each run's cost and the most its cap can bill. On a single GPU, a model above about 20B fits only with its frozen weights in 4-bit, the training script's `--load_in_4bit 1`, and the estimator prints a note when that applies. The larger runs appear in this episode as estimates, so that you know their price before you launch one.
 
 ::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -609,7 +609,7 @@ helpers.estimate_finetune_cost(params_billions=3.75, examples=251, tokens_per_ex
                                method="full");   # no instance_type: the cheapest that holds it
 ```
 
-Memory is what changes. The weights, their gradients and the optimizer's state come to 64 GB against 12, so the run no longer fits a 24 GB GPU, and the cheapest instance that holds it is the four-GPU `ml.g5.12xlarge` at `$7.09` an hour, five times the price. The four GPUs share the work, so the job is shorter, and the run comes to about `$1.87` against `$0.60`. On 251 pages that is a dollar; the same jump at 7B is the Step 0 table's `$140` a run, and the warning the function prints is the lesson's rule, no full fine-tune, and its note says what the four-GPU box costs an hour.
+Memory is what changes. The weights, their gradients and the optimizer's state come to 64 GB against 12, so the run no longer fits a 24 GB GPU, and the cheapest instance that holds it is the four-GPU `ml.g5.12xlarge` at `$7.09` an hour, five times the price. The four GPUs share the work, so the job is shorter, and the run comes to about `$1.87` against `$0.60`. On 251 pages that is a dollar; the same jump at 7B is the Step 0 table's `$140` a run, and the function prints the lesson's rule against full fine-tuning along with the four-GPU instance's hourly rate.
 
 Two more sizes on the same 251 pages, each both ways. Nothing is launched; read the memory line and the instance it forces.
 
@@ -631,7 +631,7 @@ helpers.estimate_finetune_cost(params_billions=70, examples=251, tokens_per_exam
                                instance_type="ml.p5.48xlarge");   # the largest box on the list: 8 x H100, 640 GB
 ```
 
-A 7B LoRA still fits one GPU, 19 GB on a 24 GB L4, for under a dollar; the full fine-tune of the same model needs 116 GB, a four-GPU box at `$13` an hour, and the lesson does not run one. At 70B the LoRA needs 146 GB, a four-GPU job that the account allows and caps at four hours, and the full fine-tune needs 1,124 GB: nothing on the list holds it, and the function says what the largest box would do, start, bill ten minutes of startup at `$63` an hour, and die out of memory. That run is two or more such boxes with the model sharded across them, which is the `$12,000` row in the cost table once the data is a real corpus and not 251 pages. On 251 pages the arithmetic is minutes everywhere, so these bills are mostly each box's price for ten minutes of startup; what the four runs show is the box a model forces you onto, which is the first thing to find out about a fine-tune, before the data or the epochs.
+A 7B LoRA still fits one GPU, 19 GB on a 24 GB L4, for under a dollar; the full fine-tune of the same model needs 116 GB, a four-GPU box at `$13` an hour, and the lesson does not run one. At 70B the LoRA needs 146 GB, a four-GPU job the account allows for up to four hours, and the full fine-tune needs 1,124 GB: nothing on the list holds it, and the function says what the largest box would do, start, bill ten minutes of startup at `$63` an hour, and die out of memory. That run is two or more such boxes with the model sharded across them, which is the `$12,000` row in the cost table once the data is a real corpus and not 251 pages. On 251 pages the arithmetic is minutes everywhere, so these bills are mostly each box's price for ten minutes of startup; what the four runs show is the box a model forces you onto, which is the first thing to find out about a fine-tune, before the data or the epochs.
 
 ### A code folder for the job
 
@@ -824,7 +824,7 @@ hyperparameters = {
 | `seed` | 42 (default) | Fixes the holdout split, the evaluation sample and the training order, so every run scores the same pages. |  |
 | `max_new_tokens` | 1024 (default) | The most tokens the model may generate when transcribing a page during scoring. | A page is about 200 text tokens. The cap matters only when the model rambles, which the base model does on pages it cannot read. |
 
-One check of all of it before the estimator exists, as `check_launch` checked the tags. `check_finetune_launch` applies the account's rules to the tags, the instance type and the cap, and then this lesson's own rules for a fine-tune: LoRA and not a full fine-tune, a cap between the estimate and four times it, checkpoints on any run that may pass an hour, a fixed job name, and sane values for the passes and the pixel budget. It raises with every problem named, or prints what the launch is allowed to cost.
+One check of all of it before the estimator exists, as `check_launch` checked the tags. `check_finetune_launch` applies the account's rules to the tags, the instance type and the cap, and then this lesson's own rules for a fine-tune: LoRA and not a full fine-tune, a cap between the estimate and four times it, checkpoints on any run that may pass an hour, a fixed job name, and sane values for the passes and the pixel budget. It raises an error naming every problem, or prints the most the launch can cost.
 
 ```python
 helpers.check_finetune_launch(
