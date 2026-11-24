@@ -351,7 +351,7 @@ FLOPS_PER_PARAM_TOKEN = {"lora": 4.0, "full": 6.0}
 def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs=2, method="lora",
                            instance_type=None, runs=1, utilization=0.25, gradient_checkpointing=True,
                            activations_gb=4.0, startup_minutes=10, verbose=True, from_scratch=False,
-                           lora_r=None, hidden_size=None, trainable_fraction=None):
+                           lora_r=None, hidden_size=None, trainable_fraction=None, load_in_4bit=False):
     """
     Back-of-the-envelope cost of a fine-tuning run, using the two rules from the
     fine-tuning episode. Good to within about a factor of two, which is enough to tell
@@ -392,6 +392,10 @@ def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs
     hidden_size : int         the model's hidden size, from its config.json, for the rank arithmetic.
                               Left out, it is estimated from the parameter count (2048 at 3.75B, growing
                               with the square root of the size), which is within about 30%.
+    load_in_4bit : bool,    LoRA only. Store the frozen weights in 4-bit (the training script's --load_in_4bit 1),
+                              half a byte per parameter instead of two, which is how a model above about 20B fits
+                              one 48 GB GPU. The adapter and the arithmetic are unchanged, so the time and cost are
+                              the same; only the memory line moves.
     trainable_fraction : float, LoRA only. The adapter's exact share of the parameters, when you have
                               it (the fine-tuning episode's count cell computes it from the config:
                               0.008 at rank 16 on CHURRO-3B, 0.13 at rank 256). Overrides lora_r.
@@ -410,8 +414,11 @@ def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs
             raise ValueError(f"lora_r={lora_r} is wider than the model's hidden size (~{hidden:.0f}): an adapter cannot have "
                              "more rank than the matrix it sits beside, and above a few hundred it already costs more memory than a full fine-tune")
         trainable_fraction = lora_r / hidden                        # r x (in + out) summed over the projections, over their in x out: about r / hidden
+    frozen_bytes = 0.5 if (method == "lora" and load_in_4bit) else 2.0   # 4-bit or bf16 storage of the frozen weights
     if method == "lora" and trainable_fraction is not None:
-        bytes_per_param = 2.0 + 16.0 * trainable_fraction          # frozen weights in bf16, plus the adapter's full training state
+        bytes_per_param = frozen_bytes + 16.0 * trainable_fraction  # frozen weights, plus the adapter's full training state
+    elif method == "lora" and load_in_4bit:
+        bytes_per_param = frozen_bytes + 0.5                        # the flat rule's adapter share, on 4-bit weights
     mem_gb = bytes_per_param * params / 1e9 + activations_gb
     flops_per_param_token = FLOPS_PER_PARAM_TOKEN[method]
     if method == "lora" and trainable_fraction is not None:
@@ -448,6 +455,8 @@ def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs
         print(f"{what} of a {params_billions:g}B model: {examples:,} examples x "
               f"{tokens_per_example:,} tokens x {epochs:g} passes = {tokens/1e6:,.1f}M tokens")
         print(f"memory:     ~{mem_gb:.0f} GB needed; {instance_type} has {spec['gpus'] * spec['gpu_mem_gb']} GB ({gpus})")
+        if method == "lora" and load_in_4bit:
+            print("weights:    frozen weights stored in 4-bit, half a byte per parameter; the adapter trains in full precision")
         if method == "lora" and trainable_fraction is not None:
             rank = f"rank {lora_r}: " if lora_r is not None else ""
             print(f"adapter:    {rank}{100 * trainable_fraction:.1f}% of the parameters train, so {bytes_per_param:.1f} bytes per parameter")
@@ -480,12 +489,12 @@ def estimate_finetune_cost(params_billions, examples, tokens_per_example, epochs
             print(f"warning:    {spec['gpu']}: {spec['note']}")
         if method == "full" and not from_scratch:
             print("warning:    full fine-tuning updates every weight; do not run one on the class account")
-        if method == "lora" and params_billions > 30:
-            print("warning:    LoRA above 30B is outside what the class account allows: it does not fit the 48 GB GPU even with the frozen weights in 4-bit")
-        elif method == "lora" and params_billions > 7:
-            print("warning:    a LoRA run above 7B fits the account's GPUs only with the frozen weights in 4-bit (--load_in_4bit 1) on the 48 GB ml.g6e.xlarge")
+        if method == "lora" and not load_in_4bit and mem_gb > 48 and spec["gpus"] > 1:
+            print("note:       in bf16 this needs a multi-GPU instance. With the frozen weights in 4-bit (--load_in_4bit 1 on the script, "
+                  "load_in_4bit=True here) it fits one 48 GB ml.g6e.xlarge, at about the same cost and a longer wall-clock")
         if spec["gpus"] > 1:
-            print("warning:    multi-GPU instance; not allowed on the class account, and more GPUs do not make the run cheaper")
+            print(f"note:       multi-GPU instance at ${spec['price']}/h. The GPUs split the work, so the run finishes sooner but costs about the same. "
+                  f"A job that runs to the max_run above costs ${result['max_run_seconds'] / 3600 * spec['price']:,.0f}")
     return result
 
 
@@ -550,6 +559,9 @@ def check_launch(tags, instance_type=None, max_run=None):
         problems.append(f"instance type {instance_type} is not one the lesson uses: choose from {', '.join(rules['instance_types'])}")
     if max_run is not None and max_run > rules["max_run_seconds"]:
         problems.append(f"max_run of {max_run} s is above the account's cap of {rules['max_run_seconds']} s ({rules['max_run_seconds'] // 3600} hours)")
+    if max_run is not None and instance_type in GPU_INSTANCES and GPU_INSTANCES[instance_type]["gpus"] > 1:
+        worst = max_run / 3600 * GPU_INSTANCES[instance_type]["price"]
+        print(f"note: {instance_type} bills ${GPU_INSTANCES[instance_type]['price']}/h, so a job that runs to its max_run of {max_run // 3600} h costs ${worst:,.0f}")
     if problems:
         raise ValueError("this launch would be refused by the account:\n  - " + "\n  - ".join(problems))
     return tags
@@ -567,10 +579,7 @@ def check_finetune_launch(tags, instance_type, max_run, estimated_minutes, price
         problems += str(e).split("\n  - ")[1:]
     if method != "lora":
         problems.append(f'method="{method}": a full fine-tune updates every weight, needs 16 bytes per parameter, '
-                        "and is not run on the class account; use LoRA")
-    elif params_billions > 30:
-        problems.append(f"{params_billions}B parameters: a LoRA run above 30B does not fit the 48 GB GPU, the largest the account allows, "
-                        "even with the frozen weights in 4-bit")
+                        "and costs a hundred times the LoRA run; the lesson does not run one. Use LoRA")
     if max_run is None:
         problems.append("no max_run: the SDK would send 24 hours, so a hung job bills a day; set it to about twice the estimate")
     else:

@@ -526,7 +526,7 @@ Nothing was gained: the two-instance run took longer and cost twice as much. Eac
 Its inputs differ from the cost estimator's in one way. The cost estimator takes the whole run, `examples` × `tokens_per_example` × `epochs`, because the bill is the total work. This one takes a single step, `tokens_per_step`, because the exchange happens once per step and the speedup is the same for every step, so the length of the run does not enter. A step is one batch, so `tokens_per_step` is the batch size times the tokens per example, the same two numbers as the cost estimator's with the batch in place of the dataset. The 7B model from the cost section, trained with a batch of 16 documents of 2,000 tokens each, three ways:
 
 ```python
-# Two single-GPU instances over the network: the class-account form of data parallelism
+# Two single-GPU instances over the network; a four-GPU box does the same inside one machine, over a faster link
 helpers.estimate_parallel_speedup(
     params_billions=7,
     tokens_per_step=16 * 2000,       # one step: a batch of 16 documents x 2,000 tokens each
