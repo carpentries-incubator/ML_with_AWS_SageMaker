@@ -423,6 +423,23 @@ Console: **Service Quotas → Amazon Bedrock**, and **Bedrock → Model access**
 }
 ```
 
+### The Custom Model Import role
+
+Step 5 of the RAG Beyond the Bedrock Catalog episode imports a small open-weight model into Bedrock. The import job runs as an IAM role that can read the learner's bucket, and the learner permission set cannot create roles, so the instructor creates one role for the account and runs that step in front of the class. From CloudShell, in the class region:
+
+```bash
+cat > trust.json <<'EOF'
+{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"bedrock.amazonaws.com"},"Action":"sts:AssumeRole","Condition":{"StringEquals":{"aws:SourceAccount":"ACCOUNT_ID"},"ArnEquals":{"aws:SourceArn":"arn:aws:bedrock:us-east-2:ACCOUNT_ID:model-import-job/*"}}}]}
+EOF
+cat > s3read.json <<'EOF'
+{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject","s3:ListBucket"],"Resource":["arn:aws:s3:::*"]}]}
+EOF
+aws iam create-role --role-name BedrockImportRole --assume-role-policy-document file://trust.json
+aws iam put-role-policy --role-name BedrockImportRole --policy-name S3Read --policy-document file://s3read.json
+```
+
+Replace `ACCOUNT_ID` with the account's 12-digit id. The read policy covers every bucket in the account so the role works for whichever bucket holds the weights; narrow it to one prefix on an account that holds anything sensitive. The role's ARN is what the episode's `import_role_arn` cell takes. The import itself is free and the imported model bills per Custom Model Unit only while it answers; delete the model after class with `aws bedrock delete-imported-model`.
+
 ## Cost allocation tags
 
 - Confirm with the Public Cloud team that `Name`, `Project`, `Purpose` are active cost allocation keys on the account ([KB 72454](https://kb.wisc.edu/72454)). The lesson uses exactly those three everywhere.
