@@ -37,6 +37,7 @@ Console: **Service Quotas → AWS services → Amazon SageMaker**, in the region
 | `ml.g5.xlarge for training job usage` | 100 | fine-tuning episode (one job per student at once) |
 | `ml.g6e.xlarge for training job usage` | 100 | optional: fine-tuning Exercise 2 |
 | `Number of instances across all training jobs` | 250 (already applied) | account-level ceiling; 250 covers 100 students |
+| `ml.g5.12xlarge for training job usage` and `ml.g6e.12xlarge for training job usage` | 4 each | the four-GPU instances the fine-tuning episode estimates, for 70B LoRA runs or large datasets |
 | `ml.g5.xlarge for processing job usage` | 200 | Processing Jobs episode (both jobs) and fine-tuning homework (two jobs per student, possibly at once) |
 | `ml.g6.xlarge for training job usage` and `for processing job usage` | 100 each (fallback) | the capacity fallback for `ml.g5.xlarge` at the end of this page; it is on the guard-rail list, and it needs a quota before it can be used |
 | `ml.g6e.xlarge for processing job usage` | 0 | no episode uses it; the Processing Jobs episode runs Qwen3-8B on `ml.g5.xlarge`, and the 27B generator runs only in the optional GPU-notebook episode, on a notebook instance |
@@ -119,7 +120,9 @@ Learners reach the account through the console, the SageMaker SDK in notebooks, 
             "ml.g5.xlarge",
             "ml.g6.xlarge",
             "ml.g6e.xlarge",
-            "ml.g6e.2xlarge"
+            "ml.g6e.2xlarge",
+            "ml.g5.12xlarge",
+            "ml.g6e.12xlarge"
           ]
         }
       }
@@ -268,7 +271,7 @@ Learners reach the account through the console, the SageMaker SDK in notebooks, 
 What each statement does, and what it costs you:
 
 - **NothingThatRunsUntilDeleted** blocks the three resource kinds with no runtime cap. Nothing in the lesson creates any of them, so no episode changes. This is the statement that would have stopped the participant who spent a year's credits from a terminal.
-- **OnlyLessonInstanceTypes** refuses any job or notebook whose instance type is not on the list. The list must match the quota table above exactly, including the capacity fallbacks; a type you forget here fails for every learner at once, from the console too. Keep `ml.g6e.xlarge` on the list only if you want the optional GPU-notebook episode to be possible. The list is single-GPU on purpose, and that is a budget decision rather than a technical one: under the 48-hour cap, the worst case for one hung job is `$125` on the largest allowed type, against `$340` on an `ml.g5.12xlarge`, `$630` on an `ml.g6e.12xlarge` and `$1,200` on an `ml.p4d.24xlarge`, which is more than a learner's share of the credits. If a term needs a four-GPU type, add it here together with a second deny statement that names those types and a shorter cap, four hours say; IAM ANDs the conditions in one statement, so single-GPU jobs keep the 48-hour ceiling. Those types also start at a quota of zero in a new account.
+- **OnlyLessonInstanceTypes** refuses any job or notebook whose instance type is not on the list. The list must match the quota table above exactly, including the capacity fallbacks; a type you forget here fails for every learner at once, from the console too. Keep `ml.g6e.xlarge` on the list only if you want the optional GPU-notebook episode to be possible. The two four-GPU types are on the list for learners whose models need them. Under the 48-hour cap one hung job costs `$125` on the largest single GPU and `$630` on an `ml.g6e.12xlarge`, so the per-learner budget alert below matters more once they are on the list, and the lesson's launch check prints what a job that runs to its cap would cost.
 - **The three tag statements** refuse a job or notebook created without each of the cost-allocation keys. **NameTagNotBlank** refuses a `Name` that is present but empty, which passes the first check and still bills as nobody's. **ProjectTagFromTheList and PurposeTagFromTheList** refuse any `Project` that is not on the list and any `Purpose` that is not one of the five words the lesson uses. The project list is the workshop's own project, `SinkOrSwim`, plus the year's challenge names; it is the one thing in the policy that changes every year, and it also decides your own test runs. The lesson's example values, `DoeJohn` and `SinkOrSwim`, are allowed on purpose, so that a learner who runs a notebook without replacing them is not stopped at the first launch; what they cost is a job on the bill under `DoeJohn`, which Cost Explorer shows and the first episodes tell learners to check.
 - **Buckets are not covered.** A bucket can be created without tags, from the console or the SDK, and the policy does not try to stop it: the S3 console creates the bucket and attaches the tags in a second call, so a deny on an untagged `CreateBucket` would refuse every bucket. An untagged bucket costs cents a month and shows on the bill as unallocated, which is where you find it at cleanup. The S3 episode makes the tags mandatory in words instead.
 - **RuntimeCapAtMost48Hours and ProcessingJobsNeedACap** bound what one job can bill. A training job always carries a `StoppingCondition` (the API requires one, and the SDK's default is 24 hours); a Processing job does not, and without one it runs until the script ends. With the instance list above, the most one job can now cost is 48 hours of the dearest type, `ml.g6e.2xlarge` at `$2.80`: about `$135`. Lower the number to tighten it; the credit-request form promises learners 48 hours, so change both together.
@@ -361,7 +364,7 @@ aws lambda invoke --function-name nightly-notebook-stop out.json && cat out.json
 
 Say in the credit-request form and in class that instances stop at 11 pm, that a running cell is interrupted when they do, and that jobs are not.
 
-### 2. A spend alert per learner, and a brake on the class total
+### 2. A spend alert per learner, and a limit on the class total
 
 AWS Budgets can watch one cost-allocation tag. One budget per learner on the `Name` tag, at the per-person credit with an alert at 80%, tells you who is about to run over, a day or two late because of Cost Explorer's lag. From CloudShell, with a file `names.txt` holding one `Name` tag value per line:
 
@@ -422,6 +425,23 @@ Console: **Service Quotas → Amazon Bedrock**, and **Bedrock → Model access**
   ]
 }
 ```
+
+### The Custom Model Import role
+
+The last step of the Bedrock episode imports a small open-weight model into Bedrock. The import job runs as an IAM role that can read the learner's bucket, and the learner permission set cannot create roles, so the instructor creates one role for the account and runs that step in front of the class. From CloudShell, in the class region:
+
+```bash
+cat > trust.json <<'EOF'
+{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"bedrock.amazonaws.com"},"Action":"sts:AssumeRole","Condition":{"StringEquals":{"aws:SourceAccount":"ACCOUNT_ID"},"ArnEquals":{"aws:SourceArn":"arn:aws:bedrock:us-east-2:ACCOUNT_ID:model-import-job/*"}}}]}
+EOF
+cat > s3read.json <<'EOF'
+{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject","s3:ListBucket"],"Resource":["arn:aws:s3:::*"]}]}
+EOF
+aws iam create-role --role-name BedrockImportRole --assume-role-policy-document file://trust.json
+aws iam put-role-policy --role-name BedrockImportRole --policy-name S3Read --policy-document file://s3read.json
+```
+
+Replace `ACCOUNT_ID` with the account's 12-digit id. The read policy covers every bucket in the account so the role works for whichever bucket holds the weights; narrow it to one prefix on an account that holds anything sensitive. The role's ARN is what the episode's `import_role_arn` cell takes. The import itself is free and the imported model bills per Custom Model Unit only while it answers; delete the model after class with `aws bedrock delete-imported-model`.
 
 ## Cost allocation tags
 
