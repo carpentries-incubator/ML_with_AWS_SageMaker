@@ -46,7 +46,7 @@ A 27B model is large enough that the choice of GPU and weight precision matters.
 
 ::::::::::::::::::::::::::::::::::::: callout
 
-### This instance bills `$2.61` an hour until you stop it, and nothing stops it for you
+### This instance bills `$2.61` an hour until you stop it
 
 A GPU notebook instance is a rental with the meter running. It bills by the hour from the moment it starts until the moment *you* stop it, whether it is generating answers, sitting at an idle prompt, or showing a closed browser tab on a laptop that went home for the weekend. Nothing in this episode turns it off for you. The instance we use, `ml.g6e.xlarge` (one L40S GPU, 48 GB), costs **`$2.61` per hour** on-demand in `us-east-1` (AWS price list, October 2026). That is:
 
